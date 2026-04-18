@@ -1,14 +1,14 @@
-import express from "express";
-import { env } from "./config/env";
-import { telegramWebhookRouter } from "./routes/telegramWebhook";
-import { getWebhookInfo, setWebhook } from "./bot/bot";
+import express from 'express';
+import { env } from './config/env';
+import { telegramWebhookRouter } from './routes/telegramWebhook';
+import { getWebhookInfo, setWebhook } from './bot/bot';
 
 async function bootstrap() {
   const app = express();
 
   app.use(express.json());
 
-  app.get("/health", (_req, res) => {
+  app.get('/health', (_req, res) => {
     res.status(200).json({ ok: true });
   });
 
@@ -19,17 +19,17 @@ async function bootstrap() {
 
     try {
       const result = await setWebhook();
-      console.log("Webhook set:", result);
+      console.log('Webhook set:', result);
 
       const info = await getWebhookInfo();
-      console.log("Webhook info:", info);
+      console.log('Webhook info:', info);
     } catch (error) {
-      console.error("Failed to set webhook:", error);
+      console.error('Failed to set webhook:', error);
     }
   });
 }
 
 bootstrap().catch((error) => {
-  console.error("Fatal bootstrap error:", error);
+  console.error('Fatal bootstrap error:', error);
   process.exit(1);
 });
