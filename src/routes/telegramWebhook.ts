@@ -36,17 +36,23 @@ import { findServiceById } from '../repositories/service.repository';
 import { findSpecialistById } from '../repositories/specialist.repository';
 import { createBookingAppointment } from '../services/appointment.service';
 import { sendBookingStubNotification } from '../services/notification.service';
-import { getDefaultTimezone } from '../repositories/app-settings.repository';
+import { getAppSettings } from '../repositories/app-settings.repository';
 
 export const telegramWebhookRouter = Router();
 
-function buildCalendarLink(date: string, time: string, title: string, timezone: string) {
+function buildCalendarLink(
+  date: string,
+  time: string,
+  title: string,
+  timezone: string,
+  durationMin: number,
+) {
   const compactDate = date.replace(/-/g, '');
   const compactTime = time.replace(':', '');
   const [hours, minutes] = time.split(':').map(Number);
 
   const endDateTime = new Date(Date.UTC(2000, 0, 1, hours, minutes));
-  endDateTime.setUTCHours(endDateTime.getUTCHours() + 1);
+  endDateTime.setUTCMinutes(endDateTime.getUTCMinutes() + durationMin);
 
   const end = `${compactDate}T${String(endDateTime.getUTCHours()).padStart(2, '0')}${String(
     endDateTime.getUTCMinutes(),
@@ -347,12 +353,13 @@ telegramWebhookRouter.post(
           await answerCallbackQuery(callback.id, t(lang, 'booking.created'));
           await editMessageText(chatId, messageId, t(lang, 'booking.created'));
 
-          const timezone = await getDefaultTimezone();
+          const appSettings = await getAppSettings();
           const calendarUrl = buildCalendarLink(
             payload.selectedDate!,
             payload.selectedTime!,
             serviceName,
-            timezone,
+            appSettings.timezone,
+            appSettings.slotDurationMin,
           );
           const paymentUrl = `https://example.com/pay/${appointmentResult.appointment.id}`;
 

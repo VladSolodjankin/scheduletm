@@ -39,7 +39,7 @@ export async function selectService(userId: number, serviceId: number) {
       skipSpecialist: true as const,
       service,
       specialist: defaultSpecialist,
-      dates: getNextAvailableDates(),
+      dates: await getNextAvailableDates(),
     };
   }
 
@@ -67,6 +67,6 @@ export async function selectSpecialist(userId: number, specialistId: number) {
   return {
     ok: true as const,
     specialist,
-    dates: getNextAvailableDates(),
+    dates: await getNextAvailableDates(),
   };
 }
