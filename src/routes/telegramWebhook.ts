@@ -12,6 +12,7 @@ import {
   getAppointmentEditInlineKeyboard,
   getDatesInlineKeyboard,
   getBookingConfirmationKeyboard,
+  getBookingFinalInlineKeyboard,
   getLanguageKeyboard,
   getMainMenuKeyboard,
   getMyAppointmentsInlineKeyboard,
@@ -448,9 +449,13 @@ telegramWebhookRouter.post(
           );
           const paymentUrl = `https://example.com/pay/${appointmentResult.appointment.id}`;
 
-          await sendMessage(chatId, t(lang, 'booking.calendarLink', { url: calendarUrl }));
-          await sendMessage(chatId, t(lang, 'booking.paymentLink', { url: paymentUrl }));
-          await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
+          await sendMessage(
+            chatId,
+            t(lang, 'booking.finalMessage', {
+              created: t(lang, 'booking.created'),
+            }),
+            getBookingFinalInlineKeyboard(lang, calendarUrl, paymentUrl),
+          );
 
           await sendBookingStubNotification({
             chatId,
