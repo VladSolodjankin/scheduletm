@@ -11,6 +11,11 @@ export type TelegramUpdate = {
   message?: {
     message_id: number;
     text?: string;
+    contact?: {
+      phone_number: string;
+      first_name: string;
+      user_id?: number;
+    };
     chat: {
       id: number;
       type: string;
