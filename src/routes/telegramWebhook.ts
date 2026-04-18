@@ -9,10 +9,12 @@ import {
 import { findOrCreateTelegramUser } from '../services/user.service';
 import { normalizeLanguageCode, t } from '../i18n';
 import {
+  getAppointmentEditInlineKeyboard,
   getDatesInlineKeyboard,
   getBookingConfirmationKeyboard,
   getLanguageKeyboard,
   getMainMenuKeyboard,
+  getMyAppointmentsInlineKeyboard,
   getPhoneRequestKeyboard,
   getServicesInlineKeyboard,
   getSpecialistsInlineKeyboard,
@@ -34,9 +36,17 @@ import {
 } from '../repositories/user-session.repository';
 import { findServiceById } from '../repositories/service.repository';
 import { findSpecialistById } from '../repositories/specialist.repository';
-import { createBookingAppointment } from '../services/appointment.service';
+import {
+  canEditAppointment,
+  createBookingAppointment,
+  getUserAppointment,
+  getUserAppointments,
+  rescheduleUserAppointment,
+} from '../services/appointment.service';
 import { sendBookingStubNotification } from '../services/notification.service';
 import { getAppSettings } from '../repositories/app-settings.repository';
+import { toMoscowDateTimeFromUtc } from '../utils/timezone';
+import { getNextAvailableDates } from '../services/date.service';
 
 export const telegramWebhookRouter = Router();
 
@@ -112,6 +122,30 @@ async function buildConfirmationText(userId: number, lang: 'ru' | 'en') {
     payload,
     serviceName,
   };
+}
+
+function buildAppointmentDetailsText(
+  lang: 'ru' | 'en',
+  appointment: {
+    appointmentAt: string | Date;
+    serviceNameRu: string;
+    serviceNameEn: string;
+    specialistName: string;
+  },
+  canEdit: boolean,
+) {
+  const dateTime = toMoscowDateTimeFromUtc(appointment.appointmentAt);
+  const serviceName = lang === 'ru' ? appointment.serviceNameRu : appointment.serviceNameEn;
+
+  return [
+    t(lang, 'appointments.detailsTitle'),
+    t(lang, 'appointments.detailsService', { value: serviceName }),
+    t(lang, 'appointments.detailsSpecialist', { value: appointment.specialistName }),
+    t(lang, 'appointments.detailsDate', { value: dateTime.date }),
+    t(lang, 'appointments.detailsTime', { value: dateTime.time }),
+    '',
+    canEdit ? t(lang, 'appointments.editAllowed') : t(lang, 'appointments.editBlocked'),
+  ].join('\n');
 }
 
 telegramWebhookRouter.post(
@@ -250,7 +284,27 @@ telegramWebhookRouter.post(
               lang,
               'booking.chooseTime',
             )}\n${t(lang, 'booking.slotsTimezoneNote')}`,
-            getTimeSlotsInlineKeyboard(availableSlots),
+            getTimeSlotsInlineKeyboard(availableSlots, lang),
+          );
+
+          return res.status(200).json({ ok: true });
+        }
+
+        if (data === 'time_change_date') {
+          const payload = await getSessionPayload(user.id);
+
+          if (!payload.serviceId || !payload.specialistId) {
+            await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
+            return res.status(200).json({ ok: true });
+          }
+
+          await mergeSessionPayload(user.id, UserSessionState.CHOOSING_DATE, {});
+          await answerCallbackQuery(callback.id);
+          await editMessageText(
+            chatId,
+            messageId,
+            t(lang, 'booking.chooseDate'),
+            getDatesInlineKeyboard(await getNextAvailableDates()),
           );
 
           return res.status(200).json({ ok: true });
@@ -260,6 +314,37 @@ telegramWebhookRouter.post(
           const hh = data.slice('time_'.length, 'time_'.length + 2);
           const mm = data.slice('time_'.length + 2, 'time_'.length + 4);
           const selectedTime = `${hh}:${mm}`;
+          const payload = await getSessionPayload(user.id);
+
+          if (payload.editingAppointmentId) {
+            const rescheduled = await rescheduleUserAppointment({
+              userId: user.id,
+              appointmentId: payload.editingAppointmentId,
+              selectedDate: payload.selectedDate!,
+              selectedTime,
+            });
+
+            await answerCallbackQuery(callback.id, selectedTime);
+
+            if (!rescheduled.ok) {
+              await editMessageText(chatId, messageId, t(lang, 'appointments.editBlocked'));
+              await updateSessionState(user.id, UserSessionState.IDLE, {});
+              return res.status(200).json({ ok: true });
+            }
+
+            await editMessageText(
+              chatId,
+              messageId,
+              t(lang, 'appointments.rescheduled', {
+                date: rescheduled.next.date,
+                time: rescheduled.next.time,
+              }),
+            );
+
+            await updateSessionState(user.id, UserSessionState.IDLE, {});
+            await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
+            return res.status(200).json({ ok: true });
+          }
 
           const nextState = user.phone
             ? user.email
@@ -376,6 +461,59 @@ telegramWebhookRouter.post(
             selectedTime: payload.selectedTime!,
             serviceName,
           });
+
+          return res.status(200).json({ ok: true });
+        }
+
+        if (data.startsWith('appointment:')) {
+          const appointmentId = Number(data.split(':')[1]);
+          const appointment = await getUserAppointment(user.id, appointmentId);
+
+          if (!appointment) {
+            await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
+            return res.status(200).json({ ok: true });
+          }
+
+          const editable = canEditAppointment(appointment.appointmentAt);
+          await answerCallbackQuery(callback.id);
+          await editMessageText(
+            chatId,
+            messageId,
+            buildAppointmentDetailsText(lang, appointment, editable),
+            editable ? getAppointmentEditInlineKeyboard(appointment.id, lang) : undefined,
+          );
+
+          return res.status(200).json({ ok: true });
+        }
+
+        if (data.startsWith('appointment_edit:')) {
+          const appointmentId = Number(data.split(':')[1]);
+          const appointment = await getUserAppointment(user.id, appointmentId);
+
+          if (!appointment) {
+            await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
+            return res.status(200).json({ ok: true });
+          }
+
+          const editable = canEditAppointment(appointment.appointmentAt);
+          if (!editable) {
+            await answerCallbackQuery(callback.id, t(lang, 'appointments.editBlocked'));
+            return res.status(200).json({ ok: true });
+          }
+
+          await mergeSessionPayload(user.id, UserSessionState.CHOOSING_DATE, {
+            editingAppointmentId: appointment.id,
+            serviceId: appointment.serviceId,
+            specialistId: appointment.specialistId,
+          });
+
+          await answerCallbackQuery(callback.id);
+          await editMessageText(
+            chatId,
+            messageId,
+            t(lang, 'appointments.chooseNewDate'),
+            getDatesInlineKeyboard(await getNextAvailableDates()),
+          );
 
           return res.status(200).json({ ok: true });
         }
@@ -518,6 +656,36 @@ telegramWebhookRouter.post(
           chatId,
           t(lang, 'booking.chooseService'),
           getServicesInlineKeyboard(services, lang),
+        );
+
+        return res.status(200).json({ ok: true });
+      }
+
+      if (text === t(lang, 'common.myAppointments')) {
+        const appointments = await getUserAppointments(user.id);
+
+        if (!appointments.length) {
+          await sendMessage(chatId, t(lang, 'appointments.empty'), getMainMenuKeyboard(lang));
+          return res.status(200).json({ ok: true });
+        }
+
+        await sendMessage(
+          chatId,
+          t(lang, 'appointments.listTitle'),
+          getMyAppointmentsInlineKeyboard(
+            appointments.map((appointment) => {
+              const dateTime = toMoscowDateTimeFromUtc(appointment.appointmentAt);
+              return {
+                id: appointment.id,
+                title: t(lang, 'appointments.item', {
+                  date: dateTime.date,
+                  time: dateTime.time,
+                  service:
+                    lang === 'ru' ? appointment.serviceNameRu : appointment.serviceNameEn,
+                }),
+              };
+            }),
+          ),
         );
 
         return res.status(200).json({ ok: true });
