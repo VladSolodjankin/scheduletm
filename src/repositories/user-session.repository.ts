@@ -74,3 +74,17 @@ export async function mergeSessionPayload(
 
   return updated;
 }
+
+export async function getSessionPayload(userId: number): Promise<BookingPayload> {
+  const session = await getOrCreateSession(userId);
+
+  if (!session.payload_json) {
+    return {};
+  }
+
+  if (typeof session.payload_json === 'string') {
+    return JSON.parse(session.payload_json) as BookingPayload;
+  }
+
+  return session.payload_json as BookingPayload;
+}
