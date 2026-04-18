@@ -3,16 +3,26 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build",
-    "start": "node dist/app.js"
+    "start": "node dist/app.js",
+
+    "knex": "node --loader ts-node/esm ./node_modules/knex/bin/cli.js --knexfile knexfile.ts",
+    "migrate:make": "npm run knex -- migrate:make",
+    "migrate:latest": "npm run knex -- migrate:latest",
+    "migrate:rollback": "npm run knex -- migrate:rollback",
+    "seed:make": "npm run knex -- seed:make",
+    "seed:run": "npm run knex -- seed:run"
   },
   "dependencies": {
     "axios": "^1.15.0",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "knex": "^3.2.9",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
