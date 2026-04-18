@@ -5,6 +5,11 @@ type AppointmentRow = {
   appointment_at: string | Date;
 };
 
+type BusyAppointmentRow = {
+  appointment_at: string | Date;
+  duration_min: number;
+};
+
 type CreateAppointmentInput = {
   userId: number;
   serviceId: number;
@@ -31,6 +36,33 @@ export async function findBusyAppointmentTimesByDate(
   return rows.map((row) => {
     const dateTime = toMoscowDateTimeFromUtc(row.appointment_at);
     return dateTime.time;
+  });
+}
+
+export async function findBusyAppointmentsByDate(
+  date: string,
+  specialistId: number,
+) {
+  const { startIso: start, endIso: end } = getUtcRangeForMoscowDate(date);
+
+  const rows = (await db('appointments')
+    .where('specialist_id', specialistId)
+    .whereNot('status', 'cancelled')
+    .where('appointment_at', '<', end)
+    .andWhereRaw(
+      "appointment_at + (duration_min * interval '1 minute') > ?",
+      [start],
+    )
+    .select('appointment_at', 'duration_min')) as BusyAppointmentRow[];
+
+  return rows.map((row) => {
+    const dateTime = toMoscowDateTimeFromUtc(row.appointment_at);
+
+    return {
+      date: dateTime.date,
+      time: dateTime.time,
+      durationMin: row.duration_min,
+    };
   });
 }
 
