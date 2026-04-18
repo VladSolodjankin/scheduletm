@@ -270,6 +270,7 @@ telegramWebhookRouter.post(
       await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
       return res.status(200).json({ ok: true });
     } catch (error) {
+      console.error('Webhook handling error:', error);
       const detail = error instanceof Error ? error.message : String(error);
       console.error('Webhook handling error:', detail);
       return res.status(200).json({ ok: true });
