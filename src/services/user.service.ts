@@ -36,7 +36,8 @@ export async function findOrCreateTelegramUser(profile: TelegramProfile) {
   const updated = await updateUserByTelegramId(profile.telegramId, {
     username: profile.username ?? existing.username,
     firstName: profile.firstName ?? existing.first_name,
-    languageCode,
+    // Do not overwrite user's chosen language on every update.
+    // Telegram profile language_code is a useful default for new users only.
   });
 
   await getOrCreateSession(updated.id);
