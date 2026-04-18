@@ -4,6 +4,17 @@ type AppointmentRow = {
   appointment_at: string | Date;
 };
 
+type CreateAppointmentInput = {
+  userId: number;
+  serviceId: number;
+  specialistId: number;
+  appointmentAt: string;
+  durationMin: number;
+  price: number;
+  currency: string;
+  comment?: string | null;
+};
+
 export async function findBusyAppointmentTimesByDate(
   date: string,
   specialistId: number,
@@ -27,4 +38,22 @@ export async function findBusyAppointmentTimesByDate(
     const minutes = String(dateValue.getUTCMinutes()).padStart(2, '0');
     return `${hours}:${minutes}`;
   });
+}
+
+export async function createAppointment(input: CreateAppointmentInput) {
+  const [appointment] = await db('appointments')
+    .insert({
+      user_id: input.userId,
+      service_id: input.serviceId,
+      specialist_id: input.specialistId,
+      appointment_at: input.appointmentAt,
+      duration_min: input.durationMin,
+      status: 'new',
+      comment: input.comment ?? null,
+      price: input.price,
+      currency: input.currency,
+    })
+    .returning('*');
+
+  return appointment;
 }

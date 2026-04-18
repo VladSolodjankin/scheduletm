@@ -81,3 +81,25 @@ export function getTimeSlotsInlineKeyboard(slots: string[]) {
     ]),
   };
 }
+
+export function getPhoneRequestKeyboard(lang: SupportedLanguage) {
+  return {
+    keyboard: [
+      [{ text: translate(lang, 'booking.sharePhoneButton'), request_contact: true }],
+      [{ text: translate(lang, 'booking.skipPhone') }],
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: true,
+  };
+}
+
+export function getBookingConfirmationKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: '✅', callback_data: 'confirm:yes' },
+        { text: '✏️', callback_data: 'confirm:edit' },
+      ],
+    ],
+  };
+}
