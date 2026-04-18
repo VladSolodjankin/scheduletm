@@ -1,5 +1,6 @@
 import { createAppointment } from '../repositories/appointment.repository';
 import { findServiceById } from '../repositories/service.repository';
+import { toUtcIsoFromMoscow } from '../utils/timezone';
 
 type CreateBookingAppointmentInput = {
   userId: number;
@@ -19,7 +20,7 @@ export async function createBookingAppointment(input: CreateBookingAppointmentIn
     };
   }
 
-  const appointmentAt = `${input.selectedDate}T${input.selectedTime}:00.000Z`;
+  const appointmentAt = toUtcIsoFromMoscow(input.selectedDate, input.selectedTime);
 
   const appointment = await createAppointment({
     userId: input.userId,

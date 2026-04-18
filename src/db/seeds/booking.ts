@@ -4,6 +4,7 @@ export async function seed(knex: Knex): Promise<void> {
     await knex("user_sessions").del();
     await knex("specialists").del();
     await knex("services").del();
+    await knex("app_settings").del();
 
     await knex("services").insert([
         {
@@ -38,6 +39,16 @@ export async function seed(knex: Knex): Promise<void> {
             sessions_count: 10,
             is_first_free: false,
             is_active: true,
+        },
+    ]);
+
+    await knex("app_settings").insert([
+        {
+            timezone: "Europe/Moscow",
+            work_start_hour: 9,
+            work_end_hour: 20,
+            work_days: "1,2,3,4,5,6",
+            slot_duration_min: 90,
         },
     ]);
 

@@ -36,24 +36,27 @@ import { findServiceById } from '../repositories/service.repository';
 import { findSpecialistById } from '../repositories/specialist.repository';
 import { createBookingAppointment } from '../services/appointment.service';
 import { sendBookingStubNotification } from '../services/notification.service';
+import { getDefaultTimezone } from '../repositories/app-settings.repository';
 
 export const telegramWebhookRouter = Router();
 
-function buildCalendarLink(date: string, time: string, title: string) {
+function buildCalendarLink(date: string, time: string, title: string, timezone: string) {
   const compactDate = date.replace(/-/g, '');
   const compactTime = time.replace(':', '');
-  const start = `${compactDate}T${compactTime}00Z`;
   const [hours, minutes] = time.split(':').map(Number);
-  const endDateTime = new Date(`${date}T${time}:00.000Z`);
-  endDateTime.setUTCHours(hours + 1, minutes, 0, 0);
+
+  const endDateTime = new Date(Date.UTC(2000, 0, 1, hours, minutes));
+  endDateTime.setUTCHours(endDateTime.getUTCHours() + 1);
+
   const end = `${compactDate}T${String(endDateTime.getUTCHours()).padStart(2, '0')}${String(
     endDateTime.getUTCMinutes(),
-  ).padStart(2, '0')}00Z`;
+  ).padStart(2, '0')}00`;
 
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text: title,
-    dates: `${start}/${end}`,
+    dates: `${compactDate}T${compactTime}00/${end}`,
+    ctz: timezone,
   });
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
@@ -228,7 +231,7 @@ telegramWebhookRouter.post(
               `${t(lang, 'booking.chooseDate')} ${selectedDate}\n\n${t(
                 lang,
                 'booking.noSlots',
-              )}`,
+              )}\n${t(lang, 'booking.slotsTimezoneNote')}`,
             );
             return res.status(200).json({ ok: true });
           }
@@ -240,7 +243,7 @@ telegramWebhookRouter.post(
             `${t(lang, 'booking.chooseDate')} ${selectedDate}\n\n${t(
               lang,
               'booking.chooseTime',
-            )}`,
+            )}\n${t(lang, 'booking.slotsTimezoneNote')}`,
             getTimeSlotsInlineKeyboard(availableSlots),
           );
 
@@ -344,10 +347,12 @@ telegramWebhookRouter.post(
           await answerCallbackQuery(callback.id, t(lang, 'booking.created'));
           await editMessageText(chatId, messageId, t(lang, 'booking.created'));
 
+          const timezone = await getDefaultTimezone();
           const calendarUrl = buildCalendarLink(
             payload.selectedDate!,
             payload.selectedTime!,
             serviceName,
+            timezone,
           );
           const paymentUrl = `https://example.com/pay/${appointmentResult.appointment.id}`;
 
