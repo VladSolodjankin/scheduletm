@@ -68,3 +68,15 @@ export function getDatesInlineKeyboard(dates: string[]) {
     ]),
   };
 }
+
+export function getTimeSlotsInlineKeyboard(slots: string[]) {
+  return {
+    inline_keyboard: slots.map((slot) => [
+      {
+        text: slot,
+        callback_data: `time:${slot}`,
+      },
+    ]),
+  };
+}
+

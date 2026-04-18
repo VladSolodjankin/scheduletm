@@ -14,6 +14,7 @@ import {
   getMainMenuKeyboard,
   getServicesInlineKeyboard,
   getSpecialistsInlineKeyboard,
+  getTimeSlotsInlineKeyboard,
 } from '../bot/keyboards';
 import { updateUserByTelegramId } from '../repositories/user.repository';
 import {
@@ -21,6 +22,12 @@ import {
   selectSpecialist,
   startBooking,
 } from '../services/booking.service';
+import { UserSessionState } from '../types/session';
+import { getAvailableSlots } from '../services/slot.service';
+import {
+  getSessionPayload,
+  mergeSessionPayload,
+} from '../repositories/user-session.repository';
 
 export const telegramWebhookRouter = Router();
 
@@ -122,12 +129,46 @@ telegramWebhookRouter.post(
 
         if (data.startsWith('date:')) {
           const selectedDate = data.split(':')[1];
+          const payload = await getSessionPayload(user.id);
+
+          await mergeSessionPayload(user.id, UserSessionState.CHOOSING_TIME, {
+            selectedDate,
+          });
+
+          if (!payload.serviceId || !payload.specialistId) {
+            await answerCallbackQuery(callback.id, 'Booking session expired');
+            return res.status(200).json({ ok: true });
+          }
+
+          const availableSlots = await getAvailableSlots({
+            date: selectedDate,
+            serviceId: payload.serviceId,
+            specialistId: payload.specialistId,
+          });
+
+          if (!availableSlots.length) {
+            await answerCallbackQuery(callback.id);
+            await editMessageText(
+              chatId,
+              messageId,
+              `${t(lang, 'booking.chooseDate')} ${selectedDate}\n\n${t(
+                lang,
+                'booking.noSlots',
+              )}`,
+            );
+            return res.status(200).json({ ok: true });
+          }
 
           await answerCallbackQuery(callback.id, selectedDate);
           await editMessageText(
             chatId,
             messageId,
             `${t(lang, 'booking.chooseDate')} ${selectedDate}`,
+            `${t(lang, 'booking.chooseDate')} ${selectedDate}\n\n${t(
+              lang,
+              'booking.chooseTime',
+            )}`,
+            getTimeSlotsInlineKeyboard(availableSlots),
           );
 
           return res.status(200).json({ ok: true });
