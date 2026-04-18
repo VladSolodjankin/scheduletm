@@ -11,7 +11,7 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
 
     'start.welcomeNew': 'Привет, {{name}}! Я бот для записи к психологу.',
     'start.welcomeBack': 'С возвращением, {{name}}!',
-    'start.chooseAction': 'Выберите действие:',
+    'start.chooseAction': 'Давайте запишем вас к специалисту или посмотрим ваши записи',
 
     'language.changed': 'Язык переключён на русский.',
     'language.choose': 'Выберите язык:',
@@ -37,10 +37,9 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.created': 'Готово! Запись подтверждена.',
     'booking.calendarLink': 'Сохранить в календарь: {{url}}',
     'booking.paymentLink': 'Ссылка на оплату (заглушка): {{url}}',
+    'booking.finalMessage': '🎉 {{created}}\n\n📌 Добавьте встречу в календарь и перейдите к оплате по кнопкам ниже.',
     'booking.openCalendar': '📅 Открыть календарь',
-    'booking.openPayment': '💳 Перейти к оплате',
-    'booking.finalMessage': '🎉 {{created}}\n\n📅 {{calendarLabel}}\n{{calendarUrl}}\n\n💳 {{paymentLabel}}\n{{paymentUrl}}',
-    'booking.notificationStub': 'Заглушка нотификации: отправим напоминание о «{{service}}» на {{date}} {{time}} через {{channels}}.',
+    'booking.openPayment': '💳 Перейти к оплате',    'booking.notificationStub': 'Заглушка нотификации: отправим напоминание о «{{service}}» на {{date}} {{time}} через {{channels}}.',
     'booking.channelPhone': 'телефон',
     'booking.channelEmail': 'email',
     'booking.restart': 'Начинаем заново. Выберите услугу:',
@@ -72,7 +71,7 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
 
     'start.welcomeNew': 'Hi, {{name}}! I’m your psychology booking bot.',
     'start.welcomeBack': 'Welcome back, {{name}}!',
-    'start.chooseAction': 'Choose an action:',
+    'start.chooseAction': 'I can help you book a session or manage your appointments',
 
     'language.changed': 'Language switched to English.',
     'language.choose': 'Choose a language:',
@@ -98,9 +97,9 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.created': 'Done! Your booking is confirmed.',
     'booking.calendarLink': 'Save to calendar: {{url}}',
     'booking.paymentLink': 'Payment link (stub): {{url}}',
+    'booking.finalMessage': '🎉 {{created}}\n\n📌 Add the session to your calendar and continue with payment using the buttons below.',
     'booking.openCalendar': '📅 Open calendar',
     'booking.openPayment': '💳 Open payment',
-    'booking.finalMessage': '🎉 {{created}}\n\n📅 {{calendarLabel}}\n{{calendarUrl}}\n\n💳 {{paymentLabel}}\n{{paymentUrl}}',
     'booking.notificationStub': 'Notification stub: we will send a reminder for "{{service}}" at {{date}} {{time}} via {{channels}}.',
     'booking.channelPhone': 'phone',
     'booking.channelEmail': 'email',

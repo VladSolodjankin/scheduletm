@@ -4,7 +4,9 @@
     "dev": "vite build --watch",
     "build": "vite build",
     "start": "node dist/app.js",
-
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "knex": "node --loader ts-node/esm ./node_modules/knex/bin/cli.js --knexfile knexfile.ts",
     "migrate:make": "npm run knex -- migrate:make",
     "migrate:latest": "npm run knex -- migrate:latest",
@@ -22,10 +24,12 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
+    "@vitest/coverage-v8": "^4.1.4",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
-    "vite": "^8.0.8"
+    "vite": "^8.0.8",
+    "vitest": "^4.1.4"
   }
 }

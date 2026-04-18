@@ -4,7 +4,10 @@ function parseWorkDays(workDays: string) {
   const allowed = new Set<number>();
 
   for (const chunk of workDays.split(',')) {
-    const day = Number(chunk.trim());
+    const trimmed = chunk.trim();
+    if (!trimmed) continue;
+
+    const day = Number(trimmed);
     if (Number.isInteger(day) && day >= 0 && day <= 6) {
       allowed.add(day);
     }

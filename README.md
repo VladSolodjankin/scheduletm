@@ -85,6 +85,9 @@ npm run start
 - `npm run build` - сборка в `dist/`
 - `npm run dev` - сборка в watch-режиме
 - `npm run start` - запуск `node dist/app.js`
+- `npm test` - запуск unit-тестов
+- `npm run test:watch` - unit-тесты в watch-режиме
+- `npm run test:coverage` - unit-тесты с покрытием (отчет в `coverage/`)
 - `npm run migrate:latest` / `migrate:rollback` / `migrate:make` - миграции Knex
 - `npm run seed:run` / `seed:make` - сиды Knex
 
@@ -92,4 +95,3 @@ npm run start
 
 - Слоты времени сейчас рассчитываются в логике приложения с фиксированными границами 09:00-20:00 и временем Москвы (UTC+3). Таблица `app_settings` уже существует и может стать источником этих настроек.
 - Если русские строки в интерфейсе бота отображаются некорректно, проверьте, что файлы в `src/i18n` и `src/bot` сохранены в UTF-8.
-
