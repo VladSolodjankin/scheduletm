@@ -5,3 +5,7 @@ export async function findActiveServices() {
     .where({ is_active: true })
     .orderBy('id', 'asc');
 }
+
+export async function findServiceById(id: number) {
+  return db('services').where({ id }).first();
+}

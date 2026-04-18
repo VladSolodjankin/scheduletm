@@ -18,6 +18,11 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
 
     'booking.chooseService': 'Выберите услугу:',
     'booking.noServices': 'Сейчас нет доступных услуг.',
+    'booking.chooseSpecialist': 'Выберите специалиста:',
+    'booking.noSpecialists': 'Сейчас нет доступных специалистов.',
+    'booking.chooseDate': 'Выберите дату:',
+    'booking.specialistSelected': 'Специалист: {{name}}',
+    'booking.serviceSelected': 'Услуга: {{name}}',
   },
 
   en: {
@@ -35,5 +40,10 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
 
     'booking.chooseService': 'Choose a service:',
     'booking.noServices': 'There are no available services right now.',
+    'booking.chooseSpecialist': 'Choose a specialist:',
+    'booking.noSpecialists': 'There are no available specialists right now.',
+    'booking.chooseDate': 'Choose a date:',
+    'booking.specialistSelected': 'Specialist: {{name}}',
+    'booking.serviceSelected': 'Service: {{name}}',
   },
 };

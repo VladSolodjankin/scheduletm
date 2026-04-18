@@ -1,6 +1,17 @@
 import { SupportedLanguage } from '../i18n/dictionaries';
 import { t as translate } from '../i18n';
 
+type ServiceRow = {
+  id: number;
+  name_ru: string;
+  name_en: string;
+};
+
+type SpecialistRow = {
+  id: number;
+  name: string;
+};
+
 export function getMainMenuKeyboard(lang: SupportedLanguage) {
   return {
     keyboard: [
@@ -19,5 +30,41 @@ export function getLanguageKeyboard() {
     keyboard: [[{ text: 'Русский' }, { text: 'English' }]],
     resize_keyboard: true,
     one_time_keyboard: true,
+  };
+}
+
+export function getServicesInlineKeyboard(
+  services: ServiceRow[],
+  lang: SupportedLanguage,
+) {
+  return {
+    inline_keyboard: services.map((service) => [
+      {
+        text: lang === 'ru' ? service.name_ru : service.name_en,
+        callback_data: `service:${service.id}`,
+      },
+    ]),
+  };
+}
+
+export function getSpecialistsInlineKeyboard(specialists: SpecialistRow[]) {
+  return {
+    inline_keyboard: specialists.map((specialist) => [
+      {
+        text: specialist.name,
+        callback_data: `specialist:${specialist.id}`,
+      },
+    ]),
+  };
+}
+
+export function getDatesInlineKeyboard(dates: string[]) {
+  return {
+    inline_keyboard: dates.map((date) => [
+      {
+        text: date,
+        callback_data: `date:${date}`,
+      },
+    ]),
   };
 }

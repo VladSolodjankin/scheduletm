@@ -23,6 +23,25 @@ export type TelegramUpdate = {
       language_code?: string;
     };
   };
+  callback_query?: {
+    id: string;
+    data?: string;
+    from: {
+      id: number;
+      is_bot: boolean;
+      first_name?: string;
+      username?: string;
+      language_code?: string;
+    };
+    message?: {
+      message_id: number;
+      chat: {
+        id: number;
+        type: string;
+      };
+      text?: string;
+    };
+  };
 };
 
 export async function sendMessage(
@@ -34,6 +53,30 @@ export async function sendMessage(
     chat_id: chatId,
     text,
     reply_markup: replyMarkup,
+  });
+}
+
+export async function editMessageText(
+  chatId: number,
+  messageId: number,
+  text: string,
+  replyMarkup?: Record<string, unknown>,
+) {
+  await telegramApi.post('/editMessageText', {
+    chat_id: chatId,
+    message_id: messageId,
+    text,
+    reply_markup: replyMarkup,
+  });
+}
+
+export async function answerCallbackQuery(
+  callbackQueryId: string,
+  text?: string,
+) {
+  await telegramApi.post('/answerCallbackQuery', {
+    callback_query_id: callbackQueryId,
+    text,
   });
 }
 

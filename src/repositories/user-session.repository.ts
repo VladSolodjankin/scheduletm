@@ -43,3 +43,34 @@ export async function updateSessionState(
 
   return session;
 }
+
+export async function mergeSessionPayload(
+  userId: number,
+  state: UserSessionState,
+  patch: Partial<BookingPayload>,
+) {
+  const session = await getOrCreateSession(userId);
+
+  const currentPayload =
+    typeof session.payload_json === 'string'
+      ? JSON.parse(session.payload_json)
+      : session.payload_json || {};
+
+  const nextPayload = {
+    ...currentPayload,
+    ...patch,
+  };
+
+  const [updated] = await db('user_sessions')
+    .where({ user_id: userId })
+    .update(
+      {
+        state,
+        payload_json: JSON.stringify(nextPayload),
+        updated_at: db.fn.now(),
+      },
+      ['*'],
+    );
+
+  return updated;
+}
