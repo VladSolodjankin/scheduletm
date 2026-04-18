@@ -12,6 +12,11 @@ type SpecialistRow = {
   name: string;
 };
 
+type UserAppointmentKeyboardRow = {
+  id: number;
+  title: string;
+};
+
 export function getMainMenuKeyboard(lang: SupportedLanguage) {
   return {
     keyboard: [
@@ -69,16 +74,24 @@ export function getDatesInlineKeyboard(dates: string[]) {
   };
 }
 
-export function getTimeSlotsInlineKeyboard(slots: string[]) {
+export function getTimeSlotsInlineKeyboard(slots: string[], lang: SupportedLanguage) {
   const normalizedSlots = slots.filter((slot) => /^\d{2}:\d{2}$/.test(slot));
 
   return {
-    inline_keyboard: normalizedSlots.map((slot) => [
-      {
-        text: slot,
-        callback_data: `time_${slot.replace(':', '')}`,
-      },
-    ]),
+    inline_keyboard: [
+      ...normalizedSlots.map((slot) => [
+        {
+          text: slot,
+          callback_data: `time_${slot.replace(':', '')}`,
+        },
+      ]),
+      [
+        {
+          text: translate(lang, 'booking.changeDate'),
+          callback_data: 'time_change_date',
+        },
+      ],
+    ],
   };
 }
 
@@ -99,6 +112,30 @@ export function getBookingConfirmationKeyboard() {
       [
         { text: '✅', callback_data: 'confirm:yes' },
         { text: '✏️', callback_data: 'confirm:edit' },
+      ],
+    ],
+  };
+}
+
+export function getMyAppointmentsInlineKeyboard(appointments: UserAppointmentKeyboardRow[]) {
+  return {
+    inline_keyboard: appointments.map((appointment) => [
+      {
+        text: appointment.title,
+        callback_data: `appointment:${appointment.id}`,
+      },
+    ]),
+  };
+}
+
+export function getAppointmentEditInlineKeyboard(appointmentId: number, lang: SupportedLanguage) {
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: lang === 'ru' ? '✏️ Изменить' : '✏️ Edit',
+          callback_data: `appointment_edit:${appointmentId}`,
+        },
       ],
     ],
   };

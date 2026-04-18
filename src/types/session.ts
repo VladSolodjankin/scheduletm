@@ -15,6 +15,7 @@ export type BookingPayload = {
   specialistId?: number;
   selectedDate?: string;
   selectedTime?: string;
+  editingAppointmentId?: number;
   enteredName?: string;
   enteredPhone?: string;
   enteredEmail?: string;
