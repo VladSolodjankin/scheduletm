@@ -1,6 +1,3 @@
-import { sendMessage } from '../bot/bot';
-import { normalizeLanguageCode, t } from '../i18n';
-
 type SendBookingStubNotificationInput = {
   chatId: number;
   languageCode?: string | null;
@@ -14,23 +11,8 @@ type SendBookingStubNotificationInput = {
 export async function sendBookingStubNotification(
   input: SendBookingStubNotificationInput,
 ) {
-  const lang = normalizeLanguageCode(input.languageCode);
-  const channels: string[] = [];
-
-  if (input.hasPhone) channels.push(t(lang, 'booking.channelPhone'));
-  if (input.hasEmail) channels.push(t(lang, 'booking.channelEmail'));
-
-  if (!channels.length) {
-    return;
-  }
-
-  await sendMessage(
-    input.chatId,
-    t(lang, 'booking.notificationStub', {
-      service: input.serviceName,
-      date: input.selectedDate,
-      time: input.selectedTime,
-      channels: channels.join(', '),
-    }),
-  );
+  // Intentionally disabled for now.
+  // We keep this stub to preserve future notification workflow entry-point,
+  // but actual reminder delivery will be moved to a dedicated background job.
+  void input;
 }
