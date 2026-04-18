@@ -174,6 +174,28 @@ telegramWebhookRouter.post(
           return res.status(200).json({ ok: true });
         }
 
+        if (data.startsWith('time_')) {
+          const hh = data.slice('time_'.length, 'time_'.length + 2);
+          const mm = data.slice('time_'.length + 2, 'time_'.length + 4);
+          const selectedTime = `${hh}:${mm}`;
+
+          await mergeSessionPayload(user.id, UserSessionState.ENTERING_NAME, {
+            selectedTime,
+          });
+
+          await answerCallbackQuery(callback.id, selectedTime);
+          await editMessageText(
+            chatId,
+            messageId,
+            `${t(lang, 'booking.chooseTime')} ${selectedTime}\n\n${t(
+              lang,
+              'booking.enterName',
+            )}`,
+          );
+
+          return res.status(200).json({ ok: true });
+        }
+
         await answerCallbackQuery(callback.id);
         return res.status(200).json({ ok: true });
       }
@@ -250,6 +272,8 @@ telegramWebhookRouter.post(
       return res.status(200).json({ ok: true });
     } catch (error) {
       console.error('Webhook handling error:', error);
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error('Webhook handling error:', detail);
       return res.status(200).json({ ok: true });
     }
   },
