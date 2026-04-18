@@ -163,7 +163,6 @@ telegramWebhookRouter.post(
           await editMessageText(
             chatId,
             messageId,
-            `${t(lang, 'booking.chooseDate')} ${selectedDate}`,
             `${t(lang, 'booking.chooseDate')} ${selectedDate}\n\n${t(
               lang,
               'booking.chooseTime',

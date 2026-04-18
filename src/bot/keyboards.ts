@@ -70,13 +70,14 @@ export function getDatesInlineKeyboard(dates: string[]) {
 }
 
 export function getTimeSlotsInlineKeyboard(slots: string[]) {
+  const normalizedSlots = slots.filter((slot) => /^\d{2}:\d{2}$/.test(slot));
+
   return {
-    inline_keyboard: slots.map((slot) => [
+    inline_keyboard: normalizedSlots.map((slot) => [
       {
         text: slot,
-        callback_data: `time:${slot}`,
+        callback_data: `time_${slot.replace(':', '')}`,
       },
     ]),
   };
 }
-

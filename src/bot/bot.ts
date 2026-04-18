@@ -49,11 +49,16 @@ export async function sendMessage(
   text: string,
   replyMarkup?: Record<string, unknown>,
 ) {
-  await telegramApi.post('/sendMessage', {
+  const payload: Record<string, unknown> = {
     chat_id: chatId,
     text,
-    reply_markup: replyMarkup,
-  });
+  };
+
+  if (replyMarkup) {
+    payload.reply_markup = replyMarkup;
+  }
+
+  await telegramApi.post('/sendMessage', payload);
 }
 
 export async function editMessageText(
@@ -62,12 +67,17 @@ export async function editMessageText(
   text: string,
   replyMarkup?: Record<string, unknown>,
 ) {
-  await telegramApi.post('/editMessageText', {
+  const payload: Record<string, unknown> = {
     chat_id: chatId,
     message_id: messageId,
     text,
-    reply_markup: replyMarkup,
-  });
+  };
+
+  if (replyMarkup) {
+    payload.reply_markup = replyMarkup;
+  }
+
+  await telegramApi.post('/editMessageText', payload);
 }
 
 export async function answerCallbackQuery(
