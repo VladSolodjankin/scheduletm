@@ -448,9 +448,17 @@ telegramWebhookRouter.post(
           );
           const paymentUrl = `https://example.com/pay/${appointmentResult.appointment.id}`;
 
-          await sendMessage(chatId, t(lang, 'booking.calendarLink', { url: calendarUrl }));
-          await sendMessage(chatId, t(lang, 'booking.paymentLink', { url: paymentUrl }));
-          await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
+          await sendMessage(
+            chatId,
+            t(lang, 'booking.finalMessage', {
+              created: t(lang, 'booking.created'),
+              calendarLabel: t(lang, 'booking.calendarLink', { url: '' }).trim(),
+              calendarUrl,
+              paymentLabel: t(lang, 'booking.paymentLink', { url: '' }).trim(),
+              paymentUrl,
+            }),
+            getMainMenuKeyboard(lang),
+          );
 
           await sendBookingStubNotification({
             chatId,
