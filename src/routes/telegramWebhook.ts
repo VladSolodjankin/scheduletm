@@ -12,6 +12,7 @@ import {
   getAppointmentEditInlineKeyboard,
   getDatesInlineKeyboard,
   getBookingConfirmationKeyboard,
+  getBookingFinalInlineKeyboard,
   getLanguageKeyboard,
   getMainMenuKeyboard,
   getMyAppointmentsInlineKeyboard,
@@ -452,12 +453,8 @@ telegramWebhookRouter.post(
             chatId,
             t(lang, 'booking.finalMessage', {
               created: t(lang, 'booking.created'),
-              calendarLabel: t(lang, 'booking.calendarLink', { url: '' }).trim(),
-              calendarUrl,
-              paymentLabel: t(lang, 'booking.paymentLink', { url: '' }).trim(),
-              paymentUrl,
             }),
-            getMainMenuKeyboard(lang),
+            getBookingFinalInlineKeyboard(lang, calendarUrl, paymentUrl),
           );
 
           await sendBookingStubNotification({

@@ -117,6 +117,19 @@ export function getBookingConfirmationKeyboard() {
   };
 }
 
+export function getBookingFinalInlineKeyboard(
+  lang: SupportedLanguage,
+  calendarUrl: string,
+  paymentUrl: string,
+) {
+  return {
+    inline_keyboard: [
+      [{ text: translate(lang, 'booking.openCalendar'), url: calendarUrl }],
+      [{ text: translate(lang, 'booking.openPayment'), url: paymentUrl }],
+    ],
+  };
+}
+
 export function getMyAppointmentsInlineKeyboard(appointments: UserAppointmentKeyboardRow[]) {
   return {
     inline_keyboard: appointments.map((appointment) => [
