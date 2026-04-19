@@ -75,6 +75,10 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'appointments.rescheduled': 'Запись обновлена: {{date}} {{time}}.',
     'appointments.cancelled': 'Запись отменена.',
     'booking.slotAlreadyBooked': 'Этот слот уже занят. Выберите другое время.',
+
+    'notifications.appointmentReminder':
+      'Напоминание: {{service}} у {{specialist}} {{date}} в {{time}}.',
+    'notifications.appointmentReminderComment': 'Комментарий: {{comment}}',
   },
 
   en: {
@@ -146,5 +150,9 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'appointments.rescheduled': 'Appointment updated: {{date}} {{time}}.',
     'appointments.cancelled': 'Appointment cancelled.',
     'booking.slotAlreadyBooked': 'This slot is already booked. Please choose another time.',
+
+    'notifications.appointmentReminder':
+      'Reminder: {{service}} with {{specialist}} on {{date}} at {{time}}.',
+    'notifications.appointmentReminderComment': 'Comment: {{comment}}',
   },
 };

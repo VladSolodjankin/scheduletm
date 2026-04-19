@@ -1,4 +1,5 @@
 import { sendMessage } from '../bot/bot';
+import { t as translate } from '../i18n';
 import { getAppSettings } from '../repositories/app-settings.repository';
 import {
   createNotification,
@@ -19,6 +20,7 @@ type QueueAppointmentReminderInput = {
   specialistName: string;
   selectedDate: string;
   selectedTime: string;
+  language?: 'ru' | 'en';
   chatId?: number;
   email?: string | null;
   phone?: string | null;
@@ -48,6 +50,7 @@ export async function queueAppointmentReminder(input: QueueAppointmentReminderIn
     selectedDate: input.selectedDate,
     selectedTime: input.selectedTime,
     reminderComment: (input.reminderComment ?? '').trim(),
+    language: input.language ?? 'ru',
   };
 
   return Promise.all(
@@ -154,12 +157,27 @@ async function dispatchNotification(channel: NotificationChannel, input: Dispatc
 }
 
 function buildReminderText(payload: Record<string, unknown>) {
-  const serviceName = String(payload.serviceName ?? 'service');
-  const specialistName = String(payload.specialistName ?? 'specialist');
+  const language = (payload.language === 'en' ? 'en' : 'ru') as 'ru' | 'en';
+  const serviceName = String(payload.serviceName ?? '');
+  const specialistName = String(payload.specialistName ?? '');
   const selectedDate = String(payload.selectedDate ?? '');
   const selectedTime = String(payload.selectedTime ?? '');
   const reminderComment = String(payload.reminderComment ?? '').trim();
 
-  const base = `Напоминание: ${serviceName} у ${specialistName} ${selectedDate} в ${selectedTime}.`;
-  return reminderComment ? `${base}\nКомментарий: ${reminderComment}` : base;
+  const base = translate(language, 'notifications.appointmentReminder', {
+    service: serviceName,
+    specialist: specialistName,
+    date: selectedDate,
+    time: selectedTime,
+  });
+
+  if (!reminderComment) {
+    return base;
+  }
+
+  const comment = translate(language, 'notifications.appointmentReminderComment', {
+    comment: reminderComment,
+  });
+
+  return `${base}\n${comment}`;
 }
