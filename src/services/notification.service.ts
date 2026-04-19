@@ -1,4 +1,5 @@
 import { sendMessage } from '../bot/bot';
+import { getAppSettings } from '../repositories/app-settings.repository';
 import {
   createNotification,
   findDueNotifications,
@@ -21,14 +22,10 @@ type QueueAppointmentReminderInput = {
   chatId?: number;
   email?: string | null;
   phone?: string | null;
+  reminderComment?: string | null;
 };
 
-const NOTIFICATION_TYPE = 'appointment_reminder_24h';
-
 export async function queueAppointmentReminder(input: QueueAppointmentReminderInput) {
-  const sendAt = new Date(new Date(input.appointmentAtIso).getTime() - 24 * 60 * 60 * 1000);
-  const sendAtIso = sendAt > new Date() ? sendAt.toISOString() : new Date().toISOString();
-
   const channels: NotificationChannel[] = [];
 
   if (input.chatId) channels.push('telegram');
@@ -39,34 +36,45 @@ export async function queueAppointmentReminder(input: QueueAppointmentReminderIn
     return [];
   }
 
+  const settings = await getAppSettings(input.accountId);
+  const offsets = settings.reminderOffsetsMin;
+
+  const appointmentTs = new Date(input.appointmentAtIso).getTime();
+  const nowTs = Date.now();
+
   const payload = {
     serviceName: input.serviceName,
     specialistName: input.specialistName,
     selectedDate: input.selectedDate,
     selectedTime: input.selectedTime,
+    reminderComment: (input.reminderComment ?? '').trim(),
   };
 
   return Promise.all(
-    channels.map((channel) =>
-      createNotification({
-        accountId: input.accountId,
-        appointmentId: input.appointmentId,
-        userId: input.userId,
-        type: NOTIFICATION_TYPE,
-        channel,
-        sendAt: sendAtIso,
-        payload,
-        recipient: {
-          chatId: input.chatId,
-          email: input.email ?? undefined,
-          phone: input.phone ?? undefined,
-        },
-      }),
-    ),
+    offsets.flatMap((offsetMin) => {
+      const sendAt = new Date(appointmentTs - offsetMin * 60 * 1000);
+      const sendAtIso = sendAt.getTime() > nowTs ? sendAt.toISOString() : new Date(nowTs).toISOString();
+      const type = `appointment_reminder_${offsetMin}m`;
+
+      return channels.map((channel) =>
+        createNotification({
+          accountId: input.accountId,
+          appointmentId: input.appointmentId,
+          userId: input.userId,
+          type,
+          channel,
+          sendAt: sendAtIso,
+          payload,
+          recipient: {
+            chatId: input.chatId,
+            email: input.email ?? undefined,
+            phone: input.phone ?? undefined,
+          },
+        }),
+      );
+    }),
   );
 }
-
-
 
 export async function cancelAppointmentReminders(accountId: number, appointmentId: number) {
   await cancelPendingNotificationsByAppointment(accountId, appointmentId);
@@ -76,6 +84,7 @@ export async function recreateAppointmentReminders(input: QueueAppointmentRemind
   await cancelPendingNotificationsByAppointment(input.accountId, input.appointmentId);
   return queueAppointmentReminder(input);
 }
+
 export async function processDueNotifications(limit = 100) {
   const notifications = await findDueNotifications(limit);
 
@@ -149,6 +158,8 @@ function buildReminderText(payload: Record<string, unknown>) {
   const specialistName = String(payload.specialistName ?? 'specialist');
   const selectedDate = String(payload.selectedDate ?? '');
   const selectedTime = String(payload.selectedTime ?? '');
+  const reminderComment = String(payload.reminderComment ?? '').trim();
 
-  return `Напоминание: ${serviceName} у ${specialistName} ${selectedDate} в ${selectedTime}.`;
+  const base = `Напоминание: ${serviceName} у ${specialistName} ${selectedDate} в ${selectedTime}.`;
+  return reminderComment ? `${base}\nКомментарий: ${reminderComment}` : base;
 }
