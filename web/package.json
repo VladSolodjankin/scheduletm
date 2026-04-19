@@ -15,9 +15,12 @@
     "gapi-script": "^1.2.0",
     "mobx": "^6.13.7",
     "mobx-react-lite": "^4.1.1",
-    "muicss": "^0.10.3",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+
+    "@mui/material": "^6.0.0",
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.2",
