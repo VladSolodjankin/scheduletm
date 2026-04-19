@@ -3,17 +3,27 @@
 ## Назначение модулей
 
 - `bot/` — существующее backend-приложение Telegram-бота.
-- `server/` — заготовка под API для web-приложения:
-  - `server/package.json` — зависимости и скрипты сервера.
-  - `server/tsconfig.json` — TypeScript-конфигурация сборки в `dist`.
-  - `server/src/` — директория под исходники API.
-- `web/` — заготовка под SPA:
-  - `web/package.json` — зависимости React/MobX/MUI/Firebase/Axios.
-  - `web/tsconfig.json` — TypeScript-конфигурация фронтенда.
-  - `web/vite.config.ts` — Vite + React plugin.
-  - `web/src/` — директория под исходники UI.
+- `server/` — API для web-приложения:
+  - `server/src/index.ts` — bootstrap.
+  - `server/src/app.ts` — инициализация Express middleware/роутов.
+  - `server/src/config/*` — env + схемы валидации.
+  - `server/src/routes/*` — auth/settings/integrations/health endpoints.
+  - `server/src/services/*` — бизнес-логика auth/settings.
+  - `server/src/middlewares/*` — auth + login lock middleware.
+  - `server/src/repositories/inMemoryStore.ts` — in-memory состояние (MVP).
+- `web/` — SPA:
+  - `web/src/app/*` — root app + router.
+  - `web/src/pages/*` — страницы.
+  - `web/src/containers/*` — контейнеры с запросами и состоянием.
+  - `web/src/components/*` — UI-компоненты.
+  - `web/src/shared/*` — API client, типы, auth context.
 
-## Root-level orchestration
+## API карта (MVP)
 
-- `package.json` в корне определяет npm workspaces (`bot`, `server`, `web`).
-- Команды `typecheck/build/test` запускаются по всем пакетам через `npm run -ws ...`.
+- `GET /health`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `GET /api/settings`
+- `PUT /api/settings`
+- `POST /api/integrations/google/connect`

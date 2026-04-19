@@ -1,12 +1,12 @@
 # ScheduleTM Monorepo
 
-Репозиторий переведен на монорепо-структуру и теперь разделен на изолированные приложения:
+Репозиторий разделен на изолированные приложения:
 
-- `bot` — текущий Telegram-бот (legacy и рабочий контур).
-- `server` — новый Node.js API слой для web-клиента и интеграций.
-- `web` — новый frontend (React + MobX + MUI CSS + Axios).
+- `bot` — Telegram-бот (legacy).
+- `server` — Node.js API слой для web-клиента и интеграций.
+- `web` — React SPA для пользователя.
 
-## Текущая структура
+## Структура
 
 ```text
 scheduletm/
@@ -15,38 +15,55 @@ scheduletm/
 └─ web/
 ```
 
-## Базовый стек
+## MVP сейчас
 
 ### Web
 
-- React
-- MobX
-- MUI CSS (`muicss`)
-- Axios
-- Firebase (SSO)
-- Google Calendar API client (`gapi-script`)
+- Страницы: `/login`, `/register`, `/settings` через `react-router-dom`.
+- UI на `@mui/material` (без кастомного CSS на старте).
+- Разделение на `components`, `containers`, `pages`, `app`, `shared`.
+- Кнопка `Подключить Google` на странице настроек.
 
 ### Server
 
-- Node.js + Express
-- Google APIs (Calendar)
-- Firebase Admin (проверка SSO токенов)
-- Axios
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `GET /api/settings`
+- `PUT /api/settings`
+- `POST /api/integrations/google/connect`
 
-## Workspace команды
+Сервер разнесен по слоям:
 
-Из корня:
+- `config` — env + схемы валидации.
+- `routes` — HTTP-маршруты.
+- `middlewares` — auth/rate-limit middleware.
+- `services` — бизнес-логика auth/settings.
+- `repositories` — in-memory store (MVP).
+- `utils` — утилиты (crypto/cookies).
+
+## Безопасность (MVP)
+
+- `helmet`.
+- CORS ограничен `APP_URL`.
+- Валидация входа через `zod`.
+- Salted PBKDF2 hash для паролей.
+- Защита логина от brute-force (lockout).
+- Refresh-сессия через `HttpOnly` cookie.
+
+> Пока используется in-memory storage. Для production нужно перенести users/sessions/settings в БД.
+
+## Команды
 
 ```bash
 npm install
 npm run typecheck
 npm run build
-npm run test
 ```
 
-## Важно
+Локально:
 
-На данном этапе сделан только bootstrap и конфигурация модулей `web` и `server`.
-Бизнес-логика и прикладной код в новые модули пока не добавлялись.
-
-Старый контур `bot` остается доступным и не удаляется до завершения миграции.
+```bash
+npm run -w @scheduletm/server dev
+npm run -w @scheduletm/web dev
+```
