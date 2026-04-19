@@ -74,7 +74,10 @@ export function getDatesInlineKeyboard(dates: string[]) {
   };
 }
 
-export function getTimeSlotsInlineKeyboard(slots: string[], lang: SupportedLanguage) {
+export function getTimeSlotsInlineKeyboard(
+  slots: string[],
+  lang: SupportedLanguage,
+) {
   const normalizedSlots = slots.filter((slot) => /^\d{2}:\d{2}$/.test(slot));
 
   return {
@@ -130,7 +133,9 @@ export function getBookingFinalInlineKeyboard(
   };
 }
 
-export function getMyAppointmentsInlineKeyboard(appointments: UserAppointmentKeyboardRow[]) {
+export function getMyAppointmentsInlineKeyboard(
+  appointments: UserAppointmentKeyboardRow[],
+) {
   return {
     inline_keyboard: appointments.map((appointment) => [
       {
@@ -141,7 +146,10 @@ export function getMyAppointmentsInlineKeyboard(appointments: UserAppointmentKey
   };
 }
 
-export function getAppointmentEditInlineKeyboard(appointmentId: number, lang: SupportedLanguage) {
+export function getAppointmentEditInlineKeyboard(
+  appointmentId: number,
+  lang: SupportedLanguage,
+) {
   return {
     inline_keyboard: [
       [
@@ -153,3 +161,4 @@ export function getAppointmentEditInlineKeyboard(appointmentId: number, lang: Su
     ],
   };
 }
+

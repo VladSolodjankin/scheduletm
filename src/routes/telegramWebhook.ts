@@ -79,8 +79,8 @@ function buildCalendarLink(
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-async function buildConfirmationText(userId: number, lang: 'ru' | 'en') {
-  const payload = await getSessionPayload(userId);
+async function buildConfirmationText(accountId: number, userId: number, lang: 'ru' | 'en') {
+  const payload = await getSessionPayload(accountId, userId);
 
   if (
     !payload.serviceId ||
@@ -92,8 +92,8 @@ async function buildConfirmationText(userId: number, lang: 'ru' | 'en') {
   }
 
   const [service, specialist] = await Promise.all([
-    findServiceById(payload.serviceId),
-    findSpecialistById(payload.specialistId),
+    findServiceById(accountId, payload.serviceId),
+    findSpecialistById(accountId, payload.specialistId),
   ]);
 
   if (!service || !specialist) {
@@ -184,7 +184,7 @@ telegramWebhookRouter.post(
         if (data.startsWith('service:')) {
           const serviceId = Number(data.split(':')[1]);
 
-          const result = await selectService(user.id, serviceId);
+          const result = await selectService(user.account_id, user.id, serviceId);
 
           if (!result.ok) {
             await answerCallbackQuery(callback.id, 'Service not found');
@@ -224,7 +224,7 @@ telegramWebhookRouter.post(
         if (data.startsWith('specialist:')) {
           const specialistId = Number(data.split(':')[1]);
 
-          const result = await selectSpecialist(user.id, specialistId);
+          const result = await selectSpecialist(user.account_id, user.id, specialistId);
 
           if (!result.ok) {
             await answerCallbackQuery(callback.id, 'Specialist not found');
@@ -247,9 +247,9 @@ telegramWebhookRouter.post(
 
         if (data.startsWith('date:')) {
           const selectedDate = data.split(':')[1];
-          const payload = await getSessionPayload(user.id);
+          const payload = await getSessionPayload(user.account_id, user.id);
 
-          await mergeSessionPayload(user.id, UserSessionState.CHOOSING_TIME, {
+          await mergeSessionPayload(user.account_id, user.id, UserSessionState.CHOOSING_TIME, {
             selectedDate,
           });
 
@@ -259,6 +259,7 @@ telegramWebhookRouter.post(
           }
 
           const availableSlots = await getAvailableSlots({
+            accountId: user.account_id,
             date: selectedDate,
             serviceId: payload.serviceId,
             specialistId: payload.specialistId,
@@ -292,20 +293,20 @@ telegramWebhookRouter.post(
         }
 
         if (data === 'time_change_date') {
-          const payload = await getSessionPayload(user.id);
+          const payload = await getSessionPayload(user.account_id, user.id);
 
           if (!payload.serviceId || !payload.specialistId) {
             await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
             return res.status(200).json({ ok: true });
           }
 
-          await mergeSessionPayload(user.id, UserSessionState.CHOOSING_DATE, {});
+          await mergeSessionPayload(user.account_id, user.id, UserSessionState.CHOOSING_DATE, {});
           await answerCallbackQuery(callback.id);
           await editMessageText(
             chatId,
             messageId,
             t(lang, 'booking.chooseDate'),
-            getDatesInlineKeyboard(await getNextAvailableDates()),
+            getDatesInlineKeyboard(await getNextAvailableDates(user.account_id)),
           );
 
           return res.status(200).json({ ok: true });
@@ -315,10 +316,11 @@ telegramWebhookRouter.post(
           const hh = data.slice('time_'.length, 'time_'.length + 2);
           const mm = data.slice('time_'.length + 2, 'time_'.length + 4);
           const selectedTime = `${hh}:${mm}`;
-          const payload = await getSessionPayload(user.id);
+          const payload = await getSessionPayload(user.account_id, user.id);
 
           if (payload.editingAppointmentId) {
             const rescheduled = await rescheduleUserAppointment({
+              accountId: user.account_id,
               userId: user.id,
               appointmentId: payload.editingAppointmentId,
               selectedDate: payload.selectedDate!,
@@ -329,7 +331,7 @@ telegramWebhookRouter.post(
 
             if (!rescheduled.ok) {
               await editMessageText(chatId, messageId, t(lang, 'appointments.editBlocked'));
-              await updateSessionState(user.id, UserSessionState.IDLE, {});
+              await updateSessionState(user.account_id, user.id, UserSessionState.IDLE, {});
               return res.status(200).json({ ok: true });
             }
 
@@ -342,7 +344,7 @@ telegramWebhookRouter.post(
               }),
             );
 
-            await updateSessionState(user.id, UserSessionState.IDLE, {});
+            await updateSessionState(user.account_id, user.id, UserSessionState.IDLE, {});
             await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
             return res.status(200).json({ ok: true });
           }
@@ -353,7 +355,7 @@ telegramWebhookRouter.post(
               : UserSessionState.ENTERING_EMAIL
             : UserSessionState.ENTERING_PHONE;
 
-          await mergeSessionPayload(user.id, nextState, {
+          await mergeSessionPayload(user.account_id, user.id, nextState, {
             selectedTime,
             enteredName: user.first_name ?? callback.from.first_name ?? undefined,
             enteredPhone: user.phone ?? undefined,
@@ -385,7 +387,7 @@ telegramWebhookRouter.post(
             return res.status(200).json({ ok: true });
           }
 
-          const confirmData = await buildConfirmationText(user.id, lang);
+          const confirmData = await buildConfirmationText(user.account_id, user.id, lang);
           if (confirmData) {
             await sendMessage(chatId, confirmData.text, getBookingConfirmationKeyboard());
           } else {
@@ -396,7 +398,7 @@ telegramWebhookRouter.post(
         }
 
         if (data === 'confirm:edit') {
-          const services = await startBooking(user.id);
+          const services = await startBooking(user.account_id, user.id);
           await answerCallbackQuery(callback.id);
 
           if (!services.length) {
@@ -415,7 +417,7 @@ telegramWebhookRouter.post(
         }
 
         if (data === 'confirm:yes') {
-          const confirmData = await buildConfirmationText(user.id, lang);
+          const confirmData = await buildConfirmationText(user.account_id, user.id, lang);
           if (!confirmData) {
             await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
             return res.status(200).json({ ok: true });
@@ -423,6 +425,7 @@ telegramWebhookRouter.post(
 
           const { payload, serviceName } = confirmData;
           const appointmentResult = await createBookingAppointment({
+            accountId: user.account_id,
             userId: user.id,
             serviceId: payload.serviceId!,
             specialistId: payload.specialistId!,
@@ -435,11 +438,11 @@ telegramWebhookRouter.post(
             return res.status(200).json({ ok: true });
           }
 
-          await updateSessionState(user.id, UserSessionState.IDLE, {});
+          await updateSessionState(user.account_id, user.id, UserSessionState.IDLE, {});
           await answerCallbackQuery(callback.id, t(lang, 'booking.created'));
           await editMessageText(chatId, messageId, t(lang, 'booking.created'));
 
-          const appSettings = await getAppSettings();
+          const appSettings = await getAppSettings(user.account_id);
           const calendarUrl = buildCalendarLink(
             payload.selectedDate!,
             payload.selectedTime!,
@@ -472,7 +475,7 @@ telegramWebhookRouter.post(
 
         if (data.startsWith('appointment:')) {
           const appointmentId = Number(data.split(':')[1]);
-          const appointment = await getUserAppointment(user.id, appointmentId);
+          const appointment = await getUserAppointment(user.account_id, user.id, appointmentId);
 
           if (!appointment) {
             await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
@@ -493,7 +496,7 @@ telegramWebhookRouter.post(
 
         if (data.startsWith('appointment_edit:')) {
           const appointmentId = Number(data.split(':')[1]);
-          const appointment = await getUserAppointment(user.id, appointmentId);
+          const appointment = await getUserAppointment(user.account_id, user.id, appointmentId);
 
           if (!appointment) {
             await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
@@ -506,7 +509,7 @@ telegramWebhookRouter.post(
             return res.status(200).json({ ok: true });
           }
 
-          await mergeSessionPayload(user.id, UserSessionState.CHOOSING_DATE, {
+          await mergeSessionPayload(user.account_id, user.id, UserSessionState.CHOOSING_DATE, {
             editingAppointmentId: appointment.id,
             serviceId: appointment.serviceId,
             specialistId: appointment.specialistId,
@@ -517,7 +520,7 @@ telegramWebhookRouter.post(
             chatId,
             messageId,
             t(lang, 'appointments.chooseNewDate'),
-            getDatesInlineKeyboard(await getNextAvailableDates()),
+            getDatesInlineKeyboard(await getNextAvailableDates(user.account_id)),
           );
 
           return res.status(200).json({ ok: true });
@@ -546,7 +549,7 @@ telegramWebhookRouter.post(
       const user = userResult.user;
       const lang = normalizeLanguageCode(user.language_code);
       const firstName = user.first_name || message.from.first_name || 'friend';
-      const session = await findSessionByUserId(user.id);
+      const session = await findSessionByUserId(user.account_id, user.id);
       const state = (session?.state as UserSessionState | undefined) ?? UserSessionState.IDLE;
 
       if (state === UserSessionState.ENTERING_PHONE) {
@@ -561,10 +564,10 @@ telegramWebhookRouter.post(
         }
 
         if (enteredPhone) {
-          await updateUserByTelegramId(message.from.id, { phone: enteredPhone });
+          await updateUserByTelegramId(user.account_id, message.from.id, { phone: enteredPhone });
         }
 
-        await mergeSessionPayload(user.id, UserSessionState.ENTERING_EMAIL, {
+        await mergeSessionPayload(user.account_id, user.id, UserSessionState.ENTERING_EMAIL, {
           enteredPhone,
           enteredName: user.first_name ?? message.from.first_name ?? undefined,
         });
@@ -595,16 +598,16 @@ telegramWebhookRouter.post(
         }
 
         if (enteredEmail) {
-          await updateUserByTelegramId(message.from.id, { email: enteredEmail });
+          await updateUserByTelegramId(user.account_id, message.from.id, { email: enteredEmail });
         }
 
-        await mergeSessionPayload(user.id, UserSessionState.CONFIRMING, {
+        await mergeSessionPayload(user.account_id, user.id, UserSessionState.CONFIRMING, {
           enteredEmail,
         });
 
-        const confirmData = await buildConfirmationText(user.id, lang);
+        const confirmData = await buildConfirmationText(user.account_id, user.id, lang);
         if (!confirmData) {
-          await updateSessionState(user.id, UserSessionState.IDLE, {});
+          await updateSessionState(user.account_id, user.id, UserSessionState.IDLE, {});
           await sendMessage(chatId, t(lang, 'booking.sessionExpired'), getMainMenuKeyboard(lang));
           return res.status(200).json({ ok: true });
         }
@@ -634,14 +637,22 @@ telegramWebhookRouter.post(
         text === 'English'
       ) {
         if (text === 'Русский') {
-          await updateUserByTelegramId(message.from.id, { languageCode: 'ru' });
-          await sendMessage(chatId, 'Язык переключён на русский.', getMainMenuKeyboard('ru'));
+          await updateUserByTelegramId(user.account_id, message.from.id, { languageCode: 'ru' });
+          await sendMessage(
+            chatId,
+            t('ru', 'language.changed'),
+            getMainMenuKeyboard('ru'),
+          );
           return res.status(200).json({ ok: true });
         }
 
         if (text === 'English') {
-          await updateUserByTelegramId(message.from.id, { languageCode: 'en' });
-          await sendMessage(chatId, 'Language switched to English.', getMainMenuKeyboard('en'));
+          await updateUserByTelegramId(user.account_id, message.from.id, { languageCode: 'en' });
+          await sendMessage(
+            chatId,
+            t('en', 'language.changed'),
+            getMainMenuKeyboard('en'),
+          );
           return res.status(200).json({ ok: true });
         }
 
@@ -650,7 +661,7 @@ telegramWebhookRouter.post(
       }
 
       if (text === t(lang, 'common.book')) {
-        const services = await startBooking(user.id);
+        const services = await startBooking(user.account_id, user.id);
 
         if (!services.length) {
           await sendMessage(chatId, t(lang, 'booking.noServices'), getMainMenuKeyboard(lang));
@@ -667,7 +678,7 @@ telegramWebhookRouter.post(
       }
 
       if (text === t(lang, 'common.myAppointments')) {
-        const appointments = await getUserAppointments(user.id);
+        const appointments = await getUserAppointments(user.account_id, user.id);
 
         if (!appointments.length) {
           await sendMessage(chatId, t(lang, 'appointments.empty'), getMainMenuKeyboard(lang));

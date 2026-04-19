@@ -23,6 +23,7 @@ type BusyAppointmentRow = {
 };
 
 type CreateAppointmentInput = {
+  accountId: number;
   userId: number;
   serviceId: number;
   specialistId: number;
@@ -34,13 +35,14 @@ type CreateAppointmentInput = {
 };
 
 export async function findBusyAppointmentTimesByDate(
+  accountId: number,
   date: string,
   specialistId: number,
 ) {
   const { startIso: start, endIso: end } = getUtcRangeForMoscowDate(date);
 
   const rows = (await db('appointments')
-    .where('specialist_id', specialistId)
+    .where({ account_id: accountId, specialist_id: specialistId })
     .whereBetween('appointment_at', [start, end])
     .whereNot('status', 'cancelled')
     .select('appointment_at')) as AppointmentRow[];
@@ -52,13 +54,14 @@ export async function findBusyAppointmentTimesByDate(
 }
 
 export async function findBusyAppointmentsByDate(
+  accountId: number,
   date: string,
   specialistId: number,
 ) {
   const { startIso: start, endIso: end } = getUtcRangeForMoscowDate(date);
 
   const rows = (await db('appointments')
-    .where('specialist_id', specialistId)
+    .where({ account_id: accountId, specialist_id: specialistId })
     .whereNot('status', 'cancelled')
     .where('appointment_at', '<', end)
     .andWhereRaw(
@@ -81,6 +84,7 @@ export async function findBusyAppointmentsByDate(
 export async function createAppointment(input: CreateAppointmentInput) {
   const [appointment] = await db('appointments')
     .insert({
+      account_id: input.accountId,
       user_id: input.userId,
       service_id: input.serviceId,
       specialist_id: input.specialistId,
@@ -96,10 +100,15 @@ export async function createAppointment(input: CreateAppointmentInput) {
   return appointment;
 }
 
-export async function findUserAppointments(userId: number) {
+export async function findUserAppointments(accountId: number, userId: number) {
   const rows = (await db('appointments as a')
-    .join('services as s', 's.id', 'a.service_id')
-    .join('specialists as sp', 'sp.id', 'a.specialist_id')
+    .join('services as s', function joinServices() {
+      this.on('s.id', '=', 'a.service_id').andOn('s.account_id', '=', 'a.account_id');
+    })
+    .join('specialists as sp', function joinSpecialists() {
+      this.on('sp.id', '=', 'a.specialist_id').andOn('sp.account_id', '=', 'a.account_id');
+    })
+    .where('a.account_id', accountId)
     .where('a.user_id', userId)
     .whereNot('a.status', 'cancelled')
     .orderBy('a.appointment_at', 'asc')
@@ -128,10 +137,19 @@ export async function findUserAppointments(userId: number) {
   }));
 }
 
-export async function findUserAppointmentById(userId: number, appointmentId: number) {
+export async function findUserAppointmentById(
+  accountId: number,
+  userId: number,
+  appointmentId: number,
+) {
   const row = (await db('appointments as a')
-    .join('services as s', 's.id', 'a.service_id')
-    .join('specialists as sp', 'sp.id', 'a.specialist_id')
+    .join('services as s', function joinServices() {
+      this.on('s.id', '=', 'a.service_id').andOn('s.account_id', '=', 'a.account_id');
+    })
+    .join('specialists as sp', function joinSpecialists() {
+      this.on('sp.id', '=', 'a.specialist_id').andOn('sp.account_id', '=', 'a.account_id');
+    })
+    .where('a.account_id', accountId)
     .where('a.user_id', userId)
     .where('a.id', appointmentId)
     .whereNot('a.status', 'cancelled')
@@ -164,12 +182,14 @@ export async function findUserAppointmentById(userId: number, appointmentId: num
 }
 
 export async function updateAppointmentDateTime(
+  accountId: number,
   userId: number,
   appointmentId: number,
   appointmentAt: string,
 ) {
   const [appointment] = await db('appointments')
     .where({
+      account_id: accountId,
       id: appointmentId,
       user_id: userId,
     })

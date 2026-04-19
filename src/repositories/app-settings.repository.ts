@@ -14,7 +14,7 @@ type AppSettingsRow = {
   slot_duration_min: number;
 };
 
-export async function getAppSettings() {
+export async function getAppSettings(accountId: number) {
   const row = await db('app_settings')
     .select(
       'timezone',
@@ -23,6 +23,7 @@ export async function getAppSettings() {
       'work_days',
       'slot_duration_min',
     )
+    .where({ account_id: accountId })
     .orderBy('id', 'asc')
     .first<AppSettingsRow>();
 
@@ -35,7 +36,7 @@ export async function getAppSettings() {
   };
 }
 
-export async function getDefaultTimezone() {
-  const settings = await getAppSettings();
+export async function getDefaultTimezone(accountId: number) {
+  const settings = await getAppSettings(accountId);
   return settings.timezone;
 }

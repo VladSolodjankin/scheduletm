@@ -11,7 +11,7 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
 
     'start.welcomeNew': 'Привет, {{name}}! Я бот для записи к психологу.',
     'start.welcomeBack': 'С возвращением, {{name}}!',
-    'start.chooseAction': 'Давайте запишем вас к специалисту или посмотрим ваши записи',
+    'start.chooseAction': 'Я могу помочь записаться к специалисту или показать ваши записи.',
 
     'language.changed': 'Язык переключён на русский.',
     'language.choose': 'Выберите язык:',
@@ -22,7 +22,8 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.noSpecialists': 'Сейчас нет доступных специалистов.',
     'booking.chooseDate': 'Выберите дату:',
     'booking.chooseTime': 'Выберите время:',
-    'booking.enterPhone': 'Отправьте номер телефона (кнопка ниже) или нажмите «Пропустить»:',
+    'booking.enterPhone':
+      'Отправьте номер телефона (кнопка ниже) или нажмите «Пропустить»:',
     'booking.skipPhone': 'Пропустить',
     'booking.sharePhoneButton': 'Поделиться номером',
     'booking.enterEmail': 'Введите email или нажмите «Пропустить»:',
@@ -33,32 +34,38 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.confirmTime': 'Время: {{value}}',
     'booking.confirmContact': 'Контакты: {{value}}',
     'booking.contactNone': 'не указаны',
-    'booking.confirmPrompt': 'Все верно? Нажмите ✅, чтобы подтвердить, или ✏️, чтобы начать заново.',
+    'booking.confirmPrompt':
+      'Все верно? Нажмите ✅, чтобы подтвердить, или ✏️, чтобы начать заново.',
     'booking.created': 'Готово! Запись подтверждена.',
     'booking.calendarLink': 'Сохранить в календарь: {{url}}',
     'booking.paymentLink': 'Ссылка на оплату (заглушка): {{url}}',
-    'booking.finalMessage': '🎉 {{created}}\n\n📌 Добавьте встречу в календарь и перейдите к оплате по кнопкам ниже.',
+    'booking.finalMessage':
+      '🎉 {{created}}\n\n📌 Добавьте встречу в календарь и перейдите к оплате по кнопкам ниже.',
     'booking.openCalendar': '📅 Открыть календарь',
-    'booking.openPayment': '💳 Перейти к оплате',    'booking.notificationStub': 'Заглушка нотификации: отправим напоминание о «{{service}}» на {{date}} {{time}} через {{channels}}.',
+    'booking.openPayment': '💳 Перейти к оплате',
+    'booking.notificationStub':
+      'Заглушка уведомлений: отправим напоминание о «{{service}}» на {{date}} {{time}} через {{channels}}.',
     'booking.channelPhone': 'телефон',
     'booking.channelEmail': 'email',
     'booking.restart': 'Начинаем заново. Выберите услугу:',
     'booking.sessionExpired': 'Сессия записи устарела. Начните запись заново.',
-    'booking.noSlots': 'На эту дату нет свободного времени.',
+    'booking.noSlots': 'На эту дату нет свободных слотов.',
     'booking.slotsTimezoneNote': 'Все слоты указаны по Москве (UTC+3).',
     'booking.changeDate': '⬅️ Назад / Изменить дату',
     'booking.specialistSelected': 'Специалист: {{name}}',
     'booking.serviceSelected': 'Услуга: {{name}}',
+
     'appointments.empty': 'У вас пока нет записей.',
     'appointments.listTitle': 'Ваши записи:',
-    'appointments.item': '{{date}} {{time}} · {{service}}',
+    'appointments.item': '{{date}} {{time}} - {{service}}',
     'appointments.detailsTitle': 'Детали записи:',
     'appointments.detailsService': 'Услуга: {{value}}',
     'appointments.detailsSpecialist': 'Специалист: {{value}}',
     'appointments.detailsDate': 'Дата: {{value}}',
     'appointments.detailsTime': 'Время: {{value}}',
     'appointments.editAllowed': 'Эту запись можно изменить.',
-    'appointments.editBlocked': 'Редактирование доступно только если до записи больше 24 часов.',
+    'appointments.editBlocked':
+      'Редактирование доступно только если до записи больше 24 часов.',
     'appointments.chooseNewDate': 'Выберите новую дату:',
     'appointments.rescheduled': 'Запись обновлена: {{date}} {{time}}.',
   },
@@ -69,7 +76,7 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'common.changeLanguage': 'Change language',
     'common.back': 'Back',
 
-    'start.welcomeNew': 'Hi, {{name}}! I’m your psychology booking bot.',
+    'start.welcomeNew': "Hi, {{name}}! I'm your psychology booking bot.",
     'start.welcomeBack': 'Welcome back, {{name}}!',
     'start.chooseAction': 'I can help you book a session or manage your appointments',
 
@@ -97,22 +104,25 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.created': 'Done! Your booking is confirmed.',
     'booking.calendarLink': 'Save to calendar: {{url}}',
     'booking.paymentLink': 'Payment link (stub): {{url}}',
-    'booking.finalMessage': '🎉 {{created}}\n\n📌 Add the session to your calendar and continue with payment using the buttons below.',
+    'booking.finalMessage':
+      '🎉 {{created}}\n\n📌 Add the session to your calendar and continue with payment using the buttons below.',
     'booking.openCalendar': '📅 Open calendar',
     'booking.openPayment': '💳 Open payment',
-    'booking.notificationStub': 'Notification stub: we will send a reminder for "{{service}}" at {{date}} {{time}} via {{channels}}.',
+    'booking.notificationStub':
+      'Notification stub: we will send a reminder for "{{service}}" at {{date}} {{time}} via {{channels}}.',
     'booking.channelPhone': 'phone',
     'booking.channelEmail': 'email',
     'booking.restart': 'Starting over. Choose a service:',
     'booking.sessionExpired': 'Booking session expired. Please start again.',
     'booking.noSlots': 'No available time slots for this date.',
     'booking.slotsTimezoneNote': 'All slots are shown in Moscow time (UTC+3).',
-    'booking.changeDate': '⬅️ Go Back / Change Date',
+    'booking.changeDate': '⬅️ Go back / Change date',
     'booking.specialistSelected': 'Specialist: {{name}}',
     'booking.serviceSelected': 'Service: {{name}}',
+
     'appointments.empty': 'You have no appointments yet.',
     'appointments.listTitle': 'Your appointments:',
-    'appointments.item': '{{date}} {{time}} · {{service}}',
+    'appointments.item': '{{date}} {{time}} - {{service}}',
     'appointments.detailsTitle': 'Appointment details:',
     'appointments.detailsService': 'Service: {{value}}',
     'appointments.detailsSpecialist': 'Specialist: {{value}}',
@@ -124,3 +134,4 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'appointments.rescheduled': 'Appointment updated: {{date}} {{time}}.',
   },
 };
+

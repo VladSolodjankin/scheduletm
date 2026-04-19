@@ -1,27 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../repositories/appointment.repository', () => {
+vi.mock('../../repositories/appointment.repository', () => {
   return {
     findBusyAppointmentsByDate: vi.fn(),
   };
 });
 
-vi.mock('../repositories/app-settings.repository', () => {
+vi.mock('../../repositories/app-settings.repository', () => {
   return {
     getAppSettings: vi.fn(),
   };
 });
 
-vi.mock('../repositories/service.repository', () => {
+vi.mock('../../repositories/service.repository', () => {
   return {
     findServiceById: vi.fn(),
   };
 });
 
-import { findBusyAppointmentsByDate } from '../repositories/appointment.repository';
-import { getAppSettings } from '../repositories/app-settings.repository';
-import { findServiceById } from '../repositories/service.repository';
-import { getAvailableSlots } from './slot.service';
+import { findBusyAppointmentsByDate } from '../../repositories/appointment.repository';
+import { getAppSettings } from '../../repositories/app-settings.repository';
+import { findServiceById } from '../../repositories/service.repository';
+import { getAvailableSlots } from '../slot.service';
 
 describe('getAvailableSlots', () => {
   beforeEach(() => {
@@ -43,6 +43,7 @@ describe('getAvailableSlots', () => {
     ] as any);
 
     const slots = await getAvailableSlots({
+      accountId: 7,
       date: '2026-04-18',
       specialistId: 1,
       serviceId: 1,
@@ -62,6 +63,7 @@ describe('getAvailableSlots', () => {
     ] as any);
 
     const slots = await getAvailableSlots({
+      accountId: 7,
       date: '2026-04-18',
       specialistId: 1,
       serviceId: 1,
@@ -82,6 +84,7 @@ describe('getAvailableSlots', () => {
     ] as any);
 
     const slots = await getAvailableSlots({
+      accountId: 7,
       date: '2026-04-18',
       specialistId: 1,
       serviceId: 1,
@@ -99,6 +102,7 @@ describe('getAvailableSlots', () => {
     vi.mocked(findBusyAppointmentsByDate).mockResolvedValue([] as any);
 
     const slots = await getAvailableSlots({
+      accountId: 7,
       date: '2026-04-18',
       specialistId: 1,
       serviceId: 999,
@@ -117,6 +121,7 @@ describe('getAvailableSlots', () => {
     vi.mocked(findBusyAppointmentsByDate).mockResolvedValue([] as any);
 
     const slots = await getAvailableSlots({
+      accountId: 7,
       date: '2026-04-18',
       specialistId: 1,
       serviceId: 1,
@@ -136,6 +141,7 @@ describe('getAvailableSlots', () => {
     ] as any);
 
     const slots = await getAvailableSlots({
+      accountId: 7,
       date: '2026-04-18',
       specialistId: 1,
       serviceId: 1,

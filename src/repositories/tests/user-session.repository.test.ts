@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { UserSessionState } from '../types/session';
+import { UserSessionState } from '../../types/session';
 
 type SessionRow = {
   id?: number;
@@ -44,7 +44,7 @@ function createDbMock(initialSession: SessionRow | null) {
   return { db, qb, state };
 }
 
-vi.mock('../db/knex', () => {
+vi.mock('../../db/knex', () => {
   // Each test sets globalThis.__dbMock to a knex-like function with db.fn.now().
   const dbProxy: any = (...args: any[]) => (globalThis as any).__dbMock(...args);
 
@@ -63,7 +63,7 @@ import {
   getSessionPayload,
   mergeSessionPayload,
   updateSessionState,
-} from './user-session.repository';
+} from '../user-session.repository';
 
 describe('user-session.repository', () => {
   afterEach(() => {
@@ -80,7 +80,7 @@ describe('user-session.repository', () => {
     });
     (globalThis as any).__dbMock = db;
 
-    const session = await getOrCreateSession(10);
+    const session = await getOrCreateSession(7, 10);
 
     expect(session).toEqual(state.session);
     expect(qb.insert).not.toHaveBeenCalled();
@@ -90,9 +90,10 @@ describe('user-session.repository', () => {
     const { db, qb } = createDbMock(null);
     (globalThis as any).__dbMock = db;
 
-    const session = await createSession(10);
+    const session = await createSession(7, 10);
 
     expect(qb.insert).toHaveBeenCalledWith({
+      account_id: 7,
       user_id: 10,
       state: UserSessionState.IDLE,
       payload_json: JSON.stringify({}),
@@ -110,7 +111,7 @@ describe('user-session.repository', () => {
     });
     (globalThis as any).__dbMock = db;
 
-    const out = await updateSessionState(10, UserSessionState.CHOOSING_SERVICE);
+    const out = await updateSessionState(7, 10, UserSessionState.CHOOSING_SERVICE);
 
     const patch = vi.mocked(qb.update).mock.calls[0]?.[0] as any;
     expect(patch.state).toBe(UserSessionState.CHOOSING_SERVICE);
@@ -129,7 +130,7 @@ describe('user-session.repository', () => {
     });
     (globalThis as any).__dbMock = db;
 
-    await mergeSessionPayload(10, UserSessionState.CHOOSING_TIME, {
+    await mergeSessionPayload(7, 10, UserSessionState.CHOOSING_TIME, {
       selectedDate: '2026-04-18',
     });
 
@@ -158,7 +159,7 @@ describe('user-session.repository', () => {
     });
     (globalThis as any).__dbMock = db;
 
-    await mergeSessionPayload(10, UserSessionState.CHOOSING_TIME, {
+    await mergeSessionPayload(7, 10, UserSessionState.CHOOSING_TIME, {
       selectedTime: '09:00',
     });
 
@@ -179,7 +180,7 @@ describe('user-session.repository', () => {
     });
     (globalThis as any).__dbMock = db;
 
-    const out = await getSessionPayload(10);
+    const out = await getSessionPayload(7, 10);
     expect(out).toEqual({});
   });
 });

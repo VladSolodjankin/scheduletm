@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../repositories/app-settings.repository', () => {
+vi.mock('../../repositories/app-settings.repository', () => {
   return {
     getAppSettings: vi.fn(),
   };
 });
 
-import { getAppSettings } from '../repositories/app-settings.repository';
-import { getNextAvailableDates } from './date.service';
+import { getAppSettings } from '../../repositories/app-settings.repository';
+import { getNextAvailableDates } from '../date.service';
 
 describe('getNextAvailableDates', () => {
   beforeEach(() => {
@@ -26,7 +26,7 @@ describe('getNextAvailableDates', () => {
       workDays: '1,2,3,4,5', // Mon-Fri
     } as any);
 
-    const dates = await getNextAvailableDates(3);
+    const dates = await getNextAvailableDates(7, 3);
     expect(dates).toEqual(['2026-04-20', '2026-04-21', '2026-04-22']);
   });
 
@@ -37,7 +37,7 @@ describe('getNextAvailableDates', () => {
       workDays: '1,2,3,4,5',
     } as any);
 
-    const dates = await getNextAvailableDates(1);
+    const dates = await getNextAvailableDates(7, 1);
     expect(dates).toEqual(['2026-04-20']);
   });
 
@@ -46,7 +46,7 @@ describe('getNextAvailableDates', () => {
       workDays: 'x, 7, -1, 99, ',
     } as any);
 
-    const dates = await getNextAvailableDates(3);
+    const dates = await getNextAvailableDates(7, 3);
     expect(dates).toEqual([]);
   });
 
@@ -57,7 +57,7 @@ describe('getNextAvailableDates', () => {
       workDays: '0',
     } as any);
 
-    const dates = await getNextAvailableDates(10);
+    const dates = await getNextAvailableDates(7, 10);
     expect(dates).toEqual(['2026-04-19', '2026-04-26', '2026-05-03']);
   });
 });

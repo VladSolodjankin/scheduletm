@@ -5,6 +5,7 @@ import {
 } from '../repositories/user.repository';
 import { getOrCreateSession } from '../repositories/user-session.repository';
 import { normalizeLanguageCode } from '../i18n';
+import { getDefaultAccountId } from '../repositories/account.repository';
 
 type TelegramProfile = {
   telegramId: number;
@@ -15,17 +16,19 @@ type TelegramProfile = {
 
 export async function findOrCreateTelegramUser(profile: TelegramProfile) {
   const languageCode = normalizeLanguageCode(profile.languageCode);
-  const existing = await findUserByTelegramId(profile.telegramId);
+  const accountId = await getDefaultAccountId();
+  const existing = await findUserByTelegramId(accountId, profile.telegramId);
 
   if (!existing) {
     const created = await createUser({
+      accountId,
       telegramId: profile.telegramId,
       username: profile.username ?? null,
       firstName: profile.firstName ?? null,
       languageCode,
     });
 
-    await getOrCreateSession(created.id);
+    await getOrCreateSession(created.account_id, created.id);
 
     return {
       user: created,
@@ -33,14 +36,14 @@ export async function findOrCreateTelegramUser(profile: TelegramProfile) {
     };
   }
 
-  const updated = await updateUserByTelegramId(profile.telegramId, {
+  const updated = await updateUserByTelegramId(accountId, profile.telegramId, {
     username: profile.username ?? existing.username,
     firstName: profile.firstName ?? existing.first_name,
     // Do not overwrite user's chosen language on every update.
     // Telegram profile language_code is a useful default for new users only.
   });
 
-  await getOrCreateSession(updated.id);
+  await getOrCreateSession(updated.account_id, updated.id);
 
   return {
     user: updated,

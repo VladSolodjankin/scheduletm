@@ -1,20 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../repositories/appointment.repository', () => {
+vi.mock('../../repositories/appointment.repository', () => {
   return {
     createAppointment: vi.fn(),
   };
 });
 
-vi.mock('../repositories/service.repository', () => {
+vi.mock('../../repositories/service.repository', () => {
   return {
     findServiceById: vi.fn(),
   };
 });
 
-import { createAppointment } from '../repositories/appointment.repository';
-import { findServiceById } from '../repositories/service.repository';
-import { createBookingAppointment } from './appointment.service';
+import { createAppointment } from '../../repositories/appointment.repository';
+import { findServiceById } from '../../repositories/service.repository';
+import { createBookingAppointment } from '../appointment.service';
 
 describe('createBookingAppointment', () => {
   afterEach(() => {
@@ -25,6 +25,7 @@ describe('createBookingAppointment', () => {
     vi.mocked(findServiceById).mockResolvedValue(null as any);
 
     const out = await createBookingAppointment({
+      accountId: 7,
       userId: 1,
       serviceId: 123,
       specialistId: 2,
@@ -42,6 +43,7 @@ describe('createBookingAppointment', () => {
     } as any);
 
     const out = await createBookingAppointment({
+      accountId: 7,
       userId: 1,
       serviceId: 10,
       specialistId: 2,
@@ -67,6 +69,7 @@ describe('createBookingAppointment', () => {
     });
 
     const out = await createBookingAppointment({
+      accountId: 7,
       userId: 1,
       serviceId: 10,
       specialistId: 2,
@@ -79,6 +82,7 @@ describe('createBookingAppointment', () => {
 
     expect(createAppointment).toHaveBeenCalledWith(
       expect.objectContaining({
+        accountId: 7,
         userId: 1,
         serviceId: 10,
         specialistId: 2,

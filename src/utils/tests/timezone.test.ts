@@ -3,7 +3,7 @@ import {
   getUtcRangeForMoscowDate,
   toMoscowDateTimeFromUtc,
   toUtcIsoFromMoscow,
-} from './timezone';
+} from '../timezone';
 
 describe('timezone utils', () => {
   it('converts Moscow date/time to UTC ISO', () => {

@@ -11,25 +11,25 @@ import {
 import { UserSessionState } from '../types/session';
 import { getNextAvailableDates } from './date.service';
 
-export async function startBooking(userId: number) {
-  await updateSessionState(userId, UserSessionState.CHOOSING_SERVICE, {});
-  return findActiveServices();
+export async function startBooking(accountId: number, userId: number) {
+  await updateSessionState(accountId, userId, UserSessionState.CHOOSING_SERVICE, {});
+  return findActiveServices(accountId);
 }
 
-export async function selectService(userId: number, serviceId: number) {
-  const service = await findServiceById(serviceId);
+export async function selectService(accountId: number, userId: number, serviceId: number) {
+  const service = await findServiceById(accountId, serviceId);
   if (!service || !service.is_active) {
     return { ok: false as const, reason: 'service_not_found' };
   }
 
-  await mergeSessionPayload(userId, UserSessionState.CHOOSING_SPECIALIST, {
+  await mergeSessionPayload(accountId, userId, UserSessionState.CHOOSING_SPECIALIST, {
     serviceId: service.id,
   });
 
-  const defaultSpecialist = await findSingleDefaultActiveSpecialist();
+  const defaultSpecialist = await findSingleDefaultActiveSpecialist(accountId);
 
   if (defaultSpecialist) {
-    await mergeSessionPayload(userId, UserSessionState.CHOOSING_DATE, {
+    await mergeSessionPayload(accountId, userId, UserSessionState.CHOOSING_DATE, {
       serviceId: service.id,
       specialistId: defaultSpecialist.id,
     });
@@ -39,11 +39,11 @@ export async function selectService(userId: number, serviceId: number) {
       skipSpecialist: true as const,
       service,
       specialist: defaultSpecialist,
-      dates: await getNextAvailableDates(),
+      dates: await getNextAvailableDates(accountId),
     };
   }
 
-  const specialists = await findActiveSpecialists();
+  const specialists = await findActiveSpecialists(accountId);
 
   return {
     ok: true as const,
@@ -53,20 +53,20 @@ export async function selectService(userId: number, serviceId: number) {
   };
 }
 
-export async function selectSpecialist(userId: number, specialistId: number) {
-  const specialist = await findSpecialistById(specialistId);
+export async function selectSpecialist(accountId: number, userId: number, specialistId: number) {
+  const specialist = await findSpecialistById(accountId, specialistId);
 
   if (!specialist || !specialist.is_active) {
     return { ok: false as const, reason: 'specialist_not_found' };
   }
 
-  await mergeSessionPayload(userId, UserSessionState.CHOOSING_DATE, {
+  await mergeSessionPayload(accountId, userId, UserSessionState.CHOOSING_DATE, {
     specialistId: specialist.id,
   });
 
   return {
     ok: true as const,
     specialist,
-    dates: await getNextAvailableDates(),
+    dates: await getNextAvailableDates(accountId),
   };
 }

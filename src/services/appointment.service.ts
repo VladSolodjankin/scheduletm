@@ -8,6 +8,7 @@ import { findServiceById } from '../repositories/service.repository';
 import { toMoscowDateTimeFromUtc, toUtcIsoFromMoscow } from '../utils/timezone';
 
 type CreateBookingAppointmentInput = {
+  accountId: number;
   userId: number;
   serviceId: number;
   specialistId: number;
@@ -16,7 +17,7 @@ type CreateBookingAppointmentInput = {
 };
 
 export async function createBookingAppointment(input: CreateBookingAppointmentInput) {
-  const service = await findServiceById(input.serviceId);
+  const service = await findServiceById(input.accountId, input.serviceId);
 
   if (!service || !service.is_active) {
     return {
@@ -28,6 +29,7 @@ export async function createBookingAppointment(input: CreateBookingAppointmentIn
   const appointmentAt = toUtcIsoFromMoscow(input.selectedDate, input.selectedTime);
 
   const appointment = await createAppointment({
+    accountId: input.accountId,
     userId: input.userId,
     serviceId: input.serviceId,
     specialistId: input.specialistId,
@@ -44,12 +46,12 @@ export async function createBookingAppointment(input: CreateBookingAppointmentIn
   };
 }
 
-export async function getUserAppointments(userId: number) {
-  return findUserAppointments(userId);
+export async function getUserAppointments(accountId: number, userId: number) {
+  return findUserAppointments(accountId, userId);
 }
 
-export async function getUserAppointment(userId: number, appointmentId: number) {
-  return findUserAppointmentById(userId, appointmentId);
+export async function getUserAppointment(accountId: number, userId: number, appointmentId: number) {
+  return findUserAppointmentById(accountId, userId, appointmentId);
 }
 
 export function canEditAppointment(appointmentAt: string | Date, now = new Date()) {
@@ -62,6 +64,7 @@ export function canEditAppointment(appointmentAt: string | Date, now = new Date(
 }
 
 type RescheduleAppointmentInput = {
+  accountId: number;
   userId: number;
   appointmentId: number;
   selectedDate: string;
@@ -69,7 +72,11 @@ type RescheduleAppointmentInput = {
 };
 
 export async function rescheduleUserAppointment(input: RescheduleAppointmentInput) {
-  const appointment = await findUserAppointmentById(input.userId, input.appointmentId);
+  const appointment = await findUserAppointmentById(
+    input.accountId,
+    input.userId,
+    input.appointmentId,
+  );
   if (!appointment) {
     return {
       ok: false as const,
@@ -85,7 +92,12 @@ export async function rescheduleUserAppointment(input: RescheduleAppointmentInpu
   }
 
   const appointmentAt = toUtcIsoFromMoscow(input.selectedDate, input.selectedTime);
-  const updated = await updateAppointmentDateTime(input.userId, input.appointmentId, appointmentAt);
+  const updated = await updateAppointmentDateTime(
+    input.accountId,
+    input.userId,
+    input.appointmentId,
+    appointmentAt,
+  );
 
   return {
     ok: true as const,

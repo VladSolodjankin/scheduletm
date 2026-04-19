@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeLanguageCode, t } from './index';
+import { normalizeLanguageCode, t } from '../index';
 
 describe('i18n', () => {
   it('normalizes language codes', () => {

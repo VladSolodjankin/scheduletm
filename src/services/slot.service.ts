@@ -39,16 +39,18 @@ function parseTimeToMinutes(time: string) {
 }
 
 export async function getAvailableSlots(params: {
+  accountId: number;
   date: string;
   specialistId: number;
   serviceId: number;
 }) {
-  const service = await findServiceById(params.serviceId);
-  const settings = await getAppSettings();
+  const service = await findServiceById(params.accountId, params.serviceId);
+  const settings = await getAppSettings(params.accountId);
   const durationMin = service?.duration_min ?? 90;
 
   const allSlots = buildDaySlots(durationMin, settings.workStartHour, settings.workEndHour);
   const busyAppointments = await findBusyAppointmentsByDate(
+    params.accountId,
     params.date,
     params.specialistId,
   );

@@ -16,10 +16,10 @@ function parseWorkDays(workDays: string) {
   return allowed;
 }
 
-export async function getNextAvailableDates(count = 7): Promise<string[]> {
+export async function getNextAvailableDates(accountId: number, count = 7): Promise<string[]> {
   const results: string[] = [];
   const now = new Date();
-  const settings = await getAppSettings();
+  const settings = await getAppSettings(accountId);
   const allowedWorkDays = parseWorkDays(settings.workDays);
 
   for (let i = 0; results.length < count && i < 21; i += 1) {

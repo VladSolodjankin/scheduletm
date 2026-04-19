@@ -1,13 +1,14 @@
 import { db } from '../db/knex';
 import { BookingPayload, UserSessionState } from '../types/session';
 
-export async function findSessionByUserId(userId: number) {
-  return db('user_sessions').where({ user_id: userId }).first();
+export async function findSessionByUserId(accountId: number, userId: number) {
+  return db('user_sessions').where({ account_id: accountId, user_id: userId }).first();
 }
 
-export async function createSession(userId: number) {
+export async function createSession(accountId: number, userId: number) {
   const [session] = await db('user_sessions')
     .insert({
+      account_id: accountId,
       user_id: userId,
       state: UserSessionState.IDLE,
       payload_json: JSON.stringify({}),
@@ -17,13 +18,14 @@ export async function createSession(userId: number) {
   return session;
 }
 
-export async function getOrCreateSession(userId: number) {
-  const existing = await findSessionByUserId(userId);
+export async function getOrCreateSession(accountId: number, userId: number) {
+  const existing = await findSessionByUserId(accountId, userId);
   if (existing) return existing;
-  return createSession(userId);
+  return createSession(accountId, userId);
 }
 
 export async function updateSessionState(
+  accountId: number,
   userId: number,
   state: UserSessionState,
   payload?: BookingPayload,
@@ -38,18 +40,19 @@ export async function updateSessionState(
   }
 
   const [session] = await db('user_sessions')
-    .where({ user_id: userId })
+    .where({ account_id: accountId, user_id: userId })
     .update(updateData, ['*']);
 
   return session;
 }
 
 export async function mergeSessionPayload(
+  accountId: number,
   userId: number,
   state: UserSessionState,
   patch: Partial<BookingPayload>,
 ) {
-  const session = await getOrCreateSession(userId);
+  const session = await getOrCreateSession(accountId, userId);
 
   const currentPayload =
     typeof session.payload_json === 'string'
@@ -62,7 +65,7 @@ export async function mergeSessionPayload(
   };
 
   const [updated] = await db('user_sessions')
-    .where({ user_id: userId })
+    .where({ account_id: accountId, user_id: userId })
     .update(
       {
         state,
@@ -75,8 +78,8 @@ export async function mergeSessionPayload(
   return updated;
 }
 
-export async function getSessionPayload(userId: number): Promise<BookingPayload> {
-  const session = await getOrCreateSession(userId);
+export async function getSessionPayload(accountId: number, userId: number): Promise<BookingPayload> {
+  const session = await getOrCreateSession(accountId, userId);
 
   if (!session.payload_json) {
     return {};
