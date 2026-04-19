@@ -17,9 +17,5 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  },
-  "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/morgan": "^1.9.10"
   }
 }
