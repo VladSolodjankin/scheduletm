@@ -1,4 +1,15 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../repositories/notification.repository', () => {
+  return {
+    createNotification: vi.fn(),
+    findDueNotifications: vi.fn(),
+    markNotificationFailed: vi.fn(),
+    markNotificationSent: vi.fn(),
+    scheduleNotificationRetry: vi.fn(),
+    cancelPendingNotificationsByAppointment: vi.fn(),
+  };
+});
 
 vi.mock('../../bot/bot', () => {
   return {
@@ -6,64 +17,132 @@ vi.mock('../../bot/bot', () => {
   };
 });
 
-describe('sendBookingStubNotification', () => {
-  beforeEach(() => {
-    // Ensure the module under test is evaluated with the mocked bot module.
-    vi.resetModules();
-  });
+import { sendMessage } from '../../bot/bot';
+import {
+  createNotification,
+  findDueNotifications,
+  markNotificationFailed,
+  markNotificationSent,
+  scheduleNotificationRetry,
+  cancelPendingNotificationsByAppointment,
+} from '../../repositories/notification.repository';
+import {
+  cancelAppointmentReminders,
+  processDueNotifications,
+  queueAppointmentReminder,
+  recreateAppointmentReminders,
+} from '../notification.service';
 
+describe('notification.service', () => {
   afterEach(() => {
     vi.resetAllMocks();
   });
 
-  it('does nothing when no channels are available', async () => {
-    const { sendBookingStubNotification } = await import('../notification.service');
-    const { sendMessage } = await import('../../bot/bot');
+  it('queues notifications for all available channels', async () => {
+    vi.mocked(createNotification).mockResolvedValue({ id: 1 } as any);
 
-    await sendBookingStubNotification({
-      chatId: 1,
-      languageCode: 'ru',
-      hasPhone: false,
-      hasEmail: false,
-      selectedDate: '2026-04-18',
-      selectedTime: '09:00',
-      serviceName: 'Test',
+    await queueAppointmentReminder({
+      accountId: 1,
+      appointmentId: 10,
+      userId: 20,
+      appointmentAtIso: '2026-04-22T10:00:00.000Z',
+      serviceName: 'Консультация',
+      specialistName: 'Лилия',
+      selectedDate: '2026-04-22',
+      selectedTime: '13:00',
+      chatId: 123,
+      email: 'test@example.com',
+      phone: '+70000000000',
     });
 
-    expect(sendMessage).not.toHaveBeenCalled();
+    expect(createNotification).toHaveBeenCalledTimes(3);
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: 'telegram' }),
+    );
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: 'email' }),
+    );
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ channel: 'sms' }),
+    );
   });
 
-  it('does nothing even when channels are available (stubbed)', async () => {
-    const { sendBookingStubNotification } = await import('../notification.service');
-    const { sendMessage } = await import('../../bot/bot');
 
-    await sendBookingStubNotification({
-      chatId: 1,
-      languageCode: 'ru',
-      hasPhone: true,
-      hasEmail: true,
-      selectedDate: '2026-04-18',
-      selectedTime: '09:00',
-      serviceName: 'Тест',
-    });
 
-    expect(sendMessage).not.toHaveBeenCalled();
+  it('cancels pending reminders for appointment', async () => {
+    await cancelAppointmentReminders(7, 88);
+
+    expect(cancelPendingNotificationsByAppointment).toHaveBeenCalledWith(7, 88);
   });
 
-  it('does nothing for other languages too', async () => {
-    const { sendBookingStubNotification } = await import('../notification.service');
-    const { sendMessage } = await import('../../bot/bot');
+  it('recreates reminders on reschedule', async () => {
+    vi.mocked(createNotification).mockResolvedValue({ id: 1 } as any);
 
-    await sendBookingStubNotification({
-      chatId: 1,
-      languageCode: 'en-US',
-      hasPhone: true,
-      hasEmail: false,
-      selectedDate: '2026-04-18',
-      selectedTime: '09:00',
-      serviceName: 'Test',
+    await recreateAppointmentReminders({
+      accountId: 1,
+      appointmentId: 10,
+      userId: 20,
+      appointmentAtIso: '2026-04-22T10:00:00.000Z',
+      serviceName: 'Консультация',
+      specialistName: 'Лилия',
+      selectedDate: '2026-04-22',
+      selectedTime: '13:00',
+      chatId: 123,
+      email: 'test@example.com',
+      phone: '+70000000000',
     });
 
-    expect(sendMessage).not.toHaveBeenCalled();
+    expect(cancelPendingNotificationsByAppointment).toHaveBeenCalledWith(1, 10);
+    expect(createNotification).toHaveBeenCalledTimes(3);
+  });
+  it('marks telegram notification as sent', async () => {
+    vi.mocked(findDueNotifications).mockResolvedValue([
+      {
+        id: 99,
+        attempts: 0,
+        maxAttempts: 3,
+        channel: 'telegram',
+        recipientChatId: 555,
+        recipientEmail: null,
+        recipientPhone: null,
+        payload: {
+          serviceName: 'Test',
+          specialistName: 'Spec',
+          selectedDate: '2026-04-22',
+          selectedTime: '10:00',
+        },
+      },
+    ] as any);
+
+    const processed = await processDueNotifications();
+
+    expect(processed).toBe(1);
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    expect(markNotificationSent).toHaveBeenCalledWith(99);
+  });
+
+  it('schedules retry for failed notification', async () => {
+    vi.mocked(findDueNotifications).mockResolvedValue([
+      {
+        id: 77,
+        attempts: 0,
+        maxAttempts: 3,
+        channel: 'telegram',
+        recipientChatId: null,
+        recipientEmail: null,
+        recipientPhone: null,
+        payload: {
+          serviceName: 'Test',
+          specialistName: 'Spec',
+          selectedDate: '2026-04-22',
+          selectedTime: '10:00',
+        },
+      },
+    ] as any);
+
+    await processDueNotifications();
+
+    expect(scheduleNotificationRetry).toHaveBeenCalledTimes(1);
+    expect(markNotificationFailed).not.toHaveBeenCalled();
   });
 });

@@ -15,4 +15,5 @@ export const env = {
   botToken: getEnv("BOT_TOKEN"),
   webhookSecret: getEnv("WEBHOOK_SECRET"),
   appUrl: getEnv("APP_URL"),
+  notificationPollMs: Number(process.env.NOTIFICATION_POLL_MS || 60000),
 };
