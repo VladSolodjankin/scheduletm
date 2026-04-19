@@ -1,15 +1,12 @@
 import fs from 'fs';
 import xpath from 'xpath';
-import { DOMParser } from 'xmldom';
+import { DOMParser } from '@xmldom/xmldom';
 
 export function readBPMN(filePathFromRoot: string): any {
-  // Load XML file
   const fullFilePath = (process.env.MS_API_ROOT || "/var/www/html/api") + filePathFromRoot;
   const xml = fs.readFileSync(fullFilePath, 'utf-8');
 
-  // Parse XML
-  const doc = new DOMParser().parseFromString(xml);
-  return doc;
+  return new DOMParser().parseFromString(xml, "text/xml");
 }
 
 export function getStartBlocks(doc: any): BPMNBlock[] {
@@ -35,8 +32,7 @@ export function getNext(doc: any, taskId: string): BPMNBlockFlow[] {
   const outgoing = getOutgoingFlows(doc, taskId);
   for (let i = 0; i < outgoing.length; i++) {
     const it = outgoing[i];
-    const props = getTaskPropertiesById(doc, it.blockId);
-    it.properties = props;
+    it.properties = getTaskPropertiesById(doc, it.blockId);
     let annotationProps: Record<string, any> = {};
 
     // we parse annotations as JSON and put into properties
@@ -104,7 +100,7 @@ export function getCurrent(doc: any, taskId: string): BPMNBlockFlow | null {
 }
 
 function getXPSelect() {
-  let select = xpath.useNamespaces({
+  return xpath.useNamespaces({
     bpmn: "http://www.omg.org/spec/BPMN/20100524/MODEL",
     bpmndi: "http://www.omg.org/spec/BPMN/20100524/DI",
     dc: "http://www.omg.org/spec/DD/20100524/DC",
@@ -112,7 +108,6 @@ function getXPSelect() {
     modeler: "http://camunda.org/schema/modeler/1.0",
     camunda: "http://camunda.org/schema/1.0/bpmn",
   })
-  return select;
 }
 
 function getTaskById(doc: any, taskId: string) {
@@ -124,8 +119,8 @@ function getTaskById(doc: any, taskId: string) {
 function getOutgoingFlows(doc: any, taskId: string, type: string = "sequenceFlow"): Array<BPMNBlockFlow> {
   const select = getXPSelect();
   const outgoing = select("//bpmn:*[@sourceRef=\"" + taskId + "\"]", doc) as any;
-  
-  const outgoingNames = Array.from(outgoing).map((flowLine: any) => {
+
+  return Array.from(outgoing).map((flowLine: any) => {
     // collect flow props
     const flowId = getAttr(flowLine, "id");
 
@@ -153,8 +148,6 @@ function getOutgoingFlows(doc: any, taskId: string, type: string = "sequenceFlow
     
     return node;
   }).filter(x => x != null);
-
-  return outgoingNames;
 }
 
 function getTaskPropertiesById(doc: any, taskId: string): Record<string,string> {
