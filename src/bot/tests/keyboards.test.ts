@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { getBookingFinalInlineKeyboard, getSpecialistsInlineKeyboard } from '../keyboards';
+import {
+  getBookingFinalInlineKeyboard,
+  getDatesInlineKeyboardWithPagination,
+  getMultiSessionModeKeyboard,
+  getSpecialistsInlineKeyboard,
+} from '../keyboards';
 
 describe('getBookingFinalInlineKeyboard', () => {
   it('returns localized calendar choice buttons and payment button with URLs', () => {
@@ -36,5 +41,36 @@ describe('getSpecialistsInlineKeyboard', () => {
         [{ text: '⬅️ Назад', callback_data: 'back:services' }],
       ],
     });
+  });
+});
+
+describe('getDatesInlineKeyboardWithPagination', () => {
+  it('adds prev/next page controls when requested', () => {
+    const keyboard = getDatesInlineKeyboardWithPagination(
+      ['2026-04-20', '2026-04-21'],
+      14,
+      true,
+      true,
+    );
+
+    expect(keyboard).toEqual({
+      inline_keyboard: [
+        [{ text: '2026-04-20', callback_data: 'date:2026-04-20' }],
+        [{ text: '2026-04-21', callback_data: 'date:2026-04-21' }],
+        [
+          { text: '⬅️', callback_data: 'date_nav:0' },
+          { text: '➡️', callback_data: 'date_nav:28' },
+        ],
+      ],
+    });
+  });
+});
+
+describe('getMultiSessionModeKeyboard', () => {
+  it('returns clear options for package booking strategy', () => {
+    const keyboard = getMultiSessionModeKeyboard('ru');
+    expect(keyboard.inline_keyboard).toHaveLength(2);
+    expect(keyboard.inline_keyboard[0][0].callback_data).toBe('multisession:same');
+    expect(keyboard.inline_keyboard[1][0].callback_data).toBe('multisession:custom');
   });
 });
