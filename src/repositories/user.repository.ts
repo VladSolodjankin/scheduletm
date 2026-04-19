@@ -8,6 +8,7 @@ export type CreateUserInput = {
   phone?: string | null;
   email?: string | null;
   languageCode?: string | null;
+  reminderComment?: string | null;
 };
 
 export async function findUserByTelegramId(accountId: number, telegramId: number) {
@@ -24,6 +25,7 @@ export async function createUser(input: CreateUserInput) {
       phone: input.phone ?? null,
       email: input.email ?? null,
       language_code: input.languageCode ?? "ru",
+      reminder_comment: input.reminderComment ?? '',
     })
     .returning("*");
 
@@ -43,6 +45,7 @@ export async function updateUserByTelegramId(
   if (patch.firstName !== undefined) updateData.first_name = patch.firstName;
   if (patch.phone !== undefined) updateData.phone = patch.phone;
   if (patch.email !== undefined) updateData.email = patch.email;
+  if (patch.reminderComment !== undefined) updateData.reminder_comment = patch.reminderComment;
   if (patch.languageCode !== undefined) {
     updateData.language_code = patch.languageCode;
   }

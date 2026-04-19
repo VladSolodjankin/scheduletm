@@ -372,6 +372,7 @@ telegramWebhookRouter.post(
               chatId,
               email: user.email,
               phone: user.phone,
+              reminderComment: user.reminder_comment,
             });
 
             await editMessageText(
@@ -540,6 +541,7 @@ telegramWebhookRouter.post(
             chatId,
             email: payload.enteredEmail || user.email,
             phone: payload.enteredPhone || user.phone,
+            reminderComment: user.reminder_comment,
           });
 
           return res.status(200).json({ ok: true });

@@ -65,6 +65,8 @@ export async function seed(knex: Knex): Promise<void> {
       work_end_hour: 20,
       work_days: '1,2,3,4,5,6',
       slot_duration_min: 90,
+      reminder_offsets_min: '1440,60,30',
+      reminder_comment: '',
     },
   ]);
 

@@ -11,6 +11,12 @@ vi.mock('../../repositories/notification.repository', () => {
   };
 });
 
+vi.mock('../../repositories/app-settings.repository', () => {
+  return {
+    getAppSettings: vi.fn(),
+  };
+});
+
 vi.mock('../../bot/bot', () => {
   return {
     sendMessage: vi.fn(),
@@ -18,6 +24,7 @@ vi.mock('../../bot/bot', () => {
 });
 
 import { sendMessage } from '../../bot/bot';
+import { getAppSettings } from '../../repositories/app-settings.repository';
 import {
   createNotification,
   findDueNotifications,
@@ -38,8 +45,17 @@ describe('notification.service', () => {
     vi.resetAllMocks();
   });
 
-  it('queues notifications for all available channels', async () => {
+  it('queues notifications for all available channels and reminder offsets', async () => {
     vi.mocked(createNotification).mockResolvedValue({ id: 1 } as any);
+    vi.mocked(getAppSettings).mockResolvedValue({
+      timezone: 'Europe/Moscow',
+      workStartHour: 9,
+      workEndHour: 20,
+      workDays: '1,2,3,4,5,6',
+      slotDurationMin: 90,
+      reminderOffsetsMin: [1440, 60, 30],
+      reminderComment: '',
+    });
 
     await queueAppointmentReminder({
       accountId: 1,
@@ -53,21 +69,23 @@ describe('notification.service', () => {
       chatId: 123,
       email: 'test@example.com',
       phone: '+70000000000',
+      reminderComment: 'Ссылка на встречу появится здесь',
     });
 
-    expect(createNotification).toHaveBeenCalledTimes(3);
+    expect(createNotification).toHaveBeenCalledTimes(9);
     expect(createNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ channel: 'telegram' }),
+      expect.objectContaining({ channel: 'telegram', type: 'appointment_reminder_1440m' }),
     );
     expect(createNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ channel: 'email' }),
+      expect.objectContaining({ channel: 'email', type: 'appointment_reminder_60m' }),
     );
     expect(createNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ channel: 'sms' }),
+      expect.objectContaining({ channel: 'sms', type: 'appointment_reminder_30m' }),
+    );
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: expect.objectContaining({ reminderComment: 'Ссылка на встречу появится здесь' }) }),
     );
   });
-
-
 
   it('cancels pending reminders for appointment', async () => {
     await cancelAppointmentReminders(7, 88);
@@ -77,6 +95,15 @@ describe('notification.service', () => {
 
   it('recreates reminders on reschedule', async () => {
     vi.mocked(createNotification).mockResolvedValue({ id: 1 } as any);
+    vi.mocked(getAppSettings).mockResolvedValue({
+      timezone: 'Europe/Moscow',
+      workStartHour: 9,
+      workEndHour: 20,
+      workDays: '1,2,3,4,5,6',
+      slotDurationMin: 90,
+      reminderOffsetsMin: [1440, 60, 30],
+      reminderComment: '',
+    });
 
     await recreateAppointmentReminders({
       accountId: 1,
@@ -90,11 +117,13 @@ describe('notification.service', () => {
       chatId: 123,
       email: 'test@example.com',
       phone: '+70000000000',
+      reminderComment: '',
     });
 
     expect(cancelPendingNotificationsByAppointment).toHaveBeenCalledWith(1, 10);
-    expect(createNotification).toHaveBeenCalledTimes(3);
+    expect(createNotification).toHaveBeenCalledTimes(9);
   });
+
   it('marks telegram notification as sent', async () => {
     vi.mocked(findDueNotifications).mockResolvedValue([
       {
