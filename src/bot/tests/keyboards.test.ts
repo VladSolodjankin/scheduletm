@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getBookingFinalInlineKeyboard } from '../keyboards';
+import { getBookingFinalInlineKeyboard, getSpecialistsInlineKeyboard } from '../keyboards';
 
 describe('getBookingFinalInlineKeyboard', () => {
   it('returns localized calendar choice buttons and payment button with URLs', () => {
@@ -18,6 +18,22 @@ describe('getBookingFinalInlineKeyboard', () => {
         [{ text: '🍎 Apple Calendar (.ics)', url: 'https://example.com/calendar/apple.ics?x=2' }],
         [{ text: '🪟 Microsoft Calendar', url: 'https://outlook.live.com/calendar/0/deeplink/compose?x=3' }],
         [{ text: '💳 Перейти к оплате', url: 'https://example.com/pay/15' }],
+      ],
+    });
+  });
+});
+
+describe('getSpecialistsInlineKeyboard', () => {
+  it('adds a back button to return to services step', () => {
+    const keyboard = getSpecialistsInlineKeyboard(
+      [{ id: 5, name: 'Dr. Smith' }],
+      'ru',
+    );
+
+    expect(keyboard).toEqual({
+      inline_keyboard: [
+        [{ text: 'Dr. Smith', callback_data: 'specialist:5' }],
+        [{ text: '⬅️ Назад', callback_data: 'back:services' }],
       ],
     });
   });

@@ -215,7 +215,7 @@ telegramWebhookRouter.post(
             chatId,
             messageId,
             t(lang, 'booking.chooseSpecialist'),
-            getSpecialistsInlineKeyboard(result.specialists),
+            getSpecialistsInlineKeyboard(result.specialists, lang),
           );
 
           await answerCallbackQuery(callback.id);
@@ -243,6 +243,25 @@ telegramWebhookRouter.post(
           );
 
           await answerCallbackQuery(callback.id);
+          return res.status(200).json({ ok: true });
+        }
+
+        if (data === 'back:services') {
+          const services = await startBooking(user.account_id, user.id);
+          await answerCallbackQuery(callback.id);
+
+          if (!services.length) {
+            await editMessageText(chatId, messageId, t(lang, 'booking.noServices'));
+            return res.status(200).json({ ok: true });
+          }
+
+          await editMessageText(
+            chatId,
+            messageId,
+            t(lang, 'booking.chooseService'),
+            getServicesInlineKeyboard(services, lang),
+          );
+
           return res.status(200).json({ ok: true });
         }
 
@@ -672,11 +691,19 @@ telegramWebhookRouter.post(
       }
 
       if (text === '/start') {
+        await updateSessionState(user.account_id, user.id, UserSessionState.IDLE, {});
         const greeting = userResult.isNew
           ? t(lang, 'start.welcomeNew', { name: firstName })
           : t(lang, 'start.welcomeBack', { name: firstName });
 
         await sendMessage(chatId, greeting, getMainMenuKeyboard(lang));
+        await sendMessage(chatId, t(lang, 'start.chooseAction'));
+        return res.status(200).json({ ok: true });
+      }
+
+      if (text === '/reset') {
+        await updateSessionState(user.account_id, user.id, UserSessionState.IDLE, {});
+        await sendMessage(chatId, t(lang, 'start.sessionReset'), getMainMenuKeyboard(lang));
         await sendMessage(chatId, t(lang, 'start.chooseAction'));
         return res.status(200).json({ ok: true });
       }

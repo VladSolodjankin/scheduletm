@@ -11,6 +11,7 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
 
     'start.welcomeNew': 'Привет, {{name}}! Я бот для записи к психологу.',
     'start.welcomeBack': 'С возвращением, {{name}}!',
+    'start.sessionReset': 'Сессия сброшена. Начинаем заново.',
     'start.chooseAction': 'Я могу помочь записаться к специалисту или показать ваши записи.',
 
     'language.changed': 'Язык переключён на русский.',
@@ -84,6 +85,7 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
 
     'start.welcomeNew': "Hi, {{name}}! I'm your psychology booking bot.",
     'start.welcomeBack': 'Welcome back, {{name}}!',
+    'start.sessionReset': 'Session reset. Let’s start over.',
     'start.chooseAction': 'I can help you book a session or manage your appointments',
 
     'language.changed': 'Language switched to English.',
