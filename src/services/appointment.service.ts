@@ -1,12 +1,13 @@
 import {
   cancelAppointmentById,
-  createAppointment,
+  createAppointments,
   findUserAppointmentById,
   findUserAppointments,
   updateAppointmentDateTime,
 } from '../repositories/appointment.repository';
 import { getDefaultTimezone } from '../repositories/app-settings.repository';
 import { findServiceById } from '../repositories/service.repository';
+import { findSpecialistById } from '../repositories/specialist.repository';
 import { toDateTimeFromUtc, toUtcIsoFromTimezone } from '../utils/timezone';
 
 type CreateBookingAppointmentInput = {
@@ -37,25 +38,45 @@ export async function createBookingAppointment(input: CreateBookingAppointmentIn
     };
   }
 
+  const specialist = await findSpecialistById(input.accountId, input.specialistId);
+  if (!specialist || !specialist.is_active) {
+    return {
+      ok: false as const,
+      reason: 'specialist_not_found',
+    };
+  }
+
   const timezone = await getDefaultTimezone(input.accountId);
-  const appointmentAt = toUtcIsoFromTimezone(input.selectedDate, input.selectedTime, timezone);
+  const sessionCount = Math.max(1, Number(service.sessions_count ?? 1));
+  const appointmentTimes = buildSessionDates(input.selectedDate, sessionCount)
+    .map((date) => toUtcIsoFromTimezone(date, input.selectedTime, timezone));
+  const totalPrice = calculateServicePrice({
+    sessionCount,
+    durationMin: service.duration_min,
+    specialistBaseSessionPrice: specialist.base_session_price,
+    specialistBaseHourPrice: specialist.base_hour_price,
+  });
 
   try {
-    const appointment = await createAppointment({
-      accountId: input.accountId,
-      userId: input.userId,
-      serviceId: input.serviceId,
-      specialistId: input.specialistId,
-      appointmentAt,
-      durationMin: service.duration_min,
-      price: service.price,
-      currency: service.currency,
-    });
+    const appointments = await createAppointments(
+      appointmentTimes.map((appointmentAt, index) => ({
+        accountId: input.accountId,
+        userId: input.userId,
+        serviceId: input.serviceId,
+        specialistId: input.specialistId,
+        appointmentAt,
+        durationMin: service.duration_min,
+        price: index === 0 ? totalPrice : 0,
+        currency: service.currency,
+      })),
+    );
 
     return {
       ok: true as const,
-      appointment,
+      appointments,
+      appointment: appointments[0],
       service,
+      specialist,
     };
   } catch (error) {
     if (isSlotConflictError(error)) {
@@ -67,6 +88,36 @@ export async function createBookingAppointment(input: CreateBookingAppointmentIn
 
     throw error;
   }
+}
+
+function buildSessionDates(startDate: string, sessionCount: number) {
+  const [year, month, day] = startDate.split('-').map(Number);
+  const dates: string[] = [];
+
+  for (let index = 0; index < sessionCount; index += 1) {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    date.setUTCDate(date.getUTCDate() + index * 7);
+    dates.push(date.toISOString().slice(0, 10));
+  }
+
+  return dates;
+}
+
+function calculateServicePrice(input: {
+  sessionCount: number;
+  durationMin: number;
+  specialistBaseSessionPrice?: number | null;
+  specialistBaseHourPrice?: number | null;
+}) {
+  if (input.specialistBaseSessionPrice && input.specialistBaseSessionPrice > 0) {
+    return input.specialistBaseSessionPrice * input.sessionCount;
+  }
+
+  if (input.specialistBaseHourPrice && input.specialistBaseHourPrice > 0) {
+    return Math.round(input.specialistBaseHourPrice * (input.durationMin / 60) * input.sessionCount);
+  }
+
+  return 0;
 }
 
 export async function getUserAppointments(accountId: number, userId: number) {

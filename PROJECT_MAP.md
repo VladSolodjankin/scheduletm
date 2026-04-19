@@ -95,9 +95,9 @@ Webhook-роут ожидает следующие форматы:
 - `users`
   - `telegram_id`, `username`, `first_name`, `phone`, `email`, `language_code`
 - `services`
-  - `code`, `name_ru`, `name_en`, `price`, `currency`, `duration_min`, `is_active`, ...
+  - `code`, `name_ru`, `name_en`, `price`, `currency`, `duration_min`, `sessions_count`, `is_active`, ...
 - `specialists`
-  - `code`, `name`, `is_default`, `is_active`
+  - `code`, `name`, `is_default`, `is_active`, `base_session_price`, `base_hour_price`
 - `user_sessions`
   - `user_id` (unique), `state`, `payload_json`
 - `app_settings`
@@ -111,6 +111,7 @@ Webhook-роут ожидает следующие форматы:
 ### Уведомления
 
 - При подтверждении записи создаются уведомления T-24h (по доступным каналам: Telegram, email, SMS).
+- Если `services.sessions_count > 1`, при подтверждении создается серия записей (еженедельно от выбранного слота), и напоминания планируются для каждой записи.
 - При переносе записи старые pending/retry уведомления отменяются и создаются заново на новую дату; при отмене записи pending/retry уведомления переводятся в `cancelled`.
 - Фоновая джоба `startReminderJob()` раз в `NOTIFICATION_POLL_MS` выбирает due-сообщения из `notifications`.
 - При ошибке отправки применяется exponential backoff (до `max_attempts`), после чего запись переходит в `failed`.

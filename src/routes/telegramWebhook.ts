@@ -476,6 +476,8 @@ telegramWebhookRouter.post(
           if (!appointmentResult.ok) {
             const errorText = appointmentResult.reason === 'slot_already_booked'
               ? t(lang, 'booking.slotAlreadyBooked')
+              : appointmentResult.reason === 'specialist_not_found'
+                ? t(lang, 'booking.specialistNotFound')
               : 'Service not found';
             await answerCallbackQuery(callback.id, errorText);
             await editMessageText(chatId, messageId, errorText);
@@ -529,20 +531,24 @@ telegramWebhookRouter.post(
 
           await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
 
-          await queueAppointmentReminder({
-            accountId: user.account_id,
-            appointmentId: appointmentResult.appointment.id,
-            userId: user.id,
-            appointmentAtIso: String(appointmentResult.appointment.appointment_at),
-            serviceName,
-            specialistName: confirmData.specialistName,
-            selectedDate: payload.selectedDate!,
-            selectedTime: payload.selectedTime!,
-            chatId,
-            email: payload.enteredEmail || user.email,
-            phone: payload.enteredPhone || user.phone,
-            reminderComment: user.reminder_comment,
-          });
+          await Promise.all(
+            appointmentResult.appointments.map((appointment) =>
+              queueAppointmentReminder({
+                accountId: user.account_id,
+                appointmentId: appointment.id,
+                userId: user.id,
+                appointmentAtIso: String(appointment.appointment_at),
+                serviceName,
+                specialistName: confirmData.specialistName,
+                selectedDate: toDateTimeFromUtc(appointment.appointment_at, timezone).date,
+                selectedTime: toDateTimeFromUtc(appointment.appointment_at, timezone).time,
+                chatId,
+                email: payload.enteredEmail || user.email,
+                phone: payload.enteredPhone || user.phone,
+                reminderComment: user.reminder_comment,
+              }),
+            ),
+          );
 
           return res.status(200).json({ ok: true });
         }

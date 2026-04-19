@@ -102,6 +102,35 @@ export async function createAppointment(input: CreateAppointmentInput) {
   return appointment;
 }
 
+export async function createAppointments(input: CreateAppointmentInput[]) {
+  if (!input.length) return [];
+
+  return db.transaction(async (trx) => {
+    const created = [];
+
+    for (const item of input) {
+      const [appointment] = await trx('appointments')
+        .insert({
+          account_id: item.accountId,
+          user_id: item.userId,
+          service_id: item.serviceId,
+          specialist_id: item.specialistId,
+          appointment_at: item.appointmentAt,
+          duration_min: item.durationMin,
+          status: 'new',
+          comment: item.comment ?? null,
+          price: item.price,
+          currency: item.currency,
+        })
+        .returning('*');
+
+      created.push(appointment);
+    }
+
+    return created;
+  });
+}
+
 export async function findUserAppointments(accountId: number, userId: number) {
   const rows = (await db('appointments as a')
     .join('services as s', function joinServices() {

@@ -14,9 +14,27 @@ export async function seed(knex: Knex): Promise<void> {
 
   await knex('user_sessions').del();
   await knex('appointments').del();
-  await knex('specialists').del();
   await knex('services').del();
+  await knex('specialists').del();
   await knex('app_settings').del();
+
+  const [specialist] = await knex('specialists')
+    .insert([
+      {
+        account_id: accountId,
+        code: 'main_psychologist',
+        name: 'Лилия Солодянкина',
+        base_session_price: 2500,
+        base_hour_price: 1700,
+        is_active: true,
+        is_default: true,
+      },
+    ])
+    .returning<{ id: number; base_session_price: number; base_hour_price: number }[]>(
+      ['id', 'base_session_price', 'base_hour_price'],
+    );
+
+  const sessionPrice = specialist.base_session_price;
 
   await knex('services').insert([
     {
@@ -24,7 +42,7 @@ export async function seed(knex: Knex): Promise<void> {
       code: 'first_consultation',
       name_ru: 'Первичная консультация',
       name_en: 'First consultation',
-      price: 0,
+      price: sessionPrice,
       currency: 'RUB',
       duration_min: 90,
       sessions_count: 1,
@@ -36,7 +54,7 @@ export async function seed(knex: Knex): Promise<void> {
       code: 'single_session',
       name_ru: '1 сессия',
       name_en: '1 session',
-      price: 2500,
+      price: sessionPrice,
       currency: 'RUB',
       duration_min: 90,
       sessions_count: 1,
@@ -48,7 +66,7 @@ export async function seed(knex: Knex): Promise<void> {
       code: 'package_10',
       name_ru: '10 сессий',
       name_en: '10 sessions',
-      price: 22500,
+      price: sessionPrice * 10,
       currency: 'RUB',
       duration_min: 90,
       sessions_count: 10,
@@ -67,16 +85,6 @@ export async function seed(knex: Knex): Promise<void> {
       slot_duration_min: 90,
       reminder_offsets_min: '1440,60,30',
       reminder_comment: '',
-    },
-  ]);
-
-  await knex('specialists').insert([
-    {
-      account_id: accountId,
-      code: 'main_psychologist',
-      name: 'Лилия Солодянкина',
-      is_active: true,
-      is_default: true,
     },
   ]);
 }
