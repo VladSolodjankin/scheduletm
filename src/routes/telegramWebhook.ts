@@ -12,7 +12,6 @@ import {
   getAppointmentEditInlineKeyboard,
   getDatesInlineKeyboard,
   getBookingConfirmationKeyboard,
-  getBookingFinalInlineKeyboard,
   getLanguageKeyboard,
   getMainMenuKeyboard,
   getMyAppointmentsInlineKeyboard,
@@ -45,39 +44,10 @@ import {
   rescheduleUserAppointment,
 } from '../services/appointment.service';
 import { sendBookingStubNotification } from '../services/notification.service';
-import { getAppSettings } from '../repositories/app-settings.repository';
 import { toMoscowDateTimeFromUtc } from '../utils/timezone';
 import { getNextAvailableDates } from '../services/date.service';
 
 export const telegramWebhookRouter = Router();
-
-function buildCalendarLink(
-  date: string,
-  time: string,
-  title: string,
-  timezone: string,
-  durationMin: number,
-) {
-  const compactDate = date.replace(/-/g, '');
-  const compactTime = time.replace(':', '');
-  const [hours, minutes] = time.split(':').map(Number);
-
-  const endDateTime = new Date(Date.UTC(2000, 0, 1, hours, minutes));
-  endDateTime.setUTCMinutes(endDateTime.getUTCMinutes() + durationMin);
-
-  const end = `${compactDate}T${String(endDateTime.getUTCHours()).padStart(2, '0')}${String(
-    endDateTime.getUTCMinutes(),
-  ).padStart(2, '0')}00`;
-
-  const params = new URLSearchParams({
-    action: 'TEMPLATE',
-    text: title,
-    dates: `${compactDate}T${compactTime}00/${end}`,
-    ctz: timezone,
-  });
-
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
 
 async function buildConfirmationText(accountId: number, userId: number, lang: 'ru' | 'en') {
   const payload = await getSessionPayload(accountId, userId);
@@ -443,16 +413,6 @@ telegramWebhookRouter.post(
           await answerCallbackQuery(callback.id, t(lang, 'booking.created'));
           await editMessageText(chatId, messageId, t(lang, 'booking.created'));
 
-          const appSettings = await getAppSettings(user.account_id);
-          const calendarUrl = buildCalendarLink(
-            payload.selectedDate!,
-            payload.selectedTime!,
-            serviceName,
-            appSettings.timezone,
-            appSettings.slotDurationMin,
-          );
-          const paymentUrl = `https://example.com/pay/${appointmentResult.appointment.id}`;
-
           await sendMessage(
             chatId,
             t(lang, 'booking.finalMessage', {
@@ -461,7 +421,7 @@ telegramWebhookRouter.post(
               time: payload.selectedTime!,
               specialist: confirmData.specialistName,
             }),
-            getBookingFinalInlineKeyboard(lang, calendarUrl, paymentUrl),
+            getMainMenuKeyboard(lang),
           );
 
           await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
