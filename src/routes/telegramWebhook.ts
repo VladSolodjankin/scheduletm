@@ -424,6 +424,8 @@ telegramWebhookRouter.post(
             getMainMenuKeyboard(lang),
           );
 
+          await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
+
           await sendBookingStubNotification({
             chatId,
             languageCode: user.language_code,
