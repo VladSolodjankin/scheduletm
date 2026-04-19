@@ -1,39 +1,38 @@
 # PRODUCTION_READINESS_CHECKLIST
 
-Чеклист для нового контура `server + web`.
+Чеклист для `server + web`.
 
 ## 1. Platform & runtime
 
 - [ ] Зафиксировать Node.js LTS версию для всех workspace.
-- [ ] Настроить единые команды CI: install, typecheck, test, build.
-- [ ] Добавить lockfile политику и reproducible installs.
+- [ ] Настроить CI команды: install, typecheck, test, build.
+- [ ] Добавить lockfile-политику и reproducible installs.
 
 ## 2. Security
 
-- [ ] Добавить безопасную работу с секретами (`.env`, secret manager).
-- [ ] Подключить проверку Firebase ID token на server.
-- [ ] Ограничить CORS для production-доменов.
-- [ ] Добавить базовые security middleware (helmet, rate limit).
+- [x] Валидация payload через `zod`.
+- [x] `helmet` для базовых security headers.
+- [x] Salted PBKDF2 hashing для паролей.
+- [x] Brute-force lockout на login endpoint.
+- [x] Refresh session через `HttpOnly` cookie.
+- [ ] Добавить CSRF protection для refresh cookie flow.
+- [ ] Перенести секреты в secret manager (production).
 
-## 3. Observability
+## 3. API architecture
 
-- [ ] Добавить health/readiness endpoints на server.
-- [ ] Подключить структурированные логи и request-id.
-- [ ] Определить SLI/SLO (latency/error rate/auth failures).
+- [x] Разделить server-код по слоям (`routes/services/middlewares/config/repositories`).
+- [ ] Перенести in-memory store в persistent storage.
+- [ ] Добавить миграции и backup policy.
 
 ## 4. Integrations
 
-- [ ] Описать контракт интеграции с Google Calendar API.
-- [ ] Описать политику обновления Firebase SDK / service account ключей.
-- [ ] Добавить retry/backoff стратегию для внешних API.
+- [x] Добавить минимальный контракт `/api/integrations/google/connect`.
+- [ ] Реализовать полноценный OAuth 2.0 Google flow.
+- [ ] Добавить retry/backoff для внешних API.
 
 ## 5. Web delivery
 
-- [ ] Добавить production build pipeline для web.
+- [x] Включить роутинг для `/login`, `/register`, `/settings`.
+- [x] Использовать MUI как базовую UI систему.
 - [ ] Подключить error tracking.
-- [ ] Настроить кэширование и заголовки безопасности.
-
-## 6. Migration strategy
-
-- [ ] Задокументировать границы ответственности `bot` vs `server/web` на период миграции.
-- [ ] Зафиксировать критерии полного перехода на `server/web`.
+- [ ] Настроить caching/security headers на edge.
