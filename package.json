@@ -1,0 +1,21 @@
+{
+  "name": "scheduletm",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ScheduleTM monorepo (bot, server, web)",
+  "workspaces": [
+    "bot",
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "install:all": "npm install --workspaces",
+    "lint": "npm run -ws lint --if-present",
+    "typecheck": "npm run -ws typecheck --if-present",
+    "test": "npm run -ws test --if-present",
+    "build": "npm run -ws build --if-present"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
