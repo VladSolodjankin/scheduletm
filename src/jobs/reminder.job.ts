@@ -1,4 +1,5 @@
 import { processDueNotifications } from '../services/notification.service';
+import { logError, logInfo } from '../utils/logger';
 
 const DEFAULT_INTERVAL_MS = 60_000;
 
@@ -7,10 +8,12 @@ export function startReminderJob(intervalMs = DEFAULT_INTERVAL_MS) {
     try {
       const processed = await processDueNotifications();
       if (processed > 0) {
-        console.log(`[reminder.job] processed notifications: ${processed}`);
+        logInfo('reminder.job_processed', { processed });
       }
     } catch (error) {
-      console.error('[reminder.job] failed to process notifications', error);
+      logError('reminder.job_failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }, intervalMs);
 

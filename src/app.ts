@@ -3,6 +3,8 @@ import { env } from './config/env';
 import { telegramWebhookRouter } from './routes/telegramWebhook';
 import { getWebhookInfo, setWebhook } from './bot/bot';
 import { startReminderJob } from './jobs/reminder.job';
+import { startAlertsJob } from './jobs/alerts.job';
+import { logError, logInfo } from './utils/logger';
 
 async function bootstrap() {
   const app = express();
@@ -16,23 +18,40 @@ async function bootstrap() {
   app.use(telegramWebhookRouter);
 
   const stopReminderJob = startReminderJob(env.notificationPollMs);
+  const stopAlertsJob = startAlertsJob(
+    env.alertPollMs,
+    env.alertNoUpdatesThresholdMs,
+    env.alertFailedGrowthThreshold,
+  );
 
   const server = app.listen(env.port, async () => {
-    console.log(`Server started on port ${env.port}`);
+    logInfo('app.started', { port: env.port, node_env: env.nodeEnv });
 
-    try {
-      const result = await setWebhook();
-      console.log('Webhook set:', result);
+    if (env.isProduction && env.autoSetWebhook) {
+      try {
+        const result = await setWebhook();
+        logInfo('telegram.webhook_set', { result });
 
-      const info = await getWebhookInfo();
-      console.log('Webhook info:', info);
-    } catch (error) {
-      console.error('Failed to set webhook:', error);
+        const info = await getWebhookInfo();
+        logInfo('telegram.webhook_info', { info });
+      } catch (error) {
+        logError('telegram.webhook_set_failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      return;
     }
+
+    logInfo('telegram.webhook_autoset_skipped', {
+      reason: 'AUTO_SET_WEBHOOK is enabled only in production',
+      node_env: env.nodeEnv,
+      auto_set_webhook: env.autoSetWebhook,
+    });
   });
 
   const shutdown = () => {
     stopReminderJob();
+    stopAlertsJob();
     server.close(() => process.exit(0));
   };
 
@@ -41,6 +60,8 @@ async function bootstrap() {
 }
 
 bootstrap().catch((error) => {
-  console.error('Fatal bootstrap error:', error);
+  logError('app.bootstrap_failed', {
+    error: error instanceof Error ? error.message : String(error),
+  });
   process.exit(1);
 });

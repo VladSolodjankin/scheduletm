@@ -14,7 +14,7 @@
 
 ## Дерево проекта (главное)
 
-- `src/app.ts` - bootstrap Express + регистрация роутов + `setWebhook()` на старте
+- `src/app.ts` - bootstrap Express + регистрация роутов + условный `setWebhook()` на старте (только production + `AUTO_SET_WEBHOOK`)
 - `src/config/env.ts` - чтение env-переменных
 - `src/routes/telegramWebhook.ts` - единый webhook-роут и основная «оркестрация» диалога
 - `src/bot/*` - обёртка над Telegram Bot API + генераторы клавиатур
@@ -24,6 +24,7 @@
 - `src/db/*` - knex init, миграции и сиды
 - `src/utils/timezone.ts` - timezone-утилиты (IANA): конвертация локального времени аккаунта <-> UTC ISO, диапазоны суток и «сегодня» в timezone аккаунта
 - `src/jobs/reminder.job.ts` - воркер напоминаний: опрашивает `notifications`, отправляет и управляет ретраями
+- `src/jobs/alerts.job.ts` - фоновые проверки и алерты по 5xx, росту `notifications.failed` и отсутствию входящих updates
 - `src/utils/BPMN/BPMN.ts` - экспериментальная BPMN-утилита (пока не интегрирована)
 
 Сборка: `vite build` собирает SSR entry `src/app.ts` в `dist/app.js`, который запускается командой `npm run start`.
@@ -35,7 +36,7 @@
 1. `src/app.ts` создаёт Express-приложение, включает `express.json()`.
 2. Регистрирует `GET /health`.
 3. Регистрирует `telegramWebhookRouter`.
-4. На `app.listen` вызывает `setWebhook()` и печатает `getWebhookInfo()`.
+4. На `app.listen` вызывает `setWebhook()` и печатает `getWebhookInfo()` только в production при `AUTO_SET_WEBHOOK=1`.
 
 ### Telegram webhook
 
@@ -108,6 +109,8 @@ Webhook-роут ожидает следующие форматы:
   - `user_id`, `service_id`, `specialist_id`, `total_sessions`, `total_price`, `currency`, `payment_status`
 - `notifications`
   - очередь уведомлений по каналам (`telegram/email/sms`), статусам (`pending/retry/sent/failed/cancelled`), ретраям и данным получателя
+- `processed_updates`
+  - техническая таблица идемпотентности webhook (`update_id`, статус обработки)
 
 
 ### Уведомления

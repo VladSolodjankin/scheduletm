@@ -10,6 +10,7 @@ import {
   scheduleNotificationRetry,
   cancelPendingNotificationsByAppointment,
 } from '../repositories/notification.repository';
+import { logInfo } from '../utils/logger';
 
 type QueueAppointmentReminderInput = {
   accountId: number;
@@ -144,7 +145,10 @@ async function dispatchNotification(channel: NotificationChannel, input: Dispatc
     }
 
     // Stub provider for MVP: save multichannel contract and status flow.
-    console.log(`[notification/email] to=${input.recipientEmail} ${message}`);
+    logInfo('notification.email_stub_sent', {
+      recipient: input.recipientEmail,
+      message,
+    });
     return;
   }
 
@@ -153,7 +157,10 @@ async function dispatchNotification(channel: NotificationChannel, input: Dispatc
   }
 
   // Stub provider for MVP: save multichannel contract and status flow.
-  console.log(`[notification/sms] to=${input.recipientPhone} ${message}`);
+  logInfo('notification.sms_stub_sent', {
+    recipient: input.recipientPhone,
+    message,
+  });
 }
 
 function buildReminderText(payload: Record<string, unknown>) {

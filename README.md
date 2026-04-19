@@ -46,6 +46,10 @@ Backend Telegram-бот для записи на услуги через webhook
 - `DATABASE_PUBLIC_URL` - строка подключения к Postgres для `development`
 - `DATABASE_URL` - строка подключения к Postgres для `production`
 - `NOTIFICATION_POLL_MS` - интервал фоновой обработки уведомлений в миллисекундах (по умолчанию `60000`)
+- `AUTO_SET_WEBHOOK` - авто-вызов `setWebhook()` только в `production` (`1/true` для включения)
+- `ALERT_POLL_MS` - интервал проверки алертов (по умолчанию `60000`)
+- `ALERT_NO_UPDATES_THRESHOLD_MS` - порог алерта по отсутствию входящих updates (по умолчанию `900000`)
+- `ALERT_FAILED_GROWTH_THRESHOLD` - порог роста `notifications.failed` для алерта (по умолчанию `5`)
 
 ## Быстрый старт (локально)
 
@@ -71,7 +75,12 @@ npm run build
 npm run start
 ```
 
-При старте приложение вызывает `setWebhook()` и печатает `getWebhookInfo()` в лог.
+При старте приложение вызывает `setWebhook()` и печатает `getWebhookInfo()` в лог **только если** одновременно:
+
+- `NODE_ENV=production`
+- `AUTO_SET_WEBHOOK=1` (или `true`)
+
+Во всех остальных окружениях авто-установка webhook пропускается.
 
 Важно: Telegram webhook должен указывать на публичный HTTPS URL. Для локальной разработки обычно используют ngrok/аналог и подставляют его в `APP_URL`.
 

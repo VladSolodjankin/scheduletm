@@ -55,5 +55,5 @@
 
 - Добавить `docker-compose.yml` (Postgres + app), `README` для деплоя.
 - Добавить `npm run typecheck` (tsc --noEmit) и включить его в CI.
-- Добавить `AUTO_SET_WEBHOOK=0/1` или `SET_WEBHOOK_ON_START=...`, чтобы локально не трогать webhook.
-- Добавить структурированные логи (request id, update id) и метрики (health details).
+- [x] Добавить `AUTO_SET_WEBHOOK=0/1` или `SET_WEBHOOK_ON_START=...`, чтобы локально не трогать webhook.
+- [x] Добавить структурированные логи (request id, update id) и метрики (health details).
