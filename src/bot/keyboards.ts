@@ -141,8 +141,14 @@ export function getAppointmentEditInlineKeyboard(
     inline_keyboard: [
       [
         {
-          text: lang === 'ru' ? '✏️ Изменить' : '✏️ Edit',
+          text: translate(lang, 'appointments.editButton'),
           callback_data: `appointment_edit:${appointmentId}`,
+        },
+      ],
+      [
+        {
+          text: translate(lang, 'appointments.cancelButton'),
+          callback_data: `appointment_cancel:${appointmentId}`,
         },
       ],
     ],

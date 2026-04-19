@@ -12,7 +12,14 @@ vi.mock('../../repositories/service.repository', () => {
   };
 });
 
+vi.mock('../../repositories/app-settings.repository', () => {
+  return {
+    getDefaultTimezone: vi.fn(),
+  };
+});
+
 import { createAppointment } from '../../repositories/appointment.repository';
+import { getDefaultTimezone } from '../../repositories/app-settings.repository';
 import { findServiceById } from '../../repositories/service.repository';
 import { createBookingAppointment } from '../appointment.service';
 
@@ -55,7 +62,8 @@ describe('createBookingAppointment', () => {
     expect(createAppointment).not.toHaveBeenCalled();
   });
 
-  it('creates appointment with UTC ISO datetime converted from Moscow date/time', async () => {
+  it('creates appointment with UTC ISO datetime converted from account timezone date/time', async () => {
+    vi.mocked(getDefaultTimezone).mockResolvedValue('Europe/Moscow');
     vi.mocked(findServiceById).mockResolvedValue({
       id: 10,
       is_active: true,

@@ -1,4 +1,5 @@
 import { getAppSettings } from '../repositories/app-settings.repository';
+import { getCurrentDateInTimezone, getDateAfterDays } from '../utils/timezone';
 
 function parseWorkDays(workDays: string) {
   const allowed = new Set<number>();
@@ -16,30 +17,25 @@ function parseWorkDays(workDays: string) {
   return allowed;
 }
 
+function getWeekDay(date: string) {
+  const [year, month, day] = date.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+}
+
 export async function getNextAvailableDates(accountId: number, count = 7): Promise<string[]> {
   const results: string[] = [];
-  const now = new Date();
   const settings = await getAppSettings(accountId);
   const allowedWorkDays = parseWorkDays(settings.workDays);
+  const startDate = getCurrentDateInTimezone(settings.timezone);
 
   for (let i = 0; results.length < count && i < 21; i += 1) {
-    const date = new Date(now);
-    date.setDate(now.getDate() + i);
-
-    const day = date.getDay(); // 0=Sun, 1=Mon, ... 6=Sat
+    const date = getDateAfterDays(startDate, i);
+    const day = getWeekDay(date); // 0=Sun, 1=Mon, ... 6=Sat
 
     if (!allowedWorkDays.has(day)) continue;
 
-    const formatted = formatDate(date);
-    results.push(formatted);
+    results.push(date);
   }
 
   return results;
-}
-
-function formatDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }

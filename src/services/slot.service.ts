@@ -53,6 +53,7 @@ export async function getAvailableSlots(params: {
     params.accountId,
     params.date,
     params.specialistId,
+    settings.timezone,
   );
 
   const busyIntervals = busyAppointments.map((appointment) => {

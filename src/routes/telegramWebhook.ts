@@ -42,10 +42,12 @@ import {
   getUserAppointment,
   getUserAppointments,
   rescheduleUserAppointment,
+  cancelUserAppointment,
 } from '../services/appointment.service';
 import { sendBookingStubNotification } from '../services/notification.service';
-import { toMoscowDateTimeFromUtc } from '../utils/timezone';
+import { toDateTimeFromUtc } from '../utils/timezone';
 import { getNextAvailableDates } from '../services/date.service';
+import { getDefaultTimezone } from '../repositories/app-settings.repository';
 
 export const telegramWebhookRouter = Router();
 
@@ -98,6 +100,7 @@ async function buildConfirmationText(accountId: number, userId: number, lang: 'r
 
 function buildAppointmentDetailsText(
   lang: 'ru' | 'en',
+  timezone: string,
   appointment: {
     appointmentAt: string | Date;
     serviceNameRu: string;
@@ -106,7 +109,7 @@ function buildAppointmentDetailsText(
   },
   canEdit: boolean,
 ) {
-  const dateTime = toMoscowDateTimeFromUtc(appointment.appointmentAt);
+  const dateTime = toDateTimeFromUtc(appointment.appointmentAt, timezone);
   const serviceName = lang === 'ru' ? appointment.serviceNameRu : appointment.serviceNameEn;
 
   return [
@@ -151,6 +154,7 @@ telegramWebhookRouter.post(
 
         const user = userResult.user;
         const lang = normalizeLanguageCode(user.language_code);
+        const timezone = await getDefaultTimezone(user.account_id);
 
         if (data.startsWith('service:')) {
           const serviceId = Number(data.split(':')[1]);
@@ -244,7 +248,7 @@ telegramWebhookRouter.post(
               `${t(lang, 'booking.chooseDate')} ${selectedDate}\n\n${t(
                 lang,
                 'booking.noSlots',
-              )}\n${t(lang, 'booking.slotsTimezoneNote')}`,
+              )}\n${t(lang, 'booking.slotsTimezoneNote', { timezone })}`,
             );
             return res.status(200).json({ ok: true });
           }
@@ -256,7 +260,7 @@ telegramWebhookRouter.post(
             `${t(lang, 'booking.chooseDate')} ${selectedDate}\n\n${t(
               lang,
               'booking.chooseTime',
-            )}\n${t(lang, 'booking.slotsTimezoneNote')}`,
+            )}\n${t(lang, 'booking.slotsTimezoneNote', { timezone })}`,
             getTimeSlotsInlineKeyboard(availableSlots, lang),
           );
 
@@ -301,7 +305,10 @@ telegramWebhookRouter.post(
             await answerCallbackQuery(callback.id, selectedTime);
 
             if (!rescheduled.ok) {
-              await editMessageText(chatId, messageId, t(lang, 'appointments.editBlocked'));
+              const messageText = rescheduled.reason === 'slot_already_booked'
+                ? t(lang, 'booking.slotAlreadyBooked')
+                : t(lang, 'appointments.editBlocked');
+              await editMessageText(chatId, messageId, messageText);
               await updateSessionState(user.account_id, user.id, UserSessionState.IDLE, {});
               return res.status(200).json({ ok: true });
             }
@@ -405,7 +412,11 @@ telegramWebhookRouter.post(
           });
 
           if (!appointmentResult.ok) {
-            await answerCallbackQuery(callback.id, 'Service not found');
+            const errorText = appointmentResult.reason === 'slot_already_booked'
+              ? t(lang, 'booking.slotAlreadyBooked')
+              : 'Service not found';
+            await answerCallbackQuery(callback.id, errorText);
+            await editMessageText(chatId, messageId, errorText);
             return res.status(200).json({ ok: true });
           }
 
@@ -453,7 +464,7 @@ telegramWebhookRouter.post(
           await editMessageText(
             chatId,
             messageId,
-            buildAppointmentDetailsText(lang, appointment, editable),
+            buildAppointmentDetailsText(lang, timezone, appointment, editable),
             editable ? getAppointmentEditInlineKeyboard(appointment.id, lang) : undefined,
           );
 
@@ -492,6 +503,22 @@ telegramWebhookRouter.post(
           return res.status(200).json({ ok: true });
         }
 
+        if (data.startsWith('appointment_cancel:')) {
+          const appointmentId = Number(data.split(':')[1]);
+          const cancelled = await cancelUserAppointment(user.account_id, user.id, appointmentId);
+
+          if (!cancelled.ok) {
+            await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
+            return res.status(200).json({ ok: true });
+          }
+
+          await answerCallbackQuery(callback.id, t(lang, 'appointments.cancelled'));
+          await editMessageText(chatId, messageId, t(lang, 'appointments.cancelled'));
+          await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
+
+          return res.status(200).json({ ok: true });
+        }
+
         await answerCallbackQuery(callback.id);
         return res.status(200).json({ ok: true });
       }
@@ -514,6 +541,7 @@ telegramWebhookRouter.post(
 
       const user = userResult.user;
       const lang = normalizeLanguageCode(user.language_code);
+      const timezone = await getDefaultTimezone(user.account_id);
       const firstName = user.first_name || message.from.first_name || 'friend';
       const session = await findSessionByUserId(user.account_id, user.id);
       const state = (session?.state as UserSessionState | undefined) ?? UserSessionState.IDLE;
@@ -656,7 +684,7 @@ telegramWebhookRouter.post(
           t(lang, 'appointments.listTitle'),
           getMyAppointmentsInlineKeyboard(
             appointments.map((appointment) => {
-              const dateTime = toMoscowDateTimeFromUtc(appointment.appointmentAt);
+              const dateTime = toDateTimeFromUtc(appointment.appointmentAt, timezone);
               return {
                 id: appointment.id,
                 title: t(lang, 'appointments.item', {

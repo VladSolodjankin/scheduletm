@@ -1,5 +1,5 @@
 import { db } from '../db/knex';
-import { getUtcRangeForMoscowDate, toMoscowDateTimeFromUtc } from '../utils/timezone';
+import { getUtcRangeForTimezoneDate, toDateTimeFromUtc } from '../utils/timezone';
 
 type AppointmentRow = {
   appointment_at: string | Date;
@@ -38,8 +38,9 @@ export async function findBusyAppointmentTimesByDate(
   accountId: number,
   date: string,
   specialistId: number,
+  timezone: string,
 ) {
-  const { startIso: start, endIso: end } = getUtcRangeForMoscowDate(date);
+  const { startIso: start, endIso: end } = getUtcRangeForTimezoneDate(date, timezone);
 
   const rows = (await db('appointments')
     .where({ account_id: accountId, specialist_id: specialistId })
@@ -48,7 +49,7 @@ export async function findBusyAppointmentTimesByDate(
     .select('appointment_at')) as AppointmentRow[];
 
   return rows.map((row) => {
-    const dateTime = toMoscowDateTimeFromUtc(row.appointment_at);
+    const dateTime = toDateTimeFromUtc(row.appointment_at, timezone);
     return dateTime.time;
   });
 }
@@ -57,8 +58,9 @@ export async function findBusyAppointmentsByDate(
   accountId: number,
   date: string,
   specialistId: number,
+  timezone: string,
 ) {
-  const { startIso: start, endIso: end } = getUtcRangeForMoscowDate(date);
+  const { startIso: start, endIso: end } = getUtcRangeForTimezoneDate(date, timezone);
 
   const rows = (await db('appointments')
     .where({ account_id: accountId, specialist_id: specialistId })
@@ -71,7 +73,7 @@ export async function findBusyAppointmentsByDate(
     .select('appointment_at', 'duration_min')) as BusyAppointmentRow[];
 
   return rows.map((row) => {
-    const dateTime = toMoscowDateTimeFromUtc(row.appointment_at);
+    const dateTime = toDateTimeFromUtc(row.appointment_at, timezone);
 
     return {
       date: dateTime.date,
@@ -202,4 +204,28 @@ export async function updateAppointmentDateTime(
     );
 
   return appointment;
+}
+
+
+export async function cancelAppointmentById(
+  accountId: number,
+  userId: number,
+  appointmentId: number,
+) {
+  const [appointment] = await db('appointments')
+    .where({
+      account_id: accountId,
+      id: appointmentId,
+      user_id: userId,
+    })
+    .whereNot('status', 'cancelled')
+    .update(
+      {
+        status: 'cancelled',
+        updated_at: db.fn.now(),
+      },
+      ['*'],
+    );
+
+  return appointment ?? null;
 }
