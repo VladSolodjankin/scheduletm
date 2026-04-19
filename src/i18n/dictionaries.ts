@@ -41,7 +41,9 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.paymentLink': 'Ссылка на оплату (заглушка): {{url}}',
     'booking.finalMessage':
       '🎉 {{created}}\n\n🧑‍⚕️ Специалист: {{specialist}}\n📅 Дата: {{date}}\n🕒 Время: {{time}}\n\nВыберите действие в меню ниже.\n\nСпециалист свяжется с вами и пришлёт ссылку на встречу.',
-    'booking.openCalendar': '📅 Открыть календарь',
+    'booking.openCalendarGoogle': '📅 Google Calendar',
+    'booking.openCalendarApple': '🍎 Apple Calendar (.ics)',
+    'booking.openCalendarMicrosoft': '🪟 Microsoft Calendar',
     'booking.openPayment': '💳 Перейти к оплате',
     'booking.notificationStub':
       'Заглушка уведомлений: отправим напоминание о «{{service}}» на {{date}} {{time}} через {{channels}}.',
@@ -110,7 +112,9 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.paymentLink': 'Payment link (stub): {{url}}',
     'booking.finalMessage':
       '🎉 {{created}}\n\n🧑‍⚕️ Specialist: {{specialist}}\n📅 Date: {{date}}\n🕒 Time: {{time}}\n\nChoose an action from the menu below.\n\nA specialist will contact you and send a meeting link.',
-    'booking.openCalendar': '📅 Open calendar',
+    'booking.openCalendarGoogle': '📅 Google Calendar',
+    'booking.openCalendarApple': '🍎 Apple Calendar (.ics)',
+    'booking.openCalendarMicrosoft': '🪟 Microsoft Calendar',
     'booking.openPayment': '💳 Open payment',
     'booking.notificationStub':
       'Notification stub: we will send a reminder for "{{service}}" at {{date}} {{time}} via {{channels}}.',

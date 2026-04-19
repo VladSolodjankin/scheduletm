@@ -12,6 +12,7 @@ import {
   getAppointmentEditInlineKeyboard,
   getDatesInlineKeyboard,
   getBookingConfirmationKeyboard,
+  getBookingFinalInlineKeyboard,
   getLanguageKeyboard,
   getMainMenuKeyboard,
   getMyAppointmentsInlineKeyboard,
@@ -48,6 +49,12 @@ import { sendBookingStubNotification } from '../services/notification.service';
 import { toDateTimeFromUtc } from '../utils/timezone';
 import { getNextAvailableDates } from '../services/date.service';
 import { getDefaultTimezone } from '../repositories/app-settings.repository';
+import {
+  buildAppleCalendarIcs,
+  buildAppleCalendarLink,
+  buildCalendarLink,
+  buildMicrosoftCalendarLink,
+} from '../utils/calendar-links';
 
 export const telegramWebhookRouter = Router();
 
@@ -97,6 +104,25 @@ async function buildConfirmationText(accountId: number, userId: number, lang: 'r
     specialistName: specialist.name,
   };
 }
+
+
+telegramWebhookRouter.get('/calendar/apple.ics', (req: Request, res: Response) => {
+  const date = typeof req.query.date === 'string' ? req.query.date : '';
+  const time = typeof req.query.time === 'string' ? req.query.time : '';
+  const title = typeof req.query.title === 'string' ? req.query.title : 'ScheduleTM booking';
+  const timezone = typeof req.query.timezone === 'string' ? req.query.timezone : 'UTC';
+  const durationMinRaw = typeof req.query.durationMin === 'string' ? Number(req.query.durationMin) : 60;
+  const durationMin = Number.isFinite(durationMinRaw) ? durationMinRaw : 60;
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
+    return res.status(400).send('Invalid date or time');
+  }
+
+  const ics = buildAppleCalendarIcs(date, time, title, timezone, durationMin);
+  res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="appointment.ics"');
+  return res.status(200).send(ics);
+});
 
 function buildAppointmentDetailsText(
   lang: 'ru' | 'en',
@@ -424,6 +450,30 @@ telegramWebhookRouter.post(
           await answerCallbackQuery(callback.id, t(lang, 'booking.created'));
           await editMessageText(chatId, messageId, t(lang, 'booking.created'));
 
+          const calendarGoogleUrl = buildCalendarLink(
+            payload.selectedDate!,
+            payload.selectedTime!,
+            serviceName,
+            timezone,
+            appointmentResult.service.duration_min,
+          );
+          const calendarAppleUrl = buildAppleCalendarLink(
+            env.appUrl,
+            payload.selectedDate!,
+            payload.selectedTime!,
+            serviceName,
+            timezone,
+            appointmentResult.service.duration_min,
+          );
+          const calendarMicrosoftUrl = buildMicrosoftCalendarLink(
+            payload.selectedDate!,
+            payload.selectedTime!,
+            serviceName,
+            timezone,
+            appointmentResult.service.duration_min,
+          );
+          const paymentUrl = `https://example.com/pay/${appointmentResult.appointment.id}`;
+
           await sendMessage(
             chatId,
             t(lang, 'booking.finalMessage', {
@@ -432,7 +482,13 @@ telegramWebhookRouter.post(
               time: payload.selectedTime!,
               specialist: confirmData.specialistName,
             }),
-            getMainMenuKeyboard(lang),
+            getBookingFinalInlineKeyboard(
+              lang,
+              calendarGoogleUrl,
+              calendarAppleUrl,
+              calendarMicrosoftUrl,
+              paymentUrl,
+            ),
           );
 
           await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
