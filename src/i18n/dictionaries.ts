@@ -75,6 +75,16 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'appointments.rescheduled': 'Запись обновлена: {{date}} {{time}}.',
     'appointments.cancelled': 'Запись отменена.',
     'booking.slotAlreadyBooked': 'Этот слот уже занят. Выберите другое время.',
+    'booking.slotAlreadySelected': 'Этот слот уже выбран в пакете. Выберите другой.',
+    'booking.chooseSessionSlotDate': 'Выберите дату для сессии {{current}} из {{total}}:',
+    'booking.sessionSlotSaved':
+      'Сессия {{current}} из {{total}} сохранена: {{date}} {{time}}.',
+    'booking.allSessionSlotsSelected': 'Вы выбрали все {{total}} сессий. Проверьте запись ниже.',
+    'booking.confirmSlotsTitle': 'Слоты:',
+    'booking.confirmSlotItem': '{{index}}) {{date}} {{time}}',
+    'booking.multiSessionModePrompt': 'Как записать оставшиеся сессии?',
+    'booking.multiSessionSameTime': 'Оставшиеся — в то же время (раз в неделю)',
+    'booking.multiSessionCustomTime': 'Выбрать дату/время для каждой',
 
     'notifications.appointmentReminder':
       'Напоминание: {{service}} у {{specialist}} {{date}} в {{time}}.',
@@ -150,6 +160,16 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'appointments.rescheduled': 'Appointment updated: {{date}} {{time}}.',
     'appointments.cancelled': 'Appointment cancelled.',
     'booking.slotAlreadyBooked': 'This slot is already booked. Please choose another time.',
+    'booking.slotAlreadySelected': 'This slot is already selected in the package. Choose another one.',
+    'booking.chooseSessionSlotDate': 'Choose date for session {{current}} of {{total}}:',
+    'booking.sessionSlotSaved': 'Session {{current}} of {{total}} saved: {{date}} {{time}}.',
+    'booking.allSessionSlotsSelected':
+      'You selected all {{total}} sessions. Please verify booking details below.',
+    'booking.confirmSlotsTitle': 'Slots:',
+    'booking.confirmSlotItem': '{{index}}) {{date}} {{time}}',
+    'booking.multiSessionModePrompt': 'How would you like to schedule the remaining sessions?',
+    'booking.multiSessionSameTime': 'Keep same time weekly',
+    'booking.multiSessionCustomTime': 'Pick date/time for each',
 
     'notifications.appointmentReminder':
       'Reminder: {{service}} with {{specialist}} on {{date}} at {{time}}.',

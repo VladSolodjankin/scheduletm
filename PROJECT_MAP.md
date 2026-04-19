@@ -103,7 +103,9 @@ Webhook-роут ожидает следующие форматы:
 - `app_settings`
   - `timezone`, `work_start_hour`, `work_end_hour`, `work_days`, `slot_duration_min`
 - `appointments`
-  - `user_id`, `service_id`, `specialist_id`, `appointment_at` (timestamptz), `duration_min`, `status`, `price`, `currency`, ...
+  - `user_id`, `service_id`, `specialist_id`, `group_id`, `appointment_at` (timestamptz), `duration_min`, `status`, `price`, `currency`, `is_paid`, ...
+- `appointment_groups`
+  - `user_id`, `service_id`, `specialist_id`, `total_sessions`, `total_price`, `currency`, `payment_status`
 - `notifications`
   - очередь уведомлений по каналам (`telegram/email/sms`), статусам (`pending/retry/sent/failed/cancelled`), ретраям и данным получателя
 
@@ -111,7 +113,7 @@ Webhook-роут ожидает следующие форматы:
 ### Уведомления
 
 - При подтверждении записи создаются уведомления T-24h (по доступным каналам: Telegram, email, SMS).
-- Если `services.sessions_count > 1`, при подтверждении создается серия записей (еженедельно от выбранного слота), и напоминания планируются для каждой записи.
+- Если `services.sessions_count > 1`, после выбора первого слота можно выбрать режим: автоматом на то же время (еженедельно) или вручную для каждой сессии; затем создается серия записей (связанных через `appointment_groups`) и напоминания планируются для каждой записи.
 - При переносе записи старые pending/retry уведомления отменяются и создаются заново на новую дату; при отмене записи pending/retry уведомления переводятся в `cancelled`.
 - Фоновая джоба `startReminderJob()` раз в `NOTIFICATION_POLL_MS` выбирает due-сообщения из `notifications`.
 - При ошибке отправки применяется exponential backoff (до `max_attempts`), после чего запись переходит в `failed`.

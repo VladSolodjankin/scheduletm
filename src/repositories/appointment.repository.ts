@@ -31,6 +31,8 @@ type CreateAppointmentInput = {
   durationMin: number;
   price: number;
   currency: string;
+  groupId?: number | null;
+  isPaid?: boolean;
   comment?: string | null;
 };
 
@@ -96,6 +98,8 @@ export async function createAppointment(input: CreateAppointmentInput) {
       comment: input.comment ?? null,
       price: input.price,
       currency: input.currency,
+      group_id: input.groupId ?? null,
+      is_paid: input.isPaid ?? false,
     })
     .returning('*');
 
@@ -121,6 +125,8 @@ export async function createAppointments(input: CreateAppointmentInput[]) {
           comment: item.comment ?? null,
           price: item.price,
           currency: item.currency,
+          group_id: item.groupId ?? null,
+          is_paid: item.isPaid ?? false,
         })
         .returning('*');
 

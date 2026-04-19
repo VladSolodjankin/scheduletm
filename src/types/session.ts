@@ -11,6 +11,11 @@ export enum UserSessionState {
 }
 
 export type BookingPayload = {
+  selectedSlots?: Array<{ date: string; time: string }>;
+  currentSlotIndex?: number;
+  totalSessions?: number;
+  multiSessionMode?: 'same_time' | 'custom';
+  datePageOffset?: number;
   serviceId?: number;
   specialistId?: number;
   selectedDate?: string;

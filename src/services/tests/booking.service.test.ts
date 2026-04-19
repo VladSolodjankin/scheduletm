@@ -89,13 +89,26 @@ describe('booking.service', () => {
       7,
       1,
       UserSessionState.CHOOSING_SPECIALIST,
-      { serviceId: 10 },
+      expect.objectContaining({
+        serviceId: 10,
+        totalSessions: 1,
+        selectedSlots: [],
+        currentSlotIndex: 0,
+        datePageOffset: 0,
+      }),
     );
     expect(mergeSessionPayload).toHaveBeenCalledWith(
       7,
       1,
       UserSessionState.CHOOSING_DATE,
-      { serviceId: 10, specialistId: 77 },
+      expect.objectContaining({
+        serviceId: 10,
+        specialistId: 77,
+        totalSessions: 1,
+        selectedSlots: [],
+        currentSlotIndex: 0,
+        datePageOffset: 0,
+      }),
     );
 
     expect(out.ok).toBe(true);

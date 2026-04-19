@@ -50,14 +50,12 @@ describe('getNextAvailableDates', () => {
     expect(dates).toEqual([]);
   });
 
-  it('caps search window (21 days) and may return less than requested', async () => {
-    // Only Sundays allowed; starting Saturday 2026-04-18 => Sundays in next 21 days:
-    // 2026-04-19, 2026-04-26, 2026-05-03
+  it('supports offset pagination and wider search window', async () => {
     vi.mocked(getAppSettings).mockResolvedValue({
       workDays: '0',
     } as any);
 
-    const dates = await getNextAvailableDates(7, 10);
-    expect(dates).toEqual(['2026-04-19', '2026-04-26', '2026-05-03']);
+    const dates = await getNextAvailableDates(7, 3, 7);
+    expect(dates).toEqual(['2026-04-26', '2026-05-03', '2026-05-10']);
   });
 });

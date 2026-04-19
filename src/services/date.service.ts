@@ -22,13 +22,18 @@ function getWeekDay(date: string) {
   return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
 }
 
-export async function getNextAvailableDates(accountId: number, count = 7): Promise<string[]> {
+export async function getNextAvailableDates(
+  accountId: number,
+  count = 14,
+  startOffsetDays = 0,
+): Promise<string[]> {
   const results: string[] = [];
   const settings = await getAppSettings(accountId);
   const allowedWorkDays = parseWorkDays(settings.workDays);
   const startDate = getCurrentDateInTimezone(settings.timezone);
+  const maxScanDays = startOffsetDays + 120;
 
-  for (let i = 0; results.length < count && i < 21; i += 1) {
+  for (let i = startOffsetDays; results.length < count && i < maxScanDays; i += 1) {
     const date = getDateAfterDays(startDate, i);
     const day = getWeekDay(date); // 0=Sun, 1=Mon, ... 6=Sat
 

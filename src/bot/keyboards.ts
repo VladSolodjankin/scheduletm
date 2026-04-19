@@ -70,13 +70,33 @@ export function getSpecialistsInlineKeyboard(
 }
 
 export function getDatesInlineKeyboard(dates: string[]) {
+  return getDatesInlineKeyboardWithPagination(dates, 0, false, false);
+}
+
+export function getDatesInlineKeyboardWithPagination(
+  dates: string[],
+  pageOffset: number,
+  hasPrevPage: boolean,
+  hasNextPage: boolean,
+) {
+  const navRow = [];
+  if (hasPrevPage) {
+    navRow.push({ text: '⬅️', callback_data: `date_nav:${Math.max(pageOffset - 14, 0)}` });
+  }
+  if (hasNextPage) {
+    navRow.push({ text: '➡️', callback_data: `date_nav:${pageOffset + 14}` });
+  }
+
   return {
-    inline_keyboard: dates.map((date) => [
-      {
-        text: date,
-        callback_data: `date:${date}`,
-      },
-    ]),
+    inline_keyboard: [
+      ...dates.map((date) => [
+        {
+          text: date,
+          callback_data: `date:${date}`,
+        },
+      ]),
+      ...(navRow.length ? [navRow] : []),
+    ],
   };
 }
 
@@ -122,6 +142,15 @@ export function getBookingConfirmationKeyboard() {
         { text: '✅', callback_data: 'confirm:yes' },
         { text: '✏️', callback_data: 'confirm:edit' },
       ],
+    ],
+  };
+}
+
+export function getMultiSessionModeKeyboard(lang: SupportedLanguage) {
+  return {
+    inline_keyboard: [
+      [{ text: translate(lang, 'booking.multiSessionSameTime'), callback_data: 'multisession:same' }],
+      [{ text: translate(lang, 'booking.multiSessionCustomTime'), callback_data: 'multisession:custom' }],
     ],
   };
 }

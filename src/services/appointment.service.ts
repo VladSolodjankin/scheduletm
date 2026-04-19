@@ -8,6 +8,7 @@ import {
 import { getDefaultTimezone } from '../repositories/app-settings.repository';
 import { findServiceById } from '../repositories/service.repository';
 import { findSpecialistById } from '../repositories/specialist.repository';
+import { createAppointmentGroup } from '../repositories/appointment-group.repository';
 import { toDateTimeFromUtc, toUtcIsoFromTimezone } from '../utils/timezone';
 
 type CreateBookingAppointmentInput = {
@@ -17,6 +18,14 @@ type CreateBookingAppointmentInput = {
   specialistId: number;
   selectedDate: string;
   selectedTime: string;
+};
+
+type CreateBookingAppointmentsFromSlotsInput = {
+  accountId: number;
+  userId: number;
+  serviceId: number;
+  specialistId: number;
+  slots: Array<{ date: string; time: string }>;
 };
 
 function isSlotConflictError(error: unknown) {
@@ -58,6 +67,18 @@ export async function createBookingAppointment(input: CreateBookingAppointmentIn
   });
 
   try {
+    const groupId = sessionCount > 1
+      ? (await createAppointmentGroup({
+        accountId: input.accountId,
+        userId: input.userId,
+        serviceId: input.serviceId,
+        specialistId: input.specialistId,
+        totalSessions: sessionCount,
+        totalPrice,
+        currency: service.currency,
+      })).id
+      : null;
+
     const appointments = await createAppointments(
       appointmentTimes.map((appointmentAt, index) => ({
         accountId: input.accountId,
@@ -68,6 +89,99 @@ export async function createBookingAppointment(input: CreateBookingAppointmentIn
         durationMin: service.duration_min,
         price: index === 0 ? totalPrice : 0,
         currency: service.currency,
+        groupId,
+        isPaid: false,
+      })),
+    );
+
+    return {
+      ok: true as const,
+      appointments,
+      appointment: appointments[0],
+      service,
+      specialist,
+    };
+  } catch (error) {
+    if (isSlotConflictError(error)) {
+      return {
+        ok: false as const,
+        reason: 'slot_already_booked',
+      };
+    }
+
+    throw error;
+  }
+}
+
+export async function createBookingAppointmentsFromSlots(
+  input: CreateBookingAppointmentsFromSlotsInput,
+) {
+  if (!input.slots.length) {
+    return {
+      ok: false as const,
+      reason: 'slots_required',
+    };
+  }
+
+  const service = await findServiceById(input.accountId, input.serviceId);
+  if (!service || !service.is_active) {
+    return {
+      ok: false as const,
+      reason: 'service_not_found',
+    };
+  }
+
+  const specialist = await findSpecialistById(input.accountId, input.specialistId);
+  if (!specialist || !specialist.is_active) {
+    return {
+      ok: false as const,
+      reason: 'specialist_not_found',
+    };
+  }
+
+  const timezone = await getDefaultTimezone(input.accountId);
+  const uniqueSlots = new Set(input.slots.map((slot) => `${slot.date}T${slot.time}`));
+  if (uniqueSlots.size !== input.slots.length) {
+    return {
+      ok: false as const,
+      reason: 'duplicate_slots',
+    };
+  }
+
+  const appointmentTimes = input.slots.map((slot) =>
+    toUtcIsoFromTimezone(slot.date, slot.time, timezone));
+  const totalPrice = calculateServicePrice({
+    sessionCount: input.slots.length,
+    durationMin: service.duration_min,
+    specialistBaseSessionPrice: specialist.base_session_price,
+    specialistBaseHourPrice: specialist.base_hour_price,
+  });
+
+  try {
+    const groupId = input.slots.length > 1
+      ? (await createAppointmentGroup({
+        accountId: input.accountId,
+        userId: input.userId,
+        serviceId: input.serviceId,
+        specialistId: input.specialistId,
+        totalSessions: input.slots.length,
+        totalPrice,
+        currency: service.currency,
+      })).id
+      : null;
+
+    const appointments = await createAppointments(
+      appointmentTimes.map((appointmentAt, index) => ({
+        accountId: input.accountId,
+        userId: input.userId,
+        serviceId: input.serviceId,
+        specialistId: input.specialistId,
+        appointmentAt,
+        durationMin: service.duration_min,
+        price: index === 0 ? totalPrice : 0,
+        currency: service.currency,
+        groupId,
+        isPaid: false,
       })),
     );
 

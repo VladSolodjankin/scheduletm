@@ -24,6 +24,10 @@ export async function selectService(accountId: number, userId: number, serviceId
 
   await mergeSessionPayload(accountId, userId, UserSessionState.CHOOSING_SPECIALIST, {
     serviceId: service.id,
+    totalSessions: Math.max(1, Number(service.sessions_count ?? 1)),
+    selectedSlots: [],
+    currentSlotIndex: 0,
+    datePageOffset: 0,
   });
 
   const defaultSpecialist = await findSingleDefaultActiveSpecialist(accountId);
@@ -32,6 +36,10 @@ export async function selectService(accountId: number, userId: number, serviceId
     await mergeSessionPayload(accountId, userId, UserSessionState.CHOOSING_DATE, {
       serviceId: service.id,
       specialistId: defaultSpecialist.id,
+      totalSessions: Math.max(1, Number(service.sessions_count ?? 1)),
+      selectedSlots: [],
+      currentSlotIndex: 0,
+      datePageOffset: 0,
     });
 
     return {
