@@ -125,3 +125,7 @@ npm test
 В проекте есть экспериментальный парсер BPMN: [src/utils/BPMN/BPMN.ts](./src/utils/BPMN/BPMN.ts). Он пока не подключен к боту и требует установки дополнительных зависимостей перед использованием (см. `TODO.md`).
 
 Диапазон выбора дат в боте расширен через пагинацию inline-календаря (вперед/назад) без ограничения только 7 ближайшими днями.
+
+## Production readiness
+
+- [Production readiness checklist (no payment flow, Railway)](./PRODUCTION_READINESS_CHECKLIST.md)
