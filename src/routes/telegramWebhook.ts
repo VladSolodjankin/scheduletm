@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { env } from '../config/env';
 import {
   answerCallbackQuery,
@@ -58,6 +59,13 @@ import {
   buildCalendarLink,
   buildMicrosoftCalendarLink,
 } from '../utils/calendar-links';
+import {
+  beginProcessingUpdate,
+  markProcessedUpdate,
+  releaseProcessingUpdate,
+} from '../repositories/processed-update.repository';
+import { recordHttp5xx, recordIncomingUpdate } from '../monitoring/alerts';
+import { logError, logInfo, logWarn } from '../utils/logger';
 
 export const telegramWebhookRouter = Router();
 
@@ -197,13 +205,44 @@ function buildAppointmentDetailsText(
 telegramWebhookRouter.post(
   '/telegram/webhook/:secret',
   async (req: Request, res: Response) => {
+    const requestId = req.header('x-request-id') ?? randomUUID();
     const secret = req.params.secret;
 
     if (secret !== env.webhookSecret) {
+      logWarn('webhook.forbidden', { request_id: requestId });
       return res.status(403).json({ ok: false, error: 'Forbidden' });
     }
 
     const update = req.body as TelegramUpdate;
+    const updateId = typeof update?.update_id === 'number' ? update.update_id : undefined;
+    let updateLockAcquired = false;
+
+    logInfo('webhook.request_received', {
+      request_id: requestId,
+      update_id: updateId,
+    });
+
+    if (updateId !== undefined) {
+      recordIncomingUpdate(updateId);
+      updateLockAcquired = await beginProcessingUpdate(updateId);
+
+      if (!updateLockAcquired) {
+        logInfo('webhook.duplicate_update_skipped', {
+          request_id: requestId,
+          update_id: updateId,
+        });
+        return res.status(200).json({ ok: true, duplicate: true });
+      }
+
+      res.once('finish', () => {
+        if (res.statusCode >= 500) {
+          void releaseProcessingUpdate(updateId);
+          return;
+        }
+
+        void markProcessedUpdate(updateId);
+      });
+    }
 
     try {
       if (update.callback_query) {
@@ -1095,12 +1134,19 @@ telegramWebhookRouter.post(
       }
 
       await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
+      logInfo('webhook.request_processed', {
+        request_id: requestId,
+        update_id: updateId,
+      });
       return res.status(200).json({ ok: true });
     } catch (error) {
-      console.error('Webhook handling error:', error);
-      const detail = error instanceof Error ? error.message : String(error);
-      console.error('Webhook handling error:', detail);
-      return res.status(200).json({ ok: true });
+      recordHttp5xx();
+      logError('webhook.request_failed', {
+        request_id: requestId,
+        update_id: updateId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return res.status(500).json({ ok: false });
     }
   },
 );

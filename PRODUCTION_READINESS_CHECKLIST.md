@@ -4,10 +4,10 @@
 
 ## 0) Что сделать в первую очередь (если нужно быстро выйти в прод)
 
-1. [ ] Идемпотентность webhook по `update_id`.
-2. [ ] `AUTO_SET_WEBHOOK`: включен только в production.
-3. [ ] Structured logs + `request_id`/`update_id`.
-4. [ ] Алерты: 5xx, рост `notifications.failed`, отсутствие входящих updates.
+1. [x] Идемпотентность webhook по `update_id`.
+2. [x] `AUTO_SET_WEBHOOK`: включен только в production.
+3. [x] Structured logs + `request_id`/`update_id`.
+4. [x] Алерты: 5xx, рост `notifications.failed`, отсутствие входящих updates.
 5. [ ] Backup + тест restore для Railway Postgres.
 
 ## 1) Надежность webhook и state machine
