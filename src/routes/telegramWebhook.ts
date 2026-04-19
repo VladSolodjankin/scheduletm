@@ -59,6 +59,7 @@ import {
   buildCalendarLink,
   buildMicrosoftCalendarLink,
 } from '../utils/calendar-links';
+import { createGoogleCalendarEvents } from '../services/google-calendar.service';
 import {
   beginProcessingUpdate,
   markProcessedUpdate,
@@ -868,6 +869,21 @@ telegramWebhookRouter.post(
               }),
             ),
           );
+
+          await createGoogleCalendarEvents({
+            accountId: user.account_id,
+            specialistId: payload.specialistId!,
+            appointments: appointmentResult.appointments.map((appointment) => ({
+              id: appointment.id,
+              appointment_at: appointment.appointment_at,
+              duration_min: appointment.duration_min,
+            })),
+            serviceName,
+            specialistName: confirmData.specialistName,
+            clientName: payload.enteredName || user.first_name || undefined,
+            clientPhone: payload.enteredPhone || user.phone || undefined,
+            clientEmail: payload.enteredEmail || user.email || undefined,
+          });
 
           return res.status(200).json({ ok: true });
         }

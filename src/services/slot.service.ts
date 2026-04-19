@@ -1,6 +1,7 @@
 import { findBusyAppointmentsByDate } from '../repositories/appointment.repository';
 import { getAppSettings } from '../repositories/app-settings.repository';
 import { findServiceById } from '../repositories/service.repository';
+import { getBusyIntervalsFromGoogleCalendar } from './google-calendar.service';
 
 const SLOT_STEP_MIN = 30;
 const MINUTES_IN_DAY = 24 * 60;
@@ -55,8 +56,15 @@ export async function getAvailableSlots(params: {
     params.specialistId,
     settings.timezone,
   );
+  const googleBusyAppointments = await getBusyIntervalsFromGoogleCalendar({
+    accountId: params.accountId,
+    specialistId: params.specialistId,
+    date: params.date,
+    timezone: settings.timezone,
+  });
+  const mergedBusyAppointments = [...busyAppointments, ...googleBusyAppointments];
 
-  const busyIntervals = busyAppointments.map((appointment) => {
+  const busyIntervals = mergedBusyAppointments.map((appointment) => {
     const dayOffset = getDateOffsetInDays(appointment.date, params.date);
     const startMinute = dayOffset * MINUTES_IN_DAY + parseTimeToMinutes(appointment.time);
 
