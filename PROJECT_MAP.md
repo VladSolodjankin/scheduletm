@@ -73,6 +73,7 @@ Webhook-роут ожидает следующие форматы:
 
 - `service:<id>`
 - `specialist:<id>`
+- `back:services`
 - `date:<YYYY-MM-DD>`
 - `time_<HHMM>` (например `time_0930`)
 - `time_change_date`
@@ -81,6 +82,11 @@ Webhook-роут ожидает следующие форматы:
 - `appointment:<id>`
 - `appointment_edit:<id>`
 - `appointment_cancel:<id>`
+
+Также поддерживаются текстовые команды:
+
+- `/start` - приветствие + сброс активной сессии в `idle`
+- `/reset` - явный сброс активной сессии в `idle` без смены языка/профиля
 
 ## Схема БД (логическая)
 

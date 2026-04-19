@@ -52,14 +52,20 @@ export function getServicesInlineKeyboard(
   };
 }
 
-export function getSpecialistsInlineKeyboard(specialists: SpecialistRow[]) {
+export function getSpecialistsInlineKeyboard(
+  specialists: SpecialistRow[],
+  lang: SupportedLanguage,
+) {
   return {
-    inline_keyboard: specialists.map((specialist) => [
-      {
-        text: specialist.name,
-        callback_data: `specialist:${specialist.id}`,
-      },
-    ]),
+    inline_keyboard: [
+      ...specialists.map((specialist) => [
+        {
+          text: specialist.name,
+          callback_data: `specialist:${specialist.id}`,
+        },
+      ]),
+      [{ text: `⬅️ ${translate(lang, 'common.back')}`, callback_data: 'back:services' }],
+    ],
   };
 }
 
