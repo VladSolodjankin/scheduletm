@@ -122,6 +122,7 @@ async function buildConfirmationText(accountId: number, userId: number, lang: 'r
     text: lines.join('\n'),
     payload,
     serviceName,
+    specialistName: specialist.name,
   };
 }
 
@@ -456,9 +457,14 @@ telegramWebhookRouter.post(
             chatId,
             t(lang, 'booking.finalMessage', {
               created: t(lang, 'booking.created'),
+              date: payload.selectedDate!,
+              time: payload.selectedTime!,
+              specialist: confirmData.specialistName,
             }),
             getBookingFinalInlineKeyboard(lang, calendarUrl, paymentUrl),
           );
+
+          await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
 
           await sendBookingStubNotification({
             chatId,

@@ -40,7 +40,7 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.calendarLink': 'Сохранить в календарь: {{url}}',
     'booking.paymentLink': 'Ссылка на оплату (заглушка): {{url}}',
     'booking.finalMessage':
-      '🎉 {{created}}\n\n📌 Добавьте встречу в календарь и перейдите к оплате по кнопкам ниже.',
+      '🎉 {{created}}\n\n🧑‍⚕️ Специалист: {{specialist}}\n📅 Дата: {{date}}\n🕒 Время: {{time}}\n\nВыберите действие в меню ниже.\n\nСпециалист свяжется с вами и пришлёт ссылку на встречу.',
     'booking.openCalendar': '📅 Открыть календарь',
     'booking.openPayment': '💳 Перейти к оплате',
     'booking.notificationStub':
@@ -105,7 +105,7 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.calendarLink': 'Save to calendar: {{url}}',
     'booking.paymentLink': 'Payment link (stub): {{url}}',
     'booking.finalMessage':
-      '🎉 {{created}}\n\n📌 Add the session to your calendar and continue with payment using the buttons below.',
+      '🎉 {{created}}\n\n🧑‍⚕️ Specialist: {{specialist}}\n📅 Date: {{date}}\n🕒 Time: {{time}}\n\nChoose an action from the menu below.\n\nA specialist will contact you and send a meeting link.',
     'booking.openCalendar': '📅 Open calendar',
     'booking.openPayment': '💳 Open payment',
     'booking.notificationStub':
@@ -134,4 +134,3 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'appointments.rescheduled': 'Appointment updated: {{date}} {{time}}.',
   },
 };
-
