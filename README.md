@@ -2,7 +2,7 @@
 
 Репозиторий разделен на изолированные приложения:
 
-- `bot` — Telegram-бот (legacy).
+- `bot` — Telegram-бот.
 - `server` — Node.js API слой для web-клиента и интеграций.
 - `web` — React SPA для пользователя.
 
