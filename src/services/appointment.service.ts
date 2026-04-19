@@ -133,6 +133,12 @@ export async function rescheduleUserAppointment(input: RescheduleAppointmentInpu
         date: input.selectedDate,
         time: input.selectedTime,
       },
+      reminderContext: {
+        serviceNameRu: appointment.serviceNameRu,
+        serviceNameEn: appointment.serviceNameEn,
+        specialistName: appointment.specialistName,
+        appointmentAtIso: String(updated.appointment_at),
+      },
     };
   } catch (error) {
     if (isSlotConflictError(error)) {

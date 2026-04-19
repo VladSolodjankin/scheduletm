@@ -45,7 +45,7 @@ import {
   rescheduleUserAppointment,
   cancelUserAppointment,
 } from '../services/appointment.service';
-import { sendBookingStubNotification } from '../services/notification.service';
+import { cancelAppointmentReminders, queueAppointmentReminder, recreateAppointmentReminders } from '../services/notification.service';
 import { toDateTimeFromUtc } from '../utils/timezone';
 import { getNextAvailableDates } from '../services/date.service';
 import { getDefaultTimezone } from '../repositories/app-settings.repository';
@@ -358,6 +358,22 @@ telegramWebhookRouter.post(
               return res.status(200).json({ ok: true });
             }
 
+            await recreateAppointmentReminders({
+              accountId: user.account_id,
+              appointmentId: payload.editingAppointmentId,
+              userId: user.id,
+              appointmentAtIso: rescheduled.reminderContext.appointmentAtIso,
+              serviceName: lang === 'ru'
+                ? rescheduled.reminderContext.serviceNameRu
+                : rescheduled.reminderContext.serviceNameEn,
+              specialistName: rescheduled.reminderContext.specialistName,
+              selectedDate: rescheduled.next.date,
+              selectedTime: rescheduled.next.time,
+              chatId,
+              email: user.email,
+              phone: user.phone,
+            });
+
             await editMessageText(
               chatId,
               messageId,
@@ -512,14 +528,18 @@ telegramWebhookRouter.post(
 
           await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
 
-          await sendBookingStubNotification({
-            chatId,
-            languageCode: user.language_code,
-            hasPhone: Boolean(payload.enteredPhone || user.phone),
-            hasEmail: Boolean(payload.enteredEmail || user.email),
+          await queueAppointmentReminder({
+            accountId: user.account_id,
+            appointmentId: appointmentResult.appointment.id,
+            userId: user.id,
+            appointmentAtIso: String(appointmentResult.appointment.appointment_at),
+            serviceName,
+            specialistName: confirmData.specialistName,
             selectedDate: payload.selectedDate!,
             selectedTime: payload.selectedTime!,
-            serviceName,
+            chatId,
+            email: payload.enteredEmail || user.email,
+            phone: payload.enteredPhone || user.phone,
           });
 
           return res.status(200).json({ ok: true });
@@ -586,6 +606,8 @@ telegramWebhookRouter.post(
             await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
             return res.status(200).json({ ok: true });
           }
+
+          await cancelAppointmentReminders(user.account_id, appointmentId);
 
           await answerCallbackQuery(callback.id, t(lang, 'appointments.cancelled'));
           await editMessageText(chatId, messageId, t(lang, 'appointments.cancelled'));

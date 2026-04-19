@@ -23,7 +23,7 @@
 - `src/repositories/*` - доступ к БД (CRUD/запросы)
 - `src/db/*` - knex init, миграции и сиды
 - `src/utils/timezone.ts` - timezone-утилиты (IANA): конвертация локального времени аккаунта <-> UTC ISO, диапазоны суток и «сегодня» в timezone аккаунта
-- `src/jobs/reminder.job.ts` - placeholder под будущие джобы/напоминания
+- `src/jobs/reminder.job.ts` - воркер напоминаний: опрашивает `notifications`, отправляет и управляет ретраями
 - `src/utils/BPMN/BPMN.ts` - экспериментальная BPMN-утилита (пока не интегрирована)
 
 Сборка: `vite build` собирает SSR entry `src/app.ts` в `dist/app.js`, который запускается командой `npm run start`.
@@ -105,7 +105,15 @@ Webhook-роут ожидает следующие форматы:
 - `appointments`
   - `user_id`, `service_id`, `specialist_id`, `appointment_at` (timestamptz), `duration_min`, `status`, `price`, `currency`, ...
 - `notifications`
-  - задел под напоминания/уведомления (пока не используется, сервис уведомлений выключен)
+  - очередь уведомлений по каналам (`telegram/email/sms`), статусам (`pending/retry/sent/failed/cancelled`), ретраям и данным получателя
+
+
+### Уведомления
+
+- При подтверждении записи создаются уведомления T-24h (по доступным каналам: Telegram, email, SMS).
+- При переносе записи старые pending/retry уведомления отменяются и создаются заново на новую дату; при отмене записи pending/retry уведомления переводятся в `cancelled`.
+- Фоновая джоба `startReminderJob()` раз в `NOTIFICATION_POLL_MS` выбирает due-сообщения из `notifications`.
+- При ошибке отправки применяется exponential backoff (до `max_attempts`), после чего запись переходит в `failed`.
 
 ## Где менять поведение
 
