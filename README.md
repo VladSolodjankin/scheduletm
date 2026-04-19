@@ -9,7 +9,9 @@ Backend Telegram-бот для записи на услуги через webhook
 - Telegram webhook endpoint: `POST /telegram/webhook/:secret` (проверка `WEBHOOK_SECRET`).
 - Состояние диалога как state machine в Postgres (`user_sessions.state` + `payload_json`).
 - Справочники услуг/специалистов в БД (`services`, `specialists`) и выдача inline-кнопок.
+- Поддержка пакетных услуг: `services.sessions_count` позволяет записывать клиента сразу на несколько сессий (последующие сессии создаются с недельным шагом от выбранной даты/времени).
 - Подбор свободных слотов по рабочим часам и занятости (`appointments`) с шагом 30 минут.
+- Расчет стоимости в бронировании от базовых ставок специалиста (`specialists.base_session_price` / `specialists.base_hour_price`) с учетом длительности и количества сессий услуги.
 - Учет timezone аккаунта (`app_settings.timezone`, IANA): слоты, детали записи и конвертация времени в БД работают не только для Москвы.
 - Защита от двойного бронирования на уровне БД (исключающее ограничение на пересечение интервалов по `account_id + specialist_id`, кроме `cancelled`).
 - Просмотр записей, перенос (если до записи больше 24 часов) и отмена записи пользователем.
@@ -96,7 +98,7 @@ npm test
 
 - `accounts` - кабинет/рабочее пространство верхнего уровня
 - `services` - услуги (в т.ч. `duration_min`, `price`, `currency`, `is_active`)
-- `specialists` - специалисты (в т.ч. `is_default`, `is_active`)
+- `specialists` - специалисты (в т.ч. `is_default`, `is_active`, `base_session_price`, `base_hour_price`)
 - `app_settings` - рабочие часы/дни и timezone (IANA), в которой показываются слоты/записи
 
 Все основные сущности привязаны к `account_id`. Сейчас Telegram-бот работает через `default account`, пока отдельный веб-кабинет и маршрутизация по аккаунтам не вынесены в HTTP API/UI.
