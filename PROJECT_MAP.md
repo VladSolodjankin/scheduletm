@@ -20,6 +20,7 @@
 - `src/bot/*` - обёртка над Telegram Bot API + генераторы клавиатур
 - `src/i18n/*` - словари и `t()`
 - `src/services/*` - бизнес-логика (выбор услуги/специалиста, слоты, запись, перенос, отмена)
+- `src/services/google-calendar.service.ts` - интеграция с Google Calendar специалиста (чтение занятости и создание событий)
 - `src/repositories/*` - доступ к БД (CRUD/запросы)
 - `src/db/*` - knex init, миграции и сиды
 - `src/utils/timezone.ts` - timezone-утилиты (IANA): конвертация локального времени аккаунта <-> UTC ISO, диапазоны суток и «сегодня» в timezone аккаунта
@@ -98,7 +99,7 @@ Webhook-роут ожидает следующие форматы:
 - `services`
   - `code`, `name_ru`, `name_en`, `price`, `currency`, `duration_min`, `sessions_count`, `is_active`, ...
 - `specialists`
-  - `code`, `name`, `is_default`, `is_active`, `base_session_price`, `base_hour_price`
+  - `code`, `name`, `is_default`, `is_active`, `base_session_price`, `base_hour_price`, `google_api_key`, `google_calendar_id`
 - `user_sessions`
   - `user_id` (unique), `state`, `payload_json`
 - `app_settings`
@@ -120,6 +121,7 @@ Webhook-роут ожидает следующие форматы:
 - При переносе записи старые pending/retry уведомления отменяются и создаются заново на новую дату; при отмене записи pending/retry уведомления переводятся в `cancelled`.
 - Фоновая джоба `startReminderJob()` раз в `NOTIFICATION_POLL_MS` выбирает due-сообщения из `notifications`.
 - При ошибке отправки применяется exponential backoff (до `max_attempts`), после чего запись переходит в `failed`.
+- После успешного бронирования отправляется запрос на создание события в Google Calendar специалиста (если интеграция настроена у специалиста).
 
 ## Где менять поведение
 
