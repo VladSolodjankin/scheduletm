@@ -19,10 +19,10 @@
 - `src/routes/telegramWebhook.ts` - единый webhook-роут и основная «оркестрация» диалога
 - `src/bot/*` - обёртка над Telegram Bot API + генераторы клавиатур
 - `src/i18n/*` - словари и `t()`
-- `src/services/*` - бизнес-логика (выбор услуги/специалиста, слоты, запись, перенос)
+- `src/services/*` - бизнес-логика (выбор услуги/специалиста, слоты, запись, перенос, отмена)
 - `src/repositories/*` - доступ к БД (CRUD/запросы)
 - `src/db/*` - knex init, миграции и сиды
-- `src/utils/timezone.ts` - конвертация «Москва <-> UTC ISO» (сейчас фиксированный UTC+3)
+- `src/utils/timezone.ts` - timezone-утилиты (IANA): конвертация локального времени аккаунта <-> UTC ISO, диапазоны суток и «сегодня» в timezone аккаунта
 - `src/jobs/reminder.job.ts` - placeholder под будущие джобы/напоминания
 - `src/utils/BPMN/BPMN.ts` - экспериментальная BPMN-утилита (пока не интегрирована)
 
@@ -80,6 +80,7 @@ Webhook-роут ожидает следующие форматы:
 - `confirm:edit`
 - `appointment:<id>`
 - `appointment_edit:<id>`
+- `appointment_cancel:<id>`
 
 ## Схема БД (логическая)
 
@@ -124,11 +125,10 @@ Webhook-роут ожидает следующие форматы:
 
 ## Известные ограничения (важные для расширения)
 
-- Время сейчас считается как «Москва = UTC+3» фиксированно в [src/utils/timezone.ts](./src/utils/timezone.ts). `app_settings.timezone` используется в основном для `ctz` в Google Calendar link.
+- Шаг сетки слотов пока фиксированный (`SLOT_STEP_MIN = 30`) в [src/services/slot.service.ts](./src/services/slot.service.ts), без настройки из `app_settings`.
 - `vite build` не делает typecheck автоматически. Если включать BPMN-интеграцию, лучше добавить отдельный `typecheck` и зависимости.
 
 ## См. также
 
 - [README.md](./README.md)
 - [TODO.md](./TODO.md)
-
