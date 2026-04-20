@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
+import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
 import type { AppSettings } from '../shared/types/api';
 
@@ -19,6 +20,7 @@ const defaultSettings: AppSettings = {
 export function SettingsContainer() {
   const navigate = useNavigate();
   const { accessToken, clearAuth } = useAuth();
+  const { t } = useI18n();
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [error, setError] = useState('');
 
@@ -35,12 +37,12 @@ export function SettingsContainer() {
         });
         setSettings(response.data);
       } catch {
-        setError('Не удалось загрузить настройки.');
+        setError(t('settings.errors.load'));
       }
     };
 
     void load();
-  }, [accessToken, navigate]);
+  }, [accessToken, navigate, t]);
 
   const saveSettings = async () => {
     try {
@@ -50,7 +52,7 @@ export function SettingsContainer() {
       setSettings(response.data);
       setError('');
     } catch {
-      setError('Не удалось сохранить настройки.');
+      setError(t('settings.errors.save'));
     }
   };
 
@@ -60,7 +62,7 @@ export function SettingsContainer() {
       setSettings((prev) => ({ ...prev, googleConnected: true }));
       setError('');
     } catch {
-      setError('Не удалось подключить Google.');
+      setError(t('settings.errors.connectGoogle'));
     }
   };
 
@@ -70,7 +72,7 @@ export function SettingsContainer() {
   };
 
   return (
-    <AppPage title="Настройки" subtitle="Управляйте общими параметрами, интеграциями и внешним видом интерфейса.">
+    <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')}>
       {error && (
         <Box sx={{ maxWidth: 720, mb: 2 }}>
           <Alert severity="error">{error}</Alert>
@@ -80,6 +82,22 @@ export function SettingsContainer() {
       <Box sx={{ maxWidth: 720 }}>
         <SettingsCard
           settings={settings}
+          copy={{
+            generalTab: t('settings.tabs.general'),
+            integrationsTab: t('settings.tabs.integrations'),
+            profileTitle: t('settings.profileTitle'),
+            timezone: t('settings.timezone'),
+            locale: t('settings.locale'),
+            defaultMeetingDuration: t('settings.defaultMeetingDuration'),
+            dailyDigestEnabled: t('settings.dailyDigestEnabled'),
+            weekStartsOnMonday: t('settings.weekStartsOnMonday'),
+            saveSettings: t('common.saveSettings'),
+            integrationsTitle: t('settings.integrationsTitle'),
+            integrationsSubtitle: t('settings.integrationsSubtitle'),
+            connectGoogle: t('settings.connectGoogle'),
+            googleConnected: t('settings.googleConnected'),
+            logout: t('common.logout')
+          }}
           onSettingsChange={setSettings}
           onSave={saveSettings}
           onConnectGoogle={connectGoogle}

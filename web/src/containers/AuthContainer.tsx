@@ -5,6 +5,7 @@ import { isAxiosError } from 'axios';
 import { AuthCard } from '../components/AuthCard';
 import { apiClient } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
+import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
 import type { AuthResponse } from '../shared/types/api';
 
@@ -22,6 +23,7 @@ type ApiErrorResponse = {
 export function AuthContainer({ mode }: AuthContainerProps) {
   const navigate = useNavigate();
   const { setAccessToken } = useAuth();
+  const { t } = useI18n();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,24 +47,24 @@ export function AuthContainer({ mode }: AuthContainerProps) {
         const apiError = err.response?.data;
 
         setError(apiError?.message ?? (isLogin
-          ? 'Не удалось войти. Проверьте email и пароль.'
-          : 'Не удалось зарегистрироваться.'));
+          ? t('auth.errors.loginFailed')
+          : t('auth.errors.registerFailed')));
 
         setFieldErrors(apiError?.errors ?? {});
         return;
       }
 
       setError(isLogin
-        ? 'Не удалось войти. Проверьте email и пароль.'
-        : 'Не удалось зарегистрироваться.');
+        ? t('auth.errors.loginFailed')
+        : t('auth.errors.registerFailed'));
       setFieldErrors({});
     }
   };
 
   return (
     <AppPage
-      title={isLogin ? 'Вход в аккаунт' : 'Регистрация'}
-      subtitle={isLogin ? 'Продолжайте работу со своим расписанием.' : 'Создайте аккаунт и начните настройки.'}
+      title={isLogin ? t('auth.loginTitle') : t('auth.registerTitle')}
+      subtitle={isLogin ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
     >
       {error && (
         <Box sx={{ maxWidth: 460, mx: 'auto', mt: 2, mb: 2 }}>
@@ -79,11 +81,13 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       )}
 
       <AuthCard
-        title={isLogin ? 'Вход' : 'Регистрация'}
+        title={isLogin ? t('auth.formLoginTitle') : t('auth.formRegisterTitle')}
         email={email}
         password={password}
-        submitText={isLogin ? 'Войти' : 'Зарегистрироваться'}
-        switchText={isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
+        emailLabel={t('common.email')}
+        passwordLabel={t('common.password')}
+        submitText={isLogin ? t('auth.submitLogin') : t('auth.submitRegister')}
+        switchText={isLogin ? t('auth.switchToRegister') : t('auth.switchToLogin')}
         onEmailChange={(value) => {
           setEmail(value);
           setFieldErrors((prev) => ({ ...prev, email: '' }));
