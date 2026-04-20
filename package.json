@@ -2,7 +2,7 @@
   "name": "scheduletm",
   "private": true,
   "version": "0.1.0",
-  "description": "ScheduleTM monorepo (bot, server, web)",
+  "description": "Meetli monorepo (bot, server, web)",
   "workspaces": [
     "bot",
     "server",

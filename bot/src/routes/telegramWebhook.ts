@@ -163,7 +163,7 @@ function buildWeeklySlots(startDate: string, time: string, totalSessions: number
 telegramWebhookRouter.get('/calendar/apple.ics', (req: Request, res: Response) => {
   const date = typeof req.query.date === 'string' ? req.query.date : '';
   const time = typeof req.query.time === 'string' ? req.query.time : '';
-  const title = typeof req.query.title === 'string' ? req.query.title : 'ScheduleTM booking';
+  const title = typeof req.query.title === 'string' ? req.query.title : 'Meetli booking';
   const timezone = typeof req.query.timezone === 'string' ? req.query.timezone : 'UTC';
   const durationMinRaw = typeof req.query.durationMin === 'string' ? Number(req.query.durationMin) : 60;
   const durationMin = Number.isFinite(durationMinRaw) ? durationMinRaw : 60;

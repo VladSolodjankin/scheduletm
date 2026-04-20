@@ -1,7 +1,7 @@
 export const dictionaries = {
   en: {
     common: {
-      appTitle: 'ScheduleTM',
+      appTitle: 'Meetli',
       email: 'Email',
       password: 'Password',
       saveSettings: 'Save settings',
@@ -56,7 +56,7 @@ export const dictionaries = {
   },
   ru: {
     common: {
-      appTitle: 'ScheduleTM',
+      appTitle: 'Meetli',
       email: 'Email',
       password: 'Пароль',
       saveSettings: 'Сохранить настройки',

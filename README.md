@@ -1,8 +1,8 @@
-# ScheduleTM Monorepo
+# Meetli Monorepo
 
 ## О проекте
 
-**ScheduleTM** — платформа для управления расписанием специалистов и коммуникацией с клиентами через web + Telegram.
+**Meetli** — платформа для управления расписанием специалистов и коммуникацией с клиентами через web + Telegram.
 
 ### Какие проблемы решаем
 
@@ -127,3 +127,7 @@ npm run build
 npm run -w @scheduletm/server dev
 npm run -w @scheduletm/web dev
 ```
+
+Для дополнительной информации смотри PRODUCTION_READINESS_CHECKLIST.md, README.md, TODO.md, PROJECT_MAP.md
+После доработки не зыбудь обновить документации.
+
