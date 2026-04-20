@@ -1,10 +1,11 @@
-import { Alert, Box, Typography } from '@mui/material';
+import { Alert, Box } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { AuthCard } from '../components/AuthCard';
 import { apiClient } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
+import { AppPage } from '../shared/ui/AppPage';
 import type { AuthResponse } from '../shared/types/api';
 
 type AuthMode = 'login' | 'register';
@@ -59,13 +60,12 @@ export function AuthContainer({ mode }: AuthContainerProps) {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" sx={{ mt: 4, textAlign: 'center' }}>
-        ScheduleTM
-      </Typography>
-
+    <AppPage
+      title={isLogin ? 'Вход в аккаунт' : 'Регистрация'}
+      subtitle={isLogin ? 'Продолжайте работу со своим расписанием.' : 'Создайте аккаунт и начните настройки.'}
+    >
       {error && (
-        <Box sx={{ maxWidth: 460, mx: 'auto', mt: 2 }}>
+        <Box sx={{ maxWidth: 460, mx: 'auto', mt: 2, mb: 2 }}>
           <Alert severity="error">
             {error}
             {(fieldErrors.email || fieldErrors.password) && (
@@ -95,6 +95,6 @@ export function AuthContainer({ mode }: AuthContainerProps) {
         onSubmit={submit}
         onSwitch={() => navigate(isLogin ? '/register' : '/login')}
       />
-    </Box>
+    </AppPage>
   );
 }

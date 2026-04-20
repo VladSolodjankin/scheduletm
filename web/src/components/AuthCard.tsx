@@ -1,4 +1,7 @@
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import { AppButton } from '../shared/ui/AppButton';
+import { AppForm } from '../shared/ui/AppForm';
+import { AppTextField } from '../shared/ui/AppTextField';
 
 type AuthCardProps = {
   title: string;
@@ -14,31 +17,33 @@ type AuthCardProps = {
 
 export function AuthCard(props: AuthCardProps) {
   return (
-    <Box sx={{ maxWidth: 460, mx: 'auto', mt: 8 }}>
-      <Stack spacing={2} sx={{ p: 3, borderRadius: 2, boxShadow: 2, bgcolor: 'background.paper' }}>
+    <Box sx={{ maxWidth: 460, mx: 'auto' }}>
+      <AppForm>
         <Typography variant="h5">{props.title}</Typography>
-        <TextField
+
+        <AppTextField
           label="Email"
           type="email"
           value={props.email}
           onChange={(event) => props.onEmailChange(event.target.value)}
-          fullWidth
         />
-        <TextField
+
+        <AppTextField
           label="Пароль"
           type="password"
           inputProps={{ minLength: 10 }}
           value={props.password}
           onChange={(event) => props.onPasswordChange(event.target.value)}
-          fullWidth
         />
-        <Button variant="contained" onClick={props.onSubmit}>
+
+        <AppButton variant="contained" onClick={props.onSubmit}>
           {props.submitText}
-        </Button>
-        <Button variant="text" onClick={props.onSwitch}>
+        </AppButton>
+
+        <AppButton variant="text" onClick={props.onSwitch}>
           {props.switchText}
-        </Button>
-      </Stack>
+        </AppButton>
+      </AppForm>
     </Box>
   );
 }
