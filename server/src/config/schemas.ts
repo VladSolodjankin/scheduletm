@@ -33,5 +33,7 @@ export const settingsSchema = z.object({
     .min(15, 'Минимальная длительность встречи — 15 минут')
     .max(180, 'Максимальная длительность встречи — 180 минут'),
   weekStartsOnMonday: z.boolean(),
-  locale: z.string().min(2, 'Укажите язык/локаль').max(16, 'Локаль слишком длинная')
-});
+  locale: z.string().min(2, 'Укажите язык/локаль').max(16, 'Локаль слишком длинная'),
+  uiThemeMode: z.enum(['light', 'dark']),
+  uiPaletteVariantId: z.string().min(1, 'Укажите id палитры').max(64, 'Id палитры слишком длинный')
+}).partial();

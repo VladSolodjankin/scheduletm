@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, useState, type PropsWithChildren } 
 
 type AuthContextValue = {
   accessToken: string;
+  isAuthenticated: boolean;
   setAccessToken: (token: string) => void;
   clearAuth: () => void;
 };
@@ -23,7 +24,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     localStorage.removeItem(TOKEN_KEY);
   };
 
-  const value = useMemo(() => ({ accessToken, setAccessToken, clearAuth }), [accessToken]);
+  const value = useMemo(() => ({
+    accessToken,
+    isAuthenticated: Boolean(accessToken),
+    setAccessToken,
+    clearAuth
+  }), [accessToken]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,5 +1,8 @@
 import { Box } from '@mui/material';
+import { useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
+import { apiClient, authHeaders } from '../../shared/api/client';
+import { useAuth } from '../../shared/auth/AuthContext';
 import { useI18n } from '../../shared/i18n/I18nContext';
 import { useThemeSettings } from '../../shared/theme/ThemeContext';
 import type { PaletteVariantId } from '../../shared/theme/constants';
@@ -9,11 +12,43 @@ import { LeftMenu } from './LeftMenu';
 export function MainLayout() {
   const { mode, paletteVariantId, toggleMode, setPaletteVariantId } = useThemeSettings();
   const { t, locale, setLocale } = useI18n();
+  const { isAuthenticated, accessToken } = useAuth();
+  const lastSyncedPreferencesRef = useRef('');
+
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken) {
+      lastSyncedPreferencesRef.current = '';
+      return;
+    }
+
+    const settingsLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
+    const signature = `${settingsLocale}|${mode}|${paletteVariantId}`;
+    if (signature === lastSyncedPreferencesRef.current) {
+      return;
+    }
+
+    const sync = async () => {
+      try {
+        await apiClient.put('/api/settings', {
+          locale: settingsLocale,
+          uiThemeMode: mode,
+          uiPaletteVariantId: paletteVariantId
+        }, {
+          headers: authHeaders(accessToken)
+        });
+        lastSyncedPreferencesRef.current = signature;
+      } catch {
+        // silent sync: profile settings will be saved in explicit settings screen as fallback
+      }
+    };
+
+    void sync();
+  }, [accessToken, isAuthenticated, locale, mode, paletteVariantId]);
 
   const menuItems = [
     { to: '/login', label: t('common.login'), icon: 'login' as const },
     { to: '/register', label: t('common.register'), icon: 'register' as const },
-    { to: '/settings', label: t('common.settings'), icon: 'settings' as const }
+    ...(isAuthenticated ? [{ to: '/settings', label: t('common.settings'), icon: 'settings' as const }] : [])
   ];
 
   return (

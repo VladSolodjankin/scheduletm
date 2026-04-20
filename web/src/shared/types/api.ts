@@ -13,4 +13,6 @@ export type AppSettings = {
   weekStartsOnMonday: boolean;
   locale: string;
   googleConnected: boolean;
+  uiThemeMode: 'light' | 'dark';
+  uiPaletteVariantId: string;
 };
