@@ -3,12 +3,12 @@ import type { Response } from 'express';
 import { env } from '../config/env.js';
 import {
   accessSessions,
-  defaultSettings,
   loginAttempts,
-  refreshSessions,
-  settingsByUserId,
-  usersByEmail
+  refreshSessions
 } from '../repositories/inMemoryStore.js';
+import { getDefaultAccountId } from '../repositories/accountRepository.js';
+import { createIdentityLinkIfMissing, findTelegramUserByEmail } from '../repositories/userIdentityLinkRepository.js';
+import { createWebUser, findWebUserByEmail, findWebUserById, touchWebUserLastLogin } from '../repositories/webUserRepository.js';
 import type { User } from '../types/domain.js';
 import { createToken, hashPassword, sanitizeEmail, verifyPassword } from '../utils/crypto.js';
 
@@ -52,34 +52,69 @@ export const issueSession = (userId: string, res: Response) => {
   return accessToken;
 };
 
-export const registerUser = (emailRaw: string, password: string): User | null => {
+const mapWebUserToDomain = (id: number, email: string, passwordSalt: string, passwordHash: string, createdAt: Date): User => {
+  return {
+    id: String(id),
+    email,
+    passwordSalt,
+    passwordHash,
+    createdAt: createdAt.toISOString()
+  };
+};
+
+const tryLinkTelegramIdentity = async (accountId: number, email: string, webUserId: number) => {
+  const telegramUser = await findTelegramUserByEmail(accountId, email);
+  if (!telegramUser) {
+    return;
+  }
+
+  await createIdentityLinkIfMissing(accountId, telegramUser.id, webUserId);
+};
+
+export const registerUser = async (emailRaw: string, password: string): Promise<User | null> => {
   const email = sanitizeEmail(emailRaw);
-  if (usersByEmail.has(email)) {
+  const accountId = await getDefaultAccountId();
+
+  const existing = await findWebUserByEmail(accountId, email);
+  if (existing) {
     return null;
   }
 
   const salt = crypto.randomBytes(16).toString('hex');
-  const user: User = {
-    id: crypto.randomUUID(),
+  const passwordHash = hashPassword(password, salt);
+  const webUser = await createWebUser({
+    accountId,
     email,
-    passwordSalt: salt,
-    passwordHash: hashPassword(password, salt),
-    createdAt: new Date().toISOString()
-  };
+    passwordHash,
+    passwordSalt: salt
+  });
 
-  usersByEmail.set(email, user);
-  settingsByUserId.set(user.id, { ...defaultSettings });
-  return user;
+  await tryLinkTelegramIdentity(accountId, email, webUser.id);
+
+  return mapWebUserToDomain(
+    webUser.id,
+    webUser.email,
+    webUser.password_salt,
+    webUser.password_hash,
+    webUser.created_at
+  );
 };
 
-export const authenticateUser = (emailRaw: string, password: string): User | null => {
+export const authenticateUser = async (emailRaw: string, password: string): Promise<User | null> => {
   const email = sanitizeEmail(emailRaw);
-  const user = usersByEmail.get(email);
+  const accountId = await getDefaultAccountId();
+  const user = await findWebUserByEmail(accountId, email);
   if (!user) {
     return null;
   }
 
-  return verifyPassword(password, user.passwordSalt, user.passwordHash) ? user : null;
+  const isValid = verifyPassword(password, user.password_salt, user.password_hash);
+  if (!isValid) {
+    return null;
+  }
+
+  await touchWebUserLastLogin(accountId, user.id);
+  return mapWebUserToDomain(user.id, user.email, user.password_salt, user.password_hash, user.created_at);
 };
 
 export const refreshAccess = (refreshToken: string) => {
@@ -92,11 +127,22 @@ export const refreshAccess = (refreshToken: string) => {
   return current.userId;
 };
 
-export const resolveUserByAccessToken = (token: string): User | null => {
+export const resolveUserByAccessToken = async (token: string): Promise<User | null> => {
   const session = accessSessions.get(token);
   if (!session || session.expiresAt < now()) {
     return null;
   }
 
-  return [...usersByEmail.values()].find((item) => item.id === session.userId) ?? null;
+  const accountId = await getDefaultAccountId();
+  const userId = Number(session.userId);
+  if (!Number.isInteger(userId)) {
+    return null;
+  }
+
+  const user = await findWebUserById(accountId, userId);
+  if (!user) {
+    return null;
+  }
+
+  return mapWebUserToDomain(user.id, user.email, user.password_salt, user.password_hash, user.created_at);
 };

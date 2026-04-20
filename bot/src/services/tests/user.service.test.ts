@@ -20,6 +20,18 @@ vi.mock('../../repositories/account.repository', () => {
   };
 });
 
+vi.mock('../../repositories/web-user.repository', () => {
+  return {
+    findWebUserByEmail: vi.fn(),
+  };
+});
+
+vi.mock('../../repositories/user-identity-link.repository', () => {
+  return {
+    linkTelegramUserToWebUser: vi.fn(),
+  };
+});
+
 import {
   createUser,
   findUserByTelegramId,
@@ -27,6 +39,8 @@ import {
 } from '../../repositories/user.repository';
 import { getDefaultAccountId } from '../../repositories/account.repository';
 import { getOrCreateSession } from '../../repositories/user-session.repository';
+import { findWebUserByEmail } from '../../repositories/web-user.repository';
+import { linkTelegramUserToWebUser } from '../../repositories/user-identity-link.repository';
 import { findOrCreateTelegramUser } from '../user.service';
 
 describe('findOrCreateTelegramUser', () => {
@@ -43,8 +57,10 @@ describe('findOrCreateTelegramUser', () => {
       telegram_id: 123,
       username: null,
       first_name: null,
+      email: 'new@example.com',
       language_code: 'en',
     } as any);
+    vi.mocked(findWebUserByEmail).mockResolvedValue({ id: 10 } as any);
 
     const out = await findOrCreateTelegramUser({
       telegramId: 123,
@@ -59,6 +75,8 @@ describe('findOrCreateTelegramUser', () => {
       languageCode: 'en',
     });
     expect(getOrCreateSession).toHaveBeenCalledWith(7, 1);
+    expect(findWebUserByEmail).toHaveBeenCalledWith(7, 'new@example.com');
+    expect(linkTelegramUserToWebUser).toHaveBeenCalledWith(7, 1, 10);
     expect(out.isNew).toBe(true);
   });
 
@@ -70,6 +88,7 @@ describe('findOrCreateTelegramUser', () => {
       telegram_id: 123,
       username: 'old',
       first_name: 'OldName',
+      email: 'old@example.com',
       language_code: 'ru',
     } as any);
 
@@ -79,8 +98,10 @@ describe('findOrCreateTelegramUser', () => {
       telegram_id: 123,
       username: 'new',
       first_name: 'NewName',
+      email: 'old@example.com',
       language_code: 'ru',
     } as any);
+    vi.mocked(findWebUserByEmail).mockResolvedValue({ id: 22 } as any);
 
     const out = await findOrCreateTelegramUser({
       telegramId: 123,
@@ -101,6 +122,7 @@ describe('findOrCreateTelegramUser', () => {
     expect(updateArg.languageCode).toBeUndefined();
 
     expect(getOrCreateSession).toHaveBeenCalledWith(7, 9);
+    expect(linkTelegramUserToWebUser).toHaveBeenCalledWith(7, 9, 22);
     expect(out.isNew).toBe(false);
   });
 
@@ -112,6 +134,7 @@ describe('findOrCreateTelegramUser', () => {
       telegram_id: 123,
       username: 'old',
       first_name: 'OldName',
+      email: null,
       language_code: 'ru',
     } as any);
 
@@ -121,6 +144,7 @@ describe('findOrCreateTelegramUser', () => {
       telegram_id: 123,
       username: 'old',
       first_name: 'OldName',
+      email: null,
       language_code: 'ru',
     } as any);
 
@@ -133,5 +157,7 @@ describe('findOrCreateTelegramUser', () => {
       username: 'old',
       firstName: 'OldName',
     });
+    expect(findWebUserByEmail).not.toHaveBeenCalled();
+    expect(linkTelegramUserToWebUser).not.toHaveBeenCalled();
   });
 });

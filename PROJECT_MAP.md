@@ -11,6 +11,14 @@
   - `server/src/services/*` — бизнес-логика auth/settings.
   - `server/src/middlewares/*` — auth + login lock middleware.
   - `server/src/repositories/inMemoryStore.ts` — in-memory состояние (MVP).
+
+## Data map (server)
+
+- `users` — Telegram users.
+- `web_users` — web auth users (email/password hash/salt).
+- `user_identity_links` — 1:1 bridge между `users` и `web_users` внутри `account_id`.
+- Миграция: `server/src/db/migrations/20260420133000_add_web_users_and_identity_links.ts`.
+- Реализация: `server/src/services/authService.ts` + `bot/src/services/user.service.ts` используют эту схему для auth и auto-link по email.
 - `web/` — SPA:
   - `web/src/app/*` — root app + router.
   - `web/src/pages/*` — страницы.
