@@ -20,10 +20,33 @@
 - [x] Перейти на MUI (`@mui/material`) и убрать кастомный CSS на старте.
 - [x] Добавить страницы login/register/settings.
 
-## Этап 4 — Следующий шаг
+## Этап 4 — Ближайший план web/server
 
-- [ ] Перенести in-memory storage в БД.
-- [ ] Добавить полноценный Google OAuth 2.0 flow.
+### 4.1 Data layer
+
+- [ ] Перенести in-memory storage в БД (минимум users/sessions/settings).
+- [ ] Добавить миграции и seed для локальной разработки.
+
+### 4.2 Appointments (MVP)
+
+- [ ] Добавить сущность `appointment` в server + CRUD/list API.
+- [ ] Добавить поля `status`, `paymentStatus`, `scheduledAt`, `meetingLink`, `notes`.
+- [ ] Реализовать операции: подтверждение оплаты, отмена, перенос даты, ручное уведомление.
+- [ ] Добавить в web страницу списка и карточку редактирования appointment.
+
+### 4.3 Meeting link strategy
+
+- [ ] Добавить `defaultMeetingLink` в профиль пользователя/специалиста.
+- [ ] При создании appointment копировать `defaultMeetingLink` в `appointment.meetingLink`.
+- [ ] Разрешить ручное переопределение `meetingLink` для конкретной записи.
+
+### 4.4 Security & auth hardening
+
 - [ ] Добавить logout endpoint и отзыв refresh-сессий на backend.
 - [ ] Добавить CSRF protection для refresh cookie flow.
-- [ ] Добавить интеграционные и e2e тесты.
+- [ ] Добавить полноценный Google OAuth 2.0 flow.
+
+### 4.5 Web UX & quality
+
+- [ ] Добавить поддержку разных языков (i18n, переводы по страницам).
+- [ ] Добавить интеграционные тесты (server) и e2e smoke (web).
