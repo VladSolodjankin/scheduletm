@@ -38,10 +38,16 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const response = await apiClient.post<AuthResponse>(endpoint, { email, password });
 
-      setAccessToken(response.data.accessToken);
       setError('');
       setFieldErrors({});
-      navigate('/settings');
+
+      if (isLogin) {
+        setAccessToken(response.data.accessToken);
+        navigate('/settings');
+        return;
+      }
+
+      navigate('/login');
     } catch (err) {
       if (isAxiosError<ApiErrorResponse>(err)) {
         const apiError = err.response?.data;

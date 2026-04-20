@@ -45,11 +45,15 @@ export function MainLayout() {
     void sync();
   }, [accessToken, isAuthenticated, locale, mode, paletteVariantId]);
 
-  const menuItems = [
-    { to: '/login', label: t('common.login'), icon: 'login' as const },
-    { to: '/register', label: t('common.register'), icon: 'register' as const },
-    ...(isAuthenticated ? [{ to: '/settings', label: t('common.settings'), icon: 'settings' as const }] : [])
-  ];
+  const menuItems = [{ to: '/settings', label: t('common.settings'), icon: 'settings' as const }];
+
+  if (!isAuthenticated) {
+    return (
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+        <Outlet />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
