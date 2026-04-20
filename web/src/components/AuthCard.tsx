@@ -36,7 +36,7 @@ export function AuthCard(props: AuthCardProps) {
               {props.title}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Taplink / Meetli
+              Meetli
             </Typography>
           </Stack>
 
