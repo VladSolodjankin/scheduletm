@@ -27,6 +27,8 @@
 - [ ] Перенести in-memory storage в БД (минимум users/sessions/settings).
 - [ ] Добавить миграции и seed для локальной разработки.
 - [x] Развести identity-модели: `users` (Telegram), `web_users` (web-auth), `user_identity_links` (1:1 связь в рамках account).
+- [x] Сохранять Google OAuth ключ web-пользователя в `web_users.google_api_key` после успешного callback.
+- [x] Добавить связь `specialists <-> web_users` через `specialist_identity_links` для персонального календаря специалиста.
 
 ### 4.2 Appointments (MVP)
 

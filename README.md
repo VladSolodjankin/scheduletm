@@ -67,6 +67,7 @@ scheduletm/
 - `users` — Telegram-пользователи.
 - `web_users` — web-учетки для email/password auth.
 - `user_identity_links` — связь между Telegram и Web учетками (1:1 в рамках `account_id`).
+- `specialist_identity_links` — связь специалиста с web-учеткой (1:1 в рамках `account_id`) для персонального Google Calendar.
 - `server` auth-сервис регистрирует/логинит через `web_users`, а `bot` user-сервис при наличии email делает auto-link через `user_identity_links`.
 
 Сервер разнесен по слоям:
@@ -95,8 +96,15 @@ scheduletm/
 - Кнопка `Connect Google` в web теперь запускает backend endpoint `POST /api/integrations/google/oauth/start`.
 - Backend формирует `authorizeUrl` и redirect на Google Consent Screen.
 - Callback обрабатывается через `GET /api/integrations/google/oauth/callback` с обменом `code -> tokens`.
+- `access_token` Google сохраняется в `web_users.google_api_key` для текущего web-пользователя (под будущую ролевую модель, где специалист логинится сам).
 - После успешного callback пользователь возвращается на `/settings`, а в настройках отмечается `googleConnected: true`.
 - Переменные окружения добавлены в `server/.env.example`: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `GOOGLE_OAUTH_SCOPES`.
+
+Текущее состояние модели данных для Google:
+
+- `web_users.google_api_key` — ключ, полученный через web OAuth (источник истины для авторизованного web-пользователя).
+- `specialist_identity_links` определяет, какому специалисту принадлежит `web_user`.
+- bot Google Calendar использует сначала ключ/календарь связанного `web_user`, а затем fallback на legacy `specialists.google_api_key` / `specialists.google_calendar_id`.
 
 ## Куда двигаться дальше (web/server)
 

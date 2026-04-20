@@ -2,6 +2,8 @@ import axios from 'axios';
 import { randomBytes } from 'node:crypto';
 import { URLSearchParams } from 'node:url';
 import { env } from '../config/env.js';
+import { getDefaultAccountId } from '../repositories/accountRepository.js';
+import { updateWebUserGoogleCredentials } from '../repositories/webUserRepository.js';
 import { oauthStateByToken, settingsByUserId } from '../repositories/inMemoryStore.js';
 import { getSettings } from './settingsService.js';
 
@@ -84,6 +86,18 @@ export const completeGoogleOAuth = async (state: string, code: string) => {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       timeout: 10000
+    });
+
+    const webUserId = Number(pending.userId);
+    if (!Number.isInteger(webUserId)) {
+      return { ok: false as const, reason: 'invalid_user_id' };
+    }
+
+    const accountId = await getDefaultAccountId();
+    await updateWebUserGoogleCredentials({
+      accountId,
+      id: webUserId,
+      googleApiKey: tokenResponse.data.access_token
     });
 
     const nextSettings = {

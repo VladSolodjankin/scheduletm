@@ -100,6 +100,10 @@ Webhook-роут ожидает следующие форматы:
   - `code`, `name_ru`, `name_en`, `price`, `currency`, `duration_min`, `sessions_count`, `is_active`, ...
 - `specialists`
   - `code`, `name`, `is_default`, `is_active`, `base_session_price`, `base_hour_price`, `google_api_key`, `google_calendar_id`
+- `specialist_identity_links`
+  - связь `specialist_id <-> web_user_id` внутри `account_id` для персональных Google credentials
+- `web_users`
+  - `email`, auth поля + `google_api_key`, `google_calendar_id` (основной источник ключа календаря специалиста)
 - `user_sessions`
   - `user_id` (unique), `state`, `payload_json`
 - `app_settings`
@@ -121,7 +125,7 @@ Webhook-роут ожидает следующие форматы:
 - При переносе записи старые pending/retry уведомления отменяются и создаются заново на новую дату; при отмене записи pending/retry уведомления переводятся в `cancelled`.
 - Фоновая джоба `startReminderJob()` раз в `NOTIFICATION_POLL_MS` выбирает due-сообщения из `notifications`.
 - При ошибке отправки применяется exponential backoff (до `max_attempts`), после чего запись переходит в `failed`.
-- После успешного бронирования отправляется запрос на создание события в Google Calendar специалиста (если интеграция настроена у специалиста).
+- После успешного бронирования отправляется запрос на создание события в Google Calendar специалиста (через link `specialist_identity_links -> web_users`, либо legacy fallback на `specialists`).
 
 ## Где менять поведение
 

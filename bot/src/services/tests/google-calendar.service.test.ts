@@ -9,10 +9,11 @@ vi.mock('axios', () => ({
 
 vi.mock('../../repositories/specialist.repository', () => ({
   findSpecialistById: vi.fn(),
+  findSpecialistCalendarCredentials: vi.fn(),
 }));
 
 import axios from 'axios';
-import { findSpecialistById } from '../../repositories/specialist.repository';
+import { findSpecialistById, findSpecialistCalendarCredentials } from '../../repositories/specialist.repository';
 import { createGoogleCalendarEvents, getBusyIntervalsFromGoogleCalendar } from '../google-calendar.service';
 
 describe('google-calendar.service', () => {
@@ -21,7 +22,10 @@ describe('google-calendar.service', () => {
   });
 
   it('returns empty busy intervals when specialist has no Google settings', async () => {
-    vi.mocked(findSpecialistById).mockResolvedValue({ id: 1 } as any);
+    vi.mocked(findSpecialistCalendarCredentials).mockResolvedValue({
+      google_api_key: null,
+      google_calendar_id: null,
+    } as any);
 
     const out = await getBusyIntervalsFromGoogleCalendar({
       accountId: 7,
@@ -35,8 +39,7 @@ describe('google-calendar.service', () => {
   });
 
   it('maps Google events to busy intervals', async () => {
-    vi.mocked(findSpecialistById).mockResolvedValue({
-      id: 1,
+    vi.mocked(findSpecialistCalendarCredentials).mockResolvedValue({
       google_api_key: 'api-key',
       google_calendar_id: 'calendar-id',
     } as any);
@@ -65,6 +68,8 @@ describe('google-calendar.service', () => {
   it('sends Google Calendar events for each appointment', async () => {
     vi.mocked(findSpecialistById).mockResolvedValue({
       id: 1,
+    } as any);
+    vi.mocked(findSpecialistCalendarCredentials).mockResolvedValue({
       google_api_key: 'api-key',
       google_calendar_id: 'calendar-id',
     } as any);
