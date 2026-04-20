@@ -2,6 +2,7 @@ import { CssBaseline, ThemeProvider } from '@mui/material';
 import { useMemo, useState } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { AuthProvider } from '../shared/auth/AuthContext';
+import { I18nProvider } from '../shared/i18n/I18nContext';
 import { ThemeSettingsContext } from '../shared/theme/ThemeContext';
 import {
   DEFAULT_PALETTE_VARIANT_ID,
@@ -43,10 +44,12 @@ export function App() {
   return (
     <ThemeSettingsContext.Provider value={{ mode, paletteVariantId, toggleMode, setPaletteVariantId }}>
       <ThemeProvider theme={theme}>
-        <AuthProvider>
-          <CssBaseline />
-          <RouterProvider router={router} />
-        </AuthProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <CssBaseline />
+            <RouterProvider router={router} />
+          </AuthProvider>
+        </I18nProvider>
       </ThemeProvider>
     </ThemeSettingsContext.Provider>
   );

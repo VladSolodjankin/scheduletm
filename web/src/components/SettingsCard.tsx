@@ -13,8 +13,26 @@ import { AppIcons } from '../shared/ui/AppIcons';
 import { AppTab, AppTabs } from '../shared/ui/AppTabs';
 import { AppTextField } from '../shared/ui/AppTextField';
 
+type SettingsCardCopy = {
+  generalTab: string;
+  integrationsTab: string;
+  profileTitle: string;
+  timezone: string;
+  locale: string;
+  defaultMeetingDuration: string;
+  dailyDigestEnabled: string;
+  weekStartsOnMonday: string;
+  saveSettings: string;
+  integrationsTitle: string;
+  integrationsSubtitle: string;
+  connectGoogle: string;
+  googleConnected: string;
+  logout: string;
+};
+
 type SettingsCardProps = {
   settings: AppSettings;
+  copy: SettingsCardCopy;
   onSettingsChange: (next: AppSettings) => void;
   onSave: () => void;
   onConnectGoogle: () => void;
@@ -23,6 +41,7 @@ type SettingsCardProps = {
 
 export function SettingsCard({
   settings,
+  copy,
   onSettingsChange,
   onSave,
   onConnectGoogle,
@@ -33,28 +52,28 @@ export function SettingsCard({
   return (
     <Box>
       <AppTabs value={tab} onChange={(_, next) => setTab(next)} sx={{ mb: 2 }}>
-        <AppTab label="Общие" />
-        <AppTab label="Интеграции" />
+        <AppTab label={copy.generalTab} />
+        <AppTab label={copy.integrationsTab} />
       </AppTabs>
 
       {tab === 0 && (
         <AppForm>
-          <Typography variant="h5">Настройки профиля</Typography>
+          <Typography variant="h5">{copy.profileTitle}</Typography>
 
           <AppTextField
-            label="Timezone"
+            label={copy.timezone}
             value={settings.timezone}
             onChange={(event) => onSettingsChange({ ...settings, timezone: event.target.value })}
           />
 
           <AppTextField
-            label="Locale"
+            label={copy.locale}
             value={settings.locale}
             onChange={(event) => onSettingsChange({ ...settings, locale: event.target.value })}
           />
 
           <AppTextField
-            label="Default meeting duration (min)"
+            label={copy.defaultMeetingDuration}
             type="number"
             inputProps={{ min: 15, max: 180 }}
             value={settings.defaultMeetingDuration}
@@ -72,7 +91,7 @@ export function SettingsCard({
                 }
               />
             }
-            label="Daily digest enabled"
+            label={copy.dailyDigestEnabled}
           />
 
           <FormControlLabel
@@ -84,29 +103,29 @@ export function SettingsCard({
                 }
               />
             }
-            label="Week starts on Monday"
+            label={copy.weekStartsOnMonday}
           />
 
           <AppButton startIcon={<AppIcons.save />} onClick={onSave}>
-            Сохранить настройки
+            {copy.saveSettings}
           </AppButton>
         </AppForm>
       )}
 
       {tab === 1 && (
         <AppForm>
-          <Typography variant="h5">Интеграции</Typography>
+          <Typography variant="h5">{copy.integrationsTitle}</Typography>
           <Typography color="text.secondary" variant="body2">
-            Подключите внешние сервисы, чтобы автоматизировать бронирования и напоминания.
+            {copy.integrationsSubtitle}
           </Typography>
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
             <AppButton variant="outlined" onClick={onConnectGoogle} disabled={settings.googleConnected}>
-              {settings.googleConnected ? 'Google подключен' : 'Подключить Google'}
+              {settings.googleConnected ? copy.googleConnected : copy.connectGoogle}
             </AppButton>
 
             <AppButton color="error" variant="text" startIcon={<AppIcons.logout />} onClick={onLogout}>
-              Выйти
+              {copy.logout}
             </AppButton>
           </Stack>
         </AppForm>

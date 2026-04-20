@@ -19,6 +19,7 @@
   - `web/src/shared/ui/*` — базовые MUI-wrapper компоненты (`AppButton`, `AppTabs`, `AppForm`, `AppTextField`, `AppPage`, `AppIcons`).
   - `web/src/shared/theme/*` — константы дизайна + фабрика темы + light/dark + palette variants.
   - `web/src/shared/*` — API client, типы, auth context и переиспользуемая инфраструктура.
+  - `web/src/shared/i18n/*` — словари переводов (`ru/en`) и i18n-контекст приложения.
 
 ## API карта (MVP)
 

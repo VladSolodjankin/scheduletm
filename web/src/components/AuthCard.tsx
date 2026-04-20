@@ -9,6 +9,8 @@ type AuthCardProps = {
   password: string;
   submitText: string;
   switchText: string;
+  emailLabel: string;
+  passwordLabel: string;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onSubmit: () => void;
@@ -22,14 +24,14 @@ export function AuthCard(props: AuthCardProps) {
         <Typography variant="h5">{props.title}</Typography>
 
         <AppTextField
-          label="Email"
+          label={props.emailLabel}
           type="email"
           value={props.email}
           onChange={(event) => props.onEmailChange(event.target.value)}
         />
 
         <AppTextField
-          label="Пароль"
+          label={props.passwordLabel}
           type="password"
           inputProps={{ minLength: 10 }}
           value={props.password}
