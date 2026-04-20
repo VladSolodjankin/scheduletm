@@ -54,6 +54,19 @@
 - `POST /api/appointments/:id/mark-paid` — подтвердить оплату.
 - `POST /api/appointments/:id/notify` — ручное уведомление.
 
+### Текущий MVP scope (что делаем прямо сейчас)
+
+- В первом слайсе реализуем только:
+  - `GET /api/appointments`
+  - `POST /api/appointments`
+  - `PATCH /api/appointments/:id`
+  - `POST /api/appointments/:id/cancel`
+  - `POST /api/appointments/:id/reschedule`
+- Откладываем на следующий шаг:
+  - `mark-paid`
+  - `notify`
+  - расширенные фильтры и аудит-лог.
+
 ## Стратегия meeting link
 
 - Источник по умолчанию: `user.defaultMeetingLink`.

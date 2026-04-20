@@ -28,7 +28,7 @@
 
 ## 4. Integrations
 
-- [x] Добавить минимальный контракт `/api/integrations/google/connect`.
+- [x] Добавить endpoint запуска OAuth `/api/integrations/google/oauth/start`.
 - [x] Реализовать полноценный OAuth 2.0 Google flow (auth URL + callback + token exchange).
 - [x] Сохранять OAuth ключ web-пользователя в `web_users.google_api_key` после callback.
 - [ ] Добавить retry/backoff для внешних API.
@@ -43,6 +43,7 @@
 
 ## 6. Appointments readiness
 
+- [ ] Сначала закрыть MVP-слайс: list/create/edit + cancel/reschedule (end-to-end через web + server).
 - [ ] Добавить контракт и валидацию для lifecycle appointments.
 - [ ] Добавить optimistic locking/versioning для защиты от одновременного редактирования.
 - [ ] Добавить аудит-лог действий (cancel/reschedule/mark-paid/notify).

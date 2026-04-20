@@ -22,6 +22,13 @@
 
 ## Этап 4 — Ближайший план web/server
 
+### 4.0 Текущий приоритет (этот шаг)
+
+- [ ] Сделать Appointments MVP Slice end-to-end: `list + create + edit` (server + web).
+- [ ] Ограничить первую версию полями: `scheduledAt`, `status`, `meetingLink`, `notes`.
+- [ ] Добавить только два action endpoint: `cancel`, `reschedule`.
+- [ ] Добавить 3 интеграционных smoke-сценария: create, reschedule, cancel.
+
 ### 4.1 Data layer
 
 - [ ] Перенести in-memory storage в БД (минимум users/sessions/settings).
