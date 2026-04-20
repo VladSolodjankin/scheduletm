@@ -1,8 +1,11 @@
+import type { WebUserRole } from './roles';
+
 export type AuthResponse = {
   accessToken: string;
   user: {
     id: string;
     email: string;
+    role: WebUserRole;
   };
 };
 

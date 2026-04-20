@@ -36,7 +36,7 @@ authRoutes.post('/register', async (req, res) => {
     return res.status(201).json({
       message: 'Регистрация прошла успешно',
       accessToken,
-      user: { id: user.id, email: user.email }
+      user: { id: user.id, email: user.email, role: user.role }
     });
   } catch (error) {
     console.error(error);
@@ -68,7 +68,7 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
     return res.json({
       message: 'Вход выполнен успешно',
       accessToken,
-      user: { id: user.id, email: user.email }
+      user: { id: user.id, email: user.email, role: user.role }
     });
   } catch (error) {
     console.error(error);

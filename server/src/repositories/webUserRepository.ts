@@ -1,9 +1,11 @@
 import { db } from '../db/knex.js';
+import { type WebUserRole } from '../types/webUserRole.js';
 
 export type WebUserRecord = {
   id: number;
   account_id: number;
   email: string;
+  role: WebUserRole;
   password_hash: string;
   password_salt: string;
   is_active: boolean;
@@ -18,6 +20,7 @@ export type WebUserRecord = {
 type CreateWebUserInput = {
   accountId: number;
   email: string;
+  role: WebUserRole;
   passwordHash: string;
   passwordSalt: string;
 };
@@ -43,6 +46,7 @@ export async function createWebUser(input: CreateWebUserInput): Promise<WebUserR
     .insert({
       account_id: input.accountId,
       email: input.email,
+      role: input.role,
       password_hash: input.passwordHash,
       password_salt: input.passwordSalt,
       is_active: true,

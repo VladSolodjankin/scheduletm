@@ -24,7 +24,8 @@
 - [ ] Перенести in-memory store в persistent storage.
 - [ ] Добавить миграции и backup policy.
 - [x] Развести identity-таблицы для Telegram и Web (`users` + `web_users` + `user_identity_links`).
-- [x] Добавить связку специалиста и web identity (`specialist_identity_links`) для персональных интеграций.
+- [x] Добавить связку специалиста и web identity (`specialists.web_user_id`) для персональных интеграций.
+- [x] Добавить минимальную ролевую модель web-auth (`owner`/`specialist`) для разграничения доступа.
 
 ## 4. Integrations
 

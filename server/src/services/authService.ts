@@ -7,9 +7,11 @@ import {
   refreshSessions
 } from '../repositories/inMemoryStore.js';
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
+import { createDefaultSpecialistForWebUserIfMissing } from '../repositories/specialistRepository.js';
 import { createIdentityLinkIfMissing, findTelegramUserByEmail } from '../repositories/userIdentityLinkRepository.js';
 import { createWebUser, findWebUserByEmail, findWebUserById, touchWebUserLastLogin } from '../repositories/webUserRepository.js';
 import type { User } from '../types/domain.js';
+import { WebUserRole } from '../types/webUserRole.js';
 import { createToken, hashPassword, sanitizeEmail, verifyPassword } from '../utils/crypto.js';
 
 const now = () => Date.now();
@@ -52,10 +54,18 @@ export const issueSession = (userId: string, res: Response) => {
   return accessToken;
 };
 
-const mapWebUserToDomain = (id: number, email: string, passwordSalt: string, passwordHash: string, createdAt: Date): User => {
+const mapWebUserToDomain = (
+  id: number,
+  email: string,
+  role: WebUserRole,
+  passwordSalt: string,
+  passwordHash: string,
+  createdAt: Date,
+): User => {
   return {
     id: String(id),
     email,
+    role,
     passwordSalt,
     passwordHash,
     createdAt: createdAt.toISOString()
@@ -85,15 +95,18 @@ export const registerUser = async (emailRaw: string, password: string): Promise<
   const webUser = await createWebUser({
     accountId,
     email,
+    role: WebUserRole.Owner,
     passwordHash,
     passwordSalt: salt
   });
 
+  await createDefaultSpecialistForWebUserIfMissing(accountId, webUser.id, email);
   await tryLinkTelegramIdentity(accountId, email, webUser.id);
 
   return mapWebUserToDomain(
     webUser.id,
     webUser.email,
+    webUser.role,
     webUser.password_salt,
     webUser.password_hash,
     webUser.created_at
@@ -114,7 +127,7 @@ export const authenticateUser = async (emailRaw: string, password: string): Prom
   }
 
   await touchWebUserLastLogin(accountId, user.id);
-  return mapWebUserToDomain(user.id, user.email, user.password_salt, user.password_hash, user.created_at);
+  return mapWebUserToDomain(user.id, user.email, user.role, user.password_salt, user.password_hash, user.created_at);
 };
 
 export const refreshAccess = (refreshToken: string) => {
@@ -144,5 +157,5 @@ export const resolveUserByAccessToken = async (token: string): Promise<User | nu
     return null;
   }
 
-  return mapWebUserToDomain(user.id, user.email, user.password_salt, user.password_hash, user.created_at);
+  return mapWebUserToDomain(user.id, user.email, user.role, user.password_salt, user.password_hash, user.created_at);
 };
