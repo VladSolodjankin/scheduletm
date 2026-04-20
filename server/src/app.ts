@@ -10,11 +10,24 @@ import { settingsRoutes } from './routes/settingsRoutes.js';
 
 export const createApp = () => {
   const app = express();
+  const allowedOrigins = Array.from(new Set([env.APP_URL, 'http://localhost:5173']));
 
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(morgan('dev'));
-  app.use(cors({ origin: env.APP_URL, credentials: true }));
+  app.use(
+    cors({
+      credentials: true,
+      origin(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(new Error('Not allowed by CORS'));
+      }
+    })
+  );
   app.use(express.json({ limit: '32kb' }));
 
   app.use(healthRoutes);
