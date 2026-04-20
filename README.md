@@ -59,6 +59,13 @@ scheduletm/
 - `PUT /api/settings`
 - `POST /api/integrations/google/connect`
 
+Слой данных серверной части теперь фиксирует разделение identity-моделей:
+
+- `users` — Telegram-пользователи.
+- `web_users` — web-учетки для email/password auth.
+- `user_identity_links` — связь между Telegram и Web учетками (1:1 в рамках `account_id`).
+- `server` auth-сервис регистрирует/логинит через `web_users`, а `bot` user-сервис при наличии email делает auto-link через `user_identity_links`.
+
 Сервер разнесен по слоям:
 
 - `config` — env + схемы валидации.
@@ -130,4 +137,3 @@ npm run -w @scheduletm/web dev
 
 Для дополнительной информации смотри PRODUCTION_READINESS_CHECKLIST.md, README.md, TODO.md, PROJECT_MAP.md
 После доработки не зыбудь обновить документации.
-

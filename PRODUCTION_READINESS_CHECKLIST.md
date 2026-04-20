@@ -23,6 +23,7 @@
 - [x] Разделить server-код по слоям (`routes/services/middlewares/config/repositories`).
 - [ ] Перенести in-memory store в persistent storage.
 - [ ] Добавить миграции и backup policy.
+- [x] Развести identity-таблицы для Telegram и Web (`users` + `web_users` + `user_identity_links`).
 
 ## 4. Integrations
 
