@@ -1,13 +1,17 @@
 import {
   Box,
-  Button,
   FormControlLabel,
   Stack,
   Switch,
-  TextField,
   Typography
 } from '@mui/material';
+import { useState } from 'react';
 import type { AppSettings } from '../shared/types/api';
+import { AppButton } from '../shared/ui/AppButton';
+import { AppForm } from '../shared/ui/AppForm';
+import { AppIcons } from '../shared/ui/AppIcons';
+import { AppTab, AppTabs } from '../shared/ui/AppTabs';
+import { AppTextField } from '../shared/ui/AppTextField';
 
 type SettingsCardProps = {
   settings: AppSettings;
@@ -24,69 +28,89 @@ export function SettingsCard({
   onConnectGoogle,
   onLogout
 }: SettingsCardProps) {
+  const [tab, setTab] = useState(0);
+
   return (
-    <Box sx={{ maxWidth: 560, mx: 'auto', mt: 6 }}>
-      <Stack spacing={2} sx={{ p: 3, borderRadius: 2, boxShadow: 2, bgcolor: 'background.paper' }}>
-        <Typography variant="h5">Настройки</Typography>
+    <Box>
+      <AppTabs value={tab} onChange={(_, next) => setTab(next)} sx={{ mb: 2 }}>
+        <AppTab label="Общие" />
+        <AppTab label="Интеграции" />
+      </AppTabs>
 
-        <TextField
-          label="Timezone"
-          value={settings.timezone}
-          onChange={(event) => onSettingsChange({ ...settings, timezone: event.target.value })}
-        />
+      {tab === 0 && (
+        <AppForm>
+          <Typography variant="h5">Настройки профиля</Typography>
 
-        <TextField
-          label="Locale"
-          value={settings.locale}
-          onChange={(event) => onSettingsChange({ ...settings, locale: event.target.value })}
-        />
+          <AppTextField
+            label="Timezone"
+            value={settings.timezone}
+            onChange={(event) => onSettingsChange({ ...settings, timezone: event.target.value })}
+          />
 
-        <TextField
-          label="Default meeting duration (min)"
-          type="number"
-          inputProps={{ min: 15, max: 180 }}
-          value={settings.defaultMeetingDuration}
-          onChange={(event) =>
-            onSettingsChange({ ...settings, defaultMeetingDuration: Number(event.target.value) })
-          }
-        />
+          <AppTextField
+            label="Locale"
+            value={settings.locale}
+            onChange={(event) => onSettingsChange({ ...settings, locale: event.target.value })}
+          />
 
-        <FormControlLabel
-          control={
-            <Switch
-              checked={settings.dailyDigestEnabled}
-              onChange={(event) =>
-                onSettingsChange({ ...settings, dailyDigestEnabled: event.target.checked })
-              }
-            />
-          }
-          label="Daily digest enabled"
-        />
+          <AppTextField
+            label="Default meeting duration (min)"
+            type="number"
+            inputProps={{ min: 15, max: 180 }}
+            value={settings.defaultMeetingDuration}
+            onChange={(event) =>
+              onSettingsChange({ ...settings, defaultMeetingDuration: Number(event.target.value) })
+            }
+          />
 
-        <FormControlLabel
-          control={
-            <Switch
-              checked={settings.weekStartsOnMonday}
-              onChange={(event) =>
-                onSettingsChange({ ...settings, weekStartsOnMonday: event.target.checked })
-              }
-            />
-          }
-          label="Week starts on Monday"
-        />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={settings.dailyDigestEnabled}
+                onChange={(event) =>
+                  onSettingsChange({ ...settings, dailyDigestEnabled: event.target.checked })
+                }
+              />
+            }
+            label="Daily digest enabled"
+          />
 
-        <Button variant="contained" onClick={onSave}>
-          Сохранить настройки
-        </Button>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={settings.weekStartsOnMonday}
+                onChange={(event) =>
+                  onSettingsChange({ ...settings, weekStartsOnMonday: event.target.checked })
+                }
+              />
+            }
+            label="Week starts on Monday"
+          />
 
-        <Button variant="outlined" onClick={onConnectGoogle} disabled={settings.googleConnected}>
-          {settings.googleConnected ? 'Google подключен' : 'Подключить Google'}
-        </Button>
+          <AppButton startIcon={<AppIcons.save />} onClick={onSave}>
+            Сохранить настройки
+          </AppButton>
+        </AppForm>
+      )}
 
-        <Button color="error" variant="text" onClick={onLogout}>
-          Выйти
-        </Button>
-      </Stack>
+      {tab === 1 && (
+        <AppForm>
+          <Typography variant="h5">Интеграции</Typography>
+          <Typography color="text.secondary" variant="body2">
+            Подключите внешние сервисы, чтобы автоматизировать бронирования и напоминания.
+          </Typography>
+
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+            <AppButton variant="outlined" onClick={onConnectGoogle} disabled={settings.googleConnected}>
+              {settings.googleConnected ? 'Google подключен' : 'Подключить Google'}
+            </AppButton>
+
+            <AppButton color="error" variant="text" startIcon={<AppIcons.logout />} onClick={onLogout}>
+              Выйти
+            </AppButton>
+          </Stack>
+        </AppForm>
+      )}
     </Box>
   );
 }

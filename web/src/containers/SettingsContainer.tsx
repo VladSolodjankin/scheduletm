@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
+import { AppPage } from '../shared/ui/AppPage';
 import type { AppSettings } from '../shared/types/api';
 
 const defaultSettings: AppSettings = {
@@ -69,19 +70,22 @@ export function SettingsContainer() {
   };
 
   return (
-    <Box>
+    <AppPage title="Настройки" subtitle="Управляйте общими параметрами, интеграциями и внешним видом интерфейса.">
       {error && (
-        <Box sx={{ maxWidth: 560, mx: 'auto', mt: 2 }}>
+        <Box sx={{ maxWidth: 720, mb: 2 }}>
           <Alert severity="error">{error}</Alert>
         </Box>
       )}
-      <SettingsCard
-        settings={settings}
-        onSettingsChange={setSettings}
-        onSave={saveSettings}
-        onConnectGoogle={connectGoogle}
-        onLogout={logout}
-      />
-    </Box>
+
+      <Box sx={{ maxWidth: 720 }}>
+        <SettingsCard
+          settings={settings}
+          onSettingsChange={setSettings}
+          onSave={saveSettings}
+          onConnectGoogle={connectGoogle}
+          onLogout={logout}
+        />
+      </Box>
+    </AppPage>
   );
 }
