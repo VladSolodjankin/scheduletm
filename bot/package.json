@@ -7,13 +7,7 @@
     "start": "node dist/app.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "knex": "node --loader ts-node/esm ./node_modules/knex/bin/cli.js --knexfile knexfile.ts",
-    "migrate:make": "npm run knex -- migrate:make",
-    "migrate:latest": "npm run knex -- migrate:latest",
-    "migrate:rollback": "npm run knex -- migrate:rollback",
-    "seed:make": "npm run knex -- seed:make",
-    "seed:run": "npm run knex -- seed:run"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.10",
