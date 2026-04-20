@@ -12,5 +12,7 @@ export const defaultSettings: AppSettings = {
   defaultMeetingDuration: 30,
   weekStartsOnMonday: true,
   locale: 'ru-RU',
-  googleConnected: false
+  googleConnected: false,
+  uiThemeMode: 'light',
+  uiPaletteVariantId: 'default'
 };

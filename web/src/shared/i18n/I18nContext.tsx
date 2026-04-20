@@ -18,7 +18,20 @@ const STORAGE_KEY = 'ui-locale';
 
 function getInitialLocale(): Locale {
   const persisted = localStorage.getItem(STORAGE_KEY);
-  return persisted === 'en' || persisted === 'ru' ? persisted : DEFAULT_LOCALE;
+  if (persisted === 'en' || persisted === 'ru') {
+    return persisted;
+  }
+
+  const systemLocales = navigator.languages?.length ? navigator.languages : [navigator.language];
+  const matched = systemLocales
+    .map((locale) => locale.toLowerCase())
+    .find((locale) => locale.startsWith('ru') || locale.startsWith('en'));
+
+  if (!matched) {
+    return DEFAULT_LOCALE;
+  }
+
+  return matched.startsWith('ru') ? 'ru' : 'en';
 }
 
 function getTranslation(locale: Locale, key: TranslationKey): string {
