@@ -27,3 +27,22 @@
 - `GET /api/settings`
 - `PUT /api/settings`
 - `POST /api/integrations/google/connect`
+
+## API карта (следующий инкремент — appointments)
+
+- `GET /api/appointments` — список записей с фильтрами.
+- `POST /api/appointments` — создать запись.
+- `GET /api/appointments/:id` — получить запись.
+- `PATCH /api/appointments/:id` — обновить запись (в т.ч. `meetingLink`).
+- `POST /api/appointments/:id/cancel` — отменить запись.
+- `POST /api/appointments/:id/reschedule` — перенести запись.
+- `POST /api/appointments/:id/mark-paid` — подтвердить оплату.
+- `POST /api/appointments/:id/notify` — ручное уведомление.
+
+## Стратегия meeting link
+
+- Источник по умолчанию: `user.defaultMeetingLink`.
+- Фактическое значение встречи: `appointment.meetingLink`.
+- На создание appointment сервер подставляет default ссылку автоматически, но позволяет override.
+
+Это сохраняет простую модель и покрывает реальные кейсы (одна ссылка на пользователя + исключения на конкретные встречи).
