@@ -11,14 +11,33 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
+function PublicOnlyRoute({ children }: { children: ReactElement }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Navigate to="/settings" replace /> : children;
+}
+
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <MainLayout />,
     children: [
       { index: true, element: <Navigate to="/login" replace /> },
-      { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
+      {
+        path: '/login',
+        element: (
+          <PublicOnlyRoute>
+            <LoginPage />
+          </PublicOnlyRoute>
+        )
+      },
+      {
+        path: '/register',
+        element: (
+          <PublicOnlyRoute>
+            <RegisterPage />
+          </PublicOnlyRoute>
+        )
+      },
       {
         path: '/settings',
         element: (
