@@ -1,12 +1,12 @@
 import { Alert, Box } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
-import type { AppSettings } from '../shared/types/api';
+import type { AppSettings, GoogleOAuthStartResponse } from '../shared/types/api';
 
 const defaultSettings: AppSettings = {
   timezone: 'UTC',
@@ -21,10 +21,37 @@ const defaultSettings: AppSettings = {
 
 export function SettingsContainer() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { accessToken, clearAuth } = useAuth();
   const { t } = useI18n();
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
+
+  const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
+
+  useEffect(() => {
+    if (!googleOauthStatus) {
+      return;
+    }
+
+    if (googleOauthStatus === 'success') {
+      setSuccess(t('settings.googleConnectedSuccessfully'));
+      setSettings((prev) => ({ ...prev, googleConnected: true }));
+      setError('');
+    }
+
+    if (googleOauthStatus === 'error') {
+      setError(t('settings.errors.connectGoogle'));
+      setSuccess('');
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('google_oauth');
+    nextParams.delete('reason');
+    setSearchParams(nextParams, { replace: true });
+  }, [googleOauthStatus, searchParams, setSearchParams, t]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -53,18 +80,32 @@ export function SettingsContainer() {
       });
       setSettings(response.data);
       setError('');
+      setSuccess('');
     } catch {
       setError(t('settings.errors.save'));
+      setSuccess('');
     }
   };
 
   const connectGoogle = async () => {
+    if (!accessToken || isGoogleConnecting) {
+      return;
+    }
+
+    setIsGoogleConnecting(true);
+
     try {
-      await apiClient.post('/api/integrations/google/connect', {}, { headers: authHeaders(accessToken) });
-      setSettings((prev) => ({ ...prev, googleConnected: true }));
-      setError('');
+      const response = await apiClient.post<GoogleOAuthStartResponse>(
+        '/api/integrations/google/oauth/start',
+        {},
+        { headers: authHeaders(accessToken) }
+      );
+
+      window.location.assign(response.data.authorizeUrl);
     } catch {
       setError(t('settings.errors.connectGoogle'));
+      setSuccess('');
+      setIsGoogleConnecting(false);
     }
   };
 
@@ -78,6 +119,12 @@ export function SettingsContainer() {
       {error && (
         <Box sx={{ maxWidth: 720, mb: 2 }}>
           <Alert severity="error">{error}</Alert>
+        </Box>
+      )}
+
+      {success && (
+        <Box sx={{ maxWidth: 720, mb: 2 }}>
+          <Alert severity="success">{success}</Alert>
         </Box>
       )}
 
@@ -97,9 +144,11 @@ export function SettingsContainer() {
             integrationsTitle: t('settings.integrationsTitle'),
             integrationsSubtitle: t('settings.integrationsSubtitle'),
             connectGoogle: t('settings.connectGoogle'),
+            connectingGoogle: t('settings.connectingGoogle'),
             googleConnected: t('settings.googleConnected'),
             logout: t('common.logout')
           }}
+          isGoogleConnecting={isGoogleConnecting}
           onSettingsChange={setSettings}
           onSave={saveSettings}
           onConnectGoogle={connectGoogle}

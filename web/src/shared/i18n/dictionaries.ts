@@ -46,7 +46,9 @@ export const dictionaries = {
       integrationsTitle: 'Integrations',
       integrationsSubtitle: 'Connect external services to automate bookings and reminders.',
       connectGoogle: 'Connect Google',
+      connectingGoogle: 'Redirecting to Google...',
       googleConnected: 'Google connected',
+      googleConnectedSuccessfully: 'Google Calendar connected successfully.',
       errors: {
         load: 'Unable to load settings.',
         save: 'Unable to save settings.',
@@ -101,7 +103,9 @@ export const dictionaries = {
       integrationsTitle: 'Интеграции',
       integrationsSubtitle: 'Подключите внешние сервисы, чтобы автоматизировать бронирования и напоминания.',
       connectGoogle: 'Подключить Google',
+      connectingGoogle: 'Переходим в Google...',
       googleConnected: 'Google подключен',
+      googleConnectedSuccessfully: 'Google Calendar успешно подключен.',
       errors: {
         load: 'Не удалось загрузить настройки.',
         save: 'Не удалось сохранить настройки.',
@@ -151,7 +155,9 @@ export type TranslationKey =
   | 'settings.integrationsTitle'
   | 'settings.integrationsSubtitle'
   | 'settings.connectGoogle'
+  | 'settings.connectingGoogle'
   | 'settings.googleConnected'
+  | 'settings.googleConnectedSuccessfully'
   | 'settings.errors.load'
   | 'settings.errors.save'
   | 'settings.errors.connectGoogle';

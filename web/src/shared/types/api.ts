@@ -16,3 +16,10 @@ export type AppSettings = {
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
 };
+
+
+export type GoogleOAuthStartResponse = {
+  provider: 'google';
+  authorizeUrl: string;
+  state: string;
+};

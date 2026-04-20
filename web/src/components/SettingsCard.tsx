@@ -26,6 +26,7 @@ type SettingsCardCopy = {
   integrationsTitle: string;
   integrationsSubtitle: string;
   connectGoogle: string;
+  connectingGoogle: string;
   googleConnected: string;
   logout: string;
 };
@@ -33,6 +34,7 @@ type SettingsCardCopy = {
 type SettingsCardProps = {
   settings: AppSettings;
   copy: SettingsCardCopy;
+  isGoogleConnecting: boolean;
   onSettingsChange: (next: AppSettings) => void;
   onSave: () => void;
   onConnectGoogle: () => void;
@@ -42,6 +44,7 @@ type SettingsCardProps = {
 export function SettingsCard({
   settings,
   copy,
+  isGoogleConnecting,
   onSettingsChange,
   onSave,
   onConnectGoogle,
@@ -120,8 +123,16 @@ export function SettingsCard({
           </Typography>
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-            <AppButton variant="outlined" onClick={onConnectGoogle} disabled={settings.googleConnected}>
-              {settings.googleConnected ? copy.googleConnected : copy.connectGoogle}
+            <AppButton
+              variant="outlined"
+              onClick={onConnectGoogle}
+              disabled={settings.googleConnected || isGoogleConnecting}
+            >
+              {settings.googleConnected
+                ? copy.googleConnected
+                : isGoogleConnecting
+                  ? copy.connectingGoogle
+                  : copy.connectGoogle}
             </AppButton>
 
             <AppButton color="error" variant="text" startIcon={<AppIcons.logout />} onClick={onLogout}>

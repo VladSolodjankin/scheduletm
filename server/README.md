@@ -6,7 +6,7 @@ Node.js/Express API для web-клиента.
 
 - Auth: register/login/refresh.
 - Settings: чтение/обновление настроек пользователя.
-- Integrations: базовый endpoint для Google connect.
+- Integrations: полноценный Google OAuth 2.0 flow (start + callback + token exchange).
 - Безопасность: zod-валидация, `helmet`, login lockout, refresh cookie.
 
 ## Связь Telegram users и Web users (рекомендуемая модель)
@@ -48,3 +48,12 @@ Node.js/Express API для web-клиента.
 - `POST /api/appointments/:id/reschedule`
 - `POST /api/appointments/:id/mark-paid`
 - `POST /api/appointments/:id/notify`
+
+## Переменные окружения (Google OAuth)
+
+Смотри `server/.env.example`:
+
+- `GOOGLE_OAUTH_CLIENT_ID`
+- `GOOGLE_OAUTH_CLIENT_SECRET`
+- `GOOGLE_OAUTH_REDIRECT_URI`
+- `GOOGLE_OAUTH_SCOPES` (опционально)
