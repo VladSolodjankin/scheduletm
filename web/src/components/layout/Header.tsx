@@ -12,6 +12,8 @@ import type { Locale } from '../../shared/i18n/dictionaries';
 import type { PaletteVariantId } from '../../shared/theme/constants';
 import { PALETTE_VARIANTS } from '../../shared/theme/constants';
 import { AppIcons } from '../../shared/ui/AppIcons';
+import logoText from '../../static/images/logo_text.svg';
+import logoShort from '../../static/images/logo_short.svg';
 
 type HeaderProps = {
   title: string;
@@ -45,7 +47,20 @@ export function Header({
   return (
     <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
       <Toolbar sx={{ gap: 2 }}>
-        <Typography variant="h6">{title}</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box
+            component="img"
+            src={logoText}
+            alt={title}
+            sx={{ height: 28, display: { xs: 'none', sm: 'block' } }}
+          />
+          <Box
+            component="img"
+            src={logoShort}
+            alt={title}
+            sx={{ height: 30, display: { xs: 'block', sm: 'none' } }}
+          />
+        </Box>
 
         <Box sx={{ flexGrow: 1 }} />
 
