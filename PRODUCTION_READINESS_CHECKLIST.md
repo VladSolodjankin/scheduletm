@@ -28,7 +28,7 @@
 ## 4. Integrations
 
 - [x] Добавить минимальный контракт `/api/integrations/google/connect`.
-- [ ] Реализовать полноценный OAuth 2.0 Google flow.
+- [x] Реализовать полноценный OAuth 2.0 Google flow (auth URL + callback + token exchange).
 - [ ] Добавить retry/backoff для внешних API.
 
 ## 5. Web delivery

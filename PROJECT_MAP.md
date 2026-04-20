@@ -38,7 +38,8 @@
 - `POST /api/auth/refresh`
 - `GET /api/settings`
 - `PUT /api/settings`
-- `POST /api/integrations/google/connect`
+- `POST /api/integrations/google/oauth/start`
+- `GET /api/integrations/google/oauth/callback`
 
 ## API карта (следующий инкремент — appointments)
 
@@ -58,3 +59,10 @@
 - На создание appointment сервер подставляет default ссылку автоматически, но позволяет override.
 
 Это сохраняет простую модель и покрывает реальные кейсы (одна ссылка на пользователя + исключения на конкретные встречи).
+
+## Google OAuth переменные
+
+- `GOOGLE_OAUTH_CLIENT_ID`
+- `GOOGLE_OAUTH_CLIENT_SECRET`
+- `GOOGLE_OAUTH_REDIRECT_URI`
+- `GOOGLE_OAUTH_SCOPES` (опционально, space-separated)

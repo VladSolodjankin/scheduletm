@@ -45,7 +45,7 @@
 
 - [ ] Добавить logout endpoint и отзыв refresh-сессий на backend.
 - [ ] Добавить CSRF protection для refresh cookie flow.
-- [ ] Добавить полноценный Google OAuth 2.0 flow.
+- [x] Добавить полноценный Google OAuth 2.0 flow (web button -> backend start -> google callback).
 
 ### 4.5 Web UX & quality
 

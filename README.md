@@ -57,7 +57,8 @@ scheduletm/
 - `POST /api/auth/refresh`
 - `GET /api/settings`
 - `PUT /api/settings`
-- `POST /api/integrations/google/connect`
+- `POST /api/integrations/google/oauth/start`
+- `GET /api/integrations/google/oauth/callback`
 
 `PUT /api/settings` теперь принимает и интерфейсные поля `uiThemeMode` / `uiPaletteVariantId`, чтобы сохранять тему и палитру после логина.
 
@@ -88,6 +89,15 @@ scheduletm/
 - Дефолтная локаль берётся из системного языка браузера (если пользователь ещё не выбирал язык вручную).
 - После регистрации пользователь перенаправляется на `/login` (без автологина).
 
+
+### Google OAuth 2.0 (добавлено)
+
+- Кнопка `Connect Google` в web теперь запускает backend endpoint `POST /api/integrations/google/oauth/start`.
+- Backend формирует `authorizeUrl` и redirect на Google Consent Screen.
+- Callback обрабатывается через `GET /api/integrations/google/oauth/callback` с обменом `code -> tokens`.
+- После успешного callback пользователь возвращается на `/settings`, а в настройках отмечается `googleConnected: true`.
+- Переменные окружения добавлены в `server/.env.example`: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `GOOGLE_OAUTH_SCOPES`.
+
 ## Куда двигаться дальше (web/server)
 
 Порядок продолжения разработки (KISS, без преждевременного усложнения):
@@ -96,7 +106,7 @@ scheduletm/
 2. **Добавить appointments как отдельный модуль** в `server` + отдельные страницы/таблицы в `web`.
 3. **Реализовать операции по appointment**: смена статуса, отмена, перенос даты, ручное уведомление, подтверждение оплаты.
 4. ✅ **Внедрить i18n в web** (добавлена поддержка `ru/en`, локаль в header, переводы вынесены в отдельный слой).
-5. **Довести auth до production-потока**: logout/revoke, CSRF, полноценный Google OAuth.
+5. **Довести auth до production-потока**: logout/revoke, CSRF.
 6. **Покрыть критические сценарии тестами** (интеграционные для server + e2e smoke для web).
 
 ## Решение по ссылке на встречу
