@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { findSpecialistById } from '../repositories/specialist.repository';
+import { findSpecialistById, findSpecialistCalendarCredentials } from '../repositories/specialist.repository';
 import { getDateAfterDays, toDateTimeFromUtc, toUtcIsoFromTimezone } from '../utils/timezone';
 import { logWarn } from '../utils/logger';
 
@@ -64,13 +64,8 @@ export async function getBusyIntervalsFromGoogleCalendar(input: {
   date: string;
   timezone: string;
 }): Promise<BusyInterval[]> {
-  const specialist = await findSpecialistById(input.accountId, input.specialistId);
-
-  if (!specialist) {
-    return [];
-  }
-
-  const calendarConfig = getGoogleCalendarConfig(specialist);
+  const credentials = await findSpecialistCalendarCredentials(input.accountId, input.specialistId);
+  const calendarConfig = getGoogleCalendarConfig(credentials ?? {});
   if (!calendarConfig) {
     return [];
   }
@@ -123,12 +118,12 @@ export async function createGoogleCalendarEvents(input: {
   clientEmail?: string;
 }) {
   const specialist = await findSpecialistById(input.accountId, input.specialistId);
-
   if (!specialist) {
     return { sent: 0, skipped: input.appointments.length };
   }
 
-  const calendarConfig = getGoogleCalendarConfig(specialist);
+  const credentials = await findSpecialistCalendarCredentials(input.accountId, input.specialistId);
+  const calendarConfig = getGoogleCalendarConfig(credentials ?? {});
   if (!calendarConfig) {
     return { sent: 0, skipped: input.appointments.length };
   }

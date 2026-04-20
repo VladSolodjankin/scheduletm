@@ -7,6 +7,9 @@ export type WebUserRecord = {
   password_hash: string;
   password_salt: string;
   is_active: boolean;
+  google_api_key: string | null;
+  google_calendar_id: string | null;
+  google_connected_at: Date | null;
   created_at: Date;
   updated_at: Date;
   last_login_at: Date | null;
@@ -54,6 +57,26 @@ export async function touchWebUserLastLogin(accountId: number, id: number): Prom
     .where({ account_id: accountId, id })
     .update({
       last_login_at: db.fn.now(),
+      updated_at: db.fn.now(),
+    });
+}
+
+type UpdateWebUserGoogleCredentialsInput = {
+  accountId: number;
+  id: number;
+  googleApiKey: string;
+  googleCalendarId?: string | null;
+};
+
+export async function updateWebUserGoogleCredentials(
+  input: UpdateWebUserGoogleCredentialsInput,
+): Promise<void> {
+  await db('web_users')
+    .where({ account_id: input.accountId, id: input.id })
+    .update({
+      google_api_key: input.googleApiKey,
+      google_calendar_id: input.googleCalendarId ?? null,
+      google_connected_at: db.fn.now(),
       updated_at: db.fn.now(),
     });
 }

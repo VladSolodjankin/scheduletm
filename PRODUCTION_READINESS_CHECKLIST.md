@@ -24,11 +24,13 @@
 - [ ] Перенести in-memory store в persistent storage.
 - [ ] Добавить миграции и backup policy.
 - [x] Развести identity-таблицы для Telegram и Web (`users` + `web_users` + `user_identity_links`).
+- [x] Добавить связку специалиста и web identity (`specialist_identity_links`) для персональных интеграций.
 
 ## 4. Integrations
 
 - [x] Добавить минимальный контракт `/api/integrations/google/connect`.
 - [x] Реализовать полноценный OAuth 2.0 Google flow (auth URL + callback + token exchange).
+- [x] Сохранять OAuth ключ web-пользователя в `web_users.google_api_key` после callback.
 - [ ] Добавить retry/backoff для внешних API.
 
 ## 5. Web delivery

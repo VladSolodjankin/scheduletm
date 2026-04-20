@@ -1,5 +1,10 @@
 import { db } from '../db/knex';
 
+type SpecialistCalendarCredentialsRow = {
+  google_api_key: string | null;
+  google_calendar_id: string | null;
+};
+
 export async function findActiveSpecialists(accountId: number) {
   return db('specialists')
     .where({ account_id: accountId, is_active: true })
@@ -27,4 +32,21 @@ export async function findSingleDefaultActiveSpecialist(accountId: number) {
   }
 
   return null;
+}
+
+export async function findSpecialistCalendarCredentials(accountId: number, specialistId: number) {
+  const row = await db('specialists as sp')
+    .leftJoin('specialist_identity_links as sil', function joinIdentityLinks() {
+      this.on('sil.account_id', '=', 'sp.account_id').andOn('sil.specialist_id', '=', 'sp.id');
+    })
+    .leftJoin('web_users as wu', function joinWebUsers() {
+      this.on('wu.account_id', '=', 'sil.account_id').andOn('wu.id', '=', 'sil.web_user_id');
+    })
+    .where({ 'sp.account_id': accountId, 'sp.id': specialistId })
+    .first<SpecialistCalendarCredentialsRow>(
+      db.raw('COALESCE(wu.google_api_key, sp.google_api_key) as google_api_key'),
+      db.raw('COALESCE(wu.google_calendar_id, sp.google_calendar_id) as google_calendar_id'),
+    );
+
+  return row ?? null;
 }
