@@ -7,8 +7,9 @@
   - `server/src/index.ts` — bootstrap.
   - `server/src/app.ts` — инициализация Express middleware/роутов.
   - `server/src/config/*` — env + схемы валидации.
-  - `server/src/routes/*` — auth/settings/integrations/health endpoints.
-  - `server/src/services/*` — бизнес-логика auth/settings.
+  - `server/src/routes/*` — auth/settings/integrations/appointments/health endpoints.
+  - `server/src/services/*` — бизнес-логика auth/settings/appointments.
+  - `server/src/repositories/appointmentRepository.ts` — доступ к appointments для web-сценариев.
   - `server/src/middlewares/*` — auth + login lock middleware.
   - `server/src/repositories/inMemoryStore.ts` — in-memory состояние (MVP).
 
@@ -36,6 +37,7 @@
   - `web/src/shared/api/client.ts` — глобальный `401` handler: при `Unauthorized` очищает auth-state и переводит пользователя на `/login`.
   - `web/src/shared/i18n/*` — словари переводов (`ru/en`) и i18n-контекст приложения.
   - До логина показываются только auth-страницы (`/login`, `/register`) без header/left menu; после регистрации маршрут ведёт на `/login`.
+  - Добавлена страница `web/src/pages/AppointmentsPage.tsx` и контейнер `web/src/containers/AppointmentsContainer.tsx` для календаря appointments.
 
 ## API карта (MVP)
 
@@ -49,6 +51,11 @@
 - `PUT /api/settings`
 - `POST /api/integrations/google/oauth/start`
 - `GET /api/integrations/google/oauth/callback`
+- `GET /api/appointments`
+- `POST /api/appointments`
+- `PATCH /api/appointments/:id`
+- `POST /api/appointments/:id/cancel`
+- `POST /api/appointments/:id/reschedule`
 
 ## API карта (следующий инкремент — appointments)
 
@@ -61,9 +68,9 @@
 - `POST /api/appointments/:id/mark-paid` — подтвердить оплату.
 - `POST /api/appointments/:id/notify` — ручное уведомление.
 
-### Текущий MVP scope (что делаем прямо сейчас)
+### Текущий MVP scope (статус)
 
-- В первом слайсе реализуем только:
+- Реализовано в первом слайсе:
   - `GET /api/appointments`
   - `POST /api/appointments`
   - `PATCH /api/appointments/:id`
@@ -73,6 +80,7 @@
   - `mark-paid`
   - `notify`
   - расширенные фильтры и аудит-лог.
+  - drag&drop в календаре.
 
 ## Стратегия meeting link
 

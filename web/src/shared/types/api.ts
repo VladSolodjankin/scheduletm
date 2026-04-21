@@ -28,3 +28,24 @@ export type GoogleOAuthStartResponse = {
   authorizeUrl: string;
   state: string;
 };
+
+export type AppointmentStatus = 'new' | 'confirmed' | 'cancelled';
+
+export type SpecialistItem = {
+  id: number;
+  name: string;
+};
+
+export type AppointmentItem = {
+  id: number;
+  specialistId: number;
+  scheduledAt: string;
+  status: AppointmentStatus;
+  meetingLink: string;
+  notes: string;
+};
+
+export type AppointmentListResponse = {
+  appointments: AppointmentItem[];
+  specialists: SpecialistItem[];
+};

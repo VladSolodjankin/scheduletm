@@ -77,6 +77,7 @@ export const issueSession = async (userId: string, res: Response) => {
 
 const mapWebUserToDomain = (
   id: number,
+  accountId: number,
   email: string,
   role: WebUserRole,
   passwordSalt: string,
@@ -85,6 +86,7 @@ const mapWebUserToDomain = (
 ): User => {
   return {
     id: String(id),
+    accountId,
     email,
     role,
     passwordSalt,
@@ -116,6 +118,7 @@ export const registerUser = async (emailRaw: string, password: string): Promise<
 
   return mapWebUserToDomain(
     webUser.id,
+    webUser.account_id,
     webUser.email,
     webUser.role,
     webUser.password_salt,
@@ -168,6 +171,7 @@ export const createSpecialistUser = async (
 
   const user = mapWebUserToDomain(
     webUser.id,
+    webUser.account_id,
     webUser.email,
     webUser.role,
     webUser.password_salt,
@@ -192,7 +196,15 @@ export const authenticateUser = async (emailRaw: string, password: string): Prom
   }
 
   await touchWebUserLastLogin(accountId, user.id);
-  return mapWebUserToDomain(user.id, user.email, user.role, user.password_salt, user.password_hash, user.created_at);
+  return mapWebUserToDomain(
+    user.id,
+    user.account_id,
+    user.email,
+    user.role,
+    user.password_salt,
+    user.password_hash,
+    user.created_at
+  );
 };
 
 export const refreshAccess = async (refreshToken: string) => {
@@ -218,7 +230,15 @@ export const resolveUserByAccessToken = async (token: string): Promise<User | nu
     return null;
   }
 
-  return mapWebUserToDomain(user.id, user.email, user.role, user.password_salt, user.password_hash, user.created_at);
+  return mapWebUserToDomain(
+    user.id,
+    user.account_id,
+    user.email,
+    user.role,
+    user.password_salt,
+    user.password_hash,
+    user.created_at
+  );
 };
 
 export const logoutSession = async (refreshToken?: string, accessToken?: string) => {
