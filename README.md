@@ -47,6 +47,7 @@ scheduletm/
 
 - Страницы: `/login`, `/register`, `/settings` через `react-router-dom`.
 - UI на `@mui/material` (без кастомного CSS на старте).
+- Формы web переведены на `react-hook-form` для единообразного контроля полей и submit-state.
 - Разделение на `components`, `containers`, `pages`, `app`, `shared`.
 - Кнопка `Подключить Google` на странице настроек.
 

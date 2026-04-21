@@ -28,6 +28,7 @@ export function SettingsContainer() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
 
@@ -73,9 +74,15 @@ export function SettingsContainer() {
     void load();
   }, [accessToken, navigate, t]);
 
-  const saveSettings = async () => {
+  const saveSettings = async (nextSettings: AppSettings) => {
+    if (!accessToken) {
+      return;
+    }
+
+    setIsSaving(true);
+
     try {
-      const response = await apiClient.put<AppSettings>('/api/settings', settings, {
+      const response = await apiClient.put<AppSettings>('/api/settings', nextSettings, {
         headers: authHeaders(accessToken)
       });
       setSettings(response.data);
@@ -84,6 +91,8 @@ export function SettingsContainer() {
     } catch {
       setError(t('settings.errors.save'));
       setSuccess('');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -143,7 +152,7 @@ export function SettingsContainer() {
             googleConnected: t('settings.googleConnected')
           }}
           isGoogleConnecting={isGoogleConnecting}
-          onSettingsChange={setSettings}
+          isSaving={isSaving}
           onSave={saveSettings}
           onConnectGoogle={connectGoogle}
         />
