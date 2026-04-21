@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState, type PropsWithChildren } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
+import { setUnauthorizedHandler } from '../api/client';
 import type { WebUserRole } from '../types/roles';
 
 type AuthUser = {
@@ -50,6 +51,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
   };
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      clearAuth();
+      if (window.location.pathname !== '/login') {
+        window.location.assign('/login');
+      }
+    });
+
+    return () => {
+      setUnauthorizedHandler(null);
+    };
+  }, []);
 
   const value = useMemo(() => ({
     accessToken,

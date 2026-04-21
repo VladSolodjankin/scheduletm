@@ -1,15 +1,17 @@
 import crypto from 'node:crypto';
 import type { Response } from 'express';
 import { env } from '../config/env.js';
-import {
-  accessSessions,
-  loginAttempts,
-  refreshSessions
-} from '../repositories/inMemoryStore.js';
+import { loginAttempts } from '../repositories/inMemoryStore.js';
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import { createDefaultSpecialistForWebUserIfMissing } from '../repositories/specialistRepository.js';
 import { createIdentityLinkIfMissing, findTelegramUserByEmail } from '../repositories/userIdentityLinkRepository.js';
 import { createWebUser, findWebUserByEmail, findWebUserById, touchWebUserLastLogin } from '../repositories/webUserRepository.js';
+import {
+  createWebUserSession,
+  deleteWebUserSessionByToken,
+  findActiveWebUserSessionByToken,
+  revokeWebUserSessionByToken
+} from '../repositories/webUserSessionRepository.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { createToken, hashPassword, sanitizeEmail, verifyPassword } from '../utils/crypto.js';
@@ -36,12 +38,32 @@ export const registerFailedAttempt = (ip: string) => {
 
 export const clearAttempts = (ip: string) => loginAttempts.delete(ip);
 
-export const issueSession = (userId: string, res: Response) => {
+export const issueSession = async (userId: string, res: Response) => {
+  const accountId = await getDefaultAccountId();
+  const numericUserId = Number(userId);
+  if (!Number.isInteger(numericUserId)) {
+    throw new Error('Invalid web user id for session issue');
+  }
+
   const accessToken = createToken();
   const refreshToken = createToken();
+  const accessExpiresAt = new Date(now() + accessExpiresMs);
+  const refreshExpiresAt = new Date(now() + cookieExpiresMs);
 
-  accessSessions.set(accessToken, { userId, expiresAt: now() + accessExpiresMs });
-  refreshSessions.set(refreshToken, { userId, expiresAt: now() + cookieExpiresMs });
+  await createWebUserSession({
+    accountId,
+    webUserId: numericUserId,
+    token: accessToken,
+    sessionType: 'access',
+    expiresAt: accessExpiresAt
+  });
+  await createWebUserSession({
+    accountId,
+    webUserId: numericUserId,
+    token: refreshToken,
+    sessionType: 'refresh',
+    expiresAt: refreshExpiresAt
+  });
 
   res.cookie(env.SESSION_COOKIE_NAME, refreshToken, {
     httpOnly: true,
@@ -130,32 +152,40 @@ export const authenticateUser = async (emailRaw: string, password: string): Prom
   return mapWebUserToDomain(user.id, user.email, user.role, user.password_salt, user.password_hash, user.created_at);
 };
 
-export const refreshAccess = (refreshToken: string) => {
-  const current = refreshSessions.get(refreshToken);
-  if (!current || current.expiresAt < now()) {
+export const refreshAccess = async (refreshToken: string) => {
+  const accountId = await getDefaultAccountId();
+  const current = await findActiveWebUserSessionByToken(accountId, refreshToken, 'refresh');
+  if (!current) {
     return null;
   }
 
-  refreshSessions.delete(refreshToken);
-  return current.userId;
+  await revokeWebUserSessionByToken(accountId, refreshToken);
+  return String(current.web_user_id);
 };
 
 export const resolveUserByAccessToken = async (token: string): Promise<User | null> => {
-  const session = accessSessions.get(token);
-  if (!session || session.expiresAt < now()) {
-    return null;
-  }
-
   const accountId = await getDefaultAccountId();
-  const userId = Number(session.userId);
-  if (!Number.isInteger(userId)) {
+  const session = await findActiveWebUserSessionByToken(accountId, token, 'access');
+  if (!session) {
     return null;
   }
 
-  const user = await findWebUserById(accountId, userId);
+  const user = await findWebUserById(accountId, session.web_user_id);
   if (!user) {
     return null;
   }
 
   return mapWebUserToDomain(user.id, user.email, user.role, user.password_salt, user.password_hash, user.created_at);
+};
+
+export const logoutSession = async (refreshToken?: string, accessToken?: string) => {
+  const accountId = await getDefaultAccountId();
+
+  if (refreshToken) {
+    await deleteWebUserSessionByToken(accountId, refreshToken);
+  }
+
+  if (accessToken) {
+    await deleteWebUserSessionByToken(accountId, accessToken);
+  }
 };

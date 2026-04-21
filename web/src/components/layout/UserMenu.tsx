@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { useMemo, useState, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiClient, authHeaders } from '../../shared/api/client';
 import { useAuth } from '../../shared/auth/AuthContext';
 import { useI18n } from '../../shared/i18n/I18nContext';
 import { AppIcons } from '../../shared/ui/AppIcons';
@@ -45,7 +46,7 @@ function toInitials(displayName: string) {
 }
 
 export function UserMenu() {
-  const { user, clearAuth } = useAuth();
+  const { user, accessToken, clearAuth } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -70,8 +71,15 @@ export function UserMenu() {
     navigate('/settings');
   };
 
-  const logout = () => {
+  const logout = async () => {
     closeMenu();
+    try {
+      await apiClient.post('/api/auth/logout', {}, {
+        headers: accessToken ? authHeaders(accessToken) : undefined
+      });
+    } catch {
+      // Если logout API недоступен, локально все равно завершаем сессию.
+    }
     clearAuth();
     navigate('/login');
   };

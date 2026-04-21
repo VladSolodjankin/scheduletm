@@ -1,9 +1,7 @@
-import type { AppSettings, Session, User } from '../types/domain.js';
+import type { AppSettings, User } from '../types/domain.js';
 
 export const usersByEmail = new Map<string, User>();
 export const settingsByUserId = new Map<string, AppSettings>();
-export const refreshSessions = new Map<string, Session>();
-export const accessSessions = new Map<string, Session>();
 export const loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
 export const oauthStateByToken = new Map<string, { userId: string; createdAt: number }>();
 

@@ -19,8 +19,3 @@ export type AppSettings = {
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
 };
-
-export type Session = {
-  userId: string;
-  expiresAt: number;
-};

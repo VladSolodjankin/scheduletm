@@ -20,6 +20,7 @@
 - `web_users.google_api_key` — Google OAuth `access_token`, сохраняемый после web-коннекта Google.
 - `user_identity_links` — 1:1 bridge между `users` и `web_users` внутри `account_id`.
 - `specialists.web_user_id` — 1:1 bridge между `specialists` и `web_users` внутри `account_id`.
+- `web_user_sessions` — web auth-сессии (`access`/`refresh`) с `expires_at`/`revoked_at`, источник истины для проверки токенов и refresh-rotation.
 - Миграция: `server/src/db/migrations/20260420133000_add_web_users_and_identity_links.ts`.
 - Реализация: `server/src/services/authService.ts` + `bot/src/services/user.service.ts` используют эту схему для auth и auto-link по email.
 - `web/` — SPA:
@@ -31,6 +32,7 @@
   - `web/src/shared/ui/*` — базовые MUI-wrapper компоненты (`AppButton`, `AppTabs`, `AppForm`, `AppTextField`, `AppPage`, `AppIcons`).
   - `web/src/shared/theme/*` — константы дизайна + фабрика темы + light/dark + palette variants.
   - `web/src/shared/*` — API client, типы, auth context и переиспользуемая инфраструктура.
+  - `web/src/shared/api/client.ts` — глобальный `401` handler: при `Unauthorized` очищает auth-state и переводит пользователя на `/login`.
   - `web/src/shared/i18n/*` — словари переводов (`ru/en`) и i18n-контекст приложения.
   - До логина показываются только auth-страницы (`/login`, `/register`) без header/left menu; после регистрации маршрут ведёт на `/login`.
 
@@ -40,6 +42,7 @@
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
+- `POST /api/auth/logout`
 - `GET /api/settings`
 - `PUT /api/settings`
 - `POST /api/integrations/google/oauth/start`
