@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import logoText from '../static/images/logo_text.svg';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
-import { AppTextField } from '../shared/ui/AppTextField';
+import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 
 type AuthFormValues = {
   email: string;
@@ -90,14 +90,11 @@ export function AuthCard({
             required: 'Email is required'
           }}
           render={({ field, fieldState }: any) => (
-            <AppTextField
-              {...field}
+            <AppRhfTextField
+              field={field}
               label={emailLabel}
               type="email"
-              onChange={(event) => {
-                field.onChange(event);
-                clearErrors('email');
-              }}
+              onValueChange={() => clearErrors('email')}
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message}
             />
@@ -115,15 +112,12 @@ export function AuthCard({
             }
           }}
           render={({ field, fieldState }: any) => (
-            <AppTextField
-              {...field}
+            <AppRhfTextField
+              field={field}
               label={passwordLabel}
               type="password"
-              inputProps={{ minLength: 10 }}
-              onChange={(event) => {
-                field.onChange(event);
-                clearErrors('password');
-              }}
+              slotProps={{ htmlInput: { minLength: 10 } }}
+              onValueChange={() => clearErrors('password')}
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message}
             />
