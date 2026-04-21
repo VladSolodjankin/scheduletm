@@ -20,7 +20,14 @@ export function AppRhfTextField<TFieldValues extends FieldValues>({
 }: AppRhfTextFieldProps<TFieldValues>) {
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = event.target.value;
-    field.onChange(parseValue ? parseValue(value) : value);
+
+    if (parseValue) {
+      field.onChange(parseValue(value));
+    } else {
+      field.onChange(event);
+      field.onChange(value);
+    }
+
     onValueChange?.(value);
   };
 
