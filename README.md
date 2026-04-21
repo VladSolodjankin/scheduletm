@@ -55,6 +55,7 @@ scheduletm/
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
+- `POST /api/auth/logout`
 - `GET /api/settings`
 - `PUT /api/settings`
 - `POST /api/integrations/google/oauth/start`
@@ -154,8 +155,11 @@ scheduletm/
 - Salted PBKDF2 hash для паролей.
 - Защита логина от brute-force (lockout).
 - Refresh-сессия через `HttpOnly` cookie.
+- Access/refresh web-сессии сохраняются в БД (`web_user_sessions`), а не в in-memory.
+- Logout в web вызывает backend `POST /api/auth/logout`, который удаляет текущие access/refresh токены из БД и очищает refresh cookie.
+- Если API возвращает `401 Unauthorized`, web-клиент автоматически очищает auth-сессию и делает redirect на `/login`.
 
-> Пока используется in-memory storage. Для production нужно перенести users/sessions/settings в БД.
+> `settings` пока остаются in-memory. Web auth-сессии уже хранятся в БД, следующий шаг — перенести туда же settings.
 
 ## Команды
 

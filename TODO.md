@@ -32,6 +32,7 @@
 ### 4.1 Data layer
 
 - [ ] Перенести in-memory storage в БД (минимум users/sessions/settings).
+- [x] Перенести web auth-сессии в БД (`web_user_sessions`, access + refresh токены).
 - [ ] Добавить миграции и seed для локальной разработки.
 - [x] Развести identity-модели: `users` (Telegram), `web_users` (web-auth), `user_identity_links` (1:1 связь в рамках account).
 - [x] Сохранять Google OAuth ключ web-пользователя в `web_users.google_api_key` после успешного callback.
@@ -53,7 +54,7 @@
 
 ### 4.4 Security & auth hardening
 
-- [ ] Добавить logout endpoint и отзыв refresh-сессий на backend.
+- [x] Добавить logout endpoint и удаление текущей web-сессии из БД на backend.
 - [ ] Добавить CSRF protection для refresh cookie flow.
 - [x] Добавить полноценный Google OAuth 2.0 flow (web button -> backend start -> google callback).
 
@@ -63,6 +64,7 @@
 - [x] Для неавторизованных пользователей показывать только `/login` и `/register` без меню/настроек; после регистрации делать redirect на `/login`.
 - [x] Добавить в header профиль авторизованного пользователя (avatar/инициалы + dropdown с settings/logout) и mobile-friendly компоновку шапки.
 - [ ] Добавить интеграционные тесты (server) и e2e smoke (web).
+- [x] На `401 Unauthorized` в web-клиенте автоматически делать logout и redirect на `/login`.
 
 ### 4.6 UI foundation (выполнено)
 

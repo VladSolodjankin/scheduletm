@@ -6,6 +6,7 @@ import {
   authenticateUser,
   clearAttempts,
   issueSession,
+  logoutSession,
   refreshAccess,
   registerFailedAttempt,
   registerUser
@@ -32,7 +33,7 @@ authRoutes.post('/register', async (req, res) => {
       });
     }
 
-    const accessToken = issueSession(user.id, res);
+    const accessToken = await issueSession(user.id, res);
     return res.status(201).json({
       message: 'Регистрация прошла успешно',
       accessToken,
@@ -64,7 +65,7 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
     }
 
     clearAttempts(req.ip ?? 'unknown');
-    const accessToken = issueSession(user.id, res);
+    const accessToken = await issueSession(user.id, res);
     return res.json({
       message: 'Вход выполнен успешно',
       accessToken,
@@ -76,7 +77,7 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
   }
 });
 
-authRoutes.post('/refresh', (req, res) => {
+authRoutes.post('/refresh', async (req, res) => {
   const refreshToken = parseCookies(req).get(env.SESSION_COOKIE_NAME);
 
   if (!refreshToken) {
@@ -85,16 +86,36 @@ authRoutes.post('/refresh', (req, res) => {
     });
   }
 
-  const userId = refreshAccess(refreshToken);
+  const userId = await refreshAccess(refreshToken);
   if (!userId) {
     return res.status(401).json({
       message: 'Не удалось обновить сессию. Войдите снова'
     });
   }
 
-  const accessToken = issueSession(userId, res);
+  const accessToken = await issueSession(userId, res);
   return res.json({
     message: 'Сессия обновлена',
     accessToken
   });
+});
+
+authRoutes.post('/logout', async (req, res) => {
+  const refreshToken = parseCookies(req).get(env.SESSION_COOKIE_NAME);
+  const auth = req.headers.authorization;
+  const accessToken = auth?.startsWith('Bearer ') ? auth.slice('Bearer '.length) : undefined;
+
+  try {
+    await logoutSession(refreshToken, accessToken);
+    res.clearCookie(env.SESSION_COOKIE_NAME, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/api/auth'
+    });
+    return res.status(204).send();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Не удалось завершить сессию' });
+  }
 });

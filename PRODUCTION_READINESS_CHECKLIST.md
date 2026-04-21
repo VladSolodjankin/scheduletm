@@ -15,6 +15,7 @@
 - [x] Salted PBKDF2 hashing для паролей.
 - [x] Brute-force lockout на login endpoint.
 - [x] Refresh session через `HttpOnly` cookie.
+- [x] Logout endpoint удаляет текущие web auth-сессии из БД и очищает refresh cookie.
 - [ ] Добавить CSRF protection для refresh cookie flow.
 - [ ] Перенести секреты в secret manager (production).
 
@@ -22,6 +23,7 @@
 
 - [x] Разделить server-код по слоям (`routes/services/middlewares/config/repositories`).
 - [ ] Перенести in-memory store в persistent storage.
+- [x] Вынести web auth-сессии в persistent storage (`web_user_sessions`, access + refresh, revoke + expires_at).
 - [ ] Добавить миграции и backup policy.
 - [x] Развести identity-таблицы для Telegram и Web (`users` + `web_users` + `user_identity_links`).
 - [x] Добавить связку специалиста и web identity (`specialists.web_user_id`) для персональных интеграций.
@@ -42,6 +44,7 @@
 - [x] Добавить в header профильный dropdown авторизованного пользователя (settings/logout) с адаптацией под мобильные экраны.
 - [ ] Подключить error tracking.
 - [ ] Настроить caching/security headers на edge.
+- [x] При `401 Unauthorized` на API автоматически очищать auth-state во фронте и отправлять пользователя на `/login`.
 
 ## 6. Appointments readiness
 

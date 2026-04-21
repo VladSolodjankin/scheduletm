@@ -17,6 +17,12 @@ export const apiClient = axios.create({
   withCredentials: true
 });
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  unauthorizedHandler = handler;
+}
+
 apiClient.interceptors.request.use((config) => {
   const url = config.url ?? '';
   const normalizedBaseUrl = config.baseURL?.replace(/\/+$/, '') ?? '';
@@ -41,6 +47,12 @@ apiClient.interceptors.response.use((response) => {
   }
 
   return response;
+}, (error) => {
+  if (error?.response?.status === 401) {
+    unauthorizedHandler?.();
+  }
+
+  return Promise.reject(error);
 });
 
 export const authHeaders = (accessToken: string) => ({
