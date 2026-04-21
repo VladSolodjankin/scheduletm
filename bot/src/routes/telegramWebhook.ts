@@ -59,7 +59,10 @@ import {
   buildCalendarLink,
   buildMicrosoftCalendarLink,
 } from '../utils/calendar-links';
-import { createGoogleCalendarEvents } from '../services/google-calendar.service';
+import {
+  syncAppointmentRescheduledInExternalCalendars,
+  syncAppointmentsToExternalCalendars,
+} from '../services/calendar-sync.service';
 import {
   beginProcessingUpdate,
   markProcessedUpdate,
@@ -573,6 +576,14 @@ telegramWebhookRouter.post(
               reminderComment: user.reminder_comment,
             });
 
+            await syncAppointmentRescheduledInExternalCalendars({
+              accountId: user.account_id,
+              specialistId: rescheduled.calendarSyncContext.specialistId,
+              appointmentId: payload.editingAppointmentId,
+              appointmentAt: rescheduled.calendarSyncContext.appointmentAtIso,
+              durationMin: rescheduled.calendarSyncContext.durationMin,
+            });
+
             await editMessageText(
               chatId,
               messageId,
@@ -870,7 +881,7 @@ telegramWebhookRouter.post(
             ),
           );
 
-          await createGoogleCalendarEvents({
+          await syncAppointmentsToExternalCalendars({
             accountId: user.account_id,
             specialistId: payload.specialistId!,
             appointments: appointmentResult.appointments.map((appointment) => ({

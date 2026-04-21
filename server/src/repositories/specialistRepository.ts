@@ -56,6 +56,12 @@ export type SpecialistRecord = {
   user_id: number | null;
 };
 
+export type SpecialistCalendarCredentials = {
+  specialistId: number;
+  googleApiKey: string;
+  googleCalendarId: string | null;
+};
+
 export async function findSpecialistById(accountId: number, specialistId: number): Promise<SpecialistRecord | null> {
   const row = await db('specialists')
     .where({ account_id: accountId, id: specialistId })
@@ -76,4 +82,28 @@ export async function findSpecialistByWebUserId(accountId: number, webUserId: nu
     .first<SpecialistRecord>();
 
   return row ?? null;
+}
+
+export async function findSpecialistsCalendarCredentials(
+  accountId: number,
+  specialistIds: number[],
+): Promise<SpecialistCalendarCredentials[]> {
+  if (!specialistIds.length) {
+    return [];
+  }
+
+  const rows = await db('specialists as s')
+    .join('web_users as wu', function joinWebUsers() {
+      this.on('wu.id', '=', 's.user_id').andOn('wu.account_id', '=', 's.account_id');
+    })
+    .where('s.account_id', accountId)
+    .whereIn('s.id', specialistIds)
+    .whereNotNull('wu.google_api_key')
+    .select(
+      's.id as specialistId',
+      'wu.google_api_key as googleApiKey',
+      'wu.google_calendar_id as googleCalendarId',
+    );
+
+  return rows.filter((row) => Boolean(row.googleApiKey));
 }

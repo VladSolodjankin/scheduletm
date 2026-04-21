@@ -52,4 +52,10 @@ export type AppointmentItem = {
 export type AppointmentListResponse = {
   appointments: AppointmentItem[];
   specialists: SpecialistItem[];
+  busySlots: Array<{
+    specialistId: number;
+    scheduledAt: string;
+    durationMin: number;
+    source: 'google';
+  }>;
 };

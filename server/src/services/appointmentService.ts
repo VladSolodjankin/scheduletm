@@ -15,6 +15,7 @@ import {
   listSpecialistsByAccount,
   type SpecialistRecord,
 } from '../repositories/specialistRepository.js';
+import { listExternalBusySlots, type ExternalBusySlot } from './calendarAvailabilityService.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 
@@ -30,6 +31,7 @@ type AppointmentDto = {
 type AppointmentListResult = {
   appointments: AppointmentDto[];
   specialists: Array<{ id: number; name: string }>;
+  busySlots: ExternalBusySlot[];
 };
 
 type CreateAppointmentPayload = {
@@ -144,9 +146,23 @@ export async function getAppointments(
         (await listSpecialistsByAccount(accountId)).filter((item) => item.user_id === Number(actor.id)),
       );
 
+  const fromDate = filters.from ? new Date(filters.from) : new Date();
+  const toDate = filters.to ? new Date(filters.to) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const busySpecialistIds = specialistId
+    ? [specialistId]
+    : specialists.map((specialist) => specialist.id);
+
+  const busySlots = await listExternalBusySlots({
+    accountId,
+    specialistIds: busySpecialistIds,
+    from: fromDate,
+    to: toDate,
+  });
+
   return {
     appointments: items.map(mapAppointment),
     specialists,
+    busySlots,
   };
 }
 

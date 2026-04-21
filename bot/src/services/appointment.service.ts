@@ -304,6 +304,11 @@ export async function rescheduleUserAppointment(input: RescheduleAppointmentInpu
         specialistName: appointment.specialistName,
         appointmentAtIso: String(updated.appointment_at),
       },
+      calendarSyncContext: {
+        specialistId: appointment.specialistId,
+        durationMin: appointment.durationMin,
+        appointmentAtIso: String(updated.appointment_at),
+      },
     };
   } catch (error) {
     if (isSlotConflictError(error)) {

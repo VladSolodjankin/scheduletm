@@ -11,6 +11,7 @@ import {
   MenuItem,
   Select,
   Stack,
+  Chip,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -90,6 +91,7 @@ export function AppointmentsContainer() {
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistItem[]>([]);
+  const [busySlots, setBusySlots] = useState<AppointmentListResponse['busySlots']>([]);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | 'all'>('all');
 
   const [focusDate, setFocusDate] = useState(() => startOfDay(new Date()));
@@ -141,6 +143,31 @@ export function AppointmentsContainer() {
     return map;
   }, [appointments]);
 
+  const busySlotsByCell = useMemo(() => {
+    const map = new Map<string, AppointmentListResponse['busySlots']>();
+
+    for (const slot of busySlots) {
+      const date = new Date(slot.scheduledAt);
+      const dayKey = startOfDay(date).toISOString();
+      const key = `${dayKey}:${date.getUTCHours()}`;
+      const list = map.get(key) ?? [];
+      list.push(slot);
+      map.set(key, list);
+    }
+
+    return map;
+  }, [busySlots]);
+
+  function getVisibleRange() {
+    const firstDay = visibleDays[0] ?? startOfDay(new Date());
+    const lastDay = visibleDays[visibleDays.length - 1] ?? firstDay;
+    const from = new Date(firstDay);
+    from.setUTCHours(0, 0, 0, 0);
+    const to = new Date(lastDay);
+    to.setUTCHours(23, 59, 59, 999);
+    return { from: from.toISOString(), to: to.toISOString() };
+  }
+
   const loadAppointments = async (nextSpecialistId: number | 'all' = selectedSpecialistId) => {
     if (!accessToken) {
       return;
@@ -149,13 +176,19 @@ export function AppointmentsContainer() {
     setIsLoading(true);
 
     try {
+      const { from, to } = getVisibleRange();
       const response = await apiClient.get<AppointmentListResponse>('/api/appointments', {
         headers: authHeaders(accessToken),
-        params: nextSpecialistId === 'all' ? undefined : { specialistId: nextSpecialistId },
+        params: {
+          from,
+          to,
+          ...(nextSpecialistId === 'all' ? {} : { specialistId: nextSpecialistId }),
+        },
       });
 
       setAppointments(response.data.appointments);
       setSpecialists(response.data.specialists);
+      setBusySlots(response.data.busySlots ?? []);
       setError('');
     } catch {
       setError('Unable to load appointments');
@@ -165,9 +198,9 @@ export function AppointmentsContainer() {
   };
 
   useEffect(() => {
-    void loadAppointments();
+    void loadAppointments(selectedSpecialistId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+  }, [accessToken, focusDate, viewMode, selectedSpecialistId]);
 
   const openCreate = (targetDate: Date) => {
     const specialistId = selectedSpecialistId === 'all'
@@ -289,9 +322,8 @@ export function AppointmentsContainer() {
     }
   };
 
-  const onSpecialistChange = async (value: number | 'all') => {
+  const onSpecialistChange = (value: number | 'all') => {
     setSelectedSpecialistId(value);
-    await loadAppointments(value);
   };
 
   const movePeriod = (direction: -1 | 1) => {
@@ -400,6 +432,7 @@ export function AppointmentsContainer() {
                   const slotDate = atHour(day, hour);
                   const key = `${startOfDay(day).toISOString()}:${hour}`;
                   const items = appointmentsByCell.get(key) ?? [];
+                  const externalBusy = busySlotsByCell.get(key) ?? [];
 
                   return (
                     <Box
@@ -427,6 +460,15 @@ export function AppointmentsContainer() {
                       onDoubleClick={() => openCreate(slotDate)}
                     >
                       <Stack spacing={0.5}>
+                        {externalBusy.map((slot) => (
+                          <Chip
+                            key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}
+                            size="small"
+                            label="Busy (Google)"
+                            color="warning"
+                            variant="outlined"
+                          />
+                        ))}
                         {items.map((item) => (
                           <Box
                             key={item.id}
