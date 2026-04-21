@@ -56,6 +56,7 @@ scheduletm/
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
+- `POST /api/auth/specialists`
 - `GET /api/settings`
 - `PUT /api/settings`
 - `POST /api/integrations/google/oauth/start`
@@ -68,8 +69,8 @@ scheduletm/
 - `users` — Telegram-пользователи.
 - `web_users` — web-учетки для email/password auth.
 - `user_identity_links` — связь между Telegram и Web учетками (1:1 в рамках `account_id`).
-- `web_users.role` — роль web-пользователя (`owner`/`specialist`).
-- `specialists.web_user_id` — прямая 1:1 привязка специалиста к web-учетке (в рамках `account_id`).
+- `web_users.role` — роль web-пользователя (`owner`/`admin`/`specialist`).
+- `specialists.user_id` — прямая 1:1 привязка специалиста к web-учетке (в рамках `account_id`).
 - `server` auth-сервис регистрирует/логинит через `web_users`, а `bot` user-сервис при наличии email делает auto-link через `user_identity_links`.
 
 Сервер разнесен по слоям:
@@ -108,8 +109,8 @@ scheduletm/
 Текущее состояние модели данных для Google:
 
 - `web_users.google_api_key` — ключ, полученный через web OAuth (источник истины для авторизованного web-пользователя).
-- `specialists.web_user_id` определяет, какому специалисту принадлежит `web_user`.
-- bot Google Calendar использует сначала ключ/календарь связанного `web_user`, а затем fallback на legacy `specialists.google_api_key` / `specialists.google_calendar_id`.
+- `specialists.user_id` определяет, какому специалисту принадлежит `web_user`.
+- `specialists` больше не хранит Google credentials: источник истины только `web_users.google_api_key/google_calendar_id`.
 
 ## Куда двигаться дальше (web/server)
 

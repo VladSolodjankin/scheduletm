@@ -16,10 +16,10 @@
 
 - `users` — Telegram users.
 - `web_users` — web auth users (email/password hash/salt).
-- `web_users.role` — роль web-пользователя (`owner`/`specialist`).
+- `web_users.role` — роль web-пользователя (`owner`/`admin`/`specialist`).
 - `web_users.google_api_key` — Google OAuth `access_token`, сохраняемый после web-коннекта Google.
 - `user_identity_links` — 1:1 bridge между `users` и `web_users` внутри `account_id`.
-- `specialists.web_user_id` — 1:1 bridge между `specialists` и `web_users` внутри `account_id`.
+- `specialists.user_id` — 1:1 bridge между `specialists` и `web_users` внутри `account_id`.
 - `web_user_sessions` — web auth-сессии (`access`/`refresh`) с `expires_at`/`revoked_at`, источник истины для проверки токенов и refresh-rotation.
 - Миграция: `server/src/db/migrations/20260420133000_add_web_users_and_identity_links.ts`.
 - Реализация: `server/src/services/authService.ts` + `bot/src/services/user.service.ts` используют эту схему для auth и auto-link по email.
@@ -43,6 +43,7 @@
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
+- `POST /api/auth/specialists`
 - `GET /api/settings`
 - `PUT /api/settings`
 - `POST /api/integrations/google/oauth/start`
@@ -90,5 +91,5 @@
 ## Google credentials (текущее разделение)
 
 - `web_users.google_api_key` — ключ, полученный через OAuth в web (под будущие роли и self-service логин специалистов).
-- `specialists.web_user_id` — связь владельца credentials с конкретным специалистом.
-- `specialists.google_api_key/google_calendar_id` — fallback в bot booking-flow для обратной совместимости.
+- `specialists.user_id` — связь владельца credentials с конкретным специалистом.
+- `specialists` не хранит Google credentials; bot/web должны использовать `web_users.google_api_key/google_calendar_id` через связь `specialists.user_id`.

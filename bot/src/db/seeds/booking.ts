@@ -26,8 +26,6 @@ export async function seed(knex: Knex): Promise<void> {
         name: 'Лилия Солодянкина',
         base_session_price: 2500,
         base_hour_price: 1700,
-        google_api_key: null,
-        google_calendar_id: null,
         is_active: true,
         is_default: true,
       },

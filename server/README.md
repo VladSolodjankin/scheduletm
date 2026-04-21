@@ -18,7 +18,7 @@ Node.js/Express API для web-клиента.
 - `users` — Telegram-профиль (chat context, username, phone, язык и т.д.).
 - `web_users` — web-учетка (email, password hash/salt, role, login lifecycle).
 - `user_identity_links` — явная 1:1 связь между `users` и `web_users` внутри одного `account_id`.
-- `specialists.web_user_id` — явная 1:1 связь специалиста с web-учеткой внутри одного `account_id`.
+- `specialists.user_id` — явная 1:1 связь специалиста с web-учеткой внутри одного `account_id`.
 
 Преимущества:
 
@@ -30,7 +30,7 @@ Node.js/Express API для web-клиента.
 `20260420170000_add_web_user_roles_and_specialist_link.ts` с этими таблицами и связями.
 
 Текущая реализация `server/src/services/authService.ts` использует `web_users` для register/login,
-создает роль `owner` при регистрации, автоматически добавляет owner как default specialist
+создает роль `owner` при регистрации, а owner/admin могут создавать пользователя с ролью `specialist`; также автоматически добавляется default specialist для owner
 и пытается создать запись в `user_identity_links`, если найден Telegram user с тем же email.
 
 ## Ближайший roadmap
@@ -60,3 +60,9 @@ Node.js/Express API для web-клиента.
 - `GOOGLE_OAUTH_CLIENT_SECRET`
 - `GOOGLE_OAUTH_REDIRECT_URI`
 - `GOOGLE_OAUTH_SCOPES` (опционально)
+
+
+## Дополнительно по ролям и специалистам
+
+- `POST /api/auth/specialists` — создание web-пользователя роли `specialist` + связанного `specialists`-профиля.
+- Доступ: только роли `owner` и `admin`.

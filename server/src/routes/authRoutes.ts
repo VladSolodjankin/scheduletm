@@ -1,20 +1,68 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
-import { loginSchema, registrationSchema } from '../config/schemas.js';
+import { loginSchema, registrationSchema, specialistUserCreationSchema } from '../config/schemas.js';
+import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { blockIfTooManyAttempts } from '../middlewares/loginRateLimit.js';
 import {
   authenticateUser,
   clearAttempts,
+  createSpecialistUser,
   issueSession,
   logoutSession,
   refreshAccess,
   registerFailedAttempt,
   registerUser
 } from '../services/authService.js';
+import { WebUserRole } from '../types/webUserRole.js';
 import { parseCookies } from '../utils/cookies.js';
 import { formatZodError } from '../utils/validation.js';
 
 export const authRoutes = Router();
+
+authRoutes.post('/specialists', requireAccessToken, async (req, res) => {
+  const actor = (req as AuthedRequest).user;
+  if (actor.role !== WebUserRole.Owner && actor.role !== WebUserRole.Admin) {
+    return res.status(403).json({ message: 'Недостаточно прав для создания специалиста' });
+  }
+
+  const parsed = specialistUserCreationSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json(formatZodError(parsed.error));
+  }
+
+  try {
+    const created = await createSpecialistUser(
+      actor,
+      parsed.data.email,
+      parsed.data.password,
+      parsed.data.specialistName,
+    );
+
+    if (!created) {
+      return res.status(409).json({
+        message: 'Не удалось создать пользователя специалиста',
+        errors: {
+          email: 'Этот email уже используется'
+        }
+      });
+    }
+
+    return res.status(201).json({
+      message: 'Специалист успешно создан',
+      user: {
+        id: created.user.id,
+        email: created.user.email,
+        role: created.user.role,
+      },
+      specialist: {
+        id: created.specialistId,
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Не удалось создать специалиста' });
+  }
+});
 
 authRoutes.post('/register', async (req, res) => {
   const parsed = registrationSchema.safeParse(req.body);

@@ -26,8 +26,9 @@
 - [x] Вынести web auth-сессии в persistent storage (`web_user_sessions`, access + refresh, revoke + expires_at).
 - [ ] Добавить миграции и backup policy.
 - [x] Развести identity-таблицы для Telegram и Web (`users` + `web_users` + `user_identity_links`).
-- [x] Добавить связку специалиста и web identity (`specialists.web_user_id`) для персональных интеграций.
-- [x] Добавить минимальную ролевую модель web-auth (`owner`/`specialist`) для разграничения доступа.
+- [x] Добавить связку специалиста и web identity (`specialists.user_id`) для персональных интеграций.
+- [x] Добавить минимальную ролевую модель web-auth (`owner`/`admin`/`specialist`) для разграничения доступа.
+- [x] Дать owner/admin возможность создавать web-пользователя роли `specialist` и связанного `specialists`-профиля.
 
 ## 4. Integrations
 
