@@ -24,7 +24,6 @@ export function AuthCard(props: AuthCardProps) {
     <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
       <AppForm
         sx={{
-          borderRadius: APP_SIZING.radiusLg,
           borderColor: 'divider',
           px: { xs: 2.5, sm: 4 },
           py: { xs: 3, sm: 4 },
