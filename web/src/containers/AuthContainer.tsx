@@ -1,4 +1,4 @@
-import { Alert, Box } from '@mui/material';
+import { Alert, Box, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
@@ -6,7 +6,6 @@ import { AuthCard } from '../components/AuthCard';
 import { apiClient } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
-import { AppPage } from '../shared/ui/AppPage';
 import type { AuthResponse } from '../shared/types/api';
 
 type AuthMode = 'login' | 'register';
@@ -19,6 +18,8 @@ type ApiErrorResponse = {
   message?: string;
   errors?: Record<string, string>;
 };
+
+const GOLDEN_RATIO = 1.618;
 
 export function AuthContainer({ mode }: AuthContainerProps) {
   const navigate = useNavigate();
@@ -68,43 +69,62 @@ export function AuthContainer({ mode }: AuthContainerProps) {
   };
 
   return (
-    <AppPage
-      title={isLogin ? t('auth.loginTitle') : t('auth.registerTitle')}
-      subtitle={isLogin ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
+    <Box
+      sx={{
+        width: '100%',
+        minHeight: '100dvh',
+        display: 'flex',
+        justifyContent: 'center',
+        px: { xs: 2, sm: 3 },
+        py: { xs: 4, sm: 6 }
+      }}
     >
-      {error && (
-        <Box sx={{ maxWidth: 460, mx: 'auto', mt: 2, mb: 2 }}>
-          <Alert severity="error">
-            {error}
-            {(fieldErrors.email || fieldErrors.password) && (
-              <Box component="ul" sx={{ mb: 0, mt: 1, pl: 3 }}>
-                {fieldErrors.email && <li>{fieldErrors.email}</li>}
-                {fieldErrors.password && <li>{fieldErrors.password}</li>}
-              </Box>
-            )}
-          </Alert>
+      <Stack spacing={{ xs: 3, sm: 4 }} sx={{ width: '100%', maxWidth: 840 }}>
+        <Box sx={{ width: '100%', maxWidth: `${Math.round(520 * GOLDEN_RATIO)}px`, mx: 'auto' }}>
+          <Stack spacing={1.25}>
+            <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
+              {isLogin ? t('auth.loginTitle') : t('auth.registerTitle')}
+            </Typography>
+            <Typography color="text.secondary" variant="body1">
+              {isLogin ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
+            </Typography>
+          </Stack>
         </Box>
-      )}
 
-      <AuthCard
-        title={isLogin ? t('auth.formLoginTitle') : t('auth.formRegisterTitle')}
-        email={email}
-        password={password}
-        emailLabel={t('common.email')}
-        passwordLabel={t('common.password')}
-        submitText={isLogin ? t('auth.submitLogin') : t('auth.submitRegister')}
-        switchText={isLogin ? t('auth.switchToRegister') : t('auth.switchToLogin')}
-        onEmailChange={(value) => {
-          setEmail(value);
-          setFieldErrors((prev) => ({ ...prev, email: '' }));
-        }}
-        onPasswordChange={(value) => {
-          setPassword(value);
-          setFieldErrors((prev) => ({ ...prev, password: '' }));
-        }}
-        onSubmit={submit}
-        onSwitch={() => navigate(isLogin ? '/register' : '/login')}
-      />
-    </AppPage>
+        {error && (
+          <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
+            <Alert severity="error">
+              {error}
+              {(fieldErrors.email || fieldErrors.password) && (
+                <Box component="ul" sx={{ mb: 0, mt: 1, pl: 3 }}>
+                  {fieldErrors.email && <li>{fieldErrors.email}</li>}
+                  {fieldErrors.password && <li>{fieldErrors.password}</li>}
+                </Box>
+              )}
+            </Alert>
+          </Box>
+        )}
+
+        <AuthCard
+          title={isLogin ? t('auth.formLoginTitle') : t('auth.formRegisterTitle')}
+          email={email}
+          password={password}
+          emailLabel={t('common.email')}
+          passwordLabel={t('common.password')}
+          submitText={isLogin ? t('auth.submitLogin') : t('auth.submitRegister')}
+          switchText={isLogin ? t('auth.switchToRegister') : t('auth.switchToLogin')}
+          onEmailChange={(value) => {
+            setEmail(value);
+            setFieldErrors((prev) => ({ ...prev, email: '' }));
+          }}
+          onPasswordChange={(value) => {
+            setPassword(value);
+            setFieldErrors((prev) => ({ ...prev, password: '' }));
+          }}
+          onSubmit={submit}
+          onSwitch={() => navigate(isLogin ? '/register' : '/login')}
+        />
+      </Stack>
+    </Box>
   );
 }
