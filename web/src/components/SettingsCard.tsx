@@ -1,11 +1,6 @@
-import {
-  Box,
-  FormControlLabel,
-  Stack,
-  Switch,
-  Typography
-} from '@mui/material';
-import { useState } from 'react';
+import { Box, FormControlLabel, Stack, Switch, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import type { AppSettings } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
@@ -34,8 +29,8 @@ type SettingsCardProps = {
   settings: AppSettings;
   copy: SettingsCardCopy;
   isGoogleConnecting: boolean;
-  onSettingsChange: (next: AppSettings) => void;
-  onSave: () => void;
+  isSaving?: boolean;
+  onSave: (next: AppSettings) => Promise<void> | void;
   onConnectGoogle: () => void;
 };
 
@@ -43,11 +38,19 @@ export function SettingsCard({
   settings,
   copy,
   isGoogleConnecting,
-  onSettingsChange,
+  isSaving = false,
   onSave,
   onConnectGoogle
 }: SettingsCardProps) {
   const [tab, setTab] = useState(0);
+
+  const { control, handleSubmit, reset } = useForm<AppSettings>({
+    defaultValues: settings
+  });
+
+  useEffect(() => {
+    reset(settings);
+  }, [reset, settings]);
 
   return (
     <Box>
@@ -57,56 +60,58 @@ export function SettingsCard({
       </AppTabs>
 
       {tab === 0 && (
-        <AppForm>
+        <AppForm component="form" onSubmit={handleSubmit(onSave)}>
           <Typography variant="h5">{copy.profileTitle}</Typography>
 
-          <AppTextField
-            label={copy.timezone}
-            value={settings.timezone}
-            onChange={(event) => onSettingsChange({ ...settings, timezone: event.target.value })}
+          <Controller
+            name="timezone"
+            control={control}
+            render={({ field }: any) => <AppTextField {...field} label={copy.timezone} />}
           />
 
-          <AppTextField
-            label={copy.locale}
-            value={settings.locale}
-            onChange={(event) => onSettingsChange({ ...settings, locale: event.target.value })}
+          <Controller
+            name="locale"
+            control={control}
+            render={({ field }: any) => <AppTextField {...field} label={copy.locale} />}
           />
 
-          <AppTextField
-            label={copy.defaultMeetingDuration}
-            type="number"
-            inputProps={{ min: 15, max: 180 }}
-            value={settings.defaultMeetingDuration}
-            onChange={(event) =>
-              onSettingsChange({ ...settings, defaultMeetingDuration: Number(event.target.value) })
-            }
-          />
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={settings.dailyDigestEnabled}
-                onChange={(event) =>
-                  onSettingsChange({ ...settings, dailyDigestEnabled: event.target.checked })
-                }
+          <Controller
+            name="defaultMeetingDuration"
+            control={control}
+            render={({ field }: any) => (
+              <AppTextField
+                {...field}
+                label={copy.defaultMeetingDuration}
+                type="number"
+                inputProps={{ min: 15, max: 180 }}
+                onChange={(event) => field.onChange(Number(event.target.value))}
               />
-            }
-            label={copy.dailyDigestEnabled}
+            )}
           />
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={settings.weekStartsOnMonday}
-                onChange={(event) =>
-                  onSettingsChange({ ...settings, weekStartsOnMonday: event.target.checked })
-                }
+          <Controller
+            name="dailyDigestEnabled"
+            control={control}
+            render={({ field }: any) => (
+              <FormControlLabel
+                control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
+                label={copy.dailyDigestEnabled}
               />
-            }
-            label={copy.weekStartsOnMonday}
+            )}
           />
 
-          <AppButton startIcon={<AppIcons.save />} onClick={onSave}>
+          <Controller
+            name="weekStartsOnMonday"
+            control={control}
+            render={({ field }: any) => (
+              <FormControlLabel
+                control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
+                label={copy.weekStartsOnMonday}
+              />
+            )}
+          />
+
+          <AppButton type="submit" startIcon={<AppIcons.save />} disabled={isSaving}>
             {copy.saveSettings}
           </AppButton>
         </AppForm>

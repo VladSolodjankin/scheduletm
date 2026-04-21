@@ -26,15 +26,15 @@ export function AuthContainer({ mode }: AuthContainerProps) {
   const { setAuthSession } = useAuth();
   const { t } = useI18n();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isLogin = mode === 'login';
 
-  const submit = async () => {
+  const submit = async ({ email, password }: { email: string; password: string }) => {
+    setIsSubmitting(true);
+
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const response = await apiClient.post<AuthResponse>(endpoint, { email, password });
@@ -53,18 +53,18 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       if (isAxiosError<ApiErrorResponse>(err)) {
         const apiError = err.response?.data;
 
-        setError(apiError?.message ?? (isLogin
-          ? t('auth.errors.loginFailed')
-          : t('auth.errors.registerFailed')));
+        setError(
+          apiError?.message ?? (isLogin ? t('auth.errors.loginFailed') : t('auth.errors.registerFailed'))
+        );
 
         setFieldErrors(apiError?.errors ?? {});
         return;
       }
 
-      setError(isLogin
-        ? t('auth.errors.loginFailed')
-        : t('auth.errors.registerFailed'));
+      setError(isLogin ? t('auth.errors.loginFailed') : t('auth.errors.registerFailed'));
       setFieldErrors({});
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -93,34 +93,18 @@ export function AuthContainer({ mode }: AuthContainerProps) {
 
         {error && (
           <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
-            <Alert severity="error">
-              {error}
-              {(fieldErrors.email || fieldErrors.password) && (
-                <Box component="ul" sx={{ mb: 0, mt: 1, pl: 3 }}>
-                  {fieldErrors.email && <li>{fieldErrors.email}</li>}
-                  {fieldErrors.password && <li>{fieldErrors.password}</li>}
-                </Box>
-              )}
-            </Alert>
+            <Alert severity="error">{error}</Alert>
           </Box>
         )}
 
         <AuthCard
           title={isLogin ? t('auth.formLoginTitle') : t('auth.formRegisterTitle')}
-          email={email}
-          password={password}
           emailLabel={t('common.email')}
           passwordLabel={t('common.password')}
           submitText={isLogin ? t('auth.submitLogin') : t('auth.submitRegister')}
           switchText={isLogin ? t('auth.switchToRegister') : t('auth.switchToLogin')}
-          onEmailChange={(value) => {
-            setEmail(value);
-            setFieldErrors((prev) => ({ ...prev, email: '' }));
-          }}
-          onPasswordChange={(value) => {
-            setPassword(value);
-            setFieldErrors((prev) => ({ ...prev, password: '' }));
-          }}
+          isSubmitting={isSubmitting}
+          fieldErrors={{ email: fieldErrors.email, password: fieldErrors.password }}
           onSubmit={submit}
           onSwitch={() => navigate(isLogin ? '/register' : '/login')}
         />

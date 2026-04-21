@@ -1,28 +1,65 @@
 import { Box, Divider, Link, Stack, Typography } from '@mui/material';
+import { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import logoText from '../static/images/logo_text.svg';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
-import { APP_SIZING } from '../shared/theme/constants';
 import { AppTextField } from '../shared/ui/AppTextField';
+
+type AuthFormValues = {
+  email: string;
+  password: string;
+};
 
 type AuthCardProps = {
   title: string;
-  email: string;
-  password: string;
   submitText: string;
   switchText: string;
   emailLabel: string;
   passwordLabel: string;
-  onEmailChange: (value: string) => void;
-  onPasswordChange: (value: string) => void;
-  onSubmit: () => void;
+  isSubmitting?: boolean;
+  fieldErrors?: Partial<Record<keyof AuthFormValues, string>>;
+  onSubmit: (values: AuthFormValues) => Promise<void> | void;
   onSwitch: () => void;
 };
 
-export function AuthCard(props: AuthCardProps) {
+export function AuthCard({
+  title,
+  submitText,
+  switchText,
+  emailLabel,
+  passwordLabel,
+  isSubmitting = false,
+  fieldErrors,
+  onSubmit,
+  onSwitch
+}: AuthCardProps) {
+  const { control, handleSubmit, setError, clearErrors } = useForm<AuthFormValues>({
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  });
+
+  useEffect(() => {
+    if (!fieldErrors) {
+      return;
+    }
+
+    if (fieldErrors.email) {
+      setError('email', { type: 'server', message: fieldErrors.email });
+    }
+
+    if (fieldErrors.password) {
+      setError('password', { type: 'server', message: fieldErrors.password });
+    }
+  }, [fieldErrors, setError]);
+
   return (
     <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
       <AppForm
+        component="form"
+        onSubmit={handleSubmit(onSubmit)}
         sx={{
           borderColor: 'divider',
           px: { xs: 2.5, sm: 4 },
@@ -42,33 +79,65 @@ export function AuthCard(props: AuthCardProps) {
             sx={{ height: { xs: 28, sm: 32 }, width: 'auto', alignSelf: 'flex-start' }}
           />
           <Typography variant="h4" sx={{ fontWeight: 700 }}>
-            {props.title}
+            {title}
           </Typography>
         </Stack>
 
-        <AppTextField
-          label={props.emailLabel}
-          type="email"
-          value={props.email}
-          onChange={(event) => props.onEmailChange(event.target.value)}
+        <Controller
+          name="email"
+          control={control}
+          rules={{
+            required: 'Email is required'
+          }}
+          render={({ field, fieldState }: any) => (
+            <AppTextField
+              {...field}
+              label={emailLabel}
+              type="email"
+              onChange={(event) => {
+                field.onChange(event);
+                clearErrors('email');
+              }}
+              error={Boolean(fieldState.error)}
+              helperText={fieldState.error?.message}
+            />
+          )}
         />
 
-        <AppTextField
-          label={props.passwordLabel}
-          type="password"
-          inputProps={{ minLength: 10 }}
-          value={props.password}
-          onChange={(event) => props.onPasswordChange(event.target.value)}
+        <Controller
+          name="password"
+          control={control}
+          rules={{
+            required: 'Password is required',
+            minLength: {
+              value: 10,
+              message: 'Password must be at least 10 characters'
+            }
+          }}
+          render={({ field, fieldState }: any) => (
+            <AppTextField
+              {...field}
+              label={passwordLabel}
+              type="password"
+              inputProps={{ minLength: 10 }}
+              onChange={(event) => {
+                field.onChange(event);
+                clearErrors('password');
+              }}
+              error={Boolean(fieldState.error)}
+              helperText={fieldState.error?.message}
+            />
+          )}
         />
 
-        <AppButton variant="contained" onClick={props.onSubmit} sx={{ minHeight: 46 }}>
-          {props.submitText}
+        <AppButton type="submit" variant="contained" disabled={isSubmitting} sx={{ minHeight: 46 }}>
+          {submitText}
         </AppButton>
 
         <Divider />
 
-        <AppButton variant="text" onClick={props.onSwitch}>
-          {props.switchText}
+        <AppButton variant="text" onClick={onSwitch}>
+          {switchText}
         </AppButton>
 
         <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>

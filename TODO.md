@@ -65,6 +65,7 @@
 - [x] Для неавторизованных пользователей показывать только `/login` и `/register` без меню/настроек; после регистрации делать redirect на `/login`.
 - [x] Добавить в header профиль авторизованного пользователя (avatar/инициалы + dropdown с settings/logout) и mobile-friendly компоновку шапки.
 - [ ] Добавить интеграционные тесты (server) и e2e smoke (web).
+- [x] Перевести web-формы (auth/settings) на `react-hook-form` для централизованного контроля полей.
 - [x] На `401 Unauthorized` в web-клиенте автоматически делать logout и redirect на `/login`.
 
 ### 4.6 UI foundation (выполнено)
