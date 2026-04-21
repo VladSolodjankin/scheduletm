@@ -1,9 +1,5 @@
 import { TextField, type TextFieldProps } from '@mui/material';
 
-type Props = TextFieldProps & {
-  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
-};
-
-export function AppTextField(props: Props) {
+export function AppTextField(props: TextFieldProps) {
   return <TextField fullWidth size="medium" {...props} />;
 }

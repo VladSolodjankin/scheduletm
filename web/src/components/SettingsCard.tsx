@@ -5,8 +5,8 @@ import type { SystemSettings, UserSettings } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
 import { AppIcons } from '../shared/ui/AppIcons';
+import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 import { AppTab, AppTabs } from '../shared/ui/AppTabs';
-import { AppTextField } from '../shared/ui/AppTextField';
 
 type SettingsCardCopy = {
   systemTab: string;
@@ -83,25 +83,29 @@ export function SettingsCard({
           <Controller
             name="timezone"
             control={systemControl}
-            render={({ field }: any) => <AppTextField {...field} label={copy.timezone} />}
+            render={({ field }: any) => (
+              <AppRhfTextField field={field} label={copy.timezone} />
+            )}
           />
 
           <Controller
             name="locale"
             control={systemControl}
-            render={({ field }: any) => <AppTextField {...field} label={copy.locale} />}
+            render={({ field }: any) => (
+              <AppRhfTextField field={field} label={copy.locale} />
+            )}
           />
 
           <Controller
             name="defaultMeetingDuration"
             control={systemControl}
             render={({ field }: any) => (
-              <AppTextField
-                {...field}
+              <AppRhfTextField
+                field={field}
                 label={copy.defaultMeetingDuration}
                 type="number"
-                inputProps={{ min: 15, max: 180 }}
-                onChange={(event) => field.onChange(Number(event.target.value))}
+                slotProps={{ htmlInput: { min: 15, max: 180 } }}
+                parseValue={(value) => Number(value)}
               />
             )}
           />
@@ -141,13 +145,17 @@ export function SettingsCard({
           <Controller
             name="timezone"
             control={userControl}
-            render={({ field }: any) => <AppTextField {...field} label={copy.timezone} />}
+            render={({ field }: any) => (
+              <AppRhfTextField field={field} label={copy.timezone} />
+            )}
           />
 
           <Controller
             name="locale"
             control={userControl}
-            render={({ field }: any) => <AppTextField {...field} label={copy.locale} />}
+            render={({ field }: any) => (
+              <AppRhfTextField field={field} label={copy.locale} />
+            )}
           />
 
           <AppButton type="submit" startIcon={<AppIcons.save />} disabled={isSavingUser}>
