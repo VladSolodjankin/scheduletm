@@ -37,3 +37,15 @@ export const settingsSchema = z.object({
   uiThemeMode: z.enum(['light', 'dark']),
   uiPaletteVariantId: z.string().min(1, 'Укажите id палитры').max(64, 'Id палитры слишком длинный')
 }).partial();
+
+export const specialistUserCreationSchema = z.object({
+  email: z
+    .string()
+    .email('Введите корректный email')
+    .max(254, 'Email слишком длинный'),
+  password: passwordSchema,
+  specialistName: z
+    .string()
+    .min(2, 'Имя специалиста должно содержать минимум 2 символа')
+    .max(120, 'Имя специалиста слишком длинное')
+});

@@ -3,7 +3,7 @@ import type { Response } from 'express';
 import { env } from '../config/env.js';
 import { loginAttempts } from '../repositories/inMemoryStore.js';
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
-import { createDefaultSpecialistForWebUserIfMissing } from '../repositories/specialistRepository.js';
+import { createDefaultSpecialistForWebUserIfMissing, createSpecialistForWebUser } from '../repositories/specialistRepository.js';
 import { createIdentityLinkIfMissing, findTelegramUserByEmail } from '../repositories/userIdentityLinkRepository.js';
 import { createWebUser, findWebUserByEmail, findWebUserById, touchWebUserLastLogin } from '../repositories/webUserRepository.js';
 import {
@@ -133,6 +133,60 @@ export const registerUser = async (emailRaw: string, password: string): Promise<
     webUser.password_hash,
     webUser.created_at
   );
+};
+
+const canManageSpecialists = (role: WebUserRole): boolean => {
+  return role === WebUserRole.Owner || role === WebUserRole.Admin;
+};
+
+const buildSpecialistCode = (webUserId: number): string => {
+  return `specialist-${webUserId}`;
+};
+
+export const createSpecialistUser = async (
+  actor: User,
+  emailRaw: string,
+  password: string,
+  specialistName: string,
+): Promise<{ user: User; specialistId: number } | null> => {
+  if (!canManageSpecialists(actor.role)) {
+    return null;
+  }
+
+  const email = sanitizeEmail(emailRaw);
+  const accountId = await getDefaultAccountId();
+  const existing = await findWebUserByEmail(accountId, email);
+  if (existing) {
+    return null;
+  }
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  const passwordHash = hashPassword(password, salt);
+  const webUser = await createWebUser({
+    accountId,
+    email,
+    role: WebUserRole.Specialist,
+    passwordHash,
+    passwordSalt: salt,
+  });
+
+  const specialistId = await createSpecialistForWebUser({
+    accountId,
+    webUserId: webUser.id,
+    name: specialistName.trim(),
+    code: buildSpecialistCode(webUser.id),
+  });
+
+  const user = mapWebUserToDomain(
+    webUser.id,
+    webUser.email,
+    webUser.role,
+    webUser.password_salt,
+    webUser.password_hash,
+    webUser.created_at,
+  );
+
+  return { user, specialistId };
 };
 
 export const authenticateUser = async (emailRaw: string, password: string): Promise<User | null> => {

@@ -6,7 +6,7 @@ export async function createDefaultSpecialistForWebUserIfMissing(
   email: string,
 ): Promise<void> {
   const existing = await db('specialists')
-    .where({ account_id: accountId, web_user_id: webUserId })
+    .where({ account_id: accountId, user_id: webUserId })
     .first('id');
 
   if (existing) {
@@ -21,6 +21,28 @@ export async function createDefaultSpecialistForWebUserIfMissing(
     name: fallbackName,
     is_active: true,
     is_default: true,
-    web_user_id: webUserId,
+    user_id: webUserId,
   });
+}
+
+type CreateSpecialistInput = {
+  accountId: number;
+  webUserId: number;
+  name: string;
+  code: string;
+};
+
+export async function createSpecialistForWebUser(input: CreateSpecialistInput): Promise<number> {
+  const [row] = await db('specialists')
+    .insert({
+      account_id: input.accountId,
+      code: input.code,
+      name: input.name,
+      is_active: true,
+      is_default: false,
+      user_id: input.webUserId,
+    })
+    .returning<{ id: number }[]>('id');
+
+  return row.id;
 }
