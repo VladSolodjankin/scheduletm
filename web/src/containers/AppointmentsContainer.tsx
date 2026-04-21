@@ -12,9 +12,11 @@ import {
   Select,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
@@ -29,20 +31,10 @@ type EditFormState = {
   notes: string;
 };
 
+type CalendarViewMode = 'day' | 'week';
+
 const STATUS_OPTIONS: AppointmentStatus[] = ['new', 'confirmed', 'cancelled'];
-
-function getMonthMatrix(cursor: Date): Date[] {
-  const firstDay = new Date(Date.UTC(cursor.getUTCFullYear(), cursor.getUTCMonth(), 1));
-  const startWeekDay = firstDay.getUTCDay();
-  const gridStart = new Date(firstDay);
-  gridStart.setUTCDate(firstDay.getUTCDate() - startWeekDay);
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const day = new Date(gridStart);
-    day.setUTCDate(gridStart.getUTCDate() + index);
-    return day;
-  });
-}
+const HOURS = Array.from({ length: 24 }, (_, index) => index);
 
 function toDatetimeLocal(iso: string): string {
   const date = new Date(iso);
@@ -54,28 +46,56 @@ function fromDatetimeLocal(value: string): string {
   return new Date(value).toISOString();
 }
 
-function sameDay(left: Date, right: Date): boolean {
-  return left.getUTCFullYear() === right.getUTCFullYear()
-    && left.getUTCMonth() === right.getUTCMonth()
-    && left.getUTCDate() === right.getUTCDate();
-}
-
 function statusLabel(status: AppointmentStatus): string {
   if (status === 'confirmed') return 'confirmed';
   if (status === 'cancelled') return 'cancelled';
   return 'new';
 }
 
+function startOfDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function sameDay(left: Date, right: Date): boolean {
+  return left.getUTCFullYear() === right.getUTCFullYear()
+    && left.getUTCMonth() === right.getUTCMonth()
+    && left.getUTCDate() === right.getUTCDate();
+}
+
+function weekStart(date: Date): Date {
+  const base = startOfDay(date);
+  const day = base.getUTCDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  base.setUTCDate(base.getUTCDate() + diff);
+  return base;
+}
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+function atHour(date: Date, hour: number): Date {
+  const next = new Date(date);
+  next.setUTCHours(hour, 0, 0, 0);
+  return next;
+}
+
 export function AppointmentsContainer() {
   const { t } = useI18n();
   const { accessToken, user } = useAuth();
+
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistItem[]>([]);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | 'all'>('all');
-  const [monthCursor, setMonthCursor] = useState(() => new Date());
-  const [selectedDay, setSelectedDay] = useState(() => new Date());
+
+  const [focusDate, setFocusDate] = useState(() => startOfDay(new Date()));
+  const [viewMode, setViewMode] = useState<CalendarViewMode>('week');
+
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
   const [form, setForm] = useState<EditFormState>({
@@ -85,15 +105,35 @@ export function AppointmentsContainer() {
     notes: '',
   });
 
-  const monthDays = useMemo(() => getMonthMatrix(monthCursor), [monthCursor]);
-
-  const appointmentsForSelectedDay = useMemo(() => {
-    return appointments
-      .filter((item) => sameDay(new Date(item.scheduledAt), selectedDay))
-      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [appointments, selectedDay]);
-
   const canManageAll = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin;
+
+  const visibleDays = useMemo(() => {
+    if (viewMode === 'day') {
+      return [startOfDay(focusDate)];
+    }
+
+    const start = weekStart(focusDate);
+    return Array.from({ length: 7 }, (_, index) => addDays(start, index));
+  }, [focusDate, viewMode]);
+
+  const appointmentsByCell = useMemo(() => {
+    const map = new Map<string, AppointmentItem[]>();
+
+    for (const item of appointments) {
+      const date = new Date(item.scheduledAt);
+      const dayKey = startOfDay(date).toISOString();
+      const key = `${dayKey}:${date.getUTCHours()}`;
+      const list = map.get(key) ?? [];
+      list.push(item);
+      map.set(key, list);
+    }
+
+    map.forEach((list) => {
+      list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+    });
+
+    return map;
+  }, [appointments]);
 
   const loadAppointments = async (nextSpecialistId: number | 'all' = selectedSpecialistId) => {
     if (!accessToken) {
@@ -123,7 +163,7 @@ export function AppointmentsContainer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
-  const openCreate = () => {
+  const openCreate = (targetDate: Date) => {
     const specialistId = selectedSpecialistId === 'all'
       ? specialists[0]?.id
       : selectedSpecialistId;
@@ -134,7 +174,7 @@ export function AppointmentsContainer() {
     }
 
     setForm({
-      scheduledAt: toDatetimeLocal(new Date(selectedDay).toISOString()),
+      scheduledAt: toDatetimeLocal(targetDate.toISOString()),
       status: 'new',
       meetingLink: '',
       notes: '',
@@ -214,9 +254,43 @@ export function AppointmentsContainer() {
     }
   };
 
+  const moveAppointment = async (appointmentId: number, targetDate: Date) => {
+    if (!accessToken) {
+      return;
+    }
+
+    const current = appointments.find((item) => item.id === appointmentId);
+
+    if (!current) {
+      return;
+    }
+
+    const sourceDate = new Date(current.scheduledAt);
+    const next = new Date(targetDate);
+    next.setUTCMinutes(sourceDate.getUTCMinutes(), 0, 0);
+
+    try {
+      await apiClient.post(`/api/appointments/${appointmentId}/reschedule`, {
+        scheduledAt: next.toISOString(),
+      }, {
+        headers: authHeaders(accessToken),
+      });
+
+      await loadAppointments(selectedSpecialistId);
+      setError('');
+    } catch {
+      setError('Unable to reschedule appointment');
+    }
+  };
+
   const onSpecialistChange = async (value: number | 'all') => {
     setSelectedSpecialistId(value);
     await loadAppointments(value);
+  };
+
+  const movePeriod = (direction: -1 | 1) => {
+    const delta = viewMode === 'day' ? direction : direction * 7;
+    setFocusDate((prev) => addDays(prev, delta));
   };
 
   return (
@@ -251,72 +325,140 @@ export function AppointmentsContainer() {
           </FormControl>
         )}
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 2 }}>
-          <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">{monthCursor.toLocaleString(undefined, { month: 'long', year: 'numeric' })}</Typography>
-              <Stack direction="row" spacing={1}>
-                <Button size="small" onClick={() => setMonthCursor(new Date(Date.UTC(monthCursor.getUTCFullYear(), monthCursor.getUTCMonth() - 1, 1)))}>{'<'}</Button>
-                <Button size="small" onClick={() => setMonthCursor(new Date(Date.UTC(monthCursor.getUTCFullYear(), monthCursor.getUTCMonth() + 1, 1)))}>{'>'}</Button>
-              </Stack>
-            </Box>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { xs: 'stretch', md: 'center' } }}>
+          <Stack direction="row" spacing={1}>
+            <Button size="small" variant="outlined" onClick={() => movePeriod(-1)}>{'<'}</Button>
+            <Button size="small" variant="outlined" onClick={() => setFocusDate(startOfDay(new Date()))}>{t('appointments.today')}</Button>
+            <Button size="small" variant="outlined" onClick={() => movePeriod(1)}>{'>'}</Button>
+          </Stack>
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 1 }}>
-              {monthDays.map((day) => {
-                const isCurrentMonth = day.getUTCMonth() === monthCursor.getUTCMonth();
-                const isSelected = sameDay(day, selectedDay);
-                const count = appointments.filter((item) => sameDay(new Date(item.scheduledAt), day)).length;
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            {viewMode === 'week'
+              ? `${visibleDays[0].toLocaleDateString()} — ${visibleDays[visibleDays.length - 1].toLocaleDateString()}`
+              : visibleDays[0].toLocaleDateString()}
+          </Typography>
 
-                return (
-                  <Button
-                    key={day.toISOString()}
-                    variant={isSelected ? 'contained' : 'text'}
-                    color={isCurrentMonth ? 'primary' : 'inherit'}
-                    onClick={() => setSelectedDay(day)}
-                    sx={{ minHeight: 70, flexDirection: 'column', alignItems: 'flex-start', textTransform: 'none' }}
-                  >
-                    <Typography variant="body2">{day.getUTCDate()}</Typography>
-                    {count > 0 && <Typography variant="caption">{count} appt</Typography>}
-                  </Button>
-                );
-              })}
-            </Box>
-          </Box>
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={viewMode}
+            onChange={(_, nextMode: CalendarViewMode | null) => {
+              if (nextMode) {
+                setViewMode(nextMode);
+              }
+            }}
+          >
+            <ToggleButton value="day">{t('appointments.viewDay')}</ToggleButton>
+            <ToggleButton value="week">{t('appointments.viewWeek')}</ToggleButton>
+          </ToggleButtonGroup>
+        </Stack>
 
-          <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Typography variant="h6">{selectedDay.toLocaleDateString()}</Typography>
-              <Button onClick={openCreate} variant="outlined" size="small">
-                {t('appointments.create')}
-              </Button>
-            </Box>
+        <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
 
-            {isLoading ? <Typography variant="body2">Loading...</Typography> : null}
+        <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflowX: 'auto' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: `72px repeat(${visibleDays.length}, minmax(180px, 1fr))`, minWidth: viewMode === 'week' ? 1100 : 560 }}>
+            <Box sx={{ borderRight: 1, borderColor: 'divider', p: 1, bgcolor: 'background.default' }} />
+            {visibleDays.map((day) => (
+              <Box
+                key={day.toISOString()}
+                sx={{
+                  borderRight: 1,
+                  borderColor: 'divider',
+                  p: 1,
+                  bgcolor: sameDay(day, new Date()) ? 'action.selected' : 'background.default',
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {day.toLocaleDateString(undefined, { weekday: 'short' })}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">{day.toLocaleDateString()}</Typography>
+              </Box>
+            ))}
 
-            <Stack spacing={1.5}>
-              {appointmentsForSelectedDay.map((item) => (
+            {HOURS.map((hour) => (
+              <Fragment key={`row-${hour}`}>
                 <Box
-                  key={item.id}
                   sx={{
-                    border: 1,
+                    borderTop: 1,
+                    borderRight: 1,
                     borderColor: 'divider',
-                    borderRadius: 1.5,
-                    p: 1.5,
-                    cursor: 'pointer',
+                    px: 1,
+                    py: 1.5,
+                    bgcolor: 'background.default',
                   }}
-                  onClick={() => openEdit(item)}
                 >
-                  <Typography variant="subtitle2">{new Date(item.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Typography>
-                  <Typography variant="body2">{statusLabel(item.status)}</Typography>
-                  {item.notes && <Typography variant="caption" color="text.secondary">{item.notes}</Typography>}
+                  <Typography variant="caption" color="text.secondary">{`${String(hour).padStart(2, '0')}:00`}</Typography>
                 </Box>
-              ))}
-              {appointmentsForSelectedDay.length === 0 && (
-                <Typography variant="body2" color="text.secondary">{t('appointments.emptyDay')}</Typography>
-              )}
-            </Stack>
+
+                {visibleDays.map((day) => {
+                  const slotDate = atHour(day, hour);
+                  const key = `${startOfDay(day).toISOString()}:${hour}`;
+                  const items = appointmentsByCell.get(key) ?? [];
+
+                  return (
+                    <Box
+                      key={`${key}-cell`}
+                      sx={{
+                        borderTop: 1,
+                        borderRight: 1,
+                        borderColor: 'divider',
+                        minHeight: 76,
+                        p: 0.5,
+                        bgcolor: 'background.paper',
+                      }}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        const rawId = event.dataTransfer.getData('text/appointment-id');
+                        const id = Number(rawId);
+
+                        if (!Number.isNaN(id)) {
+                          void moveAppointment(id, slotDate);
+                        }
+                      }}
+                      onDoubleClick={() => openCreate(slotDate)}
+                    >
+                      <Stack spacing={0.5}>
+                        {items.map((item) => (
+                          <Box
+                            key={item.id}
+                            draggable
+                            onDragStart={(event) => event.dataTransfer.setData('text/appointment-id', String(item.id))}
+                            onClick={() => openEdit(item)}
+                            sx={{
+                              borderRadius: 1,
+                              border: 1,
+                              borderColor: item.status === 'cancelled' ? 'error.main' : 'primary.light',
+                              bgcolor: item.status === 'cancelled' ? 'rgba(211, 47, 47, 0.08)' : 'rgba(25, 118, 210, 0.08)',
+                              px: 0.75,
+                              py: 0.5,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                              {new Date(item.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                              {statusLabel(item.status)}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Box>
+                  );
+                })}
+              </Fragment>
+            ))}
           </Box>
         </Box>
+
+        <Button onClick={() => openCreate(atHour(visibleDays[0], 9))} variant="outlined" size="small" sx={{ alignSelf: 'flex-start' }}>
+          {t('appointments.create')}
+        </Button>
+
+        {isLoading ? <Typography variant="body2">{t('appointments.loading')}</Typography> : null}
       </Stack>
 
       <Dialog open={isCreateOpen} onClose={() => setIsCreateOpen(false)} maxWidth="sm" fullWidth>

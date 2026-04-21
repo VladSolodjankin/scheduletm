@@ -78,11 +78,12 @@
   - `PATCH /api/appointments/:id`
   - `POST /api/appointments/:id/cancel`
   - `POST /api/appointments/:id/reschedule`
+  - web календарь переведен на time-grid (`Day/Week`) с отображением appointments прямо в слотах по времени.
+  - web поддерживает drag&drop перенос appointments между слотами (используется backend `reschedule` endpoint).
 - Откладываем на следующий шаг:
   - `mark-paid`
   - `notify`
   - расширенные фильтры и аудит-лог.
-  - drag&drop в календаре.
 
 ## Стратегия meeting link
 
