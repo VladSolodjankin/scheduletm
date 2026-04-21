@@ -102,7 +102,7 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
   try {
     const user = await authenticateUser(parsed.data.email, parsed.data.password);
     if (!user) {
-      registerFailedAttempt(req.ip ?? 'unknown');
+      await registerFailedAttempt(req.ip ?? 'unknown');
       return res.status(401).json({
         message: 'Неверный email или пароль',
         errors: {
@@ -112,7 +112,7 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
       });
     }
 
-    clearAttempts(req.ip ?? 'unknown');
+    await clearAttempts(req.ip ?? 'unknown');
     const accessToken = await issueSession(user.id, res);
     return res.json({
       message: 'Вход выполнен успешно',

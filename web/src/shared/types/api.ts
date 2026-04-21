@@ -11,17 +11,21 @@ export type AuthResponse = {
   };
 };
 
-export type AppSettings = {
+export type SystemSettings = {
   timezone: string;
   dailyDigestEnabled: boolean;
   defaultMeetingDuration: number;
   weekStartsOnMonday: boolean;
   locale: string;
-  googleConnected: boolean;
-  uiThemeMode: 'light' | 'dark';
-  uiPaletteVariantId: string;
 };
 
+export type UserSettings = {
+  timezone: string;
+  locale: string;
+  uiThemeMode: 'light' | 'dark';
+  uiPaletteVariantId: string;
+  googleConnected: boolean;
+};
 
 export type GoogleOAuthStartResponse = {
   provider: 'google';

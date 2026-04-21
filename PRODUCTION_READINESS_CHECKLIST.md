@@ -22,7 +22,7 @@
 ## 3. API architecture
 
 - [x] Разделить server-код по слоям (`routes/services/middlewares/config/repositories`).
-- [ ] Перенести in-memory store в persistent storage.
+- [x] Перенести in-memory store в persistent storage (settings/login attempts/oauth state + sessions).
 - [x] Вынести web auth-сессии в persistent storage (`web_user_sessions`, access + refresh, revoke + expires_at).
 - [ ] Добавить миграции и backup policy.
 - [x] Развести identity-таблицы для Telegram и Web (`users` + `web_users` + `user_identity_links`).

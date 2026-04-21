@@ -6,31 +6,39 @@ import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
-import type { AppSettings, GoogleOAuthStartResponse } from '../shared/types/api';
+import type { GoogleOAuthStartResponse, SystemSettings, UserSettings } from '../shared/types/api';
 
-const defaultSettings: AppSettings = {
+const defaultSystemSettings: SystemSettings = {
   timezone: 'UTC',
   dailyDigestEnabled: true,
   defaultMeetingDuration: 30,
   weekStartsOnMonday: true,
   locale: 'ru-RU',
-  googleConnected: false,
+};
+
+const defaultUserSettings: UserSettings = {
+  timezone: 'UTC',
+  locale: 'ru-RU',
   uiThemeMode: 'light',
-  uiPaletteVariantId: 'default'
+  uiPaletteVariantId: 'default',
+  googleConnected: false,
 };
 
 export function SettingsContainer() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const { t } = useI18n();
-  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>(defaultSystemSettings);
+  const [userSettings, setUserSettings] = useState<UserSettings>(defaultUserSettings);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingSystem, setIsSavingSystem] = useState(false);
+  const [isSavingUser, setIsSavingUser] = useState(false);
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
+  const canManageSystemSettings = user?.role === 'owner' || user?.role === 'admin';
 
   useEffect(() => {
     if (!googleOauthStatus) {
@@ -39,7 +47,7 @@ export function SettingsContainer() {
 
     if (googleOauthStatus === 'success') {
       setSuccess(t('settings.googleConnectedSuccessfully'));
-      setSettings((prev) => ({ ...prev, googleConnected: true }));
+      setUserSettings((prev) => ({ ...prev, googleConnected: true }));
       setError('');
     }
 
@@ -62,37 +70,66 @@ export function SettingsContainer() {
 
     const load = async () => {
       try {
-        const response = await apiClient.get<AppSettings>('/api/settings', {
+        const userResponse = await apiClient.get<UserSettings>('/api/settings/user', {
           headers: authHeaders(accessToken)
         });
-        setSettings(response.data);
+        setUserSettings(userResponse.data);
+
+        if (canManageSystemSettings) {
+          const systemResponse = await apiClient.get<SystemSettings>('/api/settings/system', {
+            headers: authHeaders(accessToken)
+          });
+          setSystemSettings(systemResponse.data);
+        }
       } catch {
         setError(t('settings.errors.load'));
       }
     };
 
     void load();
-  }, [accessToken, navigate, t]);
+  }, [accessToken, canManageSystemSettings, navigate, t]);
 
-  const saveSettings = async (nextSettings: AppSettings) => {
-    if (!accessToken) {
+  const saveSystemSettings = async (nextSettings: SystemSettings) => {
+    if (!accessToken || !canManageSystemSettings) {
       return;
     }
 
-    setIsSaving(true);
+    setIsSavingSystem(true);
 
     try {
-      const response = await apiClient.put<AppSettings>('/api/settings', nextSettings, {
+      const response = await apiClient.put<SystemSettings>('/api/settings/system', nextSettings, {
         headers: authHeaders(accessToken)
       });
-      setSettings(response.data);
+      setSystemSettings(response.data);
       setError('');
       setSuccess('');
     } catch {
       setError(t('settings.errors.save'));
       setSuccess('');
     } finally {
-      setIsSaving(false);
+      setIsSavingSystem(false);
+    }
+  };
+
+  const saveUserSettings = async (nextSettings: UserSettings) => {
+    if (!accessToken) {
+      return;
+    }
+
+    setIsSavingUser(true);
+
+    try {
+      const response = await apiClient.put<UserSettings>('/api/settings/user', nextSettings, {
+        headers: authHeaders(accessToken)
+      });
+      setUserSettings(response.data);
+      setError('');
+      setSuccess('');
+    } catch {
+      setError(t('settings.errors.save'));
+      setSuccess('');
+    } finally {
+      setIsSavingUser(false);
     }
   };
 
@@ -134,11 +171,14 @@ export function SettingsContainer() {
 
       <Box sx={{ maxWidth: 720 }}>
         <SettingsCard
-          settings={settings}
+          systemSettings={systemSettings}
+          userSettings={userSettings}
+          canManageSystemSettings={canManageSystemSettings}
           copy={{
-            generalTab: t('settings.tabs.general'),
-            integrationsTab: t('settings.tabs.integrations'),
-            profileTitle: t('settings.profileTitle'),
+            systemTab: t('settings.tabs.system'),
+            userTab: t('settings.tabs.user'),
+            systemTitle: t('settings.systemTitle'),
+            userTitle: t('settings.userTitle'),
             timezone: t('settings.timezone'),
             locale: t('settings.locale'),
             defaultMeetingDuration: t('settings.defaultMeetingDuration'),
@@ -152,8 +192,10 @@ export function SettingsContainer() {
             googleConnected: t('settings.googleConnected')
           }}
           isGoogleConnecting={isGoogleConnecting}
-          isSaving={isSaving}
-          onSave={saveSettings}
+          isSavingSystem={isSavingSystem}
+          isSavingUser={isSavingUser}
+          onSaveSystem={saveSystemSettings}
+          onSaveUser={saveUserSettings}
           onConnectGoogle={connectGoogle}
         />
       </Box>

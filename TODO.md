@@ -9,7 +9,7 @@
 ## Этап 2 — API MVP (выполнено)
 
 - [x] Реализовать auth endpoints (register/login/refresh).
-- [x] Реализовать settings API (get/save).
+- [x] Реализовать settings API (system/user get/save).
 - [x] Реализовать google connect API endpoint.
 - [x] Разнести сервер по слоям (`routes/services/middlewares/config`).
 
@@ -33,7 +33,7 @@
 
 ### 4.1 Data layer
 
-- [ ] Перенести in-memory storage в БД (минимум telegram_users/sessions/settings).
+- [x] Перенести in-memory storage в БД (включая login attempts, oauth state и settings).
 - [x] Перенести web auth-сессии в БД (`web_user_sessions`, access + refresh токены).
 - [ ] Добавить миграции и seed для локальной разработки.
 - [x] Развести identity-модели: `users` (Telegram), `web_users` (web-auth), `user_identity_links` (1:1 связь в рамках account).

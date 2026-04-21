@@ -5,9 +5,9 @@ import { completeGoogleOAuth, createGoogleOAuthUrl } from '../services/googleOAu
 
 export const integrationRoutes = Router();
 
-integrationRoutes.post('/google/oauth/start', requireAccessToken, (req, res) => {
+integrationRoutes.post('/google/oauth/start', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  const oauthInit = createGoogleOAuthUrl(user.id);
+  const oauthInit = await createGoogleOAuthUrl(user.id);
 
   if (!oauthInit) {
     return res.status(503).json({
