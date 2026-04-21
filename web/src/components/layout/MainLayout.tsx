@@ -45,7 +45,10 @@ export function MainLayout() {
     void sync();
   }, [accessToken, isAuthenticated, locale, mode, paletteVariantId]);
 
-  const menuItems = [{ to: '/settings', label: t('common.settings'), icon: 'settings' as const }];
+  const menuItems = [
+    { to: '/appointments', label: t('common.appointments'), icon: 'calendar' as const },
+    { to: '/settings', label: t('common.settings'), icon: 'settings' as const }
+  ];
 
   if (!isAuthenticated) {
     return (

@@ -6,6 +6,7 @@ import { env } from './config/env.js';
 import { authRoutes } from './routes/authRoutes.js';
 import { healthRoutes } from './routes/healthRoutes.js';
 import { integrationRoutes } from './routes/integrationRoutes.js';
+import { appointmentRoutes } from './routes/appointmentRoutes.js';
 import { settingsRoutes } from './routes/settingsRoutes.js';
 
 export const createApp = () => {
@@ -33,6 +34,7 @@ export const createApp = () => {
   app.use(healthRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/settings', settingsRoutes);
+  app.use('/api/appointments', appointmentRoutes);
   app.use('/api/integrations', integrationRoutes);
 
   app.use((_req, res) => {

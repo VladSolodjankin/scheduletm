@@ -134,6 +134,26 @@ scheduletm/
 - После этого — только 2 действия: `cancel` и `reschedule`, остальные операции позже.
 - Критерий готовности: сценарий “создать запись → перенести → отменить” проходит целиком в web и server.
 
+### Appointments MVP: что уже сделано
+
+- Server: добавлены endpoint'ы `GET /api/appointments`, `POST /api/appointments`, `PATCH /api/appointments/:id`, `POST /api/appointments/:id/cancel`, `POST /api/appointments/:id/reschedule`.
+- В server добавлена базовая role-aware фильтрация:
+  - `owner/admin` видят записи всех специалистов внутри своего `account_id`;
+  - `specialist` видит только свои записи.
+- Во все выборки appointments добавлена привязка к `account_id` как базовое правило изоляции данных.
+- Web: добавлена страница `/appointments`:
+  - календарный месяц с переключением месяцев;
+  - список записей выбранного дня;
+  - создание/редактирование записи в popup;
+  - действия `cancel` и `reschedule` через popup.
+- Для `owner/admin` добавлен фильтр по специалистам сверху страницы appointments.
+
+### Appointments MVP: что оставили на следующий инкремент
+
+- Drag & Drop перенос записи по календарю.
+- Детализированный тайм-грид в стиле Teams (с насыщенной визуализацией слотов по часам).
+- Расширенные фильтры календаря и групповые операции.
+
 ## Решение по ссылке на встречу
 
 Рекомендуемая стратегия:
@@ -180,4 +200,3 @@ npm run -w @scheduletm/web dev
 
 Для дополнительной информации смотри PRODUCTION_READINESS_CHECKLIST.md, README.md, TODO.md, PROJECT_MAP.md
 После доработки не зыбудь обновить документации.
-

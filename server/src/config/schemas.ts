@@ -49,3 +49,26 @@ export const specialistUserCreationSchema = z.object({
     .min(2, 'Имя специалиста должно содержать минимум 2 символа')
     .max(120, 'Имя специалиста слишком длинное')
 });
+
+const appointmentStatusSchema = z.enum(['new', 'confirmed', 'cancelled']);
+
+export const appointmentCreateSchema = z.object({
+  specialistId: z.coerce.number().int().positive('Укажите специалиста'),
+  scheduledAt: z.string().datetime('Укажите корректную дату и время'),
+  status: appointmentStatusSchema.optional(),
+  meetingLink: z.string().trim().url('Укажите корректную ссылку').max(2048).optional().or(z.literal('')),
+  notes: z.string().trim().max(2000, 'Комментарий слишком длинный').optional(),
+});
+
+export const appointmentUpdateSchema = z.object({
+  scheduledAt: z.string().datetime('Укажите корректную дату и время').optional(),
+  status: appointmentStatusSchema.optional(),
+  meetingLink: z.string().trim().url('Укажите корректную ссылку').max(2048).optional().or(z.literal('')),
+  notes: z.string().trim().max(2000, 'Комментарий слишком длинный').optional(),
+}).refine((value) => Object.keys(value).length > 0, {
+  message: 'Передайте хотя бы одно поле для обновления',
+});
+
+export const appointmentRescheduleSchema = z.object({
+  scheduledAt: z.string().datetime('Укажите корректную дату и время'),
+});

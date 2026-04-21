@@ -10,6 +10,7 @@ export const dictionaries = {
       login: 'Login',
       register: 'Register',
       language: 'Language',
+      appointments: 'Appointments',
       profileMenuAria: 'Open profile menu',
       appearancePaletteAria: 'Select color palette',
       themeToggleAria: 'Toggle theme mode',
@@ -55,6 +56,25 @@ export const dictionaries = {
         save: 'Unable to save settings.',
         connectGoogle: 'Unable to connect Google.'
       }
+    },
+    appointments: {
+      pageTitle: 'Appointments',
+      pageSubtitle: 'Calendar view with schedule by day and time.',
+      specialistFilter: 'Specialist',
+      allSpecialists: 'All specialists',
+      create: 'Create',
+      createTitle: 'Create appointment',
+      editTitle: 'Edit appointment',
+      save: 'Save',
+      close: 'Close',
+      emptyDay: 'No appointments on this day.',
+      cancelAction: 'Cancel appointment',
+      fields: {
+        scheduledAt: 'Date and time',
+        status: 'Status',
+        meetingLink: 'Meeting link',
+        notes: 'Notes'
+      }
     }
   },
   ru: {
@@ -68,6 +88,7 @@ export const dictionaries = {
       login: 'Вход',
       register: 'Регистрация',
       language: 'Язык',
+      appointments: 'Записи',
       profileMenuAria: 'Открыть меню профиля',
       appearancePaletteAria: 'Выбрать цветовую палитру',
       themeToggleAria: 'Переключить тему',
@@ -113,6 +134,25 @@ export const dictionaries = {
         save: 'Не удалось сохранить настройки.',
         connectGoogle: 'Не удалось подключить Google.'
       }
+    },
+    appointments: {
+      pageTitle: 'Записи',
+      pageSubtitle: 'Календарный вид с расписанием по дням и времени.',
+      specialistFilter: 'Специалист',
+      allSpecialists: 'Все специалисты',
+      create: 'Создать',
+      createTitle: 'Создать запись',
+      editTitle: 'Редактировать запись',
+      save: 'Сохранить',
+      close: 'Закрыть',
+      emptyDay: 'На этот день записей нет.',
+      cancelAction: 'Отменить запись',
+      fields: {
+        scheduledAt: 'Дата и время',
+        status: 'Статус',
+        meetingLink: 'Ссылка на встречу',
+        notes: 'Комментарий'
+      }
     }
   }
 } as const;
@@ -129,6 +169,7 @@ export type TranslationKey =
   | 'common.login'
   | 'common.register'
   | 'common.language'
+  | 'common.appointments'
   | 'common.profileMenuAria'
   | 'common.appearancePaletteAria'
   | 'common.themeToggleAria'
@@ -163,6 +204,21 @@ export type TranslationKey =
   | 'settings.googleConnectedSuccessfully'
   | 'settings.errors.load'
   | 'settings.errors.save'
-  | 'settings.errors.connectGoogle';
+  | 'settings.errors.connectGoogle'
+  | 'appointments.pageTitle'
+  | 'appointments.pageSubtitle'
+  | 'appointments.specialistFilter'
+  | 'appointments.allSpecialists'
+  | 'appointments.create'
+  | 'appointments.createTitle'
+  | 'appointments.editTitle'
+  | 'appointments.save'
+  | 'appointments.close'
+  | 'appointments.emptyDay'
+  | 'appointments.cancelAction'
+  | 'appointments.fields.scheduledAt'
+  | 'appointments.fields.status'
+  | 'appointments.fields.meetingLink'
+  | 'appointments.fields.notes';
 
 export const DEFAULT_LOCALE: Locale = 'ru';

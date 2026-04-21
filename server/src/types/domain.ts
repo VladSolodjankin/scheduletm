@@ -2,6 +2,7 @@ import type { WebUserRole } from './webUserRole.js';
 
 export type User = {
   id: string;
+  accountId: number;
   email: string;
   role: WebUserRole;
   passwordHash: string;

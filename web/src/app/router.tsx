@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { MainLayout } from '../components/layout/MainLayout';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
+import { AppointmentsPage } from '../pages/AppointmentsPage';
 import { SettingsPage } from '../pages/SettingsPage';
 import { useAuth } from '../shared/auth/AuthContext';
 
@@ -13,7 +14,7 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
 
 function PublicOnlyRoute({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Navigate to="/settings" replace /> : children;
+  return isAuthenticated ? <Navigate to="/appointments" replace /> : children;
 }
 
 export const router = createBrowserRouter([
@@ -36,6 +37,14 @@ export const router = createBrowserRouter([
           <PublicOnlyRoute>
             <RegisterPage />
           </PublicOnlyRoute>
+        )
+      },
+      {
+        path: '/appointments',
+        element: (
+          <ProtectedRoute>
+            <AppointmentsPage />
+          </ProtectedRoute>
         )
       },
       {

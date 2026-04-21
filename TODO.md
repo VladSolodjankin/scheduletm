@@ -24,10 +24,12 @@
 
 ### 4.0 Текущий приоритет (этот шаг)
 
-- [ ] Сделать Appointments MVP Slice end-to-end: `list + create + edit` (server + web).
-- [ ] Ограничить первую версию полями: `scheduledAt`, `status`, `meetingLink`, `notes`.
-- [ ] Добавить только два action endpoint: `cancel`, `reschedule`.
+- [x] Сделать Appointments MVP Slice end-to-end: `list + create + edit` (server + web).
+- [x] Ограничить первую версию полями: `scheduledAt`, `status`, `meetingLink`, `notes`.
+- [x] Добавить только два action endpoint: `cancel`, `reschedule`.
 - [ ] Добавить 3 интеграционных smoke-сценария: create, reschedule, cancel.
+- [ ] Добавить drag&drop перенос записи в календаре (web).
+- [ ] Доработать календарный UI до full time-grid вида (уровень Teams-like).
 
 ### 4.1 Data layer
 
