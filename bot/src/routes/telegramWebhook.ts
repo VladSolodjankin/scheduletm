@@ -24,7 +24,7 @@ import {
   getSpecialistsInlineKeyboard,
   getTimeSlotsInlineKeyboard,
 } from '../bot/keyboards';
-import { updateUserByTelegramId } from '../repositories/user.repository';
+import { findUserByPhoneOrEmail, updateUserByTelegramId } from '../repositories/user.repository';
 import {
   selectService,
   selectSpecialist,
@@ -998,7 +998,17 @@ telegramWebhookRouter.post(
         }
 
         if (enteredPhone) {
-          await updateUserByTelegramId(user.account_id, message.from.id, { phone: enteredPhone });
+          const existingByPhone = await findUserByPhoneOrEmail(user.account_id, { phone: enteredPhone });
+
+          if (!existingByPhone || existingByPhone.id === user.id) {
+            await updateUserByTelegramId(user.account_id, message.from.id, { phone: enteredPhone });
+          } else {
+            logInfo('client.phone_deduplicated', {
+              accountId: user.account_id,
+              telegramId: message.from.id,
+              existingClientId: existingByPhone.id,
+            });
+          }
         }
 
         await mergeSessionPayload(user.account_id, user.id, UserSessionState.ENTERING_EMAIL, {
@@ -1032,7 +1042,17 @@ telegramWebhookRouter.post(
         }
 
         if (enteredEmail) {
-          await updateUserByTelegramId(user.account_id, message.from.id, { email: enteredEmail });
+          const existingByEmail = await findUserByPhoneOrEmail(user.account_id, { email: enteredEmail });
+
+          if (!existingByEmail || existingByEmail.id === user.id) {
+            await updateUserByTelegramId(user.account_id, message.from.id, { email: enteredEmail });
+          } else {
+            logInfo('client.email_deduplicated', {
+              accountId: user.account_id,
+              telegramId: message.from.id,
+              existingClientId: existingByEmail.id,
+            });
+          }
         }
 
         await mergeSessionPayload(user.account_id, user.id, UserSessionState.CONFIRMING, {

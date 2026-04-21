@@ -47,7 +47,7 @@
 - Далее update обрабатывается как:
   - `callback_query` (inline-кнопки, `callback_data`)
   - `message` (текст, контакт)
-- Состояние диалога хранится в `user_sessions`:
+- Состояние диалога хранится в `telegram_user_sessions`:
   - `state` (строка из `UserSessionState`)
   - `payload_json` (JSON с выбранными параметрами)
 
@@ -94,7 +94,7 @@ Webhook-роут ожидает следующие форматы:
 
 Миграции: `src/db/migrations/*`.
 
-- `telegram_users`
+- `clients`
   - `telegram_id`, `username`, `first_name`, `phone`, `email`, `language_code`
 - `services`
   - `code`, `name_ru`, `name_en`, `price`, `currency`, `duration_min`, `sessions_count`, `is_active`, ...
@@ -103,7 +103,7 @@ Webhook-роут ожидает следующие форматы:
   - связь `specialists.user_id <-> web_users.id` внутри `account_id` для персональных Google credentials
 - `web_users`
   - `email`, auth поля + `google_api_key`, `google_calendar_id` (основной источник ключа календаря специалиста)
-- `user_sessions`
+- `telegram_user_sessions`
   - `user_id` (unique), `state`, `payload_json`
 - `app_settings`
   - `timezone`, `work_start_hour`, `work_end_hour`, `work_days`, `slot_duration_min`
