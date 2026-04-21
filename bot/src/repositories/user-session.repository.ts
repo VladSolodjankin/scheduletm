@@ -2,11 +2,11 @@ import { db } from '../db/knex';
 import { BookingPayload, UserSessionState } from '../types/session';
 
 export async function findSessionByUserId(accountId: number, userId: number) {
-  return db('user_sessions').where({ account_id: accountId, user_id: userId }).first();
+  return db('telegram_user_sessions').where({ account_id: accountId, user_id: userId }).first();
 }
 
 export async function createSession(accountId: number, userId: number) {
-  const [session] = await db('user_sessions')
+  const [session] = await db('telegram_user_sessions')
     .insert({
       account_id: accountId,
       user_id: userId,
@@ -39,7 +39,7 @@ export async function updateSessionState(
     updateData.payload_json = JSON.stringify(payload);
   }
 
-  const [session] = await db('user_sessions')
+  const [session] = await db('telegram_user_sessions')
     .where({ account_id: accountId, user_id: userId })
     .update(updateData, ['*']);
 
@@ -64,7 +64,7 @@ export async function mergeSessionPayload(
     ...patch,
   };
 
-  const [updated] = await db('user_sessions')
+  const [updated] = await db('telegram_user_sessions')
     .where({ account_id: accountId, user_id: userId })
     .update(
       {

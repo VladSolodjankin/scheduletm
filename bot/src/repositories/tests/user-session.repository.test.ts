@@ -33,7 +33,7 @@ function createDbMock(initialSession: SessionRow | null) {
   };
 
   const db: any = ((table: string) => {
-    expect(table).toBe('user_sessions');
+    expect(table).toBe('telegram_user_sessions');
     return qb;
   }) as any;
 

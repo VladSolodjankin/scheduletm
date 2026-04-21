@@ -12,11 +12,11 @@ export type CreateUserInput = {
 };
 
 export async function findUserByTelegramId(accountId: number, telegramId: number) {
-  return db("users").where({ account_id: accountId, telegram_id: telegramId }).first();
+  return db("telegram_users").where({ account_id: accountId, telegram_id: telegramId }).first();
 }
 
 export async function createUser(input: CreateUserInput) {
-  const [user] = await db("users")
+  const [user] = await db("telegram_users")
     .insert({
       account_id: input.accountId,
       telegram_id: input.telegramId,
@@ -50,7 +50,7 @@ export async function updateUserByTelegramId(
     updateData.language_code = patch.languageCode;
   }
 
-  const [user] = await db("users")
+  const [user] = await db("telegram_users")
     .where({ account_id: accountId, telegram_id: telegramId })
     .update(updateData, ["*"]);
 
