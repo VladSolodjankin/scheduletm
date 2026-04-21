@@ -69,6 +69,11 @@ export const dictionaries = {
       save: 'Save',
       close: 'Close',
       emptyDay: 'No appointments on this day.',
+      viewDay: 'Day',
+      viewWeek: 'Week',
+      today: 'Today',
+      loading: 'Loading appointments...',
+      dragHint: 'Drag and drop appointment to move it to another slot.',
       cancelAction: 'Cancel appointment',
       fields: {
         scheduledAt: 'Date and time',
@@ -148,6 +153,11 @@ export const dictionaries = {
       save: 'Сохранить',
       close: 'Закрыть',
       emptyDay: 'На этот день записей нет.',
+      viewDay: 'День',
+      viewWeek: 'Неделя',
+      today: 'Сегодня',
+      loading: 'Загрузка записей...',
+      dragHint: 'Перетащите запись в другой слот, чтобы перенести её.',
       cancelAction: 'Отменить запись',
       fields: {
         scheduledAt: 'Дата и время',
@@ -218,6 +228,11 @@ export type TranslationKey =
   | 'appointments.save'
   | 'appointments.close'
   | 'appointments.emptyDay'
+  | 'appointments.viewDay'
+  | 'appointments.viewWeek'
+  | 'appointments.today'
+  | 'appointments.loading'
+  | 'appointments.dragHint'
   | 'appointments.cancelAction'
   | 'appointments.fields.scheduledAt'
   | 'appointments.fields.status'
