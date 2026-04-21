@@ -23,7 +23,7 @@ const GOLDEN_RATIO = 1.618;
 
 export function AuthContainer({ mode }: AuthContainerProps) {
   const navigate = useNavigate();
-  const { setAccessToken } = useAuth();
+  const { setAuthSession } = useAuth();
   const { t } = useI18n();
 
   const [email, setEmail] = useState('');
@@ -43,7 +43,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       setFieldErrors({});
 
       if (isLogin) {
-        setAccessToken(response.data.accessToken);
+        setAuthSession(response.data.accessToken, response.data.user);
         navigate('/settings');
         return;
       }

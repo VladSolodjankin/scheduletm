@@ -28,7 +28,6 @@ type SettingsCardCopy = {
   connectGoogle: string;
   connectingGoogle: string;
   googleConnected: string;
-  logout: string;
 };
 
 type SettingsCardProps = {
@@ -38,7 +37,6 @@ type SettingsCardProps = {
   onSettingsChange: (next: AppSettings) => void;
   onSave: () => void;
   onConnectGoogle: () => void;
-  onLogout: () => void;
 };
 
 export function SettingsCard({
@@ -47,8 +45,7 @@ export function SettingsCard({
   isGoogleConnecting,
   onSettingsChange,
   onSave,
-  onConnectGoogle,
-  onLogout
+  onConnectGoogle
 }: SettingsCardProps) {
   const [tab, setTab] = useState(0);
 
@@ -133,10 +130,6 @@ export function SettingsCard({
                 : isGoogleConnecting
                   ? copy.connectingGoogle
                   : copy.connectGoogle}
-            </AppButton>
-
-            <AppButton color="error" variant="text" startIcon={<AppIcons.logout />} onClick={onLogout}>
-              {copy.logout}
             </AppButton>
           </Stack>
         </AppForm>

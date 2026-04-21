@@ -22,7 +22,7 @@ const defaultSettings: AppSettings = {
 export function SettingsContainer() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { accessToken, clearAuth } = useAuth();
+  const { accessToken } = useAuth();
   const { t } = useI18n();
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [error, setError] = useState('');
@@ -109,11 +109,6 @@ export function SettingsContainer() {
     }
   };
 
-  const logout = () => {
-    clearAuth();
-    navigate('/login');
-  };
-
   return (
     <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')}>
       {error && (
@@ -145,14 +140,12 @@ export function SettingsContainer() {
             integrationsSubtitle: t('settings.integrationsSubtitle'),
             connectGoogle: t('settings.connectGoogle'),
             connectingGoogle: t('settings.connectingGoogle'),
-            googleConnected: t('settings.googleConnected'),
-            logout: t('common.logout')
+            googleConnected: t('settings.googleConnected')
           }}
           isGoogleConnecting={isGoogleConnecting}
           onSettingsChange={setSettings}
           onSave={saveSettings}
           onConnectGoogle={connectGoogle}
-          onLogout={logout}
         />
       </Box>
     </AppPage>
