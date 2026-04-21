@@ -10,6 +10,7 @@ export const dictionaries = {
       login: 'Login',
       register: 'Register',
       language: 'Language',
+      profileMenuAria: 'Open profile menu',
       appearancePaletteAria: 'Select color palette',
       themeToggleAria: 'Toggle theme mode',
       languageAria: 'Select language'
@@ -67,6 +68,7 @@ export const dictionaries = {
       login: 'Вход',
       register: 'Регистрация',
       language: 'Язык',
+      profileMenuAria: 'Открыть меню профиля',
       appearancePaletteAria: 'Выбрать цветовую палитру',
       themeToggleAria: 'Переключить тему',
       languageAria: 'Выбрать язык'
@@ -127,6 +129,7 @@ export type TranslationKey =
   | 'common.login'
   | 'common.register'
   | 'common.language'
+  | 'common.profileMenuAria'
   | 'common.appearancePaletteAria'
   | 'common.themeToggleAria'
   | 'common.languageAria'

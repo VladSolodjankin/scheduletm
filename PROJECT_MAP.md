@@ -27,6 +27,7 @@
   - `web/src/pages/*` — страницы.
   - `web/src/containers/*` — контейнеры с запросами и состоянием.
   - `web/src/components/*` — UI-компоненты и layout (`MainLayout`, `Header`, `LeftMenu`).
+  - `web/src/components/layout/UserMenu.tsx` — профиль в header (avatar/инициалы, меню settings/logout).
   - `web/src/shared/ui/*` — базовые MUI-wrapper компоненты (`AppButton`, `AppTabs`, `AppForm`, `AppTextField`, `AppPage`, `AppIcons`).
   - `web/src/shared/theme/*` — константы дизайна + фабрика темы + light/dark + palette variants.
   - `web/src/shared/*` — API client, типы, auth context и переиспользуемая инфраструктура.

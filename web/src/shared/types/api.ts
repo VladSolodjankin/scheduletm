@@ -6,6 +6,8 @@ export type AuthResponse = {
     id: string;
     email: string;
     role: WebUserRole;
+    fullName?: string;
+    avatarUrl?: string;
   };
 };
 
