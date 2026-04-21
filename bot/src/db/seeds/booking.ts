@@ -12,7 +12,7 @@ export async function seed(knex: Knex): Promise<void> {
 
   const accountId = account.id;
 
-  await knex('user_sessions').del();
+  await knex('telegram_user_sessions').del();
   await knex('appointments').del();
   await knex('services').del();
   await knex('specialists').del();

@@ -10,7 +10,7 @@ export async function findTelegramUserByEmail(
   accountId: number,
   email: string,
 ): Promise<TelegramUserRow | null> {
-  const row = await db('users')
+  const row = await db('telegram_users')
     .where({ account_id: accountId, email })
     .first<TelegramUserRow>();
 
