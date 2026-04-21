@@ -19,8 +19,6 @@ type ApiErrorResponse = {
   errors?: Record<string, string>;
 };
 
-const GOLDEN_RATIO = 1.618;
-
 export function AuthContainer({ mode }: AuthContainerProps) {
   const navigate = useNavigate();
   const { setAuthSession } = useAuth();
@@ -79,8 +77,8 @@ export function AuthContainer({ mode }: AuthContainerProps) {
         py: { xs: 4, sm: 6 }
       }}
     >
-      <Stack spacing={{ xs: 3, sm: 4 }} sx={{ width: '100%', maxWidth: 840 }}>
-        <Box sx={{ width: '100%', maxWidth: `${Math.round(520 * GOLDEN_RATIO)}px`, mx: 'auto' }}>
+      <Stack spacing={{ xs: 3, sm: 4 }} sx={{ width: '100%', maxWidth: 840, alignItems: 'center' }}>
+        <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
           <Stack spacing={1.25}>
             <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
               {isLogin ? t('auth.loginTitle') : t('auth.registerTitle')}
