@@ -13,7 +13,7 @@ function getEnv(name: string, fallback?: string): string {
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   isProduction: (process.env.NODE_ENV ?? 'development') === 'production',
-  port: Number(process.env.PORT || 3000),
+  port: Number(process.env.PORT || 3002),
   botToken: getEnv("BOT_TOKEN"),
   webhookSecret: getEnv("WEBHOOK_SECRET"),
   appUrl: getEnv("APP_URL"),

@@ -10,7 +10,7 @@ function normalizeBaseUrl(rawBaseUrl?: string): string | undefined {
   return rawBaseUrl.replace(/\/+$/, '');
 }
 
-const baseURL = normalizeBaseUrl(import.meta.env.VITE_API_URL ?? runtimeOrigin ?? 'http://localhost:3000');
+const baseURL = normalizeBaseUrl(import.meta.env.VITE_API_URL ?? runtimeOrigin ?? 'http://localhost:3003');
 
 export const apiClient = axios.create({
   baseURL,

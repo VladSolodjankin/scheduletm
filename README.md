@@ -179,3 +179,4 @@ npm run -w @scheduletm/web dev
 
 Для дополнительной информации смотри PRODUCTION_READINESS_CHECKLIST.md, README.md, TODO.md, PROJECT_MAP.md
 После доработки не зыбудь обновить документации.
+
