@@ -94,7 +94,7 @@ Webhook-роут ожидает следующие форматы:
 
 Миграции: `src/db/migrations/*`.
 
-- `users`
+- `telegram_users`
   - `telegram_id`, `username`, `first_name`, `phone`, `email`, `language_code`
 - `services`
   - `code`, `name_ru`, `name_en`, `price`, `currency`, `duration_min`, `sessions_count`, `is_active`, ...

@@ -14,11 +14,11 @@
 
 ## Data map (server)
 
-- `users` — Telegram users.
+- `telegram_users` — Telegram users.
 - `web_users` — web auth users (email/password hash/salt).
 - `web_users.role` — роль web-пользователя (`owner`/`admin`/`specialist`).
 - `web_users.google_api_key` — Google OAuth `access_token`, сохраняемый после web-коннекта Google.
-- `user_identity_links` — 1:1 bridge между `users` и `web_users` внутри `account_id`.
+- `user_identity_links` — 1:1 bridge между `telegram_users` и `web_users` внутри `account_id`.
 - `specialists.user_id` — 1:1 bridge между `specialists` и `web_users` внутри `account_id`.
 - `web_user_sessions` — web auth-сессии (`access`/`refresh`) с `expires_at`/`revoked_at`, источник истины для проверки токенов и refresh-rotation.
 - Миграция: `server/src/db/migrations/20260420133000_add_web_users_and_identity_links.ts`.

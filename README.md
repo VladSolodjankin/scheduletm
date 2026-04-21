@@ -66,7 +66,7 @@ scheduletm/
 
 Слой данных серверной части теперь фиксирует разделение identity-моделей:
 
-- `users` — Telegram-пользователи.
+- `telegram_users` — Telegram-пользователи.
 - `web_users` — web-учетки для email/password auth.
 - `user_identity_links` — связь между Telegram и Web учетками (1:1 в рамках `account_id`).
 - `web_users.role` — роль web-пользователя (`owner`/`admin`/`specialist`).
@@ -116,7 +116,7 @@ scheduletm/
 
 Порядок продолжения разработки (KISS, без преждевременного усложнения):
 
-1. **Перевести хранение данных с in-memory на БД** (минимальная схема users/sessions/settings).
+1. **Перевести хранение данных с in-memory на БД** (минимальная схема telegram_users/sessions/settings).
 2. **Добавить appointments как отдельный модуль** в `server` + отдельные страницы/таблицы в `web`.
 3. **Реализовать операции по appointment**: смена статуса, отмена, перенос даты, ручное уведомление, подтверждение оплаты.
 4. ✅ **Внедрить i18n в web** (добавлена поддержка `ru/en`, локаль в header, переводы вынесены в отдельный слой).

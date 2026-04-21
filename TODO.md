@@ -31,7 +31,7 @@
 
 ### 4.1 Data layer
 
-- [ ] Перенести in-memory storage в БД (минимум users/sessions/settings).
+- [ ] Перенести in-memory storage в БД (минимум telegram_users/sessions/settings).
 - [x] Перенести web auth-сессии в БД (`web_user_sessions`, access + refresh токены).
 - [ ] Добавить миграции и seed для локальной разработки.
 - [x] Развести identity-модели: `users` (Telegram), `web_users` (web-auth), `user_identity_links` (1:1 связь в рамках account).
