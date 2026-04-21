@@ -3,9 +3,8 @@ import { randomBytes } from 'node:crypto';
 import { URLSearchParams } from 'node:url';
 import { env } from '../config/env.js';
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
+import { createGoogleOAuthState, consumeGoogleOAuthState } from '../repositories/googleOAuthStateRepository.js';
 import { updateWebUserGoogleCredentials } from '../repositories/webUserRepository.js';
-import { oauthStateByToken, settingsByUserId } from '../repositories/inMemoryStore.js';
-import { getSettings } from './settingsService.js';
 
 type GoogleTokenResponse = {
   access_token: string;
@@ -32,15 +31,24 @@ const isGoogleOAuthConfigured = () => {
   );
 };
 
-export const createGoogleOAuthUrl = (userId: string) => {
+export const createGoogleOAuthUrl = async (userId: string) => {
   if (!isGoogleOAuthConfigured()) {
     return null;
   }
 
+  const webUserId = Number(userId);
+  if (!Number.isInteger(webUserId)) {
+    return null;
+  }
+
+  const accountId = await getDefaultAccountId();
   const state = randomBytes(32).toString('hex');
-  oauthStateByToken.set(state, {
-    userId,
-    createdAt: Date.now()
+
+  await createGoogleOAuthState({
+    accountId,
+    webUserId,
+    stateToken: state,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   });
 
   const params = new URLSearchParams({
@@ -65,12 +73,11 @@ export const completeGoogleOAuth = async (state: string, code: string) => {
     return { ok: false as const, reason: 'google_oauth_not_configured' };
   }
 
-  const pending = oauthStateByToken.get(state);
+  const accountId = await getDefaultAccountId();
+  const pending = await consumeGoogleOAuthState(accountId, state);
   if (!pending) {
     return { ok: false as const, reason: 'invalid_state' };
   }
-
-  oauthStateByToken.delete(state);
 
   try {
     const payload = new URLSearchParams({
@@ -88,27 +95,15 @@ export const completeGoogleOAuth = async (state: string, code: string) => {
       timeout: 10000
     });
 
-    const webUserId = Number(pending.userId);
-    if (!Number.isInteger(webUserId)) {
-      return { ok: false as const, reason: 'invalid_user_id' };
-    }
-
-    const accountId = await getDefaultAccountId();
     await updateWebUserGoogleCredentials({
       accountId,
-      id: webUserId,
+      id: pending.web_user_id,
       googleApiKey: tokenResponse.data.access_token
     });
 
-    const nextSettings = {
-      ...getSettings(pending.userId),
-      googleConnected: true
-    };
-    settingsByUserId.set(pending.userId, nextSettings);
-
     return {
       ok: true as const,
-      userId: pending.userId,
+      userId: String(pending.web_user_id),
       connectedAt: new Date().toISOString(),
       tokenMeta: {
         tokenType: tokenResponse.data.token_type,

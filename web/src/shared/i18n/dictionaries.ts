@@ -34,12 +34,13 @@ export const dictionaries = {
     },
     settings: {
       pageTitle: 'Settings',
-      pageSubtitle: 'Manage general preferences, integrations, and interface appearance.',
+      pageSubtitle: 'Manage system and personal settings, integrations, and interface appearance.',
       tabs: {
-        general: 'General',
-        integrations: 'Integrations'
+        system: 'System settings',
+        user: 'User settings'
       },
-      profileTitle: 'Profile settings',
+      systemTitle: 'System settings',
+      userTitle: 'User settings',
       timezone: 'Timezone',
       locale: 'Locale',
       defaultMeetingDuration: 'Default meeting duration (min)',
@@ -112,17 +113,18 @@ export const dictionaries = {
     },
     settings: {
       pageTitle: 'Настройки',
-      pageSubtitle: 'Управляйте общими параметрами, интеграциями и внешним видом интерфейса.',
+      pageSubtitle: 'Управляйте системными и личными настройками, интеграциями и внешним видом интерфейса.',
       tabs: {
-        general: 'Общие',
-        integrations: 'Интеграции'
+        system: 'Системные',
+        user: 'Пользовательские'
       },
-      profileTitle: 'Настройки профиля',
-      timezone: 'Timezone',
-      locale: 'Locale',
-      defaultMeetingDuration: 'Default meeting duration (min)',
-      dailyDigestEnabled: 'Daily digest enabled',
-      weekStartsOnMonday: 'Week starts on Monday',
+      systemTitle: 'Системные настройки',
+      userTitle: 'Пользовательские настройки',
+      timezone: 'Часовой пояс',
+      locale: 'Локаль',
+      defaultMeetingDuration: 'Длительность встречи по умолчанию (мин)',
+      dailyDigestEnabled: 'Ежедневный дайджест включен',
+      weekStartsOnMonday: 'Неделя начинается с понедельника',
       integrationsTitle: 'Интеграции',
       integrationsSubtitle: 'Подключите внешние сервисы, чтобы автоматизировать бронирования и напоминания.',
       connectGoogle: 'Подключить Google',
@@ -188,9 +190,10 @@ export type TranslationKey =
   | 'auth.errors.registerFailed'
   | 'settings.pageTitle'
   | 'settings.pageSubtitle'
-  | 'settings.tabs.general'
-  | 'settings.tabs.integrations'
-  | 'settings.profileTitle'
+  | 'settings.tabs.system'
+  | 'settings.tabs.user'
+  | 'settings.systemTitle'
+  | 'settings.userTitle'
   | 'settings.timezone'
   | 'settings.locale'
   | 'settings.defaultMeetingDuration'

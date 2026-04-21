@@ -29,7 +29,7 @@ export function MainLayout() {
 
     const sync = async () => {
       try {
-        await apiClient.put('/api/settings', {
+        await apiClient.put('/api/settings/user', {
           locale: settingsLocale,
           uiThemeMode: mode,
           uiPaletteVariantId: paletteVariantId

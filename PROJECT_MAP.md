@@ -11,7 +11,7 @@
   - `server/src/services/*` — бизнес-логика auth/settings/appointments.
   - `server/src/repositories/appointmentRepository.ts` — доступ к appointments для web-сценариев.
   - `server/src/middlewares/*` — auth + login lock middleware.
-  - `server/src/repositories/inMemoryStore.ts` — in-memory состояние (MVP).
+  - `server/src/repositories/appSettingsRepository.ts` + `webUserRepository.ts` + `loginAttemptRepository.ts` + `googleOAuthStateRepository.ts` — хранение state/settings в БД.
 
 ## Data map (server)
 
@@ -47,8 +47,10 @@
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `POST /api/auth/specialists`
-- `GET /api/settings`
-- `PUT /api/settings`
+- `GET /api/settings/system` (owner/admin)
+- `PUT /api/settings/system` (owner/admin)
+- `GET /api/settings/user`
+- `PUT /api/settings/user`
 - `POST /api/integrations/google/oauth/start`
 - `GET /api/integrations/google/oauth/callback`
 - `GET /api/appointments`

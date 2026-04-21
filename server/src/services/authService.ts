@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import type { Response } from 'express';
 import { env } from '../config/env.js';
-import { loginAttempts } from '../repositories/inMemoryStore.js';
+import { clearLoginAttempt, findLoginAttemptByIp, upsertFailedLoginAttempt } from '../repositories/loginAttemptRepository.js';
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import { createDefaultSpecialistForWebUserIfMissing, createSpecialistForWebUser } from '../repositories/specialistRepository.js';
 import { createWebUser, findWebUserByEmail, findWebUserById, touchWebUserLastLogin } from '../repositories/webUserRepository.js';
@@ -19,23 +19,21 @@ const now = () => Date.now();
 const cookieExpiresMs = env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;
 const accessExpiresMs = env.ACCESS_TOKEN_TTL_SECONDS * 1000;
 
-export const isLockedIp = (ip: string) => {
-  const attempt = loginAttempts.get(ip);
-  return Boolean(attempt && attempt.lockedUntil > now());
+export const isLockedIp = async (ip: string) => {
+  const attempt = await findLoginAttemptByIp(ip);
+  return Boolean(attempt?.locked_until && attempt.locked_until.getTime() > now());
 };
 
-export const registerFailedAttempt = (ip: string) => {
-  const current = loginAttempts.get(ip) ?? { count: 0, lockedUntil: 0 };
-  const nextCount = current.count + 1;
+export const registerFailedAttempt = async (ip: string) => {
+  const current = await findLoginAttemptByIp(ip);
+  const currentCount = current?.fail_count ?? 0;
+  const nextCount = currentCount + 1;
   const lockForMs = nextCount >= 5 ? 15 * 60 * 1000 : 0;
 
-  loginAttempts.set(ip, {
-    count: lockForMs > 0 ? 0 : nextCount,
-    lockedUntil: lockForMs > 0 ? now() + lockForMs : 0
-  });
+  await upsertFailedLoginAttempt(ip, lockForMs > 0 ? new Date(now() + lockForMs) : null);
 };
 
-export const clearAttempts = (ip: string) => loginAttempts.delete(ip);
+export const clearAttempts = async (ip: string) => clearLoginAttempt(ip);
 
 export const issueSession = async (userId: string, res: Response) => {
   const accountId = await getDefaultAccountId();

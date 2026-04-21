@@ -1,7 +1,7 @@
 import { Box, FormControlLabel, Stack, Switch, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import type { AppSettings } from '../shared/types/api';
+import type { SystemSettings, UserSettings } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
 import { AppIcons } from '../shared/ui/AppIcons';
@@ -9,9 +9,10 @@ import { AppTab, AppTabs } from '../shared/ui/AppTabs';
 import { AppTextField } from '../shared/ui/AppTextField';
 
 type SettingsCardCopy = {
-  generalTab: string;
-  integrationsTab: string;
-  profileTitle: string;
+  systemTab: string;
+  userTab: string;
+  systemTitle: string;
+  userTitle: string;
   timezone: string;
   locale: string;
   defaultMeetingDuration: string;
@@ -26,58 +27,74 @@ type SettingsCardCopy = {
 };
 
 type SettingsCardProps = {
-  settings: AppSettings;
+  systemSettings: SystemSettings;
+  userSettings: UserSettings;
   copy: SettingsCardCopy;
+  canManageSystemSettings: boolean;
   isGoogleConnecting: boolean;
-  isSaving?: boolean;
-  onSave: (next: AppSettings) => Promise<void> | void;
+  isSavingSystem?: boolean;
+  isSavingUser?: boolean;
+  onSaveSystem: (next: SystemSettings) => Promise<void> | void;
+  onSaveUser: (next: UserSettings) => Promise<void> | void;
   onConnectGoogle: () => void;
 };
 
 export function SettingsCard({
-  settings,
+  systemSettings,
+  userSettings,
   copy,
+  canManageSystemSettings,
   isGoogleConnecting,
-  isSaving = false,
-  onSave,
+  isSavingSystem = false,
+  isSavingUser = false,
+  onSaveSystem,
+  onSaveUser,
   onConnectGoogle
 }: SettingsCardProps) {
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState(canManageSystemSettings ? 0 : 1);
 
-  const { control, handleSubmit, reset } = useForm<AppSettings>({
-    defaultValues: settings
+  const { control: systemControl, handleSubmit: handleSystemSubmit, reset: resetSystem } = useForm<SystemSettings>({
+    defaultValues: systemSettings
+  });
+
+  const { control: userControl, handleSubmit: handleUserSubmit, reset: resetUser } = useForm<UserSettings>({
+    defaultValues: userSettings
   });
 
   useEffect(() => {
-    reset(settings);
-  }, [reset, settings]);
+    resetSystem(systemSettings);
+  }, [resetSystem, systemSettings]);
+
+  useEffect(() => {
+    resetUser(userSettings);
+  }, [resetUser, userSettings]);
 
   return (
     <Box>
       <AppTabs value={tab} onChange={(_, next) => setTab(next)} sx={{ mb: 2 }}>
-        <AppTab label={copy.generalTab} />
-        <AppTab label={copy.integrationsTab} />
+        <AppTab label={copy.systemTab} disabled={!canManageSystemSettings} />
+        <AppTab label={copy.userTab} />
       </AppTabs>
 
-      {tab === 0 && (
-        <AppForm component="form" onSubmit={handleSubmit(onSave)}>
-          <Typography variant="h5">{copy.profileTitle}</Typography>
+      {tab === 0 && canManageSystemSettings && (
+        <AppForm component="form" onSubmit={handleSystemSubmit(onSaveSystem)}>
+          <Typography variant="h5">{copy.systemTitle}</Typography>
 
           <Controller
             name="timezone"
-            control={control}
+            control={systemControl}
             render={({ field }: any) => <AppTextField {...field} label={copy.timezone} />}
           />
 
           <Controller
             name="locale"
-            control={control}
+            control={systemControl}
             render={({ field }: any) => <AppTextField {...field} label={copy.locale} />}
           />
 
           <Controller
             name="defaultMeetingDuration"
-            control={control}
+            control={systemControl}
             render={({ field }: any) => (
               <AppTextField
                 {...field}
@@ -91,7 +108,7 @@ export function SettingsCard({
 
           <Controller
             name="dailyDigestEnabled"
-            control={control}
+            control={systemControl}
             render={({ field }: any) => (
               <FormControlLabel
                 control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
@@ -102,7 +119,7 @@ export function SettingsCard({
 
           <Controller
             name="weekStartsOnMonday"
-            control={control}
+            control={systemControl}
             render={({ field }: any) => (
               <FormControlLabel
                 control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
@@ -111,14 +128,32 @@ export function SettingsCard({
             )}
           />
 
-          <AppButton type="submit" startIcon={<AppIcons.save />} disabled={isSaving}>
+          <AppButton type="submit" startIcon={<AppIcons.save />} disabled={isSavingSystem}>
             {copy.saveSettings}
           </AppButton>
         </AppForm>
       )}
 
       {tab === 1 && (
-        <AppForm>
+        <AppForm component="form" onSubmit={handleUserSubmit(onSaveUser)}>
+          <Typography variant="h5">{copy.userTitle}</Typography>
+
+          <Controller
+            name="timezone"
+            control={userControl}
+            render={({ field }: any) => <AppTextField {...field} label={copy.timezone} />}
+          />
+
+          <Controller
+            name="locale"
+            control={userControl}
+            render={({ field }: any) => <AppTextField {...field} label={copy.locale} />}
+          />
+
+          <AppButton type="submit" startIcon={<AppIcons.save />} disabled={isSavingUser}>
+            {copy.saveSettings}
+          </AppButton>
+
           <Typography variant="h5">{copy.integrationsTitle}</Typography>
           <Typography color="text.secondary" variant="body2">
             {copy.integrationsSubtitle}
@@ -128,9 +163,9 @@ export function SettingsCard({
             <AppButton
               variant="outlined"
               onClick={onConnectGoogle}
-              disabled={settings.googleConnected || isGoogleConnecting}
+              disabled={userSettings.googleConnected || isGoogleConnecting}
             >
-              {settings.googleConnected
+              {userSettings.googleConnected
                 ? copy.googleConnected
                 : isGoogleConnecting
                   ? copy.connectingGoogle

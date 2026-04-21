@@ -24,7 +24,7 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Введите пароль')
 });
 
-export const settingsSchema = z.object({
+export const systemSettingsSchema = z.object({
   timezone: z.string().min(1, 'Укажите часовой пояс').max(64, 'Часовой пояс слишком длинный'),
   dailyDigestEnabled: z.boolean(),
   defaultMeetingDuration: z.coerce
@@ -33,6 +33,11 @@ export const settingsSchema = z.object({
     .min(15, 'Минимальная длительность встречи — 15 минут')
     .max(180, 'Максимальная длительность встречи — 180 минут'),
   weekStartsOnMonday: z.boolean(),
+  locale: z.string().min(2, 'Укажите язык/локаль').max(16, 'Локаль слишком длинная'),
+}).partial();
+
+export const userSettingsSchema = z.object({
+  timezone: z.string().min(1, 'Укажите часовой пояс').max(64, 'Часовой пояс слишком длинный'),
   locale: z.string().min(2, 'Укажите язык/локаль').max(16, 'Локаль слишком длинная'),
   uiThemeMode: z.enum(['light', 'dark']),
   uiPaletteVariantId: z.string().min(1, 'Укажите id палитры').max(64, 'Id палитры слишком длинный')

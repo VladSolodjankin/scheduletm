@@ -58,12 +58,14 @@ scheduletm/
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `POST /api/auth/specialists`
-- `GET /api/settings`
-- `PUT /api/settings`
+- `GET /api/settings/system` (owner/admin)
+- `PUT /api/settings/system` (owner/admin)
+- `GET /api/settings/user`
+- `PUT /api/settings/user`
 - `POST /api/integrations/google/oauth/start`
 - `GET /api/integrations/google/oauth/callback`
 
-`PUT /api/settings` теперь принимает и интерфейсные поля `uiThemeMode` / `uiPaletteVariantId`, чтобы сохранять тему и палитру после логина.
+`PUT /api/settings/system` обновляет системные настройки (таблица `app_settings`), а `PUT /api/settings/user` сохраняет пользовательские настройки (`web_users`, включая `uiThemeMode` / `uiPaletteVariantId`).
 
 Слой данных серверной части теперь фиксирует разделение identity-моделей:
 
@@ -80,7 +82,7 @@ scheduletm/
 - `routes` — HTTP-маршруты.
 - `middlewares` — auth/rate-limit middleware.
 - `services` — бизнес-логика auth/settings.
-- `repositories` — in-memory store (MVP).
+- `repositories` — persistence-слой на БД (settings, sessions, login attempts, oauth state).
 - `utils` — утилиты (crypto/cookies).
 
 
@@ -117,7 +119,7 @@ scheduletm/
 
 Порядок продолжения разработки (KISS, без преждевременного усложнения):
 
-1. **Перевести хранение данных с in-memory на БД** (минимальная схема telegram_users/sessions/settings).
+1. **Перевести хранение данных с in-memory на БД** (выполнено для settings/login attempts/oauth state и web sessions).
 2. **Добавить appointments как отдельный модуль** в `server` + отдельные страницы/таблицы в `web`.
 3. **Реализовать операции по appointment**: смена статуса, отмена, перенос даты, ручное уведомление, подтверждение оплаты.
 4. ✅ **Внедрить i18n в web** (добавлена поддержка `ru/en`, локаль в header, переводы вынесены в отдельный слой).
@@ -181,7 +183,7 @@ scheduletm/
 - Logout в web вызывает backend `POST /api/auth/logout`, который удаляет текущие access/refresh токены из БД и очищает refresh cookie.
 - Если API возвращает `401 Unauthorized`, web-клиент автоматически очищает auth-сессию и делает redirect на `/login`.
 
-> `settings` пока остаются in-memory. Web auth-сессии уже хранятся в БД, следующий шаг — перенести туда же settings.
+> `settings` и OAuth/login state переведены в БД: system settings в `app_settings`, user settings/integrations в `web_users`.
 
 ## Команды
 
