@@ -6,8 +6,6 @@ import {
 import { getOrCreateSession } from '../repositories/user-session.repository';
 import { normalizeLanguageCode } from '../i18n';
 import { getDefaultAccountId } from '../repositories/account.repository';
-import { findWebUserByEmail } from '../repositories/web-user.repository';
-import { linkTelegramUserToWebUser } from '../repositories/user-identity-link.repository';
 
 type TelegramProfile = {
   telegramId: number;
@@ -15,21 +13,6 @@ type TelegramProfile = {
   firstName?: string;
   languageCode?: string;
 };
-
-const normalizeEmail = (email: string) => email.trim().toLowerCase();
-
-async function ensureIdentityLink(user: { account_id: number; id: number; email?: string | null }) {
-  if (!user.email) {
-    return;
-  }
-
-  const webUser = await findWebUserByEmail(user.account_id, normalizeEmail(user.email));
-  if (!webUser) {
-    return;
-  }
-
-  await linkTelegramUserToWebUser(user.account_id, user.id, webUser.id);
-}
 
 export async function findOrCreateTelegramUser(profile: TelegramProfile) {
   const languageCode = normalizeLanguageCode(profile.languageCode);
@@ -46,7 +29,6 @@ export async function findOrCreateTelegramUser(profile: TelegramProfile) {
     });
 
     await getOrCreateSession(created.account_id, created.id);
-    await ensureIdentityLink(created);
 
     return {
       user: created,
@@ -62,7 +44,6 @@ export async function findOrCreateTelegramUser(profile: TelegramProfile) {
   });
 
   await getOrCreateSession(updated.account_id, updated.id);
-  await ensureIdentityLink(updated);
 
   return {
     user: updated,
