@@ -4,7 +4,6 @@ import { env } from '../config/env.js';
 import { loginAttempts } from '../repositories/inMemoryStore.js';
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import { createDefaultSpecialistForWebUserIfMissing, createSpecialistForWebUser } from '../repositories/specialistRepository.js';
-import { createIdentityLinkIfMissing, findTelegramUserByEmail } from '../repositories/userIdentityLinkRepository.js';
 import { createWebUser, findWebUserByEmail, findWebUserById, touchWebUserLastLogin } from '../repositories/webUserRepository.js';
 import {
   createWebUserSession,
@@ -94,15 +93,6 @@ const mapWebUserToDomain = (
   };
 };
 
-const tryLinkTelegramIdentity = async (accountId: number, email: string, webUserId: number) => {
-  const telegramUser = await findTelegramUserByEmail(accountId, email);
-  if (!telegramUser) {
-    return;
-  }
-
-  await createIdentityLinkIfMissing(accountId, telegramUser.id, webUserId);
-};
-
 export const registerUser = async (emailRaw: string, password: string): Promise<User | null> => {
   const email = sanitizeEmail(emailRaw);
   const accountId = await getDefaultAccountId();
@@ -123,7 +113,6 @@ export const registerUser = async (emailRaw: string, password: string): Promise<
   });
 
   await createDefaultSpecialistForWebUserIfMissing(accountId, webUser.id, email);
-  await tryLinkTelegramIdentity(accountId, email, webUser.id);
 
   return mapWebUserToDomain(
     webUser.id,

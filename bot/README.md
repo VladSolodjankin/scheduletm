@@ -3,7 +3,6 @@
 Backend Telegram-бот для записи на услуги через webhook (Express + PostgreSQL + Knex). Сейчас реализован базовый сценарий бронирования: услуга -> специалист -> дата -> время -> контакты -> подтверждение.
 
 Текущая схема подготовлена к multi-account модели: один backend обслуживает несколько кабинетов, а изоляция данных выполняется через таблицу `accounts` и поле `account_id` в бизнес-таблицах.
-При наличии web-кабинета бот дополнительно использует связку `web_users` + `user_identity_links`: если у Telegram-пользователя заполнен email и найден matching web user в том же account, создаётся identity-link.
 
 ## Возможности
 
@@ -113,7 +112,7 @@ npm test
 - `services` - услуги (в т.ч. `duration_min`, `price`, `currency`, `is_active`)
 - `specialists` - специалисты (в т.ч. `is_default`, `is_active`, `base_session_price`, `base_hour_price`)
 - Для интеграции календаря у специалиста используется связка:
-  - `specialist_identity_links` (какой `web_user` владеет интеграцией специалиста)
+  - `specialists.user_id` (какой `web_user` владеет интеграцией специалиста)
   - `web_users.google_api_key` / `web_users.google_calendar_id`
   - `specialists` не хранит Google ключи; источник истины — `web_users`
 - `app_settings` - рабочие часы/дни и timezone (IANA), в которой показываются слоты/записи
