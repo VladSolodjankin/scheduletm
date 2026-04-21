@@ -9,13 +9,13 @@ Node.js/Express API для web-клиента.
 - Integrations: полноценный Google OAuth 2.0 flow (start + callback + token exchange).
 - Безопасность: zod-валидация, `helmet`, login lockout, refresh cookie.
 
-## Связь Telegram users и Web users (рекомендуемая модель)
+## Связь clients и Web users (рекомендуемая модель)
 
-Так как в базе уже есть `telegram_users` (Telegram-пользователи), для web-auth лучше не перегружать эту же таблицу.
+Так как в базе уже есть `clients` (Telegram-пользователи), для web-auth лучше не перегружать эту же таблицу.
 
 Минимальная рабочая схема:
 
-- `telegram_users` — Telegram-профиль (chat context, username, phone, язык и т.д.).
+- `clients` — Telegram-профиль (chat context, username, phone, язык и т.д.).
 - `web_users` — web-учетка (email, password hash/salt, role, login lifecycle).
 - `specialists.user_id` — явная 1:1 связь специалиста с web-учеткой внутри одного `account_id`.
 
@@ -33,7 +33,7 @@ Node.js/Express API для web-клиента.
 
 ## Ближайший roadmap
 
-1. Перенос хранилища в БД (`telegram_users`, `sessions`, `settings`).
+1. Перенос хранилища в БД (`clients`, `telegram_user_sessions`, `settings`).
 2. Добавление модуля appointments (CRUD + lifecycle actions).
 3. Meeting links: `user.defaultMeetingLink` + `appointment.meetingLink`.
 4. Logout/revoke + CSRF для refresh-cookie потока.
