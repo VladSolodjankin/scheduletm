@@ -17,10 +17,12 @@ import {
   Typography,
 } from '@mui/material';
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
+import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 import type { AppointmentItem, AppointmentListResponse, AppointmentStatus, SpecialistItem } from '../shared/types/api';
 import { WebUserRole } from '../shared/types/roles';
 
@@ -98,11 +100,15 @@ export function AppointmentsContainer() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
-  const [form, setForm] = useState<EditFormState>({
+  const initialFormValues: EditFormState = {
     scheduledAt: toDatetimeLocal(new Date().toISOString()),
     status: 'new',
     meetingLink: '',
     notes: '',
+  };
+
+  const { control, handleSubmit, reset } = useForm<EditFormState>({
+    defaultValues: initialFormValues,
   });
 
   const canManageAll = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin;
@@ -173,7 +179,7 @@ export function AppointmentsContainer() {
       return;
     }
 
-    setForm({
+    reset({
       scheduledAt: toDatetimeLocal(targetDate.toISOString()),
       status: 'new',
       meetingLink: '',
@@ -183,7 +189,7 @@ export function AppointmentsContainer() {
     setIsCreateOpen(true);
   };
 
-  const submitForm = async () => {
+  const submitForm = async (form: EditFormState) => {
     if (!accessToken) {
       return;
     }
@@ -228,7 +234,7 @@ export function AppointmentsContainer() {
 
   const openEdit = (item: AppointmentItem) => {
     setEditingItem(item);
-    setForm({
+    reset({
       scheduledAt: toDatetimeLocal(item.scheduledAt),
       status: item.status,
       meetingLink: item.meetingLink,
@@ -465,37 +471,50 @@ export function AppointmentsContainer() {
         <DialogTitle>{editingItem ? t('appointments.editTitle') : t('appointments.createTitle')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label={t('appointments.fields.scheduledAt')}
-              type="datetime-local"
-              value={form.scheduledAt}
-              onChange={(event) => setForm((prev) => ({ ...prev, scheduledAt: event.target.value }))}
-              slotProps={{ inputLabel: { shrink: true } }}
+            <Controller
+              name="scheduledAt"
+              control={control}
+              render={({ field }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={t('appointments.fields.scheduledAt')}
+                  type="datetime-local"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              )}
             />
-            <FormControl>
-              <InputLabel id="status-label">{t('appointments.fields.status')}</InputLabel>
-              <Select
-                labelId="status-label"
-                label={t('appointments.fields.status')}
-                value={form.status}
-                onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value as AppointmentStatus }))}
-              >
-                {STATUS_OPTIONS.map((status) => (
-                  <MenuItem key={status} value={status}>{statusLabel(status)}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              label={t('appointments.fields.meetingLink')}
-              value={form.meetingLink}
-              onChange={(event) => setForm((prev) => ({ ...prev, meetingLink: event.target.value }))}
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }: any) => (
+                <FormControl>
+                  <InputLabel id="status-label">{t('appointments.fields.status')}</InputLabel>
+                  <Select
+                    labelId="status-label"
+                    label={t('appointments.fields.status')}
+                    value={field.value}
+                    onChange={(event) => field.onChange(event.target.value as AppointmentStatus)}
+                  >
+                    {STATUS_OPTIONS.map((status) => (
+                      <MenuItem key={status} value={status}>{statusLabel(status)}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
             />
-            <TextField
-              label={t('appointments.fields.notes')}
-              value={form.notes}
-              onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))}
-              multiline
-              minRows={3}
+            <Controller
+              name="meetingLink"
+              control={control}
+              render={({ field }: any) => (
+                <AppRhfTextField field={field} label={t('appointments.fields.meetingLink')} />
+              )}
+            />
+            <Controller
+              name="notes"
+              control={control}
+              render={({ field }: any) => (
+                <AppRhfTextField field={field} label={t('appointments.fields.notes')} multiline minRows={3} />
+              )}
             />
           </Stack>
         </DialogContent>
@@ -504,7 +523,7 @@ export function AppointmentsContainer() {
             <Button color="error" onClick={cancelAppointment}>{t('appointments.cancelAction')}</Button>
           )}
           <Button onClick={() => setIsCreateOpen(false)}>{t('appointments.close')}</Button>
-          <Button variant="contained" onClick={submitForm}>{t('appointments.save')}</Button>
+          <Button variant="contained" onClick={handleSubmit(submitForm)}>{t('appointments.save')}</Button>
         </DialogActions>
       </Dialog>
     </AppPage>
