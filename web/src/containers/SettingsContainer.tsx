@@ -1,4 +1,4 @@
-import { Alert, Box } from '@mui/material';
+import { Alert, Box, Skeleton, Stack } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
@@ -36,6 +36,7 @@ export function SettingsContainer() {
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
   const [isSavingSystem, setIsSavingSystem] = useState(false);
   const [isSavingUser, setIsSavingUser] = useState(false);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const canManageSystemSettings = user?.role === 'owner' || user?.role === 'admin';
@@ -69,6 +70,8 @@ export function SettingsContainer() {
     }
 
     const load = async () => {
+      setIsLoadingSettings(true);
+
       try {
         const userResponse = await apiClient.get<UserSettings>('/api/settings/user', {
           headers: authHeaders(accessToken)
@@ -83,6 +86,8 @@ export function SettingsContainer() {
         }
       } catch {
         setError(t('settings.errors.load'));
+      } finally {
+        setIsLoadingSettings(false);
       }
     };
 
@@ -170,34 +175,44 @@ export function SettingsContainer() {
       )}
 
       <Box sx={{ maxWidth: 720 }}>
-        <SettingsCard
-          systemSettings={systemSettings}
-          userSettings={userSettings}
-          canManageSystemSettings={canManageSystemSettings}
-          copy={{
-            systemTab: t('settings.tabs.system'),
-            userTab: t('settings.tabs.user'),
-            systemTitle: t('settings.systemTitle'),
-            userTitle: t('settings.userTitle'),
-            timezone: t('settings.timezone'),
-            locale: t('settings.locale'),
-            defaultMeetingDuration: t('settings.defaultMeetingDuration'),
-            dailyDigestEnabled: t('settings.dailyDigestEnabled'),
-            weekStartsOnMonday: t('settings.weekStartsOnMonday'),
-            saveSettings: t('common.saveSettings'),
-            integrationsTitle: t('settings.integrationsTitle'),
-            integrationsSubtitle: t('settings.integrationsSubtitle'),
-            connectGoogle: t('settings.connectGoogle'),
-            connectingGoogle: t('settings.connectingGoogle'),
-            googleConnected: t('settings.googleConnected')
-          }}
-          isGoogleConnecting={isGoogleConnecting}
-          isSavingSystem={isSavingSystem}
-          isSavingUser={isSavingUser}
-          onSaveSystem={saveSystemSettings}
-          onSaveUser={saveUserSettings}
-          onConnectGoogle={connectGoogle}
-        />
+        {isLoadingSettings ? (
+          <Stack spacing={2}>
+            <Skeleton variant="rounded" height={42} />
+            <Skeleton variant="rounded" height={56} />
+            <Skeleton variant="rounded" height={56} />
+            <Skeleton variant="rounded" height={56} />
+            <Skeleton variant="rounded" height={46} width={180} />
+          </Stack>
+        ) : (
+          <SettingsCard
+            systemSettings={systemSettings}
+            userSettings={userSettings}
+            canManageSystemSettings={canManageSystemSettings}
+            copy={{
+              systemTab: t('settings.tabs.system'),
+              userTab: t('settings.tabs.user'),
+              systemTitle: t('settings.systemTitle'),
+              userTitle: t('settings.userTitle'),
+              timezone: t('settings.timezone'),
+              locale: t('settings.locale'),
+              defaultMeetingDuration: t('settings.defaultMeetingDuration'),
+              dailyDigestEnabled: t('settings.dailyDigestEnabled'),
+              weekStartsOnMonday: t('settings.weekStartsOnMonday'),
+              saveSettings: t('common.saveSettings'),
+              integrationsTitle: t('settings.integrationsTitle'),
+              integrationsSubtitle: t('settings.integrationsSubtitle'),
+              connectGoogle: t('settings.connectGoogle'),
+              connectingGoogle: t('settings.connectingGoogle'),
+              googleConnected: t('settings.googleConnected')
+            }}
+            isGoogleConnecting={isGoogleConnecting}
+            isSavingSystem={isSavingSystem}
+            isSavingUser={isSavingUser}
+            onSaveSystem={saveSystemSettings}
+            onSaveUser={saveUserSettings}
+            onConnectGoogle={connectGoogle}
+          />
+        )}
       </Box>
     </AppPage>
   );
