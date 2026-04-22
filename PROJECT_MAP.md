@@ -122,5 +122,5 @@
 
 ## Тестовая карта (smoke)
 
-- `server/tests/appointments.smoke.test.ts` — integration smoke для API сценариев `create`, `reschedule`, `cancel` через Express app + `vitest` + встроенный `fetch` Node.js.
+- `server/tests/appointments.routes.smoke.test.ts` — route-smoke для API сценариев `create`, `reschedule`, `cancel` через Express app + `vitest` + встроенный `fetch` Node.js (service-слой замокан).
 - `web/tests/e2e/smoke.e2e.test.mjs` — web smoke для сценариев `auth/settings/appointments` (проверка маршрутов и API-контрактов на уровне SPA-кода).

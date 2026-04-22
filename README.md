@@ -124,7 +124,7 @@ scheduletm/
 3. **Реализовать операции по appointment**: смена статуса, отмена, перенос даты, ручное уведомление, подтверждение оплаты.
 4. ✅ **Внедрить i18n в web** (добавлена поддержка `ru/en`, локаль в header, переводы вынесены в отдельный слой).
 5. **Довести auth до production-потока**: logout/revoke, CSRF.
-6. ✅ **Покрыть критические сценарии тестами** (интеграционные smoke для server + web smoke-проверки auth/settings/appointments).
+6. ✅ **Покрыть критические сценарии тестами** (route-smoke для server (с моками service-слоя) + web smoke-проверки auth/settings/appointments).
 
 ### Текущий шаг (без переусложнения)
 
@@ -133,7 +133,7 @@ scheduletm/
 - Backend: `GET /api/appointments`, `POST /api/appointments`, `PATCH /api/appointments/:id`, `POST /cancel`, `POST /reschedule`.
 - Поля MVP: `scheduledAt`, `status`, `meetingLink`, `notes`.
 - Web: страница appointments с календарём, popup-формой создания/редактирования и действиями cancel/reschedule.
-- Тесты: добавлены server integration smoke-сценарии (`create/reschedule/cancel`) и web smoke-проверки (`auth/settings/appointments`).
+- Тесты: добавлены server route-smoke-сценарии (`create/reschedule/cancel`, с моками service-слоя) и web smoke-проверки (`auth/settings/appointments`).
 - Следующий шаг: расширить lifecycle (`mark-paid`, `notify`) и покрыть edge-case сценарии конфликтов.
 
 ### Appointments MVP: что уже сделано
