@@ -2,6 +2,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -11,7 +12,6 @@ import {
   MenuItem,
   Select,
   Stack,
-  Chip,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -21,13 +21,14 @@ import { Controller, useForm } from 'react-hook-form';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
-import { AppPage } from '../shared/ui/AppPage';
-import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 import type { AppointmentItem, AppointmentListResponse, AppointmentStatus, SpecialistItem } from '../shared/types/api';
 import { WebUserRole } from '../shared/types/roles';
+import { AppPage } from '../shared/ui/AppPage';
+import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 
 type EditFormState = {
-  scheduledAt: string;
+  startAt: string;
+  endAt: string;
   status: AppointmentStatus;
   meetingLink: string;
   notes: string;
@@ -36,7 +37,8 @@ type EditFormState = {
 type CalendarViewMode = 'day' | 'week';
 
 const STATUS_OPTIONS: AppointmentStatus[] = ['new', 'confirmed', 'cancelled'];
-const HOURS = Array.from({ length: 24 }, (_, index) => index);
+const DEFAULT_SLOT_STEP_MIN = 30;
+const SLOT_ROWS = Array.from({ length: 48 }, (_, index) => index * 30);
 const BROWSER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
 function getDateTimeParts(date: Date, timeZone: string) {
@@ -105,13 +107,26 @@ function toDateKeyInTimezone(date: Date, timeZone: string): string {
   return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
 }
 
-function toHourInTimezone(date: Date, timeZone: string): number {
-  return getDateTimeParts(date, timeZone).hour;
+function toTimeKeyInTimezone(date: Date, timeZone: string): string {
+  const parts = getDateTimeParts(date, timeZone);
+  return `${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}`;
 }
 
 function createDatetimeLocal(dateKey: string, hour: number, minute = 0): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${dateKey}T${pad(hour)}:${pad(minute)}`;
+}
+
+function addMinutesToDatetimeLocal(value: string, minutesToAdd: number, timeZone: string): string {
+  const iso = fromDatetimeLocal(value, timeZone);
+  return toDatetimeLocal(new Date(new Date(iso).getTime() + minutesToAdd * 60_000).toISOString(), timeZone);
+}
+
+function diffMinutesBetweenLocalDateTimes(startValue: string, endValue: string, timeZone: string): number {
+  const startIso = fromDatetimeLocal(startValue, timeZone);
+  const endIso = fromDatetimeLocal(endValue, timeZone);
+  const diffMs = new Date(endIso).getTime() - new Date(startIso).getTime();
+  return Math.round(diffMs / 60_000);
 }
 
 function getUtcNowByTimeZone(timeZone: string): Date {
@@ -131,12 +146,6 @@ function formatLocalTime(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-function toLocalDateKey(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function statusLabel(status: AppointmentStatus): string {
@@ -181,21 +190,36 @@ export function AppointmentsContainer() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
-  const initialFormValues: EditFormState = {
-    scheduledAt: toDatetimeLocal(new Date().toISOString(), displayTimeZone),
-    status: 'new',
-    meetingLink: '',
-    notes: '',
-  };
-
-  const { control, handleSubmit, reset } = useForm<EditFormState>({
-    defaultValues: initialFormValues,
-  });
 
   const canManageAll = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin;
   const selectedSpecialist = selectedSpecialistId === 'all'
     ? null
     : specialists.find((item) => item.id === selectedSpecialistId) ?? null;
+  const selectedSlotStepMin = selectedSpecialist?.slotStepMin ?? DEFAULT_SLOT_STEP_MIN;
+
+  const initialStartAt = toDatetimeLocal(new Date().toISOString(), displayTimeZone);
+  const initialFormValues: EditFormState = {
+    startAt: initialStartAt,
+    endAt: addMinutesToDatetimeLocal(initialStartAt, selectedSlotStepMin, displayTimeZone),
+    status: 'new',
+    meetingLink: '',
+    notes: '',
+  };
+
+  const { control, handleSubmit, reset, watch, setValue } = useForm<EditFormState>({
+    defaultValues: initialFormValues,
+  });
+
+  const startAtValue = watch('startAt');
+
+  useEffect(() => {
+    if (!isCreateOpen || editingItem) {
+      return;
+    }
+
+    const nextEnd = addMinutesToDatetimeLocal(startAtValue, selectedSlotStepMin, displayTimeZone);
+    setValue('endAt', nextEnd, { shouldDirty: true });
+  }, [displayTimeZone, editingItem, isCreateOpen, selectedSlotStepMin, setValue, startAtValue]);
 
   const visibleDays = useMemo(() => {
     if (viewMode === 'day') {
@@ -212,7 +236,7 @@ export function AppointmentsContainer() {
     for (const item of appointments) {
       const date = new Date(item.scheduledAt);
       const dayKey = toDateKeyInTimezone(date, displayTimeZone);
-      const key = `${dayKey}:${toHourInTimezone(date, displayTimeZone)}`;
+      const key = `${dayKey}:${toTimeKeyInTimezone(date, displayTimeZone)}`;
       const list = map.get(key) ?? [];
       list.push(item);
       map.set(key, list);
@@ -231,7 +255,7 @@ export function AppointmentsContainer() {
     for (const slot of busySlots) {
       const date = new Date(slot.scheduledAt);
       const dayKey = toDateKeyInTimezone(date, displayTimeZone);
-      const key = `${dayKey}:${toHourInTimezone(date, displayTimeZone)}`;
+      const key = `${dayKey}:${toTimeKeyInTimezone(date, displayTimeZone)}`;
       const list = map.get(key) ?? [];
       list.push(slot);
       map.set(key, list);
@@ -292,7 +316,7 @@ export function AppointmentsContainer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken, focusDate, viewMode, selectedSpecialistId]);
 
-  const openCreate = (targetDateKey: string, hour: number) => {
+  const openCreate = (targetDateKey: string, hour: number, minute = 0) => {
     const specialistId = selectedSpecialistId === 'all'
       ? specialists[0]?.id
       : selectedSpecialistId;
@@ -302,8 +326,11 @@ export function AppointmentsContainer() {
       return;
     }
 
+    const startAt = createDatetimeLocal(targetDateKey, hour, minute);
+
     reset({
-      scheduledAt: createDatetimeLocal(targetDateKey, hour),
+      startAt,
+      endAt: addMinutesToDatetimeLocal(startAt, selectedSlotStepMin, displayTimeZone),
       status: 'new',
       meetingLink: '',
       notes: '',
@@ -326,10 +353,16 @@ export function AppointmentsContainer() {
       return;
     }
 
+    const durationMin = Math.max(
+      selectedSlotStepMin,
+      diffMinutesBetweenLocalDateTimes(form.startAt, form.endAt, displayTimeZone),
+    );
+
     try {
       if (editingItem) {
         await apiClient.patch(`/api/appointments/${editingItem.id}`, {
-          scheduledAt: fromDatetimeLocal(form.scheduledAt, displayTimeZone),
+          scheduledAt: fromDatetimeLocal(form.startAt, displayTimeZone),
+          durationMin,
           status: form.status,
           meetingLink: form.meetingLink,
           notes: form.notes,
@@ -339,7 +372,8 @@ export function AppointmentsContainer() {
       } else {
         await apiClient.post('/api/appointments', {
           specialistId,
-          scheduledAt: fromDatetimeLocal(form.scheduledAt, displayTimeZone),
+          scheduledAt: fromDatetimeLocal(form.startAt, displayTimeZone),
+          durationMin,
           status: form.status,
           meetingLink: form.meetingLink,
           notes: form.notes,
@@ -356,9 +390,12 @@ export function AppointmentsContainer() {
   };
 
   const openEdit = (item: AppointmentItem) => {
+    const startAt = toDatetimeLocal(item.scheduledAt, displayTimeZone);
+
     setEditingItem(item);
     reset({
-      scheduledAt: toDatetimeLocal(item.scheduledAt, displayTimeZone),
+      startAt,
+      endAt: addMinutesToDatetimeLocal(startAt, item.durationMin || selectedSlotStepMin, displayTimeZone),
       status: item.status,
       meetingLink: item.meetingLink,
       notes: item.notes,
@@ -383,7 +420,7 @@ export function AppointmentsContainer() {
     }
   };
 
-  const moveAppointment = async (appointmentId: number, targetDayKey: string, targetHour: number) => {
+  const moveAppointment = async (appointmentId: number, targetDayKey: string, targetHour: number, targetMinute: number) => {
     if (!accessToken) {
       return;
     }
@@ -394,10 +431,8 @@ export function AppointmentsContainer() {
       return;
     }
 
-    const sourceDate = new Date(current.scheduledAt);
-    const sourceMinute = sourceDate.getMinutes();
     const nextIso = fromDatetimeLocal(
-      createDatetimeLocal(targetDayKey, targetHour, sourceMinute),
+      createDatetimeLocal(targetDayKey, targetHour, targetMinute),
       displayTimeZone,
     );
 
@@ -413,10 +448,6 @@ export function AppointmentsContainer() {
     } catch {
       setError('Unable to reschedule appointment');
     }
-  };
-
-  const onSpecialistChange = (value: number | 'all') => {
-    setSelectedSpecialistId(value);
   };
 
   const movePeriod = (direction: -1 | 1) => {
@@ -445,7 +476,7 @@ export function AppointmentsContainer() {
               value={selectedSpecialistId}
               onChange={(event) => {
                 const raw = event.target.value;
-                void onSpecialistChange(raw === 'all' ? 'all' : Number(raw));
+                setSelectedSpecialistId(raw === 'all' ? 'all' : Number(raw));
               }}
             >
               <MenuItem value="all">{t('appointments.allSpecialists')}</MenuItem>
@@ -493,8 +524,8 @@ export function AppointmentsContainer() {
         <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
         <Typography variant="caption" color="text.secondary">
           {selectedSpecialist
-            ? `Displayed in your browser timezone: ${BROWSER_TIMEZONE}. Specialist timezone: ${selectedSpecialist.timezone}.`
-            : `Displayed in your browser timezone: ${BROWSER_TIMEZONE}.`}
+            ? `Displayed in your browser timezone: ${BROWSER_TIMEZONE}. Specialist timezone: ${selectedSpecialist.timezone}. Slot step: ${selectedSlotStepMin} min.`
+            : `Displayed in your browser timezone: ${BROWSER_TIMEZONE}. Slot step: ${DEFAULT_SLOT_STEP_MIN} min.`}
         </Typography>
 
         <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflowX: 'auto' }}>
@@ -517,96 +548,111 @@ export function AppointmentsContainer() {
               </Box>
             ))}
 
-            {HOURS.map((hour) => (
-              <Fragment key={`row-${hour}`}>
-                <Box
-                  sx={{
-                    borderTop: 1,
-                    borderRight: 1,
-                    borderColor: 'divider',
-                    px: 1,
-                    py: 1.5,
-                    bgcolor: 'background.default',
-                  }}
-                >
-                  <Typography variant="caption" color="text.secondary">{`${String(hour).padStart(2, '0')}:00`}</Typography>
-                </Box>
+            {SLOT_ROWS.map((totalMinute) => {
+              const hour = Math.floor(totalMinute / 60);
+              const minute = totalMinute % 60;
 
-                {visibleDays.map((day) => {
-                  const dayKey = getGridDayKey(day);
-                  const key = `${dayKey}:${hour}`;
-                  const items = appointmentsByCell.get(key) ?? [];
-                  const externalBusy = busySlotsByCell.get(key) ?? [];
+              return (
+                <Fragment key={`row-${hour}-${minute}`}>
+                  <Box
+                    sx={{
+                      borderTop: 1,
+                      borderRight: 1,
+                      borderColor: 'divider',
+                      px: 1,
+                      py: 1,
+                      bgcolor: 'background.default',
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      {`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`}
+                    </Typography>
+                  </Box>
 
-                  return (
-                    <Box
-                      key={`${key}-cell`}
-                      sx={{
-                        borderTop: 1,
-                        borderRight: 1,
-                        borderColor: 'divider',
-                        minHeight: 76,
-                        p: 0.5,
-                        bgcolor: 'background.paper',
-                      }}
-                      onDragOver={(event) => {
-                        event.preventDefault();
-                      }}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        const rawId = event.dataTransfer.getData('text/appointment-id');
-                        const id = Number(rawId);
+                  {visibleDays.map((day) => {
+                    const dayKey = getGridDayKey(day);
+                    const timeKey = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                    const key = `${dayKey}:${timeKey}`;
+                    const items = appointmentsByCell.get(key) ?? [];
+                    const externalBusy = busySlotsByCell.get(key) ?? [];
 
-                        if (!Number.isNaN(id)) {
-                          void moveAppointment(id, dayKey, hour);
-                        }
-                      }}
-                      onDoubleClick={() => openCreate(dayKey, hour)}
-                    >
-                      <Stack spacing={0.5}>
-                        {externalBusy.map((slot) => (
-                          <Chip
-                            key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}
-                            size="small"
-                            label="Busy (Google)"
-                            color="warning"
-                            variant="outlined"
-                          />
-                        ))}
-                        {items.map((item) => (
-                          <Box
-                            key={item.id}
-                            draggable
-                            onDragStart={(event) => event.dataTransfer.setData('text/appointment-id', String(item.id))}
-                            onClick={() => openEdit(item)}
-                            sx={{
-                              borderRadius: 1,
-                              border: 1,
-                              borderColor: item.status === 'cancelled' ? 'error.main' : 'primary.light',
-                              bgcolor: item.status === 'cancelled' ? 'rgba(211, 47, 47, 0.08)' : 'rgba(25, 118, 210, 0.08)',
-                              px: 0.75,
-                              py: 0.5,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-                              {formatLocalTime(item.scheduledAt)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                              {statusLabel(item.status)}
-                            </Typography>
-                          </Box>
-                        ))}
-                      </Stack>
-                    </Box>
-                  );
-                })}
-              </Fragment>
-            ))}
+                    return (
+                      <Box
+                        key={`${key}-cell`}
+                        sx={{
+                          borderTop: 1,
+                          borderRight: 1,
+                          borderColor: 'divider',
+                          minHeight: 36,
+                          p: 0.5,
+                          bgcolor: 'background.paper',
+                          transition: 'background-color 0.15s ease',
+                          '&:hover': {
+                            bgcolor: 'action.hover',
+                          },
+                        }}
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const rawId = event.dataTransfer.getData('text/appointment-id');
+                          const id = Number(rawId);
+
+                          if (!Number.isNaN(id)) {
+                            void moveAppointment(id, dayKey, hour, minute);
+                          }
+                        }}
+                        onClick={() => openCreate(dayKey, hour, minute)}
+                      >
+                        <Stack spacing={0.5}>
+                          {externalBusy.map((slot) => (
+                            <Chip
+                              key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}
+                              size="small"
+                              label="Busy (Google)"
+                              color="warning"
+                              variant="outlined"
+                            />
+                          ))}
+                          {items.map((item) => (
+                            <Box
+                              key={item.id}
+                              draggable
+                              onDragStart={(event) => event.dataTransfer.setData('text/appointment-id', String(item.id))}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                openEdit(item);
+                              }}
+                              sx={{
+                                borderRadius: 1,
+                                border: 1,
+                                borderColor: item.status === 'cancelled' ? 'error.main' : 'primary.light',
+                                bgcolor: item.status === 'cancelled' ? 'rgba(211, 47, 47, 0.08)' : 'rgba(25, 118, 210, 0.08)',
+                                px: 0.75,
+                                py: 0.5,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                                {formatLocalTime(item.scheduledAt)}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                {statusLabel(item.status)} · {item.durationMin}m
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
+                    );
+                  })}
+                </Fragment>
+              );
+            })}
           </Box>
         </Box>
 
-        <Button onClick={() => openCreate(getGridDayKey(visibleDays[0]), 9)} variant="outlined" size="small" sx={{ alignSelf: 'flex-start' }}>
+        <Button onClick={() => openCreate(getGridDayKey(visibleDays[0]), 9, 0)} variant="outlined" size="small" sx={{ alignSelf: 'flex-start' }}>
           {t('appointments.create')}
         </Button>
 
@@ -618,14 +664,32 @@ export function AppointmentsContainer() {
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Controller
-              name="scheduledAt"
+              name="startAt"
               control={control}
               render={({ field }: any) => (
                 <AppRhfTextField
                   field={field}
-                  label={t('appointments.fields.scheduledAt')}
+                  label="Start time"
                   type="datetime-local"
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    htmlInput: { step: selectedSlotStepMin * 60 },
+                  }}
+                />
+              )}
+            />
+            <Controller
+              name="endAt"
+              control={control}
+              render={({ field }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label="End time"
+                  type="datetime-local"
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    htmlInput: { step: selectedSlotStepMin * 60 },
+                  }}
                 />
               )}
             />

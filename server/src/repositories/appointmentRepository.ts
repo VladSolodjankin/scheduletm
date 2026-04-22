@@ -40,6 +40,7 @@ type UpdateAppointmentInput = {
   scheduledAt?: Date;
   status?: AppointmentStatus;
   notes?: string | null;
+  durationMin?: number;
 };
 
 export async function listAppointments(filters: AppointmentListFilters): Promise<AppointmentRecord[]> {
@@ -106,6 +107,10 @@ export async function updateAppointment(input: UpdateAppointmentInput): Promise<
 
   if (Object.prototype.hasOwnProperty.call(input, 'notes')) {
     payload.comment = input.notes;
+  }
+
+  if (input.durationMin !== undefined) {
+    payload.duration_min = input.durationMin;
   }
 
   const [row] = await db('appointments')

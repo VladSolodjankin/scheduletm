@@ -1,20 +1,21 @@
 import { findBusyAppointmentsByDate } from '../repositories/appointment.repository';
 import { getAppSettings } from '../repositories/app-settings.repository';
 import { findServiceById } from '../repositories/service.repository';
+import { findSpecialistScheduleSettings } from '../repositories/specialist.repository';
 import { getBusyIntervalsFromExternalCalendars } from './calendar-sync.service';
 
-const SLOT_STEP_MIN = 30;
 const MINUTES_IN_DAY = 24 * 60;
 
-function buildDaySlots(durationMin: number, workStartHour: number, workEndHour: number) {
+function buildDaySlots(durationMin: number, workStartHour: number, workEndHour: number, slotStepMin: number) {
   const startMinutes = workStartHour * 60;
   const endMinutes = workEndHour * 60;
+  const step = slotStepMin > 0 ? slotStepMin : 30;
   const slots: string[] = [];
 
   for (
     let minute = startMinutes;
     minute + durationMin <= endMinutes;
-    minute += SLOT_STEP_MIN
+    minute += step
   ) {
     const hours = String(Math.floor(minute / 60)).padStart(2, '0');
     const mins = String(minute % 60).padStart(2, '0');
@@ -46,10 +47,16 @@ export async function getAvailableSlots(params: {
   serviceId: number;
 }) {
   const service = await findServiceById(params.accountId, params.serviceId);
+  const specialistSettings = await findSpecialistScheduleSettings(params.accountId, params.specialistId);
   const settings = await getAppSettings(params.accountId);
-  const durationMin = service?.duration_min ?? 90;
+  const durationMin = service?.duration_min ?? specialistSettings.slotDurationMin;
 
-  const allSlots = buildDaySlots(durationMin, settings.workStartHour, settings.workEndHour);
+  const allSlots = buildDaySlots(
+    durationMin,
+    specialistSettings.workStartHour,
+    specialistSettings.workEndHour,
+    specialistSettings.slotStepMin,
+  );
   const busyAppointments = await findBusyAppointmentsByDate(
     params.accountId,
     params.date,

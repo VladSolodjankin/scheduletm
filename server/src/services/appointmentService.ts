@@ -23,6 +23,7 @@ type AppointmentDto = {
   id: number;
   specialistId: number;
   scheduledAt: string;
+  durationMin: number;
   status: AppointmentStatus;
   meetingLink: string;
   notes: string;
@@ -30,13 +31,14 @@ type AppointmentDto = {
 
 type AppointmentListResult = {
   appointments: AppointmentDto[];
-  specialists: Array<{ id: number; name: string; timezone: string }>;
+  specialists: Array<{ id: number; name: string; timezone: string; slotStepMin: number }>;
   busySlots: ExternalBusySlot[];
 };
 
 type CreateAppointmentPayload = {
   specialistId: number;
   scheduledAt: string;
+  durationMin?: number;
   status?: AppointmentStatus;
   meetingLink?: string;
   notes?: string;
@@ -44,6 +46,7 @@ type CreateAppointmentPayload = {
 
 type UpdateAppointmentPayload = {
   scheduledAt?: string;
+  durationMin?: number;
   status?: AppointmentStatus;
   meetingLink?: string;
   notes?: string;
@@ -93,6 +96,7 @@ function mapAppointment(row: AppointmentRecord): AppointmentDto {
     id: row.id,
     specialistId: row.specialist_id,
     scheduledAt: row.appointment_at.toISOString(),
+    durationMin: row.duration_min,
     status: row.status,
     notes: parsed.notes,
     meetingLink: parsed.meetingLink,
@@ -125,6 +129,7 @@ function mapSpecialistsForUi(rows: SpecialistRecord[]) {
     id: item.id,
     name: item.name,
     timezone: item.timezone || 'UTC',
+    slotStepMin: item.slot_step_min ?? 30,
   }));
 }
 
@@ -201,7 +206,7 @@ export async function createAppointmentForActor(
     notes: composeNotes(payload.meetingLink, payload.notes),
     userId,
     serviceId,
-    durationMin: 60,
+    durationMin: payload.durationMin ?? 30,
   });
 
   return mapAppointment(created);
@@ -230,6 +235,7 @@ export async function updateAppointmentForActor(
     accountId,
     id: appointmentId,
     scheduledAt: payload.scheduledAt ? new Date(payload.scheduledAt) : undefined,
+    durationMin: payload.durationMin,
     status: payload.status,
     notes: Object.prototype.hasOwnProperty.call(payload, 'notes') || Object.prototype.hasOwnProperty.call(payload, 'meetingLink')
       ? composeNotes(payload.meetingLink, payload.notes)

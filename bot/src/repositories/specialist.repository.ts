@@ -5,6 +5,11 @@ type SpecialistCalendarCredentialsRow = {
   google_calendar_id: string | null;
 };
 
+const DEFAULT_WORK_START_HOUR = 9;
+const DEFAULT_WORK_END_HOUR = 20;
+const DEFAULT_SLOT_DURATION_MIN = 90;
+const DEFAULT_SLOT_STEP_MIN = 30;
+
 export async function findActiveSpecialists(accountId: number) {
   return db('specialists')
     .where({ account_id: accountId, is_active: true })
@@ -46,4 +51,29 @@ export async function findSpecialistCalendarCredentials(accountId: number, speci
     );
 
   return row ?? null;
+}
+
+type SpecialistScheduleRow = {
+  work_start_hour: number | null;
+  work_end_hour: number | null;
+  slot_duration_min: number | null;
+  slot_step_min: number | null;
+};
+
+export async function findSpecialistScheduleSettings(accountId: number, specialistId: number) {
+  const row = await db('specialists')
+    .where({ account_id: accountId, id: specialistId })
+    .first<SpecialistScheduleRow>(
+      'work_start_hour',
+      'work_end_hour',
+      'slot_duration_min',
+      'slot_step_min',
+    );
+
+  return {
+    workStartHour: row?.work_start_hour ?? DEFAULT_WORK_START_HOUR,
+    workEndHour: row?.work_end_hour ?? DEFAULT_WORK_END_HOUR,
+    slotDurationMin: row?.slot_duration_min ?? DEFAULT_SLOT_DURATION_MIN,
+    slotStepMin: row?.slot_step_min ?? DEFAULT_SLOT_STEP_MIN,
+  };
 }

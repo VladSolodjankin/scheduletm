@@ -77,6 +77,7 @@ const appointmentStatusSchema = z.enum(['new', 'confirmed', 'cancelled']);
 export const appointmentCreateSchema = z.object({
   specialistId: z.coerce.number().int().positive('Укажите специалиста'),
   scheduledAt: z.string().datetime('Укажите корректную дату и время'),
+  durationMin: z.coerce.number().int().min(15, 'Минимальная длительность — 15 минут').max(480, 'Максимальная длительность — 480 минут').optional(),
   status: appointmentStatusSchema.optional(),
   meetingLink: z.string().trim().url('Укажите корректную ссылку').max(2048).optional().or(z.literal('')),
   notes: z.string().trim().max(2000, 'Комментарий слишком длинный').optional(),
@@ -84,6 +85,7 @@ export const appointmentCreateSchema = z.object({
 
 export const appointmentUpdateSchema = z.object({
   scheduledAt: z.string().datetime('Укажите корректную дату и время').optional(),
+  durationMin: z.coerce.number().int().min(15, 'Минимальная длительность — 15 минут').max(480, 'Максимальная длительность — 480 минут').optional(),
   status: appointmentStatusSchema.optional(),
   meetingLink: z.string().trim().url('Укажите корректную ссылку').max(2048).optional().or(z.literal('')),
   notes: z.string().trim().max(2000, 'Комментарий слишком длинный').optional(),
