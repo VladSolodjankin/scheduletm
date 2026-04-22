@@ -60,7 +60,10 @@ export type SpecialistRecord = {
 
 export type SpecialistCalendarCredentials = {
   specialistId: number;
+  webUserId: number;
   googleApiKey: string;
+  googleRefreshToken: string | null;
+  googleTokenExpiresAt: Date | null;
   googleCalendarId: string | null;
 };
 
@@ -116,7 +119,10 @@ export async function findSpecialistsCalendarCredentials(
     .whereNotNull('wu.google_api_key')
     .select(
       's.id as specialistId',
+      'wu.id as webUserId',
       'wu.google_api_key as googleApiKey',
+      'wu.google_refresh_token as googleRefreshToken',
+      'wu.google_token_expires_at as googleTokenExpiresAt',
       'wu.google_calendar_id as googleCalendarId',
     );
 

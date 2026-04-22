@@ -10,6 +10,8 @@ export type WebUserRecord = {
   password_salt: string;
   is_active: boolean;
   google_api_key: string | null;
+  google_refresh_token: string | null;
+  google_token_expires_at: Date | null;
   google_calendar_id: string | null;
   google_connected_at: Date | null;
   timezone: string;
@@ -75,18 +77,46 @@ type UpdateWebUserGoogleCredentialsInput = {
   accountId: number;
   id: number;
   googleApiKey: string;
+  googleRefreshToken?: string | null;
+  googleTokenExpiresAt?: Date | null;
   googleCalendarId?: string | null;
 };
 
 export async function updateWebUserGoogleCredentials(
   input: UpdateWebUserGoogleCredentialsInput,
 ): Promise<void> {
+  const patch: Record<string, unknown> = {
+    google_api_key: input.googleApiKey,
+    google_connected_at: db.fn.now(),
+    updated_at: db.fn.now(),
+  };
+
+  if (input.googleRefreshToken !== undefined) {
+    patch.google_refresh_token = input.googleRefreshToken;
+  }
+
+  if (input.googleTokenExpiresAt !== undefined) {
+    patch.google_token_expires_at = input.googleTokenExpiresAt;
+  }
+
+  if (input.googleCalendarId !== undefined) {
+    patch.google_calendar_id = input.googleCalendarId;
+  }
+
   await db('web_users')
     .where({ account_id: input.accountId, id: input.id })
+    .update(patch);
+}
+
+export async function clearWebUserGoogleCredentials(accountId: number, id: number): Promise<void> {
+  await db('web_users')
+    .where({ account_id: accountId, id })
     .update({
-      google_api_key: input.googleApiKey,
-      google_calendar_id: input.googleCalendarId ?? null,
-      google_connected_at: db.fn.now(),
+      google_api_key: null,
+      google_refresh_token: null,
+      google_token_expires_at: null,
+      google_calendar_id: null,
+      google_connected_at: null,
       updated_at: db.fn.now(),
     });
 }

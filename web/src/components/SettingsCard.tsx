@@ -23,6 +23,8 @@ type SettingsCardCopy = {
   integrationsSubtitle: string;
   connectGoogle: string;
   connectingGoogle: string;
+  disconnectGoogle: string;
+  disconnectingGoogle: string;
   googleConnected: string;
 };
 
@@ -32,11 +34,13 @@ type SettingsCardProps = {
   copy: SettingsCardCopy;
   canManageSystemSettings: boolean;
   isGoogleConnecting: boolean;
+  isGoogleDisconnecting: boolean;
   isSavingSystem?: boolean;
   isSavingUser?: boolean;
   onSaveSystem: (next: SystemSettings) => Promise<void> | void;
   onSaveUser: (next: UserSettings) => Promise<void> | void;
   onConnectGoogle: () => void;
+  onDisconnectGoogle: () => void;
 };
 
 export function SettingsCard({
@@ -45,11 +49,13 @@ export function SettingsCard({
   copy,
   canManageSystemSettings,
   isGoogleConnecting,
+  isGoogleDisconnecting,
   isSavingSystem = false,
   isSavingUser = false,
   onSaveSystem,
   onSaveUser,
-  onConnectGoogle
+  onConnectGoogle,
+  onDisconnectGoogle
 }: SettingsCardProps) {
   const [tab, setTab] = useState(canManageSystemSettings ? 0 : 1);
 
@@ -171,15 +177,23 @@ export function SettingsCard({
             <AppButton
               variant="outlined"
               onClick={onConnectGoogle}
-              disabled={userSettings.googleConnected}
+              disabled={userSettings.googleConnected || isGoogleDisconnecting}
               isLoading={isGoogleConnecting}
             >
-              {userSettings.googleConnected
-                ? copy.googleConnected
-                : isGoogleConnecting
-                  ? copy.connectingGoogle
-                  : copy.connectGoogle}
+              {isGoogleConnecting ? copy.connectingGoogle : copy.connectGoogle}
             </AppButton>
+
+            {userSettings.googleConnected && (
+              <AppButton
+                variant="outlined"
+                color="error"
+                onClick={onDisconnectGoogle}
+                isLoading={isGoogleDisconnecting}
+                disabled={isGoogleConnecting}
+              >
+                {isGoogleDisconnecting ? copy.disconnectingGoogle : copy.disconnectGoogle}
+              </AppButton>
+            )}
           </Stack>
         </AppForm>
       )}

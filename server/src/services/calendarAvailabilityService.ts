@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { findSpecialistsCalendarCredentials } from '../repositories/specialistRepository.js';
+import { refreshGoogleAccessToken } from './googleOAuthService.js';
 
 export type ExternalBusySlot = {
   specialistId: number;
@@ -21,6 +22,15 @@ type GoogleCalendarEvent = {
 type GoogleCalendarEventsResponse = {
   items?: GoogleCalendarEvent[];
 };
+
+function isAccessTokenExpired(expiresAt: Date | null): boolean {
+  if (!expiresAt) {
+    return true;
+  }
+
+  const safetyWindowMs = 30 * 1000;
+  return expiresAt.getTime() <= Date.now() + safetyWindowMs;
+}
 
 function toDurationMin(startIso?: string, endIso?: string): number | null {
   if (!startIso || !endIso) {
@@ -52,13 +62,26 @@ export async function listExternalBusySlots(input: {
 
   const busySlots = await Promise.all(
     credentials.map(async (item) => {
+      let googleApiKey = item.googleApiKey;
+      if (isAccessTokenExpired(item.googleTokenExpiresAt) && item.googleRefreshToken) {
+        const refreshed = await refreshGoogleAccessToken({
+          accountId: input.accountId,
+          webUserId: item.webUserId,
+          refreshToken: item.googleRefreshToken,
+        });
+
+        if (refreshed) {
+          googleApiKey = refreshed.googleApiKey;
+        }
+      }
+
       const calendarId = item.googleCalendarId?.trim() || 'primary';
       const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`;
 
       try {
         const response = await axios.get<GoogleCalendarEventsResponse>(url, {
           headers: {
-            Authorization: `Bearer ${item.googleApiKey}`,
+            Authorization: `Bearer ${googleApiKey}`,
           },
           params: {
             singleEvents: true,

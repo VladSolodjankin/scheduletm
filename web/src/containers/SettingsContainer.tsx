@@ -6,7 +6,7 @@ import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
-import type { GoogleOAuthStartResponse, SystemSettings, UserSettings } from '../shared/types/api';
+import type { GoogleOAuthDisconnectResponse, GoogleOAuthStartResponse, SystemSettings, UserSettings } from '../shared/types/api';
 
 const defaultSystemSettings: SystemSettings = {
   timezone: 'UTC',
@@ -34,6 +34,7 @@ export function SettingsContainer() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
+  const [isGoogleDisconnecting, setIsGoogleDisconnecting] = useState(false);
   const [isSavingSystem, setIsSavingSystem] = useState(false);
   const [isSavingUser, setIsSavingUser] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
@@ -160,6 +161,30 @@ export function SettingsContainer() {
     }
   };
 
+  const disconnectGoogle = async () => {
+    if (!accessToken || isGoogleDisconnecting) {
+      return;
+    }
+
+    setIsGoogleDisconnecting(true);
+
+    try {
+      await apiClient.post<GoogleOAuthDisconnectResponse>(
+        '/api/integrations/google/disconnect',
+        {},
+        { headers: authHeaders(accessToken) }
+      );
+      setUserSettings((prev) => ({ ...prev, googleConnected: false }));
+      setError('');
+      setSuccess('');
+    } catch {
+      setError(t('settings.errors.disconnectGoogle'));
+      setSuccess('');
+    } finally {
+      setIsGoogleDisconnecting(false);
+    }
+  };
+
   return (
     <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')}>
       {error && (
@@ -203,14 +228,18 @@ export function SettingsContainer() {
               integrationsSubtitle: t('settings.integrationsSubtitle'),
               connectGoogle: t('settings.connectGoogle'),
               connectingGoogle: t('settings.connectingGoogle'),
+              disconnectGoogle: t('settings.disconnectGoogle'),
+              disconnectingGoogle: t('settings.disconnectingGoogle'),
               googleConnected: t('settings.googleConnected')
             }}
             isGoogleConnecting={isGoogleConnecting}
+            isGoogleDisconnecting={isGoogleDisconnecting}
             isSavingSystem={isSavingSystem}
             isSavingUser={isSavingUser}
             onSaveSystem={saveSystemSettings}
             onSaveUser={saveUserSettings}
             onConnectGoogle={connectGoogle}
+            onDisconnectGoogle={disconnectGoogle}
           />
         )}
       </Box>
