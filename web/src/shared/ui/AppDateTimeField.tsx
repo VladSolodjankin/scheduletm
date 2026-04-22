@@ -12,7 +12,12 @@ type AppDateTimeFieldProps = Omit<TextFieldProps, 'type'> & {
 };
 
 export function AppDateTimeField({ type = 'datetime-local', minutesStep, slotProps, ...props }: AppDateTimeFieldProps) {
-  const pickerValue = typeof props.value === 'string' && props.value ? dayjs(props.value) : null;
+  const pickerValue =
+    typeof props.value === 'string' && props.value
+      ? type === 'time'
+        ? dayjs(`1970-01-01T${props.value}`)
+        : dayjs(props.value)
+      : null;
 
   const emitChange = (formattedValue: string) => {
     const syntheticEvent = {
