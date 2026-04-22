@@ -27,7 +27,6 @@ import type { TranslationKey } from '../../shared/i18n/dictionaries';
 
 type Props = {
   t: (key: TranslationKey) => string;
-  isLoading: boolean;
   viewMode: CalendarViewMode;
   visibleDays: Date[];
   displayTimeZone: string;
@@ -44,7 +43,6 @@ type Props = {
 
 export function AppointmentsCalendar({
   t,
-  isLoading,
   viewMode,
   visibleDays,
   displayTimeZone,
@@ -100,13 +98,7 @@ export function AppointmentsCalendar({
         </CardContent>
       </Card>
 
-      {isLoading ? (
-        <Stack spacing={1}>
-          <Skeleton variant="text" width={220} />
-          <Skeleton variant="rounded" height={520} />
-        </Stack>
-      ) : (
-        <>
+      <>
           <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
 
           <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflowX: 'auto', boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.08)}` }}>
@@ -236,8 +228,7 @@ export function AppointmentsCalendar({
               })}
             </Box>
           </Box>
-        </>
-      )}
+    </>
     </>
   );
 }

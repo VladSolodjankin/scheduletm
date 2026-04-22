@@ -353,7 +353,6 @@ export function AppointmentsContainer() {
 
         <AppointmentsCalendar
           t={t}
-          isLoading={isLoading}
           viewMode={viewMode}
           visibleDays={visibleDays}
           displayTimeZone={displayTimeZone}
