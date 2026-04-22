@@ -474,6 +474,13 @@ export function AppointmentsContainer() {
       createDatetimeLocal(targetDayKey, targetHour, targetMinute),
       displayTimeZone,
     );
+    const previousScheduledAt = current.scheduledAt;
+
+    setAppointments((prev) => prev.map((item) => (
+      item.id === appointmentId
+        ? { ...item, scheduledAt: nextIso }
+        : item
+    )));
 
     try {
       await apiClient.post(`/api/appointments/${appointmentId}/reschedule`, {
@@ -482,9 +489,14 @@ export function AppointmentsContainer() {
         headers: authHeaders(accessToken),
       });
 
-      await loadAppointments(selectedSpecialistId);
+      void loadAppointments(selectedSpecialistId);
       setError('');
     } catch {
+      setAppointments((prev) => prev.map((item) => (
+        item.id === appointmentId
+          ? { ...item, scheduledAt: previousScheduledAt }
+          : item
+      )));
       setError('Unable to reschedule appointment');
     }
   };
