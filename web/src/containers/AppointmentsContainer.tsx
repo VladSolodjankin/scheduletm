@@ -38,6 +38,7 @@ type CalendarViewMode = 'day' | 'week';
 
 const STATUS_OPTIONS: AppointmentStatus[] = ['new', 'confirmed', 'cancelled'];
 const HOURS = Array.from({ length: 24 }, (_, index) => index);
+const BROWSER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
 function getDateTimeParts(date: Date, timeZone: string) {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -114,7 +115,7 @@ function toDateKeyInTimezone(date: Date, timeZone: string): string {
   const parts = getDateTimeParts(date, timeZone);
   const pad = (n: number) => String(n).padStart(2, '0');
 
-  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function toHourInTimezone(date: Date, timeZone: string): number {
@@ -134,6 +135,32 @@ function getUtcNowByTimeZone(timeZone: string): Date {
   return new Date(fromDatetimeLocal(`${todayKey}T00:00`, timeZone));
 }
 
+function formatLocalDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
+  return date.toLocaleDateString(undefined, options);
+}
+
+function formatLocalTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function toLocalDateKey(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function toLocalHour(date: Date): number {
+  return date.getHours();
+}
+
+function createDatetimeLocal(dateKey: string, hour: number, minute = 0): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${dateKey}T${pad(hour)}:${pad(minute)}`;
+}
+
 function statusLabel(status: AppointmentStatus): string {
   if (status === 'confirmed') return 'confirmed';
   if (status === 'cancelled') return 'cancelled';
@@ -141,20 +168,20 @@ function statusLabel(status: AppointmentStatus): string {
 }
 
 function startOfDay(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 function weekStart(date: Date): Date {
   const base = startOfDay(date);
-  const day = base.getUTCDay();
+  const day = base.getDay();
   const diff = day === 0 ? -6 : 1 - day;
-  base.setUTCDate(base.getUTCDate() + diff);
+  base.setDate(base.getDate() + diff);
   return base;
 }
 
 function addDays(date: Date, days: number): Date {
   const next = new Date(date);
-  next.setUTCDate(next.getUTCDate() + days);
+  next.setDate(next.getDate() + days);
   return next;
 }
 
@@ -193,30 +220,6 @@ export function AppointmentsContainer() {
     ? null
     : specialists.find((item) => item.id === selectedSpecialistId) ?? null;
 
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-
-    const loadViewerTimezone = async () => {
-      try {
-        const response = await apiClient.get<{ timezone: string }>('/api/settings/user', {
-          headers: authHeaders(accessToken),
-        });
-
-        setViewerTimezone(response.data.timezone || 'UTC');
-      } catch {
-        setViewerTimezone('UTC');
-      }
-    };
-
-    void loadViewerTimezone();
-  }, [accessToken]);
-
-  useEffect(() => {
-    setFocusDate(startOfDay(getUtcNowByTimeZone(displayTimeZone)));
-  }, [displayTimeZone]);
-
   const visibleDays = useMemo(() => {
     if (viewMode === 'day') {
       return [startOfDay(focusDate)];
@@ -231,8 +234,8 @@ export function AppointmentsContainer() {
 
     for (const item of appointments) {
       const date = new Date(item.scheduledAt);
-      const dayKey = toDateKeyInTimezone(date, displayTimeZone);
-      const key = `${dayKey}:${toHourInTimezone(date, displayTimeZone)}`;
+      const dayKey = toLocalDateKey(date);
+      const key = `${dayKey}:${toLocalHour(date)}`;
       const list = map.get(key) ?? [];
       list.push(item);
       map.set(key, list);
@@ -278,6 +281,37 @@ export function AppointmentsContainer() {
     };
   }
 
+  const busySlotsByCell = useMemo(() => {
+    const map = new Map<string, AppointmentListResponse['busySlots']>();
+
+    for (const slot of busySlots) {
+      const date = new Date(slot.scheduledAt);
+      const dayKey = toLocalDateKey(date);
+      const key = `${dayKey}:${toLocalHour(date)}`;
+      const list = map.get(key) ?? [];
+      list.push(slot);
+      map.set(key, list);
+    }
+
+    return map;
+  }, [busySlots]);
+
+  function getGridDayKey(day: Date) {
+    return toLocalDateKey(day);
+  }
+
+  function getVisibleRange() {
+    const firstDay = visibleDays[0] ?? startOfDay(new Date());
+    const lastDay = visibleDays[visibleDays.length - 1] ?? firstDay;
+    const firstDayKey = getGridDayKey(firstDay);
+    const lastDayKey = getGridDayKey(lastDay);
+
+    return {
+      from: fromDatetimeLocal(`${firstDayKey}T00:00`),
+      to: fromDatetimeLocal(`${lastDayKey}T23:59`),
+    };
+  }
+
   const loadAppointments = async (nextSpecialistId: number | 'all' = selectedSpecialistId) => {
     if (!accessToken) {
       return;
@@ -310,7 +344,7 @@ export function AppointmentsContainer() {
   useEffect(() => {
     void loadAppointments(selectedSpecialistId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken, focusDate, viewMode, selectedSpecialistId, displayTimeZone]);
+  }, [accessToken, focusDate, viewMode, selectedSpecialistId]);
 
   const openCreate = (targetDateKey: string, hour: number) => {
     const specialistId = selectedSpecialistId === 'all'
@@ -415,10 +449,9 @@ export function AppointmentsContainer() {
     }
 
     const sourceDate = new Date(current.scheduledAt);
-    const sourceMinute = getDateTimeParts(sourceDate, displayTimeZone).minute;
+    const sourceMinute = sourceDate.getMinutes();
     const nextIso = fromDatetimeLocal(
       createDatetimeLocal(targetDayKey, targetHour, sourceMinute),
-      displayTimeZone,
     );
 
     try {
@@ -482,7 +515,7 @@ export function AppointmentsContainer() {
             <Button
               size="small"
               variant="outlined"
-              onClick={() => setFocusDate(startOfDay(getUtcNowByTimeZone(displayTimeZone)))}
+              onClick={() => setFocusDate(startOfDay(new Date()))}
             >
               {t('appointments.today')}
             </Button>
@@ -491,8 +524,8 @@ export function AppointmentsContainer() {
 
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             {viewMode === 'week'
-              ? `${formatDateInTimezone(visibleDays[0], displayTimeZone)} — ${formatDateInTimezone(visibleDays[visibleDays.length - 1], displayTimeZone)}`
-              : formatDateInTimezone(visibleDays[0], displayTimeZone)}
+              ? `${formatLocalDate(visibleDays[0])} — ${formatLocalDate(visibleDays[visibleDays.length - 1])}`
+              : formatLocalDate(visibleDays[0])}
           </Typography>
 
           <ToggleButtonGroup
@@ -513,8 +546,8 @@ export function AppointmentsContainer() {
         <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
         <Typography variant="caption" color="text.secondary">
           {selectedSpecialist
-            ? `Displayed in your timezone: ${displayTimeZone}. Specialist timezone: ${selectedSpecialist.timezone}.`
-            : `Displayed in your timezone: ${displayTimeZone}.`}
+            ? `Displayed in your browser timezone: ${BROWSER_TIMEZONE}. Specialist timezone: ${selectedSpecialist.timezone}.`
+            : `Displayed in your browser timezone: ${BROWSER_TIMEZONE}.`}
         </Typography>
 
         <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflowX: 'auto' }}>
@@ -527,13 +560,13 @@ export function AppointmentsContainer() {
                   borderRight: 1,
                   borderColor: 'divider',
                   p: 1,
-                  bgcolor: getGridDayKey(day) === toDateKeyInTimezone(new Date(), displayTimeZone) ? 'action.selected' : 'background.default',
+                  bgcolor: getGridDayKey(day) === toLocalDateKey(new Date()) ? 'action.selected' : 'background.default',
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {formatDateInTimezone(day, displayTimeZone, { weekday: 'short' })}
+                  {formatLocalDate(day, { weekday: 'short' })}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">{formatDateInTimezone(day, displayTimeZone)}</Typography>
+                <Typography variant="caption" color="text.secondary">{formatLocalDate(day)}</Typography>
               </Box>
             ))}
 
@@ -610,7 +643,7 @@ export function AppointmentsContainer() {
                             }}
                           >
                             <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-                              {formatTimeInTimezone(item.scheduledAt, displayTimeZone)}
+                              {formatLocalTime(item.scheduledAt)}
                             </Typography>
                             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                               {statusLabel(item.status)}

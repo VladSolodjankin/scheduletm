@@ -268,7 +268,7 @@ telegramWebhookRouter.post(
 
         const user = userResult.user;
         const lang = normalizeLanguageCode(user.language_code);
-        const timezone = await getDefaultTimezone(user.account_id);
+        const timezone = user.timezone || await getDefaultTimezone(user.account_id);
 
         if (data.startsWith('service:')) {
           const serviceId = Number(data.split(':')[1]);
@@ -992,7 +992,7 @@ telegramWebhookRouter.post(
 
       const user = userResult.user;
       const lang = normalizeLanguageCode(user.language_code);
-      const timezone = await getDefaultTimezone(user.account_id);
+      const timezone = user.timezone || await getDefaultTimezone(user.account_id);
       const firstName = user.first_name || message.from.first_name || 'friend';
       const session = await findSessionByUserId(user.account_id, user.id);
       const state = (session?.state as UserSessionState | undefined) ?? UserSessionState.IDLE;

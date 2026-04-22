@@ -59,6 +59,20 @@
 - `POST /api/appointments/:id/cancel`
 - `POST /api/appointments/:id/reschedule`
 
+### Appointments response (текущее расширение)
+
+- `GET /api/appointments` возвращает:
+  - `appointments[]` (UTC timestamps),
+  - `specialists[]` с `timezone`,
+  - `busySlots[]` из внешнего календаря (Google) в заданном диапазоне `from/to`.
+
+### Timezone policy
+
+- Источник истины для хранения времени — UTC в БД/API.
+- Источник timezone отображения в web-календаре — локальная timezone браузера пользователя.
+- Web выполняет двустороннюю конвертацию `datetime-local <-> UTC` на клиенте.
+- `web_users.timezone` и `clients.timezone` хранятся в IANA-формате (DST-safe), чтобы корректно строить сообщения и напоминания по локальному времени пользователя.
+
 ## API карта (следующий инкремент — appointments)
 
 - `GET /api/appointments` — список записей с фильтрами.

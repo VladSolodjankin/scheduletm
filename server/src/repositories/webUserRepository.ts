@@ -27,6 +27,7 @@ type CreateWebUserInput = {
   role: WebUserRole;
   passwordHash: string;
   passwordSalt: string;
+  timezone?: string;
 };
 
 export async function findWebUserByEmail(accountId: number, email: string): Promise<WebUserRecord | null> {
@@ -53,6 +54,7 @@ export async function createWebUser(input: CreateWebUserInput): Promise<WebUserR
       role: input.role,
       password_hash: input.passwordHash,
       password_salt: input.passwordSalt,
+      timezone: input.timezone ?? 'UTC',
       is_active: true,
     })
     .returning<WebUserRecord[]>('*');

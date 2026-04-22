@@ -71,7 +71,7 @@ authRoutes.post('/register', async (req, res) => {
   }
 
   try {
-    const user = await registerUser(parsed.data.email, parsed.data.password);
+    const user = await registerUser(parsed.data.email, parsed.data.password, parsed.data.timezone);
     if (!user) {
       return res.status(409).json({
         message: 'Пользователь с таким email уже зарегистрирован',
@@ -100,7 +100,7 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
   }
 
   try {
-    const user = await authenticateUser(parsed.data.email, parsed.data.password);
+    const user = await authenticateUser(parsed.data.email, parsed.data.password, parsed.data.timezone);
     if (!user) {
       await registerFailedAttempt(req.ip ?? 'unknown');
       return res.status(401).json({

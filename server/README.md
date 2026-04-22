@@ -8,6 +8,9 @@ Node.js/Express API для web-клиента.
 - Settings: чтение/обновление настроек пользователя.
 - Integrations: полноценный Google OAuth 2.0 flow (start + callback + token exchange).
 - Безопасность: zod-валидация, `helmet`, login lockout, refresh cookie.
+- Appointments API возвращает внешние занятые интервалы (`busySlots`) из Google Calendar по специалистам.
+- В модели appointments сервер хранит/принимает время в UTC (`scheduledAt` ISO), без локальных смещений на уровне persistence.
+- Таймзоны пользователей хранятся как IANA (`web_users.timezone` / `clients.timezone`) для корректного учета DST и конвертации времени в уведомлениях/UI.
 
 ## Связь clients и Web users (рекомендуемая модель)
 
@@ -49,6 +52,12 @@ Node.js/Express API для web-клиента.
 - `POST /api/appointments/:id/reschedule`
 - `POST /api/appointments/:id/mark-paid`
 - `POST /api/appointments/:id/notify`
+
+### Что дополнительно возвращает `GET /api/appointments`
+
+- `appointments[]` — локальные записи (UTC timestamps);
+- `specialists[]` — список специалистов с `timezone` (из `web_users.timezone`, fallback `UTC`);
+- `busySlots[]` — внешняя занятость (Google), агрегированная в заданном диапазоне `from/to`.
 
 ## Переменные окружения (Google OAuth)
 
