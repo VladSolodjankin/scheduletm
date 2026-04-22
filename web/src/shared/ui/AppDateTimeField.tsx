@@ -2,10 +2,11 @@ import type { TextFieldProps } from '@mui/material';
 import { AppTextField } from './AppTextField';
 
 type AppDateTimeFieldProps = Omit<TextFieldProps, 'type'> & {
+  type?: 'datetime-local' | 'time';
   minutesStep?: number;
 };
 
-export function AppDateTimeField({ minutesStep, slotProps, ...props }: AppDateTimeFieldProps) {
+export function AppDateTimeField({ type = 'datetime-local', minutesStep, slotProps, ...props }: AppDateTimeFieldProps) {
   const htmlInputSlotProps = typeof slotProps?.htmlInput === 'object' && slotProps.htmlInput
     ? slotProps.htmlInput
     : {};
@@ -13,7 +14,7 @@ export function AppDateTimeField({ minutesStep, slotProps, ...props }: AppDateTi
   return (
     <AppTextField
       {...props}
-      type="datetime-local"
+      type={type}
       slotProps={{
         ...slotProps,
         inputLabel: {

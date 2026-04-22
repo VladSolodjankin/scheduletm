@@ -2,6 +2,7 @@ import {
   Alert,
   Box,
   Button,
+  Collapse,
   Chip,
   Dialog,
   DialogActions,
@@ -27,8 +28,9 @@ import { AppPage } from '../shared/ui/AppPage';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 
 type EditFormState = {
-  startAt: string;
-  endAt: string;
+  startDate: string;
+  startTime: string;
+  endTime: string;
   status: AppointmentStatus;
   meetingLink: string;
   notes: string;
@@ -40,6 +42,10 @@ const STATUS_OPTIONS: AppointmentStatus[] = ['new', 'confirmed', 'cancelled'];
 const DEFAULT_SLOT_STEP_MIN = 30;
 const SLOT_ROWS = Array.from({ length: 48 }, (_, index) => index * 30);
 const BROWSER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+const FALLBACK_TIMEZONES = ['UTC', BROWSER_TIMEZONE];
+const AVAILABLE_TIMEZONES = typeof Intl.supportedValuesOf === 'function'
+  ? Intl.supportedValuesOf('timeZone')
+  : FALLBACK_TIMEZONES;
 
 function getDateTimeParts(date: Date, timeZone: string) {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -122,13 +128,6 @@ function addMinutesToDatetimeLocal(value: string, minutesToAdd: number, timeZone
   return toDatetimeLocal(new Date(new Date(iso).getTime() + minutesToAdd * 60_000).toISOString(), timeZone);
 }
 
-function diffMinutesBetweenLocalDateTimes(startValue: string, endValue: string, timeZone: string): number {
-  const startIso = fromDatetimeLocal(startValue, timeZone);
-  const endIso = fromDatetimeLocal(endValue, timeZone);
-  const diffMs = new Date(endIso).getTime() - new Date(startIso).getTime();
-  return Math.round(diffMs / 60_000);
-}
-
 function getUtcNowByTimeZone(timeZone: string): Date {
   const now = new Date();
   const nowLocal = toDatetimeLocal(now.toISOString(), timeZone);
@@ -172,6 +171,30 @@ function addDays(date: Date, days: number): Date {
   return next;
 }
 
+function splitLocalDateTime(value: string): { date: string; time: string } {
+  const [date = '', time = ''] = value.split('T');
+  return { date, time: time.slice(0, 5) };
+}
+
+function composeFormDateTime(date: string, time: string): string {
+  return `${date}T${time}`;
+}
+
+function buildStartEndIso(form: EditFormState, timeZone: string) {
+  const startLocal = composeFormDateTime(form.startDate, form.startTime);
+  const startIso = fromDatetimeLocal(startLocal, timeZone);
+
+  let endDate = form.startDate;
+  if (form.endTime <= form.startTime) {
+    const startDate = new Date(`${form.startDate}T00:00:00`);
+    const nextDate = addDays(startDate, 1);
+    endDate = nextDate.toISOString().slice(0, 10);
+  }
+
+  const endIso = fromDatetimeLocal(composeFormDateTime(endDate, form.endTime), timeZone);
+  return { startIso, endIso };
+}
+
 export function AppointmentsContainer() {
   const { t } = useI18n();
   const { accessToken, user } = useAuth();
@@ -189,6 +212,8 @@ export function AppointmentsContainer() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [showTimezoneSelect, setShowTimezoneSelect] = useState(false);
+  const [formTimeZone, setFormTimeZone] = useState(BROWSER_TIMEZONE);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
 
   const canManageAll = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin;
@@ -197,10 +222,13 @@ export function AppointmentsContainer() {
     : specialists.find((item) => item.id === selectedSpecialistId) ?? null;
   const selectedSlotStepMin = selectedSpecialist?.slotStepMin ?? DEFAULT_SLOT_STEP_MIN;
 
-  const initialStartAt = toDatetimeLocal(new Date().toISOString(), displayTimeZone);
+  const initialStartAt = toDatetimeLocal(new Date().toISOString(), formTimeZone);
+  const initialStartParts = splitLocalDateTime(initialStartAt);
+  const initialEndParts = splitLocalDateTime(addMinutesToDatetimeLocal(initialStartAt, selectedSlotStepMin, formTimeZone));
   const initialFormValues: EditFormState = {
-    startAt: initialStartAt,
-    endAt: addMinutesToDatetimeLocal(initialStartAt, selectedSlotStepMin, displayTimeZone),
+    startDate: initialStartParts.date,
+    startTime: initialStartParts.time,
+    endTime: initialEndParts.time,
     status: 'new',
     meetingLink: '',
     notes: '',
@@ -210,16 +238,18 @@ export function AppointmentsContainer() {
     defaultValues: initialFormValues,
   });
 
-  const startAtValue = watch('startAt');
+  const startDateValue = watch('startDate');
+  const startTimeValue = watch('startTime');
 
   useEffect(() => {
     if (!isCreateOpen || editingItem) {
       return;
     }
 
-    const nextEnd = addMinutesToDatetimeLocal(startAtValue, selectedSlotStepMin, displayTimeZone);
-    setValue('endAt', nextEnd, { shouldDirty: true });
-  }, [displayTimeZone, editingItem, isCreateOpen, selectedSlotStepMin, setValue, startAtValue]);
+    const startAt = composeFormDateTime(startDateValue, startTimeValue);
+    const nextEnd = splitLocalDateTime(addMinutesToDatetimeLocal(startAt, selectedSlotStepMin, formTimeZone));
+    setValue('endTime', nextEnd.time, { shouldDirty: true });
+  }, [editingItem, formTimeZone, isCreateOpen, selectedSlotStepMin, setValue, startDateValue, startTimeValue]);
 
   const visibleDays = useMemo(() => {
     if (viewMode === 'day') {
@@ -327,14 +357,19 @@ export function AppointmentsContainer() {
     }
 
     const startAt = createDatetimeLocal(targetDateKey, hour, minute);
+    const startParts = splitLocalDateTime(startAt);
+    const endParts = splitLocalDateTime(addMinutesToDatetimeLocal(startAt, selectedSlotStepMin, BROWSER_TIMEZONE));
 
     reset({
-      startAt,
-      endAt: addMinutesToDatetimeLocal(startAt, selectedSlotStepMin, displayTimeZone),
+      startDate: startParts.date,
+      startTime: startParts.time,
+      endTime: endParts.time,
       status: 'new',
       meetingLink: '',
       notes: '',
     });
+    setFormTimeZone(BROWSER_TIMEZONE);
+    setShowTimezoneSelect(false);
     setEditingItem(null);
     setIsCreateOpen(true);
   };
@@ -353,15 +388,13 @@ export function AppointmentsContainer() {
       return;
     }
 
-    const durationMin = Math.max(
-      selectedSlotStepMin,
-      diffMinutesBetweenLocalDateTimes(form.startAt, form.endAt, displayTimeZone),
-    );
+    const { startIso, endIso } = buildStartEndIso(form, formTimeZone);
+    const durationMin = Math.max(selectedSlotStepMin, Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / 60_000));
 
     try {
       if (editingItem) {
         await apiClient.patch(`/api/appointments/${editingItem.id}`, {
-          scheduledAt: fromDatetimeLocal(form.startAt, displayTimeZone),
+          scheduledAt: startIso,
           durationMin,
           status: form.status,
           meetingLink: form.meetingLink,
@@ -372,7 +405,7 @@ export function AppointmentsContainer() {
       } else {
         await apiClient.post('/api/appointments', {
           specialistId,
-          scheduledAt: fromDatetimeLocal(form.startAt, displayTimeZone),
+          scheduledAt: startIso,
           durationMin,
           status: form.status,
           meetingLink: form.meetingLink,
@@ -390,16 +423,22 @@ export function AppointmentsContainer() {
   };
 
   const openEdit = (item: AppointmentItem) => {
-    const startAt = toDatetimeLocal(item.scheduledAt, displayTimeZone);
+    const startAt = toDatetimeLocal(item.scheduledAt, BROWSER_TIMEZONE);
+    const endAt = addMinutesToDatetimeLocal(startAt, item.durationMin || selectedSlotStepMin, BROWSER_TIMEZONE);
+    const startParts = splitLocalDateTime(startAt);
+    const endParts = splitLocalDateTime(endAt);
 
     setEditingItem(item);
     reset({
-      startAt,
-      endAt: addMinutesToDatetimeLocal(startAt, item.durationMin || selectedSlotStepMin, displayTimeZone),
+      startDate: startParts.date,
+      startTime: startParts.time,
+      endTime: endParts.time,
       status: item.status,
       meetingLink: item.meetingLink,
       notes: item.notes,
     });
+    setFormTimeZone(BROWSER_TIMEZONE);
+    setShowTimezoneSelect(false);
     setIsCreateOpen(true);
   };
 
@@ -663,26 +702,65 @@ export function AppointmentsContainer() {
         <DialogTitle>{editingItem ? t('appointments.editTitle') : t('appointments.createTitle')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => setShowTimezoneSelect((prev) => !prev)}
+                sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
+              >
+                {showTimezoneSelect ? 'Hide custom timezone' : 'Use custom timezone'}
+              </Button>
+              <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
+                {`Current timezone: ${formTimeZone}`}
+              </Typography>
+            </Stack>
+            <Collapse in={showTimezoneSelect}>
+              <FormControl fullWidth>
+                <InputLabel id="appointment-timezone-label">Timezone</InputLabel>
+                <Select
+                  labelId="appointment-timezone-label"
+                  label="Timezone"
+                  value={formTimeZone}
+                  onChange={(event) => setFormTimeZone(String(event.target.value))}
+                >
+                  {AVAILABLE_TIMEZONES.map((timeZone) => (
+                    <MenuItem key={timeZone} value={timeZone}>{timeZone}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Collapse>
             <Controller
-              name="startAt"
+              name="startDate"
+              control={control}
+              render={({ field }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label="Start date"
+                  type="date"
+                />
+              )}
+            />
+            <Controller
+              name="startTime"
               control={control}
               render={({ field }: any) => (
                 <AppRhfTextField
                   field={field}
                   label="Start time"
-                  type="datetime-local"
+                  type="time"
                   minutesStep={selectedSlotStepMin}
                 />
               )}
             />
             <Controller
-              name="endAt"
+              name="endTime"
               control={control}
               render={({ field }: any) => (
                 <AppRhfTextField
                   field={field}
                   label="End time"
-                  type="datetime-local"
+                  type="time"
                   minutesStep={selectedSlotStepMin}
                 />
               )}
