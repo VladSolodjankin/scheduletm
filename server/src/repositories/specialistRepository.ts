@@ -55,6 +55,7 @@ export type SpecialistRecord = {
   is_active: boolean;
   user_id: number | null;
   timezone: string;
+  slot_step_min: number | null;
 };
 
 export type SpecialistCalendarCredentials = {
@@ -85,6 +86,7 @@ export async function listSpecialistsByAccount(accountId: number): Promise<Speci
       's.name',
       's.is_active',
       's.user_id',
+      's.slot_step_min',
       db.raw("COALESCE(wu.timezone, 'UTC') as timezone"),
     );
 }

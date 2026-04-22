@@ -39,12 +39,14 @@ export type SpecialistItem = {
   id: number;
   name: string;
   timezone: string;
+  slotStepMin: number;
 };
 
 export type AppointmentItem = {
   id: number;
   specialistId: number;
   scheduledAt: string;
+  durationMin: number;
   status: AppointmentStatus;
   meetingLink: string;
   notes: string;
