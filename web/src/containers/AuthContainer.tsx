@@ -35,7 +35,8 @@ export function AuthContainer({ mode }: AuthContainerProps) {
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const response = await apiClient.post<AuthResponse>(endpoint, { email, password });
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      const response = await apiClient.post<AuthResponse>(endpoint, { email, password, timezone });
 
       setError('');
       setFieldErrors({});

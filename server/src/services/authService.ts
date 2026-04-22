@@ -4,7 +4,13 @@ import { env } from '../config/env.js';
 import { clearLoginAttempt, findLoginAttemptByIp, upsertFailedLoginAttempt } from '../repositories/loginAttemptRepository.js';
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import { createDefaultSpecialistForWebUserIfMissing, createSpecialistForWebUser } from '../repositories/specialistRepository.js';
-import { createWebUser, findWebUserByEmail, findWebUserById, touchWebUserLastLogin } from '../repositories/webUserRepository.js';
+import {
+  createWebUser,
+  findWebUserByEmail,
+  findWebUserById,
+  touchWebUserLastLogin,
+  updateWebUserSettings,
+} from '../repositories/webUserRepository.js';
 import {
   createWebUserSession,
   deleteWebUserSessionByToken,
@@ -93,7 +99,11 @@ const mapWebUserToDomain = (
   };
 };
 
-export const registerUser = async (emailRaw: string, password: string): Promise<User | null> => {
+export const registerUser = async (
+  emailRaw: string,
+  password: string,
+  timezone?: string,
+): Promise<User | null> => {
   const email = sanitizeEmail(emailRaw);
   const accountId = await getDefaultAccountId();
 
@@ -109,7 +119,8 @@ export const registerUser = async (emailRaw: string, password: string): Promise<
     email,
     role: WebUserRole.Owner,
     passwordHash,
-    passwordSalt: salt
+    passwordSalt: salt,
+    timezone,
   });
 
   await createDefaultSpecialistForWebUserIfMissing(accountId, webUser.id, email);
@@ -180,7 +191,11 @@ export const createSpecialistUser = async (
   return { user, specialistId };
 };
 
-export const authenticateUser = async (emailRaw: string, password: string): Promise<User | null> => {
+export const authenticateUser = async (
+  emailRaw: string,
+  password: string,
+  timezone?: string,
+): Promise<User | null> => {
   const email = sanitizeEmail(emailRaw);
   const accountId = await getDefaultAccountId();
   const user = await findWebUserByEmail(accountId, email);
@@ -191,6 +206,14 @@ export const authenticateUser = async (emailRaw: string, password: string): Prom
   const isValid = verifyPassword(password, user.password_salt, user.password_hash);
   if (!isValid) {
     return null;
+  }
+
+  if (timezone && timezone !== user.timezone) {
+    await updateWebUserSettings({
+      accountId,
+      id: user.id,
+      timezone,
+    });
   }
 
   await touchWebUserLastLogin(accountId, user.id);

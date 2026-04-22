@@ -10,6 +10,7 @@ export type CreateUserInput = {
   phone?: string | null;
   email?: string | null;
   languageCode?: string | null;
+  timezone?: string | null;
   reminderComment?: string | null;
 };
 
@@ -64,6 +65,7 @@ export async function createUser(input: CreateUserInput) {
       phone: normalizePhone(input.phone),
       email: normalizeEmail(input.email),
       language_code: input.languageCode ?? "ru",
+      timezone: input.timezone ?? 'UTC',
       reminder_comment: input.reminderComment ?? '',
     })
     .returning("*");
@@ -87,6 +89,9 @@ export async function updateUserByTelegramId(
   if (patch.reminderComment !== undefined) updateData.reminder_comment = patch.reminderComment;
   if (patch.languageCode !== undefined) {
     updateData.language_code = patch.languageCode;
+  }
+  if (patch.timezone !== undefined) {
+    updateData.timezone = patch.timezone;
   }
 
   const [user] = await db(CLIENTS_TABLE)

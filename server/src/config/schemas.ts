@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+function isValidIanaTimezone(value: string) {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const timezoneSchema = z
+  .string()
+  .min(1, 'Укажите часовой пояс')
+  .max(64, 'Часовой пояс слишком длинный')
+  .refine(isValidIanaTimezone, 'Некорректный IANA timezone');
+
 export const passwordSchema = z
   .string()
   .min(10, 'Пароль должен содержать минимум 10 символов')
@@ -13,7 +28,8 @@ export const registrationSchema = z.object({
     .string()
     .email('Введите корректный email')
     .max(254, 'Email слишком длинный'),
-  password: passwordSchema
+  password: passwordSchema,
+  timezone: timezoneSchema.optional(),
 });
 
 export const loginSchema = z.object({
@@ -21,7 +37,8 @@ export const loginSchema = z.object({
     .string()
     .email('Введите корректный email')
     .max(254, 'Email слишком длинный'),
-  password: z.string().min(1, 'Введите пароль')
+  password: z.string().min(1, 'Введите пароль'),
+  timezone: timezoneSchema.optional(),
 });
 
 export const systemSettingsSchema = z.object({
@@ -37,7 +54,7 @@ export const systemSettingsSchema = z.object({
 }).partial();
 
 export const userSettingsSchema = z.object({
-  timezone: z.string().min(1, 'Укажите часовой пояс').max(64, 'Часовой пояс слишком длинный'),
+  timezone: timezoneSchema,
   locale: z.string().min(2, 'Укажите язык/локаль').max(16, 'Локаль слишком длинная'),
   uiThemeMode: z.enum(['light', 'dark']),
   uiPaletteVariantId: z.string().min(1, 'Укажите id палитры').max(64, 'Id палитры слишком длинный')

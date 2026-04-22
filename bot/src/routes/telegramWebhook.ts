@@ -59,7 +59,10 @@ import {
   buildCalendarLink,
   buildMicrosoftCalendarLink,
 } from '../utils/calendar-links';
-import { createGoogleCalendarEvents } from '../services/google-calendar.service';
+import {
+  syncAppointmentRescheduledInExternalCalendars,
+  syncAppointmentsToExternalCalendars,
+} from '../services/calendar-sync.service';
 import {
   beginProcessingUpdate,
   markProcessedUpdate,
@@ -265,7 +268,7 @@ telegramWebhookRouter.post(
 
         const user = userResult.user;
         const lang = normalizeLanguageCode(user.language_code);
-        const timezone = await getDefaultTimezone(user.account_id);
+        const timezone = user.timezone || await getDefaultTimezone(user.account_id);
 
         if (data.startsWith('service:')) {
           const serviceId = Number(data.split(':')[1]);
@@ -573,6 +576,14 @@ telegramWebhookRouter.post(
               reminderComment: user.reminder_comment,
             });
 
+            await syncAppointmentRescheduledInExternalCalendars({
+              accountId: user.account_id,
+              specialistId: rescheduled.calendarSyncContext.specialistId,
+              appointmentId: payload.editingAppointmentId,
+              appointmentAt: rescheduled.calendarSyncContext.appointmentAtIso,
+              durationMin: rescheduled.calendarSyncContext.durationMin,
+            });
+
             await editMessageText(
               chatId,
               messageId,
@@ -870,7 +881,7 @@ telegramWebhookRouter.post(
             ),
           );
 
-          await createGoogleCalendarEvents({
+          await syncAppointmentsToExternalCalendars({
             accountId: user.account_id,
             specialistId: payload.specialistId!,
             appointments: appointmentResult.appointments.map((appointment) => ({
@@ -981,7 +992,7 @@ telegramWebhookRouter.post(
 
       const user = userResult.user;
       const lang = normalizeLanguageCode(user.language_code);
-      const timezone = await getDefaultTimezone(user.account_id);
+      const timezone = user.timezone || await getDefaultTimezone(user.account_id);
       const firstName = user.first_name || message.from.first_name || 'friend';
       const session = await findSessionByUserId(user.account_id, user.id);
       const state = (session?.state as UserSessionState | undefined) ?? UserSessionState.IDLE;

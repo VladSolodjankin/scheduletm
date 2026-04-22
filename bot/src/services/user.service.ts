@@ -6,6 +6,7 @@ import {
 import { getOrCreateSession } from '../repositories/user-session.repository';
 import { normalizeLanguageCode } from '../i18n';
 import { getDefaultAccountId } from '../repositories/account.repository';
+import { getDefaultTimezone } from '../repositories/app-settings.repository';
 
 type TelegramProfile = {
   telegramId: number;
@@ -20,12 +21,15 @@ export async function findOrCreateTelegramUser(profile: TelegramProfile) {
   const existing = await findUserByTelegramId(accountId, profile.telegramId);
 
   if (!existing) {
+    const timezone = await getDefaultTimezone(accountId);
+
     const created = await createUser({
       accountId,
       telegramId: profile.telegramId,
       username: profile.username ?? null,
       firstName: profile.firstName ?? null,
       languageCode,
+      timezone,
     });
 
     await getOrCreateSession(created.account_id, created.id);

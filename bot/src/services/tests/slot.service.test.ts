@@ -18,16 +18,16 @@ vi.mock('../../repositories/service.repository', () => {
   };
 });
 
-vi.mock('../google-calendar.service', () => {
+vi.mock('../calendar-sync.service', () => {
   return {
-    getBusyIntervalsFromGoogleCalendar: vi.fn(),
+    getBusyIntervalsFromExternalCalendars: vi.fn(),
   };
 });
 
 import { findBusyAppointmentsByDate } from '../../repositories/appointment.repository';
 import { getAppSettings } from '../../repositories/app-settings.repository';
 import { findServiceById } from '../../repositories/service.repository';
-import { getBusyIntervalsFromGoogleCalendar } from '../google-calendar.service';
+import { getBusyIntervalsFromExternalCalendars } from '../calendar-sync.service';
 import { getAvailableSlots } from '../slot.service';
 
 describe('getAvailableSlots', () => {
@@ -48,7 +48,7 @@ describe('getAvailableSlots', () => {
     vi.mocked(findBusyAppointmentsByDate).mockResolvedValue([
       { date: '2026-04-18', time: '10:00', durationMin: 60 },
     ] as any);
-    vi.mocked(getBusyIntervalsFromGoogleCalendar).mockResolvedValue([] as any);
+    vi.mocked(getBusyIntervalsFromExternalCalendars).mockResolvedValue([] as any);
 
     const slots = await getAvailableSlots({
       accountId: 7,
@@ -69,7 +69,7 @@ describe('getAvailableSlots', () => {
     vi.mocked(findBusyAppointmentsByDate).mockResolvedValue([
       { date: '2026-04-18', time: '09:00', durationMin: 60 },
     ] as any);
-    vi.mocked(getBusyIntervalsFromGoogleCalendar).mockResolvedValue([] as any);
+    vi.mocked(getBusyIntervalsFromExternalCalendars).mockResolvedValue([] as any);
 
     const slots = await getAvailableSlots({
       accountId: 7,
@@ -91,7 +91,7 @@ describe('getAvailableSlots', () => {
       // 23:30-01:30 overlaps the next day 00:00-02:00 work window
       { date: '2026-04-17', time: '23:30', durationMin: 120 },
     ] as any);
-    vi.mocked(getBusyIntervalsFromGoogleCalendar).mockResolvedValue([] as any);
+    vi.mocked(getBusyIntervalsFromExternalCalendars).mockResolvedValue([] as any);
 
     const slots = await getAvailableSlots({
       accountId: 7,
@@ -110,7 +110,7 @@ describe('getAvailableSlots', () => {
       workEndHour: 12,
     } as any);
     vi.mocked(findBusyAppointmentsByDate).mockResolvedValue([] as any);
-    vi.mocked(getBusyIntervalsFromGoogleCalendar).mockResolvedValue([] as any);
+    vi.mocked(getBusyIntervalsFromExternalCalendars).mockResolvedValue([] as any);
 
     const slots = await getAvailableSlots({
       accountId: 7,
@@ -130,7 +130,7 @@ describe('getAvailableSlots', () => {
       workEndHour: 11,
     } as any);
     vi.mocked(findBusyAppointmentsByDate).mockResolvedValue([] as any);
-    vi.mocked(getBusyIntervalsFromGoogleCalendar).mockResolvedValue([] as any);
+    vi.mocked(getBusyIntervalsFromExternalCalendars).mockResolvedValue([] as any);
 
     const slots = await getAvailableSlots({
       accountId: 7,
@@ -151,7 +151,7 @@ describe('getAvailableSlots', () => {
     vi.mocked(findBusyAppointmentsByDate).mockResolvedValue([
       { date: '2026-04-19', time: '09:00', durationMin: 60 },
     ] as any);
-    vi.mocked(getBusyIntervalsFromGoogleCalendar).mockResolvedValue([] as any);
+    vi.mocked(getBusyIntervalsFromExternalCalendars).mockResolvedValue([] as any);
 
     const slots = await getAvailableSlots({
       accountId: 7,
@@ -171,7 +171,7 @@ describe('getAvailableSlots', () => {
       timezone: 'Europe/Moscow',
     } as any);
     vi.mocked(findBusyAppointmentsByDate).mockResolvedValue([] as any);
-    vi.mocked(getBusyIntervalsFromGoogleCalendar).mockResolvedValue([
+    vi.mocked(getBusyIntervalsFromExternalCalendars).mockResolvedValue([
       { date: '2026-04-18', time: '10:00', durationMin: 60 },
     ] as any);
 
