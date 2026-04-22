@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   CardContent,
-  CircularProgress,
   Collapse,
   Chip,
   Dialog,
@@ -15,6 +14,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Skeleton,
   Stack,
   ToggleButton,
   ToggleButtonGroup,
@@ -30,6 +30,7 @@ import { useI18n } from '../shared/i18n/I18nContext';
 import type { AppointmentItem, AppointmentListResponse, AppointmentStatus, SpecialistItem } from '../shared/types/api';
 import { WebUserRole } from '../shared/types/roles';
 import { AppPage } from '../shared/ui/AppPage';
+import { AppButton } from '../shared/ui/AppButton';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 
 type EditFormState = {
@@ -216,6 +217,8 @@ export function AppointmentsContainer() {
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
+  const [isCancellingAppointment, setIsCancellingAppointment] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [showTimezoneSelect, setShowTimezoneSelect] = useState(false);
@@ -397,6 +400,8 @@ export function AppointmentsContainer() {
     const { startIso, endIso } = buildStartEndIso(form, formTimeZone);
     const durationMin = Math.max(selectedSlotStepMin, Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / 60_000));
 
+    setIsSubmittingForm(true);
+
     try {
       if (editingItem) {
         await apiClient.patch(`/api/appointments/${editingItem.id}`, {
@@ -425,6 +430,8 @@ export function AppointmentsContainer() {
       await loadAppointments(selectedSpecialistId);
     } catch {
       setError('Unable to save appointment');
+    } finally {
+      setIsSubmittingForm(false);
     }
   };
 
@@ -453,6 +460,8 @@ export function AppointmentsContainer() {
       return;
     }
 
+    setIsCancellingAppointment(true);
+
     try {
       await apiClient.post(`/api/appointments/${editingItem.id}/cancel`, {}, {
         headers: authHeaders(accessToken),
@@ -462,6 +471,8 @@ export function AppointmentsContainer() {
       await loadAppointments(selectedSpecialistId);
     } catch {
       setError('Unable to cancel appointment');
+    } finally {
+      setIsCancellingAppointment(false);
     }
   };
 
@@ -608,10 +619,18 @@ export function AppointmentsContainer() {
           </CardContent>
         </Card>
 
-        <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
+        {isLoading ? (
+          <Stack spacing={1}>
+            <Skeleton variant="text" width={220} />
+            <Skeleton variant="rounded" height={520} />
+            <Skeleton variant="rounded" height={36} width={160} />
+          </Stack>
+        ) : (
+          <>
+            <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
 
-        <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflowX: 'auto', boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.08)}` }}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: `72px repeat(${visibleDays.length}, minmax(180px, 1fr))`, minWidth: viewMode === 'week' ? 1100 : 560 }}>
+            <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflowX: 'auto', boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.08)}` }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: `72px repeat(${visibleDays.length}, minmax(180px, 1fr))`, minWidth: viewMode === 'week' ? 1100 : 560 }}>
             <Box sx={{ borderRight: 1, borderColor: 'divider', p: 1, bgcolor: 'background.default' }} />
             {visibleDays.map((day) => (
               <Box
@@ -735,19 +754,14 @@ export function AppointmentsContainer() {
                 </Fragment>
               );
             })}
-          </Box>
-        </Box>
+              </Box>
+            </Box>
 
-        <Button onClick={() => openCreate(getGridDayKey(visibleDays[0]), 9, 0)} variant="outlined" size="small" sx={{ alignSelf: 'flex-start' }}>
-          {t('appointments.create')}
-        </Button>
-
-        {isLoading ? (
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <CircularProgress size={18} />
-            <Typography variant="body2">{t('appointments.loading')}</Typography>
-          </Stack>
-        ) : null}
+            <Button onClick={() => openCreate(getGridDayKey(visibleDays[0]), 9, 0)} variant="outlined" size="small" sx={{ alignSelf: 'flex-start' }}>
+              {t('appointments.create')}
+            </Button>
+          </>
+        )}
       </Stack>
 
       <Dialog open={isCreateOpen} onClose={() => setIsCreateOpen(false)} maxWidth="sm" fullWidth>
@@ -854,10 +868,14 @@ export function AppointmentsContainer() {
         </DialogContent>
         <DialogActions>
           {editingItem && (
-            <Button color="error" onClick={cancelAppointment}>{t('appointments.cancelAction')}</Button>
+            <AppButton color="error" onClick={cancelAppointment} isLoading={isCancellingAppointment}>
+              {t('appointments.cancelAction')}
+            </AppButton>
           )}
-          <Button onClick={() => setIsCreateOpen(false)}>{t('appointments.close')}</Button>
-          <Button variant="contained" onClick={handleSubmit(submitForm)}>{t('appointments.save')}</Button>
+          <Button onClick={() => setIsCreateOpen(false)} disabled={isSubmittingForm || isCancellingAppointment}>{t('appointments.close')}</Button>
+          <AppButton variant="contained" onClick={handleSubmit(submitForm)} isLoading={isSubmittingForm}>
+            {t('appointments.save')}
+          </AppButton>
         </DialogActions>
       </Dialog>
     </AppPage>

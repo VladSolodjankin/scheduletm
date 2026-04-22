@@ -124,7 +124,7 @@ export function AuthCard({
           )}
         />
 
-        <AppButton type="submit" variant="contained" disabled={isSubmitting} sx={{ minHeight: 46 }}>
+        <AppButton type="submit" variant="contained" isLoading={isSubmitting} sx={{ minHeight: 46 }}>
           {submitText}
         </AppButton>
 

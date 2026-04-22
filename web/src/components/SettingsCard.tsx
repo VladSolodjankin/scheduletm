@@ -132,7 +132,7 @@ export function SettingsCard({
             )}
           />
 
-          <AppButton type="submit" startIcon={<AppIcons.save />} disabled={isSavingSystem}>
+          <AppButton type="submit" startIcon={<AppIcons.save />} isLoading={isSavingSystem}>
             {copy.saveSettings}
           </AppButton>
         </AppForm>
@@ -158,7 +158,7 @@ export function SettingsCard({
             )}
           />
 
-          <AppButton type="submit" startIcon={<AppIcons.save />} disabled={isSavingUser}>
+          <AppButton type="submit" startIcon={<AppIcons.save />} isLoading={isSavingUser}>
             {copy.saveSettings}
           </AppButton>
 
@@ -171,7 +171,8 @@ export function SettingsCard({
             <AppButton
               variant="outlined"
               onClick={onConnectGoogle}
-              disabled={userSettings.googleConnected || isGoogleConnecting}
+              disabled={userSettings.googleConnected}
+              isLoading={isGoogleConnecting}
             >
               {userSettings.googleConnected
                 ? copy.googleConnected
