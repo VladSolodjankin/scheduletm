@@ -7,6 +7,9 @@ export type ExternalBusySlot = {
   scheduledAt: string;
   durationMin: number;
   source: 'google';
+  title: string;
+  organizerEmail: string;
+  creatorEmail: string;
 };
 
 type GoogleCalendarEventDateTime = {
@@ -15,8 +18,15 @@ type GoogleCalendarEventDateTime = {
 
 type GoogleCalendarEvent = {
   status?: string;
+  summary?: string;
   start?: GoogleCalendarEventDateTime;
   end?: GoogleCalendarEventDateTime;
+  organizer?: {
+    email?: string;
+  };
+  creator?: {
+    email?: string;
+  };
 };
 
 type GoogleCalendarEventsResponse = {
@@ -105,6 +115,9 @@ export async function listExternalBusySlots(input: {
               scheduledAt: new Date(event.start.dateTime).toISOString(),
               durationMin,
               source: 'google' as const,
+              title: event.summary?.trim() ?? '',
+              organizerEmail: event.organizer?.email?.trim() ?? '',
+              creatorEmail: event.creator?.email?.trim() ?? '',
             };
           })
           .filter((slot): slot is ExternalBusySlot => Boolean(slot));

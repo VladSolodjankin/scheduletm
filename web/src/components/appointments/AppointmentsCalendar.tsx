@@ -8,6 +8,7 @@ import {
   Stack,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
   Typography,
   alpha,
   useTheme,
@@ -57,6 +58,23 @@ export function AppointmentsCalendar({
   getGridDayKey,
 }: Props) {
   const theme = useTheme();
+
+  const getGoogleSlotTitle = (slot: AppointmentListResponse['busySlots'][number]) => {
+    if (slot.title) {
+      return slot.title;
+    }
+
+    return slot.organizerEmail || slot.creatorEmail || 'Busy (Google)';
+  };
+
+  const getGoogleSlotTooltip = (slot: AppointmentListResponse['busySlots'][number]) =>
+    [
+      slot.title ? `Title: ${slot.title}` : '',
+      slot.organizerEmail ? `Organizer: ${slot.organizerEmail}` : '',
+      slot.creatorEmail ? `Creator: ${slot.creatorEmail}` : '',
+    ]
+      .filter(Boolean)
+      .join(' · ');
 
   return (
     <>
@@ -182,13 +200,20 @@ export function AppointmentsCalendar({
                         >
                           <Stack spacing={0.5}>
                             {externalBusy.map((slot) => (
-                              <Chip
+                              <Tooltip
                                 key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}
-                                size="small"
-                                label="Busy (Google)"
-                                color="warning"
-                                variant="outlined"
-                              />
+                                title={getGoogleSlotTooltip(slot)}
+                                placement="top"
+                                arrow
+                                disableHoverListener={!getGoogleSlotTooltip(slot)}
+                              >
+                                <Chip
+                                  size="small"
+                                  label={getGoogleSlotTitle(slot)}
+                                  color="warning"
+                                  variant="outlined"
+                                />
+                              </Tooltip>
                             ))}
                             {items.map((item) => (
                               <Box
