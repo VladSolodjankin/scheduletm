@@ -671,10 +671,7 @@ export function AppointmentsContainer() {
                   field={field}
                   label="Start time"
                   type="datetime-local"
-                  slotProps={{
-                    inputLabel: { shrink: true },
-                    htmlInput: { step: selectedSlotStepMin * 60 },
-                  }}
+                  minutesStep={selectedSlotStepMin}
                 />
               )}
             />
@@ -686,10 +683,7 @@ export function AppointmentsContainer() {
                   field={field}
                   label="End time"
                   type="datetime-local"
-                  slotProps={{
-                    inputLabel: { shrink: true },
-                    htmlInput: { step: selectedSlotStepMin * 60 },
-                  }}
+                  minutesStep={selectedSlotStepMin}
                 />
               )}
             />
