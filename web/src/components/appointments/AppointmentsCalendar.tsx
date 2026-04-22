@@ -13,12 +13,14 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
-import { Fragment } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { Fragment, useState } from 'react';
 import type { AppointmentItem, AppointmentListResponse } from '../../shared/types/api';
 import {
   CalendarViewMode,
   formatLocalDate,
   formatLocalTime,
+  isSlotInPast,
   SLOT_ROWS,
   statusLabel,
   toDateKeyInTimezone,
@@ -39,6 +41,7 @@ type Props = {
   onOpenCreate: (dayKey: string, hour: number, minute: number) => void;
   onOpenEdit: (item: AppointmentItem) => void;
   onMoveAppointment: (appointmentId: number, targetDayKey: string, targetHour: number, targetMinute: number) => void;
+  onPastSlotActionBlocked: () => void;
   getGridDayKey: (day: Date) => string;
 };
 
@@ -55,9 +58,12 @@ export function AppointmentsCalendar({
   onOpenCreate,
   onOpenEdit,
   onMoveAppointment,
+  onPastSlotActionBlocked,
   getGridDayKey,
 }: Props) {
   const theme = useTheme();
+  const [draggingAppointmentId, setDraggingAppointmentId] = useState<number | null>(null);
+  const [blockedCellKey, setBlockedCellKey] = useState<string | null>(null);
 
   const getGoogleSlotTitle = (slot: AppointmentListResponse['busySlots'][number]) => {
     if (slot.title) {
@@ -173,6 +179,7 @@ export function AppointmentsCalendar({
                         <Box
                           key={`${key}-cell`}
                           sx={{
+                            position: 'relative',
                             borderTop: 1,
                             borderRight: 1,
                             borderColor: 'divider',
@@ -186,9 +193,30 @@ export function AppointmentsCalendar({
                           }}
                           onDragOver={(event) => {
                             event.preventDefault();
+                            if (!draggingAppointmentId) {
+                              return;
+                            }
+
+                            if (isSlotInPast(dayKey, hour, minute, displayTimeZone)) {
+                              event.dataTransfer.dropEffect = 'none';
+                              setBlockedCellKey(key);
+                            } else {
+                              event.dataTransfer.dropEffect = 'move';
+                              setBlockedCellKey(null);
+                            }
+                          }}
+                          onDragLeave={() => {
+                            setBlockedCellKey((prev) => (prev === key ? null : prev));
                           }}
                           onDrop={(event) => {
                             event.preventDefault();
+                            setBlockedCellKey(null);
+
+                            if (isSlotInPast(dayKey, hour, minute, displayTimeZone)) {
+                              onPastSlotActionBlocked();
+                              return;
+                            }
+
                             const rawId = event.dataTransfer.getData('text/appointment-id');
                             const id = Number(rawId);
 
@@ -196,8 +224,31 @@ export function AppointmentsCalendar({
                               onMoveAppointment(id, dayKey, hour, minute);
                             }
                           }}
-                          onClick={() => onOpenCreate(dayKey, hour, minute)}
+                          onClick={() => {
+                            if (isSlotInPast(dayKey, hour, minute, displayTimeZone)) {
+                              onPastSlotActionBlocked();
+                              return;
+                            }
+
+                            onOpenCreate(dayKey, hour, minute);
+                          }}
                         >
+                          {draggingAppointmentId && blockedCellKey === key && (
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                inset: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                bgcolor: alpha(theme.palette.error.main, 0.08),
+                                pointerEvents: 'none',
+                                zIndex: 2,
+                              }}
+                            >
+                              <CloseRoundedIcon color="error" fontSize="small" />
+                            </Box>
+                          )}
                           <Stack spacing={0.5}>
                             {externalBusy.map((slot) => (
                               <Tooltip
@@ -219,7 +270,14 @@ export function AppointmentsCalendar({
                               <Box
                                 key={item.id}
                                 draggable
-                                onDragStart={(event) => event.dataTransfer.setData('text/appointment-id', String(item.id))}
+                                onDragStart={(event) => {
+                                  setDraggingAppointmentId(item.id);
+                                  event.dataTransfer.setData('text/appointment-id', String(item.id));
+                                }}
+                                onDragEnd={() => {
+                                  setDraggingAppointmentId(null);
+                                  setBlockedCellKey(null);
+                                }}
                                 onClick={(event) => {
                                   event.stopPropagation();
                                   onOpenEdit(item);

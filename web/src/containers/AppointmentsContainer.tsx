@@ -24,6 +24,7 @@ import {
   DEFAULT_SLOT_STEP_MIN,
   fromDatetimeLocal,
   getUtcNowByTimeZone,
+  isSlotInPast,
   startOfDay,
   toDateKeyInTimezone,
   toTimeKeyInTimezone,
@@ -57,6 +58,7 @@ export function AppointmentsContainer() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
+  const pastSlotError = 'Cannot create or move an appointment to a past date/time';
 
   const canManageAll = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin;
   const selectedSpecialist = selectedSpecialistId === 'all'
@@ -160,6 +162,11 @@ export function AppointmentsContainer() {
   }, [accessToken, focusDate, viewMode, selectedSpecialistId]);
 
   const openCreate = (targetDateKey: string, hour: number, minute = 0) => {
+    if (isSlotInPast(targetDateKey, hour, minute, displayTimeZone)) {
+      setError(pastSlotError);
+      return;
+    }
+
     const specialistId = selectedSpecialistId === 'all'
       ? specialists[0]?.id
       : selectedSpecialistId;
@@ -193,6 +200,11 @@ export function AppointmentsContainer() {
     setIsSubmittingForm(true);
 
     try {
+      if (!editingItem && new Date(payload.startIso).getTime() < Date.now()) {
+        setError(pastSlotError);
+        return;
+      }
+
       if (editingItem) {
         await apiClient.patch(`/api/appointments/${editingItem.id}`, {
           scheduledAt: payload.startIso,
@@ -248,6 +260,10 @@ export function AppointmentsContainer() {
 
   const moveAppointment = async (appointmentId: number, targetDayKey: string, targetHour: number, targetMinute: number) => {
     if (!accessToken) {
+      return;
+    }
+    if (isSlotInPast(targetDayKey, targetHour, targetMinute, displayTimeZone)) {
+      setError(pastSlotError);
       return;
     }
 
@@ -366,6 +382,7 @@ export function AppointmentsContainer() {
           onMoveAppointment={(id, dayKey, hour, minute) => {
             void moveAppointment(id, dayKey, hour, minute);
           }}
+          onPastSlotActionBlocked={() => setError(pastSlotError)}
           getGridDayKey={getGridDayKey}
         />
       </Stack>

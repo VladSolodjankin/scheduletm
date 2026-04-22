@@ -98,6 +98,11 @@ export function createDatetimeLocal(dateKey: string, hour: number, minute = 0): 
   return `${dateKey}T${pad(hour)}:${pad(minute)}`;
 }
 
+export function isSlotInPast(dateKey: string, hour: number, minute: number, timeZone: string): boolean {
+  const slotIso = fromDatetimeLocal(createDatetimeLocal(dateKey, hour, minute), timeZone);
+  return new Date(slotIso).getTime() < Date.now();
+}
+
 export function addMinutesToDatetimeLocal(value: string, minutesToAdd: number, timeZone: string): string {
   const iso = fromDatetimeLocal(value, timeZone);
   return toDatetimeLocal(new Date(new Date(iso).getTime() + minutesToAdd * 60_000).toISOString(), timeZone);
