@@ -121,8 +121,15 @@ export async function listExternalBusySlots(input: {
             };
           })
           .filter((slot): slot is ExternalBusySlot => Boolean(slot));
-      } catch {
-        return [];
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+          throw new Error(
+            `Failed to fetch calendar ${calendarId}: ${
+              error.response?.data?.error?.message ?? error.message
+            }`
+          );
+        }
+        throw error;
       }
     }),
   );

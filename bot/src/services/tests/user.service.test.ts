@@ -56,6 +56,7 @@ describe('findOrCreateTelegramUser', () => {
       telegramId: 123,
       username: null,
       firstName: null,
+      timezone: 'Europe/Moscow',
       languageCode: 'en',
     });
     expect(getOrCreateSession).toHaveBeenCalledWith(7, 1);
