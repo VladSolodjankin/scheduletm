@@ -2,6 +2,9 @@ import {
   Alert,
   Box,
   Button,
+  Card,
+  CardContent,
+  CircularProgress,
   Collapse,
   Chip,
   Dialog,
@@ -16,6 +19,8 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -198,6 +203,7 @@ function buildStartEndIso(form: EditFormState, timeZone: string) {
 export function AppointmentsContainer() {
   const { t } = useI18n();
   const { accessToken, user } = useAuth();
+  const theme = useTheme();
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistItem[]>([]);
@@ -518,68 +524,93 @@ export function AppointmentsContainer() {
       )}
 
       <Stack spacing={2}>
+        <Card
+          variant="outlined"
+          sx={{
+            borderRadius: 3,
+            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.14)} 0%, ${alpha(theme.palette.info.light, 0.12)} 100%)`,
+          }}
+        >
+          <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+                <Chip size="small" color="primary" variant="outlined" label={viewMode === 'week' ? t('appointments.viewWeek') : t('appointments.viewDay')} />
+                <Chip size="small" color="default" variant="outlined" label={selectedSpecialist ? selectedSpecialist.name : t('appointments.allSpecialists')} />
+              </Stack>
+              <Typography variant="caption" color="text.secondary">
+                {selectedSpecialist
+                  ? `Timezone: ${BROWSER_TIMEZONE} · ${selectedSpecialist.timezone} · ${selectedSlotStepMin} min`
+                  : `Timezone: ${BROWSER_TIMEZONE} · ${DEFAULT_SLOT_STEP_MIN} min`}
+              </Typography>
+            </Stack>
+          </CardContent>
+        </Card>
+
         {canManageAll && (
-          <FormControl sx={{ maxWidth: 360 }} size="small">
-            <InputLabel id="specialist-filter">{t('appointments.specialistFilter')}</InputLabel>
-            <Select
-              labelId="specialist-filter"
-              label={t('appointments.specialistFilter')}
-              value={selectedSpecialistId}
-              onChange={(event) => {
-                const raw = event.target.value;
-                setSelectedSpecialistId(raw === 'all' ? 'all' : Number(raw));
-              }}
-            >
-              <MenuItem value="all">{t('appointments.allSpecialists')}</MenuItem>
-              {specialists.map((specialist) => (
-                <MenuItem key={specialist.id} value={specialist.id}>{specialist.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Card variant="outlined" sx={{ borderRadius: 3 }}>
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+              <FormControl sx={{ width: { xs: '100%', sm: 360 } }} size="small">
+                <InputLabel id="specialist-filter">{t('appointments.specialistFilter')}</InputLabel>
+                <Select
+                  labelId="specialist-filter"
+                  label={t('appointments.specialistFilter')}
+                  value={selectedSpecialistId}
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    setSelectedSpecialistId(raw === 'all' ? 'all' : Number(raw));
+                  }}
+                >
+                  <MenuItem value="all">{t('appointments.allSpecialists')}</MenuItem>
+                  {specialists.map((specialist) => (
+                    <MenuItem key={specialist.id} value={specialist.id}>{specialist.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </CardContent>
+          </Card>
         )}
 
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { xs: 'stretch', md: 'center' } }}>
-          <Stack direction="row" spacing={1}>
-            <Button size="small" variant="outlined" onClick={() => movePeriod(-1)}>{'<'}</Button>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => setFocusDate(startOfDay(new Date()))}
-            >
-              {t('appointments.today')}
-            </Button>
-            <Button size="small" variant="outlined" onClick={() => movePeriod(1)}>{'>'}</Button>
-          </Stack>
+        <Card variant="outlined" sx={{ borderRadius: 3 }}>
+          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { xs: 'stretch', md: 'center' } }}>
+              <Stack direction="row" spacing={1}>
+                <Button size="small" variant="outlined" onClick={() => movePeriod(-1)}>{'<'}</Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => setFocusDate(startOfDay(new Date()))}
+                >
+                  {t('appointments.today')}
+                </Button>
+                <Button size="small" variant="outlined" onClick={() => movePeriod(1)}>{'>'}</Button>
+              </Stack>
 
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            {viewMode === 'week'
-              ? `${formatLocalDate(visibleDays[0])} — ${formatLocalDate(visibleDays[visibleDays.length - 1])}`
-              : formatLocalDate(visibleDays[0])}
-          </Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                {viewMode === 'week'
+                  ? `${formatLocalDate(visibleDays[0])} — ${formatLocalDate(visibleDays[visibleDays.length - 1])}`
+                  : formatLocalDate(visibleDays[0])}
+              </Typography>
 
-          <ToggleButtonGroup
-            size="small"
-            exclusive
-            value={viewMode}
-            onChange={(_, nextMode: CalendarViewMode | null) => {
-              if (nextMode) {
-                setViewMode(nextMode);
-              }
-            }}
-          >
-            <ToggleButton value="day">{t('appointments.viewDay')}</ToggleButton>
-            <ToggleButton value="week">{t('appointments.viewWeek')}</ToggleButton>
-          </ToggleButtonGroup>
-        </Stack>
+              <ToggleButtonGroup
+                size="small"
+                exclusive
+                value={viewMode}
+                onChange={(_, nextMode: CalendarViewMode | null) => {
+                  if (nextMode) {
+                    setViewMode(nextMode);
+                  }
+                }}
+              >
+                <ToggleButton value="day">{t('appointments.viewDay')}</ToggleButton>
+                <ToggleButton value="week">{t('appointments.viewWeek')}</ToggleButton>
+              </ToggleButtonGroup>
+            </Stack>
+          </CardContent>
+        </Card>
 
         <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
-        <Typography variant="caption" color="text.secondary">
-          {selectedSpecialist
-            ? `Displayed in your browser timezone: ${BROWSER_TIMEZONE}. Specialist timezone: ${selectedSpecialist.timezone}. Slot step: ${selectedSlotStepMin} min.`
-            : `Displayed in your browser timezone: ${BROWSER_TIMEZONE}. Slot step: ${DEFAULT_SLOT_STEP_MIN} min.`}
-        </Typography>
 
-        <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflowX: 'auto' }}>
+        <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflowX: 'auto', boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.08)}` }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: `72px repeat(${visibleDays.length}, minmax(180px, 1fr))`, minWidth: viewMode === 'week' ? 1100 : 560 }}>
             <Box sx={{ borderRight: 1, borderColor: 'divider', p: 1, bgcolor: 'background.default' }} />
             {visibleDays.map((day) => (
@@ -589,7 +620,9 @@ export function AppointmentsContainer() {
                   borderRight: 1,
                   borderColor: 'divider',
                   p: 1,
-                  bgcolor: getGridDayKey(day) === toDateKeyInTimezone(new Date(), displayTimeZone) ? 'action.selected' : 'background.default',
+                  bgcolor: getGridDayKey(day) === toDateKeyInTimezone(new Date(), displayTimeZone)
+                    ? alpha(theme.palette.primary.main, 0.14)
+                    : 'background.default',
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -636,7 +669,7 @@ export function AppointmentsContainer() {
                           borderColor: 'divider',
                           minHeight: 36,
                           p: 0.5,
-                          bgcolor: 'background.paper',
+                          bgcolor: alpha(theme.palette.background.paper, 0.92),
                           transition: 'background-color 0.15s ease',
                           '&:hover': {
                             bgcolor: 'action.hover',
@@ -679,7 +712,9 @@ export function AppointmentsContainer() {
                                 borderRadius: 1,
                                 border: 1,
                                 borderColor: item.status === 'cancelled' ? 'error.main' : 'primary.light',
-                                bgcolor: item.status === 'cancelled' ? 'rgba(211, 47, 47, 0.08)' : 'rgba(25, 118, 210, 0.08)',
+                                bgcolor: item.status === 'cancelled'
+                                  ? alpha(theme.palette.error.main, 0.12)
+                                  : alpha(theme.palette.primary.main, 0.16),
                                 px: 0.75,
                                 py: 0.5,
                                 cursor: 'pointer',
@@ -707,7 +742,12 @@ export function AppointmentsContainer() {
           {t('appointments.create')}
         </Button>
 
-        {isLoading ? <Typography variant="body2">{t('appointments.loading')}</Typography> : null}
+        {isLoading ? (
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <CircularProgress size={18} />
+            <Typography variant="body2">{t('appointments.loading')}</Typography>
+          </Stack>
+        ) : null}
       </Stack>
 
       <Dialog open={isCreateOpen} onClose={() => setIsCreateOpen(false)} maxWidth="sm" fullWidth>
