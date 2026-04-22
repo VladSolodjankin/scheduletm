@@ -34,6 +34,7 @@ import { AppButton } from '../shared/ui/AppButton';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 
 type EditFormState = {
+  specialistId: string;
   startDate: string;
   startTime: string;
   endTime: string;
@@ -246,6 +247,7 @@ export function AppointmentsContainer() {
 
   const initialTimes = createFormValuesFromAppointmentAt(new Date().toISOString(), selectedSlotStepMin, formTimeZone);
   const initialFormValues: EditFormState = {
+    specialistId: '',
     startDate: initialTimes.startDate,
     startTime: initialTimes.startTime,
     endTime: initialTimes.endTime,
@@ -380,6 +382,7 @@ export function AppointmentsContainer() {
     const times = createFormValuesFromAppointmentAt(appointmentAtIso, selectedSlotStepMin, BROWSER_TIMEZONE);
 
     reset({
+      specialistId: String(specialistId),
       startDate: times.startDate,
       startTime: times.startTime,
       endTime: times.endTime,
@@ -398,11 +401,9 @@ export function AppointmentsContainer() {
       return;
     }
 
-    const specialistId = selectedSpecialistId === 'all'
-      ? specialists[0]?.id
-      : selectedSpecialistId;
+    const specialistId = Number(form.specialistId);
 
-    if (!specialistId) {
+    if (!Number.isFinite(specialistId) || specialistId <= 0) {
       setError('Specialist is required');
       return;
     }
@@ -454,6 +455,7 @@ export function AppointmentsContainer() {
 
     setEditingItem(item);
     reset({
+      specialistId: String(item.specialistId),
       startDate: times.startDate,
       startTime: times.startTime,
       endTime: times.endTime,
@@ -807,6 +809,26 @@ export function AppointmentsContainer() {
                 </Select>
               </FormControl>
             </Collapse>
+            <Controller
+              name="specialistId"
+              control={control}
+              render={({ field }: any) => (
+                <FormControl>
+                  <InputLabel id="specialist-label">{t('appointments.specialistFilter')}</InputLabel>
+                  <Select
+                    labelId="specialist-label"
+                    label={t('appointments.specialistFilter')}
+                    value={field.value}
+                    disabled={Boolean(editingItem)}
+                    onChange={(event) => field.onChange(String(event.target.value))}
+                  >
+                    {specialists.map((specialist) => (
+                      <MenuItem key={specialist.id} value={String(specialist.id)}>{specialist.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            />
             <Controller
               name="startDate"
               control={control}
