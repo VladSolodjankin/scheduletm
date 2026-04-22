@@ -46,7 +46,28 @@ function toDatetimeLocal(iso: string): string {
 }
 
 function fromDatetimeLocal(value: string): string {
-  return new Date(value).toISOString();
+  const [datePart, timePart] = value.split('T');
+
+  if (!datePart || !timePart) {
+    return new Date(value).toISOString();
+  }
+
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute] = timePart.split(':').map(Number);
+
+  return new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0)).toISOString();
+}
+
+function formatUtcDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
+  return date.toLocaleDateString(undefined, { timeZone: 'UTC', ...options });
+}
+
+function formatUtcTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  });
 }
 
 function statusLabel(status: AppointmentStatus): string {
@@ -372,8 +393,8 @@ export function AppointmentsContainer() {
 
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             {viewMode === 'week'
-              ? `${visibleDays[0].toLocaleDateString()} — ${visibleDays[visibleDays.length - 1].toLocaleDateString()}`
-              : visibleDays[0].toLocaleDateString()}
+              ? `${formatUtcDate(visibleDays[0])} — ${formatUtcDate(visibleDays[visibleDays.length - 1])}`
+              : formatUtcDate(visibleDays[0])}
           </Typography>
 
           <ToggleButtonGroup
@@ -392,6 +413,7 @@ export function AppointmentsContainer() {
         </Stack>
 
         <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
+        <Typography variant="caption" color="text.secondary">All times are shown in UTC (UTC+0)</Typography>
 
         <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflowX: 'auto' }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: `72px repeat(${visibleDays.length}, minmax(180px, 1fr))`, minWidth: viewMode === 'week' ? 1100 : 560 }}>
@@ -407,9 +429,9 @@ export function AppointmentsContainer() {
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {day.toLocaleDateString(undefined, { weekday: 'short' })}
+                  {formatUtcDate(day, { weekday: 'short' })}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">{day.toLocaleDateString()}</Typography>
+                <Typography variant="caption" color="text.secondary">{formatUtcDate(day)}</Typography>
               </Box>
             ))}
 
@@ -486,7 +508,7 @@ export function AppointmentsContainer() {
                             }}
                           >
                             <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-                              {new Date(item.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {formatUtcTime(item.scheduledAt)}
                             </Typography>
                             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                               {statusLabel(item.status)}
