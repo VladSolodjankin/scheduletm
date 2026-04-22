@@ -44,8 +44,14 @@ export function AppRhfTextField<TFieldValues extends FieldValues>({
     onChange: handleChange,
   };
 
-  if (type === 'datetime-local') {
-    return <AppDateTimeField {...commonProps} minutesStep={minutesStep} />;
+  if (type === 'datetime-local' || type === 'time') {
+    return (
+      <AppDateTimeField
+        {...commonProps}
+        type={type === 'time' ? 'time' : 'datetime-local'}
+        minutesStep={minutesStep}
+      />
+    );
   }
 
   return <AppTextField {...commonProps} />;
