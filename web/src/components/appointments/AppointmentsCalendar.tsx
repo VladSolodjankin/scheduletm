@@ -1,0 +1,243 @@
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Skeleton,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+  alpha,
+  useTheme,
+} from '@mui/material';
+import { Fragment } from 'react';
+import type { AppointmentItem, AppointmentListResponse } from '../../shared/types/api';
+import {
+  CalendarViewMode,
+  formatLocalDate,
+  formatLocalTime,
+  SLOT_ROWS,
+  statusLabel,
+  toDateKeyInTimezone,
+} from './appointmentsUtils';
+
+import type { TranslationKey } from '../../shared/i18n/dictionaries';
+
+type Props = {
+  t: (key: TranslationKey) => string;
+  isLoading: boolean;
+  viewMode: CalendarViewMode;
+  visibleDays: Date[];
+  displayTimeZone: string;
+  appointmentsByCell: Map<string, AppointmentItem[]>;
+  busySlotsByCell: Map<string, AppointmentListResponse['busySlots']>;
+  movePeriod: (direction: -1 | 1) => void;
+  onToday: () => void;
+  onSetViewMode: (mode: CalendarViewMode) => void;
+  onOpenCreate: (dayKey: string, hour: number, minute: number) => void;
+  onOpenEdit: (item: AppointmentItem) => void;
+  onMoveAppointment: (appointmentId: number, targetDayKey: string, targetHour: number, targetMinute: number) => void;
+  getGridDayKey: (day: Date) => string;
+};
+
+export function AppointmentsCalendar({
+  t,
+  isLoading,
+  viewMode,
+  visibleDays,
+  displayTimeZone,
+  appointmentsByCell,
+  busySlotsByCell,
+  movePeriod,
+  onToday,
+  onSetViewMode,
+  onOpenCreate,
+  onOpenEdit,
+  onMoveAppointment,
+  getGridDayKey,
+}: Props) {
+  const theme = useTheme();
+
+  return (
+    <>
+      <Card variant="outlined" sx={{ borderRadius: 3 }}>
+        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { xs: 'stretch', md: 'center' } }}>
+            <Stack direction="row" spacing={1}>
+              <Button size="small" variant="outlined" onClick={() => movePeriod(-1)}>{'<'}</Button>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={onToday}
+              >
+                {t('appointments.today')}
+              </Button>
+              <Button size="small" variant="outlined" onClick={() => movePeriod(1)}>{'>'}</Button>
+            </Stack>
+
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+              {viewMode === 'week'
+                ? `${formatLocalDate(visibleDays[0])} — ${formatLocalDate(visibleDays[visibleDays.length - 1])}`
+                : formatLocalDate(visibleDays[0])}
+            </Typography>
+
+            <ToggleButtonGroup
+              size="small"
+              exclusive
+              value={viewMode}
+              onChange={(_, nextMode: CalendarViewMode | null) => {
+                if (nextMode) {
+                  onSetViewMode(nextMode);
+                }
+              }}
+            >
+              <ToggleButton value="day">{t('appointments.viewDay')}</ToggleButton>
+              <ToggleButton value="week">{t('appointments.viewWeek')}</ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {isLoading ? (
+        <Stack spacing={1}>
+          <Skeleton variant="text" width={220} />
+          <Skeleton variant="rounded" height={520} />
+        </Stack>
+      ) : (
+        <>
+          <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
+
+          <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflowX: 'auto', boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.08)}` }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: `72px repeat(${visibleDays.length}, minmax(180px, 1fr))`, minWidth: viewMode === 'week' ? 1100 : 560 }}>
+              <Box sx={{ borderRight: 1, borderColor: 'divider', p: 1, bgcolor: 'background.default' }} />
+              {visibleDays.map((day) => (
+                <Box
+                  key={day.toISOString()}
+                  sx={{
+                    borderRight: 1,
+                    borderColor: 'divider',
+                    p: 1,
+                    bgcolor: getGridDayKey(day) === toDateKeyInTimezone(new Date(), displayTimeZone)
+                      ? alpha(theme.palette.primary.main, 0.14)
+                      : 'background.default',
+                  }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {formatLocalDate(day, { weekday: 'short' })}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">{formatLocalDate(day)}</Typography>
+                </Box>
+              ))}
+
+              {SLOT_ROWS.map((totalMinute) => {
+                const hour = Math.floor(totalMinute / 60);
+                const minute = totalMinute % 60;
+
+                return (
+                  <Fragment key={`row-${hour}-${minute}`}>
+                    <Box
+                      sx={{
+                        borderTop: 1,
+                        borderRight: 1,
+                        borderColor: 'divider',
+                        px: 1,
+                        py: 1,
+                        bgcolor: 'background.default',
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary">
+                        {`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`}
+                      </Typography>
+                    </Box>
+
+                    {visibleDays.map((day) => {
+                      const dayKey = getGridDayKey(day);
+                      const timeKey = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                      const key = `${dayKey}:${timeKey}`;
+                      const items = appointmentsByCell.get(key) ?? [];
+                      const externalBusy = busySlotsByCell.get(key) ?? [];
+
+                      return (
+                        <Box
+                          key={`${key}-cell`}
+                          sx={{
+                            borderTop: 1,
+                            borderRight: 1,
+                            borderColor: 'divider',
+                            minHeight: 36,
+                            p: 0.5,
+                            bgcolor: alpha(theme.palette.background.paper, 0.92),
+                            transition: 'background-color 0.15s ease',
+                            '&:hover': {
+                              bgcolor: 'action.hover',
+                            },
+                          }}
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            const rawId = event.dataTransfer.getData('text/appointment-id');
+                            const id = Number(rawId);
+
+                            if (!Number.isNaN(id)) {
+                              onMoveAppointment(id, dayKey, hour, minute);
+                            }
+                          }}
+                          onClick={() => onOpenCreate(dayKey, hour, minute)}
+                        >
+                          <Stack spacing={0.5}>
+                            {externalBusy.map((slot) => (
+                              <Chip
+                                key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}
+                                size="small"
+                                label="Busy (Google)"
+                                color="warning"
+                                variant="outlined"
+                              />
+                            ))}
+                            {items.map((item) => (
+                              <Box
+                                key={item.id}
+                                draggable
+                                onDragStart={(event) => event.dataTransfer.setData('text/appointment-id', String(item.id))}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  onOpenEdit(item);
+                                }}
+                                sx={{
+                                  borderRadius: 1,
+                                  border: 1,
+                                  borderColor: item.status === 'cancelled' ? 'error.main' : 'primary.light',
+                                  bgcolor: item.status === 'cancelled'
+                                    ? alpha(theme.palette.error.main, 0.12)
+                                    : alpha(theme.palette.primary.main, 0.16),
+                                  px: 0.75,
+                                  py: 0.5,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                                  {formatLocalTime(item.scheduledAt)}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                  {statusLabel(item.status)} · {item.durationMin}m
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Stack>
+                        </Box>
+                      );
+                    })}
+                  </Fragment>
+                );
+              })}
+            </Box>
+          </Box>
+        </>
+      )}
+    </>
+  );
+}
