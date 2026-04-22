@@ -124,17 +124,17 @@ scheduletm/
 3. **Реализовать операции по appointment**: смена статуса, отмена, перенос даты, ручное уведомление, подтверждение оплаты.
 4. ✅ **Внедрить i18n в web** (добавлена поддержка `ru/en`, локаль в header, переводы вынесены в отдельный слой).
 5. **Довести auth до production-потока**: logout/revoke, CSRF.
-6. **Покрыть критические сценарии тестами** (интеграционные для server + e2e smoke для web).
+6. ✅ **Покрыть критические сценарии тестами** (интеграционные smoke для server + web smoke-проверки auth/settings/appointments).
 
 ### Текущий шаг (без переусложнения)
 
-Фокус следующего инкремента: **Appointments MVP Slice** (минимальный рабочий кусок).
+Текущий инкремент закрыл **Appointments MVP Slice** и smoke-покрытие ключевого флоу.
 
-- Backend: `GET /api/appointments`, `POST /api/appointments`, `PATCH /api/appointments/:id`.
-- Поля только MVP: `scheduledAt`, `status`, `meetingLink`, `notes`.
-- Web: одна страница списка + простая форма создания/редактирования (без сложных фильтров и без drag&drop календаря).
-- После этого — только 2 действия: `cancel` и `reschedule`, остальные операции позже.
-- Критерий готовности: сценарий “создать запись → перенести → отменить” проходит целиком в web и server.
+- Backend: `GET /api/appointments`, `POST /api/appointments`, `PATCH /api/appointments/:id`, `POST /cancel`, `POST /reschedule`.
+- Поля MVP: `scheduledAt`, `status`, `meetingLink`, `notes`.
+- Web: страница appointments с календарём, popup-формой создания/редактирования и действиями cancel/reschedule.
+- Тесты: добавлены server integration smoke-сценарии (`create/reschedule/cancel`) и web smoke-проверки (`auth/settings/appointments`).
+- Следующий шаг: расширить lifecycle (`mark-paid`, `notify`) и покрыть edge-case сценарии конфликтов.
 
 ### Appointments MVP: что уже сделано
 
