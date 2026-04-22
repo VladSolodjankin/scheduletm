@@ -186,6 +186,19 @@ function composeFormDateTime(date: string, time: string): string {
   return `${date}T${time}`;
 }
 
+function createFormValuesFromAppointmentAt(appointmentAtIso: string, durationMin: number, timeZone: string) {
+  const startAt = toDatetimeLocal(appointmentAtIso, timeZone);
+  const endAt = addMinutesToDatetimeLocal(startAt, durationMin, timeZone);
+  const startParts = splitLocalDateTime(startAt);
+  const endParts = splitLocalDateTime(endAt);
+
+  return {
+    startDate: startParts.date,
+    startTime: startParts.time,
+    endTime: endParts.time,
+  };
+}
+
 function buildStartEndIso(form: EditFormState, timeZone: string) {
   const startLocal = composeFormDateTime(form.startDate, form.startTime);
   const startIso = fromDatetimeLocal(startLocal, timeZone);
@@ -231,13 +244,11 @@ export function AppointmentsContainer() {
     : specialists.find((item) => item.id === selectedSpecialistId) ?? null;
   const selectedSlotStepMin = selectedSpecialist?.slotStepMin ?? DEFAULT_SLOT_STEP_MIN;
 
-  const initialStartAt = toDatetimeLocal(new Date().toISOString(), formTimeZone);
-  const initialStartParts = splitLocalDateTime(initialStartAt);
-  const initialEndParts = splitLocalDateTime(addMinutesToDatetimeLocal(initialStartAt, selectedSlotStepMin, formTimeZone));
+  const initialTimes = createFormValuesFromAppointmentAt(new Date().toISOString(), selectedSlotStepMin, formTimeZone);
   const initialFormValues: EditFormState = {
-    startDate: initialStartParts.date,
-    startTime: initialStartParts.time,
-    endTime: initialEndParts.time,
+    startDate: initialTimes.startDate,
+    startTime: initialTimes.startTime,
+    endTime: initialTimes.endTime,
     status: 'new',
     meetingLink: '',
     notes: '',
@@ -365,14 +376,13 @@ export function AppointmentsContainer() {
       return;
     }
 
-    const startAt = createDatetimeLocal(targetDateKey, hour, minute);
-    const startParts = splitLocalDateTime(startAt);
-    const endParts = splitLocalDateTime(addMinutesToDatetimeLocal(startAt, selectedSlotStepMin, BROWSER_TIMEZONE));
+    const appointmentAtIso = fromDatetimeLocal(createDatetimeLocal(targetDateKey, hour, minute), BROWSER_TIMEZONE);
+    const times = createFormValuesFromAppointmentAt(appointmentAtIso, selectedSlotStepMin, BROWSER_TIMEZONE);
 
     reset({
-      startDate: startParts.date,
-      startTime: startParts.time,
-      endTime: endParts.time,
+      startDate: times.startDate,
+      startTime: times.startTime,
+      endTime: times.endTime,
       status: 'new',
       meetingLink: '',
       notes: '',
@@ -436,16 +446,17 @@ export function AppointmentsContainer() {
   };
 
   const openEdit = (item: AppointmentItem) => {
-    const startAt = toDatetimeLocal(item.scheduledAt, BROWSER_TIMEZONE);
-    const endAt = addMinutesToDatetimeLocal(startAt, item.durationMin || selectedSlotStepMin, BROWSER_TIMEZONE);
-    const startParts = splitLocalDateTime(startAt);
-    const endParts = splitLocalDateTime(endAt);
+    const times = createFormValuesFromAppointmentAt(
+      item.scheduledAt,
+      item.durationMin || selectedSlotStepMin,
+      BROWSER_TIMEZONE,
+    );
 
     setEditingItem(item);
     reset({
-      startDate: startParts.date,
-      startTime: startParts.time,
-      endTime: endParts.time,
+      startDate: times.startDate,
+      startTime: times.startTime,
+      endTime: times.endTime,
       status: item.status,
       meetingLink: item.meetingLink,
       notes: item.notes,
