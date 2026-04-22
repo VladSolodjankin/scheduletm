@@ -53,10 +53,16 @@ export function toDatetimeLocal(iso: string, timeZone: string): string {
 }
 
 export function fromDatetimeLocal(value: string, timeZone: string): string {
+  const parsed = new Date(value);
+  const parsedMs = parsed.getTime();
+  if (!Number.isNaN(parsedMs)) {
+    return parsed.toISOString();
+  }
+
   const [datePart, timePart] = value.split('T');
 
   if (!datePart || !timePart) {
-    return new Date(value).toISOString();
+    return new Date().toISOString();
   }
 
   const [year, month, day] = datePart.split('-').map(Number);

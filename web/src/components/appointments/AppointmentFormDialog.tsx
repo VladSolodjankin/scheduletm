@@ -131,7 +131,7 @@ export function AppointmentFormDialog({
   const startTimeValue = watch('startTime');
 
   useEffect(() => {
-    if (!open || editingItem) {
+    if (!open || editingItem || !startDateValue || !startTimeValue) {
       return;
     }
 
