@@ -4,6 +4,7 @@ vi.mock('axios', () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
+    patch: vi.fn(),
   },
 }));
 
@@ -14,7 +15,11 @@ vi.mock('../../repositories/specialist.repository', () => ({
 
 import axios from 'axios';
 import { findSpecialistById, findSpecialistCalendarCredentials } from '../../repositories/specialist.repository';
-import { createGoogleCalendarEvents, getBusyIntervalsFromGoogleCalendar } from '../google-calendar.service';
+import {
+  createGoogleCalendarEvents,
+  getBusyIntervalsFromGoogleCalendar,
+  rescheduleGoogleCalendarEvent,
+} from '../google-calendar.service';
 
 describe('google-calendar.service', () => {
   afterEach(() => {
@@ -63,6 +68,33 @@ describe('google-calendar.service', () => {
     });
 
     expect(out).toEqual([{ date: '2026-04-18', time: '10:00', durationMin: 90 }]);
+  });
+
+
+
+  it('reschedules existing Google event linked to appointment id', async () => {
+    vi.mocked(findSpecialistCalendarCredentials).mockResolvedValue({
+      google_api_key: 'api-key',
+      google_calendar_id: 'calendar-id',
+    } as any);
+    vi.mocked(axios.get)
+      .mockResolvedValueOnce({
+        data: {
+          items: [{ id: 'event-1' }],
+        },
+      } as any);
+    vi.mocked(axios.patch).mockResolvedValue({ data: {} } as any);
+
+    const out = await rescheduleGoogleCalendarEvent({
+      accountId: 7,
+      specialistId: 1,
+      appointmentId: 10,
+      appointmentAt: '2026-04-19T06:00:00.000Z',
+      durationMin: 90,
+    });
+
+    expect(out).toEqual({ updated: true });
+    expect(vi.mocked(axios.patch)).toHaveBeenCalledTimes(1);
   });
 
   it('sends Google Calendar events for each appointment', async () => {

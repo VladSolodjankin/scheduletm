@@ -11,6 +11,7 @@ import {
   MenuItem,
   Select,
   Stack,
+  Chip,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -38,14 +39,99 @@ type CalendarViewMode = 'day' | 'week';
 const STATUS_OPTIONS: AppointmentStatus[] = ['new', 'confirmed', 'cancelled'];
 const HOURS = Array.from({ length: 24 }, (_, index) => index);
 
-function toDatetimeLocal(iso: string): string {
-  const date = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
+function getDateTimeParts(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+
+  const pick = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? '00';
+
+  return {
+    year: Number(pick('year')),
+    month: Number(pick('month')),
+    day: Number(pick('day')),
+    hour: Number(pick('hour')),
+    minute: Number(pick('minute')),
+  };
 }
 
-function fromDatetimeLocal(value: string): string {
-  return new Date(value).toISOString();
+function toDatetimeLocal(iso: string, timeZone: string): string {
+  const date = new Date(iso);
+  const parts = getDateTimeParts(date, timeZone);
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T${pad(parts.hour)}:${pad(parts.minute)}`;
+}
+
+function fromDatetimeLocal(value: string, timeZone: string): string {
+  const [datePart, timePart] = value.split('T');
+
+  if (!datePart || !timePart) {
+    return new Date(value).toISOString();
+  }
+
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute] = timePart.split(':').map(Number);
+  const targetMinutes = (((year * 12 + month) * 31 + day) * 24 + hour) * 60 + minute;
+
+  let guessUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+
+  for (let i = 0; i < 3; i += 1) {
+    const guessDate = new Date(guessUtcMs);
+    const guessParts = getDateTimeParts(guessDate, timeZone);
+    const guessMinutes = (((guessParts.year * 12 + guessParts.month) * 31 + guessParts.day) * 24 + guessParts.hour) * 60 + guessParts.minute;
+    const diffMinutes = guessMinutes - targetMinutes;
+
+    if (diffMinutes === 0) {
+      break;
+    }
+
+    guessUtcMs -= diffMinutes * 60 * 1000;
+  }
+
+  return new Date(guessUtcMs).toISOString();
+}
+
+function formatDateInTimezone(date: Date, timeZone: string, options?: Intl.DateTimeFormatOptions): string {
+  return date.toLocaleDateString(undefined, { timeZone, ...options });
+}
+
+function formatTimeInTimezone(iso: string, timeZone: string): string {
+  return new Date(iso).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone,
+  });
+}
+
+function toDateKeyInTimezone(date: Date, timeZone: string): string {
+  const parts = getDateTimeParts(date, timeZone);
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
+}
+
+function toHourInTimezone(date: Date, timeZone: string): number {
+  return getDateTimeParts(date, timeZone).hour;
+}
+
+function createDatetimeLocal(dateKey: string, hour: number, minute = 0): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${dateKey}T${pad(hour)}:${pad(minute)}`;
+}
+
+function getUtcNowByTimeZone(timeZone: string): Date {
+  const now = new Date();
+  const nowLocal = toDatetimeLocal(now.toISOString(), timeZone);
+  const todayKey = nowLocal.slice(0, 10);
+
+  return new Date(fromDatetimeLocal(`${todayKey}T00:00`, timeZone));
 }
 
 function statusLabel(status: AppointmentStatus): string {
@@ -56,12 +142,6 @@ function statusLabel(status: AppointmentStatus): string {
 
 function startOfDay(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
-
-function sameDay(left: Date, right: Date): boolean {
-  return left.getUTCFullYear() === right.getUTCFullYear()
-    && left.getUTCMonth() === right.getUTCMonth()
-    && left.getUTCDate() === right.getUTCDate();
 }
 
 function weekStart(date: Date): Date {
@@ -78,30 +158,27 @@ function addDays(date: Date, days: number): Date {
   return next;
 }
 
-function atHour(date: Date, hour: number): Date {
-  const next = new Date(date);
-  next.setUTCHours(hour, 0, 0, 0);
-  return next;
-}
-
 export function AppointmentsContainer() {
   const { t } = useI18n();
   const { accessToken, user } = useAuth();
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistItem[]>([]);
+  const [busySlots, setBusySlots] = useState<AppointmentListResponse['busySlots']>([]);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | 'all'>('all');
+  const [viewerTimezone, setViewerTimezone] = useState('UTC');
 
-  const [focusDate, setFocusDate] = useState(() => startOfDay(new Date()));
+  const [focusDate, setFocusDate] = useState(() => startOfDay(getUtcNowByTimeZone('UTC')));
   const [viewMode, setViewMode] = useState<CalendarViewMode>('week');
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const displayTimeZone = viewerTimezone || 'UTC';
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
   const initialFormValues: EditFormState = {
-    scheduledAt: toDatetimeLocal(new Date().toISOString()),
+    scheduledAt: toDatetimeLocal(new Date().toISOString(), displayTimeZone),
     status: 'new',
     meetingLink: '',
     notes: '',
@@ -112,6 +189,33 @@ export function AppointmentsContainer() {
   });
 
   const canManageAll = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin;
+  const selectedSpecialist = selectedSpecialistId === 'all'
+    ? null
+    : specialists.find((item) => item.id === selectedSpecialistId) ?? null;
+
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+
+    const loadViewerTimezone = async () => {
+      try {
+        const response = await apiClient.get<{ timezone: string }>('/api/settings/user', {
+          headers: authHeaders(accessToken),
+        });
+
+        setViewerTimezone(response.data.timezone || 'UTC');
+      } catch {
+        setViewerTimezone('UTC');
+      }
+    };
+
+    void loadViewerTimezone();
+  }, [accessToken]);
+
+  useEffect(() => {
+    setFocusDate(startOfDay(getUtcNowByTimeZone(displayTimeZone)));
+  }, [displayTimeZone]);
 
   const visibleDays = useMemo(() => {
     if (viewMode === 'day') {
@@ -127,8 +231,8 @@ export function AppointmentsContainer() {
 
     for (const item of appointments) {
       const date = new Date(item.scheduledAt);
-      const dayKey = startOfDay(date).toISOString();
-      const key = `${dayKey}:${date.getUTCHours()}`;
+      const dayKey = toDateKeyInTimezone(date, displayTimeZone);
+      const key = `${dayKey}:${toHourInTimezone(date, displayTimeZone)}`;
       const list = map.get(key) ?? [];
       list.push(item);
       map.set(key, list);
@@ -139,7 +243,40 @@ export function AppointmentsContainer() {
     });
 
     return map;
-  }, [appointments]);
+  }, [appointments, displayTimeZone]);
+
+  const busySlotsByCell = useMemo(() => {
+    const map = new Map<string, AppointmentListResponse['busySlots']>();
+
+    for (const slot of busySlots) {
+      const date = new Date(slot.scheduledAt);
+      const dayKey = toDateKeyInTimezone(date, displayTimeZone);
+      const key = `${dayKey}:${toHourInTimezone(date, displayTimeZone)}`;
+      const list = map.get(key) ?? [];
+      list.push(slot);
+      map.set(key, list);
+    }
+
+    return map;
+  }, [busySlots, displayTimeZone]);
+
+  function getGridDayKey(day: Date) {
+    const noon = new Date(day);
+    noon.setUTCHours(12, 0, 0, 0);
+    return toDateKeyInTimezone(noon, displayTimeZone);
+  }
+
+  function getVisibleRange() {
+    const firstDay = visibleDays[0] ?? startOfDay(new Date());
+    const lastDay = visibleDays[visibleDays.length - 1] ?? firstDay;
+    const firstDayKey = getGridDayKey(firstDay);
+    const lastDayKey = getGridDayKey(lastDay);
+
+    return {
+      from: fromDatetimeLocal(`${firstDayKey}T00:00`, displayTimeZone),
+      to: fromDatetimeLocal(`${lastDayKey}T23:59`, displayTimeZone),
+    };
+  }
 
   const loadAppointments = async (nextSpecialistId: number | 'all' = selectedSpecialistId) => {
     if (!accessToken) {
@@ -149,13 +286,19 @@ export function AppointmentsContainer() {
     setIsLoading(true);
 
     try {
+      const { from, to } = getVisibleRange();
       const response = await apiClient.get<AppointmentListResponse>('/api/appointments', {
         headers: authHeaders(accessToken),
-        params: nextSpecialistId === 'all' ? undefined : { specialistId: nextSpecialistId },
+        params: {
+          from,
+          to,
+          ...(nextSpecialistId === 'all' ? {} : { specialistId: nextSpecialistId }),
+        },
       });
 
       setAppointments(response.data.appointments);
       setSpecialists(response.data.specialists);
+      setBusySlots(response.data.busySlots ?? []);
       setError('');
     } catch {
       setError('Unable to load appointments');
@@ -165,11 +308,11 @@ export function AppointmentsContainer() {
   };
 
   useEffect(() => {
-    void loadAppointments();
+    void loadAppointments(selectedSpecialistId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accessToken]);
+  }, [accessToken, focusDate, viewMode, selectedSpecialistId, displayTimeZone]);
 
-  const openCreate = (targetDate: Date) => {
+  const openCreate = (targetDateKey: string, hour: number) => {
     const specialistId = selectedSpecialistId === 'all'
       ? specialists[0]?.id
       : selectedSpecialistId;
@@ -180,7 +323,7 @@ export function AppointmentsContainer() {
     }
 
     reset({
-      scheduledAt: toDatetimeLocal(targetDate.toISOString()),
+      scheduledAt: createDatetimeLocal(targetDateKey, hour),
       status: 'new',
       meetingLink: '',
       notes: '',
@@ -206,7 +349,7 @@ export function AppointmentsContainer() {
     try {
       if (editingItem) {
         await apiClient.patch(`/api/appointments/${editingItem.id}`, {
-          scheduledAt: fromDatetimeLocal(form.scheduledAt),
+          scheduledAt: fromDatetimeLocal(form.scheduledAt, displayTimeZone),
           status: form.status,
           meetingLink: form.meetingLink,
           notes: form.notes,
@@ -216,7 +359,7 @@ export function AppointmentsContainer() {
       } else {
         await apiClient.post('/api/appointments', {
           specialistId,
-          scheduledAt: fromDatetimeLocal(form.scheduledAt),
+          scheduledAt: fromDatetimeLocal(form.scheduledAt, displayTimeZone),
           status: form.status,
           meetingLink: form.meetingLink,
           notes: form.notes,
@@ -235,7 +378,7 @@ export function AppointmentsContainer() {
   const openEdit = (item: AppointmentItem) => {
     setEditingItem(item);
     reset({
-      scheduledAt: toDatetimeLocal(item.scheduledAt),
+      scheduledAt: toDatetimeLocal(item.scheduledAt, displayTimeZone),
       status: item.status,
       meetingLink: item.meetingLink,
       notes: item.notes,
@@ -260,7 +403,7 @@ export function AppointmentsContainer() {
     }
   };
 
-  const moveAppointment = async (appointmentId: number, targetDate: Date) => {
+  const moveAppointment = async (appointmentId: number, targetDayKey: string, targetHour: number) => {
     if (!accessToken) {
       return;
     }
@@ -272,12 +415,15 @@ export function AppointmentsContainer() {
     }
 
     const sourceDate = new Date(current.scheduledAt);
-    const next = new Date(targetDate);
-    next.setUTCMinutes(sourceDate.getUTCMinutes(), 0, 0);
+    const sourceMinute = getDateTimeParts(sourceDate, displayTimeZone).minute;
+    const nextIso = fromDatetimeLocal(
+      createDatetimeLocal(targetDayKey, targetHour, sourceMinute),
+      displayTimeZone,
+    );
 
     try {
       await apiClient.post(`/api/appointments/${appointmentId}/reschedule`, {
-        scheduledAt: next.toISOString(),
+        scheduledAt: nextIso,
       }, {
         headers: authHeaders(accessToken),
       });
@@ -289,9 +435,8 @@ export function AppointmentsContainer() {
     }
   };
 
-  const onSpecialistChange = async (value: number | 'all') => {
+  const onSpecialistChange = (value: number | 'all') => {
     setSelectedSpecialistId(value);
-    await loadAppointments(value);
   };
 
   const movePeriod = (direction: -1 | 1) => {
@@ -334,14 +479,20 @@ export function AppointmentsContainer() {
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { xs: 'stretch', md: 'center' } }}>
           <Stack direction="row" spacing={1}>
             <Button size="small" variant="outlined" onClick={() => movePeriod(-1)}>{'<'}</Button>
-            <Button size="small" variant="outlined" onClick={() => setFocusDate(startOfDay(new Date()))}>{t('appointments.today')}</Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => setFocusDate(startOfDay(getUtcNowByTimeZone(displayTimeZone)))}
+            >
+              {t('appointments.today')}
+            </Button>
             <Button size="small" variant="outlined" onClick={() => movePeriod(1)}>{'>'}</Button>
           </Stack>
 
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             {viewMode === 'week'
-              ? `${visibleDays[0].toLocaleDateString()} — ${visibleDays[visibleDays.length - 1].toLocaleDateString()}`
-              : visibleDays[0].toLocaleDateString()}
+              ? `${formatDateInTimezone(visibleDays[0], displayTimeZone)} — ${formatDateInTimezone(visibleDays[visibleDays.length - 1], displayTimeZone)}`
+              : formatDateInTimezone(visibleDays[0], displayTimeZone)}
           </Typography>
 
           <ToggleButtonGroup
@@ -360,6 +511,11 @@ export function AppointmentsContainer() {
         </Stack>
 
         <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          {selectedSpecialist
+            ? `Displayed in your timezone: ${displayTimeZone}. Specialist timezone: ${selectedSpecialist.timezone}.`
+            : `Displayed in your timezone: ${displayTimeZone}.`}
+        </Typography>
 
         <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflowX: 'auto' }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: `72px repeat(${visibleDays.length}, minmax(180px, 1fr))`, minWidth: viewMode === 'week' ? 1100 : 560 }}>
@@ -371,13 +527,13 @@ export function AppointmentsContainer() {
                   borderRight: 1,
                   borderColor: 'divider',
                   p: 1,
-                  bgcolor: sameDay(day, new Date()) ? 'action.selected' : 'background.default',
+                  bgcolor: getGridDayKey(day) === toDateKeyInTimezone(new Date(), displayTimeZone) ? 'action.selected' : 'background.default',
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {day.toLocaleDateString(undefined, { weekday: 'short' })}
+                  {formatDateInTimezone(day, displayTimeZone, { weekday: 'short' })}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">{day.toLocaleDateString()}</Typography>
+                <Typography variant="caption" color="text.secondary">{formatDateInTimezone(day, displayTimeZone)}</Typography>
               </Box>
             ))}
 
@@ -397,9 +553,10 @@ export function AppointmentsContainer() {
                 </Box>
 
                 {visibleDays.map((day) => {
-                  const slotDate = atHour(day, hour);
-                  const key = `${startOfDay(day).toISOString()}:${hour}`;
+                  const dayKey = getGridDayKey(day);
+                  const key = `${dayKey}:${hour}`;
                   const items = appointmentsByCell.get(key) ?? [];
+                  const externalBusy = busySlotsByCell.get(key) ?? [];
 
                   return (
                     <Box
@@ -421,12 +578,21 @@ export function AppointmentsContainer() {
                         const id = Number(rawId);
 
                         if (!Number.isNaN(id)) {
-                          void moveAppointment(id, slotDate);
+                          void moveAppointment(id, dayKey, hour);
                         }
                       }}
-                      onDoubleClick={() => openCreate(slotDate)}
+                      onDoubleClick={() => openCreate(dayKey, hour)}
                     >
                       <Stack spacing={0.5}>
+                        {externalBusy.map((slot) => (
+                          <Chip
+                            key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}
+                            size="small"
+                            label="Busy (Google)"
+                            color="warning"
+                            variant="outlined"
+                          />
+                        ))}
                         {items.map((item) => (
                           <Box
                             key={item.id}
@@ -444,7 +610,7 @@ export function AppointmentsContainer() {
                             }}
                           >
                             <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-                              {new Date(item.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {formatTimeInTimezone(item.scheduledAt, displayTimeZone)}
                             </Typography>
                             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                               {statusLabel(item.status)}
@@ -460,7 +626,7 @@ export function AppointmentsContainer() {
           </Box>
         </Box>
 
-        <Button onClick={() => openCreate(atHour(visibleDays[0], 9))} variant="outlined" size="small" sx={{ alignSelf: 'flex-start' }}>
+        <Button onClick={() => openCreate(getGridDayKey(visibleDays[0]), 9)} variant="outlined" size="small" sx={{ alignSelf: 'flex-start' }}>
           {t('appointments.create')}
         </Button>
 

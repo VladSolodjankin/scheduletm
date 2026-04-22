@@ -8,6 +8,7 @@ type GoogleCalendarEventDateTime = {
 };
 
 type GoogleCalendarEvent = {
+  id?: string;
   status?: string;
   start?: GoogleCalendarEventDateTime;
   end?: GoogleCalendarEventDateTime;
@@ -152,6 +153,11 @@ export async function createGoogleCalendarEvents(input: {
         {
           summary: input.serviceName,
           description: descriptionLines.join('\n'),
+          extendedProperties: {
+            private: {
+              appointmentId: String(appointment.id),
+            },
+          },
           start: { dateTime: startIso },
           end: { dateTime: endIso },
         },
@@ -176,4 +182,93 @@ export async function createGoogleCalendarEvents(input: {
     sent,
     skipped: input.appointments.length - sent,
   };
+}
+
+async function findEventIdByAppointmentId(input: {
+  googleApiKey: string;
+  googleCalendarId: string;
+  appointmentId: number;
+}) {
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(input.googleCalendarId)}/events`;
+
+  const byPrivateProperty = await axios.get<GoogleCalendarEventsResponse>(url, {
+    params: {
+      key: input.googleApiKey,
+      singleEvents: true,
+      privateExtendedProperty: `appointmentId=${input.appointmentId}`,
+      maxResults: 1,
+    },
+  });
+
+  const eventByPrivateProperty = byPrivateProperty.data.items?.[0];
+  if (eventByPrivateProperty?.id) {
+    return eventByPrivateProperty.id;
+  }
+
+  const byDescription = await axios.get<GoogleCalendarEventsResponse>(url, {
+    params: {
+      key: input.googleApiKey,
+      singleEvents: true,
+      q: `Appointment ID: ${input.appointmentId}`,
+      maxResults: 1,
+    },
+  });
+
+  return byDescription.data.items?.[0]?.id ?? null;
+}
+
+export async function rescheduleGoogleCalendarEvent(input: {
+  accountId: number;
+  specialistId: number;
+  appointmentId: number;
+  appointmentAt: string | Date;
+  durationMin: number;
+}) {
+  const credentials = await findSpecialistCalendarCredentials(input.accountId, input.specialistId);
+  const calendarConfig = getGoogleCalendarConfig(credentials ?? {});
+  if (!calendarConfig) {
+    return { updated: false };
+  }
+
+  try {
+    const eventId = await findEventIdByAppointmentId({
+      googleApiKey: calendarConfig.googleApiKey,
+      googleCalendarId: calendarConfig.googleCalendarId,
+      appointmentId: input.appointmentId,
+    });
+
+    if (!eventId) {
+      return { updated: false };
+    }
+
+    const startIso = new Date(input.appointmentAt).toISOString();
+    const endIso = new Date(
+      new Date(input.appointmentAt).getTime() + input.durationMin * 60 * 1000,
+    ).toISOString();
+
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarConfig.googleCalendarId)}/events/${encodeURIComponent(eventId)}`;
+    await axios.patch(url, {
+      start: { dateTime: startIso },
+      end: { dateTime: endIso },
+      extendedProperties: {
+        private: {
+          appointmentId: String(input.appointmentId),
+        },
+      },
+    }, {
+      params: {
+        key: calendarConfig.googleApiKey,
+      },
+    });
+
+    return { updated: true };
+  } catch (error) {
+    logWarn('google_calendar.reschedule_event_failed', {
+      account_id: input.accountId,
+      specialist_id: input.specialistId,
+      appointment_id: input.appointmentId,
+    });
+
+    return { updated: false };
+  }
 }
