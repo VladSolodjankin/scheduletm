@@ -33,6 +33,11 @@ export type GoogleOAuthStartResponse = {
   state: string;
 };
 
+export type GoogleOAuthDisconnectResponse = {
+  provider: 'google';
+  connected: boolean;
+};
+
 export type AppointmentStatus = 'new' | 'confirmed' | 'cancelled';
 
 export type SpecialistItem = {

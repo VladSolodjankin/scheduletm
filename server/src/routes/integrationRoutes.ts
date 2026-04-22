@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
-import { completeGoogleOAuth, createGoogleOAuthUrl } from '../services/googleOAuthService.js';
+import { completeGoogleOAuth, createGoogleOAuthUrl, disconnectGoogleOAuth } from '../services/googleOAuthService.js';
 
 export const integrationRoutes = Router();
 
@@ -42,4 +42,17 @@ integrationRoutes.get('/google/oauth/callback', async (req, res) => {
   }
 
   return res.redirect(`${env.APP_URL}/settings?google_oauth=success`);
+});
+
+integrationRoutes.post('/google/disconnect', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const ok = await disconnectGoogleOAuth(user.id);
+  if (!ok) {
+    return res.status(400).json({ message: 'Invalid user id' });
+  }
+
+  return res.json({
+    provider: 'google',
+    connected: false,
+  });
 });

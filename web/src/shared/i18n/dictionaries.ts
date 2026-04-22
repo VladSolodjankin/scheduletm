@@ -50,12 +50,15 @@ export const dictionaries = {
       integrationsSubtitle: 'Connect external services to automate bookings and reminders.',
       connectGoogle: 'Connect Google',
       connectingGoogle: 'Redirecting to Google...',
+      disconnectGoogle: 'Disconnect Google',
+      disconnectingGoogle: 'Disconnecting...',
       googleConnected: 'Google connected',
       googleConnectedSuccessfully: 'Google Calendar connected successfully.',
       errors: {
         load: 'Unable to load settings.',
         save: 'Unable to save settings.',
-        connectGoogle: 'Unable to connect Google.'
+        connectGoogle: 'Unable to connect Google.',
+        disconnectGoogle: 'Unable to disconnect Google.'
       }
     },
     appointments: {
@@ -134,12 +137,15 @@ export const dictionaries = {
       integrationsSubtitle: 'Подключите внешние сервисы, чтобы автоматизировать бронирования и напоминания.',
       connectGoogle: 'Подключить Google',
       connectingGoogle: 'Переходим в Google...',
+      disconnectGoogle: 'Отключить Google',
+      disconnectingGoogle: 'Отключаем...',
       googleConnected: 'Google подключен',
       googleConnectedSuccessfully: 'Google Calendar успешно подключен.',
       errors: {
         load: 'Не удалось загрузить настройки.',
         save: 'Не удалось сохранить настройки.',
-        connectGoogle: 'Не удалось подключить Google.'
+        connectGoogle: 'Не удалось подключить Google.',
+        disconnectGoogle: 'Не удалось отключить Google.'
       }
     },
     appointments: {
@@ -213,11 +219,14 @@ export type TranslationKey =
   | 'settings.integrationsSubtitle'
   | 'settings.connectGoogle'
   | 'settings.connectingGoogle'
+  | 'settings.disconnectGoogle'
+  | 'settings.disconnectingGoogle'
   | 'settings.googleConnected'
   | 'settings.googleConnectedSuccessfully'
   | 'settings.errors.load'
   | 'settings.errors.save'
   | 'settings.errors.connectGoogle'
+  | 'settings.errors.disconnectGoogle'
   | 'appointments.pageTitle'
   | 'appointments.pageSubtitle'
   | 'appointments.specialistFilter'
