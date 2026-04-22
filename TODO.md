@@ -27,7 +27,7 @@
 - [x] Сделать Appointments MVP Slice end-to-end: `list + create + edit` (server + web).
 - [x] Ограничить первую версию полями: `scheduledAt`, `status`, `meetingLink`, `notes`.
 - [x] Добавить только два action endpoint: `cancel`, `reschedule`.
-- [ ] Добавить 3 интеграционных smoke-сценария: create, reschedule, cancel.
+- [x] Добавить 3 route-smoke-сценария server (mocked service layer): create, reschedule, cancel.
 - [x] Добавить drag&drop перенос записи в календаре (web).
 - [x] Доработать календарный UI до full time-grid вида (уровень Teams-like).
 
@@ -44,10 +44,10 @@
 
 ### 4.2 Appointments (MVP)
 
-- [ ] Добавить сущность `appointment` в server + CRUD/list API.
-- [ ] Добавить поля `status`, `paymentStatus`, `scheduledAt`, `meetingLink`, `notes`.
-- [ ] Реализовать операции: подтверждение оплаты, отмена, перенос даты, ручное уведомление.
-- [ ] Добавить в web страницу списка и карточку редактирования appointment.
+- [x] Добавить сущность `appointment` в server + CRUD/list API.
+- [x] Добавить поля `status`, `paymentStatus`, `scheduledAt`, `meetingLink`, `notes`.
+- [ ] Реализовать операции: подтверждение оплаты, отмена, перенос даты, ручное уведомление. *(в MVP готовы cancel/reschedule; mark-paid/notify в следующем шаге)*
+- [x] Добавить в web страницу списка и карточку редактирования appointment.
 
 ### 4.3 Meeting link strategy
 
@@ -66,7 +66,7 @@
 - [x] Добавить поддержку разных языков (i18n, переводы по страницам).
 - [x] Для неавторизованных пользователей показывать только `/login` и `/register` без меню/настроек; после регистрации делать redirect на `/login`.
 - [x] Добавить в header профиль авторизованного пользователя (avatar/инициалы + dropdown с settings/logout) и mobile-friendly компоновку шапки.
-- [ ] Добавить интеграционные тесты (server) и e2e smoke (web).
+- [x] Добавить route-smoke тесты (server, mocked service layer) и web smoke-проверки.
 - [x] Перевести web-формы (auth/settings) на `react-hook-form` для централизованного контроля полей.
 - [x] На `401 Unauthorized` в web-клиенте автоматически делать logout и redirect на `/login`.
 

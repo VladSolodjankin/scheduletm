@@ -50,8 +50,8 @@
 
 ## 6. Appointments readiness
 
-- [ ] Сначала закрыть MVP-слайс: list/create/edit + cancel/reschedule (end-to-end через web + server).
-- [ ] Добавить контракт и валидацию для lifecycle appointments.
+- [x] Сначала закрыть MVP-слайс: list/create/edit + cancel/reschedule (end-to-end через web + server).
+- [x] Добавить контракт и валидацию для lifecycle appointments (create/update/reschedule schemas + route-smoke coverage (service layer mocked)).
 - [ ] Добавить optimistic locking/versioning для защиты от одновременного редактирования.
 - [ ] Добавить аудит-лог действий (cancel/reschedule/mark-paid/notify).
 - [ ] Добавить идемпотентность на операции с внешними уведомлениями.

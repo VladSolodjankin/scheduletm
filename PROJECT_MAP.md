@@ -119,3 +119,8 @@
 - `web_users.google_api_key` — ключ, полученный через OAuth в web (под будущие роли и self-service логин специалистов).
 - `specialists.user_id` — связь владельца credentials с конкретным специалистом.
 - `specialists` не хранит Google credentials; bot/web должны использовать `web_users.google_api_key/google_calendar_id` через связь `specialists.user_id`.
+
+## Тестовая карта (smoke)
+
+- `server/tests/appointments.routes.smoke.test.ts` — route-smoke для API сценариев `create`, `reschedule`, `cancel` через Express app + `vitest` + встроенный `fetch` Node.js (service-слой замокан).
+- `web/tests/e2e/smoke.e2e.test.mjs` — web smoke для сценариев `auth/settings/appointments` (проверка маршрутов и API-контрактов на уровне SPA-кода).
