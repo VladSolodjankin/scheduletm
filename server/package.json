@@ -11,7 +11,8 @@
     "knex": "node --loader ts-node/esm ../node_modules/knex/bin/cli.js --knexfile knexfile.ts",
     "migrate:make": "npm run knex -- migrate:make",
     "migrate:latest": "npm run knex -- migrate:latest",
-    "migrate:rollback": "npm run knex -- migrate:rollback"
+    "migrate:rollback": "npm run knex -- migrate:rollback",
+    "test": "DATABASE_URL=postgres://smoke:smoke@127.0.0.1:5432/smoke vitest run --config vitest.config.ts"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",
@@ -33,6 +34,7 @@
     "@types/node": "^25.6.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "vitest": "^4.1.5"
   }
 }

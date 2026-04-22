@@ -7,7 +7,9 @@
     "dev": "npm run typecheck && vite",
     "build": "tsc -p tsconfig.json && vite build",
     "start": "serve -s dist -l tcp://0.0.0.0:$PORT",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/e2e/smoke.e2e.test.mjs",
+    "test:e2e": "node --test tests/e2e/smoke.e2e.test.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
