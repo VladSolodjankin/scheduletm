@@ -40,15 +40,99 @@ const STATUS_OPTIONS: AppointmentStatus[] = ['new', 'confirmed', 'cancelled'];
 const HOURS = Array.from({ length: 24 }, (_, index) => index);
 const BROWSER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
-function toDatetimeLocal(iso: string): string {
+function getDateTimeParts(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+
+  const pick = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? '00';
+
+  return {
+    year: Number(pick('year')),
+    month: Number(pick('month')),
+    day: Number(pick('day')),
+    hour: Number(pick('hour')),
+    minute: Number(pick('minute')),
+  };
+}
+
+function toDatetimeLocal(iso: string, timeZone: string): string {
   const date = new Date(iso);
+  const parts = getDateTimeParts(date, timeZone);
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}T${pad(parts.hour)}:${pad(parts.minute)}`;
+}
+
+function fromDatetimeLocal(value: string, timeZone: string): string {
+  const [datePart, timePart] = value.split('T');
+
+  if (!datePart || !timePart) {
+    return new Date(value).toISOString();
+  }
+
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute] = timePart.split(':').map(Number);
+  const targetMinutes = (((year * 12 + month) * 31 + day) * 24 + hour) * 60 + minute;
+
+  let guessUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+
+  for (let i = 0; i < 3; i += 1) {
+    const guessDate = new Date(guessUtcMs);
+    const guessParts = getDateTimeParts(guessDate, timeZone);
+    const guessMinutes = (((guessParts.year * 12 + guessParts.month) * 31 + guessParts.day) * 24 + guessParts.hour) * 60 + guessParts.minute;
+    const diffMinutes = guessMinutes - targetMinutes;
+
+    if (diffMinutes === 0) {
+      break;
+    }
+
+    guessUtcMs -= diffMinutes * 60 * 1000;
+  }
+
+  return new Date(guessUtcMs).toISOString();
+}
+
+function formatDateInTimezone(date: Date, timeZone: string, options?: Intl.DateTimeFormatOptions): string {
+  return date.toLocaleDateString(undefined, { timeZone, ...options });
+}
+
+function formatTimeInTimezone(iso: string, timeZone: string): string {
+  return new Date(iso).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone,
+  });
+}
+
+function toDateKeyInTimezone(date: Date, timeZone: string): string {
+  const parts = getDateTimeParts(date, timeZone);
   const pad = (n: number) => String(n).padStart(2, '0');
 
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-function fromDatetimeLocal(value: string): string {
-  return new Date(value).toISOString();
+function toHourInTimezone(date: Date, timeZone: string): number {
+  return getDateTimeParts(date, timeZone).hour;
+}
+
+function createDatetimeLocal(dateKey: string, hour: number, minute = 0): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${dateKey}T${pad(hour)}:${pad(minute)}`;
+}
+
+function getUtcNowByTimeZone(timeZone: string): Date {
+  const now = new Date();
+  const nowLocal = toDatetimeLocal(now.toISOString(), timeZone);
+  const todayKey = nowLocal.slice(0, 10);
+
+  return new Date(fromDatetimeLocal(`${todayKey}T00:00`, timeZone));
 }
 
 function formatLocalDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
@@ -109,17 +193,19 @@ export function AppointmentsContainer() {
   const [specialists, setSpecialists] = useState<SpecialistItem[]>([]);
   const [busySlots, setBusySlots] = useState<AppointmentListResponse['busySlots']>([]);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | 'all'>('all');
+  const [viewerTimezone, setViewerTimezone] = useState('UTC');
 
-  const [focusDate, setFocusDate] = useState(() => startOfDay(new Date()));
+  const [focusDate, setFocusDate] = useState(() => startOfDay(getUtcNowByTimeZone('UTC')));
   const [viewMode, setViewMode] = useState<CalendarViewMode>('week');
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const displayTimeZone = viewerTimezone || 'UTC';
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
   const initialFormValues: EditFormState = {
-    scheduledAt: toDatetimeLocal(new Date().toISOString()),
+    scheduledAt: toDatetimeLocal(new Date().toISOString(), displayTimeZone),
     status: 'new',
     meetingLink: '',
     notes: '',
@@ -160,7 +246,40 @@ export function AppointmentsContainer() {
     });
 
     return map;
-  }, [appointments]);
+  }, [appointments, displayTimeZone]);
+
+  const busySlotsByCell = useMemo(() => {
+    const map = new Map<string, AppointmentListResponse['busySlots']>();
+
+    for (const slot of busySlots) {
+      const date = new Date(slot.scheduledAt);
+      const dayKey = toDateKeyInTimezone(date, displayTimeZone);
+      const key = `${dayKey}:${toHourInTimezone(date, displayTimeZone)}`;
+      const list = map.get(key) ?? [];
+      list.push(slot);
+      map.set(key, list);
+    }
+
+    return map;
+  }, [busySlots, displayTimeZone]);
+
+  function getGridDayKey(day: Date) {
+    const noon = new Date(day);
+    noon.setUTCHours(12, 0, 0, 0);
+    return toDateKeyInTimezone(noon, displayTimeZone);
+  }
+
+  function getVisibleRange() {
+    const firstDay = visibleDays[0] ?? startOfDay(new Date());
+    const lastDay = visibleDays[visibleDays.length - 1] ?? firstDay;
+    const firstDayKey = getGridDayKey(firstDay);
+    const lastDayKey = getGridDayKey(lastDay);
+
+    return {
+      from: fromDatetimeLocal(`${firstDayKey}T00:00`, displayTimeZone),
+      to: fromDatetimeLocal(`${lastDayKey}T23:59`, displayTimeZone),
+    };
+  }
 
   const busySlotsByCell = useMemo(() => {
     const map = new Map<string, AppointmentListResponse['busySlots']>();
@@ -264,7 +383,7 @@ export function AppointmentsContainer() {
     try {
       if (editingItem) {
         await apiClient.patch(`/api/appointments/${editingItem.id}`, {
-          scheduledAt: fromDatetimeLocal(form.scheduledAt),
+          scheduledAt: fromDatetimeLocal(form.scheduledAt, displayTimeZone),
           status: form.status,
           meetingLink: form.meetingLink,
           notes: form.notes,
@@ -274,7 +393,7 @@ export function AppointmentsContainer() {
       } else {
         await apiClient.post('/api/appointments', {
           specialistId,
-          scheduledAt: fromDatetimeLocal(form.scheduledAt),
+          scheduledAt: fromDatetimeLocal(form.scheduledAt, displayTimeZone),
           status: form.status,
           meetingLink: form.meetingLink,
           notes: form.notes,
@@ -293,7 +412,7 @@ export function AppointmentsContainer() {
   const openEdit = (item: AppointmentItem) => {
     setEditingItem(item);
     reset({
-      scheduledAt: toDatetimeLocal(item.scheduledAt),
+      scheduledAt: toDatetimeLocal(item.scheduledAt, displayTimeZone),
       status: item.status,
       meetingLink: item.meetingLink,
       notes: item.notes,
