@@ -133,6 +133,42 @@ function mapSpecialistsForUi(rows: SpecialistRecord[]) {
   }));
 }
 
+function toTimeRange(scheduledAtIso: string, durationMin: number) {
+  const start = new Date(scheduledAtIso).getTime();
+  const end = start + durationMin * 60 * 1000;
+
+  return { start, end };
+}
+
+function intersectsByTime(
+  left: { scheduledAt: string; durationMin: number },
+  right: { scheduledAt: string; durationMin: number },
+) {
+  const leftRange = toTimeRange(left.scheduledAt, left.durationMin);
+  const rightRange = toTimeRange(right.scheduledAt, right.durationMin);
+
+  return leftRange.start < rightRange.end && rightRange.start < leftRange.end;
+}
+
+function filterBusySlotsOverlappingAppointments(
+  appointments: AppointmentDto[],
+  busySlots: ExternalBusySlot[],
+): ExternalBusySlot[] {
+  const appointmentsBySpecialist = new Map<number, AppointmentDto[]>();
+
+  for (const appointment of appointments) {
+    const list = appointmentsBySpecialist.get(appointment.specialistId) ?? [];
+    list.push(appointment);
+    appointmentsBySpecialist.set(appointment.specialistId, list);
+  }
+
+  return busySlots.filter((busySlot) => {
+    const specialistAppointments = appointmentsBySpecialist.get(busySlot.specialistId) ?? [];
+
+    return !specialistAppointments.some((appointment) => intersectsByTime(appointment, busySlot));
+  });
+}
+
 export async function getAppointments(
   actor: User,
   filters: { from?: string; to?: string; specialistId?: number },
@@ -167,11 +203,12 @@ export async function getAppointments(
     from: fromDate,
     to: toDate,
   });
+  const appointmentsForUi = items.map(mapAppointment);
 
   return {
-    appointments: items.map(mapAppointment),
+    appointments: appointmentsForUi,
     specialists,
-    busySlots,
+    busySlots: filterBusySlotsOverlappingAppointments(appointmentsForUi, busySlots),
   };
 }
 

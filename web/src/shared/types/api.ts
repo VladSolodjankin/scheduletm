@@ -65,5 +65,8 @@ export type AppointmentListResponse = {
     scheduledAt: string;
     durationMin: number;
     source: 'google';
+    title: string;
+    organizerEmail: string;
+    creatorEmail: string;
   }>;
 };
