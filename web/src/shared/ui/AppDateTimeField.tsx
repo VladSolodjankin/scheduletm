@@ -35,19 +35,6 @@ export function AppDateTimeField({ type = 'datetime-local', minutesStep, slotPro
     emitChange(newValue?.isValid() ? newValue.format('HH:mm') : '');
   };
 
-  const commonTextFieldProps = {
-    ...props,
-    fullWidth: true,
-    size: 'medium' as const,
-    slotProps: {
-      ...slotProps,
-      inputLabel: {
-        ...(typeof slotProps?.inputLabel === 'object' && slotProps.inputLabel ? slotProps.inputLabel : {}),
-        shrink: true,
-      },
-    },
-  };
-
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       {type === 'time' ? (
@@ -56,18 +43,13 @@ export function AppDateTimeField({ type = 'datetime-local', minutesStep, slotPro
           value={pickerValue}
           onChange={handleTimeChange}
           timeSteps={minutesStep ? { minutes: minutesStep } : undefined}
-          slotProps={{
-            textField: commonTextFieldProps,
-          }}
+
         />
       ) : (
         <DateTimePicker
           ampm={false}
           value={pickerValue}
           onChange={handleDateTimeChange}
-          slotProps={{
-            textField: commonTextFieldProps,
-          }}
         />
       )}
     </LocalizationProvider>

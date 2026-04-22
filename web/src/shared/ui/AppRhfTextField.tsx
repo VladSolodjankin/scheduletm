@@ -54,5 +54,5 @@ export function AppRhfTextField<TFieldValues extends FieldValues>({
     );
   }
 
-  return <AppTextField {...commonProps} />;
+  return <AppTextField {...commonProps} type={type} />;
 }
