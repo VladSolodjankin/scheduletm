@@ -54,6 +54,13 @@ export type SpecialistRecord = {
   name: string;
   is_active: boolean;
   user_id: number | null;
+  timezone: string;
+};
+
+export type SpecialistCalendarCredentials = {
+  specialistId: number;
+  googleApiKey: string;
+  googleCalendarId: string | null;
 };
 
 export async function findSpecialistById(accountId: number, specialistId: number): Promise<SpecialistRecord | null> {
@@ -65,9 +72,21 @@ export async function findSpecialistById(accountId: number, specialistId: number
 }
 
 export async function listSpecialistsByAccount(accountId: number): Promise<SpecialistRecord[]> {
-  return db('specialists')
-    .where({ account_id: accountId })
-    .orderBy('name', 'asc');
+  return db('specialists as s')
+    .leftJoin('web_users as wu', function joinWebUsers() {
+      this.on('wu.id', '=', 's.user_id').andOn('wu.account_id', '=', 's.account_id');
+    })
+    .where('s.account_id', accountId)
+    .orderBy('s.name', 'asc')
+    .select(
+      's.id',
+      's.account_id',
+      's.code',
+      's.name',
+      's.is_active',
+      's.user_id',
+      db.raw("COALESCE(wu.timezone, 'UTC') as timezone"),
+    );
 }
 
 export async function findSpecialistByWebUserId(accountId: number, webUserId: number): Promise<SpecialistRecord | null> {
@@ -76,4 +95,28 @@ export async function findSpecialistByWebUserId(accountId: number, webUserId: nu
     .first<SpecialistRecord>();
 
   return row ?? null;
+}
+
+export async function findSpecialistsCalendarCredentials(
+  accountId: number,
+  specialistIds: number[],
+): Promise<SpecialistCalendarCredentials[]> {
+  if (!specialistIds.length) {
+    return [];
+  }
+
+  const rows = await db('specialists as s')
+    .join('web_users as wu', function joinWebUsers() {
+      this.on('wu.id', '=', 's.user_id').andOn('wu.account_id', '=', 's.account_id');
+    })
+    .where('s.account_id', accountId)
+    .whereIn('s.id', specialistIds)
+    .whereNotNull('wu.google_api_key')
+    .select(
+      's.id as specialistId',
+      'wu.google_api_key as googleApiKey',
+      'wu.google_calendar_id as googleCalendarId',
+    );
+
+  return rows.filter((row) => Boolean(row.googleApiKey));
 }

@@ -38,6 +38,7 @@ export type AppointmentStatus = 'new' | 'confirmed' | 'cancelled';
 export type SpecialistItem = {
   id: number;
   name: string;
+  timezone: string;
 };
 
 export type AppointmentItem = {
@@ -52,4 +53,10 @@ export type AppointmentItem = {
 export type AppointmentListResponse = {
   appointments: AppointmentItem[];
   specialists: SpecialistItem[];
+  busySlots: Array<{
+    specialistId: number;
+    scheduledAt: string;
+    durationMin: number;
+    source: 'google';
+  }>;
 };
