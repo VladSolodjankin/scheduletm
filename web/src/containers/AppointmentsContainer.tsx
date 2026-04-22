@@ -12,7 +12,6 @@ import {
   Select,
   Stack,
   Chip,
-  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -99,23 +98,11 @@ function fromDatetimeLocal(value: string, timeZone: string): string {
   return new Date(guessUtcMs).toISOString();
 }
 
-function formatDateInTimezone(date: Date, timeZone: string, options?: Intl.DateTimeFormatOptions): string {
-  return date.toLocaleDateString(undefined, { timeZone, ...options });
-}
-
-function formatTimeInTimezone(iso: string, timeZone: string): string {
-  return new Date(iso).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone,
-  });
-}
-
 function toDateKeyInTimezone(date: Date, timeZone: string): string {
   const parts = getDateTimeParts(date, timeZone);
   const pad = (n: number) => String(n).padStart(2, '0');
 
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
 }
 
 function toHourInTimezone(date: Date, timeZone: string): number {
@@ -152,15 +139,6 @@ function toLocalDateKey(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-function toLocalHour(date: Date): number {
-  return date.getHours();
-}
-
-function createDatetimeLocal(dateKey: string, hour: number, minute = 0): string {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${dateKey}T${pad(hour)}:${pad(minute)}`;
-}
-
 function statusLabel(status: AppointmentStatus): string {
   if (status === 'confirmed') return 'confirmed';
   if (status === 'cancelled') return 'cancelled';
@@ -193,14 +171,13 @@ export function AppointmentsContainer() {
   const [specialists, setSpecialists] = useState<SpecialistItem[]>([]);
   const [busySlots, setBusySlots] = useState<AppointmentListResponse['busySlots']>([]);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | 'all'>('all');
-  const [viewerTimezone, setViewerTimezone] = useState('UTC');
+  const displayTimeZone = BROWSER_TIMEZONE;
 
-  const [focusDate, setFocusDate] = useState(() => startOfDay(getUtcNowByTimeZone('UTC')));
+  const [focusDate, setFocusDate] = useState(() => startOfDay(getUtcNowByTimeZone(displayTimeZone)));
   const [viewMode, setViewMode] = useState<CalendarViewMode>('week');
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const displayTimeZone = viewerTimezone || 'UTC';
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
@@ -234,8 +211,8 @@ export function AppointmentsContainer() {
 
     for (const item of appointments) {
       const date = new Date(item.scheduledAt);
-      const dayKey = toLocalDateKey(date);
-      const key = `${dayKey}:${toLocalHour(date)}`;
+      const dayKey = toDateKeyInTimezone(date, displayTimeZone);
+      const key = `${dayKey}:${toHourInTimezone(date, displayTimeZone)}`;
       const list = map.get(key) ?? [];
       list.push(item);
       map.set(key, list);
@@ -265,7 +242,7 @@ export function AppointmentsContainer() {
 
   function getGridDayKey(day: Date) {
     const noon = new Date(day);
-    noon.setUTCHours(12, 0, 0, 0);
+    noon.setHours(12, 0, 0, 0);
     return toDateKeyInTimezone(noon, displayTimeZone);
   }
 
@@ -278,37 +255,6 @@ export function AppointmentsContainer() {
     return {
       from: fromDatetimeLocal(`${firstDayKey}T00:00`, displayTimeZone),
       to: fromDatetimeLocal(`${lastDayKey}T23:59`, displayTimeZone),
-    };
-  }
-
-  const busySlotsByCell = useMemo(() => {
-    const map = new Map<string, AppointmentListResponse['busySlots']>();
-
-    for (const slot of busySlots) {
-      const date = new Date(slot.scheduledAt);
-      const dayKey = toLocalDateKey(date);
-      const key = `${dayKey}:${toLocalHour(date)}`;
-      const list = map.get(key) ?? [];
-      list.push(slot);
-      map.set(key, list);
-    }
-
-    return map;
-  }, [busySlots]);
-
-  function getGridDayKey(day: Date) {
-    return toLocalDateKey(day);
-  }
-
-  function getVisibleRange() {
-    const firstDay = visibleDays[0] ?? startOfDay(new Date());
-    const lastDay = visibleDays[visibleDays.length - 1] ?? firstDay;
-    const firstDayKey = getGridDayKey(firstDay);
-    const lastDayKey = getGridDayKey(lastDay);
-
-    return {
-      from: fromDatetimeLocal(`${firstDayKey}T00:00`),
-      to: fromDatetimeLocal(`${lastDayKey}T23:59`),
     };
   }
 
@@ -452,6 +398,7 @@ export function AppointmentsContainer() {
     const sourceMinute = sourceDate.getMinutes();
     const nextIso = fromDatetimeLocal(
       createDatetimeLocal(targetDayKey, targetHour, sourceMinute),
+      displayTimeZone,
     );
 
     try {
@@ -560,7 +507,7 @@ export function AppointmentsContainer() {
                   borderRight: 1,
                   borderColor: 'divider',
                   p: 1,
-                  bgcolor: getGridDayKey(day) === toLocalDateKey(new Date()) ? 'action.selected' : 'background.default',
+                  bgcolor: getGridDayKey(day) === toDateKeyInTimezone(new Date(), displayTimeZone) ? 'action.selected' : 'background.default',
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
