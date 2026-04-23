@@ -11,6 +11,7 @@ import {
 } from '../shared/theme/constants';
 import { createAppTheme } from '../shared/theme/createAppTheme';
 import { router } from './router';
+import { AppErrorBoundary } from './AppErrorBoundary';
 
 function getInitialMode(): ThemeMode {
   const persisted = localStorage.getItem('ui-theme-mode');
@@ -42,15 +43,17 @@ export function App() {
   };
 
   return (
-    <ThemeSettingsContext.Provider value={{ mode, paletteVariantId, toggleMode, setPaletteVariantId }}>
-      <ThemeProvider theme={theme}>
-        <I18nProvider>
-          <AuthProvider>
-            <CssBaseline />
-            <RouterProvider router={router} />
-          </AuthProvider>
-        </I18nProvider>
-      </ThemeProvider>
-    </ThemeSettingsContext.Provider>
+    <AppErrorBoundary>
+      <ThemeSettingsContext.Provider value={{ mode, paletteVariantId, toggleMode, setPaletteVariantId }}>
+        <ThemeProvider theme={theme}>
+          <I18nProvider>
+            <AuthProvider>
+              <CssBaseline />
+              <RouterProvider router={router} />
+            </AuthProvider>
+          </I18nProvider>
+        </ThemeProvider>
+      </ThemeSettingsContext.Provider>
+    </AppErrorBoundary>
   );
 }
