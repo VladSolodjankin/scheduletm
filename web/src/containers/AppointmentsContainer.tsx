@@ -382,7 +382,7 @@ export function AppointmentsContainer() {
           onMoveAppointment={(id, dayKey, hour, minute) => {
             void moveAppointment(id, dayKey, hour, minute);
           }}
-          onPastSlotActionBlocked={() => setError(pastSlotError)}
+          pastSlotHint={pastSlotError}
           getGridDayKey={getGridDayKey}
         />
       </Stack>
