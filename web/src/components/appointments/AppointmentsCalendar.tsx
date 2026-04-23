@@ -41,7 +41,7 @@ type Props = {
   onOpenCreate: (dayKey: string, hour: number, minute: number) => void;
   onOpenEdit: (item: AppointmentItem) => void;
   onMoveAppointment: (appointmentId: number, targetDayKey: string, targetHour: number, targetMinute: number) => void;
-  onPastSlotActionBlocked: () => void;
+  pastSlotHint: string;
   getGridDayKey: (day: Date) => string;
 };
 
@@ -58,7 +58,7 @@ export function AppointmentsCalendar({
   onOpenCreate,
   onOpenEdit,
   onMoveAppointment,
-  onPastSlotActionBlocked,
+  pastSlotHint,
   getGridDayKey,
 }: Props) {
   const theme = useTheme();
@@ -174,136 +174,136 @@ export function AppointmentsCalendar({
                       const key = `${dayKey}:${timeKey}`;
                       const items = appointmentsByCell.get(key) ?? [];
                       const externalBusy = busySlotsByCell.get(key) ?? [];
+                      const isPastSlot = isSlotInPast(dayKey, hour, minute, displayTimeZone);
 
                       return (
-                        <Box
-                          key={`${key}-cell`}
-                          sx={{
-                            position: 'relative',
-                            borderTop: 1,
-                            borderRight: 1,
-                            borderColor: 'divider',
-                            minHeight: 36,
-                            p: 0.5,
-                            bgcolor: alpha(theme.palette.background.paper, 0.92),
-                            transition: 'background-color 0.15s ease',
-                            '&:hover': {
-                              bgcolor: 'action.hover',
-                            },
-                          }}
-                          onDragOver={(event) => {
-                            event.preventDefault();
-                            if (!draggingAppointmentId) {
-                              return;
-                            }
+                        <Tooltip key={`${key}-cell`} title={isPastSlot ? pastSlotHint : ''} placement="top" arrow disableHoverListener={!isPastSlot}>
+                          <Box
+                            sx={{
+                              position: 'relative',
+                              borderTop: 1,
+                              borderRight: 1,
+                              borderColor: 'divider',
+                              minHeight: 36,
+                              p: 0.5,
+                              bgcolor: alpha(theme.palette.background.paper, 0.92),
+                              transition: 'background-color 0.15s ease',
+                              '&:hover': {
+                                bgcolor: 'action.hover',
+                              },
+                            }}
+                            onDragOver={(event) => {
+                              event.preventDefault();
+                              if (!draggingAppointmentId) {
+                                return;
+                              }
 
-                            if (isSlotInPast(dayKey, hour, minute, displayTimeZone)) {
-                              event.dataTransfer.dropEffect = 'none';
-                              setBlockedCellKey(key);
-                            } else {
-                              event.dataTransfer.dropEffect = 'move';
+                              if (isPastSlot) {
+                                event.dataTransfer.dropEffect = 'none';
+                                setBlockedCellKey(key);
+                              } else {
+                                event.dataTransfer.dropEffect = 'move';
+                                setBlockedCellKey(null);
+                              }
+                            }}
+                            onDragLeave={() => {
+                              setBlockedCellKey((prev) => (prev === key ? null : prev));
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault();
                               setBlockedCellKey(null);
-                            }
-                          }}
-                          onDragLeave={() => {
-                            setBlockedCellKey((prev) => (prev === key ? null : prev));
-                          }}
-                          onDrop={(event) => {
-                            event.preventDefault();
-                            setBlockedCellKey(null);
 
-                            if (isSlotInPast(dayKey, hour, minute, displayTimeZone)) {
-                              onPastSlotActionBlocked();
-                              return;
-                            }
+                              if (isPastSlot) {
+                                return;
+                              }
 
-                            const rawId = event.dataTransfer.getData('text/appointment-id');
-                            const id = Number(rawId);
+                              const rawId = event.dataTransfer.getData('text/appointment-id');
+                              const id = Number(rawId);
 
-                            if (!Number.isNaN(id)) {
-                              onMoveAppointment(id, dayKey, hour, minute);
-                            }
-                          }}
-                          onClick={() => {
-                            if (isSlotInPast(dayKey, hour, minute, displayTimeZone)) {
-                              onPastSlotActionBlocked();
-                              return;
-                            }
+                              if (!Number.isNaN(id)) {
+                                onMoveAppointment(id, dayKey, hour, minute);
+                              }
+                            }}
+                            onClick={() => {
+                              if (isPastSlot) {
+                                return;
+                              }
 
-                            onOpenCreate(dayKey, hour, minute);
-                          }}
-                        >
-                          {draggingAppointmentId && blockedCellKey === key && (
-                            <Box
-                              sx={{
-                                position: 'absolute',
-                                inset: 0,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                bgcolor: alpha(theme.palette.error.main, 0.08),
-                                pointerEvents: 'none',
-                                zIndex: 2,
-                              }}
-                            >
-                              <CloseRoundedIcon color="error" fontSize="small" />
-                            </Box>
-                          )}
-                          <Stack spacing={0.5}>
-                            {externalBusy.map((slot) => (
-                              <Tooltip
-                                key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}
-                                title={getGoogleSlotTooltip(slot)}
-                                placement="top"
-                                arrow
-                                disableHoverListener={!getGoogleSlotTooltip(slot)}
-                              >
-                                <Chip
-                                  size="small"
-                                  label={getGoogleSlotTitle(slot)}
-                                  color="warning"
-                                  variant="outlined"
-                                />
-                              </Tooltip>
-                            ))}
-                            {items.map((item) => (
+                              onOpenCreate(dayKey, hour, minute);
+                            }}
+                          >
+                            {draggingAppointmentId && blockedCellKey === key && (
                               <Box
-                                key={item.id}
-                                draggable
-                                onDragStart={(event) => {
-                                  setDraggingAppointmentId(item.id);
-                                  event.dataTransfer.setData('text/appointment-id', String(item.id));
-                                }}
-                                onDragEnd={() => {
-                                  setDraggingAppointmentId(null);
-                                  setBlockedCellKey(null);
-                                }}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  onOpenEdit(item);
-                                }}
                                 sx={{
-                                  borderRadius: 1,
-                                  border: 1,
-                                  borderColor: item.status === 'cancelled' ? 'error.main' : 'primary.light',
-                                  bgcolor: item.status === 'cancelled'
-                                    ? alpha(theme.palette.error.main, 0.12)
-                                    : alpha(theme.palette.primary.main, 0.16),
-                                  px: 0.75,
-                                  py: 0.5,
-                                  cursor: 'pointer',
+                                  position: 'absolute',
+                                  inset: 0,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  bgcolor: alpha(theme.palette.error.main, 0.08),
+                                  pointerEvents: 'none',
+                                  zIndex: 2,
                                 }}
                               >
-                                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-                                  {formatLocalTime(item.scheduledAt)}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                  {statusLabel(item.status)} · {item.durationMin}m
-                                </Typography>
+                                <CloseRoundedIcon color="error" fontSize="small" />
                               </Box>
-                            ))}
-                          </Stack>
-                        </Box>
+                            )}
+                            <Stack spacing={0.5}>
+                              {externalBusy.map((slot) => (
+                                <Tooltip
+                                  key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}
+                                  title={getGoogleSlotTooltip(slot)}
+                                  placement="top"
+                                  arrow
+                                  disableHoverListener={!getGoogleSlotTooltip(slot)}
+                                >
+                                  <Chip
+                                    size="small"
+                                    label={getGoogleSlotTitle(slot)}
+                                    color="warning"
+                                    variant="outlined"
+                                  />
+                                </Tooltip>
+                              ))}
+                              {items.map((item) => (
+                                <Box
+                                  key={item.id}
+                                  draggable
+                                  onDragStart={(event) => {
+                                    setDraggingAppointmentId(item.id);
+                                    event.dataTransfer.setData('text/appointment-id', String(item.id));
+                                  }}
+                                  onDragEnd={() => {
+                                    setDraggingAppointmentId(null);
+                                    setBlockedCellKey(null);
+                                  }}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    onOpenEdit(item);
+                                  }}
+                                  sx={{
+                                    borderRadius: 1,
+                                    border: 1,
+                                    borderColor: item.status === 'cancelled' ? 'error.main' : 'primary.light',
+                                    bgcolor: item.status === 'cancelled'
+                                      ? alpha(theme.palette.error.main, 0.12)
+                                      : alpha(theme.palette.primary.main, 0.16),
+                                    px: 0.75,
+                                    py: 0.5,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                                    {formatLocalTime(item.scheduledAt)}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                    {statusLabel(item.status)} · {item.durationMin}m
+                                  </Typography>
+                                </Box>
+                              ))}
+                            </Stack>
+                          </Box>
+                        </Tooltip>
                       );
                     })}
                   </Fragment>
