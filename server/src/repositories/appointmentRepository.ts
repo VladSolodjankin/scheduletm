@@ -235,3 +235,13 @@ export async function ensureFallbackServiceForAccount(accountId: number): Promis
 
   return created.id;
 }
+
+
+export async function countAppointmentsBySpecialistId(accountId: number, specialistId: number): Promise<number> {
+  const row = await db('appointments')
+    .where({ account_id: accountId, specialist_id: specialistId })
+    .count<{ count: string }[]>({ count: '*' })
+    .first();
+
+  return Number(row?.count ?? 0);
+}

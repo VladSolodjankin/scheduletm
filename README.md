@@ -58,6 +58,10 @@ scheduletm/
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `POST /api/auth/specialists`
+- `GET /api/specialists`
+- `POST /api/specialists`
+- `PATCH /api/specialists/:id`
+- `DELETE /api/specialists/:id`
 - `GET /api/settings/system` (owner/admin)
 - `PUT /api/settings/system` (owner/admin)
 - `GET /api/settings/user`

@@ -54,11 +54,28 @@ export const dictionaries = {
       disconnectingGoogle: 'Disconnecting...',
       googleConnected: 'Google connected',
       googleConnectedSuccessfully: 'Google Calendar connected successfully.',
+      specialists: {
+        title: 'Specialists',
+        add: 'Add specialist',
+        edit: 'Edit specialist',
+        delete: 'Delete specialist',
+        empty: 'No specialists yet.',
+        addDialogTitle: 'Add specialist',
+        editDialogTitle: 'Edit specialist',
+        columns: {
+          name: 'Name',
+          timezone: 'Timezone',
+          active: 'Active',
+          actions: 'Actions'
+        }
+      },
       errors: {
         load: 'Unable to load settings.',
         save: 'Unable to save settings.',
         connectGoogle: 'Unable to connect Google.',
-        disconnectGoogle: 'Unable to disconnect Google.'
+        disconnectGoogle: 'Unable to disconnect Google.',
+        saveSpecialist: 'Unable to save specialist.',
+        deleteSpecialist: 'Unable to delete specialist.'
       }
     },
     appointments: {
@@ -161,11 +178,28 @@ export const dictionaries = {
       disconnectingGoogle: 'Отключаем...',
       googleConnected: 'Google подключен',
       googleConnectedSuccessfully: 'Google Calendar успешно подключен.',
+      specialists: {
+        title: 'Специалисты',
+        add: 'Добавить специалиста',
+        edit: 'Редактировать специалиста',
+        delete: 'Удалить специалиста',
+        empty: 'Специалисты пока не добавлены.',
+        addDialogTitle: 'Добавить специалиста',
+        editDialogTitle: 'Редактировать специалиста',
+        columns: {
+          name: 'Имя',
+          timezone: 'Часовой пояс',
+          active: 'Активен',
+          actions: 'Действия'
+        }
+      },
       errors: {
         load: 'Не удалось загрузить настройки.',
         save: 'Не удалось сохранить настройки.',
         connectGoogle: 'Не удалось подключить Google.',
-        disconnectGoogle: 'Не удалось отключить Google.'
+        disconnectGoogle: 'Не удалось отключить Google.',
+        saveSpecialist: 'Не удалось сохранить специалиста.',
+        deleteSpecialist: 'Не удалось удалить специалиста.'
       }
     },
     appointments: {
@@ -263,6 +297,19 @@ export type TranslationKey =
   | 'settings.disconnectingGoogle'
   | 'settings.googleConnected'
   | 'settings.googleConnectedSuccessfully'
+  | 'settings.specialists.title'
+  | 'settings.specialists.add'
+  | 'settings.specialists.edit'
+  | 'settings.specialists.delete'
+  | 'settings.specialists.empty'
+  | 'settings.specialists.addDialogTitle'
+  | 'settings.specialists.editDialogTitle'
+  | 'settings.specialists.columns.name'
+  | 'settings.specialists.columns.timezone'
+  | 'settings.specialists.columns.active'
+  | 'settings.specialists.columns.actions'
+  | 'settings.errors.saveSpecialist'
+  | 'settings.errors.deleteSpecialist'
   | 'settings.errors.load'
   | 'settings.errors.save'
   | 'settings.errors.connectGoogle'
