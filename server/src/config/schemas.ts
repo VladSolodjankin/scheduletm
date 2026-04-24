@@ -75,14 +75,24 @@ export const specialistUserCreationSchema = z.object({
 
 
 const managedUserRoleSchema = z.enum(['admin', 'specialist']);
+const managedUserSchemaDictionary = {
+  emailInvalid: 'Введите корректный email',
+  emailTooLong: 'Email слишком длинный',
+  firstNameRequired: 'Укажите имя',
+  firstNameTooLong: 'Имя слишком длинное',
+  lastNameRequired: 'Укажите фамилию',
+  lastNameTooLong: 'Фамилия слишком длинная',
+  phoneTooLong: 'Телефон слишком длинный',
+  telegramTooLong: 'Telegram аккаунт слишком длинный',
+} as const;
 
 export const managedUserCreateSchema = z.object({
-  email: z.string().trim().email('Введите корректный email').max(254, 'Email слишком длинный'),
+  email: z.string().trim().email(managedUserSchemaDictionary.emailInvalid).max(254, managedUserSchemaDictionary.emailTooLong),
   role: managedUserRoleSchema,
-  firstName: z.string().trim().min(1, 'Укажите имя').max(120, 'Имя слишком длинное'),
-  lastName: z.string().trim().min(1, 'Укажите фамилию').max(120, 'Фамилия слишком длинная'),
-  phone: z.string().trim().max(50, 'Телефон слишком длинный').optional().or(z.literal('')),
-  telegramUsername: z.string().trim().max(255, 'Telegram аккаунт слишком длинный').optional().or(z.literal('')),
+  firstName: z.string().trim().min(1, managedUserSchemaDictionary.firstNameRequired).max(120, managedUserSchemaDictionary.firstNameTooLong),
+  lastName: z.string().trim().min(1, managedUserSchemaDictionary.lastNameRequired).max(120, managedUserSchemaDictionary.lastNameTooLong),
+  phone: z.string().trim().max(50, managedUserSchemaDictionary.phoneTooLong).optional().or(z.literal('')),
+  telegramUsername: z.string().trim().max(255, managedUserSchemaDictionary.telegramTooLong).optional().or(z.literal('')),
 });
 
 export const managedUserUpdateSchema = managedUserCreateSchema;
