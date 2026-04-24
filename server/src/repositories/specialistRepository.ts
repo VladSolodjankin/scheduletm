@@ -62,6 +62,7 @@ type CreateSpecialistInput = {
   accountId: number;
   name: string;
   code: string;
+  userId: number;
 };
 
 export async function createSpecialist(input: CreateSpecialistInput): Promise<number> {
@@ -72,7 +73,7 @@ export async function createSpecialist(input: CreateSpecialistInput): Promise<nu
       name: input.name,
       is_active: true,
       is_default: false,
-      user_id: null,
+      user_id: input.userId,
     })
     .returning<{ id: number }[]>('id');
 

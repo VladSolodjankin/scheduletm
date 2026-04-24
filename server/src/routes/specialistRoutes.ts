@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { specialistCreateSchema, specialistUpdateSchema } from '../config/schemas.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import {
+  getAvailableSpecialistWebUsersForActor,
   createSpecialistForActor,
   deleteSpecialistForActor,
   getSpecialistsForActor,
@@ -17,7 +18,11 @@ specialistRoutes.get('/', async (req, res) => {
   const actor = (req as unknown as AuthedRequest).user;
 
   try {
-    return res.json({ specialists: await getSpecialistsForActor(actor) });
+    const [specialists, availableWebUsers] = await Promise.all([
+      getSpecialistsForActor(actor),
+      getAvailableSpecialistWebUsersForActor(actor),
+    ]);
+    return res.json({ specialists, availableWebUsers });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Не удалось загрузить специалистов' });
@@ -39,6 +44,9 @@ specialistRoutes.post('/', async (req, res) => {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN') {
       return res.status(403).json({ message: 'Недостаточно прав для создания специалиста' });
+    }
+    if (message === 'WEB_USER_NOT_AVAILABLE') {
+      return res.status(400).json({ message: 'Пользователь специалиста недоступен для добавления' });
     }
 
     console.error(error);

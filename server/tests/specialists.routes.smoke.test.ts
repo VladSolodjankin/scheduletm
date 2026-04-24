@@ -5,6 +5,7 @@ import { WebUserRole } from '../src/types/webUserRole.js';
 
 const resolveUserByAccessTokenMock = vi.hoisted(() => vi.fn());
 const getSpecialistsForActorMock = vi.hoisted(() => vi.fn());
+const getAvailableSpecialistWebUsersForActorMock = vi.hoisted(() => vi.fn());
 const createSpecialistForActorMock = vi.hoisted(() => vi.fn());
 const updateSpecialistForActorMock = vi.hoisted(() => vi.fn());
 const deleteSpecialistForActorMock = vi.hoisted(() => vi.fn());
@@ -15,6 +16,7 @@ vi.mock('../src/services/authService.js', () => ({
 
 vi.mock('../src/services/specialistService.js', () => ({
   getSpecialistsForActor: getSpecialistsForActorMock,
+  getAvailableSpecialistWebUsersForActor: getAvailableSpecialistWebUsersForActorMock,
   createSpecialistForActor: createSpecialistForActorMock,
   updateSpecialistForActor: updateSpecialistForActorMock,
   deleteSpecialistForActor: deleteSpecialistForActorMock,
@@ -54,6 +56,7 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
     resolveUserByAccessTokenMock.mockReset();
     getSpecialistsForActorMock.mockReset();
     createSpecialistForActorMock.mockReset();
+    getAvailableSpecialistWebUsersForActorMock.mockReset();
     updateSpecialistForActorMock.mockReset();
     deleteSpecialistForActorMock.mockReset();
 
@@ -62,6 +65,7 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
 
   it('list: GET /api/specialists returns specialists', async () => {
     getSpecialistsForActorMock.mockResolvedValue([{ id: 1, name: 'Anna', code: 'anna-1', timezone: 'UTC', isActive: true, slotStepMin: 30 }]);
+    getAvailableSpecialistWebUsersForActorMock.mockResolvedValue([{ id: 8, email: 'spec@example.com' }]);
 
     const response = await fetch(`${baseUrl}/api/specialists`, {
       method: 'GET',
@@ -71,6 +75,7 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
       specialists: [{ id: 1, name: 'Anna' }],
+      availableWebUsers: [{ id: 8, email: 'spec@example.com' }],
     });
   });
 
@@ -83,7 +88,7 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
         'content-type': 'application/json',
         authorization: 'Bearer smoke-token',
       },
-      body: JSON.stringify({ name: 'New Spec' }),
+      body: JSON.stringify({ userId: 8 }),
     });
 
     expect(response.status).toBe(201);

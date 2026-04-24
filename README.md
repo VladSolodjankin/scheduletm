@@ -113,6 +113,7 @@ scheduletm/
 - `access_token` Google сохраняется в `web_users.google_api_key` для текущего web-пользователя (под будущую ролевую модель, где специалист логинится сам).
 - После успешного callback пользователь возвращается на `/settings`, а в настройках отмечается `googleConnected: true`.
 - Управление специалистами вынесено из `Settings` в отдельный раздел `/specialists` в левом меню (для `owner/admin`).
+- На странице `/specialists` создание специалиста теперь выполняется через выбор из `web_users` текущего `account_id` (только `role = specialist` и `is_active = true`, исключая уже привязанные профили специалистов).
 - Переменные окружения добавлены в `server/.env.example`: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `GOOGLE_OAUTH_SCOPES`.
 
 Текущее состояние модели данных для Google:
