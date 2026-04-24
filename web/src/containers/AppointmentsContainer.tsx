@@ -31,6 +31,7 @@ import {
   isSlotInPast,
   startOfMonth,
   startOfDay,
+  weekStart,
   toDateKeyInTimezone,
   toTimeKeyInTimezone,
 } from '../components/appointments/appointmentsUtils';
@@ -88,7 +89,7 @@ export function AppointmentsContainer() {
       return Array.from({ length: daysCount }, (_, index) => addDays(monthStart, index));
     }
 
-    const start = startOfDay(focusDate);
+    const start = weekStart(focusDate);
     return Array.from({ length: 7 }, (_, index) => addDays(start, index));
   }, [focusDate, viewMode]);
 
