@@ -99,4 +99,8 @@ export type SpecialistManagementItem = {
 
 export type SpecialistsListResponse = {
   specialists: SpecialistManagementItem[];
+  availableWebUsers: Array<{
+    id: number;
+    email: string;
+  }>;
 };

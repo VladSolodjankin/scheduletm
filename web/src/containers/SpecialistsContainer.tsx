@@ -17,6 +17,7 @@ export function SpecialistsContainer() {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [specialists, setSpecialists] = useState<SpecialistManagementItem[]>([]);
+  const [availableWebUsers, setAvailableWebUsers] = useState<Array<{ id: number; email: string }>>([]);
   const [isSpecialistDialogOpen, setIsSpecialistDialogOpen] = useState(false);
   const [editingSpecialist, setEditingSpecialist] = useState<SpecialistManagementItem | null>(null);
   const [isSavingSpecialist, setIsSavingSpecialist] = useState(false);
@@ -41,6 +42,7 @@ export function SpecialistsContainer() {
           headers: authHeaders(accessToken),
         });
         setSpecialists(response.data.specialists);
+        setAvailableWebUsers(response.data.availableWebUsers ?? []);
       } catch {
         setError(t('settings.errors.load'));
       } finally {
@@ -70,7 +72,7 @@ export function SpecialistsContainer() {
     setEditingSpecialist(null);
   };
 
-  const saveSpecialist = async (payload: { name: string; isActive: boolean }) => {
+  const saveSpecialist = async (payload: { userId?: number; name?: string; isActive: boolean }) => {
     if (!accessToken) {
       return;
     }
@@ -79,17 +81,25 @@ export function SpecialistsContainer() {
 
     try {
       if (editingSpecialist) {
-        const response = await apiClient.patch<SpecialistManagementItem>(`/api/specialists/${editingSpecialist.id}`, payload, {
+        const response = await apiClient.patch<SpecialistManagementItem>(`/api/specialists/${editingSpecialist.id}`, {
+          name: payload.name,
+          isActive: payload.isActive,
+        }, {
           headers: authHeaders(accessToken),
         });
 
         setSpecialists((prev) => prev.map((item) => (item.id === response.data.id ? response.data : item)));
       } else {
-        const response = await apiClient.post<SpecialistManagementItem>('/api/specialists', { name: payload.name }, {
+        if (!payload.userId) {
+          return;
+        }
+
+        const response = await apiClient.post<SpecialistManagementItem>('/api/specialists', { userId: payload.userId }, {
           headers: authHeaders(accessToken),
         });
 
         setSpecialists((prev) => [...prev, response.data].sort((left, right) => left.name.localeCompare(right.name)));
+        setAvailableWebUsers((prev) => prev.filter((item) => item.id !== payload.userId));
       }
 
       setError('');
@@ -178,6 +188,7 @@ export function SpecialistsContainer() {
         closeLabel={t('appointments.close')}
         nameLabel={t('settings.specialists.columns.name')}
         activeLabel={t('settings.specialists.columns.active')}
+        availableWebUsers={availableWebUsers}
         onClose={closeSpecialistDialog}
         onSubmit={saveSpecialist}
       />

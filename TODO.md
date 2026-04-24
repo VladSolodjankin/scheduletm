@@ -111,3 +111,5 @@
 - [x] Добавить кнопки-иконки edit/delete в таблице специалистов.
 - [x] Добавить unit/smoke тесты для нового specialists-модуля.
 - [x] Вынести управление specialists из `Settings` в отдельный пункт меню `/specialists`.
+- [x] Добавить создание специалиста через dropdown `web_users` (`account_id` + `role=specialist` + `is_active=true`) вместо ручного ввода.
+- [x] Ограничить видимость меню `/specialists` и операции добавления ролями `owner/admin`.

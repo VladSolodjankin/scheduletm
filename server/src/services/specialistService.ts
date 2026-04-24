@@ -7,6 +7,7 @@ import {
   updateSpecialistById,
 } from '../repositories/specialistRepository.js';
 import { countAppointmentsBySpecialistId } from '../repositories/appointmentRepository.js';
+import { findWebUserById, listActiveSpecialistWebUsersWithoutProfile } from '../repositories/webUserRepository.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 
@@ -20,12 +21,17 @@ type SpecialistDto = {
 };
 
 type SpecialistCreatePayload = {
-  name: string;
+  userId: number;
 };
 
 type SpecialistUpdatePayload = {
   name?: string;
   isActive?: boolean;
+};
+
+export type SpecialistWebUserOptionDto = {
+  id: number;
+  email: string;
 };
 
 const canManageSpecialists = (role: WebUserRole): boolean => {
@@ -72,16 +78,31 @@ export async function getSpecialistsForActor(actor: User): Promise<SpecialistDto
     .map(mapSpecialist);
 }
 
+export async function getAvailableSpecialistWebUsersForActor(actor: User): Promise<SpecialistWebUserOptionDto[]> {
+  if (!canManageSpecialists(actor.role)) {
+    return [];
+  }
+
+  const accountId = await resolveAccountId(actor);
+  return listActiveSpecialistWebUsersWithoutProfile(accountId);
+}
+
 export async function createSpecialistForActor(actor: User, payload: SpecialistCreatePayload): Promise<SpecialistDto> {
   if (!canManageSpecialists(actor.role)) {
     throw new Error('FORBIDDEN');
   }
 
   const accountId = await resolveAccountId(actor);
+  const webUser = await findWebUserById(accountId, payload.userId);
+  if (!webUser || webUser.role !== WebUserRole.Specialist || !webUser.is_active) {
+    throw new Error('WEB_USER_NOT_AVAILABLE');
+  }
+
   const id = await createSpecialist({
     accountId,
-    name: payload.name.trim(),
-    code: buildSpecialistCode(payload.name),
+    name: webUser.email,
+    code: buildSpecialistCode(webUser.email),
+    userId: payload.userId,
   });
 
   const created = await findSpecialistById(accountId, id);

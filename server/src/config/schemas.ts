@@ -75,7 +75,7 @@ export const specialistUserCreationSchema = z.object({
 
 
 export const specialistCreateSchema = z.object({
-  name: z.string().trim().min(2, 'Имя специалиста должно содержать минимум 2 символа').max(120, 'Имя специалиста слишком длинное'),
+  userId: z.coerce.number().int().positive('Выберите пользователя специалиста'),
 });
 
 export const specialistUpdateSchema = z.object({
