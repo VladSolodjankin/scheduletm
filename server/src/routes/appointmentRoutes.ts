@@ -37,6 +37,10 @@ appointmentRoutes.get('/', async (req, res) => {
 
     return res.json(data);
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'UNKNOWN';
+    if (message === 'CLIENT_PROFILE_NOT_FOUND') {
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
+    }
     console.error(error);
     return res.status(500).json({ message: t(req, 'appointmentsLoadFailed') });
   }
@@ -58,6 +62,9 @@ appointmentRoutes.post('/', async (req, res) => {
 
     if (message === 'FORBIDDEN_SPECIALIST') {
       return res.status(403).json({ message: t(req, 'forbiddenSpecialistScope') });
+    }
+    if (message === 'FORBIDDEN_CLIENT') {
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
 
     if (message === 'SPECIALIST_NOT_FOUND') {
@@ -98,6 +105,9 @@ appointmentRoutes.patch('/:id', async (req, res) => {
     if (message === 'FORBIDDEN_SPECIALIST') {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
+    if (message === 'FORBIDDEN_CLIENT') {
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
+    }
     if (message === 'CLIENT_NOT_FOUND') {
       return res.status(404).json({ message: t(req, 'clientNotFound') });
     }
@@ -125,6 +135,9 @@ appointmentRoutes.post('/:id/cancel', async (req, res) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN_SPECIALIST') {
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
+    }
+    if (message === 'FORBIDDEN_CLIENT') {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
 
@@ -158,6 +171,9 @@ appointmentRoutes.post('/:id/reschedule', async (req, res) => {
     if (message === 'FORBIDDEN_SPECIALIST') {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
+    if (message === 'FORBIDDEN_CLIENT') {
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
+    }
 
     console.error(error);
     return res.status(500).json({ message: t(req, 'appointmentRescheduleFailed') });
@@ -184,6 +200,9 @@ appointmentRoutes.post('/:id/mark-paid', async (req, res) => {
     if (message === 'FORBIDDEN_SPECIALIST') {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
+    if (message === 'FORBIDDEN_CLIENT') {
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
+    }
 
     console.error(error);
     return res.status(500).json({ message: t(req, 'appointmentMarkPaidFailed') });
@@ -208,6 +227,9 @@ appointmentRoutes.post('/:id/notify', async (req, res) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN_SPECIALIST') {
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
+    }
+    if (message === 'FORBIDDEN_CLIENT') {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
 

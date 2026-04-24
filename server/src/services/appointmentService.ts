@@ -25,6 +25,7 @@ import {
   listSpecialistsByAccount,
   type SpecialistRecord,
 } from '../repositories/specialistRepository.js';
+import { findWebUserById } from '../repositories/webUserRepository.js';
 import { listExternalBusySlots, type ExternalBusySlot } from './calendarAvailabilityService.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
@@ -92,6 +93,10 @@ type UpdateAppointmentPayload = {
 
 function canManageAllAppointments(role: WebUserRole): boolean {
   return role === WebUserRole.Owner || role === WebUserRole.Admin;
+}
+
+function isClientRole(role: WebUserRole): boolean {
+  return role === WebUserRole.Client;
 }
 
 function parseMeetingLinkFromNotes(notes: string | null): { notes: string; meetingLink: string } {
@@ -191,6 +196,9 @@ async function resolveAllowedSpecialistId(actor: User, accountId: number): Promi
   if (canManageAllAppointments(actor.role)) {
     return null;
   }
+  if (isClientRole(actor.role)) {
+    return null;
+  }
 
   const specialist = await findSpecialistByWebUserId(accountId, Number(actor.id));
   if (!specialist) {
@@ -198,6 +206,19 @@ async function resolveAllowedSpecialistId(actor: User, accountId: number): Promi
   }
 
   return specialist.id;
+}
+
+async function resolveClientScope(actor: User, accountId: number): Promise<number | null> {
+  if (!isClientRole(actor.role)) {
+    return null;
+  }
+
+  const webUser = await findWebUserById(accountId, Number(actor.id));
+  if (!webUser?.client_id) {
+    throw new Error('CLIENT_PROFILE_NOT_FOUND');
+  }
+
+  return webUser.client_id;
 }
 
 function mapSpecialistsForUi(rows: SpecialistRecord[]) {
@@ -313,19 +334,27 @@ export async function getAppointments(
 ): Promise<AppointmentListResult> {
   const accountId = await resolveAccountId(actor);
   const allowedSpecialistId = await resolveAllowedSpecialistId(actor, accountId);
+  const allowedClientId = await resolveClientScope(actor, accountId);
 
   const specialistId = allowedSpecialistId ?? filters.specialistId;
 
   const items = await listAppointments({
     accountId,
     specialistId,
+    clientId: allowedClientId ?? undefined,
     from: filters.from ? new Date(filters.from) : undefined,
     to: filters.to ? new Date(filters.to) : undefined,
   });
 
   const specialists = canManageAllAppointments(actor.role)
     ? mapSpecialistsForUi(await listSpecialistsByAccount(accountId))
-    : mapSpecialistsForUi(
+    : isClientRole(actor.role)
+      ? mapSpecialistsForUi(
+        (await listSpecialistsByAccount(accountId)).filter((item) =>
+          items.some((appointment) => appointment.specialist_id === item.id),
+        ),
+      )
+      : mapSpecialistsForUi(
         (await listSpecialistsByAccount(accountId)).filter((item) => item.user_id === Number(actor.id)),
       );
 
@@ -355,7 +384,11 @@ export async function getAppointments(
       events: eventsByAppointmentId.get(item.id) ?? [],
     })),
     specialists,
-    clients: (await listClientsByAccount(accountId)).map(mapClient),
+    clients: isClientRole(actor.role)
+      ? (await listClientsByAccount(accountId))
+        .filter((client) => client.id === allowedClientId)
+        .map(mapClient)
+      : (await listClientsByAccount(accountId)).map(mapClient),
     busySlots: filterBusySlotsOverlappingAppointments(appointmentsForUi, busySlots),
   };
 }
@@ -364,6 +397,10 @@ export async function createAppointmentForActor(
   actor: User,
   payload: CreateAppointmentPayload,
 ): Promise<AppointmentDto> {
+  if (isClientRole(actor.role)) {
+    throw new Error('FORBIDDEN_CLIENT');
+  }
+
   const accountId = await resolveAccountId(actor);
 
   if (!canManageAllAppointments(actor.role)) {
@@ -409,6 +446,15 @@ async function resolveManagedAppointment(actor: User, appointmentId: number) {
   }
 
   if (!canManageAllAppointments(actor.role)) {
+    if (isClientRole(actor.role)) {
+      const allowedClientId = await resolveClientScope(actor, accountId);
+      if (!allowedClientId || existing.user_id !== allowedClientId) {
+        throw new Error('FORBIDDEN_CLIENT');
+      }
+
+      return { accountId, existing };
+    }
+
     const selfSpecialist = await findSpecialistByWebUserId(accountId, Number(actor.id));
     if (!selfSpecialist || selfSpecialist.id !== existing.specialist_id) {
       throw new Error('FORBIDDEN_SPECIALIST');
@@ -516,6 +562,10 @@ export async function rescheduleAppointmentForActor(
 }
 
 export async function markPaidAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
+  if (isClientRole(actor.role)) {
+    throw new Error('FORBIDDEN_CLIENT');
+  }
+
   const { accountId, existing } = await resolveManagedAppointment(actor, appointmentId);
 
   if (!existing) {
@@ -541,6 +591,10 @@ export async function markPaidAppointmentForActor(actor: User, appointmentId: nu
 }
 
 export async function notifyAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
+  if (isClientRole(actor.role)) {
+    throw new Error('FORBIDDEN_CLIENT');
+  }
+
   const { accountId, existing } = await resolveManagedAppointment(actor, appointmentId);
 
   if (!existing) {

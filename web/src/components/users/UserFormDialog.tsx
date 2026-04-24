@@ -22,7 +22,7 @@ type UserFormDialogProps = {
   onClose: () => void;
   onSubmit: (payload: {
     email: string;
-    role: 'admin' | 'specialist';
+    role: 'admin' | 'specialist' | 'client';
     firstName: string;
     lastName: string;
     phone?: string;
@@ -32,7 +32,7 @@ type UserFormDialogProps = {
 
 type UserFormState = {
   email: string;
-  role: 'admin' | 'specialist';
+  role: 'admin' | 'specialist' | 'client';
   firstName: string;
   lastName: string;
   phone: string;
@@ -75,7 +75,11 @@ export function UserFormDialog({
 
     reset({
       email: editingUser?.email ?? '',
-      role: editingUser?.role === 'admin' ? 'admin' : 'specialist',
+      role: editingUser?.role === 'admin'
+        ? 'admin'
+        : editingUser?.role === 'client'
+          ? 'client'
+          : 'specialist',
       firstName: editingUser?.firstName ?? '',
       lastName: editingUser?.lastName ?? '',
       phone: editingUser?.phone ?? '',
@@ -112,9 +116,10 @@ export function UserFormDialog({
           render={({ field }) => (
             <FormControl margin="dense" fullWidth>
               <InputLabel id="managed-user-role-label">{roleLabel}</InputLabel>
-              <Select labelId="managed-user-role-label" label={roleLabel} value={field.value} onChange={(event) => field.onChange(event.target.value as 'admin' | 'specialist')}>
+              <Select labelId="managed-user-role-label" label={roleLabel} value={field.value} onChange={(event) => field.onChange(event.target.value as 'admin' | 'specialist' | 'client')}>
                 <MenuItem value="admin">admin</MenuItem>
                 <MenuItem value="specialist">specialist</MenuItem>
+                <MenuItem value="client">client</MenuItem>
               </Select>
             </FormControl>
           )}

@@ -21,7 +21,7 @@ export function UsersContainer() {
   const [editingUser, setEditingUser] = useState<ManagedUserItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const canManageUsers = user?.role === 'owner' || user?.role === 'admin';
+  const canManageUsers = user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
 
   useEffect(() => {
     if (!accessToken) {
@@ -54,7 +54,7 @@ export function UsersContainer() {
     void load();
   }, [accessToken, canManageUsers, navigate, t]);
 
-  const saveUser = async (payload: { email: string; role: 'admin' | 'specialist'; firstName: string; lastName: string; phone?: string; telegramUsername?: string }) => {
+  const saveUser = async (payload: { email: string; role: 'admin' | 'specialist' | 'client'; firstName: string; lastName: string; phone?: string; telegramUsername?: string }) => {
     if (!accessToken) {
       return;
     }
