@@ -117,7 +117,7 @@ export const registerUser = async (
   const webUser = await createWebUser({
     accountId,
     email,
-    role: WebUserRole.Owner,
+    role: WebUserRole.Admin,
     passwordHash,
     passwordSalt: salt,
     timezone,

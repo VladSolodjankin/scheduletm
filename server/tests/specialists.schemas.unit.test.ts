@@ -3,7 +3,7 @@ import { specialistCreateSchema, specialistUpdateSchema } from '../src/config/sc
 
 describe('specialist schemas unit', () => {
   it('validates create payload', () => {
-    const parsed = specialistCreateSchema.safeParse({ name: 'Anna Specialist' });
+    const parsed = specialistCreateSchema.safeParse({ userId: 12341234 });
 
     expect(parsed.success).toBe(true);
   });
