@@ -74,6 +74,7 @@ export const dictionaries = {
       emptyDay: 'No appointments on this day.',
       viewDay: 'Day',
       viewWeek: 'Week',
+      viewMonth: 'Month',
       today: 'Today',
       loading: 'Loading appointments...',
       dragHint: 'Drag and drop appointment to move it to another slot.',
@@ -162,6 +163,7 @@ export const dictionaries = {
       emptyDay: 'На этот день записей нет.',
       viewDay: 'День',
       viewWeek: 'Неделя',
+      viewMonth: 'Месяц',
       today: 'Сегодня',
       loading: 'Загрузка записей...',
       dragHint: 'Перетащите запись в другой слот, чтобы перенести её.',
@@ -241,6 +243,7 @@ export type TranslationKey =
   | 'appointments.emptyDay'
   | 'appointments.viewDay'
   | 'appointments.viewWeek'
+  | 'appointments.viewMonth'
   | 'appointments.today'
   | 'appointments.loading'
   | 'appointments.dragHint'

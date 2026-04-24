@@ -10,7 +10,7 @@ export type EditFormState = {
   notes: string;
 };
 
-export type CalendarViewMode = 'day' | 'week';
+export type CalendarViewMode = 'day' | 'week' | 'month';
 
 export const STATUS_OPTIONS: AppointmentStatus[] = ['new', 'confirmed', 'cancelled'];
 export const DEFAULT_SLOT_STEP_MIN = 30;
@@ -155,6 +155,18 @@ export function addDays(date: Date, days: number): Date {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
+}
+
+export function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+export function endOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
+
+export function addMonths(date: Date, months: number): Date {
+  return new Date(date.getFullYear(), date.getMonth() + months, date.getDate());
 }
 
 export function splitLocalDateTime(value: string): { date: string; time: string } {
