@@ -114,3 +114,11 @@
 - [x] Вынести управление specialists из `Settings` в отдельный пункт меню `/specialists`.
 - [x] Добавить создание специалиста через dropdown `web_users` (`account_id` + `role=specialist` + `is_active=true`) вместо ручного ввода.
 - [x] Ограничить видимость меню `/specialists` и операции добавления ролями `owner/admin`.
+
+### 4.10 Web интеграционные тесты с backend (следующий шаг, KISS)
+
+- [ ] Добавить отдельный integration-suite для web против реального `server` в тестовом окружении.
+- [ ] Покрыть Appointments: `list/create/edit/reschedule/cancel/mark-paid/notify`.
+- [ ] Покрыть Specialists: `list/create/edit/delete` + проверку role-gates (`owner/admin`).
+- [ ] Покрыть Settings: `GET/PUT user`, `GET/PUT system` + базовые ошибки валидации/доступа.
+- [ ] Выделить прогон в отдельный CI job (smoke оставить быстрым baseline).

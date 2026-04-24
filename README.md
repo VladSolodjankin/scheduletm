@@ -214,6 +214,19 @@ scheduletm/
   - `web_users.timezone` — timezone специалиста/веб-пользователя (берется из браузера при auth/register, может изменяться в user settings);
   - `clients.timezone` — timezone клиента (при отсутствии явного значения используется fallback timezone аккаунта).
 
+### Стоит ли добавлять web integration-тесты с backend для Appointments/Specialists/Settings
+
+Да — **стоит**, но точечно, без перегруза пайплайна:
+
+- оставить текущие быстрые smoke/e2e проверки web как baseline (быстрый feedback);
+- добавить отдельный слой `web + real server API` только для критических пользовательских сценариев:
+  - `appointments`: list/create/edit/reschedule/cancel/mark-paid/notify;
+  - `specialists`: list/create/edit/delete + role-ограничения `owner/admin`;
+  - `settings`: чтение/сохранение `user/system`, включая интеграционные поля (Google/Telegram).
+- запускать такие тесты в CI как отдельный job (например, на PR + nightly), чтобы не замедлять каждый локальный прогон.
+
+Практичный баланс для MVP: **smoke + 8–12 integration happy-path/guardrail кейсов** достаточно, чтобы рано ловить регрессии контракта web↔server без over-engineering.
+
 ### Appointments MVP: что оставили на следующий инкремент
 
 - Расширенные фильтры календаря и групповые операции.

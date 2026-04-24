@@ -150,10 +150,15 @@
 - `specialists.user_id` — связь владельца credentials с конкретным специалистом.
 - `specialists` не хранит Google credentials; bot/web должны использовать `web_user_integrations.google_api_key/google_calendar_id` через связь `specialists.user_id`.
 
-## Тестовая карта (smoke)
+## Тестовая карта (smoke + integration)
 
 - `server/tests/appointments.routes.smoke.test.ts` — route-smoke для API сценариев `create`, `reschedule`, `cancel` через Express app + `vitest` + встроенный `fetch` Node.js (service-слой замокан).
 - `web/tests/e2e/smoke.e2e.test.mjs` — web smoke для сценариев `auth/settings/appointments` (проверка маршрутов и API-контрактов на уровне SPA-кода).
+- Рекомендуемый следующий слой: web integration-тесты против поднятого `server` (без API-моков) для модулей:
+  - `appointments`: ключевой lifecycle (`list/create/edit/reschedule/cancel/mark-paid/notify`),
+  - `specialists`: CRUD + role-gates,
+  - `settings`: user/system read-write + проверки `401/403/422`.
+- Практичный объём для MVP: 8–12 критических сценариев в отдельном CI job (PR + nightly).
 
 ## Что делать следующим шагом (после 4.7)
 
