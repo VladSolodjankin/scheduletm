@@ -33,7 +33,6 @@ import {
   startOfDay,
   toDateKeyInTimezone,
   toTimeKeyInTimezone,
-  weekStart,
 } from '../components/appointments/appointmentsUtils';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
@@ -89,7 +88,7 @@ export function AppointmentsContainer() {
       return Array.from({ length: daysCount }, (_, index) => addDays(monthStart, index));
     }
 
-    const start = weekStart(focusDate);
+    const start = startOfDay(focusDate);
     return Array.from({ length: 7 }, (_, index) => addDays(start, index));
   }, [focusDate, viewMode]);
 
