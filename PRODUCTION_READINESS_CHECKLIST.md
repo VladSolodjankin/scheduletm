@@ -48,6 +48,7 @@
 - [x] Добавить в header профильный dropdown авторизованного пользователя (settings/logout) с адаптацией под мобильные экраны.
 - [x] Добавить preloader первой загрузки для страницы appointments (skeleton вместо пустого контента).
 - [x] Локализовать server API сообщения через словари `ru/en` (по `Accept-Language`/`x-locale`) для консистентного UX с web i18n.
+- [x] Показывать backend `message` в web при ошибках API (auth/settings/specialists/appointments) с единым user-friendly fallback для сетевых проблем.
 - [ ] Подключить error tracking.
 - [ ] Настроить caching/security headers на edge.
 - [x] При `401 Unauthorized` на API автоматически очищать auth-state во фронте и отправлять пользователя на `/login`.

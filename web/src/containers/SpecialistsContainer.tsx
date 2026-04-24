@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { SpecialistFormDialog } from '../components/specialists/SpecialistFormDialog';
 import { SpecialistsTable } from '../components/specialists/SpecialistsTable';
 import { apiClient, authHeaders } from '../shared/api/client';
+import { resolveApiError } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
@@ -43,8 +44,11 @@ export function SpecialistsContainer() {
         });
         setSpecialists(response.data.specialists);
         setAvailableWebUsers(response.data.availableWebUsers ?? []);
-      } catch {
-        setError(t('settings.errors.load'));
+      } catch (err) {
+        setError(resolveApiError(err, {
+          fallbackMessage: t('settings.errors.load'),
+          networkMessage: t('common.errors.network')
+        }).message);
       } finally {
         setIsLoading(false);
       }
@@ -106,8 +110,11 @@ export function SpecialistsContainer() {
       setSuccess('');
       setIsSpecialistDialogOpen(false);
       setEditingSpecialist(null);
-    } catch {
-      setError(t('settings.errors.saveSpecialist'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.saveSpecialist'),
+        networkMessage: t('common.errors.network')
+      }).message);
       setSuccess('');
     } finally {
       setIsSavingSpecialist(false);
@@ -126,8 +133,11 @@ export function SpecialistsContainer() {
       setSpecialists((prev) => prev.filter((item) => item.id !== specialist.id));
       setError('');
       setSuccess('');
-    } catch {
-      setError(t('settings.errors.deleteSpecialist'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.deleteSpecialist'),
+        networkMessage: t('common.errors.network')
+      }).message);
       setSuccess('');
     }
   };

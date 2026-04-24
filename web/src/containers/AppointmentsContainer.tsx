@@ -36,6 +36,7 @@ import {
   toTimeKeyInTimezone,
 } from '../components/appointments/appointmentsUtils';
 import { apiClient, authHeaders } from '../shared/api/client';
+import { resolveApiError } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import type { AppointmentItem, AppointmentListResponse, ClientItem, SpecialistItem } from '../shared/types/api';
@@ -189,8 +190,11 @@ export function AppointmentsContainer() {
       setClients(response.data.clients ?? []);
       setBusySlots(response.data.busySlots ?? []);
       setError('');
-    } catch {
-      setError(t('appointments.errors.load'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('appointments.errors.load'),
+        networkMessage: t('common.errors.network')
+      }).message);
     } finally {
       setIsLoading(false);
       setHasLoadedOnce(true);
@@ -295,8 +299,11 @@ export function AppointmentsContainer() {
 
       setIsCreateOpen(false);
       await loadAppointments(selectedSpecialistId);
-    } catch {
-      setError(t('appointments.errors.save'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('appointments.errors.save'),
+        networkMessage: t('common.errors.network')
+      }).message);
     } finally {
       setIsSubmittingForm(false);
     }
@@ -316,8 +323,11 @@ export function AppointmentsContainer() {
 
       setIsCreateOpen(false);
       await loadAppointments(selectedSpecialistId);
-    } catch {
-      setError(t('appointments.errors.cancel'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('appointments.errors.cancel'),
+        networkMessage: t('common.errors.network')
+      }).message);
     } finally {
       setIsCancellingAppointment(false);
     }
@@ -335,8 +345,11 @@ export function AppointmentsContainer() {
         headers: authHeaders(accessToken),
       });
       await loadAppointments(selectedSpecialistId);
-    } catch {
-      setError(t('appointments.errors.markPaid'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('appointments.errors.markPaid'),
+        networkMessage: t('common.errors.network')
+      }).message);
     } finally {
       setIsMarkingPaid(false);
     }
@@ -354,8 +367,11 @@ export function AppointmentsContainer() {
         headers: authHeaders(accessToken),
       });
       await loadAppointments(selectedSpecialistId);
-    } catch {
-      setError(t('appointments.errors.notify'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('appointments.errors.notify'),
+        networkMessage: t('common.errors.network')
+      }).message);
     } finally {
       setIsNotifyingClient(false);
     }
@@ -397,13 +413,16 @@ export function AppointmentsContainer() {
 
       void loadAppointments(selectedSpecialistId);
       setError('');
-    } catch {
+    } catch (err) {
       setAppointments((prev) => prev.map((item) => (
         item.id === appointmentId
           ? { ...item, scheduledAt: previousScheduledAt }
           : item
       )));
-      setError(t('appointments.errors.reschedule'));
+      setError(resolveApiError(err, {
+        fallbackMessage: t('appointments.errors.reschedule'),
+        networkMessage: t('common.errors.network')
+      }).message);
     }
   };
 

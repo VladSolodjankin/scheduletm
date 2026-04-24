@@ -15,7 +15,10 @@ export const dictionaries = {
       profileMenuAria: 'Open profile menu',
       appearancePaletteAria: 'Select color palette',
       themeToggleAria: 'Toggle theme mode',
-      languageAria: 'Select language'
+      languageAria: 'Select language',
+      errors: {
+        network: 'Network connection issue. Please check your internet and try again.'
+      }
     },
     auth: {
       loginTitle: 'Sign in to your account',
@@ -149,7 +152,10 @@ export const dictionaries = {
       profileMenuAria: 'Открыть меню профиля',
       appearancePaletteAria: 'Выбрать цветовую палитру',
       themeToggleAria: 'Переключить тему',
-      languageAria: 'Выбрать язык'
+      languageAria: 'Выбрать язык',
+      errors: {
+        network: 'Проблема с подключением к сети. Проверьте интернет и попробуйте снова.'
+      }
     },
     auth: {
       loginTitle: 'Вход в аккаунт',
@@ -287,6 +293,7 @@ export type TranslationKey =
   | 'common.appearancePaletteAria'
   | 'common.themeToggleAria'
   | 'common.languageAria'
+  | 'common.errors.network'
   | 'auth.loginTitle'
   | 'auth.loginSubtitle'
   | 'auth.registerTitle'

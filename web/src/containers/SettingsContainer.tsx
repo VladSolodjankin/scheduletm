@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
 import { apiClient, authHeaders } from '../shared/api/client';
+import { resolveApiError } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
@@ -94,8 +95,11 @@ export function SettingsContainer() {
           });
           setSystemSettings(systemResponse.data);
         }
-      } catch {
-        setError(t('settings.errors.load'));
+      } catch (err) {
+        setError(resolveApiError(err, {
+          fallbackMessage: t('settings.errors.load'),
+          networkMessage: t('common.errors.network')
+        }).message);
       } finally {
         setIsLoadingSettings(false);
       }
@@ -118,8 +122,11 @@ export function SettingsContainer() {
       setSystemSettings(response.data);
       setError('');
       setSuccess('');
-    } catch {
-      setError(t('settings.errors.save'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.save'),
+        networkMessage: t('common.errors.network')
+      }).message);
       setSuccess('');
     } finally {
       setIsSavingSystem(false);
@@ -145,8 +152,11 @@ export function SettingsContainer() {
       setUserSettings(response.data);
       setError('');
       setSuccess('');
-    } catch {
-      setError(t('settings.errors.save'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.save'),
+        networkMessage: t('common.errors.network')
+      }).message);
       setSuccess('');
     } finally {
       setIsSavingUser(false);
@@ -169,8 +179,11 @@ export function SettingsContainer() {
       setUserSettings(response.data);
       setError('');
       setSuccess('');
-    } catch {
-      setError(t('settings.errors.save'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.save'),
+        networkMessage: t('common.errors.network')
+      }).message);
       setSuccess('');
     } finally {
       setIsSavingUser(false);
@@ -193,8 +206,11 @@ export function SettingsContainer() {
       );
 
       window.location.assign(response.data.authorizeUrl);
-    } catch {
-      setError(t('settings.errors.connectGoogle'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.connectGoogle'),
+        networkMessage: t('common.errors.network')
+      }).message);
       setSuccess('');
       setIsGoogleConnecting(false);
     }
@@ -216,8 +232,11 @@ export function SettingsContainer() {
       setUserSettings((prev) => ({ ...prev, googleConnected: false }));
       setError('');
       setSuccess('');
-    } catch {
-      setError(t('settings.errors.disconnectGoogle'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.disconnectGoogle'),
+        networkMessage: t('common.errors.network')
+      }).message);
       setSuccess('');
     } finally {
       setIsGoogleDisconnecting(false);

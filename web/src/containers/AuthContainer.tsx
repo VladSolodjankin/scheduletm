@@ -1,9 +1,9 @@
 import { Alert, Box, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isAxiosError } from 'axios';
 import { AuthCard } from '../components/AuthCard';
 import { apiClient } from '../shared/api/client';
+import { resolveApiError } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import type { AuthResponse } from '../shared/types/api';
@@ -12,11 +12,6 @@ type AuthMode = 'login' | 'register';
 
 type AuthContainerProps = {
   mode: AuthMode;
-};
-
-type ApiErrorResponse = {
-  message?: string;
-  errors?: Record<string, string>;
 };
 
 export function AuthContainer({ mode }: AuthContainerProps) {
@@ -49,19 +44,14 @@ export function AuthContainer({ mode }: AuthContainerProps) {
 
       navigate('/login');
     } catch (err) {
-      if (isAxiosError<ApiErrorResponse>(err)) {
-        const apiError = err.response?.data;
+      const fallbackMessage = isLogin ? t('auth.errors.loginFailed') : t('auth.errors.registerFailed');
+      const resolvedError = resolveApiError(err, {
+        fallbackMessage,
+        networkMessage: t('common.errors.network')
+      });
 
-        setError(
-          apiError?.message ?? (isLogin ? t('auth.errors.loginFailed') : t('auth.errors.registerFailed'))
-        );
-
-        setFieldErrors(apiError?.errors ?? {});
-        return;
-      }
-
-      setError(isLogin ? t('auth.errors.loginFailed') : t('auth.errors.registerFailed'));
-      setFieldErrors({});
+      setError(resolvedError.message);
+      setFieldErrors(resolvedError.fieldErrors);
     } finally {
       setIsSubmitting(false);
     }
