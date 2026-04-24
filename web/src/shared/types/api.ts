@@ -25,6 +25,10 @@ export type UserSettings = {
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
   googleConnected: boolean;
+  telegramBotConnected: boolean;
+  telegramBotName: string | null;
+  telegramBotUsername: string | null;
+  telegramBotToken?: string;
 };
 
 export type GoogleOAuthStartResponse = {

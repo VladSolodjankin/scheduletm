@@ -19,6 +19,8 @@
 - `web_users` — web auth users (email/password hash/salt).
 - `web_users.role` — роль web-пользователя (`owner`/`admin`/`specialist`).
 - `web_users.google_api_key` — Google OAuth `access_token`, сохраняемый после web-коннекта Google.
+- `web_users.telegram_bot_token` — персональный Telegram BOT_TOKEN из user settings.
+- `web_users.telegram_bot_username` / `web_users.telegram_bot_name` — метаданные бота из `getMe` для отображения статуса интеграции.
 - `user_identity_links` — 1:1 bridge между `telegram_users` и `web_users` внутри `account_id`.
 - `specialists.user_id` — 1:1 bridge между `specialists` и `web_users` внутри `account_id`.
 - `web_user_sessions` — web auth-сессии (`access`/`refresh`) с `expires_at`/`revoked_at`, источник истины для проверки токенов и refresh-rotation.
@@ -135,6 +137,12 @@
 - `GOOGLE_OAUTH_CLIENT_SECRET`
 - `GOOGLE_OAUTH_REDIRECT_URI`
 - `GOOGLE_OAUTH_SCOPES` (опционально, space-separated)
+
+## Telegram Bot token (текущее разделение)
+
+- `PUT /api/settings/user` принимает `telegramBotToken` (password-поле на фронте).
+- Server пытается провалидировать токен через Telegram `getMe`; если запрос неуспешен, токен сохраняется как fallback.
+- `bot` использует токен из `web_users.telegram_bot_token` для вызовов Telegram API.
 
 ## Google credentials (текущее разделение)
 

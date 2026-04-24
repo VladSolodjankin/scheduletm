@@ -27,6 +27,10 @@ const defaultUserSettings: UserSettings = {
   uiThemeMode: 'light',
   uiPaletteVariantId: 'default',
   googleConnected: false,
+  telegramBotConnected: false,
+  telegramBotName: null,
+  telegramBotUsername: null,
+  telegramBotToken: '',
 };
 
 export function SettingsContainer() {
@@ -130,9 +134,38 @@ export function SettingsContainer() {
     setIsSavingUser(true);
 
     try {
-      const response = await apiClient.put<UserSettings>('/api/settings/user', nextSettings, {
+      const payload: UserSettings = { ...nextSettings };
+      if (!payload.telegramBotToken) {
+        delete payload.telegramBotToken;
+      }
+
+      const response = await apiClient.put<UserSettings>('/api/settings/user', payload, {
         headers: authHeaders(accessToken)
       });
+      setUserSettings(response.data);
+      setError('');
+      setSuccess('');
+    } catch {
+      setError(t('settings.errors.save'));
+      setSuccess('');
+    } finally {
+      setIsSavingUser(false);
+    }
+  };
+
+  const clearTelegramBotToken = async () => {
+    if (!accessToken) {
+      return;
+    }
+
+    setIsSavingUser(true);
+
+    try {
+      const response = await apiClient.put<UserSettings>(
+        '/api/settings/user',
+        { telegramBotToken: '' },
+        { headers: authHeaders(accessToken) }
+      );
       setUserSettings(response.data);
       setError('');
       setSuccess('');
@@ -236,7 +269,11 @@ export function SettingsContainer() {
               connectingGoogle: t('settings.connectingGoogle'),
               disconnectGoogle: t('settings.disconnectGoogle'),
               disconnectingGoogle: t('settings.disconnectingGoogle'),
-              googleConnected: t('settings.googleConnected')
+              googleConnected: t('settings.googleConnected'),
+              telegramBotToken: t('settings.telegramBotToken'),
+              telegramBotConnected: t('settings.telegramBotConnected'),
+              telegramBotNotConnected: t('settings.telegramBotNotConnected'),
+              clearTelegramBotToken: t('settings.clearTelegramBotToken'),
             }}
             isGoogleConnecting={isGoogleConnecting}
             isGoogleDisconnecting={isGoogleDisconnecting}
@@ -244,6 +281,7 @@ export function SettingsContainer() {
             isSavingUser={isSavingUser}
             onSaveSystem={saveSystemSettings}
             onSaveUser={saveUserSettings}
+            onClearTelegramBotToken={clearTelegramBotToken}
             onConnectGoogle={connectGoogle}
             onDisconnectGoogle={disconnectGoogle}
           />

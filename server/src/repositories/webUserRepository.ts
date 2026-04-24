@@ -14,6 +14,9 @@ export type WebUserRecord = {
   google_token_expires_at: Date | null;
   google_calendar_id: string | null;
   google_connected_at: Date | null;
+  telegram_bot_token: string | null;
+  telegram_bot_username: string | null;
+  telegram_bot_name: string | null;
   timezone: string;
   locale: string;
   ui_theme_mode: 'light' | 'dark';
@@ -147,6 +150,9 @@ type UpdateWebUserSettingsInput = {
   locale?: string;
   uiThemeMode?: 'light' | 'dark';
   uiPaletteVariantId?: string;
+  telegramBotToken?: string | null;
+  telegramBotUsername?: string | null;
+  telegramBotName?: string | null;
 };
 
 export async function updateWebUserSettings(input: UpdateWebUserSettingsInput): Promise<void> {
@@ -168,6 +174,18 @@ export async function updateWebUserSettings(input: UpdateWebUserSettingsInput): 
 
   if (input.uiPaletteVariantId !== undefined) {
     patch.ui_palette_variant_id = input.uiPaletteVariantId;
+  }
+
+  if (input.telegramBotToken !== undefined) {
+    patch.telegram_bot_token = input.telegramBotToken;
+  }
+
+  if (input.telegramBotUsername !== undefined) {
+    patch.telegram_bot_username = input.telegramBotUsername;
+  }
+
+  if (input.telegramBotName !== undefined) {
+    patch.telegram_bot_name = input.telegramBotName;
   }
 
   await db('web_users')

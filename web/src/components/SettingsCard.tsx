@@ -26,6 +26,10 @@ type SettingsCardCopy = {
   disconnectGoogle: string;
   disconnectingGoogle: string;
   googleConnected: string;
+  telegramBotToken: string;
+  telegramBotConnected: string;
+  telegramBotNotConnected: string;
+  clearTelegramBotToken: string;
 };
 
 type SettingsCardProps = {
@@ -39,6 +43,7 @@ type SettingsCardProps = {
   isSavingUser?: boolean;
   onSaveSystem: (next: SystemSettings) => Promise<void> | void;
   onSaveUser: (next: UserSettings) => Promise<void> | void;
+  onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
   onDisconnectGoogle: () => void;
 };
@@ -54,6 +59,7 @@ export function SettingsCard({
   isSavingUser = false,
   onSaveSystem,
   onSaveUser,
+  onClearTelegramBotToken,
   onConnectGoogle,
   onDisconnectGoogle
 }: SettingsCardProps) {
@@ -64,7 +70,7 @@ export function SettingsCard({
   });
 
   const { control: userControl, handleSubmit: handleUserSubmit, reset: resetUser } = useForm<UserSettings>({
-    defaultValues: userSettings
+    defaultValues: { ...userSettings, telegramBotToken: '' }
   });
 
   useEffect(() => {
@@ -72,7 +78,7 @@ export function SettingsCard({
   }, [resetSystem, systemSettings]);
 
   useEffect(() => {
-    resetUser(userSettings);
+    resetUser({ ...userSettings, telegramBotToken: '' });
   }, [resetUser, userSettings]);
 
   return (
@@ -164,9 +170,35 @@ export function SettingsCard({
             )}
           />
 
+          <Controller
+            name="telegramBotToken"
+            control={userControl}
+            render={({ field }: any) => (
+              <AppRhfTextField field={field} label={copy.telegramBotToken} type="password" />
+            )}
+          />
+
+          <Typography variant="body2" color="text.secondary">
+            {userSettings.telegramBotConnected
+              ? `${copy.telegramBotConnected}: ${userSettings.telegramBotName ?? '@unknown'}${userSettings.telegramBotUsername ? ` (@${userSettings.telegramBotUsername})` : ''}`
+              : copy.telegramBotNotConnected}
+          </Typography>
+
           <AppButton type="submit" startIcon={<AppIcons.save />} isLoading={isSavingUser}>
             {copy.saveSettings}
           </AppButton>
+
+          {userSettings.telegramBotConnected && (
+            <AppButton
+              type="button"
+              variant="outlined"
+              color="error"
+              onClick={onClearTelegramBotToken}
+              disabled={isSavingUser}
+            >
+              {copy.clearTelegramBotToken}
+            </AppButton>
+          )}
 
           <Typography variant="h5">{copy.integrationsTitle}</Typography>
           <Typography color="text.secondary" variant="body2">

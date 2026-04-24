@@ -4,6 +4,7 @@ import { findWebUserById, updateWebUserSettings } from '../repositories/webUserR
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { systemSettingsSchema, userSettingsSchema } from '../config/schemas.js';
+import { verifyTelegramBotToken } from './telegramService.js';
 
 export type SystemSettings = {
   timezone: string;
@@ -19,6 +20,9 @@ export type UserSettings = {
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
   googleConnected: boolean;
+  telegramBotConnected: boolean;
+  telegramBotName: string | null;
+  telegramBotUsername: string | null;
 };
 
 const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
@@ -87,6 +91,9 @@ export const getUserSettings = async (userId: string): Promise<UserSettings> => 
       uiThemeMode: 'light',
       uiPaletteVariantId: 'default',
       googleConnected: false,
+      telegramBotConnected: false,
+      telegramBotName: null,
+      telegramBotUsername: null,
     };
   }
 
@@ -96,6 +103,9 @@ export const getUserSettings = async (userId: string): Promise<UserSettings> => 
     uiThemeMode: user.ui_theme_mode,
     uiPaletteVariantId: user.ui_palette_variant_id,
     googleConnected: Boolean(user.google_api_key),
+    telegramBotConnected: Boolean(user.telegram_bot_token),
+    telegramBotName: user.telegram_bot_name,
+    telegramBotUsername: user.telegram_bot_username,
   };
 };
 
@@ -111,6 +121,25 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
     return null;
   }
 
+  let telegramBotTokenPatch: string | null | undefined;
+  let telegramBotUsernamePatch: string | null | undefined;
+  let telegramBotNamePatch: string | null | undefined;
+
+  if (parsed.data.telegramBotToken !== undefined) {
+    const trimmedToken = parsed.data.telegramBotToken.trim();
+
+    if (!trimmedToken) {
+      telegramBotTokenPatch = null;
+      telegramBotUsernamePatch = null;
+      telegramBotNamePatch = null;
+    } else {
+      telegramBotTokenPatch = trimmedToken;
+      const botInfo = await verifyTelegramBotToken(trimmedToken);
+      telegramBotUsernamePatch = botInfo?.username ?? null;
+      telegramBotNamePatch = botInfo?.name ?? null;
+    }
+  }
+
   await updateWebUserSettings({
     accountId,
     id: numericUserId,
@@ -118,6 +147,9 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
     locale: parsed.data.locale,
     uiThemeMode: parsed.data.uiThemeMode,
     uiPaletteVariantId: parsed.data.uiPaletteVariantId,
+    telegramBotToken: telegramBotTokenPatch,
+    telegramBotUsername: telegramBotUsernamePatch,
+    telegramBotName: telegramBotNamePatch,
   });
 
   return getUserSettings(actor.id);

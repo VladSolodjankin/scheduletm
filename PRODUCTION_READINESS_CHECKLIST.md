@@ -36,6 +36,7 @@
 - [x] Добавить endpoint запуска OAuth `/api/integrations/google/oauth/start`.
 - [x] Реализовать полноценный OAuth 2.0 Google flow (auth URL + callback + token exchange).
 - [x] Сохранять OAuth ключ web-пользователя в `web_users.google_api_key` после callback.
+- [x] Добавить пользовательский Telegram BOT_TOKEN в `web_users` + проверку через Telegram `getMe` при сохранении.
 - [ ] Добавить retry/backoff для внешних API.
 
 ## 5. Web delivery
