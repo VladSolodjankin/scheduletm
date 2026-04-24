@@ -56,15 +56,26 @@ export type AppointmentItem = {
   paymentStatus: 'paid' | 'unpaid';
   meetingLink: string;
   notes: string;
+  client: ClientItem;
   events: Array<{
     action: 'cancel' | 'reschedule' | 'mark-paid' | 'notify';
     createdAt: string;
   }>;
 };
 
+export type ClientItem = {
+  id: number;
+  username: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+};
+
 export type AppointmentListResponse = {
   appointments: AppointmentItem[];
   specialists: SpecialistItem[];
+  clients: ClientItem[];
   busySlots: Array<{
     specialistId: number;
     scheduledAt: string;

@@ -63,6 +63,10 @@ appointmentRoutes.post('/', async (req, res) => {
       return res.status(404).json({ message: 'Специалист не найден' });
     }
 
+    if (message === 'CLIENT_NOT_FOUND') {
+      return res.status(404).json({ message: 'Клиент не найден' });
+    }
+
     console.error(error);
     return res.status(500).json({ message: 'Не удалось создать запись' });
   }
@@ -92,6 +96,9 @@ appointmentRoutes.patch('/:id', async (req, res) => {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN_SPECIALIST') {
       return res.status(403).json({ message: 'Недостаточно прав для этой записи' });
+    }
+    if (message === 'CLIENT_NOT_FOUND') {
+      return res.status(404).json({ message: 'Клиент не найден' });
     }
 
     console.error(error);

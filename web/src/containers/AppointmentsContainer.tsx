@@ -38,7 +38,7 @@ import {
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
-import type { AppointmentItem, AppointmentListResponse, SpecialistItem } from '../shared/types/api';
+import type { AppointmentItem, AppointmentListResponse, ClientItem, SpecialistItem } from '../shared/types/api';
 import { WebUserRole } from '../shared/types/roles';
 import { AppPage } from '../shared/ui/AppPage';
 
@@ -49,6 +49,7 @@ export function AppointmentsContainer() {
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistItem[]>([]);
+  const [clients, setClients] = useState<ClientItem[]>([]);
   const [busySlots, setBusySlots] = useState<AppointmentListResponse['busySlots']>([]);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | 'all'>('all');
   const displayTimeZone = BROWSER_TIMEZONE;
@@ -185,6 +186,7 @@ export function AppointmentsContainer() {
 
       setAppointments(response.data.appointments);
       setSpecialists(response.data.specialists);
+      setClients(response.data.clients ?? []);
       setBusySlots(response.data.busySlots ?? []);
       setError('');
     } catch {
@@ -232,11 +234,17 @@ export function AppointmentsContainer() {
 
   const submitForm = async (payload: {
     specialistId: number;
-    startIso: string;
-    durationMin: number;
+    appointmentAt: string;
+    appointmentEndAt: string;
     status: AppointmentItem['status'];
     meetingLink: string;
     notes: string;
+    clientId?: number;
+    username: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
   }) => {
     if (!accessToken) {
       return;
@@ -245,29 +253,41 @@ export function AppointmentsContainer() {
     setIsSubmittingForm(true);
 
     try {
-      if (!editingItem && new Date(payload.startIso).getTime() < Date.now()) {
+      if (!editingItem && new Date(payload.appointmentAt).getTime() < Date.now()) {
         showPastSlotError();
         return;
       }
 
       if (editingItem) {
         await apiClient.patch(`/api/appointments/${editingItem.id}`, {
-          scheduledAt: payload.startIso,
-          durationMin: payload.durationMin,
+          appointmentAt: payload.appointmentAt,
+          appointmentEndAt: payload.appointmentEndAt,
           status: payload.status,
           meetingLink: payload.meetingLink,
           notes: payload.notes,
+          clientId: payload.clientId,
+          username: payload.username,
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          phone: payload.phone,
+          email: payload.email,
         }, {
           headers: authHeaders(accessToken),
         });
       } else {
         await apiClient.post('/api/appointments', {
           specialistId: payload.specialistId,
-          scheduledAt: payload.startIso,
-          durationMin: payload.durationMin,
+          appointmentAt: payload.appointmentAt,
+          appointmentEndAt: payload.appointmentEndAt,
           status: payload.status,
           meetingLink: payload.meetingLink,
           notes: payload.notes,
+          clientId: payload.clientId,
+          username: payload.username,
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          phone: payload.phone,
+          email: payload.email,
         }, {
           headers: authHeaders(accessToken),
         });
@@ -497,6 +517,7 @@ export function AppointmentsContainer() {
         open={isCreateOpen}
         editingItem={editingItem}
         specialists={specialists}
+        clients={clients}
         selectedSpecialistId={selectedSpecialistId}
         selectedSlotStepMin={selectedSlotStepMin}
         initialScheduledAtIso={createInitialScheduledAtIso}
@@ -513,11 +534,17 @@ export function AppointmentsContainer() {
         onNotifyClient={notifyClient}
         onSubmit={(payload) => submitForm({
           specialistId: payload.specialistId,
-          startIso: payload.startIso,
-          durationMin: payload.durationMin,
+          appointmentAt: payload.appointmentAt,
+          appointmentEndAt: payload.appointmentEndAt,
           status: payload.status,
           meetingLink: payload.meetingLink,
           notes: payload.notes,
+          clientId: payload.clientId,
+          username: payload.username,
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          phone: payload.phone,
+          email: payload.email,
         })}
       />
     </AppPage>

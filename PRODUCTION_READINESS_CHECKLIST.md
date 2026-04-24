@@ -54,6 +54,9 @@
 - [x] Сначала закрыть MVP-слайс: list/create/edit + cancel/reschedule (end-to-end через web + server).
 - [x] Добавить контракт и валидацию для lifecycle appointments (create/update/reschedule schemas + route-smoke coverage (service layer mocked)).
 - [x] Добавить lifecycle endpoints `mark-paid` и `notify` + smoke-тесты.
+- [x] Добавить обязательную валидацию `POST /api/appointments`: `appointmentAt`, `appointmentEndAt`, `firstName`, `lastName`, и один контакт (`username|phone|email`).
+- [x] Добавить выбор существующего клиента в web appointment form + автопредзаполнение полей клиента.
+- [x] Добавить автосоздание клиента при создании appointment, если выбранного клиента нет.
 - [ ] Добавить optimistic locking/versioning для защиты от одновременного редактирования.
 - [ ] Расширить аудит-лог действий (cancel/reschedule/mark-paid/notify): фильтрация, actor context, retention policy.
 - [ ] Добавить идемпотентность на операции с внешними уведомлениями.

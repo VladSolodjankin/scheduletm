@@ -161,6 +161,15 @@ scheduletm/
 
 ### Appointments MVP: что уже сделано
 
+- В формах создания/редактирования appointment добавлен выбор клиента из `clients` (фильтрация внутри текущего `account_id` на сервере).
+- Если выбран существующий клиент, поля контактов (`username`, `firstName`, `lastName`, `phone`, `email`) предзаполняются.
+- Если клиент не выбран, web позволяет ввести данные вручную; при создании appointment новый клиент автоматически создаётся в таблице `clients`.
+- Для `POST /api/appointments` добавлена обязательная валидация:
+  - `appointmentAt` (начало),
+  - `appointmentEndAt` (окончание),
+  - `firstName`,
+  - `lastName`,
+  - хотя бы одно из: `username` или `phone` или `email`.
 - Server: добавлены endpoint'ы `GET /api/appointments`, `POST /api/appointments`, `PATCH /api/appointments/:id`, `POST /api/appointments/:id/cancel`, `POST /api/appointments/:id/reschedule`.
 - В server добавлена базовая role-aware фильтрация:
   - `owner/admin` видят записи всех специалистов внутри своего `account_id`;

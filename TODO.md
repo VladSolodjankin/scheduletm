@@ -48,6 +48,9 @@
 - [x] Добавить поля `status`, `paymentStatus`, `scheduledAt`, `meetingLink`, `notes`.
 - [x] Реализовать операции: подтверждение оплаты, отмена, перенос даты, ручное уведомление. *(cancel/reschedule/mark-paid/notify реализованы)*
 - [x] Добавить в web страницу списка и карточку редактирования appointment.
+- [x] Добавить выбор клиента в create/edit appointment + автопредзаполнение контактных полей.
+- [x] Добавить server-валидацию создания appointment (`appointmentAt`, `appointmentEndAt`, `firstName`, `lastName`, `username|phone|email`).
+- [x] При создании appointment автоматически создавать нового клиента, если не выбран существующий.
 
 ### 4.3 Meeting link strategy
 

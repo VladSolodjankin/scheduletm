@@ -16,6 +16,11 @@ export type AppointmentRecord = {
   service_id: number;
   created_at: Date;
   updated_at: Date;
+  client_first_name?: string | null;
+  client_last_name?: string | null;
+  client_username?: string | null;
+  client_phone?: string | null;
+  client_email?: string | null;
 };
 
 export type AppointmentAuditEventRecord = {
@@ -54,26 +59,35 @@ type UpdateAppointmentInput = {
   notes?: string | null;
   durationMin?: number;
   isPaid?: boolean;
+  userId?: number;
 };
 
 export async function listAppointments(filters: AppointmentListFilters): Promise<AppointmentRecord[]> {
   const query = db('appointments')
-    .where({ account_id: filters.accountId })
+    .leftJoin('clients', 'clients.id', 'appointments.user_id')
+    .where({ 'appointments.account_id': filters.accountId })
     .orderBy('appointment_at', 'asc');
 
   if (filters.specialistId) {
-    query.andWhere('specialist_id', filters.specialistId);
+    query.andWhere('appointments.specialist_id', filters.specialistId);
   }
 
   if (filters.from) {
-    query.andWhere('appointment_at', '>=', filters.from);
+    query.andWhere('appointments.appointment_at', '>=', filters.from);
   }
 
   if (filters.to) {
-    query.andWhere('appointment_at', '<=', filters.to);
+    query.andWhere('appointments.appointment_at', '<=', filters.to);
   }
 
-  return query.select<AppointmentRecord[]>('*');
+  return query.select<AppointmentRecord[]>(
+    'appointments.*',
+    'clients.first_name as client_first_name',
+    'clients.last_name as client_last_name',
+    'clients.username as client_username',
+    'clients.phone as client_phone',
+    'clients.email as client_email',
+  );
 }
 
 export async function findAppointmentById(accountId: number, id: number): Promise<AppointmentRecord | null> {
@@ -128,6 +142,10 @@ export async function updateAppointment(input: UpdateAppointmentInput): Promise<
 
   if (input.isPaid !== undefined) {
     payload.is_paid = input.isPaid;
+  }
+
+  if (input.userId !== undefined) {
+    payload.user_id = input.userId;
   }
 
   const [row] = await db('appointments')

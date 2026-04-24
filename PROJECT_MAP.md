@@ -67,7 +67,17 @@
 - `GET /api/appointments` возвращает:
   - `appointments[]` (UTC timestamps),
   - `specialists[]` с `timezone`,
+  - `clients[]` (клиенты текущего `account_id` для выбора в web-форме appointment),
   - `busySlots[]` из внешнего календаря (Google) в заданном диапазоне `from/to`.
+
+### Appointments create validation (текущее расширение)
+
+- `POST /api/appointments` требует:
+  - `appointmentAt`,
+  - `appointmentEndAt`,
+  - `firstName`,
+  - `lastName`,
+  - хотя бы одно поле контакта: `username` или `phone` или `email`.
 
 ### Timezone policy
 
