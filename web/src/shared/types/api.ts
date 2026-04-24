@@ -86,3 +86,17 @@ export type AppointmentListResponse = {
     creatorEmail: string;
   }>;
 };
+
+
+export type SpecialistManagementItem = {
+  id: number;
+  name: string;
+  code: string;
+  timezone: string;
+  isActive: boolean;
+  slotStepMin: number;
+};
+
+export type SpecialistsListResponse = {
+  specialists: SpecialistManagementItem[];
+};

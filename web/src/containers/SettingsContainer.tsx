@@ -2,11 +2,20 @@ import { Alert, Box, Skeleton, Stack } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
+import { SpecialistFormDialog } from '../components/specialists/SpecialistFormDialog';
+import { SpecialistsTable } from '../components/specialists/SpecialistsTable';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
-import type { GoogleOAuthDisconnectResponse, GoogleOAuthStartResponse, SystemSettings, UserSettings } from '../shared/types/api';
+import type {
+  GoogleOAuthDisconnectResponse,
+  GoogleOAuthStartResponse,
+  SpecialistsListResponse,
+  SpecialistManagementItem,
+  SystemSettings,
+  UserSettings,
+} from '../shared/types/api';
 
 const defaultSystemSettings: SystemSettings = {
   timezone: 'UTC',
@@ -38,6 +47,10 @@ export function SettingsContainer() {
   const [isSavingSystem, setIsSavingSystem] = useState(false);
   const [isSavingUser, setIsSavingUser] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [specialists, setSpecialists] = useState<SpecialistManagementItem[]>([]);
+  const [isSpecialistDialogOpen, setIsSpecialistDialogOpen] = useState(false);
+  const [editingSpecialist, setEditingSpecialist] = useState<SpecialistManagementItem | null>(null);
+  const [isSavingSpecialist, setIsSavingSpecialist] = useState(false);
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const canManageSystemSettings = user?.role === 'owner' || user?.role === 'admin';
@@ -80,6 +93,11 @@ export function SettingsContainer() {
         setUserSettings(userResponse.data);
 
         if (canManageSystemSettings) {
+          const specialistsResponse = await apiClient.get<SpecialistsListResponse>('/api/specialists', {
+            headers: authHeaders(accessToken)
+          });
+          setSpecialists(specialistsResponse.data.specialists);
+
           const systemResponse = await apiClient.get<SystemSettings>('/api/settings/system', {
             headers: authHeaders(accessToken)
           });
@@ -136,6 +154,79 @@ export function SettingsContainer() {
       setSuccess('');
     } finally {
       setIsSavingUser(false);
+    }
+  };
+
+
+  const openCreateSpecialistDialog = () => {
+    setEditingSpecialist(null);
+    setIsSpecialistDialogOpen(true);
+  };
+
+  const openEditSpecialistDialog = (specialist: SpecialistManagementItem) => {
+    setEditingSpecialist(specialist);
+    setIsSpecialistDialogOpen(true);
+  };
+
+  const closeSpecialistDialog = () => {
+    if (isSavingSpecialist) {
+      return;
+    }
+
+    setIsSpecialistDialogOpen(false);
+    setEditingSpecialist(null);
+  };
+
+  const saveSpecialist = async (payload: { name: string; isActive: boolean }) => {
+    if (!accessToken) {
+      return;
+    }
+
+    setIsSavingSpecialist(true);
+
+    try {
+      if (editingSpecialist) {
+        const response = await apiClient.patch<SpecialistManagementItem>(`/api/specialists/${editingSpecialist.id}`, payload, {
+          headers: authHeaders(accessToken),
+        });
+
+        setSpecialists((prev) => prev.map((item) => (item.id === response.data.id ? response.data : item)));
+      } else {
+        const response = await apiClient.post<SpecialistManagementItem>('/api/specialists', { name: payload.name }, {
+          headers: authHeaders(accessToken),
+        });
+
+        setSpecialists((prev) => [...prev, response.data].sort((left, right) => left.name.localeCompare(right.name)));
+      }
+
+      setError('');
+      setSuccess('');
+      setIsSpecialistDialogOpen(false);
+      setEditingSpecialist(null);
+    } catch {
+      setError(t('settings.errors.saveSpecialist'));
+      setSuccess('');
+    } finally {
+      setIsSavingSpecialist(false);
+    }
+  };
+
+  const deleteSpecialist = async (specialist: SpecialistManagementItem) => {
+    if (!accessToken) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(`/api/specialists/${specialist.id}`, {
+        headers: authHeaders(accessToken),
+      });
+
+      setSpecialists((prev) => prev.filter((item) => item.id !== specialist.id));
+      setError('');
+      setSuccess('');
+    } catch {
+      setError(t('settings.errors.deleteSpecialist'));
+      setSuccess('');
     }
   };
 
@@ -243,6 +334,41 @@ export function SettingsContainer() {
           />
         )}
       </Box>
+
+      {canManageSystemSettings && !isLoadingSettings && (
+        <Box sx={{ maxWidth: 900, mt: 3 }}>
+          <SpecialistsTable
+            title={t('settings.specialists.title')}
+            addLabel={t('settings.specialists.add')}
+            editLabel={t('settings.specialists.edit')}
+            deleteLabel={t('settings.specialists.delete')}
+            emptyText={t('settings.specialists.empty')}
+            columns={{
+              name: t('settings.specialists.columns.name'),
+              timezone: t('settings.specialists.columns.timezone'),
+              active: t('settings.specialists.columns.active'),
+              actions: t('settings.specialists.columns.actions'),
+            }}
+            specialists={specialists}
+            onAdd={openCreateSpecialistDialog}
+            onEdit={openEditSpecialistDialog}
+            onDelete={(item) => void deleteSpecialist(item)}
+          />
+        </Box>
+      )}
+
+      <SpecialistFormDialog
+        open={isSpecialistDialogOpen}
+        isSaving={isSavingSpecialist}
+        editingSpecialist={editingSpecialist}
+        title={editingSpecialist ? t('settings.specialists.editDialogTitle') : t('settings.specialists.addDialogTitle')}
+        saveLabel={t('appointments.save')}
+        closeLabel={t('appointments.close')}
+        nameLabel={t('settings.specialists.columns.name')}
+        activeLabel={t('settings.specialists.columns.active')}
+        onClose={closeSpecialistDialog}
+        onSubmit={saveSpecialist}
+      />
     </AppPage>
   );
 }

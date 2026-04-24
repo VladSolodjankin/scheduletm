@@ -29,6 +29,7 @@
 - [x] Добавить связку специалиста и web identity (`specialists.user_id`) для персональных интеграций.
 - [x] Добавить минимальную ролевую модель web-auth (`owner`/`admin`/`specialist`) для разграничения доступа.
 - [x] Дать owner/admin возможность создавать web-пользователя роли `specialist` и связанного `specialists`-профиля.
+- [x] Добавить server CRUD специалистов (`GET/POST/PATCH/DELETE /api/specialists`) с фильтрацией по `account_id`.
 
 ## 4. Integrations
 

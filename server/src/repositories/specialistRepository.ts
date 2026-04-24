@@ -25,14 +25,14 @@ export async function createDefaultSpecialistForWebUserIfMissing(
   });
 }
 
-type CreateSpecialistInput = {
+type CreateSpecialistForWebUserInput = {
   accountId: number;
   webUserId: number;
   name: string;
   code: string;
 };
 
-export async function createSpecialistForWebUser(input: CreateSpecialistInput): Promise<number> {
+export async function createSpecialistForWebUser(input: CreateSpecialistForWebUserInput): Promise<number> {
   const [row] = await db('specialists')
     .insert({
       account_id: input.accountId,
@@ -58,6 +58,56 @@ export type SpecialistRecord = {
   slot_step_min: number | null;
 };
 
+type CreateSpecialistInput = {
+  accountId: number;
+  name: string;
+  code: string;
+};
+
+export async function createSpecialist(input: CreateSpecialistInput): Promise<number> {
+  const [row] = await db('specialists')
+    .insert({
+      account_id: input.accountId,
+      code: input.code,
+      name: input.name,
+      is_active: true,
+      is_default: false,
+      user_id: null,
+    })
+    .returning<{ id: number }[]>('id');
+
+  return row.id;
+}
+
+export async function updateSpecialistById(
+  accountId: number,
+  specialistId: number,
+  payload: { name?: string; isActive?: boolean },
+): Promise<void> {
+  const nextPayload: Record<string, unknown> = {
+    updated_at: db.fn.now(),
+  };
+
+  if (payload.name !== undefined) {
+    nextPayload.name = payload.name.trim();
+  }
+
+  if (payload.isActive !== undefined) {
+    nextPayload.is_active = payload.isActive;
+  }
+
+  await db('specialists')
+    .where({ account_id: accountId, id: specialistId })
+    .update(nextPayload);
+}
+
+export async function deleteSpecialistById(accountId: number, specialistId: number): Promise<boolean> {
+  const deleted = await db('specialists')
+    .where({ account_id: accountId, id: specialistId })
+    .del();
+
+  return deleted > 0;
+}
 export type SpecialistCalendarCredentials = {
   specialistId: number;
   webUserId: number;

@@ -72,6 +72,19 @@ export const specialistUserCreationSchema = z.object({
     .max(120, 'Имя специалиста слишком длинное')
 });
 
+
+
+export const specialistCreateSchema = z.object({
+  name: z.string().trim().min(2, 'Имя специалиста должно содержать минимум 2 символа').max(120, 'Имя специалиста слишком длинное'),
+});
+
+export const specialistUpdateSchema = z.object({
+  name: z.string().trim().min(2, 'Имя специалиста должно содержать минимум 2 символа').max(120, 'Имя специалиста слишком длинное').optional(),
+  isActive: z.boolean().optional(),
+}).refine((value) => Object.keys(value).length > 0, {
+  message: 'Передайте хотя бы одно поле для обновления',
+});
+
 const appointmentStatusSchema = z.enum(['new', 'confirmed', 'cancelled']);
 
 const appointmentClientSchema = z.object({

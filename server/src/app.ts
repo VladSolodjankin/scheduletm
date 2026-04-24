@@ -8,6 +8,7 @@ import { healthRoutes } from './routes/healthRoutes.js';
 import { integrationRoutes } from './routes/integrationRoutes.js';
 import { appointmentRoutes } from './routes/appointmentRoutes.js';
 import { settingsRoutes } from './routes/settingsRoutes.js';
+import { specialistRoutes } from './routes/specialistRoutes.js';
 
 export const createApp = () => {
   const app = express();
@@ -35,6 +36,7 @@ export const createApp = () => {
   app.use('/api/auth', authRoutes);
   app.use('/api/settings', settingsRoutes);
   app.use('/api/appointments', appointmentRoutes);
+  app.use('/api/specialists', specialistRoutes);
   app.use('/api/integrations', integrationRoutes);
 
   app.use((_req, res) => {

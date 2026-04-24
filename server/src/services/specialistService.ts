@@ -1,0 +1,140 @@
+import { getDefaultAccountId } from '../repositories/accountRepository.js';
+import {
+  createSpecialist,
+  deleteSpecialistById,
+  findSpecialistById,
+  listSpecialistsByAccount,
+  updateSpecialistById,
+} from '../repositories/specialistRepository.js';
+import { countAppointmentsBySpecialistId } from '../repositories/appointmentRepository.js';
+import type { User } from '../types/domain.js';
+import { WebUserRole } from '../types/webUserRole.js';
+
+type SpecialistDto = {
+  id: number;
+  name: string;
+  code: string;
+  timezone: string;
+  isActive: boolean;
+  slotStepMin: number;
+};
+
+type SpecialistCreatePayload = {
+  name: string;
+};
+
+type SpecialistUpdatePayload = {
+  name?: string;
+  isActive?: boolean;
+};
+
+const canManageSpecialists = (role: WebUserRole): boolean => {
+  return role === WebUserRole.Owner || role === WebUserRole.Admin;
+};
+
+const mapSpecialist = (item: Awaited<ReturnType<typeof listSpecialistsByAccount>>[number]): SpecialistDto => ({
+  id: item.id,
+  name: item.name,
+  code: item.code,
+  timezone: item.timezone || 'UTC',
+  isActive: item.is_active,
+  slotStepMin: item.slot_step_min ?? 30,
+});
+
+const buildSpecialistCode = (name: string): string => {
+  const normalized = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 40) || 'specialist';
+
+  return `${normalized}-${Date.now()}`;
+};
+
+async function resolveAccountId(actor: User): Promise<number> {
+  if (actor.accountId) {
+    return actor.accountId;
+  }
+
+  return getDefaultAccountId();
+}
+
+export async function getSpecialistsForActor(actor: User): Promise<SpecialistDto[]> {
+  const accountId = await resolveAccountId(actor);
+
+  if (canManageSpecialists(actor.role)) {
+    return (await listSpecialistsByAccount(accountId)).map(mapSpecialist);
+  }
+
+  return (await listSpecialistsByAccount(accountId))
+    .filter((item) => item.user_id === Number(actor.id))
+    .map(mapSpecialist);
+}
+
+export async function createSpecialistForActor(actor: User, payload: SpecialistCreatePayload): Promise<SpecialistDto> {
+  if (!canManageSpecialists(actor.role)) {
+    throw new Error('FORBIDDEN');
+  }
+
+  const accountId = await resolveAccountId(actor);
+  const id = await createSpecialist({
+    accountId,
+    name: payload.name.trim(),
+    code: buildSpecialistCode(payload.name),
+  });
+
+  const created = await findSpecialistById(accountId, id);
+  if (!created) {
+    throw new Error('CREATE_FAILED');
+  }
+
+  return mapSpecialist(created);
+}
+
+export async function updateSpecialistForActor(
+  actor: User,
+  specialistId: number,
+  payload: SpecialistUpdatePayload,
+): Promise<SpecialistDto | null> {
+  if (!canManageSpecialists(actor.role)) {
+    throw new Error('FORBIDDEN');
+  }
+
+  const accountId = await resolveAccountId(actor);
+  const existing = await findSpecialistById(accountId, specialistId);
+  if (!existing) {
+    return null;
+  }
+
+  await updateSpecialistById(accountId, specialistId, {
+    name: payload.name,
+    isActive: payload.isActive,
+  });
+
+  const updated = await findSpecialistById(accountId, specialistId);
+  if (!updated) {
+    return null;
+  }
+
+  return mapSpecialist(updated);
+}
+
+export async function deleteSpecialistForActor(actor: User, specialistId: number): Promise<boolean> {
+  if (!canManageSpecialists(actor.role)) {
+    throw new Error('FORBIDDEN');
+  }
+
+  const accountId = await resolveAccountId(actor);
+  const existing = await findSpecialistById(accountId, specialistId);
+  if (!existing) {
+    return false;
+  }
+
+  const appointmentsCount = await countAppointmentsBySpecialistId(accountId, specialistId);
+  if (appointmentsCount > 0) {
+    throw new Error('SPECIALIST_HAS_APPOINTMENTS');
+  }
+
+  return deleteSpecialistById(accountId, specialistId);
+}

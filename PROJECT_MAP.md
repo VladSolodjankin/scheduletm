@@ -7,7 +7,7 @@
   - `server/src/index.ts` — bootstrap.
   - `server/src/app.ts` — инициализация Express middleware/роутов.
   - `server/src/config/*` — env + схемы валидации.
-  - `server/src/routes/*` — auth/settings/integrations/appointments/health endpoints.
+  - `server/src/routes/*` — auth/settings/integrations/appointments/specialists/health endpoints.
   - `server/src/services/*` — бизнес-логика auth/settings/appointments.
   - `server/src/repositories/appointmentRepository.ts` — доступ к appointments для web-сценариев.
   - `server/src/middlewares/*` — auth + login lock middleware.
@@ -53,6 +53,10 @@
 - `GET /api/settings/user`
 - `PUT /api/settings/user`
 - `POST /api/integrations/google/oauth/start`
+- `GET /api/specialists`
+- `POST /api/specialists`
+- `PATCH /api/specialists/:id`
+- `DELETE /api/specialists/:id`
 - `GET /api/integrations/google/oauth/callback`
 - `GET /api/appointments`
 - `POST /api/appointments`

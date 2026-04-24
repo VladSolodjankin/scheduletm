@@ -27,9 +27,11 @@ describe('web smoke (auth/settings/appointments contracts)', () => {
     const settingsContainer = await read('src/containers/SettingsContainer.tsx');
     const appointmentsContainer = await read('src/containers/AppointmentsContainer.tsx');
     const appointmentDialog = await read('src/components/appointments/AppointmentFormDialog.tsx');
+    const specialistsTable = await read('src/components/specialists/SpecialistsTable.tsx');
 
     assert.match(settingsContainer, /'\/api\/settings\/user'/);
     assert.match(settingsContainer, /'\/api\/settings\/system'/);
+    assert.match(settingsContainer, /'\/api\/specialists'/);
     assert.match(appointmentsContainer, /'\/api\/appointments'/);
     assert.match(appointmentsContainer, /\/cancel/);
     assert.match(appointmentsContainer, /\/reschedule/);
@@ -37,5 +39,7 @@ describe('web smoke (auth/settings/appointments contracts)', () => {
     assert.match(appointmentsContainer, /\/notify/);
     assert.match(appointmentDialog, /appointments\.markPaidAction/);
     assert.match(appointmentDialog, /appointments\.notifyAction/);
+    assert.match(specialistsTable, /AppIcons\.edit/);
+    assert.match(specialistsTable, /AppIcons\.delete/);
   });
 });
