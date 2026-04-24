@@ -5,6 +5,7 @@ Node.js/Express API для web-клиента и интеграций.
 ## Что умеет
 
 - Auth: register/login/refresh/logout.
+  При регистрации пользователю присваивается роль 'Admin'
 - Web roles: owner/admin/specialist/client.
 - Settings API: user/system.
 - CRUD: users, specialists.
