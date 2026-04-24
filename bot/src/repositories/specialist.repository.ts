@@ -44,10 +44,13 @@ export async function findSpecialistCalendarCredentials(accountId: number, speci
     .leftJoin('web_users as wu', function joinWebUsers() {
       this.on('wu.account_id', '=', 'sp.account_id').andOn('wu.id', '=', 'sp.user_id');
     })
+    .leftJoin('web_user_integrations as wui', function joinWebUserIntegrations() {
+      this.on('wui.account_id', '=', 'wu.account_id').andOn('wui.web_user_id', '=', 'wu.id');
+    })
     .where({ 'sp.account_id': accountId, 'sp.id': specialistId })
     .first<SpecialistCalendarCredentialsRow>(
-      'wu.google_api_key as google_api_key',
-      'wu.google_calendar_id as google_calendar_id',
+      'wui.google_api_key as google_api_key',
+      'wui.google_calendar_id as google_calendar_id',
     );
 
   return row ?? null;

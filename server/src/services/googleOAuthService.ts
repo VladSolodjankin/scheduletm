@@ -4,7 +4,7 @@ import { URLSearchParams } from 'node:url';
 import { env } from '../config/env.js';
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import { createGoogleOAuthState, consumeGoogleOAuthState } from '../repositories/googleOAuthStateRepository.js';
-import { clearWebUserGoogleCredentials, updateWebUserGoogleCredentials } from '../repositories/webUserRepository.js';
+import { clearWebUserGoogleCredentials, updateWebUserGoogleCredentials } from '../repositories/webUserIntegrationRepository.js';
 
 type GoogleTokenResponse = {
   access_token: string;
@@ -107,7 +107,7 @@ export const completeGoogleOAuth = async (state: string, code: string) => {
 
     await updateWebUserGoogleCredentials({
       accountId,
-      id: pending.web_user_id,
+      webUserId: pending.web_user_id,
       googleApiKey: tokenResponse.data.access_token,
       googleRefreshToken: tokenResponse.data.refresh_token,
       googleTokenExpiresAt: resolveTokenExpiresAt(tokenResponse.data.expires_in),
@@ -152,7 +152,7 @@ export const refreshGoogleAccessToken = async (input: RefreshGoogleAccessTokenIn
     const googleTokenExpiresAt = resolveTokenExpiresAt(tokenResponse.data.expires_in);
     await updateWebUserGoogleCredentials({
       accountId: input.accountId,
-      id: input.webUserId,
+      webUserId: input.webUserId,
       googleApiKey: tokenResponse.data.access_token,
       googleRefreshToken: tokenResponse.data.refresh_token,
       googleTokenExpiresAt,

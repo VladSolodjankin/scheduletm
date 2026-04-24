@@ -116,8 +116,8 @@ npm test
 - `specialists` - специалисты (в т.ч. `is_default`, `is_active`, `base_session_price`, `base_hour_price`)
 - Для интеграции календаря у специалиста используется связка:
   - `specialists.user_id` (какой `web_user` владеет интеграцией специалиста)
-  - `web_users.google_api_key` / `web_users.google_calendar_id`
-  - `specialists` не хранит Google ключи; источник истины — `web_users`
+  - `web_user_integrations.google_api_key` / `web_user_integrations.google_calendar_id`
+  - `specialists` не хранит Google ключи; источник истины — `web_user_integrations`
 - `app_settings` - рабочие часы/дни и timezone (IANA), в которой показываются слоты/записи
 - `appointment_groups` - группы пакетных записей (общая стоимость/статус оплаты пакета), связанные с `appointments.group_id`
 

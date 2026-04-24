@@ -1,6 +1,7 @@
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import { findAppSettingsByAccountId, updateAppSettingsByAccountId } from '../repositories/appSettingsRepository.js';
 import { findWebUserById, updateWebUserSettings } from '../repositories/webUserRepository.js';
+import { findWebUserIntegrationByWebUserId, updateWebUserTelegramIntegration } from '../repositories/webUserIntegrationRepository.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { systemSettingsSchema, userSettingsSchema } from '../config/schemas.js';
@@ -97,15 +98,17 @@ export const getUserSettings = async (userId: string): Promise<UserSettings> => 
     };
   }
 
+  const integration = await findWebUserIntegrationByWebUserId(accountId, numericUserId);
+
   return {
     timezone: user.timezone,
     locale: user.locale,
     uiThemeMode: user.ui_theme_mode,
     uiPaletteVariantId: user.ui_palette_variant_id,
-    googleConnected: Boolean(user.google_api_key),
-    telegramBotConnected: Boolean(user.telegram_bot_token),
-    telegramBotName: user.telegram_bot_name,
-    telegramBotUsername: user.telegram_bot_username,
+    googleConnected: Boolean(integration?.google_api_key),
+    telegramBotConnected: Boolean(integration?.telegram_bot_token),
+    telegramBotName: integration?.telegram_bot_name ?? null,
+    telegramBotUsername: integration?.telegram_bot_username ?? null,
   };
 };
 
@@ -147,6 +150,11 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
     locale: parsed.data.locale,
     uiThemeMode: parsed.data.uiThemeMode,
     uiPaletteVariantId: parsed.data.uiPaletteVariantId,
+  });
+
+  await updateWebUserTelegramIntegration({
+    accountId,
+    webUserId: numericUserId,
     telegramBotToken: telegramBotTokenPatch,
     telegramBotUsername: telegramBotUsernamePatch,
     telegramBotName: telegramBotNamePatch,
