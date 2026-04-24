@@ -1,14 +1,15 @@
 # Web (`@scheduletm/web`)
 
-React SPA для owner/admin/specialist.
+React SPA для owner/admin/specialist/client.
 
 ## Что умеет
 
 - Auth: `/login`, `/register`.
 - Основные разделы: `/appointments`, `/specialists`, `/users`, `/settings`.
-- Role-aware UI (owner/admin/specialist).
+- Role-aware UI (owner/admin/specialist/client).
 - i18n (`ru/en`), theme mode, palette variants.
 - Calendar flow: create/edit/reschedule/cancel/mark-paid/notify.
+- Client flow: клиент работает только со своим расписанием (без доступа к чужим записям).
 
 ## Команды
 

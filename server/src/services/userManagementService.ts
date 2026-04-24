@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
+import { createClient } from '../repositories/clientRepository.js';
 import { deactivateSpecialistByWebUserId } from '../repositories/specialistRepository.js';
 import {
   createWebUser,
@@ -27,7 +28,7 @@ export type UserManagementItem = {
 
 type UserCreatePayload = {
   email: string;
-  role: "admin" | "specialist";
+  role: "admin" | "specialist" | "client";
   firstName: string;
   lastName: string;
   phone?: string;
@@ -36,14 +37,26 @@ type UserCreatePayload = {
 
 type UserUpdatePayload = {
   email: string;
-  role: "admin" | "specialist";
+  role: "admin" | "specialist" | "client";
   firstName: string;
   lastName: string;
   phone?: string;
   telegramUsername?: string;
 };
 
-const canManageUsers = (role: WebUserRole): boolean => role === WebUserRole.Owner || role === WebUserRole.Admin;
+const canManageFullUserDirectory = (role: WebUserRole): boolean =>
+  role === WebUserRole.Owner || role === WebUserRole.Admin;
+
+const canManageClients = (role: WebUserRole): boolean =>
+  canManageFullUserDirectory(role) || role === WebUserRole.Specialist;
+
+const canCreateRole = (actorRole: WebUserRole, targetRole: UserCreatePayload['role']): boolean => {
+  if (targetRole === WebUserRole.Client) {
+    return canManageClients(actorRole);
+  }
+
+  return canManageFullUserDirectory(actorRole);
+};
 
 const mapUser = (item: Awaited<ReturnType<typeof listWebUsersByAccount>>[number]): UserManagementItem => ({
   id: item.id,
@@ -62,17 +75,20 @@ async function resolveAccountId(actor: User): Promise<number> {
 }
 
 export async function listManagedUsers(actor: User): Promise<UserManagementItem[]> {
-  if (!canManageUsers(actor.role)) {
+  if (!canManageClients(actor.role)) {
     throw new Error('FORBIDDEN');
   }
 
   const accountId = await resolveAccountId(actor);
   const users = await listWebUsersByAccount(accountId);
-  return users.map(mapUser);
+  const filtered = canManageFullUserDirectory(actor.role)
+    ? users
+    : users.filter((item) => item.role === WebUserRole.Client);
+  return filtered.map(mapUser);
 }
 
 export async function createManagedUser(actor: User, payload: UserCreatePayload): Promise<UserManagementItem> {
-  if (!canManageUsers(actor.role)) {
+  if (!canCreateRole(actor.role, payload.role)) {
     throw new Error('FORBIDDEN');
   }
 
@@ -100,6 +116,23 @@ export async function createManagedUser(actor: User, payload: UserCreatePayload)
     passwordSalt: salt,
   });
 
+  if (payload.role === WebUserRole.Client) {
+    const client = await createClient({
+      accountId,
+      firstName: payload.firstName.trim(),
+      lastName: payload.lastName.trim(),
+      phone: payload.phone?.trim(),
+      email,
+      username: payload.telegramUsername?.trim(),
+    });
+
+    await updateWebUserProfile({
+      accountId,
+      id: created.id,
+      clientId: client.id,
+    });
+  }
+
   await sendWelcomePasswordEmail({
     to: email,
     firstName: payload.firstName.trim(),
@@ -110,7 +143,7 @@ export async function createManagedUser(actor: User, payload: UserCreatePayload)
 }
 
 export async function updateManagedUser(actor: User, userId: number, payload: UserUpdatePayload): Promise<UserManagementItem | null> {
-  if (!canManageUsers(actor.role)) {
+  if (!canManageClients(actor.role)) {
     throw new Error('FORBIDDEN');
   }
 
@@ -118,6 +151,11 @@ export async function updateManagedUser(actor: User, userId: number, payload: Us
   const existing = await findWebUserById(accountId, userId);
   if (!existing) {
     return null;
+  }
+  if (!canManageFullUserDirectory(actor.role)) {
+    if (existing.role !== WebUserRole.Client || payload.role !== WebUserRole.Client) {
+      throw new Error('FORBIDDEN');
+    }
   }
 
   const email = sanitizeEmail(payload.email);
@@ -144,7 +182,7 @@ export async function updateManagedUser(actor: User, userId: number, payload: Us
 }
 
 export async function deactivateManagedUser(actor: User, userId: number): Promise<UserManagementItem | null> {
-  if (!canManageUsers(actor.role)) {
+  if (!canManageClients(actor.role)) {
     throw new Error('FORBIDDEN');
   }
 
@@ -152,6 +190,9 @@ export async function deactivateManagedUser(actor: User, userId: number): Promis
   const existing = await findWebUserById(accountId, userId);
   if (!existing) {
     return null;
+  }
+  if (!canManageFullUserDirectory(actor.role) && existing.role !== WebUserRole.Client) {
+    throw new Error('FORBIDDEN');
   }
 
   await updateWebUserProfile({

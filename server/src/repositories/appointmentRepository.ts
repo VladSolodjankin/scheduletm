@@ -38,6 +38,7 @@ type AppointmentListFilters = {
   from?: Date;
   to?: Date;
   specialistId?: number;
+  clientId?: number;
 };
 
 type CreateAppointmentInput = {
@@ -70,6 +71,10 @@ export async function listAppointments(filters: AppointmentListFilters): Promise
 
   if (filters.specialistId) {
     query.andWhere('appointments.specialist_id', filters.specialistId);
+  }
+
+  if (filters.clientId) {
+    query.andWhere('appointments.user_id', filters.clientId);
   }
 
   if (filters.from) {

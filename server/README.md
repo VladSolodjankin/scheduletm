@@ -5,9 +5,14 @@ Node.js/Express API для web-клиента и интеграций.
 ## Что умеет
 
 - Auth: register/login/refresh/logout.
+- Web roles: owner/admin/specialist/client.
 - Settings API: user/system.
 - CRUD: users, specialists.
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
+- Client self-service:
+  - owner/admin/specialist могут создавать web users с ролью `client`;
+  - `client` видит и управляет только собственными записями (edit/reschedule/cancel);
+  - `client` не может создавать новые записи, отмечать оплату и отправлять уведомления.
 - Google OAuth (`start` + `callback`).
 - Локализованные API-сообщения (`ru/en`).
 

@@ -70,11 +70,15 @@ scheduletm/
 ### Web + Server
 
 - Auth: register/login/refresh/logout.
-- Роли: `owner` / `admin` / `specialist`.
+- Роли: `owner` / `admin` / `specialist` / `client`.
 - Settings: system + user settings.
 - Integrations: Google OAuth start/callback, Telegram bot token в user integrations.
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
 - Specialists и Users CRUD (с role-gates).
+- Client web users:
+  - owner/admin/specialist могут создавать пользователей с ролью `client`;
+  - `client` может входить в web-приложение, редактировать собственный профиль и управлять только своими записями (редактирование/перенос/отмена);
+  - Google OAuth доступен для подключения календаря и синхронизации занятости.
 - Базовая i18n поддержка (`ru/en`) в web + локализованные server messages.
 
 ### Bot

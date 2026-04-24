@@ -10,6 +10,7 @@ export type WebUserRecord = {
   last_name: string | null;
   phone: string | null;
   telegram_username: string | null;
+  client_id: number | null;
   password_hash: string;
   password_salt: string;
   is_active: boolean;
@@ -149,6 +150,7 @@ type UpdateWebUserProfileInput = {
   telegramUsername?: string;
   email?: string;
   isActive?: boolean;
+  clientId?: number | null;
 };
 
 export async function updateWebUserProfile(input: UpdateWebUserProfileInput): Promise<void> {
@@ -182,6 +184,10 @@ export async function updateWebUserProfile(input: UpdateWebUserProfileInput): Pr
 
   if (input.isActive !== undefined) {
     patch.is_active = input.isActive;
+  }
+
+  if (input.clientId !== undefined) {
+    patch.client_id = input.clientId;
   }
 
   await db('web_users')
