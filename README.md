@@ -80,6 +80,7 @@ scheduletm/
 - `web_user_integrations.telegram_bot_token` — персональный BOT_TOKEN для Telegram-интеграции пользователя в web settings.
 - `specialists.user_id` — прямая 1:1 привязка специалиста к web-учетке (в рамках `account_id`).
 - `server` auth-сервис регистрирует/логинит через `web_users`, а `bot` user-сервис при наличии email делает auto-link через `user_identity_links`.
+- В `server` добавлен i18n-слой ответов API (dictionary-based `ru/en`, выбор локали из `Accept-Language`/`x-locale`), чтобы серверные тексты были синхронизированы с подходом web.
 
 Сервер разнесен по слоям:
 

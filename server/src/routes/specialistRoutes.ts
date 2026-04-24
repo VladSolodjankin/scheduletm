@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { specialistCreateSchema, specialistUpdateSchema } from '../config/schemas.js';
+import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import {
   getAvailableSpecialistWebUsersForActor,
@@ -25,7 +26,7 @@ specialistRoutes.get('/', async (req, res) => {
     return res.json({ specialists, availableWebUsers });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось загрузить специалистов' });
+    return res.status(500).json({ message: t(req, 'specialistsLoadFailed') });
   }
 });
 
@@ -43,14 +44,14 @@ specialistRoutes.post('/', async (req, res) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN') {
-      return res.status(403).json({ message: 'Недостаточно прав для создания специалиста' });
+      return res.status(403).json({ message: t(req, 'forbiddenCreateSpecialist') });
     }
     if (message === 'WEB_USER_NOT_AVAILABLE') {
-      return res.status(400).json({ message: 'Пользователь специалиста недоступен для добавления' });
+      return res.status(400).json({ message: t(req, 'specialistWebUserUnavailable') });
     }
 
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось создать специалиста' });
+    return res.status(500).json({ message: t(req, 'specialistCreateFailed') });
   }
 });
 
@@ -59,7 +60,7 @@ specialistRoutes.patch('/:id', async (req, res) => {
   const specialistId = Number(req.params.id);
 
   if (!Number.isInteger(specialistId) || specialistId <= 0) {
-    return res.status(400).json({ message: 'Некорректный id специалиста' });
+    return res.status(400).json({ message: t(req, 'invalidSpecialistId') });
   }
 
   const parsed = specialistUpdateSchema.safeParse(req.body);
@@ -70,18 +71,18 @@ specialistRoutes.patch('/:id', async (req, res) => {
   try {
     const updated = await updateSpecialistForActor(actor, specialistId, parsed.data);
     if (!updated) {
-      return res.status(404).json({ message: 'Специалист не найден' });
+      return res.status(404).json({ message: t(req, 'specialistNotFound') });
     }
 
     return res.json(updated);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN') {
-      return res.status(403).json({ message: 'Недостаточно прав для изменения специалиста' });
+      return res.status(403).json({ message: t(req, 'forbiddenUpdateSpecialist') });
     }
 
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось обновить специалиста' });
+    return res.status(500).json({ message: t(req, 'specialistUpdateFailed') });
   }
 });
 
@@ -90,28 +91,28 @@ specialistRoutes.delete('/:id', async (req, res) => {
   const specialistId = Number(req.params.id);
 
   if (!Number.isInteger(specialistId) || specialistId <= 0) {
-    return res.status(400).json({ message: 'Некорректный id специалиста' });
+    return res.status(400).json({ message: t(req, 'invalidSpecialistId') });
   }
 
   try {
     const deleted = await deleteSpecialistForActor(actor, specialistId);
 
     if (!deleted) {
-      return res.status(404).json({ message: 'Специалист не найден' });
+      return res.status(404).json({ message: t(req, 'specialistNotFound') });
     }
 
     return res.status(204).send();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN') {
-      return res.status(403).json({ message: 'Недостаточно прав для удаления специалиста' });
+      return res.status(403).json({ message: t(req, 'forbiddenDeleteSpecialist') });
     }
 
     if (message === 'SPECIALIST_HAS_APPOINTMENTS') {
-      return res.status(409).json({ message: 'Нельзя удалить специалиста с существующими записями' });
+      return res.status(409).json({ message: t(req, 'specialistHasAppointments') });
     }
 
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось удалить специалиста' });
+    return res.status(500).json({ message: t(req, 'specialistDeleteFailed') });
   }
 });

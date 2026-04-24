@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import {
   canManageSystemSettings,
@@ -13,7 +14,7 @@ export const settingsRoutes = Router();
 settingsRoutes.get('/system', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
   if (!canManageSystemSettings(user.role)) {
-    return res.status(403).json({ message: 'Недостаточно прав для системных настроек' });
+    return res.status(403).json({ message: t(req, 'forbiddenSystemSettings') });
   }
 
   return res.json(await getSystemSettings());
@@ -22,12 +23,12 @@ settingsRoutes.get('/system', requireAccessToken, async (req, res) => {
 settingsRoutes.put('/system', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
   if (!canManageSystemSettings(user.role)) {
-    return res.status(403).json({ message: 'Недостаточно прав для системных настроек' });
+    return res.status(403).json({ message: t(req, 'forbiddenSystemSettings') });
   }
 
   const updated = await updateSystemSettings(req.body);
   if (!updated) {
-    return res.status(400).json({ message: 'Invalid system settings payload' });
+    return res.status(400).json({ message: t(req, 'invalidPayloadSystemSettings') });
   }
 
   return res.json(updated);
@@ -42,7 +43,7 @@ settingsRoutes.put('/user', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
   const updated = await updateUserSettings(user, req.body);
   if (!updated) {
-    return res.status(400).json({ message: 'Invalid user settings payload' });
+    return res.status(400).json({ message: t(req, 'invalidPayloadUserSettings') });
   }
 
   return res.json(updated);
