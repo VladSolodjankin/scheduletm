@@ -94,3 +94,8 @@
 - [x] Добавить в web карточку appointment две кнопки действий: `Mark as paid` и `Notify client`.
 - [x] Добавить минимальный audit trail для lifecycle действий (`cancel/reschedule/mark-paid/notify`) с простым списком событий.
 - [x] Добавить route-smoke тесты server для `mark-paid/notify` и один web smoke-сценарий на новые действия.
+
+### 4.8 Appointment form UX (выполнено)
+
+- [x] Перестроить create/edit appointment dialog в двухколоночный layout на `sm+` экранах.
+- [x] Перенести поля выбора времени (`Start date`, `Start time`, `End time`) выше контактных полей клиента.
