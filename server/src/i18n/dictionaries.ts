@@ -113,6 +113,53 @@ export const dictionaries = {
   }
 } as const;
 
+export const schemaValidationDictionary = {
+  timezoneRequired: 'Укажите часовой пояс',
+  timezoneTooLong: 'Часовой пояс слишком длинный',
+  timezoneInvalid: 'Некорректный IANA timezone',
+  passwordMinLength: 'Пароль должен содержать минимум 10 символов',
+  passwordMaxLength: 'Пароль не должен превышать 128 символов',
+  passwordNeedUppercase: 'Пароль должен содержать хотя бы одну заглавную букву',
+  passwordNeedLowercase: 'Пароль должен содержать хотя бы одну строчную букву',
+  passwordNeedDigit: 'Пароль должен содержать хотя бы одну цифру',
+  emailInvalid: 'Введите корректный email',
+  emailTooLong: 'Email слишком длинный',
+  loginPasswordRequired: 'Введите пароль',
+  meetingDurationMustBeInteger: 'Длительность встречи должна быть целым числом',
+  meetingDurationMin: 'Минимальная длительность встречи — 15 минут',
+  meetingDurationMax: 'Максимальная длительность встречи — 180 минут',
+  localeRequired: 'Укажите язык/локаль',
+  localeTooLong: 'Локаль слишком длинная',
+  paletteIdRequired: 'Укажите id палитры',
+  paletteIdTooLong: 'Id палитры слишком длинный',
+  telegramBotTokenRequired: 'Укажите BOT_TOKEN',
+  telegramBotTokenTooLong: 'BOT_TOKEN слишком длинный',
+  specialistNameMin: 'Имя специалиста должно содержать минимум 2 символа',
+  specialistNameMax: 'Имя специалиста слишком длинное',
+  managedUserFirstNameRequired: 'Укажите имя',
+  managedUserFirstNameTooLong: 'Имя слишком длинное',
+  managedUserLastNameRequired: 'Укажите фамилию',
+  managedUserLastNameTooLong: 'Фамилия слишком длинная',
+  managedUserPhoneTooLong: 'Телефон слишком длинный',
+  managedUserTelegramTooLong: 'Telegram аккаунт слишком длинный',
+  specialistUserIdRequired: 'Выберите пользователя специалиста',
+  atLeastOneFieldToUpdate: 'Передайте хотя бы одно поле для обновления',
+  appointmentSpecialistRequired: 'Укажите специалиста',
+  appointmentStartInvalid: 'Укажите корректную дату и время начала',
+  appointmentEndInvalid: 'Укажите корректную дату и время окончания',
+  appointmentLinkInvalid: 'Укажите корректную ссылку',
+  appointmentNotesTooLong: 'Комментарий слишком длинный',
+  appointmentFirstNameRequired: 'Укажите имя',
+  appointmentLastNameRequired: 'Укажите фамилию',
+  appointmentContactRequired: 'Укажите telegram username, телефон или email',
+  appointmentEndMustBeAfterStart: 'Время окончания должно быть позже времени начала',
+  appointmentDurationRange: 'Длительность встречи должна быть от 15 до 480 минут',
+  appointmentDurationMin: 'Минимальная длительность — 15 минут',
+  appointmentDurationMax: 'Максимальная длительность — 480 минут',
+  appointmentStartAndEndRequired: 'Передайте и время начала, и время окончания',
+  appointmentRescheduleInvalid: 'Укажите корректную дату и время',
+} as const;
+
 export type Locale = keyof typeof dictionaries;
 export type TranslationKey = keyof typeof dictionaries.en.errors;
 export const DEFAULT_LOCALE: Locale = 'ru';
