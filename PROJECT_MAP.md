@@ -37,6 +37,7 @@
   - Формы страниц `login/register/settings` управляются через `react-hook-form` (`Controller` + `useForm`).
   - Управление специалистами вынесено в отдельную страницу `web/src/pages/SpecialistsPage.tsx` и контейнер `web/src/containers/SpecialistsContainer.tsx` (раздел `/specialists` в левом меню только для `owner/admin`).
   - Добавление специалиста выполняется через dropdown пользователей из `web_users` текущего `account_id` с фильтрацией `role = specialist` и `is_active = true`.
+  - Страница `web/src/pages/UsersPage.tsx` использует i18n-словарь для таблицы/формы и переиспользуемый `AppRhfPhoneField` для ввода телефона пользователя.
   - `web/src/shared/theme/*` — константы дизайна + фабрика темы + light/dark + palette variants.
   - `web/src/shared/*` — API client, типы, auth context и переиспользуемая инфраструктура.
   - `web/src/shared/api/client.ts` — глобальный `401` handler: при `Unauthorized` очищает auth-state и переводит пользователя на `/login`.

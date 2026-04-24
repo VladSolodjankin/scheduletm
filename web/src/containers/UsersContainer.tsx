@@ -131,6 +131,12 @@ export function UsersContainer() {
               addLabel={t('users.add')}
               editLabel={t('users.edit')}
               deleteLabel={t('users.delete')}
+              emailColumnLabel={t('users.columns.email')}
+              firstNameColumnLabel={t('users.columns.firstName')}
+              lastNameColumnLabel={t('users.columns.lastName')}
+              roleColumnLabel={t('users.columns.role')}
+              activeColumnLabel={t('users.columns.active')}
+              actionsColumnLabel={t('users.columns.actions')}
               users={users}
               onAdd={() => {
                 setEditingUser(null);
@@ -150,6 +156,15 @@ export function UsersContainer() {
         open={isDialogOpen}
         isSaving={isSaving}
         editingUser={editingUser}
+        title={editingUser ? t('users.form.editTitle') : t('users.form.addTitle')}
+        emailLabel={t('users.form.email')}
+        roleLabel={t('users.form.role')}
+        firstNameLabel={t('users.form.firstName')}
+        lastNameLabel={t('users.form.lastName')}
+        phoneLabel={t('users.form.phone')}
+        telegramLabel={t('users.form.telegram')}
+        closeLabel={t('users.close')}
+        saveLabel={t('users.save')}
         onClose={() => {
           if (!isSaving) {
             setIsDialogOpen(false);

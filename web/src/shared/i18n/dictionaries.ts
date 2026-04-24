@@ -102,6 +102,26 @@ export const dictionaries = {
       edit: 'Edit user',
       delete: 'Deactivate user',
       empty: 'No users yet.',
+      save: 'Save',
+      close: 'Close',
+      form: {
+        addTitle: 'Add user',
+        editTitle: 'Edit user',
+        email: 'Email',
+        role: 'Role',
+        firstName: 'First name',
+        lastName: 'Last name',
+        phone: 'Phone',
+        telegram: 'Telegram'
+      },
+      columns: {
+        email: 'Email',
+        firstName: 'First name',
+        lastName: 'Last name',
+        role: 'Role',
+        active: 'Active',
+        actions: 'Actions'
+      },
       errors: {
         load: 'Unable to load users.',
         save: 'Unable to save user.',
@@ -256,6 +276,26 @@ export const dictionaries = {
       edit: 'Редактировать пользователя',
       delete: 'Деактивировать пользователя',
       empty: 'Пользователи пока не добавлены.',
+      save: 'Сохранить',
+      close: 'Закрыть',
+      form: {
+        addTitle: 'Добавить пользователя',
+        editTitle: 'Редактировать пользователя',
+        email: 'Email',
+        role: 'Роль',
+        firstName: 'Имя',
+        lastName: 'Фамилия',
+        phone: 'Телефон',
+        telegram: 'Telegram'
+      },
+      columns: {
+        email: 'Email',
+        firstName: 'Имя',
+        lastName: 'Фамилия',
+        role: 'Роль',
+        active: 'Активен',
+        actions: 'Действия'
+      },
       errors: {
         load: 'Не удалось загрузить пользователей.',
         save: 'Не удалось сохранить пользователя.',
@@ -392,6 +432,22 @@ export type TranslationKey =
   | 'users.edit'
   | 'users.delete'
   | 'users.empty'
+  | 'users.save'
+  | 'users.close'
+  | 'users.form.addTitle'
+  | 'users.form.editTitle'
+  | 'users.form.email'
+  | 'users.form.role'
+  | 'users.form.firstName'
+  | 'users.form.lastName'
+  | 'users.form.phone'
+  | 'users.form.telegram'
+  | 'users.columns.email'
+  | 'users.columns.firstName'
+  | 'users.columns.lastName'
+  | 'users.columns.role'
+  | 'users.columns.active'
+  | 'users.columns.actions'
   | 'users.errors.load'
   | 'users.errors.save'
   | 'users.errors.delete'
