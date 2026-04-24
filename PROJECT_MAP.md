@@ -38,6 +38,7 @@
   - `web/src/shared/i18n/*` — словари переводов (`ru/en`) и i18n-контекст приложения.
   - До логина показываются только auth-страницы (`/login`, `/register`) без header/left menu; после регистрации маршрут ведёт на `/login`.
   - Добавлена страница `web/src/pages/AppointmentsPage.tsx` и контейнер `web/src/containers/AppointmentsContainer.tsx` для календаря appointments.
+  - Для первой загрузки appointments контейнер показывает skeleton-preloader вместо пустого состояния страницы.
 
 ## API карта (MVP)
 

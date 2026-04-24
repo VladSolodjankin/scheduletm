@@ -9,6 +9,7 @@ import {
   MenuItem,
   Select,
   Snackbar,
+  Skeleton,
   Stack,
   Typography,
   alpha,
@@ -54,6 +55,7 @@ export function AppointmentsContainer() {
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [isCancellingAppointment, setIsCancellingAppointment] = useState(false);
   const [pastSlotToastOpen, setPastSlotToastOpen] = useState(false);
@@ -159,6 +161,7 @@ export function AppointmentsContainer() {
       setError('Unable to load appointments');
     } finally {
       setIsLoading(false);
+      setHasLoadedOnce(true);
     }
   };
 
@@ -315,6 +318,8 @@ export function AppointmentsContainer() {
     setFocusDate((prev) => addDays(prev, delta));
   };
 
+  const isInitialLoading = !hasLoadedOnce && isLoading;
+
   return (
     <AppPage
       title={t('appointments.pageTitle')}
@@ -391,6 +396,36 @@ export function AppointmentsContainer() {
           onPastSlotAttempt={showPastSlotError}
           getGridDayKey={getGridDayKey}
         />
+        {isInitialLoading ? (
+          <Card variant="outlined" sx={{ borderRadius: 3 }}>
+            <CardContent sx={{ p: 2 }}>
+              <Stack spacing={1.5}>
+                <Typography variant="body2" color="text.secondary">{t('appointments.loading')}</Typography>
+                <Skeleton variant="rounded" height={42} />
+                <Skeleton variant="rounded" height={520} />
+              </Stack>
+            </CardContent>
+          </Card>
+        ) : (
+          <AppointmentsCalendar
+            t={t}
+            viewMode={viewMode}
+            visibleDays={visibleDays}
+            displayTimeZone={displayTimeZone}
+            appointmentsByCell={appointmentsByCell}
+            busySlotsByCell={busySlotsByCell}
+            movePeriod={movePeriod}
+            onToday={() => setFocusDate(startOfDay(new Date()))}
+            onSetViewMode={setViewMode}
+            onOpenCreate={openCreate}
+            onOpenEdit={openEdit}
+            onMoveAppointment={(id, dayKey, hour, minute) => {
+              void moveAppointment(id, dayKey, hour, minute);
+            }}
+            pastSlotHint={pastSlotError}
+            getGridDayKey={getGridDayKey}
+          />
+        )}
       </Stack>
 
       <Snackbar
