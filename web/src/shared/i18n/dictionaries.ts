@@ -12,6 +12,7 @@ export const dictionaries = {
       language: 'Language',
       appointments: 'Appointments',
       specialists: 'Specialists',
+      users: 'Users',
       profileMenuAria: 'Open profile menu',
       appearancePaletteAria: 'Select color palette',
       themeToggleAria: 'Toggle theme mode',
@@ -91,6 +92,22 @@ export const dictionaries = {
       pageSubtitle: 'Create and manage specialist profiles for your team.',
       accessDenied: 'Only owner or admin can manage specialists.'
     },
+
+    users: {
+      pageTitle: 'Users',
+      pageSubtitle: 'Create, edit and deactivate users for your account.',
+      accessDenied: 'Only owner or admin can manage users.',
+      tableTitle: 'Users',
+      add: 'Add user',
+      edit: 'Edit user',
+      delete: 'Deactivate user',
+      empty: 'No users yet.',
+      errors: {
+        load: 'Unable to load users.',
+        save: 'Unable to save user.',
+        delete: 'Unable to delete user.'
+      }
+    },
     appointments: {
       pageTitle: 'Appointments',
       pageSubtitle: 'Calendar view with schedule by day and time.',
@@ -149,6 +166,7 @@ export const dictionaries = {
       language: 'Язык',
       appointments: 'Записи',
       specialists: 'Специалисты',
+      users: 'Пользователи',
       profileMenuAria: 'Открыть меню профиля',
       appearancePaletteAria: 'Выбрать цветовую палитру',
       themeToggleAria: 'Переключить тему',
@@ -228,6 +246,22 @@ export const dictionaries = {
       pageSubtitle: 'Добавляйте и управляйте профилями специалистов вашей команды.',
       accessDenied: 'Управлять специалистами может только владелец или администратор.'
     },
+
+    users: {
+      pageTitle: 'Пользователи',
+      pageSubtitle: 'Добавляйте, редактируйте и деактивируйте пользователей аккаунта.',
+      accessDenied: 'Управлять пользователями может только владелец или администратор.',
+      tableTitle: 'Пользователи',
+      add: 'Добавить пользователя',
+      edit: 'Редактировать пользователя',
+      delete: 'Деактивировать пользователя',
+      empty: 'Пользователи пока не добавлены.',
+      errors: {
+        load: 'Не удалось загрузить пользователей.',
+        save: 'Не удалось сохранить пользователя.',
+        delete: 'Не удалось удалить пользователя.'
+      }
+    },
     appointments: {
       pageTitle: 'Записи',
       pageSubtitle: 'Календарный вид с расписанием по дням и времени.',
@@ -289,6 +323,7 @@ export type TranslationKey =
   | 'common.language'
   | 'common.appointments'
   | 'common.specialists'
+  | 'common.users'
   | 'common.profileMenuAria'
   | 'common.appearancePaletteAria'
   | 'common.themeToggleAria'
@@ -349,6 +384,17 @@ export type TranslationKey =
   | 'specialists.pageTitle'
   | 'specialists.pageSubtitle'
   | 'specialists.accessDenied'
+  | 'users.pageTitle'
+  | 'users.pageSubtitle'
+  | 'users.accessDenied'
+  | 'users.tableTitle'
+  | 'users.add'
+  | 'users.edit'
+  | 'users.delete'
+  | 'users.empty'
+  | 'users.errors.load'
+  | 'users.errors.save'
+  | 'users.errors.delete'
   | 'appointments.pageTitle'
   | 'appointments.pageSubtitle'
   | 'appointments.specialistFilter'

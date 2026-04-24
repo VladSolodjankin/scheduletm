@@ -15,6 +15,7 @@
 
 - Регистрация/логин и централизованные настройки аккаунта.
 - Управление интеграциями (Google + Telegram BOT_TOKEN в user settings).
+- Управление пользователями (`owner/admin`): добавление/редактирование/деактивация с автогенерацией временного пароля на backend и подготовленным email-слоем отправки.
 - Управление appointments: создание, изменение статуса, перенос, отмена, подтверждение оплаты, ручные уведомления.
 - Управление ссылками на онлайн-встречи (дефолтная ссылка + override на конкретную запись).
 - Web-интерфейс + Telegram-бот как единая экосистема.
@@ -45,7 +46,7 @@ scheduletm/
 
 ### Web
 
-- Страницы: `/login`, `/register`, `/appointments`, `/specialists`, `/settings` через `react-router-dom`.
+- Страницы: `/login`, `/register`, `/appointments`, `/specialists`, `/users`, `/settings` через `react-router-dom`.
 - UI на `@mui/material` (без кастомного CSS на старте).
 - Формы web переведены на `react-hook-form` для единообразного контроля полей и submit-state.
 - Разделение на `components`, `containers`, `pages`, `app`, `shared`.
@@ -66,6 +67,10 @@ scheduletm/
 - `PUT /api/settings/system` (owner/admin)
 - `GET /api/settings/user`
 - `PUT /api/settings/user`
+- `GET /api/users`
+- `POST /api/users`
+- `PATCH /api/users/:id`
+- `DELETE /api/users/:id`
 - `POST /api/integrations/google/oauth/start`
 - `GET /api/integrations/google/oauth/callback`
 

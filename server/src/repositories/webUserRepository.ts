@@ -6,6 +6,10 @@ export type WebUserRecord = {
   account_id: number;
   email: string;
   role: WebUserRole;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  telegram_username: string | null;
   password_hash: string;
   password_salt: string;
   is_active: boolean;
@@ -22,6 +26,10 @@ type CreateWebUserInput = {
   accountId: number;
   email: string;
   role: WebUserRole;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  telegramUsername?: string;
   passwordHash: string;
   passwordSalt: string;
   timezone?: string;
@@ -48,6 +56,12 @@ export async function findWebUserById(accountId: number, id: number): Promise<We
   return row ?? null;
 }
 
+export async function listWebUsersByAccount(accountId: number): Promise<WebUserRecord[]> {
+  return db('web_users')
+    .where({ account_id: accountId })
+    .orderBy('created_at', 'desc');
+}
+
 export async function listActiveSpecialistWebUsersWithoutProfile(accountId: number): Promise<SpecialistWebUserOption[]> {
   return db('web_users as wu')
     .leftJoin('specialists as s', function joinSpecialists() {
@@ -67,6 +81,10 @@ export async function createWebUser(input: CreateWebUserInput): Promise<WebUserR
       account_id: input.accountId,
       email: input.email,
       role: input.role,
+      first_name: input.firstName ?? null,
+      last_name: input.lastName ?? null,
+      phone: input.phone ?? null,
+      telegram_username: input.telegramUsername ?? null,
       password_hash: input.passwordHash,
       password_salt: input.passwordSalt,
       timezone: input.timezone ?? 'UTC',
@@ -114,6 +132,56 @@ export async function updateWebUserSettings(input: UpdateWebUserSettingsInput): 
 
   if (input.uiPaletteVariantId !== undefined) {
     patch.ui_palette_variant_id = input.uiPaletteVariantId;
+  }
+
+  await db('web_users')
+    .where({ account_id: input.accountId, id: input.id })
+    .update(patch);
+}
+
+type UpdateWebUserProfileInput = {
+  accountId: number;
+  id: number;
+  role?: WebUserRole;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  telegramUsername?: string;
+  email?: string;
+  isActive?: boolean;
+};
+
+export async function updateWebUserProfile(input: UpdateWebUserProfileInput): Promise<void> {
+  const patch: Record<string, unknown> = {
+    updated_at: db.fn.now(),
+  };
+
+  if (input.role !== undefined) {
+    patch.role = input.role;
+  }
+
+  if (input.email !== undefined) {
+    patch.email = input.email;
+  }
+
+  if (input.firstName !== undefined) {
+    patch.first_name = input.firstName;
+  }
+
+  if (input.lastName !== undefined) {
+    patch.last_name = input.lastName;
+  }
+
+  if (input.phone !== undefined) {
+    patch.phone = input.phone;
+  }
+
+  if (input.telegramUsername !== undefined) {
+    patch.telegram_username = input.telegramUsername;
+  }
+
+  if (input.isActive !== undefined) {
+    patch.is_active = input.isActive;
   }
 
   await db('web_users')

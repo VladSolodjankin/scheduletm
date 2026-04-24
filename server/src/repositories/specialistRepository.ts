@@ -102,12 +102,24 @@ export async function updateSpecialistById(
     .update(nextPayload);
 }
 
-export async function deleteSpecialistById(accountId: number, specialistId: number): Promise<boolean> {
-  const deleted = await db('specialists')
+export async function deactivateSpecialistById(accountId: number, specialistId: number): Promise<boolean> {
+  const updated = await db('specialists')
     .where({ account_id: accountId, id: specialistId })
-    .del();
+    .update({
+      is_active: false,
+      updated_at: db.fn.now(),
+    });
 
-  return deleted > 0;
+  return updated > 0;
+}
+
+export async function deactivateSpecialistByWebUserId(accountId: number, webUserId: number): Promise<void> {
+  await db('specialists')
+    .where({ account_id: accountId, user_id: webUserId })
+    .update({
+      is_active: false,
+      updated_at: db.fn.now(),
+    });
 }
 export type SpecialistCalendarCredentials = {
   specialistId: number;

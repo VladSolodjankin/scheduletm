@@ -9,3 +9,8 @@ export const createToken = () => crypto.randomBytes(32).toString('hex');
 
 export const verifyPassword = (password: string, salt: string, hash: string) =>
   crypto.timingSafeEqual(Buffer.from(hashPassword(password, salt), 'hex'), Buffer.from(hash, 'hex'));
+
+export const generateTemporaryPassword = (length = 14) => {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+  return Array.from(crypto.randomBytes(length), (value) => alphabet[value % alphabet.length]).join('');
+};

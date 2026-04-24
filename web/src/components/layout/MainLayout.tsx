@@ -48,7 +48,10 @@ export function MainLayout() {
   const menuItems = [
     { to: '/appointments', label: t('common.appointments'), icon: 'calendar' as const },
     ...(user?.role === 'owner' || user?.role === 'admin'
-      ? [{ to: '/specialists', label: t('common.specialists'), icon: 'specialists' as const }]
+      ? [
+        { to: '/specialists', label: t('common.specialists'), icon: 'specialists' as const },
+        { to: '/users', label: t('common.users'), icon: 'users' as const },
+      ]
       : []),
     { to: '/settings', label: t('common.settings'), icon: 'settings' as const }
   ];

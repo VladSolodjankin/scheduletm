@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { schemaValidationDictionary as v } from '../i18n/dictionaries.js';
 
 function isValidIanaTimezone(value: string) {
   try {
@@ -11,23 +12,23 @@ function isValidIanaTimezone(value: string) {
 
 const timezoneSchema = z
   .string()
-  .min(1, 'Укажите часовой пояс')
-  .max(64, 'Часовой пояс слишком длинный')
-  .refine(isValidIanaTimezone, 'Некорректный IANA timezone');
+  .min(1, v.timezoneRequired)
+  .max(64, v.timezoneTooLong)
+  .refine(isValidIanaTimezone, v.timezoneInvalid);
 
 export const passwordSchema = z
   .string()
-  .min(10, 'Пароль должен содержать минимум 10 символов')
-  .max(128, 'Пароль не должен превышать 128 символов')
-  .regex(/[A-Z]/, 'Пароль должен содержать хотя бы одну заглавную букву')
-  .regex(/[a-z]/, 'Пароль должен содержать хотя бы одну строчную букву')
-  .regex(/[0-9]/, 'Пароль должен содержать хотя бы одну цифру');
+  .min(10, v.passwordMinLength)
+  .max(128, v.passwordMaxLength)
+  .regex(/[A-Z]/, v.passwordNeedUppercase)
+  .regex(/[a-z]/, v.passwordNeedLowercase)
+  .regex(/[0-9]/, v.passwordNeedDigit);
 
 export const registrationSchema = z.object({
   email: z
     .string()
-    .email('Введите корректный email')
-    .max(254, 'Email слишком длинный'),
+    .email(v.emailInvalid)
+    .max(254, v.emailTooLong),
   password: passwordSchema,
   timezone: timezoneSchema.optional(),
 });
@@ -35,9 +36,9 @@ export const registrationSchema = z.object({
 export const loginSchema = z.object({
   email: z
     .string()
-    .email('Введите корректный email')
-    .max(254, 'Email слишком длинный'),
-  password: z.string().min(1, 'Введите пароль'),
+    .email(v.emailInvalid)
+    .max(254, v.emailTooLong),
+  password: z.string().min(1, v.loginPasswordRequired),
   timezone: timezoneSchema.optional(),
 });
 
@@ -45,43 +46,54 @@ export const systemSettingsSchema = z.object({
   dailyDigestEnabled: z.boolean(),
   defaultMeetingDuration: z.coerce
     .number()
-    .int('Длительность встречи должна быть целым числом')
-    .min(15, 'Минимальная длительность встречи — 15 минут')
-    .max(180, 'Максимальная длительность встречи — 180 минут'),
+    .int(v.meetingDurationMustBeInteger)
+    .min(15, v.meetingDurationMin)
+    .max(180, v.meetingDurationMax),
   weekStartsOnMonday: z.boolean(),
 }).partial();
 
 export const userSettingsSchema = z.object({
   timezone: timezoneSchema,
-  locale: z.string().min(2, 'Укажите язык/локаль').max(16, 'Локаль слишком длинная'),
+  locale: z.string().min(2, v.localeRequired).max(16, v.localeTooLong),
   uiThemeMode: z.enum(['light', 'dark']),
-  uiPaletteVariantId: z.string().min(1, 'Укажите id палитры').max(64, 'Id палитры слишком длинный'),
-  telegramBotToken: z.string().trim().min(1, 'Укажите BOT_TOKEN').max(255, 'BOT_TOKEN слишком длинный').optional().or(z.literal('')),
+  uiPaletteVariantId: z.string().min(1, v.paletteIdRequired).max(64, v.paletteIdTooLong),
+  telegramBotToken: z.string().trim().min(1, v.telegramBotTokenRequired).max(255, v.telegramBotTokenTooLong).optional().or(z.literal('')),
 }).partial();
 
 export const specialistUserCreationSchema = z.object({
   email: z
     .string()
-    .email('Введите корректный email')
-    .max(254, 'Email слишком длинный'),
+    .email(v.emailInvalid)
+    .max(254, v.emailTooLong),
   password: passwordSchema,
   specialistName: z
     .string()
-    .min(2, 'Имя специалиста должно содержать минимум 2 символа')
-    .max(120, 'Имя специалиста слишком длинное')
+    .min(2, v.specialistNameMin)
+    .max(120, v.specialistNameMax)
 });
 
+const managedUserRoleSchema = z.enum(['admin', 'specialist']);
 
+export const managedUserCreateSchema = z.object({
+  email: z.string().trim().email(v.emailInvalid).max(254, v.emailTooLong),
+  role: managedUserRoleSchema,
+  firstName: z.string().trim().min(1, v.managedUserFirstNameRequired).max(120, v.managedUserFirstNameTooLong),
+  lastName: z.string().trim().min(1, v.managedUserLastNameRequired).max(120, v.managedUserLastNameTooLong),
+  phone: z.string().trim().max(50, v.managedUserPhoneTooLong).optional().or(z.literal('')),
+  telegramUsername: z.string().trim().max(255, v.managedUserTelegramTooLong).optional().or(z.literal('')),
+});
+
+export const managedUserUpdateSchema = managedUserCreateSchema;
 
 export const specialistCreateSchema = z.object({
-  userId: z.coerce.number().int().positive('Выберите пользователя специалиста'),
+  userId: z.coerce.number().int().positive(v.specialistUserIdRequired),
 });
 
 export const specialistUpdateSchema = z.object({
-  name: z.string().trim().min(2, 'Имя специалиста должно содержать минимум 2 символа').max(120, 'Имя специалиста слишком длинное').optional(),
+  name: z.string().trim().min(2, v.specialistNameMin).max(120, v.specialistNameMax).optional(),
   isActive: z.boolean().optional(),
 }).refine((value) => Object.keys(value).length > 0, {
-  message: 'Передайте хотя бы одно поле для обновления',
+  message: v.atLeastOneFieldToUpdate,
 });
 
 const appointmentStatusSchema = z.enum(['new', 'confirmed', 'cancelled']);
@@ -89,33 +101,33 @@ const appointmentStatusSchema = z.enum(['new', 'confirmed', 'cancelled']);
 const appointmentClientSchema = z.object({
   clientId: z.coerce.number().int().positive().optional(),
   username: z.string().trim().max(255).optional(),
-  firstName: z.string().trim().min(1, 'Укажите имя').max(255).optional(),
-  lastName: z.string().trim().min(1, 'Укажите фамилию').max(255).optional(),
+  firstName: z.string().trim().min(1, v.appointmentFirstNameRequired).max(255).optional(),
+  lastName: z.string().trim().min(1, v.appointmentLastNameRequired).max(255).optional(),
   phone: z.string().trim().max(50).optional(),
-  email: z.string().trim().email('Введите корректный email').max(254).optional(),
+  email: z.string().trim().email(v.emailInvalid).max(254).optional(),
 });
 
 export const appointmentCreateSchema = z.object({
-  specialistId: z.coerce.number().int().positive('Укажите специалиста'),
-  appointmentAt: z.string().datetime('Укажите корректную дату и время начала'),
-  appointmentEndAt: z.string().datetime('Укажите корректную дату и время окончания'),
+  specialistId: z.coerce.number().int().positive(v.appointmentSpecialistRequired),
+  appointmentAt: z.string().datetime(v.appointmentStartInvalid),
+  appointmentEndAt: z.string().datetime(v.appointmentEndInvalid),
   status: appointmentStatusSchema.optional(),
-  meetingLink: z.string().trim().url('Укажите корректную ссылку').max(2048).optional().or(z.literal('')),
-  notes: z.string().trim().max(2000, 'Комментарий слишком длинный').optional(),
+  meetingLink: z.string().trim().url(v.appointmentLinkInvalid).max(2048).optional().or(z.literal('')),
+  notes: z.string().trim().max(2000, v.appointmentNotesTooLong).optional(),
 }).merge(appointmentClientSchema).superRefine((value, ctx) => {
   if (!value.firstName) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['firstName'], message: 'Укажите имя' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['firstName'], message: v.appointmentFirstNameRequired });
   }
 
   if (!value.lastName) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['lastName'], message: 'Укажите фамилию' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['lastName'], message: v.appointmentLastNameRequired });
   }
 
   if (!value.username && !value.phone && !value.email && !value.clientId) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['username'],
-      message: 'Укажите telegram username, телефон или email',
+      message: v.appointmentContactRequired,
     });
   }
 
@@ -125,7 +137,7 @@ export const appointmentCreateSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['appointmentEndAt'],
-      message: 'Время окончания должно быть позже времени начала',
+      message: v.appointmentEndMustBeAfterStart,
     });
     return;
   }
@@ -135,21 +147,21 @@ export const appointmentCreateSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['appointmentEndAt'],
-      message: 'Длительность встречи должна быть от 15 до 480 минут',
+      message: v.appointmentDurationRange,
     });
   }
 });
 
 export const appointmentUpdateSchema = z.object({
-  appointmentAt: z.string().datetime('Укажите корректную дату и время начала').optional(),
-  appointmentEndAt: z.string().datetime('Укажите корректную дату и время окончания').optional(),
-  durationMin: z.coerce.number().int().min(15, 'Минимальная длительность — 15 минут').max(480, 'Максимальная длительность — 480 минут').optional(),
+  appointmentAt: z.string().datetime(v.appointmentStartInvalid).optional(),
+  appointmentEndAt: z.string().datetime(v.appointmentEndInvalid).optional(),
+  durationMin: z.coerce.number().int().min(15, v.appointmentDurationMin).max(480, v.appointmentDurationMax).optional(),
   status: appointmentStatusSchema.optional(),
-  meetingLink: z.string().trim().url('Укажите корректную ссылку').max(2048).optional().or(z.literal('')),
-  notes: z.string().trim().max(2000, 'Комментарий слишком длинный').optional(),
+  meetingLink: z.string().trim().url(v.appointmentLinkInvalid).max(2048).optional().or(z.literal('')),
+  notes: z.string().trim().max(2000, v.appointmentNotesTooLong).optional(),
 }).merge(appointmentClientSchema).superRefine((value, ctx) => {
   if (Object.keys(value).length === 0) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [], message: 'Передайте хотя бы одно поле для обновления' });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [], message: v.atLeastOneFieldToUpdate });
     return;
   }
 
@@ -157,7 +169,7 @@ export const appointmentUpdateSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['appointmentEndAt'],
-      message: 'Передайте и время начала, и время окончания',
+      message: v.appointmentStartAndEndRequired,
     });
     return;
   }
@@ -170,7 +182,7 @@ export const appointmentUpdateSchema = z.object({
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['appointmentEndAt'],
-        message: 'Время окончания должно быть позже времени начала',
+        message: v.appointmentEndMustBeAfterStart,
       });
       return;
     }
@@ -180,14 +192,14 @@ export const appointmentUpdateSchema = z.object({
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['appointmentEndAt'],
-        message: 'Длительность встречи должна быть от 15 до 480 минут',
+        message: v.appointmentDurationRange,
       });
     }
   }
 }).refine((value) => Object.keys(value).length > 0, {
-  message: 'Передайте хотя бы одно поле для обновления',
+  message: v.atLeastOneFieldToUpdate,
 });
 
 export const appointmentRescheduleSchema = z.object({
-  scheduledAt: z.string().datetime('Укажите корректную дату и время'),
+  scheduledAt: z.string().datetime(v.appointmentRescheduleInvalid),
 });

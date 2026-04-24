@@ -1,12 +1,11 @@
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import {
   createSpecialist,
-  deleteSpecialistById,
+  deactivateSpecialistById,
   findSpecialistById,
   listSpecialistsByAccount,
   updateSpecialistById,
 } from '../repositories/specialistRepository.js';
-import { countAppointmentsBySpecialistId } from '../repositories/appointmentRepository.js';
 import { findWebUserById, listActiveSpecialistWebUsersWithoutProfile } from '../repositories/webUserRepository.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
@@ -141,7 +140,7 @@ export async function updateSpecialistForActor(
   return mapSpecialist(updated);
 }
 
-export async function deleteSpecialistForActor(actor: User, specialistId: number): Promise<boolean> {
+export async function deleteSpecialistForActor(actor: User, specialistId: number): Promise<SpecialistDto | null> {
   if (!canManageSpecialists(actor.role)) {
     throw new Error('FORBIDDEN');
   }
@@ -149,13 +148,15 @@ export async function deleteSpecialistForActor(actor: User, specialistId: number
   const accountId = await resolveAccountId(actor);
   const existing = await findSpecialistById(accountId, specialistId);
   if (!existing) {
-    return false;
+    return null;
   }
 
-  const appointmentsCount = await countAppointmentsBySpecialistId(accountId, specialistId);
-  if (appointmentsCount > 0) {
-    throw new Error('SPECIALIST_HAS_APPOINTMENTS');
+  await deactivateSpecialistById(accountId, specialistId);
+
+  const updated = await findSpecialistById(accountId, specialistId);
+  if (!updated) {
+    return null;
   }
 
-  return deleteSpecialistById(accountId, specialistId);
+  return mapSpecialist(updated);
 }

@@ -127,10 +127,10 @@ export function SpecialistsContainer() {
     }
 
     try {
-      await apiClient.delete(`/api/specialists/${specialist.id}`, {
+      const response = await apiClient.delete<SpecialistManagementItem>(`/api/specialists/${specialist.id}`, {
         headers: authHeaders(accessToken),
       });
-      setSpecialists((prev) => prev.filter((item) => item.id !== specialist.id));
+      setSpecialists((prev) => prev.map((item) => (item.id === response.data.id ? response.data : item)));
       setError('');
       setSuccess('');
     } catch (err) {

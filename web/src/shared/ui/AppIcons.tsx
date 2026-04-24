@@ -9,6 +9,7 @@ import LoginRounded from '@mui/icons-material/LoginRounded';
 import LogoutRounded from '@mui/icons-material/LogoutRounded';
 import PaletteRounded from '@mui/icons-material/PaletteRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
+import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import SaveRounded from '@mui/icons-material/SaveRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 
@@ -24,6 +25,7 @@ export const AppIcons = {
   logout: LogoutRounded,
   palette: PaletteRounded,
   register: PersonAddRounded,
+  users: PeopleAltRounded,
   save: SaveRounded,
   settings: SettingsRounded
 };
