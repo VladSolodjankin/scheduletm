@@ -1,147 +1,38 @@
-# Production readiness checklist (no payment flow, Railway)
+# Production readiness checklist (`bot`)
 
-Документ фиксирует практический план, чтобы текущий Telegram-бот записи (без онлайн-оплаты и без web-кабинета) можно было безопасно вывести в production.
+Чеклист вывода Telegram-бота в production (без онлайн-оплаты).
 
-## 0) Что сделать в первую очередь (если нужно быстро выйти в прод)
+## Webhook и state machine
 
-1. [x] Идемпотентность webhook по `update_id`.
-2. [x] `AUTO_SET_WEBHOOK`: включен только в production.
-3. [x] Structured logs + `request_id`/`update_id`.
-4. [x] Алерты: 5xx, рост `notifications.failed`, отсутствие входящих updates.
-5. [ ] Backup + тест restore для Railway Postgres.
+- [ ] Идемпотентность по `update_id` (без повторного бизнес-эффекта).
+- [ ] Защита от гонок callback/query для одного пользователя.
+- [ ] Recovery состояния после рестартов (session restore + TTL).
 
-## 1) Надежность webhook и state machine
+## Наблюдаемость
 
-- [ ] Ввести **идемпотентность** обработки Telegram updates:
-  - хранить обработанные `update_id` в отдельной таблице,
-  - на повторе update отвечать `200 OK` без повторного выполнения бизнес-логики.
-- [ ] Добавить **локи на активный booking flow**: не больше одного активного сценария записи на пользователя.
-- [ ] Сохранять и восстанавливать состояние после рестартов воркера/приложения (проверка `telegram_user_sessions` + TTL устаревших сессий).
-- [ ] Явно обрабатывать edge-cases:
-  - callback на удаленное сообщение,
-  - callback c просроченной датой/слотом,
-  - race-condition между двумя callback от одного пользователя.
+- [ ] Structured logs: `request_id`, `update_id`, `account_id`, `user_id`.
+- [ ] Метрики latency/error/notification-failed.
+- [ ] Алерты: 5xx, нет входящих updates, рост failed уведомлений.
 
-## 2) Наблюдаемость (logs/metrics/alerts)
+## Безопасность
 
-- [ ] Перейти на **structured logs** (JSON) и логировать ключи:
-  - `request_id`, `update_id`, `account_id`, `user_id`, `session_state`, `appointment_id`.
-- [ ] Добавить **технические метрики**:
-  - входящий RPS webhook,
-  - latency p50/p95/p99,
-  - доля ошибок 4xx/5xx,
-  - количество конфликтов слотов,
-  - количество сообщений в retry/failed в `notifications`.
-- [ ] Сделать **health/readiness**:
-  - health: жив ли процесс,
-  - readiness: доступна БД + проверка конфигурации Telegram (`BOT_TOKEN`, `WEBHOOK_SECRET`, `APP_URL`).
-- [ ] Настроить алерты:
-  - рост 5xx,
-  - всплеск failed уведомлений,
-  - отсутствие входящих webhook updates длительное время.
+- [ ] Надежный `WEBHOOK_SECRET` + ротация.
+- [ ] Rate-limit и anti-spam на webhook.
+- [ ] Маскирование PII (phone/email) в логах.
 
-## 3) Уведомления
+## База данных
 
-- [ ] Подключить реальные провайдеры email/SMS вместо stub.
-- [ ] Добавить шаблоны сообщений по каналам и языкам (RU/EN), включая безопасный fallback.
-- [ ] Зафиксировать retry policy:
-  - максимальное число попыток,
-  - backoff,
-  - DLQ/ручная разборка для `failed`.
-- [ ] Добавить nightly-задачу консистентности:
-  - нет ли `pending` напоминаний в прошлом,
-  - нет ли осиротевших notifications без appointments.
+- [ ] Регламент миграций (forward-only + rollback-plan).
+- [ ] Индексы для `appointments`, `notifications`, `telegram_user_sessions`.
+- [ ] Backup + регулярный test restore.
 
-## 4) Безопасность
+## Тестирование
 
-- [ ] Убедиться, что `WEBHOOK_SECRET` сложный, ротируемый и не логируется.
-- [ ] Ввести rate-limit и базовую антиспам-защиту на webhook.
-- [ ] Ограничить и валидировать входящие payload:
-  - длины полей,
-  - whitelist допустимых callback-data префиксов,
-  - защита от oversized JSON.
-- [ ] Добавить политику хранения и маскирования PII (телефон/email) в логах.
-- [ ] Хранить секреты в Railway Variables, обновлять по ротации и не дублировать в репозитории.
+- [ ] E2E smoke: happy path, duplicate update, race on slot, cancel/reschedule.
+- [ ] CI: `typecheck`, `test`, миграции на чистой БД.
 
-## 5) База данных и миграции
+## Railway
 
-- [ ] Проверить индексы для горячих запросов (`appointments`, `notifications`, `telegram_user_sessions`).
-- [ ] Подготовить **регламент миграций**:
-  - forward-only в production,
-  - тест на копии production-данных,
-  - rollback-план для критических миграций.
-- [ ] Включить регулярные бэкапы и проверку restore (disaster recovery drill).
-- [ ] Добавить housekeeping:
-  - архив/очистка старых `telegram_user_sessions`,
-  - retention-policy для технических таблиц.
-
-## 6) Конфигурация и окружения
-
-- [ ] Реализовать и включить `AUTO_SET_WEBHOOK` (dev = off, prod = on).
-- [ ] Разделить конфиг по окружениям: local/staging/prod.
-- [ ] Вынести `SLOT_STEP_MIN` в `app_settings` (как уже отмечено в roadmap).
-- [ ] Зафиксировать «контракт окружения» (обязательные env + безопасные дефолты).
-
-## 7) Railway-specific checklist
-
-- [ ] Разделить сервисы как минимум на:
-  - `app` (Express + webhook),
-  - `worker` (фоновая отправка notifications), если нужен независимый скейлинг и рестарты.
-- [ ] В Railway Variables задать и проверить:
-  - `BOT_TOKEN`, `WEBHOOK_SECRET`, `APP_URL`, `DATABASE_URL`, `NOTIFICATION_POLL_MS`, `NODE_ENV`.
-- [ ] Проверить, что `APP_URL` совпадает с публичным доменом Railway (`https`, без хвостового `/`).
-- [ ] Настроить post-deploy smoke:
-  - `GET /health`,
-  - проверка `getWebhookInfo` (webhook указывает на актуальный `APP_URL` + `WEBHOOK_SECRET`).
-- [ ] Ограничить неожиданные рестарты:
-  - выставить минимально достаточные ресурсы,
-  - исключить тяжелые задачи из web-процесса.
-- [ ] Для Railway Postgres:
-  - проверить политику бэкапов,
-  - минимум раз в месяц делать тестовое восстановление в отдельную БД.
-
-## 8) Качество и тестирование
-
-- [ ] Расширить автотесты webhook-сценариев:
-  - happy-path,
-  - повторный `update_id`,
-  - параллельные попытки занять один слот,
-  - перенос/отмена и консистентность уведомлений,
-  - пакетная запись (manual/auto).
-- [ ] Добавить e2e smoke-тест на staging перед релизом.
-- [ ] В CI сделать обязательными шаги:
-  - `npm run typecheck`,
-  - `npm test`,
-  - миграции на чистой БД.
-
-## 9) Операционка (релиз и поддержка)
-
-- [ ] Подготовить runbook:
-  - действия при падении Telegram API,
-  - действия при проблемах с БД,
-  - действия при росте очереди notifications,
-  - действия при невалидном webhook после деплоя на Railway.
-- [ ] Ввести release checklist:
-  - миграции,
-  - smoke,
-  - мониторинг после релиза (15–30 минут).
-- [ ] Описать SLO/SLA (например, доставку напоминаний и доступность webhook).
-- [ ] Подготовить on-call инструкции (контакты, эскалация, шаблоны инцидентов).
-
-## Рекомендуемый порядок внедрения (2–3 недели)
-
-1. **Неделя 1**: идемпотентность webhook + structured logs + readiness + алерты.
-2. **Неделя 2**: rate-limit/безопасность + `AUTO_SET_WEBHOOK` + Railway smoke checks + расширение тестов.
-3. **Неделя 3**: провайдеры email/SMS + runbook + релизный процесс + DR-проверка бэкапов.
-
-## Go-live критерии
-
-Считать проект готовым к production, если выполнено:
-
-- нет повторной обработки одного `update_id`;
-- есть наблюдаемость (логи, метрики, алерты);
-- есть проверенный backup/restore;
-- есть автоматические тесты критических сценариев;
-- есть runbook и чек-лист релиза;
-- staging прогон проходит стабильно минимум несколько дней;
-- после деплоя на Railway webhook и фоновые задачи проходят smoke-проверку.
+- [ ] Проверить `APP_URL`, `BOT_TOKEN`, `WEBHOOK_SECRET`, `DATABASE_URL`.
+- [ ] Post-deploy smoke: `/health` + `getWebhookInfo`.
+- [ ] Разнести `app` и `worker` при росте нагрузки.
