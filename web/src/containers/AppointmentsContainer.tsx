@@ -19,14 +19,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { AppointmentFormDialog } from '../components/appointments/AppointmentFormDialog';
 import { AppointmentsCalendar } from '../components/appointments/AppointmentsCalendar';
 import {
+  addMonths,
   addDays,
   BROWSER_TIMEZONE,
   CalendarViewMode,
   createDatetimeLocal,
   DEFAULT_SLOT_STEP_MIN,
+  endOfMonth,
   fromDatetimeLocal,
   getUtcNowByTimeZone,
   isSlotInPast,
+  startOfMonth,
   startOfDay,
   toDateKeyInTimezone,
   toTimeKeyInTimezone,
@@ -79,6 +82,12 @@ export function AppointmentsContainer() {
     if (viewMode === 'day') {
       return [startOfDay(focusDate)];
     }
+    if (viewMode === 'month') {
+      const monthStart = startOfMonth(focusDate);
+      const monthEnd = endOfMonth(focusDate);
+      const daysCount = monthEnd.getDate();
+      return Array.from({ length: daysCount }, (_, index) => addDays(monthStart, index));
+    }
 
     const start = weekStart(focusDate);
     return Array.from({ length: 7 }, (_, index) => addDays(start, index));
@@ -117,6 +126,24 @@ export function AppointmentsContainer() {
 
     return map;
   }, [busySlots, displayTimeZone]);
+
+  const appointmentsByDay = useMemo(() => {
+    const map = new Map<string, AppointmentItem[]>();
+
+    for (const item of appointments) {
+      const date = new Date(item.scheduledAt);
+      const dayKey = toDateKeyInTimezone(date, displayTimeZone);
+      const list = map.get(dayKey) ?? [];
+      list.push(item);
+      map.set(dayKey, list);
+    }
+
+    map.forEach((list) => {
+      list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+    });
+
+    return map;
+  }, [appointments, displayTimeZone]);
 
   function getGridDayKey(day: Date) {
     const noon = new Date(day);
@@ -321,6 +348,11 @@ export function AppointmentsContainer() {
   };
 
   const movePeriod = (direction: -1 | 1) => {
+    if (viewMode === 'month') {
+      setFocusDate((prev) => addMonths(prev, direction));
+      return;
+    }
+
     const delta = viewMode === 'day' ? direction : direction * 7;
     setFocusDate((prev) => addDays(prev, delta));
   };
@@ -402,6 +434,7 @@ export function AppointmentsContainer() {
             visibleDays={visibleDays}
             displayTimeZone={displayTimeZone}
             appointmentsByCell={appointmentsByCell}
+            appointmentsByDay={appointmentsByDay}
             busySlotsByCell={busySlotsByCell}
             movePeriod={movePeriod}
             onToday={() => setFocusDate(startOfDay(new Date()))}

@@ -33,6 +33,7 @@ type Props = {
   visibleDays: Date[];
   displayTimeZone: string;
   appointmentsByCell: Map<string, AppointmentItem[]>;
+  appointmentsByDay: Map<string, AppointmentItem[]>;
   busySlotsByCell: Map<string, AppointmentListResponse['busySlots']>;
   movePeriod: (direction: -1 | 1) => void;
   onToday: () => void;
@@ -50,6 +51,7 @@ export function AppointmentsCalendar({
   visibleDays,
   displayTimeZone,
   appointmentsByCell,
+  appointmentsByDay,
   busySlotsByCell,
   movePeriod,
   onToday,
@@ -63,6 +65,7 @@ export function AppointmentsCalendar({
   const theme = useTheme();
   const [draggingAppointmentId, setDraggingAppointmentId] = useState<number | null>(null);
   const [blockedCellKey, setBlockedCellKey] = useState<string | null>(null);
+  const todayKey = toDateKeyInTimezone(new Date(), displayTimeZone);
 
   const getGoogleSlotTitle = (slot: AppointmentListResponse['busySlots'][number]) => {
     if (slot.title) {
@@ -101,7 +104,9 @@ export function AppointmentsCalendar({
             <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
               {viewMode === 'week'
                 ? `${formatLocalDate(visibleDays[0])} — ${formatLocalDate(visibleDays[visibleDays.length - 1])}`
-                : formatLocalDate(visibleDays[0])}
+                : viewMode === 'month'
+                  ? formatLocalDate(visibleDays[0], { month: 'long', year: 'numeric' })
+                  : formatLocalDate(visibleDays[0])}
             </Typography>
 
             <ToggleButtonGroup
@@ -116,35 +121,103 @@ export function AppointmentsCalendar({
             >
               <ToggleButton value="day">{t('appointments.viewDay')}</ToggleButton>
               <ToggleButton value="week">{t('appointments.viewWeek')}</ToggleButton>
+              <ToggleButton value="month">{t('appointments.viewMonth')}</ToggleButton>
             </ToggleButtonGroup>
           </Stack>
         </CardContent>
       </Card>
 
       <>
-          <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
+          {viewMode !== 'month' && (
+            <Typography variant="body2" color="text.secondary">{t('appointments.dragHint')}</Typography>
+          )}
 
+          {viewMode === 'month' && (
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' }, gap: 1.5 }}>
+              {visibleDays.map((day) => {
+                const dayKey = getGridDayKey(day);
+                const items = appointmentsByDay.get(dayKey) ?? [];
+                const isToday = dayKey === todayKey;
+
+                return (
+                  <Card key={day.toISOString()} variant="outlined" sx={{ borderRadius: 2, borderColor: isToday ? 'primary.main' : 'divider' }}>
+                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                      <Stack spacing={1}>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                            {formatLocalDate(day, { weekday: 'short', day: '2-digit', month: 'short' })}
+                          </Typography>
+                          {isToday && <Chip size="small" color="primary" label={t('appointments.today')} sx={{ height: 18 }} />}
+                        </Stack>
+                        <Stack spacing={0.75}>
+                          {items.length === 0 ? (
+                            <Typography variant="caption" color="text.secondary">{t('appointments.emptyDay')}</Typography>
+                          ) : (
+                            items.map((item) => (
+                              <Box
+                                key={item.id}
+                                onClick={() => onOpenEdit(item)}
+                                sx={{
+                                  borderRadius: 1,
+                                  border: 1,
+                                  borderColor: item.status === 'cancelled' ? 'error.main' : 'primary.light',
+                                  bgcolor: item.status === 'cancelled'
+                                    ? alpha(theme.palette.error.main, 0.12)
+                                    : alpha(theme.palette.primary.main, 0.16),
+                                  px: 0.75,
+                                  py: 0.5,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                                  {formatLocalTime(item.scheduledAt)}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                  {statusLabel(item.status)} · {item.durationMin}m
+                                </Typography>
+                              </Box>
+                            ))
+                          )}
+                        </Stack>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </Box>
+          )}
+
+          {viewMode !== 'month' && (
           <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 3, overflowX: 'auto', boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.08)}` }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: `72px repeat(${visibleDays.length}, minmax(180px, 1fr))`, minWidth: viewMode === 'week' ? 1100 : 560 }}>
               <Box sx={{ borderRight: 1, borderColor: 'divider', p: 1, bgcolor: 'background.default' }} />
-              {visibleDays.map((day) => (
+              {visibleDays.map((day) => {
+                const isToday = getGridDayKey(day) === todayKey;
+
+                return (
                 <Box
                   key={day.toISOString()}
                   sx={{
                     borderRight: 1,
                     borderColor: 'divider',
                     p: 1,
-                    bgcolor: getGridDayKey(day) === toDateKeyInTimezone(new Date(), displayTimeZone)
+                    bgcolor: isToday
                       ? alpha(theme.palette.primary.main, 0.14)
                       : 'background.default',
                   }}
                 >
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {formatLocalDate(day, { weekday: 'short' })}
-                  </Typography>
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {formatLocalDate(day, { weekday: 'short' })}
+                    </Typography>
+                    {isToday && (
+                      <Chip size="small" color="primary" label={t('appointments.today')} sx={{ height: 18 }} />
+                    )}
+                  </Stack>
                   <Typography variant="caption" color="text.secondary">{formatLocalDate(day)}</Typography>
                 </Box>
-              ))}
+                );
+              })}
 
               {SLOT_ROWS.map((totalMinute) => {
                 const hour = Math.floor(totalMinute / 60);
@@ -311,7 +384,8 @@ export function AppointmentsCalendar({
               })}
             </Box>
           </Box>
-    </>
+          )}
+      </>
     </>
   );
 }
