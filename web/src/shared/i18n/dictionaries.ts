@@ -11,6 +11,7 @@ export const dictionaries = {
       register: 'Register',
       language: 'Language',
       appointments: 'Appointments',
+      specialists: 'Specialists',
       profileMenuAria: 'Open profile menu',
       appearancePaletteAria: 'Select color palette',
       themeToggleAria: 'Toggle theme mode',
@@ -78,6 +79,11 @@ export const dictionaries = {
         deleteSpecialist: 'Unable to delete specialist.'
       }
     },
+    specialists: {
+      pageTitle: 'Specialists',
+      pageSubtitle: 'Create and manage specialist profiles for your team.',
+      accessDenied: 'Only owner or admin can manage specialists.'
+    },
     appointments: {
       pageTitle: 'Appointments',
       pageSubtitle: 'Calendar view with schedule by day and time.',
@@ -135,6 +141,7 @@ export const dictionaries = {
       register: 'Регистрация',
       language: 'Язык',
       appointments: 'Записи',
+      specialists: 'Специалисты',
       profileMenuAria: 'Открыть меню профиля',
       appearancePaletteAria: 'Выбрать цветовую палитру',
       themeToggleAria: 'Переключить тему',
@@ -202,6 +209,11 @@ export const dictionaries = {
         deleteSpecialist: 'Не удалось удалить специалиста.'
       }
     },
+    specialists: {
+      pageTitle: 'Специалисты',
+      pageSubtitle: 'Добавляйте и управляйте профилями специалистов вашей команды.',
+      accessDenied: 'Управлять специалистами может только владелец или администратор.'
+    },
     appointments: {
       pageTitle: 'Записи',
       pageSubtitle: 'Календарный вид с расписанием по дням и времени.',
@@ -262,6 +274,7 @@ export type TranslationKey =
   | 'common.register'
   | 'common.language'
   | 'common.appointments'
+  | 'common.specialists'
   | 'common.profileMenuAria'
   | 'common.appearancePaletteAria'
   | 'common.themeToggleAria'
@@ -314,6 +327,9 @@ export type TranslationKey =
   | 'settings.errors.save'
   | 'settings.errors.connectGoogle'
   | 'settings.errors.disconnectGoogle'
+  | 'specialists.pageTitle'
+  | 'specialists.pageSubtitle'
+  | 'specialists.accessDenied'
   | 'appointments.pageTitle'
   | 'appointments.pageSubtitle'
   | 'appointments.specialistFilter'

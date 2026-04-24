@@ -45,7 +45,7 @@ scheduletm/
 
 ### Web
 
-- Страницы: `/login`, `/register`, `/settings` через `react-router-dom`.
+- Страницы: `/login`, `/register`, `/appointments`, `/specialists`, `/settings` через `react-router-dom`.
 - UI на `@mui/material` (без кастомного CSS на старте).
 - Формы web переведены на `react-hook-form` для единообразного контроля полей и submit-state.
 - Разделение на `components`, `containers`, `pages`, `app`, `shared`.
@@ -112,6 +112,7 @@ scheduletm/
 - Callback обрабатывается через `GET /api/integrations/google/oauth/callback` с обменом `code -> tokens`.
 - `access_token` Google сохраняется в `web_users.google_api_key` для текущего web-пользователя (под будущую ролевую модель, где специалист логинится сам).
 - После успешного callback пользователь возвращается на `/settings`, а в настройках отмечается `googleConnected: true`.
+- Управление специалистами вынесено из `Settings` в отдельный раздел `/specialists` в левом меню (для `owner/admin`).
 - Переменные окружения добавлены в `server/.env.example`: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `GOOGLE_OAUTH_SCOPES`.
 
 Текущее состояние модели данных для Google:

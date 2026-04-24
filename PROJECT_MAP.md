@@ -32,6 +32,7 @@
   - `web/src/components/layout/UserMenu.tsx` — профиль в header (avatar/инициалы, меню settings/logout).
   - `web/src/shared/ui/*` — базовые MUI-wrapper компоненты (`AppButton`, `AppTabs`, `AppForm`, `AppTextField`, `AppPage`, `AppIcons`).
   - Формы страниц `login/register/settings` управляются через `react-hook-form` (`Controller` + `useForm`).
+  - Управление специалистами вынесено в отдельную страницу `web/src/pages/SpecialistsPage.tsx` и контейнер `web/src/containers/SpecialistsContainer.tsx` (раздел `/specialists` в левом меню для `owner/admin`).
   - `web/src/shared/theme/*` — константы дизайна + фабрика темы + light/dark + palette variants.
   - `web/src/shared/*` — API client, типы, auth context и переиспользуемая инфраструктура.
   - `web/src/shared/api/client.ts` — глобальный `401` handler: при `Unauthorized` очищает auth-state и переводит пользователя на `/login`.

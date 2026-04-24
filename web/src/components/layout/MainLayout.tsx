@@ -12,7 +12,7 @@ import { LeftMenu } from './LeftMenu';
 export function MainLayout() {
   const { mode, paletteVariantId, toggleMode, setPaletteVariantId } = useThemeSettings();
   const { t, locale, setLocale } = useI18n();
-  const { isAuthenticated, accessToken } = useAuth();
+  const { isAuthenticated, accessToken, user } = useAuth();
   const lastSyncedPreferencesRef = useRef('');
 
   useEffect(() => {
@@ -47,6 +47,9 @@ export function MainLayout() {
 
   const menuItems = [
     { to: '/appointments', label: t('common.appointments'), icon: 'calendar' as const },
+    ...(user?.role === 'owner' || user?.role === 'admin'
+      ? [{ to: '/specialists', label: t('common.specialists'), icon: 'specialists' as const }]
+      : []),
     { to: '/settings', label: t('common.settings'), icon: 'settings' as const }
   ];
 
