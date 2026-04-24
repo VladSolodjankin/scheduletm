@@ -93,22 +93,6 @@ export function SettingsCard({
           <Typography variant="h5">{copy.systemTitle}</Typography>
 
           <Controller
-            name="timezone"
-            control={systemControl}
-            render={({ field }: any) => (
-              <AppRhfTextField field={field} label={copy.timezone} />
-            )}
-          />
-
-          <Controller
-            name="locale"
-            control={systemControl}
-            render={({ field }: any) => (
-              <AppRhfTextField field={field} label={copy.locale} />
-            )}
-          />
-
-          <Controller
             name="defaultMeetingDuration"
             control={systemControl}
             render={({ field }: any) => (
