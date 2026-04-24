@@ -69,6 +69,7 @@
 - [x] Добавить route-smoke тесты (server, mocked service layer) и web smoke-проверки.
 - [x] Перевести web-формы (auth/settings) на `react-hook-form` для централизованного контроля полей.
 - [x] На `401 Unauthorized` в web-клиенте автоматически делать logout и redirect на `/login`.
+- [x] Добавить preloader первой загрузки на странице appointments, чтобы исключить пустой экран до получения данных.
 
 ### 4.6 UI foundation (выполнено)
 
