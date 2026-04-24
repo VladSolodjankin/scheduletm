@@ -8,6 +8,13 @@ vi.mock('../../repositories/user.repository', () => {
   };
 });
 
+vi.mock('../../repositories/app-settings.repository', () => {
+  return {
+    getDefaultTimezone: vi.fn(),
+  };
+});
+
+
 vi.mock('../../repositories/user-session.repository', () => {
   return {
     getOrCreateSession: vi.fn(),
@@ -26,6 +33,7 @@ import {
   updateUserByTelegramId,
 } from '../../repositories/user.repository';
 import { getDefaultAccountId } from '../../repositories/account.repository';
+import { getDefaultTimezone } from '../../repositories/app-settings.repository';
 import { getOrCreateSession } from '../../repositories/user-session.repository';
 import { findOrCreateTelegramUser } from '../user.service';
 
@@ -37,6 +45,7 @@ describe('findOrCreateTelegramUser', () => {
   it('creates a new user (normalizes language) and creates session', async () => {
     vi.mocked(getDefaultAccountId).mockResolvedValue(7);
     vi.mocked(findUserByTelegramId).mockResolvedValue(null as any);
+    vi.mocked(getDefaultTimezone).mockResolvedValue('Europe/Moscow');
     vi.mocked(createUser).mockResolvedValue({
       id: 1,
       account_id: 7,
