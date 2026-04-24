@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { AppointmentItem, AppointmentStatus, ClientItem, SpecialistItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
+import { AppRhfPhoneField, isValidPhoneValue } from '../../shared/ui/AppRhfPhoneField';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
 import {
   AVAILABLE_TIMEZONES,
@@ -306,7 +307,21 @@ export function AppointmentFormDialog({
           <Controller name="firstName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="First name" />} />
           <Controller name="lastName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Last name" />} />
           <Controller name="username" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Telegram username" />} />
-          <Controller name="phone" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Phone" />} />
+          <Controller
+            name="phone"
+            control={control}
+            rules={{
+              validate: (value) => isValidPhoneValue(value) || 'Invalid phone number',
+            }}
+            render={({ field, fieldState }) => (
+              <AppRhfPhoneField
+                field={field}
+                label="Phone"
+                error={Boolean(fieldState.error)}
+                helperText={fieldState.error?.message}
+              />
+            )}
+          />
           <Controller name="email" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Email" />} />
 
           <Controller name="startDate" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Start date" type="date" />} />
