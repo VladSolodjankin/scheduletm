@@ -165,16 +165,19 @@ export async function findSpecialistsCalendarCredentials(
     .join('web_users as wu', function joinWebUsers() {
       this.on('wu.id', '=', 's.user_id').andOn('wu.account_id', '=', 's.account_id');
     })
+    .leftJoin('web_user_integrations as wui', function joinWebUserIntegrations() {
+      this.on('wui.web_user_id', '=', 'wu.id').andOn('wui.account_id', '=', 'wu.account_id');
+    })
     .where('s.account_id', accountId)
     .whereIn('s.id', specialistIds)
-    .whereNotNull('wu.google_api_key')
+    .whereNotNull('wui.google_api_key')
     .select(
       's.id as specialistId',
       'wu.id as webUserId',
-      'wu.google_api_key as googleApiKey',
-      'wu.google_refresh_token as googleRefreshToken',
-      'wu.google_token_expires_at as googleTokenExpiresAt',
-      'wu.google_calendar_id as googleCalendarId',
+      'wui.google_api_key as googleApiKey',
+      'wui.google_refresh_token as googleRefreshToken',
+      'wui.google_token_expires_at as googleTokenExpiresAt',
+      'wui.google_calendar_id as googleCalendarId',
     );
 
   return rows.filter((row) => Boolean(row.googleApiKey));

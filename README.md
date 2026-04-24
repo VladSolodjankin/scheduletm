@@ -69,7 +69,7 @@ scheduletm/
 - `POST /api/integrations/google/oauth/start`
 - `GET /api/integrations/google/oauth/callback`
 
-`PUT /api/settings/system` обновляет системные настройки (таблица `app_settings`), а `PUT /api/settings/user` сохраняет пользовательские настройки (`web_users`, включая `uiThemeMode` / `uiPaletteVariantId` и `telegram_bot_token`).
+`PUT /api/settings/system` обновляет системные настройки (таблица `app_settings`), а `PUT /api/settings/user` сохраняет пользовательские настройки (`web_users` для UI/locale/timezone + `web_user_integrations` для Google/Telegram интеграций).
 
 Слой данных серверной части теперь фиксирует разделение identity-моделей:
 
@@ -77,7 +77,7 @@ scheduletm/
 - `web_users` — web-учетки для email/password auth.
 - `user_identity_links` — связь между Telegram и Web учетками (1:1 в рамках `account_id`).
 - `web_users.role` — роль web-пользователя (`owner`/`admin`/`specialist`).
-- `web_users.telegram_bot_token` — персональный BOT_TOKEN для Telegram-интеграции пользователя в web settings.
+- `web_user_integrations.telegram_bot_token` — персональный BOT_TOKEN для Telegram-интеграции пользователя в web settings.
 - `specialists.user_id` — прямая 1:1 привязка специалиста к web-учетке (в рамках `account_id`).
 - `server` auth-сервис регистрирует/логинит через `web_users`, а `bot` user-сервис при наличии email делает auto-link через `user_identity_links`.
 
@@ -111,7 +111,7 @@ scheduletm/
 - Кнопка `Connect Google` в web теперь запускает backend endpoint `POST /api/integrations/google/oauth/start`.
 - Backend формирует `authorizeUrl` и redirect на Google Consent Screen.
 - Callback обрабатывается через `GET /api/integrations/google/oauth/callback` с обменом `code -> tokens`.
-- `access_token` Google сохраняется в `web_users.google_api_key` для текущего web-пользователя (под будущую ролевую модель, где специалист логинится сам).
+- `access_token` Google сохраняется в `web_user_integrations.google_api_key` для текущего web-пользователя (под будущую ролевую модель, где специалист логинится сам).
 - После успешного callback пользователь возвращается на `/settings`, а в настройках отмечается `googleConnected: true`.
 - Управление специалистами вынесено из `Settings` в отдельный раздел `/specialists` в левом меню (для `owner/admin`).
 - На странице `/specialists` создание специалиста теперь выполняется через выбор из `web_users` текущего `account_id` (только `role = specialist` и `is_active = true`, исключая уже привязанные профили специалистов).
@@ -119,16 +119,16 @@ scheduletm/
 
 Текущее состояние модели данных для Google:
 
-- `web_users.google_api_key` — ключ, полученный через web OAuth (источник истины для авторизованного web-пользователя).
+- `web_user_integrations.google_api_key` — ключ, полученный через web OAuth (источник истины для авторизованного web-пользователя).
 - `specialists.user_id` определяет, какому специалисту принадлежит `web_user`.
-- `specialists` больше не хранит Google credentials: источник истины только `web_users.google_api_key/google_calendar_id`.
+- `specialists` больше не хранит Google credentials: источник истины только `web_user_integrations.google_api_key/google_calendar_id`.
 
 ### Telegram BOT_TOKEN (добавлено)
 
 - В `User settings` добавлено password-поле для `BOT_TOKEN`.
 - Backend при сохранении токена вызывает Telegram API `getMe`; если API недоступен, токен всё равно сохраняется как рабочий fallback.
-- В `web_users` сохраняются `telegram_bot_token` и метаданные бота (`telegram_bot_username`, `telegram_bot_name`) для отображения статуса на фронте.
-- Bot backend использует токен из `web_users.telegram_bot_token` (а не из `.env BOT_TOKEN`) для Telegram API вызовов.
+- В `web_user_integrations` сохраняются `telegram_bot_token` и метаданные бота (`telegram_bot_username`, `telegram_bot_name`) для отображения статуса на фронте.
+- Bot backend использует токен из `web_user_integrations.telegram_bot_token` (а не из `.env BOT_TOKEN`) для Telegram API вызовов.
 
 ## Куда двигаться дальше (web/server)
 

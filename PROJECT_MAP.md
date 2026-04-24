@@ -18,9 +18,9 @@
 - `telegram_users` — Telegram users.
 - `web_users` — web auth users (email/password hash/salt).
 - `web_users.role` — роль web-пользователя (`owner`/`admin`/`specialist`).
-- `web_users.google_api_key` — Google OAuth `access_token`, сохраняемый после web-коннекта Google.
-- `web_users.telegram_bot_token` — персональный Telegram BOT_TOKEN из user settings.
-- `web_users.telegram_bot_username` / `web_users.telegram_bot_name` — метаданные бота из `getMe` для отображения статуса интеграции.
+- `web_user_integrations.google_api_key` — Google OAuth `access_token`, сохраняемый после web-коннекта Google.
+- `web_user_integrations.telegram_bot_token` — персональный Telegram BOT_TOKEN из user settings.
+- `web_user_integrations.telegram_bot_username` / `web_user_integrations.telegram_bot_name` — метаданные бота из `getMe` для отображения статуса интеграции.
 - `user_identity_links` — 1:1 bridge между `telegram_users` и `web_users` внутри `account_id`.
 - `specialists.user_id` — 1:1 bridge между `specialists` и `web_users` внутри `account_id`.
 - `web_user_sessions` — web auth-сессии (`access`/`refresh`) с `expires_at`/`revoked_at`, источник истины для проверки токенов и refresh-rotation.
@@ -142,13 +142,13 @@
 
 - `PUT /api/settings/user` принимает `telegramBotToken` (password-поле на фронте).
 - Server пытается провалидировать токен через Telegram `getMe`; если запрос неуспешен, токен сохраняется как fallback.
-- `bot` использует токен из `web_users.telegram_bot_token` для вызовов Telegram API.
+- `bot` использует токен из `web_user_integrations.telegram_bot_token` для вызовов Telegram API.
 
 ## Google credentials (текущее разделение)
 
-- `web_users.google_api_key` — ключ, полученный через OAuth в web (под будущие роли и self-service логин специалистов).
+- `web_user_integrations.google_api_key` — ключ, полученный через OAuth в web (под будущие роли и self-service логин специалистов).
 - `specialists.user_id` — связь владельца credentials с конкретным специалистом.
-- `specialists` не хранит Google credentials; bot/web должны использовать `web_users.google_api_key/google_calendar_id` через связь `specialists.user_id`.
+- `specialists` не хранит Google credentials; bot/web должны использовать `web_user_integrations.google_api_key/google_calendar_id` через связь `specialists.user_id`.
 
 ## Тестовая карта (smoke)
 

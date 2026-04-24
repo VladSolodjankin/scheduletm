@@ -9,14 +9,6 @@ export type WebUserRecord = {
   password_hash: string;
   password_salt: string;
   is_active: boolean;
-  google_api_key: string | null;
-  google_refresh_token: string | null;
-  google_token_expires_at: Date | null;
-  google_calendar_id: string | null;
-  google_connected_at: Date | null;
-  telegram_bot_token: string | null;
-  telegram_bot_username: string | null;
-  telegram_bot_name: string | null;
   timezone: string;
   locale: string;
   ui_theme_mode: 'light' | 'dark';
@@ -94,55 +86,6 @@ export async function touchWebUserLastLogin(accountId: number, id: number): Prom
     });
 }
 
-type UpdateWebUserGoogleCredentialsInput = {
-  accountId: number;
-  id: number;
-  googleApiKey: string;
-  googleRefreshToken?: string | null;
-  googleTokenExpiresAt?: Date | null;
-  googleCalendarId?: string | null;
-};
-
-export async function updateWebUserGoogleCredentials(
-  input: UpdateWebUserGoogleCredentialsInput,
-): Promise<void> {
-  const patch: Record<string, unknown> = {
-    google_api_key: input.googleApiKey,
-    google_connected_at: db.fn.now(),
-    updated_at: db.fn.now(),
-  };
-
-  if (input.googleRefreshToken !== undefined) {
-    patch.google_refresh_token = input.googleRefreshToken;
-  }
-
-  if (input.googleTokenExpiresAt !== undefined) {
-    patch.google_token_expires_at = input.googleTokenExpiresAt;
-  }
-
-  if (input.googleCalendarId !== undefined) {
-    patch.google_calendar_id = input.googleCalendarId;
-  }
-
-  await db('web_users')
-    .where({ account_id: input.accountId, id: input.id })
-    .update(patch);
-}
-
-export async function clearWebUserGoogleCredentials(accountId: number, id: number): Promise<void> {
-  await db('web_users')
-    .where({ account_id: accountId, id })
-    .update({
-      google_api_key: null,
-      google_refresh_token: null,
-      google_token_expires_at: null,
-      google_calendar_id: null,
-      google_connected_at: null,
-      updated_at: db.fn.now(),
-    });
-}
-
-
 type UpdateWebUserSettingsInput = {
   accountId: number;
   id: number;
@@ -150,9 +93,6 @@ type UpdateWebUserSettingsInput = {
   locale?: string;
   uiThemeMode?: 'light' | 'dark';
   uiPaletteVariantId?: string;
-  telegramBotToken?: string | null;
-  telegramBotUsername?: string | null;
-  telegramBotName?: string | null;
 };
 
 export async function updateWebUserSettings(input: UpdateWebUserSettingsInput): Promise<void> {
@@ -174,18 +114,6 @@ export async function updateWebUserSettings(input: UpdateWebUserSettingsInput): 
 
   if (input.uiPaletteVariantId !== undefined) {
     patch.ui_palette_variant_id = input.uiPaletteVariantId;
-  }
-
-  if (input.telegramBotToken !== undefined) {
-    patch.telegram_bot_token = input.telegramBotToken;
-  }
-
-  if (input.telegramBotUsername !== undefined) {
-    patch.telegram_bot_username = input.telegramBotUsername;
-  }
-
-  if (input.telegramBotName !== undefined) {
-    patch.telegram_bot_name = input.telegramBotName;
   }
 
   await db('web_users')
