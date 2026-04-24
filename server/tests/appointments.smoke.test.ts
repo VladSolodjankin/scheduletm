@@ -79,8 +79,11 @@ describe('appointments API smoke scenarios', () => {
       },
       body: JSON.stringify({
         specialistId: 8,
-        scheduledAt: '2026-04-23T10:30:00.000Z',
-        durationMin: 30,
+        appointmentAt: '2026-04-23T10:30:00.000Z',
+        appointmentEndAt: '2026-04-23T11:00:00.000Z',
+        firstName: 'Smoke',
+        lastName: 'Client',
+        username: 'smoke_client',
         status: 'new',
         notes: 'smoke create',
       }),

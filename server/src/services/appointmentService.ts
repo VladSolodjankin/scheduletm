@@ -5,13 +5,20 @@ import {
   type AppointmentAuditAction,
   type AppointmentStatus,
   createAppointment,
-  ensureFallbackClientForAccount,
   ensureFallbackServiceForAccount,
   findAppointmentById,
   listAppointmentEventsByAppointmentIds,
   listAppointments,
   updateAppointment,
 } from '../repositories/appointmentRepository.js';
+import {
+  createClient,
+  findClientByContact,
+  findClientById,
+  listClientsByAccount,
+  type ClientRecord,
+  updateClientById,
+} from '../repositories/clientRepository.js';
 import {
   findSpecialistById,
   findSpecialistByWebUserId,
@@ -22,6 +29,15 @@ import { listExternalBusySlots, type ExternalBusySlot } from './calendarAvailabi
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 
+type AppointmentClientDto = {
+  id: number;
+  username: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+};
+
 type AppointmentDto = {
   id: number;
   specialistId: number;
@@ -31,6 +47,7 @@ type AppointmentDto = {
   paymentStatus: 'paid' | 'unpaid';
   meetingLink: string;
   notes: string;
+  client: AppointmentClientDto;
   events: AppointmentEventDto[];
 };
 
@@ -42,25 +59,36 @@ type AppointmentEventDto = {
 type AppointmentListResult = {
   appointments: AppointmentDto[];
   specialists: Array<{ id: number; name: string; timezone: string; slotStepMin: number }>;
+  clients: AppointmentClientDto[];
   busySlots: ExternalBusySlot[];
+};
+
+type AppointmentClientPayload = {
+  clientId?: number;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  email?: string;
 };
 
 type CreateAppointmentPayload = {
   specialistId: number;
-  scheduledAt: string;
-  durationMin?: number;
+  appointmentAt: string;
+  appointmentEndAt: string;
   status?: AppointmentStatus;
   meetingLink?: string;
   notes?: string;
-};
+} & AppointmentClientPayload;
 
 type UpdateAppointmentPayload = {
-  scheduledAt?: string;
+  appointmentAt?: string;
+  appointmentEndAt?: string;
   durationMin?: number;
   status?: AppointmentStatus;
   meetingLink?: string;
   notes?: string;
-};
+} & AppointmentClientPayload;
 
 function canManageAllAppointments(role: WebUserRole): boolean {
   return role === WebUserRole.Owner || role === WebUserRole.Admin;
@@ -99,6 +127,17 @@ function composeNotes(meetingLink: string | undefined, notes: string | undefined
   return [`meetingLink: ${normalizedMeetingLink}`, normalizedNotes].filter(Boolean).join('\n');
 }
 
+function mapClient(row: ClientRecord): AppointmentClientDto {
+  return {
+    id: row.id,
+    username: row.username ?? '',
+    firstName: row.first_name ?? '',
+    lastName: row.last_name ?? '',
+    phone: row.phone ?? '',
+    email: row.email ?? '',
+  };
+}
+
 function mapAppointment(row: AppointmentRecord): AppointmentDto {
   const parsed = parseMeetingLinkFromNotes(row.comment);
 
@@ -111,6 +150,14 @@ function mapAppointment(row: AppointmentRecord): AppointmentDto {
     paymentStatus: row.is_paid ? 'paid' : 'unpaid',
     notes: parsed.notes,
     meetingLink: parsed.meetingLink,
+    client: {
+      id: row.user_id,
+      username: row.client_username ?? '',
+      firstName: row.client_first_name ?? '',
+      lastName: row.client_last_name ?? '',
+      phone: row.client_phone ?? '',
+      email: row.client_email ?? '',
+    },
     events: [],
   };
 }
@@ -198,6 +245,68 @@ function filterBusySlotsOverlappingAppointments(
   });
 }
 
+function resolveDurationFromRange(appointmentAt: string, appointmentEndAt: string): number {
+  const start = new Date(appointmentAt).getTime();
+  const end = new Date(appointmentEndAt).getTime();
+
+  return Math.round((end - start) / 60_000);
+}
+
+async function resolveClientId(accountId: number, payload: AppointmentClientPayload): Promise<number> {
+  if (payload.clientId) {
+    const existing = await findClientById(accountId, payload.clientId);
+    if (!existing) {
+      throw new Error('CLIENT_NOT_FOUND');
+    }
+
+    if (payload.firstName && payload.lastName) {
+      await updateClientById(accountId, payload.clientId, {
+        accountId,
+        username: payload.username,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        phone: payload.phone,
+        email: payload.email,
+      });
+    }
+
+    return existing.id;
+  }
+
+  if (!payload.firstName || !payload.lastName) {
+    throw new Error('CLIENT_NAME_REQUIRED');
+  }
+
+  const matched = await findClientByContact(accountId, {
+    username: payload.username,
+    phone: payload.phone,
+    email: payload.email,
+  });
+
+  if (matched) {
+    await updateClientById(accountId, matched.id, {
+      accountId,
+      username: payload.username,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      phone: payload.phone,
+      email: payload.email,
+    });
+    return matched.id;
+  }
+
+  const created = await createClient({
+    accountId,
+    username: payload.username,
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    phone: payload.phone,
+    email: payload.email,
+  });
+
+  return created.id;
+}
+
 export async function getAppointments(
   actor: User,
   filters: { from?: string; to?: string; specialistId?: number },
@@ -246,6 +355,7 @@ export async function getAppointments(
       events: eventsByAppointmentId.get(item.id) ?? [],
     })),
     specialists,
+    clients: (await listClientsByAccount(accountId)).map(mapClient),
     busySlots: filterBusySlotsOverlappingAppointments(appointmentsForUi, busySlots),
   };
 }
@@ -269,22 +379,25 @@ export async function createAppointmentForActor(
   }
 
   const [userId, serviceId] = await Promise.all([
-    ensureFallbackClientForAccount(accountId),
+    resolveClientId(accountId, payload),
     ensureFallbackServiceForAccount(accountId),
   ]);
 
   const created = await createAppointment({
     accountId,
     specialistId: payload.specialistId,
-    scheduledAt: new Date(payload.scheduledAt),
+    scheduledAt: new Date(payload.appointmentAt),
     status: payload.status ?? 'new',
     notes: composeNotes(payload.meetingLink, payload.notes),
     userId,
     serviceId,
-    durationMin: payload.durationMin ?? 30,
+    durationMin: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
   });
 
-  return mapAppointment(created);
+  const rows = await listAppointments({ accountId, specialistId: created.specialist_id });
+  const hydrated = rows.find((item) => item.id === created.id) ?? created;
+
+  return mapAppointment(hydrated);
 }
 
 async function resolveManagedAppointment(actor: User, appointmentId: number) {
@@ -332,18 +445,36 @@ export async function updateAppointmentForActor(
     return null;
   }
 
+  const appointmentAt = payload.appointmentAt;
+  const appointmentEndAt = payload.appointmentEndAt;
+  const durationMin = appointmentAt && appointmentEndAt
+    ? resolveDurationFromRange(appointmentAt, appointmentEndAt)
+    : payload.durationMin;
+
+  const userId = payload.clientId || payload.firstName || payload.lastName || payload.username || payload.phone || payload.email
+    ? await resolveClientId(accountId, payload)
+    : undefined;
+
   const updated = await updateAppointment({
     accountId,
     id: appointmentId,
-    scheduledAt: payload.scheduledAt ? new Date(payload.scheduledAt) : undefined,
-    durationMin: payload.durationMin,
+    scheduledAt: appointmentAt ? new Date(appointmentAt) : undefined,
+    durationMin,
     status: payload.status,
+    userId,
     notes: Object.prototype.hasOwnProperty.call(payload, 'notes') || Object.prototype.hasOwnProperty.call(payload, 'meetingLink')
       ? composeNotes(payload.meetingLink, payload.notes)
       : undefined,
   });
 
-  return updated ? mapAppointment(updated) : null;
+  if (!updated) {
+    return null;
+  }
+
+  const rows = await listAppointments({ accountId, specialistId: updated.specialist_id });
+  const hydrated = rows.find((item) => item.id === updated.id) ?? updated;
+
+  return mapAppointment(hydrated);
 }
 
 export async function cancelAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
@@ -364,7 +495,15 @@ export async function rescheduleAppointmentForActor(
   appointmentId: number,
   scheduledAt: string,
 ): Promise<AppointmentDto | null> {
-  const updated = await updateAppointmentForActor(actor, appointmentId, { scheduledAt });
+  const { existing } = await resolveManagedAppointment(actor, appointmentId);
+  if (!existing) {
+    return null;
+  }
+
+  const updated = await updateAppointmentForActor(actor, appointmentId, {
+    appointmentAt: scheduledAt,
+    appointmentEndAt: new Date(new Date(scheduledAt).getTime() + existing.duration_min * 60_000).toISOString(),
+  });
 
   if (!updated) {
     return null;
@@ -395,7 +534,10 @@ export async function markPaidAppointmentForActor(actor: User, appointmentId: nu
 
   await appendAuditEvent(accountId, appointmentId, actor, 'mark-paid');
 
-  return mapAppointment(updated);
+  const rows = await listAppointments({ accountId, specialistId: updated.specialist_id });
+  const hydrated = rows.find((item) => item.id === updated.id) ?? updated;
+
+  return mapAppointment(hydrated);
 }
 
 export async function notifyAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
@@ -407,5 +549,8 @@ export async function notifyAppointmentForActor(actor: User, appointmentId: numb
 
   await appendAuditEvent(accountId, appointmentId, actor, 'notify');
 
-  return mapAppointment(existing);
+  const rows = await listAppointments({ accountId, specialistId: existing.specialist_id });
+  const hydrated = rows.find((item) => item.id === existing.id);
+
+  return mapAppointment(hydrated ?? existing);
 }

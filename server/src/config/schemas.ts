@@ -74,21 +74,104 @@ export const specialistUserCreationSchema = z.object({
 
 const appointmentStatusSchema = z.enum(['new', 'confirmed', 'cancelled']);
 
+const appointmentClientSchema = z.object({
+  clientId: z.coerce.number().int().positive().optional(),
+  username: z.string().trim().max(255).optional(),
+  firstName: z.string().trim().min(1, 'Укажите имя').max(255).optional(),
+  lastName: z.string().trim().min(1, 'Укажите фамилию').max(255).optional(),
+  phone: z.string().trim().max(50).optional(),
+  email: z.string().trim().email('Введите корректный email').max(254).optional(),
+});
+
 export const appointmentCreateSchema = z.object({
   specialistId: z.coerce.number().int().positive('Укажите специалиста'),
-  scheduledAt: z.string().datetime('Укажите корректную дату и время'),
-  durationMin: z.coerce.number().int().min(15, 'Минимальная длительность — 15 минут').max(480, 'Максимальная длительность — 480 минут').optional(),
+  appointmentAt: z.string().datetime('Укажите корректную дату и время начала'),
+  appointmentEndAt: z.string().datetime('Укажите корректную дату и время окончания'),
   status: appointmentStatusSchema.optional(),
   meetingLink: z.string().trim().url('Укажите корректную ссылку').max(2048).optional().or(z.literal('')),
   notes: z.string().trim().max(2000, 'Комментарий слишком длинный').optional(),
+}).merge(appointmentClientSchema).superRefine((value, ctx) => {
+  if (!value.firstName) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['firstName'], message: 'Укажите имя' });
+  }
+
+  if (!value.lastName) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['lastName'], message: 'Укажите фамилию' });
+  }
+
+  if (!value.username && !value.phone && !value.email && !value.clientId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['username'],
+      message: 'Укажите telegram username, телефон или email',
+    });
+  }
+
+  const start = new Date(value.appointmentAt).getTime();
+  const end = new Date(value.appointmentEndAt).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['appointmentEndAt'],
+      message: 'Время окончания должно быть позже времени начала',
+    });
+    return;
+  }
+
+  const durationMin = Math.round((end - start) / 60_000);
+  if (durationMin < 15 || durationMin > 480) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['appointmentEndAt'],
+      message: 'Длительность встречи должна быть от 15 до 480 минут',
+    });
+  }
 });
 
 export const appointmentUpdateSchema = z.object({
-  scheduledAt: z.string().datetime('Укажите корректную дату и время').optional(),
+  appointmentAt: z.string().datetime('Укажите корректную дату и время начала').optional(),
+  appointmentEndAt: z.string().datetime('Укажите корректную дату и время окончания').optional(),
   durationMin: z.coerce.number().int().min(15, 'Минимальная длительность — 15 минут').max(480, 'Максимальная длительность — 480 минут').optional(),
   status: appointmentStatusSchema.optional(),
   meetingLink: z.string().trim().url('Укажите корректную ссылку').max(2048).optional().or(z.literal('')),
   notes: z.string().trim().max(2000, 'Комментарий слишком длинный').optional(),
+}).merge(appointmentClientSchema).superRefine((value, ctx) => {
+  if (Object.keys(value).length === 0) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [], message: 'Передайте хотя бы одно поле для обновления' });
+    return;
+  }
+
+  if ((value.appointmentAt && !value.appointmentEndAt) || (!value.appointmentAt && value.appointmentEndAt)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['appointmentEndAt'],
+      message: 'Передайте и время начала, и время окончания',
+    });
+    return;
+  }
+
+  if (value.appointmentAt && value.appointmentEndAt) {
+    const start = new Date(value.appointmentAt).getTime();
+    const end = new Date(value.appointmentEndAt).getTime();
+
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['appointmentEndAt'],
+        message: 'Время окончания должно быть позже времени начала',
+      });
+      return;
+    }
+
+    const durationMin = Math.round((end - start) / 60_000);
+    if (durationMin < 15 || durationMin > 480) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['appointmentEndAt'],
+        message: 'Длительность встречи должна быть от 15 до 480 минут',
+      });
+    }
+  }
 }).refine((value) => Object.keys(value).length > 0, {
   message: 'Передайте хотя бы одно поле для обновления',
 });

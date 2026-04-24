@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import type { AppointmentItem, AppointmentStatus, SpecialistItem } from '../../shared/types/api';
+import type { AppointmentItem, AppointmentStatus, ClientItem, SpecialistItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
 import {
@@ -32,11 +32,21 @@ import {
 
 import type { TranslationKey } from '../../shared/i18n/dictionaries';
 
+type AppointmentFormState = EditFormState & {
+  clientId: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+};
+
 type Props = {
   t: (key: TranslationKey) => string;
   open: boolean;
   editingItem: AppointmentItem | null;
   specialists: SpecialistItem[];
+  clients: ClientItem[];
   selectedSpecialistId: number | 'all';
   selectedSlotStepMin: number;
   initialScheduledAtIso: string | null;
@@ -53,19 +63,31 @@ type Props = {
     status: AppointmentStatus;
     meetingLink: string;
     notes: string;
-    startIso: string;
-    durationMin: number;
+    appointmentAt: string;
+    appointmentEndAt: string;
+    clientId?: number;
+    username: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
   }) => Promise<void>;
 };
 
-const EMPTY_FORM: EditFormState = {
+const EMPTY_FORM: AppointmentFormState = {
   specialistId: '',
+  clientId: '',
   startDate: '',
   startTime: '',
   endTime: '',
   status: 'new',
   meetingLink: '',
   notes: '',
+  username: '',
+  firstName: '',
+  lastName: '',
+  phone: '',
+  email: '',
 };
 
 export function AppointmentFormDialog({
@@ -73,6 +95,7 @@ export function AppointmentFormDialog({
   open,
   editingItem,
   specialists,
+  clients,
   selectedSpecialistId,
   selectedSlotStepMin,
   initialScheduledAtIso,
@@ -101,13 +124,19 @@ export function AppointmentFormDialog({
 
       return {
         specialistId: String(editingItem.specialistId),
+        clientId: String(editingItem.client?.id ?? ''),
         startDate: times.startDate,
         startTime: times.startTime,
         endTime: times.endTime,
         status: editingItem.status,
         meetingLink: editingItem.meetingLink,
         notes: editingItem.notes,
-      } satisfies EditFormState;
+        username: editingItem.client?.username ?? '',
+        firstName: editingItem.client?.firstName ?? '',
+        lastName: editingItem.client?.lastName ?? '',
+        phone: editingItem.client?.phone ?? '',
+        email: editingItem.client?.email ?? '',
+      } satisfies AppointmentFormState;
     }
 
     const times = createFormValuesFromAppointmentAt(
@@ -118,16 +147,22 @@ export function AppointmentFormDialog({
 
     return {
       specialistId: defaultSpecialistId ? String(defaultSpecialistId) : '',
+      clientId: '',
       startDate: times.startDate,
       startTime: times.startTime,
       endTime: times.endTime,
       status: 'new',
       meetingLink: '',
       notes: '',
-    } satisfies EditFormState;
+      username: '',
+      firstName: '',
+      lastName: '',
+      phone: '',
+      email: '',
+    } satisfies AppointmentFormState;
   }, [editingItem, initialScheduledAtIso, selectedSlotStepMin, selectedSpecialistId, specialists]);
 
-  const { control, handleSubmit, reset, watch, setValue } = useForm<EditFormState>({
+  const { control, handleSubmit, reset, watch, setValue } = useForm<AppointmentFormState>({
     defaultValues: EMPTY_FORM,
   });
 
@@ -140,6 +175,21 @@ export function AppointmentFormDialog({
     setFormTimeZone(BROWSER_TIMEZONE);
     setShowTimezoneSelect(false);
   }, [initialValues, open, reset]);
+
+  const selectedClientId = watch('clientId');
+
+  useEffect(() => {
+    const selectedClient = clients.find((item) => String(item.id) === selectedClientId);
+    if (!selectedClient) {
+      return;
+    }
+
+    setValue('username', selectedClient.username, { shouldDirty: true });
+    setValue('firstName', selectedClient.firstName, { shouldDirty: true });
+    setValue('lastName', selectedClient.lastName, { shouldDirty: true });
+    setValue('phone', selectedClient.phone, { shouldDirty: true });
+    setValue('email', selectedClient.email, { shouldDirty: true });
+  }, [clients, selectedClientId, setValue]);
 
   const startDateValue = watch('startDate');
   const startTimeValue = watch('startTime');
@@ -162,15 +212,20 @@ export function AppointmentFormDialog({
     }
 
     const { startIso, endIso } = buildStartEndIso(form, formTimeZone);
-    const durationMin = Math.max(selectedSlotStepMin, Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / 60_000));
 
     await onSubmit({
       specialistId,
       status: form.status,
       meetingLink: form.meetingLink,
       notes: form.notes,
-      startIso,
-      durationMin,
+      appointmentAt: startIso,
+      appointmentEndAt: endIso,
+      clientId: form.clientId ? Number(form.clientId) : undefined,
+      username: form.username,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      phone: form.phone,
+      email: form.email,
     });
   });
 
@@ -228,39 +283,42 @@ export function AppointmentFormDialog({
             )}
           />
           <Controller
-            name="startDate"
+            name="clientId"
             control={control}
             render={({ field }: any) => (
-              <AppRhfTextField
-                field={field}
-                label="Start date"
-                type="date"
-              />
+              <FormControl>
+                <InputLabel id="client-label">Client</InputLabel>
+                <Select
+                  labelId="client-label"
+                  label="Client"
+                  value={field.value}
+                  onChange={(event) => field.onChange(String(event.target.value))}
+                >
+                  <MenuItem value="">New client</MenuItem>
+                  {clients.map((client) => (
+                    <MenuItem key={client.id} value={String(client.id)}>{`${client.firstName} ${client.lastName}`.trim()}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             )}
           />
+
+          <Controller name="firstName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="First name" />} />
+          <Controller name="lastName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Last name" />} />
+          <Controller name="username" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Telegram username" />} />
+          <Controller name="phone" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Phone" />} />
+          <Controller name="email" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Email" />} />
+
+          <Controller name="startDate" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Start date" type="date" />} />
           <Controller
             name="startTime"
             control={control}
-            render={({ field }: any) => (
-              <AppRhfTextField
-                field={field}
-                label="Start time"
-                type="time"
-                minutesStep={selectedSlotStepMin}
-              />
-            )}
+            render={({ field }: any) => <AppRhfTextField field={field} label="Start time" type="time" minutesStep={selectedSlotStepMin} />}
           />
           <Controller
             name="endTime"
             control={control}
-            render={({ field }: any) => (
-              <AppRhfTextField
-                field={field}
-                label="End time"
-                type="time"
-                minutesStep={selectedSlotStepMin}
-              />
-            )}
+            render={({ field }: any) => <AppRhfTextField field={field} label="End time" type="time" minutesStep={selectedSlotStepMin} />}
           />
           <Controller
             name="status"
@@ -281,19 +339,11 @@ export function AppointmentFormDialog({
               </FormControl>
             )}
           />
-          <Controller
-            name="meetingLink"
-            control={control}
-            render={({ field }: any) => (
-              <AppRhfTextField field={field} label={t('appointments.fields.meetingLink')} />
-            )}
-          />
+          <Controller name="meetingLink" control={control} render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.meetingLink')} />} />
           <Controller
             name="notes"
             control={control}
-            render={({ field }: any) => (
-              <AppRhfTextField field={field} label={t('appointments.fields.notes')} multiline minRows={3} />
-            )}
+            render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.notes')} multiline minRows={3} />}
           />
           {editingItem && (
             <Stack spacing={1}>
