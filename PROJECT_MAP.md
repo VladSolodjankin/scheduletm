@@ -59,6 +59,8 @@
 - `PATCH /api/appointments/:id`
 - `POST /api/appointments/:id/cancel`
 - `POST /api/appointments/:id/reschedule`
+- `POST /api/appointments/:id/mark-paid`
+- `POST /api/appointments/:id/notify`
 
 ### Appointments response (текущее расширение)
 
@@ -100,9 +102,7 @@
   - web поддерживает drag&drop перенос appointments между слотами (используется backend `reschedule` endpoint).
   - для прошлых слотов в календаре используется error toast при попытке клика/переноса записи, вместо постоянного hover-сообщения.
 - Откладываем на следующий шаг:
-  - `mark-paid`
-  - `notify`
-  - расширенные фильтры и аудит-лог.
+  - расширенные фильтры и углубленный аудит-лог (поиск/фильтрация по актору и периоду).
 
 ## Стратегия meeting link
 
@@ -129,3 +129,16 @@
 
 - `server/tests/appointments.routes.smoke.test.ts` — route-smoke для API сценариев `create`, `reschedule`, `cancel` через Express app + `vitest` + встроенный `fetch` Node.js (service-слой замокан).
 - `web/tests/e2e/smoke.e2e.test.mjs` — web smoke для сценариев `auth/settings/appointments` (проверка маршрутов и API-контрактов на уровне SPA-кода).
+
+## Что делать следующим шагом (после 4.7)
+
+- `server/src/routes/appointmentRoutes.ts` + `server/src/services/appointmentService.ts`:
+  - добавить query-параметры для фильтрации событий аудита (по actor/action/периоду);
+  - добавить endpoint получения audit-ленты по записи с пагинацией.
+- `web/src/components/appointments/AppointmentFormDialog.tsx` + `web/src/containers/AppointmentsContainer.tsx`:
+  - добавить фильтры и компактный просмотр полной истории действий по выбранной записи.
+- `web/src/containers/AppointmentsContainer.tsx`:
+  - добавить расширенные фильтры календаря (status/paymentStatus/specialist/period) без дублирования бизнес-логики.
+- Тесты:
+  - расширить `server/tests/appointments.routes.smoke.test.ts` сценариями фильтрации и чтения audit-ленты;
+  - дополнить `web/tests/e2e/smoke.e2e.test.mjs` проверкой UI-фильтров и отображения истории.

@@ -1,11 +1,14 @@
 import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import {
+  createAppointmentAuditEvent,
   type AppointmentRecord,
+  type AppointmentAuditAction,
   type AppointmentStatus,
   createAppointment,
   ensureFallbackClientForAccount,
   ensureFallbackServiceForAccount,
   findAppointmentById,
+  listAppointmentEventsByAppointmentIds,
   listAppointments,
   updateAppointment,
 } from '../repositories/appointmentRepository.js';
@@ -25,8 +28,15 @@ type AppointmentDto = {
   scheduledAt: string;
   durationMin: number;
   status: AppointmentStatus;
+  paymentStatus: 'paid' | 'unpaid';
   meetingLink: string;
   notes: string;
+  events: AppointmentEventDto[];
+};
+
+type AppointmentEventDto = {
+  action: AppointmentAuditAction;
+  createdAt: string;
 };
 
 type AppointmentListResult = {
@@ -98,9 +108,28 @@ function mapAppointment(row: AppointmentRecord): AppointmentDto {
     scheduledAt: row.appointment_at.toISOString(),
     durationMin: row.duration_min,
     status: row.status,
+    paymentStatus: row.is_paid ? 'paid' : 'unpaid',
     notes: parsed.notes,
     meetingLink: parsed.meetingLink,
+    events: [],
   };
+}
+
+function mapEventsByAppointmentId(
+  rows: Awaited<ReturnType<typeof listAppointmentEventsByAppointmentIds>>,
+): Map<number, AppointmentEventDto[]> {
+  const eventsById = new Map<number, AppointmentEventDto[]>();
+
+  for (const row of rows) {
+    const events = eventsById.get(row.appointment_id) ?? [];
+    events.push({
+      action: row.action,
+      createdAt: row.created_at.toISOString(),
+    });
+    eventsById.set(row.appointment_id, events);
+  }
+
+  return eventsById;
 }
 
 async function resolveAccountId(actor: User): Promise<number> {
@@ -204,9 +233,18 @@ export async function getAppointments(
     to: toDate,
   });
   const appointmentsForUi = items.map(mapAppointment);
+  const eventsByAppointmentId = mapEventsByAppointmentId(
+    await listAppointmentEventsByAppointmentIds(
+      accountId,
+      appointmentsForUi.map((item) => item.id),
+    ),
+  );
 
   return {
-    appointments: appointmentsForUi,
+    appointments: appointmentsForUi.map((item) => ({
+      ...item,
+      events: eventsByAppointmentId.get(item.id) ?? [],
+    })),
     specialists,
     busySlots: filterBusySlotsOverlappingAppointments(appointmentsForUi, busySlots),
   };
@@ -249,16 +287,12 @@ export async function createAppointmentForActor(
   return mapAppointment(created);
 }
 
-export async function updateAppointmentForActor(
-  actor: User,
-  appointmentId: number,
-  payload: UpdateAppointmentPayload,
-): Promise<AppointmentDto | null> {
+async function resolveManagedAppointment(actor: User, appointmentId: number) {
   const accountId = await resolveAccountId(actor);
   const existing = await findAppointmentById(accountId, appointmentId);
 
   if (!existing) {
-    return null;
+    return { accountId, existing: null };
   }
 
   if (!canManageAllAppointments(actor.role)) {
@@ -266,6 +300,36 @@ export async function updateAppointmentForActor(
     if (!selfSpecialist || selfSpecialist.id !== existing.specialist_id) {
       throw new Error('FORBIDDEN_SPECIALIST');
     }
+  }
+
+  return { accountId, existing };
+}
+
+async function appendAuditEvent(
+  accountId: number,
+  appointmentId: number,
+  actor: User,
+  action: AppointmentAuditAction,
+  metadata?: Record<string, unknown>,
+) {
+  await createAppointmentAuditEvent({
+    accountId,
+    appointmentId,
+    action,
+    actorWebUserId: Number.isFinite(Number(actor.id)) ? Number(actor.id) : null,
+    metadata,
+  });
+}
+
+export async function updateAppointmentForActor(
+  actor: User,
+  appointmentId: number,
+  payload: UpdateAppointmentPayload,
+): Promise<AppointmentDto | null> {
+  const { accountId, existing } = await resolveManagedAppointment(actor, appointmentId);
+
+  if (!existing) {
+    return null;
   }
 
   const updated = await updateAppointment({
@@ -283,7 +347,16 @@ export async function updateAppointmentForActor(
 }
 
 export async function cancelAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
-  return updateAppointmentForActor(actor, appointmentId, { status: 'cancelled' });
+  const updated = await updateAppointmentForActor(actor, appointmentId, { status: 'cancelled' });
+
+  if (!updated) {
+    return null;
+  }
+
+  const accountId = await resolveAccountId(actor);
+  await appendAuditEvent(accountId, appointmentId, actor, 'cancel');
+
+  return updated;
 }
 
 export async function rescheduleAppointmentForActor(
@@ -291,5 +364,48 @@ export async function rescheduleAppointmentForActor(
   appointmentId: number,
   scheduledAt: string,
 ): Promise<AppointmentDto | null> {
-  return updateAppointmentForActor(actor, appointmentId, { scheduledAt });
+  const updated = await updateAppointmentForActor(actor, appointmentId, { scheduledAt });
+
+  if (!updated) {
+    return null;
+  }
+
+  const accountId = await resolveAccountId(actor);
+  await appendAuditEvent(accountId, appointmentId, actor, 'reschedule', { scheduledAt });
+
+  return updated;
+}
+
+export async function markPaidAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
+  const { accountId, existing } = await resolveManagedAppointment(actor, appointmentId);
+
+  if (!existing) {
+    return null;
+  }
+
+  const updated = await updateAppointment({
+    accountId,
+    id: appointmentId,
+    isPaid: true,
+  });
+
+  if (!updated) {
+    return null;
+  }
+
+  await appendAuditEvent(accountId, appointmentId, actor, 'mark-paid');
+
+  return mapAppointment(updated);
+}
+
+export async function notifyAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
+  const { accountId, existing } = await resolveManagedAppointment(actor, appointmentId);
+
+  if (!existing) {
+    return null;
+  }
+
+  await appendAuditEvent(accountId, appointmentId, actor, 'notify');
+
+  return mapAppointment(existing);
 }

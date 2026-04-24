@@ -61,6 +61,8 @@ export function AppointmentsContainer() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [isCancellingAppointment, setIsCancellingAppointment] = useState(false);
+  const [isMarkingPaid, setIsMarkingPaid] = useState(false);
+  const [isNotifyingClient, setIsNotifyingClient] = useState(false);
   const [pastSlotToastOpen, setPastSlotToastOpen] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -186,7 +188,7 @@ export function AppointmentsContainer() {
       setBusySlots(response.data.busySlots ?? []);
       setError('');
     } catch {
-      setError('Unable to load appointments');
+      setError(t('appointments.errors.load'));
     } finally {
       setIsLoading(false);
       setHasLoadedOnce(true);
@@ -209,7 +211,7 @@ export function AppointmentsContainer() {
       : selectedSpecialistId;
 
     if (!specialistId) {
-      setError('Create at least one specialist first');
+      setError(t('appointments.errors.createSpecialistFirst'));
       return;
     }
 
@@ -274,7 +276,7 @@ export function AppointmentsContainer() {
       setIsCreateOpen(false);
       await loadAppointments(selectedSpecialistId);
     } catch {
-      setError('Unable to save appointment');
+      setError(t('appointments.errors.save'));
     } finally {
       setIsSubmittingForm(false);
     }
@@ -295,9 +297,47 @@ export function AppointmentsContainer() {
       setIsCreateOpen(false);
       await loadAppointments(selectedSpecialistId);
     } catch {
-      setError('Unable to cancel appointment');
+      setError(t('appointments.errors.cancel'));
     } finally {
       setIsCancellingAppointment(false);
+    }
+  };
+
+  const markAppointmentPaid = async () => {
+    if (!editingItem || !accessToken) {
+      return;
+    }
+
+    setIsMarkingPaid(true);
+
+    try {
+      await apiClient.post(`/api/appointments/${editingItem.id}/mark-paid`, {}, {
+        headers: authHeaders(accessToken),
+      });
+      await loadAppointments(selectedSpecialistId);
+    } catch {
+      setError(t('appointments.errors.markPaid'));
+    } finally {
+      setIsMarkingPaid(false);
+    }
+  };
+
+  const notifyClient = async () => {
+    if (!editingItem || !accessToken) {
+      return;
+    }
+
+    setIsNotifyingClient(true);
+
+    try {
+      await apiClient.post(`/api/appointments/${editingItem.id}/notify`, {}, {
+        headers: authHeaders(accessToken),
+      });
+      await loadAppointments(selectedSpecialistId);
+    } catch {
+      setError(t('appointments.errors.notify'));
+    } finally {
+      setIsNotifyingClient(false);
     }
   };
 
@@ -343,7 +383,7 @@ export function AppointmentsContainer() {
           ? { ...item, scheduledAt: previousScheduledAt }
           : item
       )));
-      setError('Unable to reschedule appointment');
+      setError(t('appointments.errors.reschedule'));
     }
   };
 
@@ -476,11 +516,15 @@ export function AppointmentsContainer() {
         initialScheduledAtIso={createInitialScheduledAtIso}
         isSubmittingForm={isSubmittingForm}
         isCancellingAppointment={isCancellingAppointment}
+        isMarkingPaid={isMarkingPaid}
+        isNotifyingClient={isNotifyingClient}
         onClose={() => {
           setIsCreateOpen(false);
           setCreateInitialScheduledAtIso(null);
         }}
         onCancel={cancelAppointment}
+        onMarkPaid={markAppointmentPaid}
+        onNotifyClient={notifyClient}
         onSubmit={(payload) => submitForm({
           specialistId: payload.specialistId,
           startIso: payload.startIso,

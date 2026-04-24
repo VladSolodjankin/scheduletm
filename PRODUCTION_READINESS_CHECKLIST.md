@@ -53,8 +53,9 @@
 
 - [x] Сначала закрыть MVP-слайс: list/create/edit + cancel/reschedule (end-to-end через web + server).
 - [x] Добавить контракт и валидацию для lifecycle appointments (create/update/reschedule schemas + route-smoke coverage (service layer mocked)).
+- [x] Добавить lifecycle endpoints `mark-paid` и `notify` + smoke-тесты.
 - [ ] Добавить optimistic locking/versioning для защиты от одновременного редактирования.
-- [ ] Добавить аудит-лог действий (cancel/reschedule/mark-paid/notify).
+- [ ] Расширить аудит-лог действий (cancel/reschedule/mark-paid/notify): фильтрация, actor context, retention policy.
 - [ ] Добавить идемпотентность на операции с внешними уведомлениями.
 
 ## 7. Meeting links readiness

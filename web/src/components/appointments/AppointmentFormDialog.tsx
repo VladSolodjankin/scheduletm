@@ -42,8 +42,12 @@ type Props = {
   initialScheduledAtIso: string | null;
   isSubmittingForm: boolean;
   isCancellingAppointment: boolean;
+  isMarkingPaid: boolean;
+  isNotifyingClient: boolean;
   onClose: () => void;
   onCancel: () => Promise<void>;
+  onMarkPaid: () => Promise<void>;
+  onNotifyClient: () => Promise<void>;
   onSubmit: (payload: {
     specialistId: number;
     status: AppointmentStatus;
@@ -74,8 +78,12 @@ export function AppointmentFormDialog({
   initialScheduledAtIso,
   isSubmittingForm,
   isCancellingAppointment,
+  isMarkingPaid,
+  isNotifyingClient,
   onClose,
   onCancel,
+  onMarkPaid,
+  onNotifyClient,
   onSubmit,
 }: Props) {
   const [showTimezoneSelect, setShowTimezoneSelect] = useState(false);
@@ -287,12 +295,49 @@ export function AppointmentFormDialog({
               <AppRhfTextField field={field} label={t('appointments.fields.notes')} multiline minRows={3} />
             )}
           />
+          {editingItem && (
+            <Stack spacing={1}>
+              <Typography variant="body2" color="text.secondary">
+                {editingItem.paymentStatus === 'paid'
+                  ? t('appointments.paymentStatusPaid')
+                  : t('appointments.paymentStatusUnpaid')}
+              </Typography>
+              <Typography variant="subtitle2">{t('appointments.auditTitle')}</Typography>
+              <Stack spacing={0.5}>
+                {(editingItem.events ?? []).slice(0, 6).map((event, index) => {
+                  const eventLabel = event.action === 'cancel'
+                    ? t('appointments.eventCancel')
+                    : event.action === 'reschedule'
+                      ? t('appointments.eventReschedule')
+                      : event.action === 'mark-paid'
+                        ? t('appointments.eventMarkPaid')
+                        : t('appointments.eventNotify');
+
+                  return (
+                    <Typography key={`${event.createdAt}-${index}`} variant="caption" color="text.secondary">
+                      {`${eventLabel} · ${new Date(event.createdAt).toLocaleString()}`}
+                    </Typography>
+                  );
+                })}
+              </Stack>
+            </Stack>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
         {editingItem && (
           <AppButton color="error" onClick={onCancel} isLoading={isCancellingAppointment}>
             {t('appointments.cancelAction')}
+          </AppButton>
+        )}
+        {editingItem && (
+          <AppButton onClick={onMarkPaid} isLoading={isMarkingPaid}>
+            {t('appointments.markPaidAction')}
+          </AppButton>
+        )}
+        {editingItem && (
+          <AppButton onClick={onNotifyClient} isLoading={isNotifyingClient}>
+            {t('appointments.notifyAction')}
           </AppButton>
         )}
         <Button onClick={onClose} disabled={isSubmittingForm || isCancellingAppointment}>{t('appointments.close')}</Button>

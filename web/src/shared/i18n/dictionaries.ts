@@ -80,6 +80,24 @@ export const dictionaries = {
       dragHint: 'Drag and drop appointment to move it to another slot.',
       pastSlotError: 'Cannot create or move an appointment to a past date/time.',
       cancelAction: 'Cancel appointment',
+      markPaidAction: 'Mark as paid',
+      notifyAction: 'Notify client',
+      paymentStatusPaid: 'Paid',
+      paymentStatusUnpaid: 'Unpaid',
+      auditTitle: 'Activity',
+      eventCancel: 'Appointment cancelled',
+      eventReschedule: 'Appointment rescheduled',
+      eventMarkPaid: 'Payment confirmed',
+      eventNotify: 'Manual notification sent',
+      errors: {
+        load: 'Unable to load appointments.',
+        save: 'Unable to save appointment.',
+        cancel: 'Unable to cancel appointment.',
+        reschedule: 'Unable to reschedule appointment.',
+        markPaid: 'Unable to confirm payment.',
+        notify: 'Unable to send notification.',
+        createSpecialistFirst: 'Create at least one specialist first.',
+      },
       fields: {
         scheduledAt: 'Date and time',
         status: 'Status',
@@ -169,6 +187,24 @@ export const dictionaries = {
       dragHint: 'Перетащите запись в другой слот, чтобы перенести её.',
       pastSlotError: 'Нельзя создать или перенести запись на прошедшие дату и время.',
       cancelAction: 'Отменить запись',
+      markPaidAction: 'Подтвердить оплату',
+      notifyAction: 'Уведомить клиента',
+      paymentStatusPaid: 'Оплачено',
+      paymentStatusUnpaid: 'Не оплачено',
+      auditTitle: 'История действий',
+      eventCancel: 'Запись отменена',
+      eventReschedule: 'Запись перенесена',
+      eventMarkPaid: 'Оплата подтверждена',
+      eventNotify: 'Ручное уведомление отправлено',
+      errors: {
+        load: 'Не удалось загрузить записи.',
+        save: 'Не удалось сохранить запись.',
+        cancel: 'Не удалось отменить запись.',
+        reschedule: 'Не удалось перенести запись.',
+        markPaid: 'Не удалось подтвердить оплату.',
+        notify: 'Не удалось отправить уведомление.',
+        createSpecialistFirst: 'Сначала создайте хотя бы одного специалиста.',
+      },
       fields: {
         scheduledAt: 'Дата и время',
         status: 'Статус',
@@ -249,6 +285,22 @@ export type TranslationKey =
   | 'appointments.dragHint'
   | 'appointments.pastSlotError'
   | 'appointments.cancelAction'
+  | 'appointments.markPaidAction'
+  | 'appointments.notifyAction'
+  | 'appointments.paymentStatusPaid'
+  | 'appointments.paymentStatusUnpaid'
+  | 'appointments.auditTitle'
+  | 'appointments.eventCancel'
+  | 'appointments.eventReschedule'
+  | 'appointments.eventMarkPaid'
+  | 'appointments.eventNotify'
+  | 'appointments.errors.load'
+  | 'appointments.errors.save'
+  | 'appointments.errors.cancel'
+  | 'appointments.errors.reschedule'
+  | 'appointments.errors.markPaid'
+  | 'appointments.errors.notify'
+  | 'appointments.errors.createSpecialistFirst'
   | 'appointments.fields.scheduledAt'
   | 'appointments.fields.status'
   | 'appointments.fields.meetingLink'
