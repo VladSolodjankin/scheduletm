@@ -77,6 +77,7 @@ export const dictionaries = {
       today: 'Today',
       loading: 'Loading appointments...',
       dragHint: 'Drag and drop appointment to move it to another slot.',
+      pastSlotError: 'Cannot create or move an appointment to a past date/time.',
       cancelAction: 'Cancel appointment',
       fields: {
         scheduledAt: 'Date and time',
@@ -164,6 +165,7 @@ export const dictionaries = {
       today: 'Сегодня',
       loading: 'Загрузка записей...',
       dragHint: 'Перетащите запись в другой слот, чтобы перенести её.',
+      pastSlotError: 'Нельзя создать или перенести запись на прошедшие дату и время.',
       cancelAction: 'Отменить запись',
       fields: {
         scheduledAt: 'Дата и время',
@@ -242,6 +244,7 @@ export type TranslationKey =
   | 'appointments.today'
   | 'appointments.loading'
   | 'appointments.dragHint'
+  | 'appointments.pastSlotError'
   | 'appointments.cancelAction'
   | 'appointments.fields.scheduledAt'
   | 'appointments.fields.status'

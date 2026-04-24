@@ -8,6 +8,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Snackbar,
   Skeleton,
   Stack,
   Typography,
@@ -57,10 +58,15 @@ export function AppointmentsContainer() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [isCancellingAppointment, setIsCancellingAppointment] = useState(false);
+  const [pastSlotToastOpen, setPastSlotToastOpen] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
-  const pastSlotError = 'Cannot create or move an appointment to a past date/time';
+  const pastSlotError = t('appointments.pastSlotError');
+
+  const showPastSlotError = () => {
+    setPastSlotToastOpen(true);
+  };
 
   const canManageAll = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin;
   const selectedSpecialist = selectedSpecialistId === 'all'
@@ -166,7 +172,7 @@ export function AppointmentsContainer() {
 
   const openCreate = (targetDateKey: string, hour: number, minute = 0) => {
     if (isSlotInPast(targetDateKey, hour, minute, displayTimeZone)) {
-      setError(pastSlotError);
+      showPastSlotError();
       return;
     }
 
@@ -204,7 +210,7 @@ export function AppointmentsContainer() {
 
     try {
       if (!editingItem && new Date(payload.startIso).getTime() < Date.now()) {
-        setError(pastSlotError);
+        showPastSlotError();
         return;
       }
 
@@ -266,7 +272,7 @@ export function AppointmentsContainer() {
       return;
     }
     if (isSlotInPast(targetDayKey, targetHour, targetMinute, displayTimeZone)) {
-      setError(pastSlotError);
+      showPastSlotError();
       return;
     }
 
@@ -372,6 +378,24 @@ export function AppointmentsContainer() {
           </Card>
         )}
 
+        <AppointmentsCalendar
+          t={t}
+          viewMode={viewMode}
+          visibleDays={visibleDays}
+          displayTimeZone={displayTimeZone}
+          appointmentsByCell={appointmentsByCell}
+          busySlotsByCell={busySlotsByCell}
+          movePeriod={movePeriod}
+          onToday={() => setFocusDate(startOfDay(new Date()))}
+          onSetViewMode={setViewMode}
+          onOpenCreate={openCreate}
+          onOpenEdit={openEdit}
+          onMoveAppointment={(id, dayKey, hour, minute) => {
+            void moveAppointment(id, dayKey, hour, minute);
+          }}
+          onPastSlotAttempt={showPastSlotError}
+          getGridDayKey={getGridDayKey}
+        />
         {isInitialLoading ? (
           <Card variant="outlined" sx={{ borderRadius: 3 }}>
             <CardContent sx={{ p: 2 }}>
@@ -403,6 +427,22 @@ export function AppointmentsContainer() {
           />
         )}
       </Stack>
+
+      <Snackbar
+        open={pastSlotToastOpen}
+        autoHideDuration={3000}
+        onClose={(_, reason) => {
+          if (reason === 'clickaway') {
+            return;
+          }
+          setPastSlotToastOpen(false);
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" variant="filled" onClose={() => setPastSlotToastOpen(false)}>
+          {pastSlotError}
+        </Alert>
+      </Snackbar>
 
       <AppointmentFormDialog
         t={t}
