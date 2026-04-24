@@ -312,8 +312,9 @@ export function AppointmentFormDialog({
               )}
             />
           </Box>
-          <Box sx={createResponsiveFieldGridSx(3)}>
+          <Box sx={createResponsiveFieldGridSx(2)}>
             <Controller name="startDate" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Start date" type="date" />} />
+            <Box sx={createResponsiveFieldGridSx(2)}>
             <Controller
               name="startTime"
               control={control}
@@ -324,13 +325,14 @@ export function AppointmentFormDialog({
               control={control}
               render={({ field }: any) => <AppRhfTextField field={field} label="End time" type="time" minutesStep={selectedSlotStepMin} />}
             />
+            </Box>
           </Box>
           <Box sx={createResponsiveFieldGridSx(2)}>
             <Controller
               name="status"
               control={control}
               render={({ field }: any) => (
-                <FormControl fullWidth>
+                <FormControl fullWidth sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}>
                   <InputLabel id="status-label">{t('appointments.fields.status')}</InputLabel>
                   <Select
                     labelId="status-label"
