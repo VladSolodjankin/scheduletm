@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
+import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { completeGoogleOAuth, createGoogleOAuthUrl, disconnectGoogleOAuth } from '../services/googleOAuthService.js';
 
@@ -11,7 +12,7 @@ integrationRoutes.post('/google/oauth/start', requireAccessToken, async (req, re
 
   if (!oauthInit) {
     return res.status(503).json({
-      message: 'Google OAuth is not configured on server',
+      message: t(req, 'googleOAuthNotConfigured'),
       requiredEnv: [
         'GOOGLE_OAUTH_CLIENT_ID',
         'GOOGLE_OAUTH_CLIENT_SECRET',
@@ -48,7 +49,7 @@ integrationRoutes.post('/google/disconnect', requireAccessToken, async (req, res
   const user = (req as AuthedRequest).user;
   const ok = await disconnectGoogleOAuth(user.id);
   if (!ok) {
-    return res.status(400).json({ message: 'Invalid user id' });
+    return res.status(400).json({ message: t(req, 'invalidUserId') });
   }
 
   return res.json({

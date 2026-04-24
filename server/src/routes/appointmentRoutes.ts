@@ -4,6 +4,7 @@ import {
   appointmentRescheduleSchema,
   appointmentUpdateSchema,
 } from '../config/schemas.js';
+import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import {
   cancelAppointmentForActor,
@@ -37,7 +38,7 @@ appointmentRoutes.get('/', async (req, res) => {
     return res.json(data);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось загрузить записи' });
+    return res.status(500).json({ message: t(req, 'appointmentsLoadFailed') });
   }
 });
 
@@ -56,19 +57,19 @@ appointmentRoutes.post('/', async (req, res) => {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
 
     if (message === 'FORBIDDEN_SPECIALIST') {
-      return res.status(403).json({ message: 'Недостаточно прав для этого специалиста' });
+      return res.status(403).json({ message: t(req, 'forbiddenSpecialistScope') });
     }
 
     if (message === 'SPECIALIST_NOT_FOUND') {
-      return res.status(404).json({ message: 'Специалист не найден' });
+      return res.status(404).json({ message: t(req, 'specialistNotFound') });
     }
 
     if (message === 'CLIENT_NOT_FOUND') {
-      return res.status(404).json({ message: 'Клиент не найден' });
+      return res.status(404).json({ message: t(req, 'clientNotFound') });
     }
 
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось создать запись' });
+    return res.status(500).json({ message: t(req, 'appointmentCreateFailed') });
   }
 });
 
@@ -77,7 +78,7 @@ appointmentRoutes.patch('/:id', async (req, res) => {
   const appointmentId = Number(req.params.id);
 
   if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
-    return res.status(400).json({ message: 'Некорректный id записи' });
+    return res.status(400).json({ message: t(req, 'invalidAppointmentId') });
   }
 
   const parsed = appointmentUpdateSchema.safeParse(req.body);
@@ -88,21 +89,21 @@ appointmentRoutes.patch('/:id', async (req, res) => {
   try {
     const updated = await updateAppointmentForActor(actor, appointmentId, parsed.data);
     if (!updated) {
-      return res.status(404).json({ message: 'Запись не найдена' });
+      return res.status(404).json({ message: t(req, 'appointmentNotFound') });
     }
 
     return res.json(updated);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN_SPECIALIST') {
-      return res.status(403).json({ message: 'Недостаточно прав для этой записи' });
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
     if (message === 'CLIENT_NOT_FOUND') {
-      return res.status(404).json({ message: 'Клиент не найден' });
+      return res.status(404).json({ message: t(req, 'clientNotFound') });
     }
 
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось обновить запись' });
+    return res.status(500).json({ message: t(req, 'appointmentUpdateFailed') });
   }
 });
 
@@ -111,24 +112,24 @@ appointmentRoutes.post('/:id/cancel', async (req, res) => {
   const appointmentId = Number(req.params.id);
 
   if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
-    return res.status(400).json({ message: 'Некорректный id записи' });
+    return res.status(400).json({ message: t(req, 'invalidAppointmentId') });
   }
 
   try {
     const updated = await cancelAppointmentForActor(actor, appointmentId);
     if (!updated) {
-      return res.status(404).json({ message: 'Запись не найдена' });
+      return res.status(404).json({ message: t(req, 'appointmentNotFound') });
     }
 
     return res.json(updated);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN_SPECIALIST') {
-      return res.status(403).json({ message: 'Недостаточно прав для этой записи' });
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
 
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось отменить запись' });
+    return res.status(500).json({ message: t(req, 'appointmentCancelFailed') });
   }
 });
 
@@ -137,7 +138,7 @@ appointmentRoutes.post('/:id/reschedule', async (req, res) => {
   const appointmentId = Number(req.params.id);
 
   if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
-    return res.status(400).json({ message: 'Некорректный id записи' });
+    return res.status(400).json({ message: t(req, 'invalidAppointmentId') });
   }
 
   const parsed = appointmentRescheduleSchema.safeParse(req.body);
@@ -148,18 +149,18 @@ appointmentRoutes.post('/:id/reschedule', async (req, res) => {
   try {
     const updated = await rescheduleAppointmentForActor(actor, appointmentId, parsed.data.scheduledAt);
     if (!updated) {
-      return res.status(404).json({ message: 'Запись не найдена' });
+      return res.status(404).json({ message: t(req, 'appointmentNotFound') });
     }
 
     return res.json(updated);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN_SPECIALIST') {
-      return res.status(403).json({ message: 'Недостаточно прав для этой записи' });
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
 
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось перенести запись' });
+    return res.status(500).json({ message: t(req, 'appointmentRescheduleFailed') });
   }
 });
 
@@ -168,24 +169,24 @@ appointmentRoutes.post('/:id/mark-paid', async (req, res) => {
   const appointmentId = Number(req.params.id);
 
   if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
-    return res.status(400).json({ message: 'Некорректный id записи' });
+    return res.status(400).json({ message: t(req, 'invalidAppointmentId') });
   }
 
   try {
     const updated = await markPaidAppointmentForActor(actor, appointmentId);
     if (!updated) {
-      return res.status(404).json({ message: 'Запись не найдена' });
+      return res.status(404).json({ message: t(req, 'appointmentNotFound') });
     }
 
     return res.json(updated);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN_SPECIALIST') {
-      return res.status(403).json({ message: 'Недостаточно прав для этой записи' });
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
 
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось подтвердить оплату' });
+    return res.status(500).json({ message: t(req, 'appointmentMarkPaidFailed') });
   }
 });
 
@@ -194,23 +195,23 @@ appointmentRoutes.post('/:id/notify', async (req, res) => {
   const appointmentId = Number(req.params.id);
 
   if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
-    return res.status(400).json({ message: 'Некорректный id записи' });
+    return res.status(400).json({ message: t(req, 'invalidAppointmentId') });
   }
 
   try {
     const updated = await notifyAppointmentForActor(actor, appointmentId);
     if (!updated) {
-      return res.status(404).json({ message: 'Запись не найдена' });
+      return res.status(404).json({ message: t(req, 'appointmentNotFound') });
     }
 
     return res.json(updated);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN_SPECIALIST') {
-      return res.status(403).json({ message: 'Недостаточно прав для этой записи' });
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
 
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось отправить уведомление' });
+    return res.status(500).json({ message: t(req, 'appointmentNotifyFailed') });
   }
 });

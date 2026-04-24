@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
 import { loginSchema, registrationSchema, specialistUserCreationSchema } from '../config/schemas.js';
+import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { blockIfTooManyAttempts } from '../middlewares/loginRateLimit.js';
 import {
@@ -22,7 +23,7 @@ export const authRoutes = Router();
 authRoutes.post('/specialists', requireAccessToken, async (req, res) => {
   const actor = (req as AuthedRequest).user;
   if (actor.role !== WebUserRole.Owner && actor.role !== WebUserRole.Admin) {
-    return res.status(403).json({ message: 'Недостаточно прав для создания специалиста' });
+    return res.status(403).json({ message: t(req, 'forbiddenCreateSpecialist') });
   }
 
   const parsed = specialistUserCreationSchema.safeParse(req.body);
@@ -40,15 +41,15 @@ authRoutes.post('/specialists', requireAccessToken, async (req, res) => {
 
     if (!created) {
       return res.status(409).json({
-        message: 'Не удалось создать пользователя специалиста',
+        message: t(req, 'specialistUserCreateConflict'),
         errors: {
-          email: 'Этот email уже используется'
+          email: t(req, 'specialistUserEmailInUse')
         }
       });
     }
 
     return res.status(201).json({
-      message: 'Специалист успешно создан',
+      message: t(req, 'specialistCreateSuccess'),
       user: {
         id: created.user.id,
         email: created.user.email,
@@ -60,7 +61,7 @@ authRoutes.post('/specialists', requireAccessToken, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось создать специалиста' });
+    return res.status(500).json({ message: t(req, 'specialistCreateFailed') });
   }
 });
 
@@ -74,22 +75,22 @@ authRoutes.post('/register', async (req, res) => {
     const user = await registerUser(parsed.data.email, parsed.data.password, parsed.data.timezone);
     if (!user) {
       return res.status(409).json({
-        message: 'Пользователь с таким email уже зарегистрирован',
+        message: t(req, 'userAlreadyRegistered'),
         errors: {
-          email: 'Этот email уже используется'
+          email: t(req, 'specialistUserEmailInUse')
         }
       });
     }
 
     const accessToken = await issueSession(user.id, res);
     return res.status(201).json({
-      message: 'Регистрация прошла успешно',
+      message: t(req, 'registrationSuccess'),
       accessToken,
       user: { id: user.id, email: user.email, role: user.role }
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось зарегистрировать пользователя' });
+    return res.status(500).json({ message: t(req, 'registerFailed') });
   }
 });
 
@@ -104,10 +105,10 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
     if (!user) {
       await registerFailedAttempt(req.ip ?? 'unknown');
       return res.status(401).json({
-        message: 'Неверный email или пароль',
+        message: t(req, 'invalidCredentials'),
         errors: {
-          email: 'Проверьте email',
-          password: 'Проверьте пароль'
+          email: t(req, 'invalidCredentialsEmailHint'),
+          password: t(req, 'invalidCredentialsPasswordHint')
         }
       });
     }
@@ -115,13 +116,13 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
     await clearAttempts(req.ip ?? 'unknown');
     const accessToken = await issueSession(user.id, res);
     return res.json({
-      message: 'Вход выполнен успешно',
+      message: t(req, 'loginSuccess'),
       accessToken,
       user: { id: user.id, email: user.email, role: user.role }
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось выполнить вход' });
+    return res.status(500).json({ message: t(req, 'loginFailed') });
   }
 });
 
@@ -130,20 +131,20 @@ authRoutes.post('/refresh', async (req, res) => {
 
   if (!refreshToken) {
     return res.status(401).json({
-      message: 'Сессия истекла. Войдите снова'
+      message: t(req, 'sessionExpired')
     });
   }
 
   const userId = await refreshAccess(refreshToken);
   if (!userId) {
     return res.status(401).json({
-      message: 'Не удалось обновить сессию. Войдите снова'
+      message: t(req, 'sessionRefreshFailed')
     });
   }
 
   const accessToken = await issueSession(userId, res);
   return res.json({
-    message: 'Сессия обновлена',
+    message: t(req, 'sessionRefreshed'),
     accessToken
   });
 });
@@ -164,6 +165,6 @@ authRoutes.post('/logout', async (req, res) => {
     return res.status(204).send();
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Не удалось завершить сессию' });
+    return res.status(500).json({ message: t(req, 'logoutFailed') });
   }
 });

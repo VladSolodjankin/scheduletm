@@ -6,6 +6,7 @@
 - `server/` — API для web-приложения:
   - `server/src/index.ts` — bootstrap.
   - `server/src/app.ts` — инициализация Express middleware/роутов.
+  - `server/src/i18n/*` — server-side словари (`ru/en`) и helper локализации сообщений API.
   - `server/src/config/*` — env + схемы валидации.
   - `server/src/routes/*` — auth/settings/integrations/appointments/specialists/health endpoints.
   - `server/src/services/*` — бизнес-логика auth/settings/appointments.
