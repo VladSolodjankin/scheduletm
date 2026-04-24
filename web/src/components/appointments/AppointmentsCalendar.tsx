@@ -66,6 +66,7 @@ export function AppointmentsCalendar({
   const [draggingAppointmentId, setDraggingAppointmentId] = useState<number | null>(null);
   const [blockedCellKey, setBlockedCellKey] = useState<string | null>(null);
   const todayKey = toDateKeyInTimezone(new Date(), displayTimeZone);
+  const isPastDay = (dayKey: string) => dayKey < todayKey;
 
   const getGoogleSlotTitle = (slot: AppointmentListResponse['busySlots'][number]) => {
     if (slot.title) {
@@ -138,13 +139,29 @@ export function AppointmentsCalendar({
                 const dayKey = getGridDayKey(day);
                 const items = appointmentsByDay.get(dayKey) ?? [];
                 const isToday = dayKey === todayKey;
+                const isPast = isPastDay(dayKey);
 
                 return (
-                  <Card key={day.toISOString()} variant="outlined" sx={{ borderRadius: 2, borderColor: isToday ? 'primary.main' : 'divider' }}>
+                  <Card
+                    key={day.toISOString()}
+                    variant="outlined"
+                    onClick={() => onOpenCreate(dayKey, 9, 0)}
+                    sx={{
+                      borderRadius: 2,
+                      borderColor: isToday ? 'primary.main' : 'divider',
+                      bgcolor: isPast ? 'action.disabledBackground' : alpha(theme.palette.background.paper, 0.96),
+                      opacity: isPast ? 0.78 : 1,
+                      cursor: 'pointer',
+                      transition: 'background-color 0.15s ease',
+                      '&:hover': {
+                        bgcolor: isPast ? 'action.disabledBackground' : 'action.hover',
+                      },
+                    }}
+                  >
                     <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
                       <Stack spacing={1}>
                         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }} color={isPast ? 'text.disabled' : 'text.primary'}>
                             {formatLocalDate(day, { weekday: 'short', day: '2-digit', month: 'short' })}
                           </Typography>
                           {isToday && <Chip size="small" color="primary" label={t('appointments.today')} sx={{ height: 18 }} />}
@@ -156,7 +173,10 @@ export function AppointmentsCalendar({
                             items.map((item) => (
                               <Box
                                 key={item.id}
-                                onClick={() => onOpenEdit(item)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  onOpenEdit(item);
+                                }}
                                 sx={{
                                   borderRadius: 1,
                                   border: 1,
@@ -192,7 +212,9 @@ export function AppointmentsCalendar({
             <Box sx={{ display: 'grid', gridTemplateColumns: `72px repeat(${visibleDays.length}, minmax(180px, 1fr))`, minWidth: viewMode === 'week' ? 1100 : 560 }}>
               <Box sx={{ borderRight: 1, borderColor: 'divider', p: 1, bgcolor: 'background.default' }} />
               {visibleDays.map((day) => {
-                const isToday = getGridDayKey(day) === todayKey;
+                const dayKey = getGridDayKey(day);
+                const isToday = dayKey === todayKey;
+                const isPast = isPastDay(dayKey);
 
                 return (
                 <Box
@@ -203,11 +225,14 @@ export function AppointmentsCalendar({
                     p: 1,
                     bgcolor: isToday
                       ? alpha(theme.palette.primary.main, 0.14)
-                      : 'background.default',
+                      : isPast
+                        ? 'action.disabledBackground'
+                        : 'background.default',
+                    opacity: isPast ? 0.8 : 1,
                   }}
                 >
                   <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }} color={isPast ? 'text.disabled' : 'text.primary'}>
                       {formatLocalDate(day, { weekday: 'short' })}
                     </Typography>
                     {isToday && (
@@ -247,6 +272,7 @@ export function AppointmentsCalendar({
                       const items = appointmentsByCell.get(key) ?? [];
                       const externalBusy = busySlotsByCell.get(key) ?? [];
                       const isPastSlot = isSlotInPast(dayKey, hour, minute, displayTimeZone);
+                      const isPast = isPastDay(dayKey);
 
                       return (
                         <Box
@@ -258,10 +284,13 @@ export function AppointmentsCalendar({
                             borderColor: 'divider',
                             minHeight: 36,
                             p: 0.5,
-                            bgcolor: alpha(theme.palette.background.paper, 0.92),
+                            bgcolor: isPast
+                              ? 'action.disabledBackground'
+                              : alpha(theme.palette.background.paper, 0.92),
+                            opacity: isPast ? 0.82 : 1,
                             transition: 'background-color 0.15s ease',
                             '&:hover': {
-                              bgcolor: 'action.hover',
+                              bgcolor: isPast ? 'action.disabledBackground' : 'action.hover',
                             },
                           }}
                           onDragOver={(event) => {
