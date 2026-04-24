@@ -5,6 +5,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { AppointmentsPage } from '../pages/AppointmentsPage';
 import { SettingsPage } from '../pages/SettingsPage';
+import { SpecialistsPage } from '../pages/SpecialistsPage';
 import { useAuth } from '../shared/auth/AuthContext';
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
@@ -52,6 +53,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <SettingsPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: '/specialists',
+        element: (
+          <ProtectedRoute>
+            <SpecialistsPage />
           </ProtectedRoute>
         )
       }
