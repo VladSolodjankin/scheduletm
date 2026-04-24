@@ -87,13 +87,15 @@
 
 ### Текущий MVP scope (статус)
 
-- Реализовано в первом слайсе:
+  - Реализовано в первом слайсе:
   - `GET /api/appointments`
   - `POST /api/appointments`
   - `PATCH /api/appointments/:id`
   - `POST /api/appointments/:id/cancel`
   - `POST /api/appointments/:id/reschedule`
   - web календарь переведен на time-grid (`Day/Week`) с отображением appointments прямо в слотах по времени; в режиме недели старт фиксирован с понедельника, текущий день подсвечивается в шапке; добавлен `Month` режим со списком appointments по каждой дате.
+  - в `Month` режиме клик по дню открывает popup создания appointment с дефолтным временем `09:00`.
+  - во всех календарных режимах (`Day/Week/Month`) прошедшие дни отображаются приглушенно (серый disabled-style).
   - при клике по слоту календаря форма создания appointment предзаполняется временем выбранного слота.
   - web поддерживает drag&drop перенос appointments между слотами (используется backend `reschedule` endpoint).
   - для прошлых слотов в календаре используется error toast при попытке клика/переноса записи, вместо постоянного hover-сообщения.
