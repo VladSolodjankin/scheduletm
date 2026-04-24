@@ -80,6 +80,7 @@
 - [x] Сделать прошедшие дни в `Day/Week/Month` приглушёнными (disabled-style), сохранив блокировку создания/переноса в прошлое.
 - [x] Исправить week-view appointments: неделя всегда строится как `Monday → Sunday`, даже если текущий день не понедельник.
 - [x] Во всех основных web-вызовах API показывать backend `message` пользователю и выводить user-friendly текст при сетевых ошибках.
+- [x] Убрать дублирование `timezone/locale` между system/user settings: оставить редактирование только в user settings.
 
 ### 4.6 UI foundation (выполнено)
 

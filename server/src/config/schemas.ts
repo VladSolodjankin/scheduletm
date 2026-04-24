@@ -42,7 +42,6 @@ export const loginSchema = z.object({
 });
 
 export const systemSettingsSchema = z.object({
-  timezone: z.string().min(1, 'Укажите часовой пояс').max(64, 'Часовой пояс слишком длинный'),
   dailyDigestEnabled: z.boolean(),
   defaultMeetingDuration: z.coerce
     .number()
@@ -50,7 +49,6 @@ export const systemSettingsSchema = z.object({
     .min(15, 'Минимальная длительность встречи — 15 минут')
     .max(180, 'Максимальная длительность встречи — 180 минут'),
   weekStartsOnMonday: z.boolean(),
-  locale: z.string().min(2, 'Укажите язык/локаль').max(16, 'Локаль слишком длинная'),
 }).partial();
 
 export const userSettingsSchema = z.object({

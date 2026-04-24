@@ -8,11 +8,9 @@ import { systemSettingsSchema, userSettingsSchema } from '../config/schemas.js';
 import { verifyTelegramBotToken } from './telegramService.js';
 
 export type SystemSettings = {
-  timezone: string;
   dailyDigestEnabled: boolean;
   defaultMeetingDuration: number;
   weekStartsOnMonday: boolean;
-  locale: string;
 };
 
 export type UserSettings = {
@@ -27,11 +25,9 @@ export type UserSettings = {
 };
 
 const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
-  timezone: 'UTC',
   dailyDigestEnabled: true,
   defaultMeetingDuration: 30,
   weekStartsOnMonday: true,
-  locale: 'ru-RU',
 };
 
 const mapSystemSettings = async (): Promise<SystemSettings> => {
@@ -43,11 +39,9 @@ const mapSystemSettings = async (): Promise<SystemSettings> => {
   }
 
   return {
-    timezone: row.timezone,
     dailyDigestEnabled: row.daily_digest_enabled,
     defaultMeetingDuration: row.slot_duration_min,
     weekStartsOnMonday: row.week_starts_on_monday,
-    locale: row.locale,
   };
 };
 
@@ -68,11 +62,9 @@ export const updateSystemSettings = async (payload: unknown): Promise<SystemSett
   const accountId = await getDefaultAccountId();
   await updateAppSettingsByAccountId({
     accountId,
-    timezone: parsed.data.timezone,
     slotDurationMin: parsed.data.defaultMeetingDuration,
     dailyDigestEnabled: parsed.data.dailyDigestEnabled,
     weekStartsOnMonday: parsed.data.weekStartsOnMonday,
-    locale: parsed.data.locale,
   });
 
   return mapSystemSettings();

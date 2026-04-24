@@ -69,7 +69,7 @@ scheduletm/
 - `POST /api/integrations/google/oauth/start`
 - `GET /api/integrations/google/oauth/callback`
 
-`PUT /api/settings/system` обновляет системные настройки (таблица `app_settings`), а `PUT /api/settings/user` сохраняет пользовательские настройки (`web_users` для UI/locale/timezone + `web_user_integrations` для Google/Telegram интеграций).
+`PUT /api/settings/system` обновляет только системные операционные настройки (таблица `app_settings`: длительность слота, дайджест, старт недели), а `PUT /api/settings/user` сохраняет персональные настройки пользователя (`web_users` для UI/locale/timezone + `web_user_integrations` для Google/Telegram интеграций).
 
 Слой данных серверной части теперь фиксирует разделение identity-моделей:
 
@@ -260,7 +260,7 @@ scheduletm/
 - Logout в web вызывает backend `POST /api/auth/logout`, который удаляет текущие access/refresh токены из БД и очищает refresh cookie.
 - Если API возвращает `401 Unauthorized`, web-клиент автоматически очищает auth-сессию и делает redirect на `/login`.
 
-> `settings` и OAuth/login state переведены в БД: system settings в `app_settings`, user settings/integrations в `web_users`.
+> `settings` и OAuth/login state переведены в БД: system settings в `app_settings` (без locale/timezone), user settings/integrations в `web_users` + `web_user_integrations`.
 
 ## Команды
 

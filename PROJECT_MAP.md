@@ -72,6 +72,10 @@
 - `POST /api/appointments/:id/mark-paid`
 - `POST /api/appointments/:id/notify`
 
+Разделение ответственности настроек:
+- `system settings` — только операционные параметры аккаунта (`slot duration`, `daily digest`, `week starts`).
+- `user settings` — персональные параметры пользователя (`timezone`, `locale`, UI, интеграции).
+
 ### Appointments response (текущее расширение)
 
 - `GET /api/appointments` возвращает:

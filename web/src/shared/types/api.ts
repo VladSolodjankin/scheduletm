@@ -12,11 +12,9 @@ export type AuthResponse = {
 };
 
 export type SystemSettings = {
-  timezone: string;
   dailyDigestEnabled: boolean;
   defaultMeetingDuration: number;
   weekStartsOnMonday: boolean;
-  locale: string;
 };
 
 export type UserSettings = {

@@ -15,11 +15,9 @@ import type {
 } from '../shared/types/api';
 
 const defaultSystemSettings: SystemSettings = {
-  timezone: 'UTC',
   dailyDigestEnabled: true,
   defaultMeetingDuration: 30,
   weekStartsOnMonday: true,
-  locale: 'ru-RU',
 };
 
 const defaultUserSettings: UserSettings = {
