@@ -135,7 +135,29 @@ scheduletm/
 - Поля MVP: `scheduledAt`, `status`, `meetingLink`, `notes`.
 - Web: страница appointments с календарём, popup-формой создания/редактирования и действиями cancel/reschedule.
 - Тесты: добавлены server route-smoke-сценарии (`create/reschedule/cancel`, с моками service-слоя) и web smoke-проверки (`auth/settings/appointments`).
-- Следующий шаг: расширить lifecycle (`mark-paid`, `notify`) и покрыть edge-case сценарии конфликтов.
+- Следующий шаг: добавить расширенные фильтры календаря и углубить audit/logging слой для lifecycle-событий.
+
+### Рекомендуемая задача на следующий шаг
+
+С учётом текущей структуры `server` (чистое разделение `routes -> services -> repositories`) и `web` (контейнеры + календарный UI), лучший следующий инкремент:
+
+1. добавить lifecycle-операции `mark-paid` и `notify` в appointments API;
+2. вывести эти действия в существующий popup карточки appointment в web;
+3. добавить минимальный audit trail событий без запуска сложной event-driven архитектуры.
+
+Почему именно это:
+
+- даёт максимальную бизнес-ценность в уже готовом календарном флоу;
+- использует существующую модульную структуру без рефакторинга;
+- остаётся в рамках KISS/DRY: переиспользуем текущие сервисы/контейнеры и расширяем только необходимый минимум.
+
+### Статус инкремента 4.7 (выполнено)
+
+- Server: добавлены `POST /api/appointments/:id/mark-paid` и `POST /api/appointments/:id/notify`.
+- Server: добавлен минимальный audit trail `appointment_events` для действий `cancel/reschedule/mark-paid/notify`.
+- Web: в popup редактирования appointment добавлены действия `Mark as paid` и `Notify client`.
+- Web: в popup добавлен простой список последних lifecycle-событий.
+- Тесты: расширены server route-smoke и web smoke проверки на новые endpoint/actions.
 
 ### Appointments MVP: что уже сделано
 

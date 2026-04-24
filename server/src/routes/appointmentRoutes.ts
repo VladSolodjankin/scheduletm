@@ -9,6 +9,8 @@ import {
   cancelAppointmentForActor,
   createAppointmentForActor,
   getAppointments,
+  markPaidAppointmentForActor,
+  notifyAppointmentForActor,
   rescheduleAppointmentForActor,
   updateAppointmentForActor,
 } from '../services/appointmentService.js';
@@ -151,5 +153,57 @@ appointmentRoutes.post('/:id/reschedule', async (req, res) => {
 
     console.error(error);
     return res.status(500).json({ message: 'Не удалось перенести запись' });
+  }
+});
+
+appointmentRoutes.post('/:id/mark-paid', async (req, res) => {
+  const actor = (req as unknown as AuthedRequest).user;
+  const appointmentId = Number(req.params.id);
+
+  if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
+    return res.status(400).json({ message: 'Некорректный id записи' });
+  }
+
+  try {
+    const updated = await markPaidAppointmentForActor(actor, appointmentId);
+    if (!updated) {
+      return res.status(404).json({ message: 'Запись не найдена' });
+    }
+
+    return res.json(updated);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'UNKNOWN';
+    if (message === 'FORBIDDEN_SPECIALIST') {
+      return res.status(403).json({ message: 'Недостаточно прав для этой записи' });
+    }
+
+    console.error(error);
+    return res.status(500).json({ message: 'Не удалось подтвердить оплату' });
+  }
+});
+
+appointmentRoutes.post('/:id/notify', async (req, res) => {
+  const actor = (req as unknown as AuthedRequest).user;
+  const appointmentId = Number(req.params.id);
+
+  if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
+    return res.status(400).json({ message: 'Некорректный id записи' });
+  }
+
+  try {
+    const updated = await notifyAppointmentForActor(actor, appointmentId);
+    if (!updated) {
+      return res.status(404).json({ message: 'Запись не найдена' });
+    }
+
+    return res.json(updated);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'UNKNOWN';
+    if (message === 'FORBIDDEN_SPECIALIST') {
+      return res.status(403).json({ message: 'Недостаточно прав для этой записи' });
+    }
+
+    console.error(error);
+    return res.status(500).json({ message: 'Не удалось отправить уведомление' });
   }
 });

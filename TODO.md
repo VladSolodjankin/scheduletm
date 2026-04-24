@@ -46,7 +46,7 @@
 
 - [x] Добавить сущность `appointment` в server + CRUD/list API.
 - [x] Добавить поля `status`, `paymentStatus`, `scheduledAt`, `meetingLink`, `notes`.
-- [ ] Реализовать операции: подтверждение оплаты, отмена, перенос даты, ручное уведомление. *(в MVP готовы cancel/reschedule; mark-paid/notify в следующем шаге)*
+- [x] Реализовать операции: подтверждение оплаты, отмена, перенос даты, ручное уведомление. *(cancel/reschedule/mark-paid/notify реализованы)*
 - [x] Добавить в web страницу списка и карточку редактирования appointment.
 
 ### 4.3 Meeting link strategy
@@ -81,3 +81,13 @@
 - [x] Добавить базовый layout (`MainLayout`, `Header`, `LeftMenu`).
 - [x] Добавить основу темизации (`light/dark`) и набор мягких palette-вариантов.
 - [x] Вынести базовые UI-константы (цвета, размеры, радиусы, spacing).
+
+### 4.7 Рекомендуемый следующий инкремент (web/server)
+
+> Цель: закрыть базовый lifecycle appointment без переусложнения.
+
+- [x] Добавить backend endpoint `POST /api/appointments/:id/mark-paid` (только смена `paymentStatus`, без внешних провайдеров оплаты).
+- [x] Добавить backend endpoint `POST /api/appointments/:id/notify` (ручной триггер уведомления, пока только запись факта в БД/лог).
+- [x] Добавить в web карточку appointment две кнопки действий: `Mark as paid` и `Notify client`.
+- [x] Добавить минимальный audit trail для lifecycle действий (`cancel/reschedule/mark-paid/notify`) с простым списком событий.
+- [x] Добавить route-smoke тесты server для `mark-paid/notify` и один web smoke-сценарий на новые действия.

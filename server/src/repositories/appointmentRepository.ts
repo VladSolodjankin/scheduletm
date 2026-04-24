@@ -1,6 +1,7 @@
 import { db } from '../db/knex.js';
 
 export type AppointmentStatus = 'new' | 'confirmed' | 'cancelled';
+export type AppointmentAuditAction = 'cancel' | 'reschedule' | 'mark-paid' | 'notify';
 
 export type AppointmentRecord = {
   id: number;
@@ -10,10 +11,21 @@ export type AppointmentRecord = {
   status: AppointmentStatus;
   comment: string | null;
   duration_min: number;
+  is_paid: boolean;
   user_id: number;
   service_id: number;
   created_at: Date;
   updated_at: Date;
+};
+
+export type AppointmentAuditEventRecord = {
+  id: number;
+  account_id: number;
+  appointment_id: number;
+  action: AppointmentAuditAction;
+  actor_web_user_id: number | null;
+  metadata_json: string | null;
+  created_at: Date;
 };
 
 type AppointmentListFilters = {
@@ -41,6 +53,7 @@ type UpdateAppointmentInput = {
   status?: AppointmentStatus;
   notes?: string | null;
   durationMin?: number;
+  isPaid?: boolean;
 };
 
 export async function listAppointments(filters: AppointmentListFilters): Promise<AppointmentRecord[]> {
@@ -113,12 +126,47 @@ export async function updateAppointment(input: UpdateAppointmentInput): Promise<
     payload.duration_min = input.durationMin;
   }
 
+  if (input.isPaid !== undefined) {
+    payload.is_paid = input.isPaid;
+  }
+
   const [row] = await db('appointments')
     .where({ account_id: input.accountId, id: input.id })
     .update(payload)
     .returning<AppointmentRecord[]>('*');
 
   return row ?? null;
+}
+
+export async function createAppointmentAuditEvent(input: {
+  accountId: number;
+  appointmentId: number;
+  action: AppointmentAuditAction;
+  actorWebUserId: number | null;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  await db('appointment_events').insert({
+    account_id: input.accountId,
+    appointment_id: input.appointmentId,
+    action: input.action,
+    actor_web_user_id: input.actorWebUserId,
+    metadata_json: input.metadata ? JSON.stringify(input.metadata) : null,
+  });
+}
+
+export async function listAppointmentEventsByAppointmentIds(
+  accountId: number,
+  appointmentIds: number[],
+): Promise<AppointmentAuditEventRecord[]> {
+  if (appointmentIds.length === 0) {
+    return [];
+  }
+
+  return db('appointment_events')
+    .where({ account_id: accountId })
+    .whereIn('appointment_id', appointmentIds)
+    .orderBy('created_at', 'desc')
+    .select<AppointmentAuditEventRecord[]>('*');
 }
 
 export async function ensureFallbackClientForAccount(accountId: number): Promise<number> {

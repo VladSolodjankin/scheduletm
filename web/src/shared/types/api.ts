@@ -53,8 +53,13 @@ export type AppointmentItem = {
   scheduledAt: string;
   durationMin: number;
   status: AppointmentStatus;
+  paymentStatus: 'paid' | 'unpaid';
   meetingLink: string;
   notes: string;
+  events: Array<{
+    action: 'cancel' | 'reschedule' | 'mark-paid' | 'notify';
+    createdAt: string;
+  }>;
 };
 
 export type AppointmentListResponse = {

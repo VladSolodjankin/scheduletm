@@ -7,6 +7,8 @@ const resolveUserByAccessTokenMock = vi.hoisted(() => vi.fn());
 const createAppointmentForActorMock = vi.hoisted(() => vi.fn());
 const rescheduleAppointmentForActorMock = vi.hoisted(() => vi.fn());
 const cancelAppointmentForActorMock = vi.hoisted(() => vi.fn());
+const markPaidAppointmentForActorMock = vi.hoisted(() => vi.fn());
+const notifyAppointmentForActorMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../src/services/authService.js', () => ({
   resolveUserByAccessToken: resolveUserByAccessTokenMock,
@@ -18,6 +20,8 @@ vi.mock('../src/services/appointmentService.js', () => ({
   createAppointmentForActor: createAppointmentForActorMock,
   rescheduleAppointmentForActor: rescheduleAppointmentForActorMock,
   cancelAppointmentForActor: cancelAppointmentForActorMock,
+  markPaidAppointmentForActor: markPaidAppointmentForActorMock,
+  notifyAppointmentForActor: notifyAppointmentForActorMock,
 }));
 
 const authedUser = {
@@ -55,6 +59,8 @@ describe('appointments API route-smoke scenarios (mocked service layer)', () => 
     createAppointmentForActorMock.mockReset();
     rescheduleAppointmentForActorMock.mockReset();
     cancelAppointmentForActorMock.mockReset();
+    markPaidAppointmentForActorMock.mockReset();
+    notifyAppointmentForActorMock.mockReset();
 
     resolveUserByAccessTokenMock.mockResolvedValue(authedUser);
   });
@@ -138,5 +144,59 @@ describe('appointments API route-smoke scenarios (mocked service layer)', () => 
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject(cancelled);
+  });
+
+  it('mark-paid: POST /api/appointments/:id/mark-paid returns paid status', async () => {
+    const paid = {
+      id: 41,
+      specialistId: 8,
+      scheduledAt: '2026-04-24T13:00:00.000Z',
+      durationMin: 30,
+      status: 'confirmed',
+      paymentStatus: 'paid',
+      meetingLink: '',
+      notes: '',
+      events: [],
+    };
+    markPaidAppointmentForActorMock.mockResolvedValue(paid);
+
+    const response = await fetch(`${baseUrl}/api/appointments/41/mark-paid`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer smoke-token',
+      },
+      body: '{}',
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ paymentStatus: 'paid' });
+  });
+
+  it('notify: POST /api/appointments/:id/notify returns 200', async () => {
+    const notified = {
+      id: 41,
+      specialistId: 8,
+      scheduledAt: '2026-04-24T13:00:00.000Z',
+      durationMin: 30,
+      status: 'confirmed',
+      paymentStatus: 'unpaid',
+      meetingLink: '',
+      notes: '',
+      events: [{ action: 'notify', createdAt: '2026-04-24T10:00:00.000Z' }],
+    };
+    notifyAppointmentForActorMock.mockResolvedValue(notified);
+
+    const response = await fetch(`${baseUrl}/api/appointments/41/notify`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer smoke-token',
+      },
+      body: '{}',
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject(notified);
   });
 });

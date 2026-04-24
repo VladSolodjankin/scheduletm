@@ -26,11 +26,16 @@ describe('web smoke (auth/settings/appointments contracts)', () => {
   it('settings and appointments screens call API endpoints', async () => {
     const settingsContainer = await read('src/containers/SettingsContainer.tsx');
     const appointmentsContainer = await read('src/containers/AppointmentsContainer.tsx');
+    const appointmentDialog = await read('src/components/appointments/AppointmentFormDialog.tsx');
 
     assert.match(settingsContainer, /'\/api\/settings\/user'/);
     assert.match(settingsContainer, /'\/api\/settings\/system'/);
     assert.match(appointmentsContainer, /'\/api\/appointments'/);
     assert.match(appointmentsContainer, /\/cancel/);
     assert.match(appointmentsContainer, /\/reschedule/);
+    assert.match(appointmentsContainer, /\/mark-paid/);
+    assert.match(appointmentsContainer, /\/notify/);
+    assert.match(appointmentDialog, /appointments\.markPaidAction/);
+    assert.match(appointmentDialog, /appointments\.notifyAction/);
   });
 });
