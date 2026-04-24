@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Collapse,
   Dialog,
@@ -90,6 +91,12 @@ const EMPTY_FORM: AppointmentFormState = {
   phone: '',
   email: '',
 };
+
+const createResponsiveFieldGridSx = (columns: number) => ({
+  display: 'grid',
+  gap: 2,
+  gridTemplateColumns: { xs: '1fr', sm: `repeat(${columns}, minmax(0, 1fr))` },
+});
 
 export function AppointmentFormDialog({
   t,
@@ -263,103 +270,129 @@ export function AppointmentFormDialog({
               </Select>
             </FormControl>
           </Collapse>
-          <Controller
-            name="specialistId"
-            control={control}
-            render={({ field }: any) => (
-              <FormControl>
-                <InputLabel id="specialist-label">{t('appointments.specialistFilter')}</InputLabel>
-                <Select
-                  labelId="specialist-label"
-                  label={t('appointments.specialistFilter')}
-                  value={field.value}
-                  disabled={Boolean(editingItem)}
-                  onChange={(event) => field.onChange(String(event.target.value))}
-                >
-                  {specialists.map((specialist) => (
-                    <MenuItem key={specialist.id} value={String(specialist.id)}>{specialist.name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-          />
-          <Controller
-            name="clientId"
-            control={control}
-            render={({ field }: any) => (
-              <FormControl>
-                <InputLabel id="client-label">Client</InputLabel>
-                <Select
-                  labelId="client-label"
-                  label="Client"
-                  value={field.value}
-                  onChange={(event) => field.onChange(String(event.target.value))}
-                >
-                  <MenuItem value="">New client</MenuItem>
-                  {clients.map((client) => (
-                    <MenuItem key={client.id} value={String(client.id)}>{`${client.firstName} ${client.lastName}`.trim()}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-          />
-
-          <Controller name="firstName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="First name" />} />
-          <Controller name="lastName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Last name" />} />
-          <Controller name="username" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Telegram username" />} />
-          <Controller
-            name="phone"
-            control={control}
-            rules={{
-              validate: (value) => isValidPhoneValue(value) || 'Invalid phone number',
-            }}
-            render={({ field, fieldState }) => (
-              <AppRhfPhoneField
-                field={field}
-                label="Phone"
-                error={Boolean(fieldState.error)}
-                helperText={fieldState.error?.message}
-              />
-            )}
-          />
-          <Controller name="email" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Email" />} />
-
-          <Controller name="startDate" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Start date" type="date" />} />
-          <Controller
-            name="startTime"
-            control={control}
-            render={({ field }: any) => <AppRhfTextField field={field} label="Start time" type="time" minutesStep={selectedSlotStepMin} />}
-          />
-          <Controller
-            name="endTime"
-            control={control}
-            render={({ field }: any) => <AppRhfTextField field={field} label="End time" type="time" minutesStep={selectedSlotStepMin} />}
-          />
-          <Controller
-            name="status"
-            control={control}
-            render={({ field }: any) => (
-              <FormControl>
-                <InputLabel id="status-label">{t('appointments.fields.status')}</InputLabel>
-                <Select
-                  labelId="status-label"
-                  label={t('appointments.fields.status')}
-                  value={field.value}
-                  onChange={(event) => field.onChange(event.target.value as AppointmentStatus)}
-                >
-                  {STATUS_OPTIONS.map((status) => (
-                    <MenuItem key={status} value={status}>{statusLabel(status)}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-          />
-          <Controller name="meetingLink" control={control} render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.meetingLink')} />} />
-          <Controller
-            name="notes"
-            control={control}
-            render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.notes')} multiline minRows={3} />}
-          />
+          <Box sx={createResponsiveFieldGridSx(2)}>
+            <Controller
+              name="specialistId"
+              control={control}
+              render={({ field }: any) => (
+                <FormControl fullWidth>
+                  <InputLabel id="specialist-label">{t('appointments.specialistFilter')}</InputLabel>
+                  <Select
+                    labelId="specialist-label"
+                    label={t('appointments.specialistFilter')}
+                    value={field.value}
+                    disabled={Boolean(editingItem)}
+                    onChange={(event) => field.onChange(String(event.target.value))}
+                  >
+                    {specialists.map((specialist) => (
+                      <MenuItem key={specialist.id} value={String(specialist.id)}>{specialist.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            />
+            <Controller
+              name="clientId"
+              control={control}
+              render={({ field }: any) => (
+                <FormControl fullWidth>
+                  <InputLabel id="client-label">Client</InputLabel>
+                  <Select
+                    labelId="client-label"
+                    label="Client"
+                    value={field.value}
+                    onChange={(event) => field.onChange(String(event.target.value))}
+                  >
+                    <MenuItem value="">New client</MenuItem>
+                    {clients.map((client) => (
+                      <MenuItem key={client.id} value={String(client.id)}>{`${client.firstName} ${client.lastName}`.trim()}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            />
+          </Box>
+          <Box sx={createResponsiveFieldGridSx(3)}>
+            <Controller name="startDate" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Start date" type="date" />} />
+            <Controller
+              name="startTime"
+              control={control}
+              render={({ field }: any) => <AppRhfTextField field={field} label="Start time" type="time" minutesStep={selectedSlotStepMin} />}
+            />
+            <Controller
+              name="endTime"
+              control={control}
+              render={({ field }: any) => <AppRhfTextField field={field} label="End time" type="time" minutesStep={selectedSlotStepMin} />}
+            />
+          </Box>
+          <Box sx={createResponsiveFieldGridSx(2)}>
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }: any) => (
+                <FormControl fullWidth>
+                  <InputLabel id="status-label">{t('appointments.fields.status')}</InputLabel>
+                  <Select
+                    labelId="status-label"
+                    label={t('appointments.fields.status')}
+                    value={field.value}
+                    onChange={(event) => field.onChange(event.target.value as AppointmentStatus)}
+                  >
+                    {STATUS_OPTIONS.map((status) => (
+                      <MenuItem key={status} value={status}>{statusLabel(status)}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            />
+            <Controller name="firstName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="First name" />} />
+            <Controller name="lastName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Last name" />} />
+            <Controller
+              name="phone"
+              control={control}
+              rules={{
+                validate: (value) => isValidPhoneValue(value) || 'Invalid phone number',
+              }}
+              render={({ field, fieldState }) => (
+                <AppRhfPhoneField
+                  field={field}
+                  label="Phone"
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+            />
+            <Controller name="email" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Email" />} />
+            <Controller
+              name="username"
+              control={control}
+              render={({ field }: any) => <AppRhfTextField field={field} label="Telegram username" />}
+            />
+            <Controller
+              name="meetingLink"
+              control={control}
+              render={({ field }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={t('appointments.fields.meetingLink')}
+                  sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}
+                />
+              )}
+            />
+            <Controller
+              name="notes"
+              control={control}
+              render={({ field }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={t('appointments.fields.notes')}
+                  multiline
+                  minRows={3}
+                  sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}
+                />
+              )}
+            />
+          </Box>
           {editingItem && (
             <Stack spacing={1}>
               <Typography variant="body2" color="text.secondary">
