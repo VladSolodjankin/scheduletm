@@ -420,42 +420,28 @@ export function AppointmentsContainer() {
         >
           <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
-              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-                <Chip size="small" color="primary" variant="outlined" label={viewMode === 'week' ? t('appointments.viewWeek') : t('appointments.viewDay')} />
-                <Chip size="small" color="default" variant="outlined" label={selectedSpecialist ? selectedSpecialist.name : t('appointments.allSpecialists')} />
-              </Stack>
-              <Typography variant="caption" color="text.secondary">
-                {selectedSpecialist
-                  ? `Timezone: ${BROWSER_TIMEZONE} · ${selectedSpecialist.timezone} · ${selectedSlotStepMin} min`
-                  : `Timezone: ${BROWSER_TIMEZONE} · ${DEFAULT_SLOT_STEP_MIN} min`}
-              </Typography>
+              {canManageAll && (
+                <FormControl sx={{ width: { xs: '100%', sm: 360 } }} size="small">
+                  <InputLabel id="specialist-filter">{t('appointments.specialistFilter')}</InputLabel>
+                  <Select
+                    labelId="specialist-filter"
+                    label={t('appointments.specialistFilter')}
+                    value={selectedSpecialistId}
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      setSelectedSpecialistId(raw === 'all' ? 'all' : Number(raw));
+                    }}
+                  >
+                    <MenuItem value="all">{t('appointments.allSpecialists')}</MenuItem>
+                    {specialists.map((specialist) => (
+                      <MenuItem key={specialist.id} value={specialist.id}>{specialist.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
             </Stack>
           </CardContent>
         </Card>
-
-        {canManageAll && (
-          <Card variant="outlined" sx={{ borderRadius: 3 }}>
-            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-              <FormControl sx={{ width: { xs: '100%', sm: 360 } }} size="small">
-                <InputLabel id="specialist-filter">{t('appointments.specialistFilter')}</InputLabel>
-                <Select
-                  labelId="specialist-filter"
-                  label={t('appointments.specialistFilter')}
-                  value={selectedSpecialistId}
-                  onChange={(event) => {
-                    const raw = event.target.value;
-                    setSelectedSpecialistId(raw === 'all' ? 'all' : Number(raw));
-                  }}
-                >
-                  <MenuItem value="all">{t('appointments.allSpecialists')}</MenuItem>
-                  {specialists.map((specialist) => (
-                    <MenuItem key={specialist.id} value={specialist.id}>{specialist.name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </CardContent>
-          </Card>
-        )}
 
         {isInitialLoading ? (
           <Card variant="outlined" sx={{ borderRadius: 3 }}>
