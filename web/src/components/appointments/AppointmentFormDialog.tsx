@@ -39,6 +39,7 @@ type Props = {
   specialists: SpecialistItem[];
   selectedSpecialistId: number | 'all';
   selectedSlotStepMin: number;
+  initialScheduledAtIso: string | null;
   isSubmittingForm: boolean;
   isCancellingAppointment: boolean;
   onClose: () => void;
@@ -70,6 +71,7 @@ export function AppointmentFormDialog({
   specialists,
   selectedSpecialistId,
   selectedSlotStepMin,
+  initialScheduledAtIso,
   isSubmittingForm,
   isCancellingAppointment,
   onClose,
@@ -100,7 +102,11 @@ export function AppointmentFormDialog({
       } satisfies EditFormState;
     }
 
-    const times = createFormValuesFromAppointmentAt(new Date().toISOString(), selectedSlotStepMin, BROWSER_TIMEZONE);
+    const times = createFormValuesFromAppointmentAt(
+      initialScheduledAtIso ?? new Date().toISOString(),
+      selectedSlotStepMin,
+      BROWSER_TIMEZONE,
+    );
 
     return {
       specialistId: defaultSpecialistId ? String(defaultSpecialistId) : '',
@@ -111,7 +117,7 @@ export function AppointmentFormDialog({
       meetingLink: '',
       notes: '',
     } satisfies EditFormState;
-  }, [editingItem, selectedSlotStepMin, selectedSpecialistId, specialists]);
+  }, [editingItem, initialScheduledAtIso, selectedSlotStepMin, selectedSpecialistId, specialists]);
 
   const { control, handleSubmit, reset, watch, setValue } = useForm<EditFormState>({
     defaultValues: EMPTY_FORM,
