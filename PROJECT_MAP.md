@@ -94,6 +94,7 @@
   - `POST /api/appointments/:id/cancel`
   - `POST /api/appointments/:id/reschedule`
   - web календарь переведен на time-grid (`Day/Week`) с отображением appointments прямо в слотах по времени.
+  - при клике по слоту календаря форма создания appointment предзаполняется временем выбранного слота.
   - web поддерживает drag&drop перенос appointments между слотами (используется backend `reschedule` endpoint).
   - для прошлых слотов в календаре используется error toast при попытке клика/переноса записи, вместо постоянного hover-сообщения.
 - Откладываем на следующий шаг:

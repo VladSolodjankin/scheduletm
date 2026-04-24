@@ -62,6 +62,7 @@ export function AppointmentsContainer() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
+  const [createInitialScheduledAtIso, setCreateInitialScheduledAtIso] = useState<string | null>(null);
   const pastSlotError = t('appointments.pastSlotError');
 
   const showPastSlotError = () => {
@@ -185,12 +186,18 @@ export function AppointmentsContainer() {
       return;
     }
 
+    const slotIso = fromDatetimeLocal(
+      createDatetimeLocal(targetDateKey, hour, minute),
+      displayTimeZone,
+    );
     setEditingItem(null);
+    setCreateInitialScheduledAtIso(slotIso);
     setIsCreateOpen(true);
   };
 
   const openEdit = (item: AppointmentItem) => {
     setEditingItem(item);
+    setCreateInitialScheduledAtIso(null);
     setIsCreateOpen(true);
   };
 
@@ -378,24 +385,6 @@ export function AppointmentsContainer() {
           </Card>
         )}
 
-        <AppointmentsCalendar
-          t={t}
-          viewMode={viewMode}
-          visibleDays={visibleDays}
-          displayTimeZone={displayTimeZone}
-          appointmentsByCell={appointmentsByCell}
-          busySlotsByCell={busySlotsByCell}
-          movePeriod={movePeriod}
-          onToday={() => setFocusDate(startOfDay(new Date()))}
-          onSetViewMode={setViewMode}
-          onOpenCreate={openCreate}
-          onOpenEdit={openEdit}
-          onMoveAppointment={(id, dayKey, hour, minute) => {
-            void moveAppointment(id, dayKey, hour, minute);
-          }}
-          onPastSlotAttempt={showPastSlotError}
-          getGridDayKey={getGridDayKey}
-        />
         {isInitialLoading ? (
           <Card variant="outlined" sx={{ borderRadius: 3 }}>
             <CardContent sx={{ p: 2 }}>
@@ -422,7 +411,7 @@ export function AppointmentsContainer() {
             onMoveAppointment={(id, dayKey, hour, minute) => {
               void moveAppointment(id, dayKey, hour, minute);
             }}
-            pastSlotHint={pastSlotError}
+            onPastSlotAttempt={showPastSlotError}
             getGridDayKey={getGridDayKey}
           />
         )}
@@ -451,9 +440,13 @@ export function AppointmentsContainer() {
         specialists={specialists}
         selectedSpecialistId={selectedSpecialistId}
         selectedSlotStepMin={selectedSlotStepMin}
+        initialScheduledAtIso={createInitialScheduledAtIso}
         isSubmittingForm={isSubmittingForm}
         isCancellingAppointment={isCancellingAppointment}
-        onClose={() => setIsCreateOpen(false)}
+        onClose={() => {
+          setIsCreateOpen(false);
+          setCreateInitialScheduledAtIso(null);
+        }}
         onCancel={cancelAppointment}
         onSubmit={(payload) => submitForm({
           specialistId: payload.specialistId,
