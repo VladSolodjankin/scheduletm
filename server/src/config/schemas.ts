@@ -57,7 +57,8 @@ export const userSettingsSchema = z.object({
   timezone: timezoneSchema,
   locale: z.string().min(2, 'Укажите язык/локаль').max(16, 'Локаль слишком длинная'),
   uiThemeMode: z.enum(['light', 'dark']),
-  uiPaletteVariantId: z.string().min(1, 'Укажите id палитры').max(64, 'Id палитры слишком длинный')
+  uiPaletteVariantId: z.string().min(1, 'Укажите id палитры').max(64, 'Id палитры слишком длинный'),
+  telegramBotToken: z.string().trim().min(1, 'Укажите BOT_TOKEN').max(255, 'BOT_TOKEN слишком длинный').optional().or(z.literal('')),
 }).partial();
 
 export const specialistUserCreationSchema = z.object({

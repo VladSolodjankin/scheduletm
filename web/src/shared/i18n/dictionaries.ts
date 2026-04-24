@@ -54,6 +54,10 @@ export const dictionaries = {
       disconnectGoogle: 'Disconnect Google',
       disconnectingGoogle: 'Disconnecting...',
       googleConnected: 'Google connected',
+      telegramBotToken: 'Telegram BOT_TOKEN',
+      telegramBotConnected: 'Telegram bot connected',
+      telegramBotNotConnected: 'Telegram bot is not connected',
+      clearTelegramBotToken: 'Disconnect Telegram bot',
       googleConnectedSuccessfully: 'Google Calendar connected successfully.',
       specialists: {
         title: 'Specialists',
@@ -184,6 +188,10 @@ export const dictionaries = {
       disconnectGoogle: 'Отключить Google',
       disconnectingGoogle: 'Отключаем...',
       googleConnected: 'Google подключен',
+      telegramBotToken: 'Telegram BOT_TOKEN',
+      telegramBotConnected: 'Telegram-бот подключен',
+      telegramBotNotConnected: 'Telegram-бот не подключен',
+      clearTelegramBotToken: 'Отключить Telegram-бота',
       googleConnectedSuccessfully: 'Google Calendar успешно подключен.',
       specialists: {
         title: 'Специалисты',
@@ -309,6 +317,10 @@ export type TranslationKey =
   | 'settings.disconnectGoogle'
   | 'settings.disconnectingGoogle'
   | 'settings.googleConnected'
+  | 'settings.telegramBotToken'
+  | 'settings.telegramBotConnected'
+  | 'settings.telegramBotNotConnected'
+  | 'settings.clearTelegramBotToken'
   | 'settings.googleConnectedSuccessfully'
   | 'settings.specialists.title'
   | 'settings.specialists.add'

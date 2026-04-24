@@ -63,6 +63,7 @@
 - [x] Добавить logout endpoint и удаление текущей web-сессии из БД на backend.
 - [ ] Добавить CSRF protection для refresh cookie flow.
 - [x] Добавить полноценный Google OAuth 2.0 flow (web button -> backend start -> google callback).
+- [x] Добавить Telegram BOT_TOKEN в user settings с сохранением в `web_users` и password-отображением в web.
 
 ### 4.5 Web UX & quality
 
