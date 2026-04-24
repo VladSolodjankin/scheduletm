@@ -20,13 +20,35 @@ type UsersTableProps = {
   addLabel: string;
   editLabel: string;
   deleteLabel: string;
+  emailColumnLabel: string;
+  firstNameColumnLabel: string;
+  lastNameColumnLabel: string;
+  roleColumnLabel: string;
+  activeColumnLabel: string;
+  actionsColumnLabel: string;
   users: ManagedUserItem[];
   onAdd: () => void;
   onEdit: (item: ManagedUserItem) => void;
   onDelete: (item: ManagedUserItem) => void;
 };
 
-export function UsersTable({ title, emptyText, addLabel, editLabel, deleteLabel, users, onAdd, onEdit, onDelete }: UsersTableProps) {
+export function UsersTable({
+  title,
+  emptyText,
+  addLabel,
+  editLabel,
+  deleteLabel,
+  emailColumnLabel,
+  firstNameColumnLabel,
+  lastNameColumnLabel,
+  roleColumnLabel,
+  activeColumnLabel,
+  actionsColumnLabel,
+  users,
+  onAdd,
+  onEdit,
+  onDelete
+}: UsersTableProps) {
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -38,12 +60,12 @@ export function UsersTable({ title, emptyText, addLabel, editLabel, deleteLabel,
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Email</TableCell>
-              <TableCell>Имя</TableCell>
-              <TableCell>Фамилия</TableCell>
-              <TableCell>Роль</TableCell>
-              <TableCell>Активен</TableCell>
-              <TableCell align="right">Действия</TableCell>
+              <TableCell>{emailColumnLabel}</TableCell>
+              <TableCell>{firstNameColumnLabel}</TableCell>
+              <TableCell>{lastNameColumnLabel}</TableCell>
+              <TableCell>{roleColumnLabel}</TableCell>
+              <TableCell>{activeColumnLabel}</TableCell>
+              <TableCell align="right">{actionsColumnLabel}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
