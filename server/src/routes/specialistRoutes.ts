@@ -95,22 +95,19 @@ specialistRoutes.delete('/:id', async (req, res) => {
   }
 
   try {
-    const deleted = await deleteSpecialistForActor(actor, specialistId);
+    const updated = await deleteSpecialistForActor(actor, specialistId);
 
-    if (!deleted) {
+    if (!updated) {
       return res.status(404).json({ message: t(req, 'specialistNotFound') });
     }
 
-    return res.status(204).send();
+    return res.json(updated);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'UNKNOWN';
     if (message === 'FORBIDDEN') {
       return res.status(403).json({ message: t(req, 'forbiddenDeleteSpecialist') });
     }
 
-    if (message === 'SPECIALIST_HAS_APPOINTMENTS') {
-      return res.status(409).json({ message: t(req, 'specialistHasAppointments') });
-    }
 
     console.error(error);
     return res.status(500).json({ message: t(req, 'specialistDeleteFailed') });

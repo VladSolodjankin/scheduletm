@@ -125,3 +125,12 @@
 - [ ] Покрыть Specialists: `list/create/edit/delete` + проверку role-gates (`owner/admin`).
 - [ ] Покрыть Settings: `GET/PUT user`, `GET/PUT system` + базовые ошибки валидации/доступа.
 - [ ] Выделить прогон в отдельный CI job (smoke оставить быстрым baseline).
+
+
+### 4.11 Users management (выполнено)
+
+- [x] Добавить отдельную страницу `/users` для owner/admin.
+- [x] Добавить server CRUD `/api/users` (создание/редактирование/деактивация).
+- [x] Добавить автогенерацию временного пароля на backend при создании пользователя.
+- [x] Подготовить email-delivery слой (stub) для отправки временного пароля пользователю.
+- [x] Перевести удаление пользователей и специалистов на soft-delete (`is_active=false`) без разрыва существующих appointments.

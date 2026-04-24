@@ -111,8 +111,8 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
     expect(await response.json()).toMatchObject({ id: 2, name: 'Updated' });
   });
 
-  it('delete: DELETE /api/specialists/:id returns 204', async () => {
-    deleteSpecialistForActorMock.mockResolvedValue(true);
+  it('delete: DELETE /api/specialists/:id returns 200', async () => {
+    deleteSpecialistForActorMock.mockResolvedValue({ id: 2, name: 'Updated', code: 'updated', timezone: 'UTC', isActive: false, slotStepMin: 30 });
 
     const response = await fetch(`${baseUrl}/api/specialists/2`, {
       method: 'DELETE',
@@ -121,6 +121,7 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
       },
     });
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ id: 2, isActive: false });
   });
 });

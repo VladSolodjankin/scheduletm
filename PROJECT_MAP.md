@@ -8,7 +8,7 @@
   - `server/src/app.ts` — инициализация Express middleware/роутов.
   - `server/src/i18n/*` — server-side словари (`ru/en`) и helper локализации сообщений API.
   - `server/src/config/*` — env + схемы валидации.
-  - `server/src/routes/*` — auth/settings/integrations/appointments/specialists/health endpoints.
+  - `server/src/routes/*` — auth/settings/integrations/appointments/specialists/users/health endpoints.
   - `server/src/services/*` — бизнес-логика auth/settings/appointments.
   - `server/src/repositories/appointmentRepository.ts` — доступ к appointments для web-сценариев.
   - `server/src/middlewares/*` — auth + login lock middleware.
@@ -17,7 +17,7 @@
 ## Data map (server)
 
 - `telegram_users` — Telegram users.
-- `web_users` — web auth users (email/password hash/salt).
+- `web_users` — web auth users (email/password hash/salt + first_name/last_name/phone/telegram_username).
 - `web_users.role` — роль web-пользователя (`owner`/`admin`/`specialist`).
 - `web_user_integrations.google_api_key` — Google OAuth `access_token`, сохраняемый после web-коннекта Google.
 - `web_user_integrations.telegram_bot_token` — персональный Telegram BOT_TOKEN из user settings.
@@ -62,7 +62,11 @@
 - `GET /api/specialists`
 - `POST /api/specialists`
 - `PATCH /api/specialists/:id`
-- `DELETE /api/specialists/:id`
+- `DELETE /api/specialists/:id` (soft deactivate via `is_active=false`)
+- `GET /api/users`
+- `POST /api/users`
+- `PATCH /api/users/:id`
+- `DELETE /api/users/:id` (soft deactivate via `is_active=false`)
 - `GET /api/integrations/google/oauth/callback`
 - `GET /api/appointments`
 - `POST /api/appointments`

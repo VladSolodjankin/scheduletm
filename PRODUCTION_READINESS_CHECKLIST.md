@@ -30,6 +30,7 @@
 - [x] Добавить минимальную ролевую модель web-auth (`owner`/`admin`/`specialist`) для разграничения доступа.
 - [x] Дать owner/admin возможность создавать web-пользователя роли `specialist` и связанного `specialists`-профиля.
 - [x] Добавить server CRUD специалистов (`GET/POST/PATCH/DELETE /api/specialists`) с фильтрацией по `account_id`.
+- [x] Добавить server CRUD пользователей (`GET/POST/PATCH/DELETE /api/users`) с полями профиля, автогенерацией временного пароля и soft-delete (`is_active`).
 
 ## 4. Integrations
 
@@ -41,7 +42,7 @@
 
 ## 5. Web delivery
 
-- [x] Включить роутинг для `/login`, `/register`, `/appointments`, `/specialists`, `/settings`.
+- [x] Включить роутинг для `/login`, `/register`, `/appointments`, `/specialists`, `/users`, `/settings`.
 - [x] Использовать MUI как базовую UI систему.
 - [x] Использовать `react-hook-form` для единообразного управления web-формами.
 - [x] Убрать дублирование `timezone/locale` в settings: хранить/редактировать их только на уровне user settings.

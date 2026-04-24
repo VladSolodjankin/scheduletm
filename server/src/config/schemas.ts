@@ -73,6 +73,20 @@ export const specialistUserCreationSchema = z.object({
 
 
 
+
+const managedUserRoleSchema = z.enum(['admin', 'specialist']);
+
+export const managedUserCreateSchema = z.object({
+  email: z.string().trim().email('Введите корректный email').max(254, 'Email слишком длинный'),
+  role: managedUserRoleSchema,
+  firstName: z.string().trim().min(1, 'Укажите имя').max(120, 'Имя слишком длинное'),
+  lastName: z.string().trim().min(1, 'Укажите фамилию').max(120, 'Фамилия слишком длинная'),
+  phone: z.string().trim().max(50, 'Телефон слишком длинный').optional().or(z.literal('')),
+  telegramUsername: z.string().trim().max(255, 'Telegram аккаунт слишком длинный').optional().or(z.literal('')),
+});
+
+export const managedUserUpdateSchema = managedUserCreateSchema;
+
 export const specialistCreateSchema = z.object({
   userId: z.coerce.number().int().positive('Выберите пользователя специалиста'),
 });

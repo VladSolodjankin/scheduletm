@@ -106,3 +106,20 @@ export type SpecialistsListResponse = {
     email: string;
   }>;
 };
+
+
+export type ManagedUserItem = {
+  id: number;
+  email: string;
+  role: WebUserRole;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  telegramUsername: string;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export type ManagedUsersListResponse = {
+  users: ManagedUserItem[];
+};
