@@ -8,6 +8,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Snackbar,
   Stack,
   Typography,
   alpha,
@@ -55,10 +56,15 @@ export function AppointmentsContainer() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [isCancellingAppointment, setIsCancellingAppointment] = useState(false);
+  const [pastSlotToastOpen, setPastSlotToastOpen] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
-  const pastSlotError = 'Cannot create or move an appointment to a past date/time';
+  const pastSlotError = t('appointments.pastSlotError');
+
+  const showPastSlotError = () => {
+    setPastSlotToastOpen(true);
+  };
 
   const canManageAll = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin;
   const selectedSpecialist = selectedSpecialistId === 'all'
@@ -163,7 +169,7 @@ export function AppointmentsContainer() {
 
   const openCreate = (targetDateKey: string, hour: number, minute = 0) => {
     if (isSlotInPast(targetDateKey, hour, minute, displayTimeZone)) {
-      setError(pastSlotError);
+      showPastSlotError();
       return;
     }
 
@@ -201,7 +207,7 @@ export function AppointmentsContainer() {
 
     try {
       if (!editingItem && new Date(payload.startIso).getTime() < Date.now()) {
-        setError(pastSlotError);
+        showPastSlotError();
         return;
       }
 
@@ -263,7 +269,7 @@ export function AppointmentsContainer() {
       return;
     }
     if (isSlotInPast(targetDayKey, targetHour, targetMinute, displayTimeZone)) {
-      setError(pastSlotError);
+      showPastSlotError();
       return;
     }
 
@@ -382,10 +388,26 @@ export function AppointmentsContainer() {
           onMoveAppointment={(id, dayKey, hour, minute) => {
             void moveAppointment(id, dayKey, hour, minute);
           }}
-          pastSlotHint={pastSlotError}
+          onPastSlotAttempt={showPastSlotError}
           getGridDayKey={getGridDayKey}
         />
       </Stack>
+
+      <Snackbar
+        open={pastSlotToastOpen}
+        autoHideDuration={3000}
+        onClose={(_, reason) => {
+          if (reason === 'clickaway') {
+            return;
+          }
+          setPastSlotToastOpen(false);
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" variant="filled" onClose={() => setPastSlotToastOpen(false)}>
+          {pastSlotError}
+        </Alert>
+      </Snackbar>
 
       <AppointmentFormDialog
         t={t}

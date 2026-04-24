@@ -41,7 +41,7 @@ type Props = {
   onOpenCreate: (dayKey: string, hour: number, minute: number) => void;
   onOpenEdit: (item: AppointmentItem) => void;
   onMoveAppointment: (appointmentId: number, targetDayKey: string, targetHour: number, targetMinute: number) => void;
-  pastSlotHint: string;
+  onPastSlotAttempt: () => void;
   getGridDayKey: (day: Date) => string;
 };
 
@@ -58,7 +58,7 @@ export function AppointmentsCalendar({
   onOpenCreate,
   onOpenEdit,
   onMoveAppointment,
-  pastSlotHint,
+  onPastSlotAttempt,
   getGridDayKey,
 }: Props) {
   const theme = useTheme();
@@ -177,61 +177,63 @@ export function AppointmentsCalendar({
                       const isPastSlot = isSlotInPast(dayKey, hour, minute, displayTimeZone);
 
                       return (
-                        <Tooltip key={`${key}-cell`} title={isPastSlot ? pastSlotHint : ''} placement="top" arrow disableHoverListener={!isPastSlot}>
-                          <Box
-                            sx={{
-                              position: 'relative',
-                              borderTop: 1,
-                              borderRight: 1,
-                              borderColor: 'divider',
-                              minHeight: 36,
-                              p: 0.5,
-                              bgcolor: alpha(theme.palette.background.paper, 0.92),
-                              transition: 'background-color 0.15s ease',
-                              '&:hover': {
-                                bgcolor: 'action.hover',
-                              },
-                            }}
-                            onDragOver={(event) => {
-                              event.preventDefault();
-                              if (!draggingAppointmentId) {
-                                return;
-                              }
+                        <Box
+                          key={`${key}-cell`}
+                          sx={{
+                            position: 'relative',
+                            borderTop: 1,
+                            borderRight: 1,
+                            borderColor: 'divider',
+                            minHeight: 36,
+                            p: 0.5,
+                            bgcolor: alpha(theme.palette.background.paper, 0.92),
+                            transition: 'background-color 0.15s ease',
+                            '&:hover': {
+                              bgcolor: 'action.hover',
+                            },
+                          }}
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            if (!draggingAppointmentId) {
+                              return;
+                            }
 
-                              if (isPastSlot) {
-                                event.dataTransfer.dropEffect = 'none';
-                                setBlockedCellKey(key);
-                              } else {
-                                event.dataTransfer.dropEffect = 'move';
-                                setBlockedCellKey(null);
-                              }
-                            }}
-                            onDragLeave={() => {
-                              setBlockedCellKey((prev) => (prev === key ? null : prev));
-                            }}
-                            onDrop={(event) => {
-                              event.preventDefault();
+                            if (isPastSlot) {
+                              event.dataTransfer.dropEffect = 'none';
+                              setBlockedCellKey(key);
+                            } else {
+                              event.dataTransfer.dropEffect = 'move';
                               setBlockedCellKey(null);
+                            }
+                          }}
+                          onDragLeave={() => {
+                            setBlockedCellKey((prev) => (prev === key ? null : prev));
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            setBlockedCellKey(null);
 
-                              if (isPastSlot) {
-                                return;
-                              }
+                            if (isPastSlot) {
+                              onPastSlotAttempt();
+                              return;
+                            }
 
-                              const rawId = event.dataTransfer.getData('text/appointment-id');
-                              const id = Number(rawId);
+                            const rawId = event.dataTransfer.getData('text/appointment-id');
+                            const id = Number(rawId);
 
-                              if (!Number.isNaN(id)) {
-                                onMoveAppointment(id, dayKey, hour, minute);
-                              }
-                            }}
-                            onClick={() => {
-                              if (isPastSlot) {
-                                return;
-                              }
+                            if (!Number.isNaN(id)) {
+                              onMoveAppointment(id, dayKey, hour, minute);
+                            }
+                          }}
+                          onClick={() => {
+                            if (isPastSlot) {
+                              onPastSlotAttempt();
+                              return;
+                            }
 
-                              onOpenCreate(dayKey, hour, minute);
-                            }}
-                          >
+                            onOpenCreate(dayKey, hour, minute);
+                          }}
+                        >
                             {draggingAppointmentId && blockedCellKey === key && (
                               <Box
                                 sx={{
@@ -302,8 +304,7 @@ export function AppointmentsCalendar({
                                 </Box>
                               ))}
                             </Stack>
-                          </Box>
-                        </Tooltip>
+                        </Box>
                       );
                     })}
                   </Fragment>
