@@ -77,7 +77,6 @@ export type SendEmailVerificationInput = {
   to: string;
   firstName?: string;
   verificationCode: string;
-  verificationLink: string;
 };
 
 export async function sendEmailVerificationEmail(input: SendEmailVerificationInput): Promise<boolean> {
@@ -85,8 +84,6 @@ export async function sendEmailVerificationEmail(input: SendEmailVerificationInp
   const template = renderEmailTemplate({
     title: 'Подтверждение email',
     body: `Здравствуйте, ${greetingName}! Код подтверждения: ${input.verificationCode}`,
-    ctaLabel: 'Подтвердить email',
-    ctaLink: input.verificationLink,
     footer: 'Если это были не вы — просто проигнорируйте письмо.',
   });
 

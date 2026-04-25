@@ -11,6 +11,19 @@ export type AuthResponse = {
   };
 };
 
+export type RegisterResponse = {
+  message: string;
+  user: {
+    id: string;
+    email: string;
+    role: WebUserRole;
+  };
+};
+
+export type VerifyEmailResponse = {
+  message: string;
+};
+
 export type SystemSettings = {
   dailyDigestEnabled: boolean;
   defaultMeetingDuration: number;

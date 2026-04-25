@@ -137,6 +137,21 @@ export async function touchWebUserLastLogin(accountId: number, id: number): Prom
     });
 }
 
+export async function updateWebUserCredentials(
+  accountId: number,
+  id: number,
+  passwordHash: string,
+  passwordSalt: string,
+): Promise<void> {
+  await db('web_users')
+    .where({ account_id: accountId, id })
+    .update({
+      password_hash: passwordHash,
+      password_salt: passwordSalt,
+      updated_at: db.fn.now(),
+    });
+}
+
 type UpdateWebUserSettingsInput = {
   accountId: number;
   id: number;

@@ -54,6 +54,13 @@ export const verifyEmailSchema = z.object({
     .max(128, v.emailVerificationCodeInvalid),
 });
 
+export const resendEmailVerificationCodeSchema = z.object({
+  email: z
+    .string()
+    .email(v.emailInvalid)
+    .max(254, v.emailTooLong),
+});
+
 export const systemSettingsSchema = z.object({
   dailyDigestEnabled: z.boolean(),
   defaultMeetingDuration: z.coerce

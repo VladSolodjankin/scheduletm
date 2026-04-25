@@ -1,6 +1,12 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
-import { loginSchema, registrationSchema, specialistUserCreationSchema, verifyEmailSchema } from '../config/schemas.js';
+import {
+  loginSchema,
+  registrationSchema,
+  resendEmailVerificationCodeSchema,
+  specialistUserCreationSchema,
+  verifyEmailSchema,
+} from '../config/schemas.js';
 import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { blockIfTooManyAttempts } from '../middlewares/loginRateLimit.js';
@@ -13,6 +19,7 @@ import {
   refreshAccess,
   registerFailedAttempt,
   registerUser,
+  resendUserEmailVerificationCode,
   verifyUserEmail,
 } from '../services/authService.js';
 import { WebUserRole } from '../types/webUserRole.js';
@@ -110,6 +117,25 @@ authRoutes.post('/verify-email', async (req, res) => {
     return res.json({
       message: t(req, 'emailVerificationSuccess'),
     });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: t(req, 'registerFailed') });
+  }
+});
+
+authRoutes.post('/resend-verification-code', async (req, res) => {
+  const parsed = resendEmailVerificationCodeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json(formatZodError(parsed.error));
+  }
+
+  try {
+    const sent = await resendUserEmailVerificationCode(parsed.data.email);
+    if (!sent) {
+      return res.status(404).json({ message: t(req, 'emailVerificationFailed') });
+    }
+
+    return res.json({ message: t(req, 'emailVerificationCodeResent') });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: t(req, 'registerFailed') });

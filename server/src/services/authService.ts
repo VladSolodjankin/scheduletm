@@ -11,6 +11,7 @@ import {
   findWebUserByIdAnyAccount,
   touchWebUserLastLogin,
   updateWebUserAuthState,
+  updateWebUserCredentials,
   updateWebUserSettings,
 } from '../repositories/webUserRepository.js';
 import {
@@ -113,7 +114,37 @@ export const registerUser = async (
   const email = sanitizeEmail(emailRaw);
   const existing = await findWebUserByEmailAnyAccount(email);
   if (existing) {
-    return null;
+    if (existing.email_verified_at) {
+      return null;
+    }
+
+    const salt = crypto.randomBytes(16).toString('hex');
+    const passwordHash = hashPassword(password, salt);
+    const verificationCode = createToken();
+
+    await updateWebUserCredentials(existing.account_id, existing.id, passwordHash, salt);
+    await updateWebUserAuthState({
+      accountId: existing.account_id,
+      id: existing.id,
+      emailVerificationCode: verificationCode,
+      emailVerificationSentAt: new Date(),
+    });
+
+    await sendEmailVerificationEmail({
+      to: email,
+      verificationCode,
+      firstName: existing.first_name ?? undefined,
+    });
+
+    return mapWebUserToDomain(
+      existing.id,
+      existing.account_id,
+      existing.email,
+      existing.role,
+      salt,
+      passwordHash,
+      existing.created_at,
+    );
   }
 
   const accountCode = `acc-${crypto.randomUUID()}`;
@@ -140,11 +171,9 @@ export const registerUser = async (
 
   await createDefaultSpecialistForWebUserIfMissing(accountId, webUser.id, email);
 
-  const verificationLink = `${env.EMAIL_VERIFY_BASE_URL}?email=${encodeURIComponent(email)}&code=${encodeURIComponent(verificationCode)}`;
   await sendEmailVerificationEmail({
     to: email,
     verificationCode,
-    verificationLink,
   });
 
   return mapWebUserToDomain(
@@ -156,6 +185,35 @@ export const registerUser = async (
     webUser.password_hash,
     webUser.created_at
   );
+};
+
+export const resendUserEmailVerificationCode = async (emailRaw: string): Promise<boolean> => {
+  const email = sanitizeEmail(emailRaw);
+  const user = await findWebUserByEmailAnyAccount(email);
+  if (!user) {
+    return false;
+  }
+
+  if (user.email_verified_at) {
+    return true;
+  }
+
+  const verificationCode = createToken();
+
+  await updateWebUserAuthState({
+    accountId: user.account_id,
+    id: user.id,
+    emailVerificationCode: verificationCode,
+    emailVerificationSentAt: new Date(),
+  });
+
+  await sendEmailVerificationEmail({
+    to: user.email,
+    verificationCode,
+    firstName: user.first_name ?? undefined,
+  });
+
+  return true;
 };
 const buildSpecialistCode = (webUserId: number): string => {
   return `specialist-${webUserId}`;

@@ -6,7 +6,8 @@ Node.js/Express API для web-клиента и интеграций.
 
 - Auth: register/login/refresh/logout + verify-email.
   При self-registration пользователю создаётся отдельный `account_id`, присваивается роль `admin`,
-  и отправляется письмо с кодом подтверждения email.
+  и отправляется письмо с OTP-кодом подтверждения email.
+  Поддерживаются `POST /api/auth/verify-email` и `POST /api/auth/resend-verification-code`.
 - Web roles: owner/admin/specialist/client.
 - RBAC policy (централизованные проверки прав) в `src/policies/rolePermissions.ts`.
 - Settings API: user/system.

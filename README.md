@@ -70,7 +70,7 @@ scheduletm/
 
 ### Web + Server
 
-- Auth: register/login/refresh/logout + email verification by unique code.
+- Auth: register/login/refresh/logout + OTP email verification by unique code (with resend).
 - Роли: `owner` / `admin` / `specialist` / `client` (RBAC policy централизована в server).
 - Settings: system + user settings.
 - Integrations: Google OAuth start/callback, Telegram bot token в user integrations.
