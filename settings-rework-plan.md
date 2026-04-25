@@ -14,7 +14,7 @@
 
 Дополнительно:
 
-* `specialist_settings` — настройки специалиста (прайс, расписание)
+* `specialist_settings` — настройки специалиста (прайс, расписание, дефолтное продолжение сессии)
 * `specialist_booking_policies` — правила бронирования
 * `account_notification_defaults` — дефолты нотификаций
 * `specialist_notification_settings` — логика отправки
@@ -59,6 +59,7 @@
 * `work_end_hour`
 * `slot_duration_min`
 * `slot_step_min`
+* `default_session_continuation_min`
 
 Структура:
 
@@ -189,7 +190,6 @@ cancelled
 * `specialist_notification_settings`
 * `specialist_booking_policies`
 * `user_integrations`
-* 
 
 ---
 
@@ -208,14 +208,19 @@ cancelled
 
 ## 9) Что хранить в `system_settings`
 
-Только runtime настройки:
+Только runtime-настройки без секретов:
 
 * auth TTL
-* OAuth
 * email sender
 * security limits
 
-(секреты — шифровать)
+Google OAuth параметры и секреты храним только на уровне `.env` (не в таблицах настроек):
+
+```env
+GOOGLE_OAUTH_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=your_google_client_secret
+GOOGLE_OAUTH_REDIRECT_URI=http://localhost:3003/api/integrations/google/oauth/callback
+```
 
 ---
 

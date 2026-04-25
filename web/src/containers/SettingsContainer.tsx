@@ -22,9 +22,6 @@ const defaultSystemSettings: SystemSettings = {
   refreshTokenTtlDays: 30,
   accessTokenTtlSeconds: 900,
   sessionCookieName: 'meetli_refresh_token',
-  googleOauthClientId: '',
-  googleOauthClientSecret: '',
-  googleOauthRedirectUri: '',
 };
 
 const defaultAccountSettings: AccountSettings = {
@@ -336,9 +333,6 @@ export function SettingsContainer() {
               refreshTokenTtlDays: t('settings.refreshTokenTtlDays'),
               accessTokenTtlSeconds: t('settings.accessTokenTtlSeconds'),
               sessionCookieName: t('settings.sessionCookieName'),
-              googleOauthClientId: t('settings.googleOauthClientId'),
-              googleOauthClientSecret: t('settings.googleOauthClientSecret'),
-              googleOauthRedirectUri: t('settings.googleOauthRedirectUri'),
               saveSettings: t('common.saveSettings'),
               integrationsTitle: t('settings.integrationsTitle'),
               integrationsSubtitle: t('settings.integrationsSubtitle'),

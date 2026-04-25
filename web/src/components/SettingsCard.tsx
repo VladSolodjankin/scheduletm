@@ -24,9 +24,6 @@ type SettingsCardCopy = {
   refreshTokenTtlDays: string;
   accessTokenTtlSeconds: string;
   sessionCookieName: string;
-  googleOauthClientId: string;
-  googleOauthClientSecret: string;
-  googleOauthRedirectUri: string;
   saveSettings: string;
   integrationsTitle: string;
   integrationsSubtitle: string;
@@ -165,23 +162,6 @@ export function SettingsCard({
             render={({ field }: any) => <AppRhfTextField field={field} label={copy.sessionCookieName} />}
           />
 
-          <Controller
-            name="googleOauthClientId"
-            control={systemControl}
-            render={({ field }: any) => <AppRhfTextField field={field} label={copy.googleOauthClientId} />}
-          />
-
-          <Controller
-            name="googleOauthClientSecret"
-            control={systemControl}
-            render={({ field }: any) => <AppRhfPasswordField field={field} label={copy.googleOauthClientSecret} />}
-          />
-
-          <Controller
-            name="googleOauthRedirectUri"
-            control={systemControl}
-            render={({ field }: any) => <AppRhfTextField field={field} label={copy.googleOauthRedirectUri} />}
-          />
 
           <Controller
             name="dailyDigestEnabled"
