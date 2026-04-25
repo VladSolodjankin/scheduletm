@@ -98,6 +98,24 @@ export const systemSettingsSchema = z.object({
     .min(15, v.meetingDurationMin)
     .max(180, v.meetingDurationMax),
   weekStartsOnMonday: z.boolean(),
+  refreshTokenTtlDays: z.coerce.number().int().min(1).max(365),
+  accessTokenTtlSeconds: z.coerce.number().int().min(60).max(86400),
+  sessionCookieName: z.string().trim().min(1).max(128),
+  googleOauthClientId: z.string().trim().max(255).optional().or(z.literal('')),
+  googleOauthClientSecret: z.string().trim().max(255).optional().or(z.literal('')),
+  googleOauthRedirectUri: z.string().trim().url(v.appointmentLinkInvalid).max(1024).optional().or(z.literal('')),
+}).partial();
+
+export const accountSettingsSchema = z.object({
+  timezone: timezoneSchema,
+  locale: z.string().min(2, v.localeRequired).max(16, v.localeTooLong),
+  defaultMeetingDuration: z.coerce
+    .number()
+    .int(v.meetingDurationMustBeInteger)
+    .min(15, v.meetingDurationMin)
+    .max(180, v.meetingDurationMax),
+  dailyDigestEnabled: z.boolean(),
+  weekStartsOnMonday: z.boolean(),
 }).partial();
 
 export const userSettingsSchema = z.object({

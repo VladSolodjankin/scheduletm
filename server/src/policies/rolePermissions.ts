@@ -5,6 +5,9 @@ export const isClientRole = (role: WebUserRole): boolean => role === WebUserRole
 export const canManageSystemSettings = (role: WebUserRole): boolean =>
   role === WebUserRole.Owner;
 
+export const canManageAccountSettings = (role: WebUserRole): boolean =>
+  role === WebUserRole.Owner || role === WebUserRole.Admin;
+
 export const canManageSpecialists = (role: WebUserRole): boolean =>
   role === WebUserRole.Owner || role === WebUserRole.Admin;
 

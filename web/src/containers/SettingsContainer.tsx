@@ -8,6 +8,7 @@ import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
 import type {
+  AccountSettings,
   GoogleOAuthDisconnectResponse,
   GoogleOAuthStartResponse,
   SystemSettings,
@@ -15,6 +16,20 @@ import type {
 } from '../shared/types/api';
 
 const defaultSystemSettings: SystemSettings = {
+  dailyDigestEnabled: true,
+  defaultMeetingDuration: 30,
+  weekStartsOnMonday: true,
+  refreshTokenTtlDays: 30,
+  accessTokenTtlSeconds: 900,
+  sessionCookieName: 'meetli_refresh_token',
+  googleOauthClientId: '',
+  googleOauthClientSecret: '',
+  googleOauthRedirectUri: '',
+};
+
+const defaultAccountSettings: AccountSettings = {
+  timezone: 'UTC',
+  locale: 'ru-RU',
   dailyDigestEnabled: true,
   defaultMeetingDuration: 30,
   weekStartsOnMonday: true,
@@ -38,17 +53,20 @@ export function SettingsContainer() {
   const { accessToken, user } = useAuth();
   const { t } = useI18n();
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(defaultSystemSettings);
+  const [accountSettings, setAccountSettings] = useState<AccountSettings>(defaultAccountSettings);
   const [userSettings, setUserSettings] = useState<UserSettings>(defaultUserSettings);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
   const [isGoogleDisconnecting, setIsGoogleDisconnecting] = useState(false);
   const [isSavingSystem, setIsSavingSystem] = useState(false);
+  const [isSavingAccount, setIsSavingAccount] = useState(false);
   const [isSavingUser, setIsSavingUser] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const canManageSystemSettings = user?.role === 'owner';
+  const canManageAccountSettings = user?.role === 'owner' || user?.role === 'admin';
 
   useEffect(() => {
     if (!googleOauthStatus) {
@@ -87,6 +105,13 @@ export function SettingsContainer() {
         });
         setUserSettings(userResponse.data);
 
+        if (canManageAccountSettings) {
+          const accountResponse = await apiClient.get<AccountSettings>('/api/settings/account', {
+            headers: authHeaders(accessToken)
+          });
+          setAccountSettings(accountResponse.data);
+        }
+
         if (canManageSystemSettings) {
           const systemResponse = await apiClient.get<SystemSettings>('/api/settings/system', {
             headers: authHeaders(accessToken)
@@ -104,7 +129,7 @@ export function SettingsContainer() {
     };
 
     void load();
-  }, [accessToken, canManageSystemSettings, navigate, t]);
+  }, [accessToken, canManageAccountSettings, canManageSystemSettings, navigate, t]);
 
   const saveSystemSettings = async (nextSettings: SystemSettings) => {
     if (!accessToken || !canManageSystemSettings) {
@@ -128,6 +153,31 @@ export function SettingsContainer() {
       setSuccess('');
     } finally {
       setIsSavingSystem(false);
+    }
+  };
+
+  const saveAccountSettings = async (nextSettings: AccountSettings) => {
+    if (!accessToken || !canManageAccountSettings) {
+      return;
+    }
+
+    setIsSavingAccount(true);
+
+    try {
+      const response = await apiClient.put<AccountSettings>('/api/settings/account', nextSettings, {
+        headers: authHeaders(accessToken)
+      });
+      setAccountSettings(response.data);
+      setError('');
+      setSuccess('');
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.save'),
+        networkMessage: t('common.errors.network')
+      }).message);
+      setSuccess('');
+    } finally {
+      setIsSavingAccount(false);
     }
   };
 
@@ -267,18 +317,28 @@ export function SettingsContainer() {
         ) : (
           <SettingsCard
             systemSettings={systemSettings}
+            accountSettings={accountSettings}
             userSettings={userSettings}
             canManageSystemSettings={canManageSystemSettings}
+            canManageAccountSettings={canManageAccountSettings}
             copy={{
               systemTab: t('settings.tabs.system'),
+              accountTab: t('settings.tabs.account'),
               userTab: t('settings.tabs.user'),
               systemTitle: t('settings.systemTitle'),
+              accountTitle: t('settings.accountTitle'),
               userTitle: t('settings.userTitle'),
               timezone: t('settings.timezone'),
               locale: t('settings.locale'),
               defaultMeetingDuration: t('settings.defaultMeetingDuration'),
               dailyDigestEnabled: t('settings.dailyDigestEnabled'),
               weekStartsOnMonday: t('settings.weekStartsOnMonday'),
+              refreshTokenTtlDays: t('settings.refreshTokenTtlDays'),
+              accessTokenTtlSeconds: t('settings.accessTokenTtlSeconds'),
+              sessionCookieName: t('settings.sessionCookieName'),
+              googleOauthClientId: t('settings.googleOauthClientId'),
+              googleOauthClientSecret: t('settings.googleOauthClientSecret'),
+              googleOauthRedirectUri: t('settings.googleOauthRedirectUri'),
               saveSettings: t('common.saveSettings'),
               integrationsTitle: t('settings.integrationsTitle'),
               integrationsSubtitle: t('settings.integrationsSubtitle'),
@@ -286,17 +346,18 @@ export function SettingsContainer() {
               connectingGoogle: t('settings.connectingGoogle'),
               disconnectGoogle: t('settings.disconnectGoogle'),
               disconnectingGoogle: t('settings.disconnectingGoogle'),
-              googleConnected: t('settings.googleConnected'),
               telegramBotToken: t('settings.telegramBotToken'),
               telegramBotConnected: t('settings.telegramBotConnected'),
               telegramBotNotConnected: t('settings.telegramBotNotConnected'),
-              clearTelegramBotToken: t('settings.clearTelegramBotToken'),
+              clearTelegramBotToken: t('settings.clearTelegramBotToken')
             }}
             isGoogleConnecting={isGoogleConnecting}
             isGoogleDisconnecting={isGoogleDisconnecting}
             isSavingSystem={isSavingSystem}
+            isSavingAccount={isSavingAccount}
             isSavingUser={isSavingUser}
             onSaveSystem={saveSystemSettings}
+            onSaveAccount={saveAccountSettings}
             onSaveUser={saveUserSettings}
             onClearTelegramBotToken={clearTelegramBotToken}
             onConnectGoogle={connectGoogle}

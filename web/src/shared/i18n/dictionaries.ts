@@ -75,15 +75,23 @@ export const dictionaries = {
       pageSubtitle: 'Manage system and personal settings, integrations, and interface appearance.',
       tabs: {
         system: 'System settings',
+        account: 'Account settings',
         user: 'User settings'
       },
       systemTitle: 'System settings',
+      accountTitle: 'Account settings',
       userTitle: 'User settings',
       timezone: 'Timezone',
       locale: 'Locale',
       defaultMeetingDuration: 'Default meeting duration (min)',
       dailyDigestEnabled: 'Daily digest enabled',
       weekStartsOnMonday: 'Week starts on Monday',
+      refreshTokenTtlDays: 'Refresh token TTL (days)',
+      accessTokenTtlSeconds: 'Access token TTL (seconds)',
+      sessionCookieName: 'Session cookie name',
+      googleOauthClientId: 'Google OAuth client id',
+      googleOauthClientSecret: 'Google OAuth client secret',
+      googleOauthRedirectUri: 'Google OAuth redirect URI',
       integrationsTitle: 'Integrations',
       integrationsSubtitle: 'Connect external services to automate bookings and reminders.',
       connectGoogle: 'Connect Google',
@@ -294,15 +302,23 @@ export const dictionaries = {
       pageSubtitle: 'Управляйте системными и личными настройками, интеграциями и внешним видом интерфейса.',
       tabs: {
         system: 'Системные',
+        account: 'Аккаунт',
         user: 'Пользовательские'
       },
       systemTitle: 'Системные настройки',
+      accountTitle: 'Настройки аккаунта',
       userTitle: 'Пользовательские настройки',
       timezone: 'Часовой пояс',
       locale: 'Локаль',
       defaultMeetingDuration: 'Длительность встречи по умолчанию (мин)',
       dailyDigestEnabled: 'Ежедневный дайджест включен',
       weekStartsOnMonday: 'Неделя начинается с понедельника',
+      refreshTokenTtlDays: 'TTL refresh token (дни)',
+      accessTokenTtlSeconds: 'TTL access token (сек)',
+      sessionCookieName: 'Имя session cookie',
+      googleOauthClientId: 'Google OAuth client id',
+      googleOauthClientSecret: 'Google OAuth client secret',
+      googleOauthRedirectUri: 'Google OAuth redirect URI',
       integrationsTitle: 'Интеграции',
       integrationsSubtitle: 'Подключите внешние сервисы, чтобы автоматизировать бронирования и напоминания.',
       connectGoogle: 'Подключить Google',
@@ -508,14 +524,22 @@ export type TranslationKey =
   | 'settings.pageTitle'
   | 'settings.pageSubtitle'
   | 'settings.tabs.system'
+  | 'settings.tabs.account'
   | 'settings.tabs.user'
   | 'settings.systemTitle'
+  | 'settings.accountTitle'
   | 'settings.userTitle'
   | 'settings.timezone'
   | 'settings.locale'
   | 'settings.defaultMeetingDuration'
   | 'settings.dailyDigestEnabled'
   | 'settings.weekStartsOnMonday'
+  | 'settings.refreshTokenTtlDays'
+  | 'settings.accessTokenTtlSeconds'
+  | 'settings.sessionCookieName'
+  | 'settings.googleOauthClientId'
+  | 'settings.googleOauthClientSecret'
+  | 'settings.googleOauthRedirectUri'
   | 'settings.integrationsTitle'
   | 'settings.integrationsSubtitle'
   | 'settings.connectGoogle'
