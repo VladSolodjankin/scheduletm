@@ -3,6 +3,7 @@ import type { ReactElement } from 'react';
 import { MainLayout } from '../components/layout/MainLayout';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
+import { InviteAcceptPage } from '../pages/InviteAcceptPage';
 import { AppointmentsPage } from '../pages/AppointmentsPage';
 import { SettingsPage } from '../pages/SettingsPage';
 import { SpecialistsPage } from '../pages/SpecialistsPage';
@@ -38,6 +39,14 @@ export const router = createBrowserRouter([
         element: (
           <PublicOnlyRoute>
             <RegisterPage />
+          </PublicOnlyRoute>
+        )
+      },
+      {
+        path: '/invite/accept',
+        element: (
+          <PublicOnlyRoute>
+            <InviteAcceptPage />
           </PublicOnlyRoute>
         )
       },

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
 import {
+  acceptInviteSchema,
   loginSchema,
   registrationSchema,
   resendEmailVerificationCodeSchema,
@@ -12,6 +13,7 @@ import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddl
 import { blockIfTooManyAttempts } from '../middlewares/loginRateLimit.js';
 import {
   authenticateUser,
+  acceptInvite,
   clearAttempts,
   createSpecialistUser,
   issueSession,
@@ -116,6 +118,29 @@ authRoutes.post('/verify-email', async (req, res) => {
 
     return res.json({
       message: t(req, 'emailVerificationSuccess'),
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: t(req, 'registerFailed') });
+  }
+});
+
+authRoutes.post('/accept-invite', async (req, res) => {
+  const parsed = acceptInviteSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json(formatZodError(parsed.error));
+  }
+
+  try {
+    const accepted = await acceptInvite(parsed.data.email, parsed.data.token, parsed.data.password);
+    if (!accepted) {
+      return res.status(400).json({
+        message: t(req, 'inviteAcceptFailed'),
+      });
+    }
+
+    return res.json({
+      message: t(req, 'inviteAcceptSuccess'),
     });
   } catch (error) {
     console.error(error);

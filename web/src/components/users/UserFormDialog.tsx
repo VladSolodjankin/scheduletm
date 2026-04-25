@@ -1,5 +1,5 @@
-import { Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
-import { useEffect } from 'react';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { ManagedUserItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
@@ -19,6 +19,10 @@ type UserFormDialogProps = {
   telegramLabel: string;
   closeLabel: string;
   saveLabel: string;
+  adminConfirmTitle: string;
+  adminConfirmDescription: string;
+  adminConfirmCancelLabel: string;
+  adminConfirmSubmitLabel: string;
   onClose: () => void;
   onSubmit: (payload: {
     email: string;
@@ -61,9 +65,23 @@ export function UserFormDialog({
   telegramLabel,
   closeLabel,
   saveLabel,
+  adminConfirmTitle,
+  adminConfirmDescription,
+  adminConfirmCancelLabel,
+  adminConfirmSubmitLabel,
   onClose,
   onSubmit
 }: UserFormDialogProps) {
+  const [isAdminConfirmOpen, setIsAdminConfirmOpen] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<{
+    email: string;
+    role: 'admin' | 'specialist' | 'client';
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    telegramUsername?: string;
+  } | null>(null);
+
   const { control, handleSubmit, reset, watch } = useForm<UserFormState>({
     defaultValues: EMPTY_FORM
   });
@@ -91,14 +109,22 @@ export function UserFormDialog({
   const isValid = Boolean(email?.trim() && firstName?.trim() && lastName?.trim());
 
   const submitForm = handleSubmit(async (form) => {
-    await onSubmit({
+    const payload = {
       email: form.email.trim(),
       role: form.role,
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       phone: form.phone.trim(),
       telegramUsername: form.telegramUsername.trim(),
-    });
+    };
+
+    if (!editingUser && payload.role === 'admin') {
+      setPendingPayload(payload);
+      setIsAdminConfirmOpen(true);
+      return;
+    }
+
+    await onSubmit(payload);
   });
 
   return (
@@ -149,6 +175,31 @@ export function UserFormDialog({
         <AppButton variant="text" onClick={onClose}>{closeLabel}</AppButton>
         <AppButton onClick={() => void submitForm()} isLoading={isSaving} disabled={!isValid}>{saveLabel}</AppButton>
       </DialogActions>
+
+      <Dialog open={isAdminConfirmOpen} onClose={() => setIsAdminConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{adminConfirmTitle}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{adminConfirmDescription}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <AppButton variant="text" onClick={() => setIsAdminConfirmOpen(false)}>
+            {adminConfirmCancelLabel}
+          </AppButton>
+          <AppButton
+            onClick={() => {
+              if (!pendingPayload) {
+                return;
+              }
+
+              setIsAdminConfirmOpen(false);
+              void onSubmit(pendingPayload);
+            }}
+            isLoading={isSaving}
+          >
+            {adminConfirmSubmitLabel}
+          </AppButton>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 }

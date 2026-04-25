@@ -165,6 +165,10 @@ export function UsersContainer() {
         telegramLabel={t('users.form.telegram')}
         closeLabel={t('users.close')}
         saveLabel={t('users.save')}
+        adminConfirmTitle={t('users.adminConfirm.title')}
+        adminConfirmDescription={t('users.adminConfirm.description')}
+        adminConfirmCancelLabel={t('users.adminConfirm.cancel')}
+        adminConfirmSubmitLabel={t('users.adminConfirm.confirm')}
         onClose={() => {
           if (!isSaving) {
             setIsDialogOpen(false);

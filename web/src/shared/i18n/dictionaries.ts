@@ -36,6 +36,12 @@ export const dictionaries = {
       verifySubmit: 'Confirm email',
       verifyResend: 'Resend code',
       verifyBack: 'Back',
+      inviteAcceptTitle: 'Accept invitation',
+      inviteAcceptSubtitle: 'Set your password to activate access.',
+      inviteTokenInvalid: 'Invite token is missing or invalid.',
+      inviteAcceptSubmit: 'Accept invite',
+      inviteTokenLabel: 'Invite token',
+      inviteAcceptedSuccess: 'Invitation accepted. You can now sign in.',
       registerOtpSentHint: 'Verification code sent to {email}.',
       registerOtpRestoreHint: 'Continue verification for {email}.',
       submitLogin: 'Sign in',
@@ -125,6 +131,12 @@ export const dictionaries = {
         lastName: 'Last name',
         phone: 'Phone',
         telegram: 'Telegram'
+      },
+      adminConfirm: {
+        title: 'Create admin user?',
+        description: 'You are about to create a user with admin role. Please confirm this action.',
+        cancel: 'Cancel',
+        confirm: 'Create admin'
       },
       columns: {
         email: 'Email',
@@ -222,6 +234,12 @@ export const dictionaries = {
       verifySubmit: 'Подтвердить email',
       verifyResend: 'Отправить код снова',
       verifyBack: 'Назад',
+      inviteAcceptTitle: 'Принять приглашение',
+      inviteAcceptSubtitle: 'Задайте пароль, чтобы активировать доступ.',
+      inviteTokenInvalid: 'Токен приглашения отсутствует или некорректен.',
+      inviteAcceptSubmit: 'Принять приглашение',
+      inviteTokenLabel: 'Токен приглашения',
+      inviteAcceptedSuccess: 'Приглашение принято. Теперь можно войти.',
       registerOtpSentHint: 'Код подтверждения отправлен на {email}.',
       registerOtpRestoreHint: 'Продолжите подтверждение для {email}.',
       submitLogin: 'Войти',
@@ -311,6 +329,12 @@ export const dictionaries = {
         lastName: 'Фамилия',
         phone: 'Телефон',
         telegram: 'Telegram'
+      },
+      adminConfirm: {
+        title: 'Создать администратора?',
+        description: 'Вы собираетесь создать пользователя с ролью admin. Подтвердите действие.',
+        cancel: 'Отмена',
+        confirm: 'Создать admin'
       },
       columns: {
         email: 'Email',
@@ -407,6 +431,12 @@ export type TranslationKey =
   | 'auth.verifySubmit'
   | 'auth.verifyResend'
   | 'auth.verifyBack'
+  | 'auth.inviteAcceptTitle'
+  | 'auth.inviteAcceptSubtitle'
+  | 'auth.inviteTokenInvalid'
+  | 'auth.inviteAcceptSubmit'
+  | 'auth.inviteTokenLabel'
+  | 'auth.inviteAcceptedSuccess'
   | 'auth.registerOtpSentHint'
   | 'auth.registerOtpRestoreHint'
   | 'auth.submitLogin'
@@ -478,6 +508,10 @@ export type TranslationKey =
   | 'users.form.lastName'
   | 'users.form.phone'
   | 'users.form.telegram'
+  | 'users.adminConfirm.title'
+  | 'users.adminConfirm.description'
+  | 'users.adminConfirm.cancel'
+  | 'users.adminConfirm.confirm'
   | 'users.columns.email'
   | 'users.columns.firstName'
   | 'users.columns.lastName'
