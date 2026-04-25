@@ -51,6 +51,14 @@ export const router = createBrowserRouter([
         )
       },
       {
+        path: '/verify-email',
+        element: (
+          <PublicOnlyRoute>
+            <InviteAcceptPage />
+          </PublicOnlyRoute>
+        )
+      },
+      {
         path: '/appointments',
         element: (
           <ProtectedRoute>

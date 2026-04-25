@@ -38,6 +38,21 @@ export const dictionaries = {
       verifyBack: 'Back',
       inviteAcceptTitle: 'Accept invitation',
       inviteAcceptSubtitle: 'Set your password to activate access.',
+      inviteVerifyTitle: 'Verify email and create account',
+      inviteContextGeneric: 'You were invited to join Meetli.',
+      inviteContextFallback: 'You were invited to join the “{team}” team.',
+      inviteContextFromInviter: '{inviter} invited you to the “{team}” team.',
+      inviteFallbackTeamName: 'your team',
+      inviteLoading: 'Checking invitation...',
+      inviteInvalidTitle: 'Invitation is invalid',
+      inviteInvalidText: 'This link has expired or has already been used.',
+      inviteRequestNew: 'Request a new invitation',
+      inviteCreateAccountSubmit: 'Create account',
+      inviteWeakPassword: 'Weak password',
+      passwordRepeatLabel: 'Repeat password',
+      passwordMismatch: 'Passwords do not match',
+      togglePasswordVisibility: 'Toggle password visibility',
+      inviteServerError: 'Could not create account, please try again later',
       inviteTokenInvalid: 'Invite token is missing or invalid.',
       inviteAcceptSubmit: 'Accept invite',
       inviteTokenLabel: 'Invite token',
@@ -237,6 +252,21 @@ export const dictionaries = {
       verifyBack: 'Назад',
       inviteAcceptTitle: 'Принять приглашение',
       inviteAcceptSubtitle: 'Задайте пароль, чтобы активировать доступ.',
+      inviteVerifyTitle: 'Подтвердите email и создайте аккаунт',
+      inviteContextGeneric: 'Вас пригласили в Meetli.',
+      inviteContextFallback: 'Вас пригласили в команду “{team}”.',
+      inviteContextFromInviter: 'Вас пригласил {inviter} в команду “{team}”.',
+      inviteFallbackTeamName: 'вашей команды',
+      inviteLoading: 'Проверяем приглашение...',
+      inviteInvalidTitle: 'Приглашение недействительно',
+      inviteInvalidText: 'Ссылка устарела или уже была использована.',
+      inviteRequestNew: 'Запросить новое приглашение',
+      inviteCreateAccountSubmit: 'Создать аккаунт',
+      inviteWeakPassword: 'Слабый пароль',
+      passwordRepeatLabel: 'Повторите пароль',
+      passwordMismatch: 'Пароли не совпадают',
+      togglePasswordVisibility: 'Показать или скрыть пароль',
+      inviteServerError: 'Не удалось создать аккаунт, попробуйте позже',
       inviteTokenInvalid: 'Токен приглашения отсутствует или некорректен.',
       inviteAcceptSubmit: 'Принять приглашение',
       inviteTokenLabel: 'Токен приглашения',
@@ -435,6 +465,22 @@ export type TranslationKey =
   | 'auth.verifyBack'
   | 'auth.inviteAcceptTitle'
   | 'auth.inviteAcceptSubtitle'
+
+  | 'auth.inviteVerifyTitle'
+  | 'auth.inviteContextGeneric'
+  | 'auth.inviteContextFallback'
+  | 'auth.inviteContextFromInviter'
+  | 'auth.inviteFallbackTeamName'
+  | 'auth.inviteLoading'
+  | 'auth.inviteInvalidTitle'
+  | 'auth.inviteInvalidText'
+  | 'auth.inviteRequestNew'
+  | 'auth.inviteCreateAccountSubmit'
+  | 'auth.inviteWeakPassword'
+  | 'auth.passwordRepeatLabel'
+  | 'auth.passwordMismatch'
+  | 'auth.togglePasswordVisibility'
+  | 'auth.inviteServerError'
   | 'auth.inviteTokenInvalid'
   | 'auth.inviteAcceptSubmit'
   | 'auth.inviteTokenLabel'

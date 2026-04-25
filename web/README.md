@@ -4,7 +4,7 @@ React SPA для owner/admin/specialist/client.
 
 ## Что умеет
 
-- Auth: `/login`, `/register`, `/invite/accept`.
+- Auth: `/login`, `/register`, `/invite/accept`, `/verify-email`.
 - Основные разделы: `/appointments`, `/specialists`, `/users`, `/settings`.
 - Role-aware UI (owner/admin/specialist/client).
 - i18n (`ru/en`), theme mode, palette variants.
@@ -33,3 +33,13 @@ VITE_API_URL=https://api.example.com
 
 - Глобальный обзор: [`../README.md`](../README.md)
 - Карта модуля: [`./PROJECT_MAP.md`](./PROJECT_MAP.md)
+
+
+### Invite verify-email flow
+
+Страница `/verify-email` поддерживает onboarding по приглашению:
+- проверка токена приглашения (loading/invalid states);
+- отображение email приглашения (readonly);
+- создание аккаунта с полями: имя, фамилия, пароль, повтор пароля, Telegram;
+- inline-ошибки (слабый пароль/несовпадение паролей) и fallback серверной ошибки;
+- запрос нового приглашения для истекших ссылок.

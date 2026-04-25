@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import type { Response } from 'express';
 import { env } from '../config/env.js';
 import { clearLoginAttempt, findLoginAttemptByIp, upsertFailedLoginAttempt } from '../repositories/loginAttemptRepository.js';
-import { createAccount } from '../repositories/accountRepository.js';
+import { createAccount, findAccountById } from '../repositories/accountRepository.js';
 import { createDefaultSpecialistForWebUserIfMissing, createSpecialistForWebUser } from '../repositories/specialistRepository.js';
 import {
   createWebUser,
@@ -366,7 +366,49 @@ export const verifyUserEmail = async (emailRaw: string, verificationCodeRaw: str
   return true;
 };
 
-export const acceptInvite = async (emailRaw: string, tokenRaw: string, password: string): Promise<boolean> => {
+
+export type InviteVerificationResult = {
+  valid: boolean;
+  email?: string;
+  accountName?: string;
+  firstName?: string;
+  lastName?: string;
+};
+
+export const verifyInvite = async (emailRaw: string, tokenRaw: string): Promise<InviteVerificationResult> => {
+  const email = sanitizeEmail(emailRaw);
+  const token = tokenRaw.trim();
+
+  if (!token) {
+    return { valid: false };
+  }
+
+  const user = await findWebUserByEmailAnyAccount(email);
+  if (!user || user.email_verified_at || !user.email_verification_code || !user.email_verification_sent_at) {
+    return { valid: false };
+  }
+
+  if ((now() - user.email_verification_sent_at.getTime()) > inviteTtlMs) {
+    return { valid: false };
+  }
+
+  const inviteHash = hashPassword(token, user.password_salt);
+  if (inviteHash !== user.email_verification_code) {
+    return { valid: false };
+  }
+
+  const account = await findAccountById(user.account_id);
+
+  return {
+    valid: true,
+    email: user.email,
+    accountName: account?.name,
+    firstName: user.first_name ?? undefined,
+    lastName: user.last_name ?? undefined,
+  };
+};
+
+export const acceptInvite = async (emailRaw: string, tokenRaw: string, password: string, firstName: string, lastName: string, telegramUsername?: string): Promise<boolean> => {
   const email = sanitizeEmail(emailRaw);
   const token = tokenRaw.trim();
   if (!token) {
@@ -401,6 +443,9 @@ export const acceptInvite = async (emailRaw: string, tokenRaw: string, password:
   await updateWebUserProfile({
     accountId: user.account_id,
     id: user.id,
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
+    telegramUsername: telegramUsername?.trim() || '',
     isActive: true,
   });
 

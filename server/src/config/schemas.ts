@@ -54,6 +54,19 @@ export const verifyEmailSchema = z.object({
     .max(128, v.emailVerificationCodeInvalid),
 });
 
+
+export const verifyInviteSchema = z.object({
+  email: z
+    .string()
+    .email(v.emailInvalid)
+    .max(254, v.emailTooLong),
+  token: z
+    .string()
+    .trim()
+    .min(8, v.emailVerificationCodeInvalid)
+    .max(128, v.emailVerificationCodeInvalid),
+});
+
 export const acceptInviteSchema = z.object({
   email: z
     .string()
@@ -65,6 +78,9 @@ export const acceptInviteSchema = z.object({
     .min(8, v.emailVerificationCodeInvalid)
     .max(128, v.emailVerificationCodeInvalid),
   password: passwordSchema,
+  firstName: z.string().trim().min(1, v.managedUserFirstNameRequired).max(120, v.managedUserFirstNameTooLong),
+  lastName: z.string().trim().min(1, v.managedUserLastNameRequired).max(120, v.managedUserLastNameTooLong),
+  telegramUsername: z.string().trim().max(255, v.managedUserTelegramTooLong).optional().or(z.literal('')),
 });
 
 export const resendEmailVerificationCodeSchema = z.object({
