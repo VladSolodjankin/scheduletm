@@ -2,14 +2,10 @@ import {
   Alert,
   Box,
   CircularProgress,
-  IconButton,
-  InputAdornment,
   Link,
   Stack,
   Typography,
 } from '@mui/material';
-import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
@@ -20,6 +16,7 @@ import { useI18n } from '../shared/i18n/I18nContext';
 import type { InviteVerifyResponse, VerifyEmailResponse } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
+import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 import { AppTextField } from '../shared/ui/AppTextField';
 
@@ -55,8 +52,6 @@ export function InviteAcceptContainer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRequestingInvite, setIsRequestingInvite] = useState(false);
   const [inviteState, setInviteState] = useState<InviteState>({ status: 'loading' });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const token = useMemo(() => searchParams.get('token')?.trim() ?? '', [searchParams]);
   const fallbackEmail = useMemo(() => searchParams.get('email')?.trim() ?? '', [searchParams]);
@@ -285,32 +280,12 @@ export function InviteAcceptContainer() {
                   validate: (value) => isStrongPassword(value) || t('auth.inviteWeakPassword'),
                 }}
                 render={({ field }) => (
-                  <AppTextField
-                    name={field.name}
+                  <AppRhfPasswordField
+                    field={field}
                     label={t('common.password')}
-                    type={showPassword ? 'text' : 'password'}
                     autoFocus
-                    value={field.value}
-                    onBlur={field.onBlur}
-                    onChange={field.onChange}
-                    inputRef={field.ref}
                     error={Boolean(errors.password)}
                     helperText={errors.password?.message}
-                    slotProps={{
-                      input: {
-                        endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            edge="end"
-                            onClick={() => setShowPassword((prev) => !prev)}
-                            aria-label={t('auth.togglePasswordVisibility')}
-                          >
-                            {showPassword ? <VisibilityOffRoundedIcon /> : <VisibilityRoundedIcon />}
-                          </IconButton>
-                        </InputAdornment>
-                        ),
-                      },
-                    }}
                   />
                 )}
               />
@@ -323,31 +298,11 @@ export function InviteAcceptContainer() {
                   validate: (value) => value === passwordValue || t('auth.passwordMismatch'),
                 }}
                 render={({ field }) => (
-                  <AppTextField
-                    name={field.name}
+                  <AppRhfPasswordField
+                    field={field}
                     label={t('auth.passwordRepeatLabel')}
-                    type={showPasswordConfirm ? 'text' : 'password'}
-                    value={field.value}
-                    onBlur={field.onBlur}
-                    onChange={field.onChange}
-                    inputRef={field.ref}
                     error={Boolean(errors.passwordConfirm)}
                     helperText={errors.passwordConfirm?.message}
-                    slotProps={{
-                      input: {
-                        endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            edge="end"
-                            onClick={() => setShowPasswordConfirm((prev) => !prev)}
-                            aria-label={t('auth.togglePasswordVisibility')}
-                          >
-                            {showPasswordConfirm ? <VisibilityOffRoundedIcon /> : <VisibilityRoundedIcon />}
-                          </IconButton>
-                        </InputAdornment>
-                        ),
-                      },
-                    }}
                   />
                 )}
               />

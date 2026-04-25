@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import logoText from '../static/images/logo_text.svg';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
+import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 
 type AuthFormValues = {
@@ -112,10 +113,9 @@ export function AuthCard({
             }
           }}
           render={({ field, fieldState }: any) => (
-            <AppRhfTextField
+            <AppRhfPasswordField
               field={field}
               label={passwordLabel}
-              type="password"
               slotProps={{ htmlInput: { minLength: 10 } }}
               onValueChange={() => clearErrors('password')}
               error={Boolean(fieldState.error)}
