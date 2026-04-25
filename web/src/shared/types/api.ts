@@ -39,6 +39,20 @@ export type SystemSettings = {
   dailyDigestEnabled: boolean;
   defaultMeetingDuration: number;
   weekStartsOnMonday: boolean;
+  refreshTokenTtlDays: number;
+  accessTokenTtlSeconds: number;
+  sessionCookieName: string;
+  googleOauthClientId: string;
+  googleOauthClientSecret: string;
+  googleOauthRedirectUri: string;
+};
+
+export type AccountSettings = {
+  timezone: string;
+  locale: string;
+  dailyDigestEnabled: boolean;
+  defaultMeetingDuration: number;
+  weekStartsOnMonday: boolean;
 };
 
 export type UserSettings = {

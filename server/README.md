@@ -12,7 +12,7 @@ Node.js/Express API для web-клиента и интеграций.
   Поддерживаются `POST /api/auth/verify-email` и `POST /api/auth/resend-verification-code`.
 - Web roles: owner/admin/specialist/client.
 - RBAC policy (централизованные проверки прав) в `src/policies/rolePermissions.ts`.
-- Settings API: user/system.
+- Settings API: system (owner), account (owner/admin), user (all users).
 - CRUD: users, specialists.
   - При создании пользователей owner/admin отправляется invite-link вместо временного пароля.
   - Приглашённый пользователь создаётся неактивным и активируется только после verify-email / accept-invite.
