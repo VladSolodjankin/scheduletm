@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { env } from '../config/env.js';
-import { loginSchema, registrationSchema, specialistUserCreationSchema } from '../config/schemas.js';
+import { loginSchema, registrationSchema, specialistUserCreationSchema, verifyEmailSchema } from '../config/schemas.js';
 import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { blockIfTooManyAttempts } from '../middlewares/loginRateLimit.js';
@@ -12,7 +12,8 @@ import {
   logoutSession,
   refreshAccess,
   registerFailedAttempt,
-  registerUser
+  registerUser,
+  verifyUserEmail,
 } from '../services/authService.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { parseCookies } from '../utils/cookies.js';
@@ -82,11 +83,32 @@ authRoutes.post('/register', async (req, res) => {
       });
     }
 
-    const accessToken = await issueSession(user, res);
     return res.status(201).json({
-      message: t(req, 'registrationSuccess'),
-      accessToken,
-      user: { id: user.id, email: user.email, role: user.role }
+      message: t(req, 'registrationVerificationSent'),
+      user: { id: user.id, email: user.email, role: user.role },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: t(req, 'registerFailed') });
+  }
+});
+
+authRoutes.post('/verify-email', async (req, res) => {
+  const parsed = verifyEmailSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json(formatZodError(parsed.error));
+  }
+
+  try {
+    const verified = await verifyUserEmail(parsed.data.email, parsed.data.code);
+    if (!verified) {
+      return res.status(400).json({
+        message: t(req, 'emailVerificationFailed'),
+      });
+    }
+
+    return res.json({
+      message: t(req, 'emailVerificationSuccess'),
     });
   } catch (error) {
     console.error(error);
@@ -121,6 +143,10 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
       user: { id: user.id, email: user.email, role: user.role }
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'EMAIL_NOT_VERIFIED') {
+      return res.status(403).json({ message: t(req, 'emailNotVerified') });
+    }
+
     console.error(error);
     return res.status(500).json({ message: t(req, 'loginFailed') });
   }

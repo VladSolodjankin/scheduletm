@@ -15,6 +15,10 @@ export type TelegramBotInfo = {
   name: string | null;
 };
 
+type TelegramSendMessageResponse = {
+  ok: boolean;
+};
+
 export async function verifyTelegramBotToken(token: string): Promise<TelegramBotInfo | null> {
   const trimmedToken = token.trim();
   if (!trimmedToken) {
@@ -37,5 +41,30 @@ export async function verifyTelegramBotToken(token: string): Promise<TelegramBot
     };
   } catch {
     return null;
+  }
+}
+
+export async function sendTelegramBotMessage(token: string, chatId: string, text: string): Promise<boolean> {
+  const trimmedToken = token.trim();
+  const trimmedChatId = chatId.trim();
+  const trimmedText = text.trim();
+
+  if (!trimmedToken || !trimmedChatId || !trimmedText) {
+    return false;
+  }
+
+  try {
+    const response = await axios.post<TelegramSendMessageResponse>(
+      `https://api.telegram.org/bot${trimmedToken}/sendMessage`,
+      {
+        chat_id: trimmedChatId,
+        text: trimmedText,
+      },
+      { timeout: 8000 },
+    );
+
+    return Boolean(response.data.ok);
+  } catch {
+    return false;
   }
 }

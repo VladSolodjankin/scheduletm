@@ -10,6 +10,7 @@ import {
   findWebUserById,
   findWebUserByIdAnyAccount,
   touchWebUserLastLogin,
+  updateWebUserAuthState,
   updateWebUserSettings,
 } from '../repositories/webUserRepository.js';
 import {
@@ -22,6 +23,7 @@ import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { canManageSpecialists } from '../policies/rolePermissions.js';
 import { createToken, hashPassword, sanitizeEmail, verifyPassword } from '../utils/crypto.js';
+import { sendEmailVerificationEmail, sendRegistrationSuccessEmail } from './emailDeliveryService.js';
 
 const now = () => Date.now();
 const cookieExpiresMs = env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;
@@ -123,6 +125,8 @@ export const registerUser = async (
 
   const salt = crypto.randomBytes(16).toString('hex');
   const passwordHash = hashPassword(password, salt);
+  const verificationCode = createToken();
+
   const webUser = await createWebUser({
     accountId,
     email,
@@ -130,9 +134,18 @@ export const registerUser = async (
     passwordHash,
     passwordSalt: salt,
     timezone,
+    emailVerificationCode: verificationCode,
+    emailVerificationSentAt: new Date(),
   });
 
   await createDefaultSpecialistForWebUserIfMissing(accountId, webUser.id, email);
+
+  const verificationLink = `${env.EMAIL_VERIFY_BASE_URL}?email=${encodeURIComponent(email)}&code=${encodeURIComponent(verificationCode)}`;
+  await sendEmailVerificationEmail({
+    to: email,
+    verificationCode,
+    verificationLink,
+  });
 
   return mapWebUserToDomain(
     webUser.id,
@@ -210,6 +223,11 @@ export const authenticateUser = async (
   if (!isValid) {
     return null;
   }
+
+  if (!user.email_verified_at) {
+    throw new Error('EMAIL_NOT_VERIFIED');
+  }
+
   const accountId = user.account_id;
 
   if (timezone && timezone !== user.timezone) {
@@ -230,6 +248,41 @@ export const authenticateUser = async (
     user.password_hash,
     user.created_at
   );
+};
+
+export const verifyUserEmail = async (emailRaw: string, verificationCodeRaw: string): Promise<boolean> => {
+  const email = sanitizeEmail(emailRaw);
+  const verificationCode = verificationCodeRaw.trim();
+  if (!verificationCode) {
+    return false;
+  }
+
+  const user = await findWebUserByEmailAnyAccount(email);
+  if (!user) {
+    return false;
+  }
+
+  if (user.email_verified_at) {
+    return true;
+  }
+
+  if (user.email_verification_code !== verificationCode) {
+    return false;
+  }
+
+  await updateWebUserAuthState({
+    accountId: user.account_id,
+    id: user.id,
+    emailVerifiedAt: new Date(),
+    emailVerificationCode: null,
+  });
+
+  await sendRegistrationSuccessEmail({
+    to: user.email,
+    firstName: user.first_name ?? undefined,
+  });
+
+  return true;
 };
 
 export const refreshAccess = async (refreshToken: string) => {

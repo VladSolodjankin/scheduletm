@@ -42,6 +42,18 @@ export const loginSchema = z.object({
   timezone: timezoneSchema.optional(),
 });
 
+export const verifyEmailSchema = z.object({
+  email: z
+    .string()
+    .email(v.emailInvalid)
+    .max(254, v.emailTooLong),
+  code: z
+    .string()
+    .trim()
+    .min(8, v.emailVerificationCodeInvalid)
+    .max(128, v.emailVerificationCodeInvalid),
+});
+
 export const systemSettingsSchema = z.object({
   dailyDigestEnabled: z.boolean(),
   defaultMeetingDuration: z.coerce
