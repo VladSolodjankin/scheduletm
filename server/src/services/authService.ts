@@ -29,6 +29,7 @@ import { sendEmailVerificationEmail, sendRegistrationSuccessEmail } from './emai
 const now = () => Date.now();
 const cookieExpiresMs = env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;
 const accessExpiresMs = env.ACCESS_TOKEN_TTL_SECONDS * 1000;
+const inviteTtlMs = 24 * 60 * 60 * 1000;
 
 export const isLockedIp = async (ip: string) => {
   const attempt = await findLoginAttemptByIp(ip);
@@ -121,12 +122,13 @@ export const registerUser = async (
     const salt = crypto.randomBytes(16).toString('hex');
     const passwordHash = hashPassword(password, salt);
     const verificationCode = createToken();
+    const verificationCodeHash = hashPassword(verificationCode, salt);
 
     await updateWebUserCredentials(existing.account_id, existing.id, passwordHash, salt);
     await updateWebUserAuthState({
       accountId: existing.account_id,
       id: existing.id,
-      emailVerificationCode: verificationCode,
+      emailVerificationCode: verificationCodeHash,
       emailVerificationSentAt: new Date(),
     });
 
@@ -157,6 +159,7 @@ export const registerUser = async (
   const salt = crypto.randomBytes(16).toString('hex');
   const passwordHash = hashPassword(password, salt);
   const verificationCode = createToken();
+  const verificationCodeHash = hashPassword(verificationCode, salt);
 
   const webUser = await createWebUser({
     accountId,
@@ -165,7 +168,7 @@ export const registerUser = async (
     passwordHash,
     passwordSalt: salt,
     timezone,
-    emailVerificationCode: verificationCode,
+    emailVerificationCode: verificationCodeHash,
     emailVerificationSentAt: new Date(),
   });
 
@@ -199,11 +202,12 @@ export const resendUserEmailVerificationCode = async (emailRaw: string): Promise
   }
 
   const verificationCode = createToken();
+  const verificationCodeHash = hashPassword(verificationCode, user.password_salt);
 
   await updateWebUserAuthState({
     accountId: user.account_id,
     id: user.id,
-    emailVerificationCode: verificationCode,
+    emailVerificationCode: verificationCodeHash,
     emailVerificationSentAt: new Date(),
   });
 
@@ -324,7 +328,16 @@ export const verifyUserEmail = async (emailRaw: string, verificationCodeRaw: str
     return true;
   }
 
-  if (user.email_verification_code !== verificationCode) {
+  if (!user.email_verification_code) {
+    return false;
+  }
+
+  const expectedCodeHash = hashPassword(verificationCode, user.password_salt);
+  if (user.email_verification_code !== expectedCodeHash) {
+    return false;
+  }
+
+  if (user.email_verification_sent_at && (now() - user.email_verification_sent_at.getTime()) > inviteTtlMs) {
     return false;
   }
 
@@ -333,6 +346,47 @@ export const verifyUserEmail = async (emailRaw: string, verificationCodeRaw: str
     id: user.id,
     emailVerifiedAt: new Date(),
     emailVerificationCode: null,
+  });
+
+  await sendRegistrationSuccessEmail({
+    to: user.email,
+    firstName: user.first_name ?? undefined,
+  });
+
+  return true;
+};
+
+export const acceptInvite = async (emailRaw: string, tokenRaw: string, password: string): Promise<boolean> => {
+  const email = sanitizeEmail(emailRaw);
+  const token = tokenRaw.trim();
+  if (!token) {
+    return false;
+  }
+
+  const user = await findWebUserByEmailAnyAccount(email);
+  if (!user || user.email_verified_at || !user.email_verification_code || !user.email_verification_sent_at) {
+    return false;
+  }
+
+  if ((now() - user.email_verification_sent_at.getTime()) > inviteTtlMs) {
+    return false;
+  }
+
+  const inviteHash = hashPassword(token, user.password_salt);
+  if (inviteHash !== user.email_verification_code) {
+    return false;
+  }
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  const passwordHash = hashPassword(password, salt);
+
+  await updateWebUserCredentials(user.account_id, user.id, passwordHash, salt);
+  await updateWebUserAuthState({
+    accountId: user.account_id,
+    id: user.id,
+    emailVerifiedAt: new Date(),
+    emailVerificationCode: null,
+    emailVerificationSentAt: null,
   });
 
   await sendRegistrationSuccessEmail({

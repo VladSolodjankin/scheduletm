@@ -113,26 +113,24 @@ export async function sendRegistrationSuccessEmail(input: SendRegistrationSucces
   });
 }
 
-export type SendWelcomePasswordEmailInput = {
+export type SendManagedUserInviteEmailInput = {
   to: string;
   firstName: string;
-  temporaryPassword: string;
-  verificationCode: string;
-  verificationLink: string;
+  inviteLink: string;
 };
 
-export async function sendWelcomePasswordEmail(input: SendWelcomePasswordEmailInput): Promise<boolean> {
+export async function sendManagedUserInviteEmail(input: SendManagedUserInviteEmailInput): Promise<boolean> {
   const template = renderEmailTemplate({
-    title: 'Вас добавили в Meetli',
-    body: `Здравствуйте, ${input.firstName}! Ваш одноразовый пароль: ${input.temporaryPassword}. Код активации: ${input.verificationCode}.`,
-    ctaLabel: 'Активировать аккаунт',
-    ctaLink: input.verificationLink,
-    footer: 'Рекомендуем сменить пароль после первого входа.',
+    title: 'Приглашение в Meetli',
+    body: `Здравствуйте, ${input.firstName}! Для завершения регистрации перейдите по ссылке и задайте пароль.`,
+    ctaLabel: 'Принять приглашение',
+    ctaLink: input.inviteLink,
+    footer: 'Ссылка действует 24 часа и может быть использована только один раз.',
   });
 
   return sendEmail({
     to: input.to,
-    subject: 'Meetli — активация аккаунта',
+    subject: 'Meetli — приглашение в аккаунт',
     ...template,
   });
 }

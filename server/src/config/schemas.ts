@@ -54,6 +54,19 @@ export const verifyEmailSchema = z.object({
     .max(128, v.emailVerificationCodeInvalid),
 });
 
+export const acceptInviteSchema = z.object({
+  email: z
+    .string()
+    .email(v.emailInvalid)
+    .max(254, v.emailTooLong),
+  token: z
+    .string()
+    .trim()
+    .min(8, v.emailVerificationCodeInvalid)
+    .max(128, v.emailVerificationCodeInvalid),
+  password: passwordSchema,
+});
+
 export const resendEmailVerificationCodeSchema = z.object({
   email: z
     .string()

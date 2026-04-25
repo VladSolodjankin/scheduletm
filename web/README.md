@@ -4,7 +4,7 @@ React SPA для owner/admin/specialist/client.
 
 ## Что умеет
 
-- Auth: `/login`, `/register`.
+- Auth: `/login`, `/register`, `/invite/accept`.
 - Основные разделы: `/appointments`, `/specialists`, `/users`, `/settings`.
 - Role-aware UI (owner/admin/specialist/client).
 - i18n (`ru/en`), theme mode, palette variants.
