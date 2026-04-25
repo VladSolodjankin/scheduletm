@@ -42,9 +42,6 @@ export type SystemSettings = {
   refreshTokenTtlDays: number;
   accessTokenTtlSeconds: number;
   sessionCookieName: string;
-  googleOauthClientId: string;
-  googleOauthClientSecret: string;
-  googleOauthRedirectUri: string;
 };
 
 export type AccountSettings = {

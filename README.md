@@ -132,7 +132,8 @@ scheduletm/
 Нужно сделать system_settings следующим образом
  - Будут доступны только для Owner
  - Будут ссылаться на таблицу system_settings
- - Будет возможность настроек системы на уровне Owner (REFRESH_TOKEN_TTL_DAYS, ACCESS_TOKEN_TTL_SECONDS, SESSION_COOKIE_NAME, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REDIRECT_URI) и другие системные настройки(можешь что то посоветовать если есть идеи)
+ - Будет возможность настроек системы на уровне Owner (REFRESH_TOKEN_TTL_DAYS, ACCESS_TOKEN_TTL_SECONDS, SESSION_COOKIE_NAME) и другие runtime-настройки без секретов (можешь что-то посоветовать, если есть идеи)
+ - GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REDIRECT_URI храним только в `.env`
 
 app_settings наверное лучше переименовать в user_settings (нужен совет как это лучше сделать, возможно надо часть настроек перенести в user_settings и сделать еще одну таблицу account_settings - могут редактировать Owner с сортировкой по account_id, админы аккаунта)
  - перенести всю логику из app_settings в user_settings

@@ -21,9 +21,6 @@ export type SystemSettings = {
   refreshTokenTtlDays: number;
   accessTokenTtlSeconds: number;
   sessionCookieName: string;
-  googleOauthClientId: string;
-  googleOauthClientSecret: string;
-  googleOauthRedirectUri: string;
 };
 
 export type AccountSettings = {
@@ -52,9 +49,6 @@ const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   refreshTokenTtlDays: 30,
   accessTokenTtlSeconds: 900,
   sessionCookieName: 'meetli_refresh_token',
-  googleOauthClientId: '',
-  googleOauthClientSecret: '',
-  googleOauthRedirectUri: '',
 };
 
 const mapSystemSettings = async (): Promise<SystemSettings> => {
@@ -70,9 +64,6 @@ const mapSystemSettings = async (): Promise<SystemSettings> => {
     refreshTokenTtlDays: row.refresh_token_ttl_days,
     accessTokenTtlSeconds: row.access_token_ttl_seconds,
     sessionCookieName: row.session_cookie_name,
-    googleOauthClientId: row.google_oauth_client_id ?? '',
-    googleOauthClientSecret: row.google_oauth_client_secret ?? '',
-    googleOauthRedirectUri: row.google_oauth_redirect_uri ?? '',
   };
 };
 
@@ -124,9 +115,6 @@ export const updateSystemSettings = async (payload: unknown): Promise<SystemSett
     refreshTokenTtlDays: parsed.data.refreshTokenTtlDays,
     accessTokenTtlSeconds: parsed.data.accessTokenTtlSeconds,
     sessionCookieName: parsed.data.sessionCookieName,
-    googleOauthClientId: parsed.data.googleOauthClientId,
-    googleOauthClientSecret: parsed.data.googleOauthClientSecret,
-    googleOauthRedirectUri: parsed.data.googleOauthRedirectUri,
   });
 
   return mapSystemSettings();

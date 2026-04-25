@@ -8,9 +8,6 @@ export type SystemSettingsRecord = {
   refresh_token_ttl_days: number;
   access_token_ttl_seconds: number;
   session_cookie_name: string;
-  google_oauth_client_id: string | null;
-  google_oauth_client_secret: string | null;
-  google_oauth_redirect_uri: string | null;
 };
 
 export type UpdateSystemSettingsInput = {
@@ -20,9 +17,6 @@ export type UpdateSystemSettingsInput = {
   refreshTokenTtlDays?: number;
   accessTokenTtlSeconds?: number;
   sessionCookieName?: string;
-  googleOauthClientId?: string;
-  googleOauthClientSecret?: string;
-  googleOauthRedirectUri?: string;
 };
 
 export async function getSystemSettingsRecord(): Promise<SystemSettingsRecord | null> {
@@ -59,17 +53,6 @@ export async function updateSystemSettingsRecord(input: UpdateSystemSettingsInpu
     patch.session_cookie_name = input.sessionCookieName;
   }
 
-  if (input.googleOauthClientId !== undefined) {
-    patch.google_oauth_client_id = input.googleOauthClientId;
-  }
-
-  if (input.googleOauthClientSecret !== undefined) {
-    patch.google_oauth_client_secret = input.googleOauthClientSecret;
-  }
-
-  if (input.googleOauthRedirectUri !== undefined) {
-    patch.google_oauth_redirect_uri = input.googleOauthRedirectUri;
-  }
 
   await db('system_settings').whereIn('id', db('system_settings').select('id').orderBy('id', 'asc').limit(1)).update(patch);
 }

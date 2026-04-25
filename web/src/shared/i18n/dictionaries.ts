@@ -89,9 +89,6 @@ export const dictionaries = {
       refreshTokenTtlDays: 'Refresh token TTL (days)',
       accessTokenTtlSeconds: 'Access token TTL (seconds)',
       sessionCookieName: 'Session cookie name',
-      googleOauthClientId: 'Google OAuth client id',
-      googleOauthClientSecret: 'Google OAuth client secret',
-      googleOauthRedirectUri: 'Google OAuth redirect URI',
       integrationsTitle: 'Integrations',
       integrationsSubtitle: 'Connect external services to automate bookings and reminders.',
       connectGoogle: 'Connect Google',
@@ -316,9 +313,6 @@ export const dictionaries = {
       refreshTokenTtlDays: 'TTL refresh token (дни)',
       accessTokenTtlSeconds: 'TTL access token (сек)',
       sessionCookieName: 'Имя session cookie',
-      googleOauthClientId: 'Google OAuth client id',
-      googleOauthClientSecret: 'Google OAuth client secret',
-      googleOauthRedirectUri: 'Google OAuth redirect URI',
       integrationsTitle: 'Интеграции',
       integrationsSubtitle: 'Подключите внешние сервисы, чтобы автоматизировать бронирования и напоминания.',
       connectGoogle: 'Подключить Google',
@@ -537,9 +531,6 @@ export type TranslationKey =
   | 'settings.refreshTokenTtlDays'
   | 'settings.accessTokenTtlSeconds'
   | 'settings.sessionCookieName'
-  | 'settings.googleOauthClientId'
-  | 'settings.googleOauthClientSecret'
-  | 'settings.googleOauthRedirectUri'
   | 'settings.integrationsTitle'
   | 'settings.integrationsSubtitle'
   | 'settings.connectGoogle'
