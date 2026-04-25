@@ -20,6 +20,7 @@ type UsersTableProps = {
   addLabel: string;
   editLabel: string;
   deleteLabel: string;
+  resendInviteLabel: string;
   emailColumnLabel: string;
   firstNameColumnLabel: string;
   lastNameColumnLabel: string;
@@ -31,6 +32,8 @@ type UsersTableProps = {
   onAdd: () => void;
   onEdit: (item: ManagedUserItem) => void;
   onDelete: (item: ManagedUserItem) => void;
+  onResendInvite: (item: ManagedUserItem) => void;
+  isResendingInviteForUserId: number | null;
 };
 
 export function UsersTable({
@@ -39,6 +42,7 @@ export function UsersTable({
   addLabel,
   editLabel,
   deleteLabel,
+  resendInviteLabel,
   emailColumnLabel,
   firstNameColumnLabel,
   lastNameColumnLabel,
@@ -49,7 +53,9 @@ export function UsersTable({
   users,
   onAdd,
   onEdit,
-  onDelete
+  onDelete,
+  onResendInvite,
+  isResendingInviteForUserId
 }: UsersTableProps) {
   return (
     <Stack spacing={1.5}>
@@ -86,6 +92,17 @@ export function UsersTable({
                 <TableCell>{item.isVerified ? '✓' : '—'}</TableCell>
                 <TableCell>{item.isActive ? '✓' : '—'}</TableCell>
                 <TableCell align="right">
+                  {!item.isVerified && (
+                    <AppButton
+                      size="small"
+                      variant="text"
+                      onClick={() => onResendInvite(item)}
+                      isLoading={isResendingInviteForUserId === item.id}
+                      sx={{ mr: 0.5 }}
+                    >
+                      {resendInviteLabel}
+                    </AppButton>
+                  )}
                   <IconButton size="small" aria-label={editLabel} onClick={() => onEdit(item)}>
                     <AppIcons.edit fontSize="small" />
                   </IconButton>

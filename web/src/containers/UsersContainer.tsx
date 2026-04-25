@@ -8,7 +8,7 @@ import { resolveApiError } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
-import type { ManagedUserItem, ManagedUsersListResponse } from '../shared/types/api';
+import type { ManagedUserItem, ManagedUsersListResponse, VerifyEmailResponse } from '../shared/types/api';
 
 export function UsersContainer() {
   const navigate = useNavigate();
@@ -17,6 +17,8 @@ export function UsersContainer() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isResendingInviteForUserId, setIsResendingInviteForUserId] = useState<number | null>(null);
+  const [success, setSuccess] = useState('');
   const [users, setUsers] = useState<ManagedUserItem[]>([]);
   const [editingUser, setEditingUser] = useState<ManagedUserItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -41,6 +43,7 @@ export function UsersContainer() {
           headers: authHeaders(accessToken),
         });
         setUsers(response.data.users);
+        setSuccess('');
       } catch (err) {
         setError(resolveApiError(err, {
           fallbackMessage: t('users.errors.load'),
@@ -74,6 +77,7 @@ export function UsersContainer() {
       }
 
       setError('');
+      setSuccess('');
       setIsDialogOpen(false);
       setEditingUser(null);
     } catch (err) {
@@ -97,6 +101,7 @@ export function UsersContainer() {
       });
       setUsers((prev) => prev.map((userItem) => (userItem.id === response.data.id ? response.data : userItem)));
       setError('');
+      setSuccess('');
     } catch (err) {
       setError(resolveApiError(err, {
         fallbackMessage: t('users.errors.delete'),
@@ -105,11 +110,39 @@ export function UsersContainer() {
     }
   };
 
+  const resendInvite = async (item: ManagedUserItem) => {
+    if (!accessToken) {
+      return;
+    }
+
+    setIsResendingInviteForUserId(item.id);
+    try {
+      const response = await apiClient.post<VerifyEmailResponse>(`/api/users/${item.id}/resend-invite`, {}, {
+        headers: authHeaders(accessToken),
+      });
+      setError('');
+      setSuccess(response.data.message || t('users.success.inviteResent'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('users.errors.inviteResend'),
+        networkMessage: t('common.errors.network')
+      }).message);
+      setSuccess('');
+    } finally {
+      setIsResendingInviteForUserId(null);
+    }
+  };
+
   return (
     <AppPage title={t('users.pageTitle')} subtitle={t('users.pageSubtitle')}>
       {error && (
         <Box sx={{ maxWidth: 1100, mb: 2 }}>
           <Alert severity="error">{error}</Alert>
+        </Box>
+      )}
+      {success && (
+        <Box sx={{ maxWidth: 1100, mb: 2 }}>
+          <Alert severity="success">{success}</Alert>
         </Box>
       )}
 
@@ -131,6 +164,7 @@ export function UsersContainer() {
               addLabel={t('users.add')}
               editLabel={t('users.edit')}
               deleteLabel={t('users.delete')}
+              resendInviteLabel={t('users.resendInvite')}
               emailColumnLabel={t('users.columns.email')}
               firstNameColumnLabel={t('users.columns.firstName')}
               lastNameColumnLabel={t('users.columns.lastName')}
@@ -148,6 +182,8 @@ export function UsersContainer() {
                 setIsDialogOpen(true);
               }}
               onDelete={(item) => void deleteUser(item)}
+              onResendInvite={(item) => void resendInvite(item)}
+              isResendingInviteForUserId={isResendingInviteForUserId}
             />
           )}
         </Box>
