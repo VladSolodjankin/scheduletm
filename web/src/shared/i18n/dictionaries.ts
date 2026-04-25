@@ -134,6 +134,7 @@ export const dictionaries = {
       add: 'Add user',
       edit: 'Edit user',
       delete: 'Deactivate user',
+      resendInvite: 'Resend invite',
       empty: 'No users yet.',
       save: 'Save',
       close: 'Close',
@@ -165,7 +166,11 @@ export const dictionaries = {
       errors: {
         load: 'Unable to load users.',
         save: 'Unable to save user.',
-        delete: 'Unable to delete user.'
+        delete: 'Unable to delete user.',
+        inviteResend: 'Unable to resend invite.'
+      },
+      success: {
+        inviteResent: 'Invite link sent.'
       }
     },
     appointments: {
@@ -348,6 +353,7 @@ export const dictionaries = {
       add: 'Добавить пользователя',
       edit: 'Редактировать пользователя',
       delete: 'Деактивировать пользователя',
+      resendInvite: 'Отправить инвайт повторно',
       empty: 'Пользователи пока не добавлены.',
       save: 'Сохранить',
       close: 'Закрыть',
@@ -379,7 +385,11 @@ export const dictionaries = {
       errors: {
         load: 'Не удалось загрузить пользователей.',
         save: 'Не удалось сохранить пользователя.',
-        delete: 'Не удалось удалить пользователя.'
+        delete: 'Не удалось удалить пользователя.',
+        inviteResend: 'Не удалось отправить приглашение повторно.'
+      },
+      success: {
+        inviteResent: 'Ссылка-приглашение отправлена.'
       }
     },
     appointments: {
@@ -545,6 +555,7 @@ export type TranslationKey =
   | 'users.add'
   | 'users.edit'
   | 'users.delete'
+  | 'users.resendInvite'
   | 'users.empty'
   | 'users.save'
   | 'users.close'
@@ -570,6 +581,8 @@ export type TranslationKey =
   | 'users.errors.load'
   | 'users.errors.save'
   | 'users.errors.delete'
+  | 'users.errors.inviteResend'
+  | 'users.success.inviteResent'
   | 'appointments.pageTitle'
   | 'appointments.pageSubtitle'
   | 'appointments.specialistFilter'

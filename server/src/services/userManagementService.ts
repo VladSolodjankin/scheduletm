@@ -7,6 +7,7 @@ import {
   findWebUserById,
   listWebUsersAllAccounts,
   listWebUsersByAccount,
+  updateWebUserAuthState,
   updateWebUserProfile,
 } from '../repositories/webUserRepository.js';
 import type { User } from '../types/domain.js';
@@ -202,4 +203,40 @@ export async function deactivateManagedUser(actor: User, userId: number): Promis
 
   const updated = await findWebUserById(accountId, userId);
   return updated ? mapUser(updated) : null;
+}
+
+export async function resendManagedUserInvite(actor: User, userId: number): Promise<void> {
+  if (!canManageClients(actor.role)) {
+    throw new Error('FORBIDDEN');
+  }
+
+  const accountId = await resolveAccountId(actor);
+  const existing = await findWebUserById(accountId, userId);
+  if (!existing) {
+    throw new Error('NOT_FOUND');
+  }
+  if (!canManageFullUserDirectory(actor.role) && existing.role !== WebUserRole.Client) {
+    throw new Error('FORBIDDEN');
+  }
+  if (existing.email_verified_at) {
+    throw new Error('ALREADY_VERIFIED');
+  }
+
+  const inviteToken = createToken();
+  const inviteTokenHash = hashPassword(inviteToken, existing.password_salt);
+
+  await updateWebUserAuthState({
+    accountId,
+    id: userId,
+    emailVerificationCode: inviteTokenHash,
+    emailVerificationSentAt: new Date(),
+  });
+
+  const inviteLink = `${env.EMAIL_VERIFY_BASE_URL.replace(/\/+$/, '')}/invite/accept?email=${encodeURIComponent(existing.email)}&token=${encodeURIComponent(inviteToken)}`;
+
+  await sendManagedUserInviteEmail({
+    to: existing.email,
+    firstName: existing.first_name ?? '',
+    inviteLink,
+  });
 }

@@ -6,6 +6,7 @@ import {
   createManagedUser,
   deactivateManagedUser,
   listManagedUsers,
+  resendManagedUserInvite,
   updateManagedUser,
 } from '../services/userManagementService.js';
 import { formatZodError } from '../utils/validation.js';
@@ -107,5 +108,31 @@ userManagementRoutes.delete('/:id', async (req, res) => {
 
     console.error(error);
     return res.status(500).json({ message: t(req, 'userDeleteFailed') });
+  }
+});
+
+userManagementRoutes.post('/:id/resend-invite', async (req, res) => {
+  const actor = (req as unknown as AuthedRequest).user;
+  const userId = Number(req.params.id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(400).json({ message: t(req, 'invalidUserId') });
+  }
+
+  try {
+    await resendManagedUserInvite(actor, userId);
+    return res.json({ message: t(req, 'userInviteResendSuccess') });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'FORBIDDEN') {
+      return res.status(403).json({ message: t(req, 'forbiddenManageUsers') });
+    }
+    if (error instanceof Error && error.message === 'NOT_FOUND') {
+      return res.status(404).json({ message: t(req, 'managedUserNotFound') });
+    }
+    if (error instanceof Error && error.message === 'ALREADY_VERIFIED') {
+      return res.status(409).json({ message: t(req, 'userInviteAlreadyVerified') });
+    }
+
+    console.error(error);
+    return res.status(500).json({ message: t(req, 'userInviteResendFailed') });
   }
 });
