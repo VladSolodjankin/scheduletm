@@ -10,7 +10,7 @@ const envSchema = z.object({
   BREVO_API_KEY: z.string().default(''),
   EMAIL_FROM_ADDRESS: z.string().email().default('no-reply@meetli.cc'),
   EMAIL_FROM_NAME: z.string().default('Meetli'),
-  EMAIL_VERIFY_BASE_URL: z.string().url().default('http://localhost:5173/verify-email'),
+  EMAIL_VERIFY_BASE_URL: z.string().url().default('http://localhost:5173'),
   GOOGLE_OAUTH_CLIENT_ID: z.string().default(''),
   GOOGLE_OAUTH_CLIENT_SECRET: z.string().default(''),
   GOOGLE_OAUTH_REDIRECT_URI: z.string().url().default('http://localhost:3003/api/integrations/google/oauth/callback'),

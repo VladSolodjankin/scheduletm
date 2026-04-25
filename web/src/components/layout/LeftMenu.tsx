@@ -35,6 +35,7 @@ export function LeftMenu({ items }: LeftMenuProps) {
               to={item.to}
               sx={{
                 borderRadius: 2,
+                marginBottom: 1,
                 '&.active': {
                   bgcolor: 'action.selected'
                 }

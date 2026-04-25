@@ -120,3 +120,26 @@ scheduletm/
 
 Основываясь на README.md
 Не забудь обновить документации
+Не забывай использовать локали для текстов, если локаль не используется в текущем файле который ты редактируешь, то добавь
+
+
+Идеи:
+
+Нужно сделать настройки отмены записи. Пример у каждого специалиста есть свои правила отмены записи. (user_settings)
+ - Если отменяете запись меньше чем за 24 часа, то предоплата за запись не возвращается (нужно добавить какой то сеттинг cancel_appointment_grace_period, return_maney_on_cancel) 
+ - Автоматическая отмена записи если не было оплаты (auto_cancel_appointment_if_not_paid)
+ - 
+Нужно сделать system_settings следующим образом
+ - Будут доступны только для Owner
+ - Будут ссылаться на таблицу system_settings
+ - Будет возможность настроек системы на уровне Owner (REFRESH_TOKEN_TTL_DAYS, ACCESS_TOKEN_TTL_SECONDS, SESSION_COOKIE_NAME, GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REDIRECT_URI) и другие системные настройки(можешь что то посоветовать если есть идеи)
+
+app_settings наверное лучше переименовать в user_settings (нужен совет как это лучше сделать, возможно надо часть настроек перенести в user_settings и сделать еще одну таблицу account_settings - могут редактировать Owner с сортировкой по account_id, админы аккаунта)
+ - перенести всю логику из app_settings в user_settings
+ - перенести часть полей из web_user в user_settings (google_api_key, google_calendar_id, timezone, locale, ui_theme_mode, ui_palette_variant_id, google_refresh_token, google_token_expires_at, telegram_bot_token)
+ - Позже добавим другие настройки
+
+нужно сделать notification_settings (нужен совет как лучше это реализовать)
+ - не знаю как лучше это реализовать на уровне какого то конкретного юзера или на уровне системы или и там и там user_notification_settings и account_notification_settings
+ - будет включать в себя настройки когда отправлять нужно ли оповещать о только что созданном апоинтменте, напоминание о апоинтменте, какие то информационные оповещения и т.д
+
