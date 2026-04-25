@@ -50,6 +50,23 @@ export async function findActiveWebUserSessionByToken(
   return row ?? null;
 }
 
+export async function findActiveWebUserSessionByTokenAnyAccount(
+  token: string,
+  sessionType: WebSessionType,
+): Promise<WebUserSessionRecord | null> {
+  const row = await db('web_user_sessions')
+    .where({
+      token,
+      session_type: sessionType,
+    })
+    .whereNull('revoked_at')
+    .where('expires_at', '>', db.fn.now())
+    .orderBy('id', 'desc')
+    .first<WebUserSessionRecord>();
+
+  return row ?? null;
+}
+
 export async function revokeWebUserSessionByToken(accountId: number, token: string): Promise<void> {
   await db('web_user_sessions')
     .where({ account_id: accountId, token })
@@ -63,5 +80,21 @@ export async function revokeWebUserSessionByToken(accountId: number, token: stri
 export async function deleteWebUserSessionByToken(accountId: number, token: string): Promise<void> {
   await db('web_user_sessions')
     .where({ account_id: accountId, token })
+    .del();
+}
+
+export async function revokeWebUserSessionByTokenAnyAccount(token: string): Promise<void> {
+  await db('web_user_sessions')
+    .where({ token })
+    .whereNull('revoked_at')
+    .update({
+      revoked_at: db.fn.now(),
+      updated_at: db.fn.now(),
+    });
+}
+
+export async function deleteWebUserSessionByTokenAnyAccount(token: string): Promise<void> {
+  await db('web_user_sessions')
+    .where({ token })
     .del();
 }

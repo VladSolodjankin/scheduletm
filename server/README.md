@@ -5,15 +5,17 @@ Node.js/Express API для web-клиента и интеграций.
 ## Что умеет
 
 - Auth: register/login/refresh/logout.
-  При регистрации пользователю присваивается роль 'Admin'
+  При self-registration пользователю создаётся отдельный `account_id` и присваивается роль `admin`.
 - Web roles: owner/admin/specialist/client.
+- RBAC policy (централизованные проверки прав) в `src/policies/rolePermissions.ts`.
 - Settings API: user/system.
 - CRUD: users, specialists.
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
 - Client self-service:
   - owner/admin/specialist могут создавать web users с ролью `client`;
   - `client` видит и управляет только собственными записями (edit/reschedule/cancel);
-  - `client` не может создавать новые записи, отмечать оплату и отправлять уведомления.
+  - `client` может создавать appointment только для себя;
+  - `client` не может отмечать оплату и отправлять уведомления.
 - Google OAuth (`start` + `callback`).
 - Локализованные API-сообщения (`ru/en`).
 
@@ -40,3 +42,4 @@ npm run -w @scheduletm/server test
 
 - Глобальный обзор: [`../README.md`](../README.md)
 - Карта модуля: [`./PROJECT_MAP.md`](./PROJECT_MAP.md)
+- Роли и права (RBAC): [`./docs/rbac.md`](./docs/rbac.md)

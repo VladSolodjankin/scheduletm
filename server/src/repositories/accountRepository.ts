@@ -13,3 +13,15 @@ export async function getDefaultAccountId(): Promise<number> {
 
   return account.id;
 }
+
+export async function createAccount(input: { code: string; name: string }): Promise<number> {
+  const [row] = await db('accounts')
+    .insert({
+      code: input.code,
+      name: input.name,
+      is_active: true,
+    })
+    .returning<{ id: number }[]>('id');
+
+  return row.id;
+}

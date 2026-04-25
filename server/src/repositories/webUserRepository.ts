@@ -49,6 +49,15 @@ export async function findWebUserByEmail(accountId: number, email: string): Prom
   return row ?? null;
 }
 
+export async function findWebUserByEmailAnyAccount(email: string): Promise<WebUserRecord | null> {
+  const row = await db('web_users')
+    .where({ email })
+    .orderBy('id', 'asc')
+    .first<WebUserRecord>();
+
+  return row ?? null;
+}
+
 export async function findWebUserById(accountId: number, id: number): Promise<WebUserRecord | null> {
   const row = await db('web_users')
     .where({ account_id: accountId, id })
@@ -57,9 +66,22 @@ export async function findWebUserById(accountId: number, id: number): Promise<We
   return row ?? null;
 }
 
+export async function findWebUserByIdAnyAccount(id: number): Promise<WebUserRecord | null> {
+  const row = await db('web_users')
+    .where({ id })
+    .first<WebUserRecord>();
+
+  return row ?? null;
+}
+
 export async function listWebUsersByAccount(accountId: number): Promise<WebUserRecord[]> {
   return db('web_users')
     .where({ account_id: accountId })
+    .orderBy('created_at', 'desc');
+}
+
+export async function listWebUsersAllAccounts(): Promise<WebUserRecord[]> {
+  return db('web_users')
     .orderBy('created_at', 'desc');
 }
 

@@ -3,9 +3,10 @@ import { findAppSettingsByAccountId, updateAppSettingsByAccountId } from '../rep
 import { findWebUserById, updateWebUserSettings } from '../repositories/webUserRepository.js';
 import { findWebUserIntegrationByWebUserId, updateWebUserTelegramIntegration } from '../repositories/webUserIntegrationRepository.js';
 import type { User } from '../types/domain.js';
-import { WebUserRole } from '../types/webUserRole.js';
 import { systemSettingsSchema, userSettingsSchema } from '../config/schemas.js';
 import { verifyTelegramBotToken } from './telegramService.js';
+import { canManageSystemSettings } from '../policies/rolePermissions.js';
+export { canManageSystemSettings } from '../policies/rolePermissions.js';
 
 export type SystemSettings = {
   dailyDigestEnabled: boolean;
@@ -45,10 +46,6 @@ const mapSystemSettings = async (): Promise<SystemSettings> => {
   };
 };
 
-export const canManageSystemSettings = (role: WebUserRole): boolean => {
-  return role === WebUserRole.Owner || role === WebUserRole.Admin;
-};
-
 export const getSystemSettings = async (): Promise<SystemSettings> => {
   return mapSystemSettings();
 };
@@ -70,9 +67,9 @@ export const updateSystemSettings = async (payload: unknown): Promise<SystemSett
   return mapSystemSettings();
 };
 
-export const getUserSettings = async (userId: string): Promise<UserSettings> => {
-  const accountId = await getDefaultAccountId();
-  const numericUserId = Number(userId);
+export const getUserSettings = async (actor: User): Promise<UserSettings> => {
+  const accountId = actor.accountId;
+  const numericUserId = Number(actor.id);
   const user = Number.isInteger(numericUserId)
     ? await findWebUserById(accountId, numericUserId)
     : null;
@@ -152,5 +149,5 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
     telegramBotName: telegramBotNamePatch,
   });
 
-  return getUserSettings(actor.id);
+  return getUserSettings(actor);
 };

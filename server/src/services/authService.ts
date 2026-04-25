@@ -2,23 +2,25 @@ import crypto from 'node:crypto';
 import type { Response } from 'express';
 import { env } from '../config/env.js';
 import { clearLoginAttempt, findLoginAttemptByIp, upsertFailedLoginAttempt } from '../repositories/loginAttemptRepository.js';
-import { getDefaultAccountId } from '../repositories/accountRepository.js';
+import { createAccount } from '../repositories/accountRepository.js';
 import { createDefaultSpecialistForWebUserIfMissing, createSpecialistForWebUser } from '../repositories/specialistRepository.js';
 import {
   createWebUser,
-  findWebUserByEmail,
+  findWebUserByEmailAnyAccount,
   findWebUserById,
+  findWebUserByIdAnyAccount,
   touchWebUserLastLogin,
   updateWebUserSettings,
 } from '../repositories/webUserRepository.js';
 import {
   createWebUserSession,
-  deleteWebUserSessionByToken,
-  findActiveWebUserSessionByToken,
-  revokeWebUserSessionByToken
+  deleteWebUserSessionByTokenAnyAccount,
+  findActiveWebUserSessionByTokenAnyAccount,
+  revokeWebUserSessionByTokenAnyAccount,
 } from '../repositories/webUserSessionRepository.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
+import { canManageSpecialists } from '../policies/rolePermissions.js';
 import { createToken, hashPassword, sanitizeEmail, verifyPassword } from '../utils/crypto.js';
 
 const now = () => Date.now();
@@ -41,11 +43,13 @@ export const registerFailedAttempt = async (ip: string) => {
 
 export const clearAttempts = async (ip: string) => clearLoginAttempt(ip);
 
-export const issueSession = async (userId: string, res: Response) => {
-  const accountId = await getDefaultAccountId();
-  const numericUserId = Number(userId);
+export const issueSession = async (user: Pick<User, 'id' | 'accountId'>, res: Response) => {
+  const numericUserId = Number(user.id);
   if (!Number.isInteger(numericUserId)) {
     throw new Error('Invalid web user id for session issue');
+  }
+  if (!Number.isInteger(user.accountId)) {
+    throw new Error('Invalid account id for session issue');
   }
 
   const accessToken = createToken();
@@ -54,14 +58,14 @@ export const issueSession = async (userId: string, res: Response) => {
   const refreshExpiresAt = new Date(now() + cookieExpiresMs);
 
   await createWebUserSession({
-    accountId,
+    accountId: user.accountId,
     webUserId: numericUserId,
     token: accessToken,
     sessionType: 'access',
     expiresAt: accessExpiresAt
   });
   await createWebUserSession({
-    accountId,
+    accountId: user.accountId,
     webUserId: numericUserId,
     token: refreshToken,
     sessionType: 'refresh',
@@ -105,12 +109,17 @@ export const registerUser = async (
   timezone?: string,
 ): Promise<User | null> => {
   const email = sanitizeEmail(emailRaw);
-  const accountId = await getDefaultAccountId();
-
-  const existing = await findWebUserByEmail(accountId, email);
+  const existing = await findWebUserByEmailAnyAccount(email);
   if (existing) {
     return null;
   }
+
+  const accountCode = `acc-${crypto.randomUUID()}`;
+  const accountName = email.split('@')[0]?.trim() || email;
+  const accountId = await createAccount({
+    code: accountCode,
+    name: accountName,
+  });
 
   const salt = crypto.randomBytes(16).toString('hex');
   const passwordHash = hashPassword(password, salt);
@@ -135,11 +144,6 @@ export const registerUser = async (
     webUser.created_at
   );
 };
-
-const canManageSpecialists = (role: WebUserRole): boolean => {
-  return role === WebUserRole.Owner || role === WebUserRole.Admin;
-};
-
 const buildSpecialistCode = (webUserId: number): string => {
   return `specialist-${webUserId}`;
 };
@@ -155,8 +159,8 @@ export const createSpecialistUser = async (
   }
 
   const email = sanitizeEmail(emailRaw);
-  const accountId = await getDefaultAccountId();
-  const existing = await findWebUserByEmail(accountId, email);
+  const accountId = actor.accountId;
+  const existing = await findWebUserByEmailAnyAccount(email);
   if (existing) {
     return null;
   }
@@ -197,8 +201,7 @@ export const authenticateUser = async (
   timezone?: string,
 ): Promise<User | null> => {
   const email = sanitizeEmail(emailRaw);
-  const accountId = await getDefaultAccountId();
-  const user = await findWebUserByEmail(accountId, email);
+  const user = await findWebUserByEmailAnyAccount(email);
   if (!user) {
     return null;
   }
@@ -207,6 +210,7 @@ export const authenticateUser = async (
   if (!isValid) {
     return null;
   }
+  const accountId = user.account_id;
 
   if (timezone && timezone !== user.timezone) {
     await updateWebUserSettings({
@@ -229,24 +233,25 @@ export const authenticateUser = async (
 };
 
 export const refreshAccess = async (refreshToken: string) => {
-  const accountId = await getDefaultAccountId();
-  const current = await findActiveWebUserSessionByToken(accountId, refreshToken, 'refresh');
+  const current = await findActiveWebUserSessionByTokenAnyAccount(refreshToken, 'refresh');
   if (!current) {
     return null;
   }
 
-  await revokeWebUserSessionByToken(accountId, refreshToken);
-  return String(current.web_user_id);
+  await revokeWebUserSessionByTokenAnyAccount(refreshToken);
+  return {
+    userId: String(current.web_user_id),
+    accountId: current.account_id,
+  };
 };
 
 export const resolveUserByAccessToken = async (token: string): Promise<User | null> => {
-  const accountId = await getDefaultAccountId();
-  const session = await findActiveWebUserSessionByToken(accountId, token, 'access');
+  const session = await findActiveWebUserSessionByTokenAnyAccount(token, 'access');
   if (!session) {
     return null;
   }
 
-  const user = await findWebUserById(accountId, session.web_user_id);
+  const user = await findWebUserByIdAnyAccount(session.web_user_id);
   if (!user) {
     return null;
   }
@@ -263,13 +268,11 @@ export const resolveUserByAccessToken = async (token: string): Promise<User | nu
 };
 
 export const logoutSession = async (refreshToken?: string, accessToken?: string) => {
-  const accountId = await getDefaultAccountId();
-
   if (refreshToken) {
-    await deleteWebUserSessionByToken(accountId, refreshToken);
+    await deleteWebUserSessionByTokenAnyAccount(refreshToken);
   }
 
   if (accessToken) {
-    await deleteWebUserSessionByToken(accountId, accessToken);
+    await deleteWebUserSessionByTokenAnyAccount(accessToken);
   }
 };

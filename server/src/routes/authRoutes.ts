@@ -82,7 +82,7 @@ authRoutes.post('/register', async (req, res) => {
       });
     }
 
-    const accessToken = await issueSession(user.id, res);
+    const accessToken = await issueSession(user, res);
     return res.status(201).json({
       message: t(req, 'registrationSuccess'),
       accessToken,
@@ -114,7 +114,7 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
     }
 
     await clearAttempts(req.ip ?? 'unknown');
-    const accessToken = await issueSession(user.id, res);
+    const accessToken = await issueSession(user, res);
     return res.json({
       message: t(req, 'loginSuccess'),
       accessToken,
@@ -135,14 +135,14 @@ authRoutes.post('/refresh', async (req, res) => {
     });
   }
 
-  const userId = await refreshAccess(refreshToken);
-  if (!userId) {
+  const refreshed = await refreshAccess(refreshToken);
+  if (!refreshed) {
     return res.status(401).json({
       message: t(req, 'sessionRefreshFailed')
     });
   }
 
-  const accessToken = await issueSession(userId, res);
+  const accessToken = await issueSession({ id: refreshed.userId, accountId: refreshed.accountId }, res);
   return res.json({
     message: t(req, 'sessionRefreshed'),
     accessToken
