@@ -64,6 +64,16 @@ export async function findWebUserIntegrationByWebUserId(
   return row ?? null;
 }
 
+export async function findTelegramIntegrationByAccountId(accountId: number): Promise<WebUserIntegrationRecord | null> {
+  const row = await db('web_user_integrations')
+    .where({ account_id: accountId })
+    .whereNotNull('telegram_bot_token')
+    .orderBy('updated_at', 'desc')
+    .first<WebUserIntegrationRecord>();
+
+  return row ?? null;
+}
+
 export async function updateWebUserGoogleCredentials(input: UpdateWebUserGoogleCredentialsInput): Promise<void> {
   const patch: Record<string, unknown> = {
     google_api_key: input.googleApiKey,

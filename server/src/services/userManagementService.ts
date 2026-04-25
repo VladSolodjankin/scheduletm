@@ -12,7 +12,8 @@ import {
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { canCreateUserRole, canManageClients, canManageFullUserDirectory } from '../policies/rolePermissions.js';
-import { generateTemporaryPassword, hashPassword, sanitizeEmail } from '../utils/crypto.js';
+import { createToken, generateTemporaryPassword, hashPassword, sanitizeEmail } from '../utils/crypto.js';
+import { env } from '../config/env.js';
 import { sendWelcomePasswordEmail } from './emailDeliveryService.js';
 
 export type UserManagementItem = {
@@ -90,6 +91,7 @@ export async function createManagedUser(actor: User, payload: UserCreatePayload)
   }
 
   const temporaryPassword = generateTemporaryPassword();
+  const verificationCode = createToken();
   const salt = crypto.randomBytes(16).toString('hex');
   const passwordHash = hashPassword(temporaryPassword, salt);
 
@@ -103,6 +105,8 @@ export async function createManagedUser(actor: User, payload: UserCreatePayload)
     telegramUsername: payload.telegramUsername?.trim(),
     passwordHash,
     passwordSalt: salt,
+    emailVerificationCode: verificationCode,
+    emailVerificationSentAt: new Date(),
   });
 
   if (payload.role === WebUserRole.Client) {
@@ -122,10 +126,14 @@ export async function createManagedUser(actor: User, payload: UserCreatePayload)
     });
   }
 
+  const verificationLink = `${env.EMAIL_VERIFY_BASE_URL}?email=${encodeURIComponent(email)}&code=${encodeURIComponent(verificationCode)}`;
+
   await sendWelcomePasswordEmail({
     to: email,
     firstName: payload.firstName.trim(),
     temporaryPassword,
+    verificationCode,
+    verificationLink,
   });
 
   return mapUser(created);

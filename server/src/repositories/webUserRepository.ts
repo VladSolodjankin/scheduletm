@@ -21,6 +21,10 @@ export type WebUserRecord = {
   created_at: Date;
   updated_at: Date;
   last_login_at: Date | null;
+  email_verified_at: Date | null;
+  email_verification_code: string | null;
+  email_verification_sent_at: Date | null;
+  phone_verified_at: Date | null;
 };
 
 type CreateWebUserInput = {
@@ -34,6 +38,9 @@ type CreateWebUserInput = {
   passwordHash: string;
   passwordSalt: string;
   timezone?: string;
+  emailVerificationCode?: string | null;
+  emailVerificationSentAt?: Date | null;
+  emailVerifiedAt?: Date | null;
 };
 
 export type SpecialistWebUserOption = {
@@ -111,6 +118,9 @@ export async function createWebUser(input: CreateWebUserInput): Promise<WebUserR
       password_hash: input.passwordHash,
       password_salt: input.passwordSalt,
       timezone: input.timezone ?? 'UTC',
+      email_verification_code: input.emailVerificationCode ?? null,
+      email_verification_sent_at: input.emailVerificationSentAt ?? null,
+      email_verified_at: input.emailVerifiedAt ?? null,
       is_active: true,
     })
     .returning<WebUserRecord[]>('*');
@@ -127,6 +137,21 @@ export async function touchWebUserLastLogin(accountId: number, id: number): Prom
     });
 }
 
+export async function updateWebUserCredentials(
+  accountId: number,
+  id: number,
+  passwordHash: string,
+  passwordSalt: string,
+): Promise<void> {
+  await db('web_users')
+    .where({ account_id: accountId, id })
+    .update({
+      password_hash: passwordHash,
+      password_salt: passwordSalt,
+      updated_at: db.fn.now(),
+    });
+}
+
 type UpdateWebUserSettingsInput = {
   accountId: number;
   id: number;
@@ -135,6 +160,41 @@ type UpdateWebUserSettingsInput = {
   uiThemeMode?: 'light' | 'dark';
   uiPaletteVariantId?: string;
 };
+
+type UpdateWebUserAuthStateInput = {
+  accountId: number;
+  id: number;
+  emailVerificationCode?: string | null;
+  emailVerificationSentAt?: Date | null;
+  emailVerifiedAt?: Date | null;
+  phoneVerifiedAt?: Date | null;
+};
+
+export async function updateWebUserAuthState(input: UpdateWebUserAuthStateInput): Promise<void> {
+  const patch: Record<string, unknown> = {
+    updated_at: db.fn.now(),
+  };
+
+  if (input.emailVerificationCode !== undefined) {
+    patch.email_verification_code = input.emailVerificationCode;
+  }
+
+  if (input.emailVerificationSentAt !== undefined) {
+    patch.email_verification_sent_at = input.emailVerificationSentAt;
+  }
+
+  if (input.emailVerifiedAt !== undefined) {
+    patch.email_verified_at = input.emailVerifiedAt;
+  }
+
+  if (input.phoneVerifiedAt !== undefined) {
+    patch.phone_verified_at = input.phoneVerifiedAt;
+  }
+
+  await db('web_users')
+    .where({ account_id: input.accountId, id: input.id })
+    .update(patch);
+}
 
 export async function updateWebUserSettings(input: UpdateWebUserSettingsInput): Promise<void> {
   const patch: Record<string, unknown> = {

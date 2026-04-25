@@ -232,6 +232,9 @@ appointmentRoutes.post('/:id/notify', async (req, res) => {
     if (message === 'FORBIDDEN_CLIENT') {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
+    if (message === 'NOTIFICATION_DELIVERY_FAILED') {
+      return res.status(502).json({ message: t(req, 'appointmentNotifyFailed') });
+    }
 
     console.error(error);
     return res.status(500).json({ message: t(req, 'appointmentNotifyFailed') });

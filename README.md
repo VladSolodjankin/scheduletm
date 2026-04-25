@@ -70,10 +70,11 @@ scheduletm/
 
 ### Web + Server
 
-- Auth: register/login/refresh/logout.
+- Auth: register/login/refresh/logout + OTP email verification by unique code (with resend).
 - Роли: `owner` / `admin` / `specialist` / `client` (RBAC policy централизована в server).
 - Settings: system + user settings.
 - Integrations: Google OAuth start/callback, Telegram bot token в user integrations.
+- Notifications: appointment notify flow with channel fallback (Telegram -> Email).
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
 - Specialists и Users CRUD (с role-gates).
 - Client web users:
@@ -81,6 +82,11 @@ scheduletm/
   - `client` может входить в web-приложение, редактировать собственный профиль и управлять только своими записями (создание/редактирование/перенос/отмена);
   - Google OAuth доступен для подключения календаря и синхронизации занятости.
 - Базовая i18n поддержка (`ru/en`) в web + локализованные server messages.
+- Email notifications via Brevo SMTP API (`no-reply@meetli.cc`) with hardcoded templates:
+  - email verification;
+  - registration success;
+  - appointment reminder;
+  - new managed user onboarding (temporary password + activation link/code).
 
 ### Bot
 

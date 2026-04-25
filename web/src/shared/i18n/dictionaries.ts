@@ -28,13 +28,25 @@ export const dictionaries = {
       registerSubtitle: 'Create an account and start setup.',
       formLoginTitle: 'Login',
       formRegisterTitle: 'Register',
+      verifyTitle: 'Verify email',
+      verifySubtitle: 'Enter the OTP code from email for {email}.',
+      verifyCodeLabel: 'OTP code',
+      verifyCodeRequired: 'Enter verification code',
+      verifyCodeInvalid: 'Invalid verification code',
+      verifySubmit: 'Confirm email',
+      verifyResend: 'Resend code',
+      verifyBack: 'Back',
+      registerOtpSentHint: 'Verification code sent to {email}.',
+      registerOtpRestoreHint: 'Continue verification for {email}.',
       submitLogin: 'Sign in',
       submitRegister: 'Create account',
       switchToRegister: "Don't have an account? Register",
       switchToLogin: 'Already have an account? Sign in',
       errors: {
         loginFailed: 'Unable to sign in. Check your email and password.',
-        registerFailed: 'Unable to register.'
+        registerFailed: 'Unable to register.',
+        verifyFailed: 'Unable to verify email.',
+        verifyResendFailed: 'Unable to resend verification code.'
       }
     },
     settings: {
@@ -202,13 +214,25 @@ export const dictionaries = {
       registerSubtitle: 'Создайте аккаунт и начните настройки.',
       formLoginTitle: 'Вход',
       formRegisterTitle: 'Регистрация',
+      verifyTitle: 'Подтверждение email',
+      verifySubtitle: 'Введите OTP-код из письма для {email}.',
+      verifyCodeLabel: 'OTP-код',
+      verifyCodeRequired: 'Введите код подтверждения',
+      verifyCodeInvalid: 'Некорректный код подтверждения',
+      verifySubmit: 'Подтвердить email',
+      verifyResend: 'Отправить код снова',
+      verifyBack: 'Назад',
+      registerOtpSentHint: 'Код подтверждения отправлен на {email}.',
+      registerOtpRestoreHint: 'Продолжите подтверждение для {email}.',
       submitLogin: 'Войти',
       submitRegister: 'Зарегистрироваться',
       switchToRegister: 'Нет аккаунта? Зарегистрироваться',
       switchToLogin: 'Уже есть аккаунт? Войти',
       errors: {
         loginFailed: 'Не удалось войти. Проверьте email и пароль.',
-        registerFailed: 'Не удалось зарегистрироваться.'
+        registerFailed: 'Не удалось зарегистрироваться.',
+        verifyFailed: 'Не удалось подтвердить email.',
+        verifyResendFailed: 'Не удалось отправить код повторно.'
       }
     },
     settings: {
@@ -375,12 +399,24 @@ export type TranslationKey =
   | 'auth.registerSubtitle'
   | 'auth.formLoginTitle'
   | 'auth.formRegisterTitle'
+  | 'auth.verifyTitle'
+  | 'auth.verifySubtitle'
+  | 'auth.verifyCodeLabel'
+  | 'auth.verifyCodeRequired'
+  | 'auth.verifyCodeInvalid'
+  | 'auth.verifySubmit'
+  | 'auth.verifyResend'
+  | 'auth.verifyBack'
+  | 'auth.registerOtpSentHint'
+  | 'auth.registerOtpRestoreHint'
   | 'auth.submitLogin'
   | 'auth.submitRegister'
   | 'auth.switchToRegister'
   | 'auth.switchToLogin'
   | 'auth.errors.loginFailed'
   | 'auth.errors.registerFailed'
+  | 'auth.errors.verifyFailed'
+  | 'auth.errors.verifyResendFailed'
   | 'settings.pageTitle'
   | 'settings.pageSubtitle'
   | 'settings.tabs.system'
