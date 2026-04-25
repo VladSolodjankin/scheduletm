@@ -20,6 +20,17 @@ export type RegisterResponse = {
   };
 };
 
+
+export type InviteVerifyResponse = {
+  message: string;
+  invite: {
+    email: string;
+    accountName: string | null;
+    firstName: string | null;
+    lastName: string | null;
+  };
+};
+
 export type VerifyEmailResponse = {
   message: string;
 };

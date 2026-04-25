@@ -25,3 +25,11 @@ export async function createAccount(input: { code: string; name: string }): Prom
 
   return row.id;
 }
+
+export async function findAccountById(id: number): Promise<{ id: number; name: string } | null> {
+  const account = await db('accounts')
+    .where({ id })
+    .first<{ id: number; name: string }>('id', 'name');
+
+  return account ?? null;
+}

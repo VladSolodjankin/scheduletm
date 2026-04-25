@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { env } from '../config/env.js';
 import {
   acceptInviteSchema,
+  verifyInviteSchema,
   loginSchema,
   registrationSchema,
   resendEmailVerificationCodeSchema,
@@ -22,6 +23,7 @@ import {
   registerFailedAttempt,
   registerUser,
   resendUserEmailVerificationCode,
+  verifyInvite,
   verifyUserEmail,
 } from '../services/authService.js';
 import { WebUserRole } from '../types/webUserRole.js';
@@ -125,6 +127,34 @@ authRoutes.post('/verify-email', async (req, res) => {
   }
 });
 
+
+authRoutes.get('/verify-invite', async (req, res) => {
+  const parsed = verifyInviteSchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json(formatZodError(parsed.error));
+  }
+
+  try {
+    const result = await verifyInvite(parsed.data.email, parsed.data.token);
+    if (!result.valid) {
+      return res.status(400).json({ message: t(req, 'inviteAcceptFailed') });
+    }
+
+    return res.json({
+      message: t(req, 'inviteVerifySuccess'),
+      invite: {
+        email: result.email,
+        accountName: result.accountName ?? null,
+        firstName: result.firstName ?? null,
+        lastName: result.lastName ?? null,
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: t(req, 'registerFailed') });
+  }
+});
+
 authRoutes.post('/accept-invite', async (req, res) => {
   const parsed = acceptInviteSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -132,7 +162,7 @@ authRoutes.post('/accept-invite', async (req, res) => {
   }
 
   try {
-    const accepted = await acceptInvite(parsed.data.email, parsed.data.token, parsed.data.password);
+    const accepted = await acceptInvite(parsed.data.email, parsed.data.token, parsed.data.password, parsed.data.firstName, parsed.data.lastName, parsed.data.telegramUsername);
     if (!accepted) {
       return res.status(400).json({
         message: t(req, 'inviteAcceptFailed'),
