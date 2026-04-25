@@ -48,7 +48,7 @@ export function SettingsContainer() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
-  const canManageSystemSettings = user?.role === 'owner' || user?.role === 'admin';
+  const canManageSystemSettings = user?.role === 'owner';
 
   useEffect(() => {
     if (!googleOauthStatus) {

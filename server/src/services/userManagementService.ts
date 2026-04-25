@@ -1,16 +1,17 @@
 import crypto from 'node:crypto';
-import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import { createClient } from '../repositories/clientRepository.js';
 import { deactivateSpecialistByWebUserId } from '../repositories/specialistRepository.js';
 import {
   createWebUser,
   findWebUserByEmail,
   findWebUserById,
+  listWebUsersAllAccounts,
   listWebUsersByAccount,
   updateWebUserProfile,
 } from '../repositories/webUserRepository.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
+import { canCreateUserRole, canManageClients, canManageFullUserDirectory } from '../policies/rolePermissions.js';
 import { generateTemporaryPassword, hashPassword, sanitizeEmail } from '../utils/crypto.js';
 import { sendWelcomePasswordEmail } from './emailDeliveryService.js';
 
@@ -44,20 +45,6 @@ type UserUpdatePayload = {
   telegramUsername?: string;
 };
 
-const canManageFullUserDirectory = (role: WebUserRole): boolean =>
-  role === WebUserRole.Owner || role === WebUserRole.Admin;
-
-const canManageClients = (role: WebUserRole): boolean =>
-  canManageFullUserDirectory(role) || role === WebUserRole.Specialist;
-
-const canCreateRole = (actorRole: WebUserRole, targetRole: UserCreatePayload['role']): boolean => {
-  if (targetRole === WebUserRole.Client) {
-    return canManageClients(actorRole);
-  }
-
-  return canManageFullUserDirectory(actorRole);
-};
-
 const mapUser = (item: Awaited<ReturnType<typeof listWebUsersByAccount>>[number]): UserManagementItem => ({
   id: item.id,
   email: item.email,
@@ -71,7 +58,7 @@ const mapUser = (item: Awaited<ReturnType<typeof listWebUsersByAccount>>[number]
 });
 
 async function resolveAccountId(actor: User): Promise<number> {
-  return actor.accountId || getDefaultAccountId();
+  return actor.accountId;
 }
 
 export async function listManagedUsers(actor: User): Promise<UserManagementItem[]> {
@@ -80,7 +67,9 @@ export async function listManagedUsers(actor: User): Promise<UserManagementItem[
   }
 
   const accountId = await resolveAccountId(actor);
-  const users = await listWebUsersByAccount(accountId);
+  const users = actor.role === WebUserRole.Owner
+    ? await listWebUsersAllAccounts()
+    : await listWebUsersByAccount(accountId);
   const filtered = canManageFullUserDirectory(actor.role)
     ? users
     : users.filter((item) => item.role === WebUserRole.Client);
@@ -88,7 +77,7 @@ export async function listManagedUsers(actor: User): Promise<UserManagementItem[
 }
 
 export async function createManagedUser(actor: User, payload: UserCreatePayload): Promise<UserManagementItem> {
-  if (!canCreateRole(actor.role, payload.role)) {
+  if (!canCreateUserRole(actor.role, payload.role as WebUserRole)) {
     throw new Error('FORBIDDEN');
   }
 

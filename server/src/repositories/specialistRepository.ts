@@ -138,12 +138,38 @@ export async function findSpecialistById(accountId: number, specialistId: number
   return row ?? null;
 }
 
+export async function findSpecialistByIdAnyAccount(specialistId: number): Promise<SpecialistRecord | null> {
+  const row = await db('specialists')
+    .where({ id: specialistId })
+    .first<SpecialistRecord>();
+
+  return row ?? null;
+}
+
 export async function listSpecialistsByAccount(accountId: number): Promise<SpecialistRecord[]> {
   return db('specialists as s')
     .leftJoin('web_users as wu', function joinWebUsers() {
       this.on('wu.id', '=', 's.user_id').andOn('wu.account_id', '=', 's.account_id');
     })
     .where('s.account_id', accountId)
+    .orderBy('s.name', 'asc')
+    .select(
+      's.id',
+      's.account_id',
+      's.code',
+      's.name',
+      's.is_active',
+      's.user_id',
+      's.slot_step_min',
+      db.raw("COALESCE(wu.timezone, 'UTC') as timezone"),
+    );
+}
+
+export async function listSpecialistsAllAccounts(): Promise<SpecialistRecord[]> {
+  return db('specialists as s')
+    .leftJoin('web_users as wu', function joinWebUsers() {
+      this.on('wu.id', '=', 's.user_id').andOn('wu.account_id', '=', 's.account_id');
+    })
     .orderBy('s.name', 'asc')
     .select(
       's.id',

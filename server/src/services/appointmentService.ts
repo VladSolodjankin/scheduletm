@@ -1,4 +1,3 @@
-import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import {
   createAppointmentAuditEvent,
   type AppointmentRecord,
@@ -7,8 +6,10 @@ import {
   createAppointment,
   ensureFallbackServiceForAccount,
   findAppointmentById,
+  findAppointmentByIdAnyAccount,
   listAppointmentEventsByAppointmentIds,
   listAppointments,
+  listAppointmentsAllAccounts,
   updateAppointment,
 } from '../repositories/appointmentRepository.js';
 import {
@@ -21,7 +22,9 @@ import {
 } from '../repositories/clientRepository.js';
 import {
   findSpecialistById,
+  findSpecialistByIdAnyAccount,
   findSpecialistByWebUserId,
+  listSpecialistsAllAccounts,
   listSpecialistsByAccount,
   type SpecialistRecord,
 } from '../repositories/specialistRepository.js';
@@ -29,6 +32,7 @@ import { findWebUserById } from '../repositories/webUserRepository.js';
 import { listExternalBusySlots, type ExternalBusySlot } from './calendarAvailabilityService.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
+import { canCreateAppointments, canManageAllAppointments, canMarkPaidAndNotify, isClientRole } from '../policies/rolePermissions.js';
 
 type AppointmentClientDto = {
   id: number;
@@ -90,14 +94,6 @@ type UpdateAppointmentPayload = {
   meetingLink?: string;
   notes?: string;
 } & AppointmentClientPayload;
-
-function canManageAllAppointments(role: WebUserRole): boolean {
-  return role === WebUserRole.Owner || role === WebUserRole.Admin;
-}
-
-function isClientRole(role: WebUserRole): boolean {
-  return role === WebUserRole.Client;
-}
 
 function parseMeetingLinkFromNotes(notes: string | null): { notes: string; meetingLink: string } {
   if (!notes) {
@@ -185,11 +181,7 @@ function mapEventsByAppointmentId(
 }
 
 async function resolveAccountId(actor: User): Promise<number> {
-  if (actor.accountId) {
-    return actor.accountId;
-  }
-
-  return getDefaultAccountId();
+  return actor.accountId;
 }
 
 async function resolveAllowedSpecialistId(actor: User, accountId: number): Promise<number | null> {
@@ -338,24 +330,33 @@ export async function getAppointments(
 
   const specialistId = allowedSpecialistId ?? filters.specialistId;
 
-  const items = await listAppointments({
-    accountId,
+  const listFilters = {
     specialistId,
     clientId: allowedClientId ?? undefined,
     from: filters.from ? new Date(filters.from) : undefined,
     to: filters.to ? new Date(filters.to) : undefined,
-  });
+  };
+  const items = actor.role === WebUserRole.Owner
+    ? await listAppointmentsAllAccounts(listFilters)
+    : await listAppointments({
+      accountId,
+      ...listFilters,
+    });
+
+  const allSpecialists = actor.role === WebUserRole.Owner
+    ? await listSpecialistsAllAccounts()
+    : await listSpecialistsByAccount(accountId);
 
   const specialists = canManageAllAppointments(actor.role)
-    ? mapSpecialistsForUi(await listSpecialistsByAccount(accountId))
+    ? mapSpecialistsForUi(allSpecialists)
     : isClientRole(actor.role)
       ? mapSpecialistsForUi(
-        (await listSpecialistsByAccount(accountId)).filter((item) =>
+        allSpecialists.filter((item) =>
           items.some((appointment) => appointment.specialist_id === item.id),
         ),
       )
       : mapSpecialistsForUi(
-        (await listSpecialistsByAccount(accountId)).filter((item) => item.user_id === Number(actor.id)),
+        allSpecialists.filter((item) => item.user_id === Number(actor.id)),
       );
 
   const fromDate = filters.from ? new Date(filters.from) : new Date();
@@ -397,28 +398,33 @@ export async function createAppointmentForActor(
   actor: User,
   payload: CreateAppointmentPayload,
 ): Promise<AppointmentDto> {
-  if (isClientRole(actor.role)) {
+  if (!canCreateAppointments(actor.role)) {
     throw new Error('FORBIDDEN_CLIENT');
   }
 
   const accountId = await resolveAccountId(actor);
 
-  if (!canManageAllAppointments(actor.role)) {
+  if (!canManageAllAppointments(actor.role) && !isClientRole(actor.role)) {
     const selfSpecialist = await findSpecialistByWebUserId(accountId, Number(actor.id));
     if (!selfSpecialist || selfSpecialist.id !== payload.specialistId) {
       throw new Error('FORBIDDEN_SPECIALIST');
     }
   }
 
-  const specialist = await findSpecialistById(accountId, payload.specialistId);
+  const specialist = actor.role === WebUserRole.Owner
+    ? await findSpecialistByIdAnyAccount(payload.specialistId)
+    : await findSpecialistById(accountId, payload.specialistId);
   if (!specialist) {
     throw new Error('SPECIALIST_NOT_FOUND');
   }
 
   const [userId, serviceId] = await Promise.all([
-    resolveClientId(accountId, payload),
+    isClientRole(actor.role) ? resolveClientScope(actor, accountId) : resolveClientId(accountId, payload),
     ensureFallbackServiceForAccount(accountId),
   ]);
+  if (!userId) {
+    throw new Error('CLIENT_PROFILE_NOT_FOUND');
+  }
 
   const created = await createAppointment({
     accountId,
@@ -439,7 +445,9 @@ export async function createAppointmentForActor(
 
 async function resolveManagedAppointment(actor: User, appointmentId: number) {
   const accountId = await resolveAccountId(actor);
-  const existing = await findAppointmentById(accountId, appointmentId);
+  const existing = actor.role === WebUserRole.Owner
+    ? await findAppointmentByIdAnyAccount(appointmentId)
+    : await findAppointmentById(accountId, appointmentId);
 
   if (!existing) {
     return { accountId, existing: null };
@@ -562,7 +570,7 @@ export async function rescheduleAppointmentForActor(
 }
 
 export async function markPaidAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
-  if (isClientRole(actor.role)) {
+  if (!canMarkPaidAndNotify(actor.role)) {
     throw new Error('FORBIDDEN_CLIENT');
   }
 
@@ -591,7 +599,7 @@ export async function markPaidAppointmentForActor(actor: User, appointmentId: nu
 }
 
 export async function notifyAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
-  if (isClientRole(actor.role)) {
+  if (!canMarkPaidAndNotify(actor.role)) {
     throw new Error('FORBIDDEN_CLIENT');
   }
 

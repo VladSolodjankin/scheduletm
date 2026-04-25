@@ -103,6 +103,47 @@ export async function findAppointmentById(accountId: number, id: number): Promis
   return row ?? null;
 }
 
+export async function findAppointmentByIdAnyAccount(id: number): Promise<AppointmentRecord | null> {
+  const row = await db('appointments')
+    .where({ id })
+    .first<AppointmentRecord>();
+
+  return row ?? null;
+}
+
+export async function listAppointmentsAllAccounts(filters: Omit<AppointmentListFilters, 'accountId'>): Promise<AppointmentRecord[]> {
+  const query = db('appointments')
+    .leftJoin('clients', function joinClients() {
+      this.on('clients.id', '=', 'appointments.user_id').andOn('clients.account_id', '=', 'appointments.account_id');
+    })
+    .orderBy('appointment_at', 'asc');
+
+  if (filters.specialistId) {
+    query.andWhere('appointments.specialist_id', filters.specialistId);
+  }
+
+  if (filters.clientId) {
+    query.andWhere('appointments.user_id', filters.clientId);
+  }
+
+  if (filters.from) {
+    query.andWhere('appointments.appointment_at', '>=', filters.from);
+  }
+
+  if (filters.to) {
+    query.andWhere('appointments.appointment_at', '<=', filters.to);
+  }
+
+  return query.select<AppointmentRecord[]>(
+    'appointments.*',
+    'clients.first_name as client_first_name',
+    'clients.last_name as client_last_name',
+    'clients.username as client_username',
+    'clients.phone as client_phone',
+    'clients.email as client_email',
+  );
+}
+
 export async function createAppointment(input: CreateAppointmentInput): Promise<AppointmentRecord> {
   const [row] = await db('appointments')
     .insert({

@@ -36,7 +36,7 @@ settingsRoutes.put('/system', requireAccessToken, async (req, res) => {
 
 settingsRoutes.get('/user', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  return res.json(await getUserSettings(user.id));
+  return res.json(await getUserSettings(user));
 });
 
 settingsRoutes.put('/user', requireAccessToken, async (req, res) => {

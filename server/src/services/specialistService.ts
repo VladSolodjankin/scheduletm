@@ -1,14 +1,15 @@
-import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import {
   createSpecialist,
   deactivateSpecialistById,
   findSpecialistById,
+  listSpecialistsAllAccounts,
   listSpecialistsByAccount,
   updateSpecialistById,
 } from '../repositories/specialistRepository.js';
 import { findWebUserById, listActiveSpecialistWebUsersWithoutProfile } from '../repositories/webUserRepository.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
+import { canManageSpecialists } from '../policies/rolePermissions.js';
 
 type SpecialistDto = {
   id: number;
@@ -32,11 +33,6 @@ export type SpecialistWebUserOptionDto = {
   id: number;
   email: string;
 };
-
-const canManageSpecialists = (role: WebUserRole): boolean => {
-  return role === WebUserRole.Owner || role === WebUserRole.Admin;
-};
-
 const mapSpecialist = (item: Awaited<ReturnType<typeof listSpecialistsByAccount>>[number]): SpecialistDto => ({
   id: item.id,
   name: item.name,
@@ -58,15 +54,15 @@ const buildSpecialistCode = (name: string): string => {
 };
 
 async function resolveAccountId(actor: User): Promise<number> {
-  if (actor.accountId) {
-    return actor.accountId;
-  }
-
-  return getDefaultAccountId();
+  return actor.accountId;
 }
 
 export async function getSpecialistsForActor(actor: User): Promise<SpecialistDto[]> {
   const accountId = await resolveAccountId(actor);
+
+  if (actor.role === WebUserRole.Owner) {
+    return (await listSpecialistsAllAccounts()).map(mapSpecialist);
+  }
 
   if (canManageSpecialists(actor.role)) {
     return (await listSpecialistsByAccount(accountId)).map(mapSpecialist);

@@ -61,6 +61,7 @@ scheduletm/
 - Глобальная карта: [`PROJECT_MAP.md`](./PROJECT_MAP.md)
 - Карта web: [`web/PROJECT_MAP.md`](./web/PROJECT_MAP.md)
 - Карта server: [`server/PROJECT_MAP.md`](./server/PROJECT_MAP.md)
+- Права ролей (RBAC): [`server/docs/rbac.md`](./server/docs/rbac.md)
 - Карта bot: [`bot/PROJECT_MAP.md`](./bot/PROJECT_MAP.md)
 
 ---
@@ -70,14 +71,14 @@ scheduletm/
 ### Web + Server
 
 - Auth: register/login/refresh/logout.
-- Роли: `owner` / `admin` / `specialist` / `client`.
+- Роли: `owner` / `admin` / `specialist` / `client` (RBAC policy централизована в server).
 - Settings: system + user settings.
 - Integrations: Google OAuth start/callback, Telegram bot token в user integrations.
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
 - Specialists и Users CRUD (с role-gates).
 - Client web users:
   - owner/admin/specialist могут создавать пользователей с ролью `client`;
-  - `client` может входить в web-приложение, редактировать собственный профиль и управлять только своими записями (редактирование/перенос/отмена);
+  - `client` может входить в web-приложение, редактировать собственный профиль и управлять только своими записями (создание/редактирование/перенос/отмена);
   - Google OAuth доступен для подключения календаря и синхронизации занятости.
 - Базовая i18n поддержка (`ru/en`) в web + локализованные server messages.
 
