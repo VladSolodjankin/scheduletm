@@ -5,6 +5,7 @@ import type { SystemSettings, UserSettings } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
 import { AppIcons } from '../shared/ui/AppIcons';
+import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 import { AppTab, AppTabs } from '../shared/ui/AppTabs';
 
@@ -158,7 +159,7 @@ export function SettingsCard({
             name="telegramBotToken"
             control={userControl}
             render={({ field }: any) => (
-              <AppRhfTextField field={field} label={copy.telegramBotToken} type="password" />
+              <AppRhfPasswordField field={field} label={copy.telegramBotToken} />
             )}
           />
 
