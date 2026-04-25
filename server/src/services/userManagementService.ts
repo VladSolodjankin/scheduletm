@@ -25,6 +25,7 @@ export type UserManagementItem = {
   phone: string;
   telegramUsername: string;
   isActive: boolean;
+  isVerified: boolean;
   createdAt: string;
 };
 
@@ -55,6 +56,7 @@ const mapUser = (item: Awaited<ReturnType<typeof listWebUsersByAccount>>[number]
   phone: item.phone ?? '',
   telegramUsername: item.telegram_username ?? '',
   isActive: item.is_active,
+  isVerified: Boolean(item.email_verified_at || item.phone_verified_at),
   createdAt: item.created_at.toISOString(),
 });
 
@@ -107,6 +109,7 @@ export async function createManagedUser(actor: User, payload: UserCreatePayload)
     passwordSalt: salt,
     emailVerificationCode: inviteTokenHash,
     emailVerificationSentAt: new Date(),
+    isActive: false,
   });
 
   if (payload.role === WebUserRole.Client) {

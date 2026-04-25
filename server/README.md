@@ -15,6 +15,7 @@ Node.js/Express API для web-клиента и интеграций.
 - Settings API: user/system.
 - CRUD: users, specialists.
   - При создании пользователей owner/admin отправляется invite-link вместо временного пароля.
+  - Приглашённый пользователь создаётся неактивным и активируется только после verify-email / accept-invite.
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
 - Client self-service:
   - owner/admin/specialist могут создавать web users с ролью `client`;

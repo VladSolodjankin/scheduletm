@@ -12,6 +12,7 @@ import {
   touchWebUserLastLogin,
   updateWebUserAuthState,
   updateWebUserCredentials,
+  updateWebUserProfile,
   updateWebUserSettings,
 } from '../repositories/webUserRepository.js';
 import {
@@ -290,6 +291,10 @@ export const authenticateUser = async (
     throw new Error('EMAIL_NOT_VERIFIED');
   }
 
+  if (!user.is_active) {
+    throw new Error('ACCOUNT_INACTIVE');
+  }
+
   const accountId = user.account_id;
 
   if (timezone && timezone !== user.timezone) {
@@ -347,6 +352,11 @@ export const verifyUserEmail = async (emailRaw: string, verificationCodeRaw: str
     emailVerifiedAt: new Date(),
     emailVerificationCode: null,
   });
+  await updateWebUserProfile({
+    accountId: user.account_id,
+    id: user.id,
+    isActive: true,
+  });
 
   await sendRegistrationSuccessEmail({
     to: user.email,
@@ -387,6 +397,11 @@ export const acceptInvite = async (emailRaw: string, tokenRaw: string, password:
     emailVerifiedAt: new Date(),
     emailVerificationCode: null,
     emailVerificationSentAt: null,
+  });
+  await updateWebUserProfile({
+    accountId: user.account_id,
+    id: user.id,
+    isActive: true,
   });
 
   await sendRegistrationSuccessEmail({

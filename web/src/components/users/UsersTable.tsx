@@ -24,6 +24,7 @@ type UsersTableProps = {
   firstNameColumnLabel: string;
   lastNameColumnLabel: string;
   roleColumnLabel: string;
+  verifiedColumnLabel: string;
   activeColumnLabel: string;
   actionsColumnLabel: string;
   users: ManagedUserItem[];
@@ -42,6 +43,7 @@ export function UsersTable({
   firstNameColumnLabel,
   lastNameColumnLabel,
   roleColumnLabel,
+  verifiedColumnLabel,
   activeColumnLabel,
   actionsColumnLabel,
   users,
@@ -64,6 +66,7 @@ export function UsersTable({
               <TableCell>{firstNameColumnLabel}</TableCell>
               <TableCell>{lastNameColumnLabel}</TableCell>
               <TableCell>{roleColumnLabel}</TableCell>
+              <TableCell>{verifiedColumnLabel}</TableCell>
               <TableCell>{activeColumnLabel}</TableCell>
               <TableCell align="right">{actionsColumnLabel}</TableCell>
             </TableRow>
@@ -71,7 +74,7 @@ export function UsersTable({
           <TableBody>
             {!users.length && (
               <TableRow>
-                <TableCell colSpan={6}>{emptyText}</TableCell>
+                <TableCell colSpan={7}>{emptyText}</TableCell>
               </TableRow>
             )}
             {users.map((item) => (
@@ -80,6 +83,7 @@ export function UsersTable({
                 <TableCell>{item.firstName}</TableCell>
                 <TableCell>{item.lastName}</TableCell>
                 <TableCell>{item.role}</TableCell>
+                <TableCell>{item.isVerified ? '✓' : '—'}</TableCell>
                 <TableCell>{item.isActive ? '✓' : '—'}</TableCell>
                 <TableCell align="right">
                   <IconButton size="small" aria-label={editLabel} onClick={() => onEdit(item)}>
