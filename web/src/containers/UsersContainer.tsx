@@ -135,6 +135,7 @@ export function UsersContainer() {
               firstNameColumnLabel={t('users.columns.firstName')}
               lastNameColumnLabel={t('users.columns.lastName')}
               roleColumnLabel={t('users.columns.role')}
+              verifiedColumnLabel={t('users.columns.verified')}
               activeColumnLabel={t('users.columns.active')}
               actionsColumnLabel={t('users.columns.actions')}
               users={users}

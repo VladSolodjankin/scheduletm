@@ -197,6 +197,9 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
     if (error instanceof Error && error.message === 'EMAIL_NOT_VERIFIED') {
       return res.status(403).json({ message: t(req, 'emailNotVerified') });
     }
+    if (error instanceof Error && error.message === 'ACCOUNT_INACTIVE') {
+      return res.status(403).json({ message: t(req, 'accountInactive') });
+    }
 
     console.error(error);
     return res.status(500).json({ message: t(req, 'loginFailed') });

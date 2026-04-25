@@ -143,6 +143,7 @@ export const dictionaries = {
         firstName: 'First name',
         lastName: 'Last name',
         role: 'Role',
+        verified: 'Verified',
         active: 'Active',
         actions: 'Actions'
       },
@@ -341,6 +342,7 @@ export const dictionaries = {
         firstName: 'Имя',
         lastName: 'Фамилия',
         role: 'Роль',
+        verified: 'Верифицирован',
         active: 'Активен',
         actions: 'Действия'
       },
@@ -516,6 +518,7 @@ export type TranslationKey =
   | 'users.columns.firstName'
   | 'users.columns.lastName'
   | 'users.columns.role'
+  | 'users.columns.verified'
   | 'users.columns.active'
   | 'users.columns.actions'
   | 'users.errors.load'

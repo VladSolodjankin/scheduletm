@@ -130,6 +130,7 @@ export type ManagedUserItem = {
   phone: string;
   telegramUsername: string;
   isActive: boolean;
+  isVerified: boolean;
   createdAt: string;
 };
 

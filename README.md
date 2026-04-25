@@ -86,7 +86,7 @@ scheduletm/
   - email verification;
   - registration success;
   - appointment reminder;
-  - managed user invite-link onboarding (one-time invite link with 24h TTL).
+  - managed user invite-link onboarding (one-time invite link with 24h TTL, invited user stays inactive until verification/accept-invite).
 
 ### Bot
 

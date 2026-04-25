@@ -61,7 +61,7 @@ describe('users API route-smoke scenarios (mocked service layer)', () => {
   });
 
   it('list: GET /api/users returns users', async () => {
-    listManagedUsersMock.mockResolvedValue([{ id: 2, email: 'admin@example.com', role: 'admin', firstName: 'Ann', lastName: 'Lee', phone: '', telegramUsername: '', isActive: true, createdAt: '2026-04-22T00:00:00.000Z' }]);
+    listManagedUsersMock.mockResolvedValue([{ id: 2, email: 'admin@example.com', role: 'admin', firstName: 'Ann', lastName: 'Lee', phone: '', telegramUsername: '', isActive: true, isVerified: true, createdAt: '2026-04-22T00:00:00.000Z' }]);
 
     const response = await fetch(`${baseUrl}/api/users`, {
       method: 'GET',
@@ -73,7 +73,7 @@ describe('users API route-smoke scenarios (mocked service layer)', () => {
   });
 
   it('create: POST /api/users returns 201', async () => {
-    createManagedUserMock.mockResolvedValue({ id: 3, email: 'new@example.com', role: 'specialist', firstName: 'New', lastName: 'User', phone: '', telegramUsername: '', isActive: true, createdAt: '2026-04-22T00:00:00.000Z' });
+    createManagedUserMock.mockResolvedValue({ id: 3, email: 'new@example.com', role: 'specialist', firstName: 'New', lastName: 'User', phone: '', telegramUsername: '', isActive: false, isVerified: false, createdAt: '2026-04-22T00:00:00.000Z' });
 
     const response = await fetch(`${baseUrl}/api/users`, {
       method: 'POST',

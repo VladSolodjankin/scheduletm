@@ -41,6 +41,7 @@ type CreateWebUserInput = {
   emailVerificationCode?: string | null;
   emailVerificationSentAt?: Date | null;
   emailVerifiedAt?: Date | null;
+  isActive?: boolean;
 };
 
 export type SpecialistWebUserOption = {
@@ -121,7 +122,7 @@ export async function createWebUser(input: CreateWebUserInput): Promise<WebUserR
       email_verification_code: input.emailVerificationCode ?? null,
       email_verification_sent_at: input.emailVerificationSentAt ?? null,
       email_verified_at: input.emailVerifiedAt ?? null,
-      is_active: true,
+      is_active: input.isActive ?? true,
     })
     .returning<WebUserRecord[]>('*');
 
