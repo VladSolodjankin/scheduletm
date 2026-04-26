@@ -291,3 +291,27 @@ export async function countAppointmentsBySpecialistId(accountId: number, special
 
   return Number(row?.count ?? 0);
 }
+
+
+export async function listUnpaidAppointmentsCreatedBetweenAllAccounts(
+  from: Date,
+  to: Date,
+): Promise<AppointmentRecord[]> {
+  return db('appointments')
+    .leftJoin('clients', function joinClients() {
+      this.on('clients.id', '=', 'appointments.user_id').andOn('clients.account_id', '=', 'appointments.account_id');
+    })
+    .where('appointments.is_paid', false)
+    .whereIn('appointments.status', ['new', 'confirmed'])
+    .where('appointments.created_at', '>=', from)
+    .where('appointments.created_at', '<=', to)
+    .orderBy('appointments.created_at', 'asc')
+    .select<AppointmentRecord[]>(
+      'appointments.*',
+      'clients.first_name as client_first_name',
+      'clients.last_name as client_last_name',
+      'clients.username as client_username',
+      'clients.phone as client_phone',
+      'clients.email as client_email',
+    );
+}
