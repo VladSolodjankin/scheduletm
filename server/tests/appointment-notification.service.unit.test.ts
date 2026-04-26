@@ -26,7 +26,7 @@ describe('appointment notification service unit', () => {
 
   it('does not send when notification type disabled', async () => {
     getEffectiveNotificationSettingMock.mockResolvedValue(
-      { notificationType: 'appointment_reminder', preferredChannel: 'email', enabled: false, sendTimings: ['24h'], frequency: 'immediate', deniedByClient: false },
+      { notificationType: 'appointment_reminder', preferredChannel: 'email', deliveryChannels: [], enabled: false, sendTimings: ['24h'], frequency: 'immediate', deniedByClient: false },
     );
 
     const result = await sendAppointmentNotificationByType({
@@ -56,7 +56,7 @@ describe('appointment notification service unit', () => {
 
   it('sends via email when enabled', async () => {
     getEffectiveNotificationSettingMock.mockResolvedValue(
-      { notificationType: 'appointment_reminder', preferredChannel: 'email', enabled: true, sendTimings: ['24h'], frequency: 'immediate', deniedByClient: false },
+      { notificationType: 'appointment_reminder', preferredChannel: 'email', deliveryChannels: ['email'], enabled: true, sendTimings: ['24h'], frequency: 'immediate', deniedByClient: false },
     );
     findSpecialistByIdMock.mockResolvedValue({ name: 'Dr. Test' });
     sendAppointmentNotificationEmailMock.mockResolvedValue(true);
@@ -89,7 +89,7 @@ describe('appointment notification service unit', () => {
 
   it('returns client_deny when denied by client channel override (edge case)', async () => {
     getEffectiveNotificationSettingMock.mockResolvedValue(
-      { notificationType: 'appointment_reminder', preferredChannel: 'email', enabled: false, sendTimings: ['24h'], frequency: 'immediate', deniedByClient: true },
+      { notificationType: 'appointment_reminder', preferredChannel: 'email', deliveryChannels: [], enabled: false, sendTimings: ['24h'], frequency: 'immediate', deniedByClient: true },
     );
 
     const result = await sendAppointmentNotificationByType({

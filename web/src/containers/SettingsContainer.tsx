@@ -8,6 +8,7 @@ import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
 import type {
+  AccountNotificationDefault,
   AccountSettings,
   GoogleOAuthDisconnectResponse,
   GoogleOAuthStartResponse,
@@ -53,6 +54,8 @@ const defaultSpecialistBookingPolicy: SpecialistBookingPolicy = {
   unpaidAutoCancelAfterHours: 72,
 };
 
+const defaultAccountNotificationDefaults: AccountNotificationDefault[] = [];
+
 export function SettingsContainer() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -72,6 +75,8 @@ export function SettingsContainer() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [specialistBookingPolicy, setSpecialistBookingPolicy] = useState<SpecialistBookingPolicy>(defaultSpecialistBookingPolicy);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | null>(null);
+  const [accountNotificationDefaults, setAccountNotificationDefaults] = useState<AccountNotificationDefault[]>(defaultAccountNotificationDefaults);
+  const [isSavingNotificationDefaults, setIsSavingNotificationDefaults] = useState(false);
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const canManageSystemSettings = user?.role === 'owner';
@@ -121,6 +126,11 @@ export function SettingsContainer() {
             headers: authHeaders(accessToken)
           });
           setAccountSettings(accountResponse.data);
+
+          const notificationDefaultsResponse = await apiClient.get<{ items: AccountNotificationDefault[] }>('/api/settings/account-notification-defaults', {
+            headers: authHeaders(accessToken)
+          });
+          setAccountNotificationDefaults(notificationDefaultsResponse.data.items);
         }
 
         if (canManageSystemSettings) {
@@ -183,6 +193,32 @@ export function SettingsContainer() {
       setSuccess('');
     } finally {
       setIsSavingSystem(false);
+    }
+  };
+
+  const saveAccountNotificationDefaults = async (items: AccountNotificationDefault[]) => {
+    if (!accessToken || !canManageAccountSettings) {
+      return;
+    }
+
+    setIsSavingNotificationDefaults(true);
+    try {
+      const response = await apiClient.put<{ items: AccountNotificationDefault[] }>(
+        '/api/settings/account-notification-defaults',
+        { items },
+        { headers: authHeaders(accessToken) }
+      );
+      setAccountNotificationDefaults(response.data.items);
+      setError('');
+      setSuccess('');
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.save'),
+        networkMessage: t('common.errors.network')
+      }).message);
+      setSuccess('');
+    } finally {
+      setIsSavingNotificationDefaults(false);
     }
   };
 
@@ -381,6 +417,7 @@ export function SettingsContainer() {
             accountSettings={accountSettings}
             userSettings={userSettings}
             specialistBookingPolicy={specialistBookingPolicy}
+            accountNotificationDefaults={accountNotificationDefaults}
             canManageSystemSettings={canManageSystemSettings}
             canManageAccountSettings={canManageAccountSettings}
             canManageSpecialistBookingPolicy={canManageSpecialistBookingPolicy}
@@ -415,7 +452,20 @@ export function SettingsContainer() {
               cancelGracePeriodHours: t('settings.cancelGracePeriodHours'),
               refundOnLateCancel: t('settings.refundOnLateCancel'),
               autoCancelUnpaidEnabled: t('settings.autoCancelUnpaidEnabled'),
-              unpaidAutoCancelAfterHours: t('settings.unpaidAutoCancelAfterHours')
+              unpaidAutoCancelAfterHours: t('settings.unpaidAutoCancelAfterHours'),
+              notificationsTab: t('settings.tabs.notifications'),
+              notificationSettingsTitle: t('settings.notificationSettingsTitle'),
+              reminderChannelsLabel: t('settings.reminderChannelsLabel'),
+              appointmentReminderTimingsLabel: t('settings.appointmentReminderTimingsLabel'),
+              paymentReminderTimingsLabel: t('settings.paymentReminderTimingsLabel'),
+              disabledOption: t('settings.disabledOption'),
+              channels: {
+                email: t('settings.channels.email'),
+                telegram: t('settings.channels.telegram'),
+                viber: t('settings.channels.viber'),
+                sms: t('settings.channels.sms'),
+                whatsapp: t('settings.channels.whatsapp')
+              }
             }}
             isGoogleConnecting={isGoogleConnecting}
             isGoogleDisconnecting={isGoogleDisconnecting}
@@ -423,10 +473,12 @@ export function SettingsContainer() {
             isSavingAccount={isSavingAccount}
             isSavingUser={isSavingUser}
             isSavingSpecialistBookingPolicy={isSavingSpecialistPolicy}
+            isSavingNotificationDefaults={isSavingNotificationDefaults}
             onSaveSystem={saveSystemSettings}
             onSaveAccount={saveAccountSettings}
             onSaveUser={saveUserSettings}
             onSaveSpecialistBookingPolicy={saveSpecialistBookingPolicy}
+            onSaveNotificationDefaults={saveAccountNotificationDefaults}
             onClearTelegramBotToken={clearTelegramBotToken}
             onConnectGoogle={connectGoogle}
             onDisconnectGoogle={disconnectGoogle}

@@ -1,4 +1,8 @@
-import { ensureAccountNotificationDefaults, findAccountNotificationDefaults } from '../repositories/accountNotificationDefaultsRepository.js';
+import {
+  ensureAccountNotificationDefaults,
+  findAccountNotificationDefaults,
+  upsertAccountNotificationDefaults,
+} from '../repositories/accountNotificationDefaultsRepository.js';
 import {
   findSpecialistNotificationSettings,
   upsertSpecialistNotificationSettings,
@@ -9,11 +13,12 @@ import {
 } from '../repositories/clientNotificationSettingsRepository.js';
 import {
   clientNotificationSettingsBatchSchema,
+  accountNotificationDefaultsBatchSchema,
   specialistNotificationSettingsBatchSchema,
 } from '../config/schemas.js';
 
 export const NOTIFICATION_TYPES = ['appointment_created', 'appointment_reminder', 'payment_reminder'] as const;
-export const NOTIFICATION_CHANNELS = ['email', 'viber', 'whatsapp', 'sms'] as const;
+export const NOTIFICATION_CHANNELS = ['email', 'telegram', 'viber', 'whatsapp', 'sms'] as const;
 export const NOTIFICATION_FREQUENCIES = ['immediate', 'daily'] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -38,6 +43,7 @@ export type ClientNotificationSetting = {
 export type EffectiveNotificationSetting = {
   notificationType: NotificationType;
   preferredChannel: NotificationChannel;
+  deliveryChannels: NotificationChannel[];
   enabled: boolean;
   sendTimings: string[];
   frequency: NotificationFrequency;
@@ -102,6 +108,19 @@ export async function getAccountNotificationDefaults(accountId: number): Promise
       frequency: row.frequency as NotificationFrequency,
     }))
     .sort((a, b) => a.notificationType.localeCompare(b.notificationType));
+}
+
+export async function putAccountNotificationDefaults(
+  accountId: number,
+  payload: unknown,
+): Promise<AccountNotificationDefault[] | null> {
+  const parsed = accountNotificationDefaultsBatchSchema.safeParse(payload);
+  if (!parsed.success) {
+    return null;
+  }
+
+  await upsertAccountNotificationDefaults(accountId, parsed.data.items);
+  return getAccountNotificationDefaults(accountId);
 }
 
 function toAccountLikeSettings(rows: Array<{
@@ -177,24 +196,36 @@ export async function getEffectiveNotificationSetting(input: {
   notificationType: NotificationType;
 }): Promise<EffectiveNotificationSetting | null> {
   const accountSettings = await getAccountNotificationDefaults(input.accountId);
-  const accountBase = accountSettings.find((item) => item.notificationType === input.notificationType);
+  const channelPriority = NOTIFICATION_CHANNELS;
+  const accountBaseItems = accountSettings
+    .filter((item) => item.notificationType === input.notificationType)
+    .sort((a, b) => channelPriority.indexOf(a.preferredChannel) - channelPriority.indexOf(b.preferredChannel));
+  const accountBase = accountBaseItems[0];
   if (!accountBase) {
     return null;
   }
 
   const specialistSettings = await getSpecialistNotificationSettings(input.accountId, input.specialistId);
-  const specialistOverride = specialistSettings.find((item) => item.notificationType === input.notificationType);
-  const picked = specialistOverride ?? accountBase;
+  const specialistItems = specialistSettings
+    .filter((item) => item.notificationType === input.notificationType)
+    .sort((a, b) => channelPriority.indexOf(a.preferredChannel) - channelPriority.indexOf(b.preferredChannel));
+  const pickedItems = specialistItems.length > 0 ? specialistItems : accountBaseItems;
+  const picked = pickedItems[0];
 
   const clientSettings = await getClientNotificationSettings(input.accountId, input.clientId);
-  const deny = clientSettings.find((item) =>
-    item.notificationType === input.notificationType
-    && item.channel === picked.preferredChannel
-    && !item.enabled);
+  const deniedChannels = new Set(
+    clientSettings
+      .filter((item) => item.notificationType === input.notificationType && !item.enabled)
+      .map((item) => item.channel),
+  );
+  const deliveryChannels = pickedItems
+    .filter((item) => item.enabled && !deniedChannels.has(item.preferredChannel))
+    .map((item) => item.preferredChannel);
 
   return {
     ...picked,
-    enabled: picked.enabled && !Boolean(deny),
-    deniedByClient: Boolean(deny),
+    deliveryChannels,
+    enabled: picked.enabled && deliveryChannels.length > 0,
+    deniedByClient: !deliveryChannels.includes(picked.preferredChannel),
   };
 }

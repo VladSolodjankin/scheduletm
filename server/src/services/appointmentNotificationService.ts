@@ -37,7 +37,8 @@ export async function sendAppointmentNotificationByType(input: {
       return { delivered: false, channel: null, reason: active.deniedByClient ? 'client_deny' : 'disabled' };
     }
 
-    if (active.preferredChannel !== 'email') {
+    const firstSupportedChannel = active.deliveryChannels.find((item) => item === 'email');
+    if (!firstSupportedChannel) {
       return { delivered: false, channel: null, reason: 'unsupported_channel' };
     }
   }

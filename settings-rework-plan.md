@@ -20,10 +20,18 @@
    - добавлен endpoint effective settings с приоритетом `account -> specialist -> client deny`;
    - `appointmentNotificationService` переведён на effective pipeline (с причиной `client_deny` для deny-case);
    - покрыто unit + route-smoke тестами для edge scenarios приоритетов и deny.
+6. Web: начата и реализована UX-версия настроек оповещений:
+   - отдельная вкладка в Settings для каналов и таймингов;
+   - выбор каналов: `email`, `telegram`, `viber`, `sms`, `whatsapp`;
+   - multi-select для `appointment_reminder` и `payment_reminder` с диапазоном `1h..71h` и шагом `2h`;
+   - добавлен вариант `Disabled` для отключения каждого reminder-типа.
+7. Server: добавлено сохранение account notification defaults через `PUT /api/settings/account-notification-defaults`.
+8. Server: обновлена логика выбора канала отправки (учёт fallback-цепочки, skip неподдержанных каналов с попыткой перейти к доступному `email`).
+9. Server/DB: добавлена поддержка канала `telegram` в валидации и DB check constraints для notification settings таблиц.
 
 ### ⏭️ Следующая итерация
 
-1. Доработка отправки оповещений (см. чеклист ниже: effective settings, specialist/client overrides, fallback channels, retries, observability).
+1. Доработка отправки оповещений (см. чеклист ниже: реальные провайдеры каналов, retries, observability).
 2. Авто-отмена неоплаченных записей через scheduler/jobs.
 3. Полная сквозная UX-поддержка последствий поздней отмены (refund/no-refund) в web и bot.
 
@@ -45,8 +53,8 @@
    - реализованы scope-проверки: owner/admin/specialist/client (в рамках MVP read/update сценариев).
 
 3. **Fallback channels (после email MVP)**
-   - добавить реальные провайдеры/адаптеры для `viber`, `whatsapp`, `sms`;
-   - включить последовательный fallback по `preferred_channel`.
+   - ✅ включен выбор fallback-цепочки на уровне effective settings;
+   - ⏳ добавить реальные провайдеры/адаптеры для `telegram`, `viber`, `whatsapp`, `sms`.
 
 4. **Надёжность доставки**
    - retry policy (`pending/retry/failed`) для scheduler-отправок;
@@ -62,9 +70,10 @@
    - диагностические причины skip (`disabled`, `no-contact`, `client-deny`, `unsupported-channel`).
 
 7. **Frontend + UX**
-   - единый экран матрицы `notification_type × channel`;
-   - секции account/specialist/client;
-   - управление таймингами и preview effective settings.
+   - ✅ добавлен account-экран управления каналами и reminder-таймингами;
+   - ⏳ расширить до полной матрицы `notification_type × channel`;
+   - ⏳ секции specialist/client;
+   - ⏳ preview effective settings.
 
 8. **Тесты (edge cases, обязательно):**
    - ✅ приоритет переопределений (account vs specialist vs client deny);

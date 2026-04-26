@@ -72,6 +72,18 @@ export type SpecialistBookingPolicy = {
   unpaidAutoCancelAfterHours: number;
 };
 
+export type NotificationType = 'appointment_created' | 'appointment_reminder' | 'payment_reminder';
+export type NotificationChannel = 'email' | 'telegram' | 'viber' | 'sms' | 'whatsapp';
+export type NotificationFrequency = 'immediate' | 'daily';
+
+export type AccountNotificationDefault = {
+  notificationType: NotificationType;
+  preferredChannel: NotificationChannel;
+  enabled: boolean;
+  sendTimings: string[];
+  frequency: NotificationFrequency;
+};
+
 export type GoogleOAuthStartResponse = {
   provider: 'google';
   authorizeUrl: string;

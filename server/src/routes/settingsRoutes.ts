@@ -18,6 +18,7 @@ import {
   getEffectiveNotificationSetting,
   getSpecialistNotificationSettings,
   putClientNotificationSettings,
+  putAccountNotificationDefaults,
   putSpecialistNotificationSettings,
 } from '../services/settingsService.js';
 
@@ -77,6 +78,20 @@ settingsRoutes.get('/account-notification-defaults', requireAccessToken, async (
   }
 
   return res.json({ items: await getAccountNotificationDefaults(user) });
+});
+
+settingsRoutes.put('/account-notification-defaults', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageAccountSettings(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
+  }
+
+  const items = await putAccountNotificationDefaults(user, req.body);
+  if (!items) {
+    return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
+  }
+
+  return res.json({ items });
 });
 
 settingsRoutes.get('/specialist-notification-settings', requireAccessToken, async (req, res) => {

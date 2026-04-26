@@ -131,7 +131,7 @@ export const specialistBookingPolicySchema = z.object({
 }).partial();
 
 const notificationTypeSchema = z.enum(['appointment_created', 'appointment_reminder', 'payment_reminder']);
-const notificationChannelSchema = z.enum(['email', 'viber', 'whatsapp', 'sms']);
+const notificationChannelSchema = z.enum(['email', 'telegram', 'viber', 'whatsapp', 'sms']);
 const notificationFrequencySchema = z.enum(['immediate', 'daily']);
 
 export const specialistNotificationSettingsPatchSchema = z.object({
@@ -144,6 +144,10 @@ export const specialistNotificationSettingsPatchSchema = z.object({
 
 export const specialistNotificationSettingsBatchSchema = z.object({
   items: z.array(specialistNotificationSettingsPatchSchema).max(64),
+});
+
+export const accountNotificationDefaultsBatchSchema = z.object({
+  items: z.array(specialistNotificationSettingsPatchSchema).max(128),
 });
 
 export const clientNotificationSettingsPatchSchema = z.object({
