@@ -136,9 +136,9 @@ AND
 * `account_id`
 * `specialist_id` (unique)
 * `cancel_grace_period_hours` (default 24)
-* `refund_on_late_cancel`
-* `auto_cancel_if_unpaid`
-* `unpaid_auto_cancel_after_minutes`
+* `refund_on_late_cancel` (default false)
+* `auto_cancel_if_unpaid` (default false)
+* `unpaid_auto_cancel_after_hours` (default 72)
 
 ---
 
