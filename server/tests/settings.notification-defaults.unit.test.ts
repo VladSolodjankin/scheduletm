@@ -3,14 +3,29 @@ import {
   NOTIFICATION_TYPES,
   buildDefaultAccountNotificationSettings,
   getAccountNotificationDefaults,
+  getEffectiveNotificationSetting,
 } from '../src/services/notificationSettingsService.js';
 
 const ensureAccountNotificationDefaultsMock = vi.hoisted(() => vi.fn());
 const findAccountNotificationDefaultsMock = vi.hoisted(() => vi.fn());
+const findSpecialistNotificationSettingsMock = vi.hoisted(() => vi.fn());
+const upsertSpecialistNotificationSettingsMock = vi.hoisted(() => vi.fn());
+const findClientNotificationSettingsMock = vi.hoisted(() => vi.fn());
+const upsertClientNotificationSettingsMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../src/repositories/accountNotificationDefaultsRepository.js', () => ({
   ensureAccountNotificationDefaults: ensureAccountNotificationDefaultsMock,
   findAccountNotificationDefaults: findAccountNotificationDefaultsMock,
+}));
+
+vi.mock('../src/repositories/specialistNotificationSettingsRepository.js', () => ({
+  findSpecialistNotificationSettings: findSpecialistNotificationSettingsMock,
+  upsertSpecialistNotificationSettings: upsertSpecialistNotificationSettingsMock,
+}));
+
+vi.mock('../src/repositories/clientNotificationSettingsRepository.js', () => ({
+  findClientNotificationSettings: findClientNotificationSettingsMock,
+  upsertClientNotificationSettings: upsertClientNotificationSettingsMock,
 }));
 
 describe('notification defaults unit', () => {
@@ -59,5 +74,45 @@ describe('notification defaults unit', () => {
 
     const items = await getAccountNotificationDefaults(11);
     expect(items[0]?.sendTimings).toEqual([]);
+  });
+
+  it('resolves effective with specialist override over account defaults', async () => {
+    findAccountNotificationDefaultsMock.mockResolvedValue([
+      { notification_type: 'appointment_reminder', preferred_channel: 'email', enabled: true, send_timings: ['24h'], frequency: 'immediate' },
+    ]);
+    findSpecialistNotificationSettingsMock.mockResolvedValue([
+      { notification_type: 'appointment_reminder', preferred_channel: 'email', enabled: false, send_timings: ['1h'], frequency: 'immediate' },
+    ]);
+    findClientNotificationSettingsMock.mockResolvedValue([]);
+
+    const effective = await getEffectiveNotificationSetting({
+      accountId: 1,
+      specialistId: 2,
+      clientId: 3,
+      notificationType: 'appointment_reminder',
+    });
+
+    expect(effective?.enabled).toBe(false);
+    expect(effective?.sendTimings).toEqual(['1h']);
+  });
+
+  it('resolves client deny over enabled specialist/account config (edge case)', async () => {
+    findAccountNotificationDefaultsMock.mockResolvedValue([
+      { notification_type: 'appointment_reminder', preferred_channel: 'email', enabled: true, send_timings: ['24h'], frequency: 'immediate' },
+    ]);
+    findSpecialistNotificationSettingsMock.mockResolvedValue([]);
+    findClientNotificationSettingsMock.mockResolvedValue([
+      { notification_type: 'appointment_reminder', channel: 'email', enabled: false },
+    ]);
+
+    const effective = await getEffectiveNotificationSetting({
+      accountId: 1,
+      specialistId: 2,
+      clientId: 3,
+      notificationType: 'appointment_reminder',
+    });
+
+    expect(effective?.enabled).toBe(false);
+    expect(effective?.deniedByClient).toBe(true);
   });
 });

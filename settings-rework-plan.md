@@ -15,6 +15,11 @@
 4. Тестовое покрытие для `specialist_booking_policies`:
    - frontend: интеграционный smoke-контракт для загрузки/сохранения и UI-полей;
    - backend: unit-тесты схемы/доступов и route-smoke для `GET/PUT /api/settings/specialist-booking-policy`.
+5. Закрыт server MVP-блок по notification settings overrides:
+   - добавлены server endpoints для `specialist_notification_settings` и `client_notification_settings`;
+   - добавлен endpoint effective settings с приоритетом `account -> specialist -> client deny`;
+   - `appointmentNotificationService` переведён на effective pipeline (с причиной `client_deny` для deny-case);
+   - покрыто unit + route-smoke тестами для edge scenarios приоритетов и deny.
 
 ### ⏭️ Следующая итерация
 
@@ -31,13 +36,13 @@
 - manual notify endpoint использует общий email dispatch.
 
 **Осталось реализовать:**
-1. **Effective settings pipeline**
-   - считать итоговые настройки по цепочке `account -> specialist -> client`;
-   - учитывать `client_notification_settings.enabled=false` как deny на канал.
+1. **Effective settings pipeline** ✅ (server MVP)
+   - реализован расчёт итоговых настроек по цепочке `account -> specialist -> client`;
+   - реализован deny на канал при `client_notification_settings.enabled=false`.
 
-2. **Specialist/Client overrides API + права**
-   - CRUD/read endpoints для `specialist_notification_settings` и `client_notification_settings`;
-   - role-gates и scope-проверки (owner/admin/specialist/client).
+2. **Specialist/Client overrides API + права** ✅ (server MVP)
+   - добавлены read/update endpoints для `specialist_notification_settings` и `client_notification_settings`;
+   - реализованы scope-проверки: owner/admin/specialist/client (в рамках MVP read/update сценариев).
 
 3. **Fallback channels (после email MVP)**
    - добавить реальные провайдеры/адаптеры для `viber`, `whatsapp`, `sms`;
@@ -62,10 +67,10 @@
    - управление таймингами и preview effective settings.
 
 8. **Тесты (edge cases, обязательно):**
-   - приоритет переопределений (account vs specialist vs client deny);
-   - поведение fallback-цепочки при частичных отказах каналов;
-   - дедуп и retry после рестарта job-процесса;
-   - корректность окон таймингов на границах (±1 мин, DST, timezone).
+   - ✅ приоритет переопределений (account vs specialist vs client deny);
+   - ⏳ поведение fallback-цепочки при частичных отказах каналов;
+   - ⏳ дедуп и retry после рестарта job-процесса;
+   - ⏳ корректность окон таймингов на границах (±1 мин, DST, timezone).
 
 ---
 
