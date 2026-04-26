@@ -29,13 +29,11 @@ import {
   type SpecialistRecord,
 } from '../repositories/specialistRepository.js';
 import { findWebUserById } from '../repositories/webUserRepository.js';
-import { findTelegramIntegrationByAccountId } from '../repositories/webUserIntegrationRepository.js';
 import { listExternalBusySlots, type ExternalBusySlot } from './calendarAvailabilityService.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { canCreateAppointments, canManageAllAppointments, canMarkPaidAndNotify, isClientRole } from '../policies/rolePermissions.js';
-import { sendTelegramBotMessage } from './telegramService.js';
-import { sendAppointmentNotificationEmail } from './emailDeliveryService.js';
+import { sendAppointmentNotificationByType } from './appointmentNotificationService.js';
 
 type AppointmentClientDto = {
   id: number;
@@ -443,6 +441,12 @@ export async function createAppointmentForActor(
   const rows = await listAppointments({ accountId, specialistId: created.specialist_id });
   const hydrated = rows.find((item) => item.id === created.id) ?? created;
 
+  await sendAppointmentNotificationByType({
+    accountId,
+    appointment: hydrated,
+    notificationType: 'appointment_created',
+  }).catch(() => undefined);
+
   return mapAppointment(hydrated);
 }
 
@@ -613,34 +617,20 @@ export async function notifyAppointmentForActor(actor: User, appointmentId: numb
   }
 
   const client = await findClientById(accountId, existing.user_id);
-  const specialist = await findSpecialistById(accountId, existing.specialist_id);
-  const specialistName = specialist?.name ?? 'специалист';
-  const clientName = `${client?.first_name ?? ''} ${client?.last_name ?? ''}`.trim() || 'Клиент';
-  const scheduledAt = existing.appointment_at.toISOString();
+  const delivered = await sendAppointmentNotificationByType({
+    accountId,
+    appointment: {
+      ...existing,
+      client_first_name: client?.first_name ?? existing.client_first_name,
+      client_last_name: client?.last_name ?? existing.client_last_name,
+      client_email: client?.email ?? existing.client_email,
+    },
+    notificationType: 'appointment_reminder',
+    force: true,
+  });
 
-  const telegramIntegration = await findTelegramIntegrationByAccountId(accountId);
-  const telegramDelivered = telegramIntegration?.telegram_bot_token && client?.telegram_id
-    ? await sendTelegramBotMessage(
-      telegramIntegration.telegram_bot_token,
-      client.telegram_id,
-      `Напоминание о записи: ${scheduledAt}, ${specialistName}.`,
-    )
-    : false;
-
-  if (!telegramDelivered) {
-    const email = client?.email?.trim() ?? '';
-    const emailDelivered = email
-      ? await sendAppointmentNotificationEmail({
-        to: email,
-        clientName,
-        specialistName,
-        scheduledAt,
-      })
-      : false;
-
-    if (!emailDelivered) {
-      throw new Error('NOTIFICATION_DELIVERY_FAILED');
-    }
+  if (!delivered.delivered) {
+    throw new Error('NOTIFICATION_DELIVERY_FAILED');
   }
 
   await appendAuditEvent(accountId, appointmentId, actor, 'notify');

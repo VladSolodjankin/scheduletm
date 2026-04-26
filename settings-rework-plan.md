@@ -18,9 +18,54 @@
 
 ### ⏭️ Следующая итерация
 
-1. Настройки оповещений (`account_notification_defaults`, `specialist_notification_settings`, `client_notification_settings`).
+1. Доработка отправки оповещений (см. чеклист ниже: effective settings, specialist/client overrides, fallback channels, retries, observability).
 2. Авто-отмена неоплаченных записей через scheduler/jobs.
 3. Полная сквозная UX-поддержка последствий поздней отмены (refund/no-refund) в web и bot.
+
+### 📌 Что осталось доделать именно по отправке оповещений
+
+**Уже есть (backend MVP foundation):**
+- таблицы `account_notification_defaults`, `specialist_notification_settings`, `client_notification_settings`;
+- автосоздание account defaults;
+- email-only scheduler для `appointment_reminder` и `payment_reminder`;
+- manual notify endpoint использует общий email dispatch.
+
+**Осталось реализовать:**
+1. **Effective settings pipeline**
+   - считать итоговые настройки по цепочке `account -> specialist -> client`;
+   - учитывать `client_notification_settings.enabled=false` как deny на канал.
+
+2. **Specialist/Client overrides API + права**
+   - CRUD/read endpoints для `specialist_notification_settings` и `client_notification_settings`;
+   - role-gates и scope-проверки (owner/admin/specialist/client).
+
+3. **Fallback channels (после email MVP)**
+   - добавить реальные провайдеры/адаптеры для `viber`, `whatsapp`, `sms`;
+   - включить последовательный fallback по `preferred_channel`.
+
+4. **Надёжность доставки**
+   - retry policy (`pending/retry/failed`) для scheduler-отправок;
+   - backoff/next_retry_at и ограничение `max_attempts`;
+   - дедупликация на уровне idempotency key для каждого timing.
+
+5. **Тайминги и бизнес-правила**
+   - хранить и валидировать `send_timings` как доменную модель (а не только raw JSON);
+   - привести payment reminder rule к единому полю `N hours` в API/DTO.
+
+6. **Наблюдаемость и аудит**
+   - метрики доставок/ошибок по каналам и типам;
+   - диагностические причины skip (`disabled`, `no-contact`, `client-deny`, `unsupported-channel`).
+
+7. **Frontend + UX**
+   - единый экран матрицы `notification_type × channel`;
+   - секции account/specialist/client;
+   - управление таймингами и preview effective settings.
+
+8. **Тесты (edge cases, обязательно):**
+   - приоритет переопределений (account vs specialist vs client deny);
+   - поведение fallback-цепочки при частичных отказах каналов;
+   - дедуп и retry после рестарта job-процесса;
+   - корректность окон таймингов на границах (±1 мин, DST, timezone).
 
 ---
 

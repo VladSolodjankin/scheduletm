@@ -13,6 +13,7 @@ import {
   updateSystemSettings,
   updateUserSettings,
   canManageSpecialistBookingPolicies,
+  getAccountNotificationDefaults,
 } from '../services/settingsService.js';
 
 export const settingsRoutes = Router();
@@ -61,6 +62,16 @@ settingsRoutes.put('/account', requireAccessToken, async (req, res) => {
   }
 
   return res.json(updated);
+});
+
+
+settingsRoutes.get('/account-notification-defaults', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageAccountSettings(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
+  }
+
+  return res.json({ items: await getAccountNotificationDefaults(user) });
 });
 
 settingsRoutes.get('/user', requireAccessToken, async (req, res) => {

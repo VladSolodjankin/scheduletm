@@ -24,6 +24,7 @@ import { canManageAccountSettings, canManageSystemSettings } from '../policies/r
 export { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
 import { findSpecialistById, findSpecialistByWebUserId } from '../repositories/specialistRepository.js';
 import { WebUserRole } from '../types/webUserRole.js';
+import { getAccountNotificationDefaults as getAccountNotificationDefaultsCore } from './notificationSettingsService.js';
 
 export type SystemSettings = {
   dailyDigestEnabled: boolean;
@@ -337,4 +338,8 @@ export async function updateSpecialistBookingPolicy(
   });
 
   return getSpecialistBookingPolicy(actor, resolvedSpecialistId);
+}
+
+export async function getAccountNotificationDefaults(actor: User) {
+  return getAccountNotificationDefaultsCore(actor.accountId);
 }

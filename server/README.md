@@ -12,7 +12,7 @@ Node.js/Express API для web-клиента и интеграций.
   Поддерживаются `POST /api/auth/verify-email` и `POST /api/auth/resend-verification-code`.
 - Web roles: owner/admin/specialist/client.
 - RBAC policy (централизованные проверки прав) в `src/policies/rolePermissions.ts`.
-- Settings API: system (owner), account (owner/admin), user (all users).
+- Settings API: system (owner), account (owner/admin), user (all users), account notification defaults (owner/admin).
 - CRUD: users, specialists.
   - При создании пользователей owner/admin отправляется invite-link вместо временного пароля.
   - Приглашённый пользователь создаётся неактивным и активируется только после verify-email / accept-invite.
@@ -25,6 +25,8 @@ Node.js/Express API для web-клиента и интеграций.
 - Google OAuth (`start` + `callback`).
 - Email delivery через Brevo SMTP API.
 - Оповещения о записи с fallback-цепочкой: Telegram -> Email.
+- Notification defaults backend foundation: `account_notification_defaults`, `specialist_notification_settings`, `client_notification_settings` + scheduler job для автосоздания дефолтов на аккаунт.
+- Notification delivery job (MVP): email-only отправка `appointment_reminder` (24h/1h) и `payment_reminder` (24h после создания) с дедупликацией через таблицу `notifications`.
 - Локализованные API-сообщения (`ru/en`).
 
 ## Команды
@@ -58,3 +60,17 @@ npm run -w @scheduletm/server test
 - Глобальный обзор: [`../README.md`](../README.md)
 - Карта модуля: [`./PROJECT_MAP.md`](./PROJECT_MAP.md)
 - Роли и права (RBAC): [`./docs/rbac.md`](./docs/rbac.md)
+
+
+### Notification defaults endpoint
+
+- `GET /api/settings/account-notification-defaults`
+  - доступ: `owner`, `admin`;
+  - гарантирует наличие базовых дефолтов по типам (`appointment_created`, `appointment_reminder`, `payment_reminder`) и возвращает их.
+
+
+### Notification delivery (MVP now)
+
+- Канал доставки в scheduler: только `email` (reuse `sendAppointmentNotificationEmail`).
+- Ручной `POST /api/appointments/:id/notify` тоже использует общий email-dispatch сервис (форсированная отправка, независимо от account defaults).
+- Планово scheduler уважает `account_notification_defaults.enabled` и `preferred_channel` (`email`).
