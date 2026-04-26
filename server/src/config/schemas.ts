@@ -130,6 +130,32 @@ export const specialistBookingPolicySchema = z.object({
   unpaidAutoCancelAfterHours: z.coerce.number().int().min(1).max(720),
 }).partial();
 
+const notificationTypeSchema = z.enum(['appointment_created', 'appointment_reminder', 'payment_reminder']);
+const notificationChannelSchema = z.enum(['email', 'viber', 'whatsapp', 'sms']);
+const notificationFrequencySchema = z.enum(['immediate', 'daily']);
+
+export const specialistNotificationSettingsPatchSchema = z.object({
+  notificationType: notificationTypeSchema,
+  preferredChannel: notificationChannelSchema,
+  enabled: z.boolean(),
+  sendTimings: z.array(z.string().trim().min(1)).max(16),
+  frequency: notificationFrequencySchema,
+});
+
+export const specialistNotificationSettingsBatchSchema = z.object({
+  items: z.array(specialistNotificationSettingsPatchSchema).max(64),
+});
+
+export const clientNotificationSettingsPatchSchema = z.object({
+  notificationType: notificationTypeSchema,
+  channel: notificationChannelSchema,
+  enabled: z.boolean(),
+});
+
+export const clientNotificationSettingsBatchSchema = z.object({
+  items: z.array(clientNotificationSettingsPatchSchema).max(64),
+});
+
 export const specialistUserCreationSchema = z.object({
   email: z
     .string()

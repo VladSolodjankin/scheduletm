@@ -23,8 +23,16 @@ import { verifyTelegramBotToken } from './telegramService.js';
 import { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
 export { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
 import { findSpecialistById, findSpecialistByWebUserId } from '../repositories/specialistRepository.js';
+import { findClientById } from '../repositories/clientRepository.js';
 import { WebUserRole } from '../types/webUserRole.js';
-import { getAccountNotificationDefaults as getAccountNotificationDefaultsCore } from './notificationSettingsService.js';
+import {
+  getAccountNotificationDefaults as getAccountNotificationDefaultsCore,
+  getClientNotificationSettings as getClientNotificationSettingsCore,
+  getEffectiveNotificationSetting as getEffectiveNotificationSettingCore,
+  getSpecialistNotificationSettings as getSpecialistNotificationSettingsCore,
+  putClientNotificationSettings as putClientNotificationSettingsCore,
+  putSpecialistNotificationSettings as putSpecialistNotificationSettingsCore,
+} from './notificationSettingsService.js';
 
 export type SystemSettings = {
   dailyDigestEnabled: boolean;
@@ -342,4 +350,97 @@ export async function updateSpecialistBookingPolicy(
 
 export async function getAccountNotificationDefaults(actor: User) {
   return getAccountNotificationDefaultsCore(actor.accountId);
+}
+
+async function resolveSpecialistIdForNotifications(actor: User, specialistId?: number): Promise<number | null> {
+  if (actor.role === WebUserRole.Owner || actor.role === WebUserRole.Admin) {
+    if (!specialistId || !Number.isInteger(specialistId)) {
+      return null;
+    }
+
+    const specialist = await findSpecialistById(actor.accountId, specialistId);
+    return specialist?.id ?? null;
+  }
+
+  if (actor.role === WebUserRole.Specialist) {
+    const own = await findSpecialistByWebUserId(actor.accountId, Number(actor.id));
+    return own?.id ?? null;
+  }
+
+  return null;
+}
+
+async function resolveClientIdForNotifications(actor: User, clientId?: number): Promise<number | null> {
+  if (actor.role === WebUserRole.Owner || actor.role === WebUserRole.Admin || actor.role === WebUserRole.Specialist) {
+    if (!clientId || !Number.isInteger(clientId)) {
+      return null;
+    }
+
+    const client = await findClientById(actor.accountId, clientId);
+    return client?.id ?? null;
+  }
+
+  if (actor.role === WebUserRole.Client) {
+    const own = await findWebUserById(actor.accountId, Number(actor.id));
+    return own?.client_id ?? null;
+  }
+
+  return null;
+}
+
+export async function getSpecialistNotificationSettings(actor: User, specialistId?: number) {
+  const resolvedSpecialistId = await resolveSpecialistIdForNotifications(actor, specialistId);
+  if (!resolvedSpecialistId) {
+    return null;
+  }
+
+  return getSpecialistNotificationSettingsCore(actor.accountId, resolvedSpecialistId);
+}
+
+export async function putSpecialistNotificationSettings(actor: User, specialistId: number | undefined, payload: unknown) {
+  const resolvedSpecialistId = await resolveSpecialistIdForNotifications(actor, specialistId);
+  if (!resolvedSpecialistId) {
+    return null;
+  }
+
+  return putSpecialistNotificationSettingsCore(actor.accountId, resolvedSpecialistId, payload);
+}
+
+export async function getClientNotificationSettings(actor: User, clientId?: number) {
+  const resolvedClientId = await resolveClientIdForNotifications(actor, clientId);
+  if (!resolvedClientId) {
+    return null;
+  }
+
+  return getClientNotificationSettingsCore(actor.accountId, resolvedClientId);
+}
+
+export async function putClientNotificationSettings(actor: User, clientId: number | undefined, payload: unknown) {
+  const resolvedClientId = await resolveClientIdForNotifications(actor, clientId);
+  if (!resolvedClientId) {
+    return null;
+  }
+
+  return putClientNotificationSettingsCore(actor.accountId, resolvedClientId, payload);
+}
+
+export async function getEffectiveNotificationSetting(
+  actor: User,
+  notificationType: 'appointment_created' | 'appointment_reminder' | 'payment_reminder',
+  specialistId?: number,
+  clientId?: number,
+) {
+  const resolvedSpecialistId = await resolveSpecialistIdForNotifications(actor, specialistId);
+  const resolvedClientId = await resolveClientIdForNotifications(actor, clientId);
+
+  if (!resolvedSpecialistId || !resolvedClientId) {
+    return null;
+  }
+
+  return getEffectiveNotificationSettingCore({
+    accountId: actor.accountId,
+    specialistId: resolvedSpecialistId,
+    clientId: resolvedClientId,
+    notificationType,
+  });
 }

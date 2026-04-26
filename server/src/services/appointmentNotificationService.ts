@@ -2,7 +2,7 @@ import type { AppointmentRecord } from '../repositories/appointmentRepository.js
 import { findSpecialistById } from '../repositories/specialistRepository.js';
 import { sendAppointmentNotificationEmail } from './emailDeliveryService.js';
 import {
-  getAccountNotificationDefaults,
+  getEffectiveNotificationSetting,
   type NotificationType,
 } from './notificationSettingsService.js';
 
@@ -22,11 +22,19 @@ export async function sendAppointmentNotificationByType(input: {
   }
 
   if (!input.force) {
-    const defaults = await getAccountNotificationDefaults(input.accountId);
-    const active = defaults.find((item) => item.notificationType === input.notificationType);
+    const active = await getEffectiveNotificationSetting({
+      accountId: input.accountId,
+      specialistId: input.appointment.specialist_id,
+      clientId: input.appointment.user_id,
+      notificationType: input.notificationType,
+    });
 
-    if (!active?.enabled) {
-      return { delivered: false, channel: null, reason: 'disabled' };
+    if (!active) {
+      return { delivered: false, channel: null, reason: 'missing_settings' };
+    }
+
+    if (!active.enabled) {
+      return { delivered: false, channel: null, reason: active.deniedByClient ? 'client_deny' : 'disabled' };
     }
 
     if (active.preferredChannel !== 'email') {
