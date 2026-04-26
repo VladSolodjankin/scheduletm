@@ -29,6 +29,7 @@ import {
   getAccountNotificationDefaults as getAccountNotificationDefaultsCore,
   getClientNotificationSettings as getClientNotificationSettingsCore,
   getEffectiveNotificationSetting as getEffectiveNotificationSettingCore,
+  putAccountNotificationDefaults as putAccountNotificationDefaultsCore,
   getSpecialistNotificationSettings as getSpecialistNotificationSettingsCore,
   putClientNotificationSettings as putClientNotificationSettingsCore,
   putSpecialistNotificationSettings as putSpecialistNotificationSettingsCore,
@@ -350,6 +351,10 @@ export async function updateSpecialistBookingPolicy(
 
 export async function getAccountNotificationDefaults(actor: User) {
   return getAccountNotificationDefaultsCore(actor.accountId);
+}
+
+export async function putAccountNotificationDefaults(actor: User, payload: unknown) {
+  return putAccountNotificationDefaultsCore(actor.accountId, payload);
 }
 
 async function resolveSpecialistIdForNotifications(actor: User, specialistId?: number): Promise<number | null> {

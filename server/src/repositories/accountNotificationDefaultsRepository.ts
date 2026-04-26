@@ -53,3 +53,34 @@ export async function listAccountIdsWithoutNotificationDefaults(limit: number): 
 
   return rows.map((row) => row.id);
 }
+
+export async function upsertAccountNotificationDefaults(
+  accountId: number,
+  items: Array<{
+    notificationType: string;
+    preferredChannel: string;
+    enabled: boolean;
+    sendTimings: string[];
+    frequency: string;
+  }>,
+): Promise<void> {
+  await db('account_notification_defaults').where({ account_id: accountId }).del();
+
+  if (items.length === 0) {
+    return;
+  }
+
+  await db('account_notification_defaults')
+    .insert(
+      items.map((item) => ({
+        account_id: accountId,
+        notification_type: item.notificationType,
+        preferred_channel: item.preferredChannel,
+        enabled: item.enabled,
+        send_timings: JSON.stringify(item.sendTimings),
+        frequency: item.frequency,
+        created_at: db.fn.now(),
+        updated_at: db.fn.now(),
+      })),
+    );
+}

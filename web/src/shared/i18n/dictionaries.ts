@@ -77,6 +77,7 @@ export const dictionaries = {
         system: 'System settings',
         account: 'Account settings',
         specialistPolicy: 'Booking policies',
+        notifications: 'Notifications',
         user: 'User settings'
       },
       systemTitle: 'System settings',
@@ -106,6 +107,18 @@ export const dictionaries = {
       refundOnLateCancel: 'Refund on late cancel',
       autoCancelUnpaidEnabled: 'Auto-cancel unpaid appointment',
       unpaidAutoCancelAfterHours: 'Auto-cancel unpaid after (hours)',
+      notificationSettingsTitle: 'Notification settings',
+      reminderChannelsLabel: 'Channels',
+      appointmentReminderTimingsLabel: 'Appointment reminder timings',
+      paymentReminderTimingsLabel: 'Payment reminder timings',
+      disabledOption: 'Disabled',
+      channels: {
+        email: 'Email',
+        telegram: 'Telegram',
+        viber: 'Viber',
+        sms: 'SMS',
+        whatsapp: 'WhatsApp',
+      },
       googleConnectedSuccessfully: 'Google Calendar connected successfully.',
       specialists: {
         title: 'Specialists',
@@ -316,6 +329,7 @@ export const dictionaries = {
         system: 'Системные',
         account: 'Аккаунт',
         specialistPolicy: 'Правила брони',
+        notifications: 'Оповещения',
         user: 'Пользовательские'
       },
       systemTitle: 'Системные настройки',
@@ -345,6 +359,18 @@ export const dictionaries = {
       refundOnLateCancel: 'Возвращать оплату при поздней отмене',
       autoCancelUnpaidEnabled: 'Авто-отмена неоплаченной записи',
       unpaidAutoCancelAfterHours: 'Авто-отмена через (часы)',
+      notificationSettingsTitle: 'Настройки оповещений',
+      reminderChannelsLabel: 'Каналы',
+      appointmentReminderTimingsLabel: 'Напоминание о записи',
+      paymentReminderTimingsLabel: 'Напоминание об оплате',
+      disabledOption: 'Отключено',
+      channels: {
+        email: 'Email',
+        telegram: 'Telegram',
+        viber: 'Viber',
+        sms: 'SMS',
+        whatsapp: 'WhatsApp',
+      },
       googleConnectedSuccessfully: 'Google Calendar успешно подключен.',
       specialists: {
         title: 'Специалисты',
@@ -550,6 +576,7 @@ export type TranslationKey =
   | 'settings.tabs.system'
   | 'settings.tabs.account'
   | 'settings.tabs.specialistPolicy'
+  | 'settings.tabs.notifications'
   | 'settings.tabs.user'
   | 'settings.systemTitle'
   | 'settings.accountTitle'
@@ -578,6 +605,16 @@ export type TranslationKey =
   | 'settings.refundOnLateCancel'
   | 'settings.autoCancelUnpaidEnabled'
   | 'settings.unpaidAutoCancelAfterHours'
+  | 'settings.notificationSettingsTitle'
+  | 'settings.reminderChannelsLabel'
+  | 'settings.appointmentReminderTimingsLabel'
+  | 'settings.paymentReminderTimingsLabel'
+  | 'settings.disabledOption'
+  | 'settings.channels.email'
+  | 'settings.channels.telegram'
+  | 'settings.channels.viber'
+  | 'settings.channels.sms'
+  | 'settings.channels.whatsapp'
   | 'settings.googleConnectedSuccessfully'
   | 'settings.specialists.title'
   | 'settings.specialists.add'

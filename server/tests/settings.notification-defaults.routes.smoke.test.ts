@@ -5,6 +5,7 @@ import { WebUserRole } from '../src/types/webUserRole.js';
 
 const resolveUserByAccessTokenMock = vi.hoisted(() => vi.fn());
 const getAccountNotificationDefaultsMock = vi.hoisted(() => vi.fn());
+const putAccountNotificationDefaultsMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../src/services/authService.js', () => ({
   resolveUserByAccessToken: resolveUserByAccessTokenMock,
@@ -15,6 +16,7 @@ vi.mock('../src/services/settingsService.js', async () => {
   return {
     ...actual,
     getAccountNotificationDefaults: getAccountNotificationDefaultsMock,
+    putAccountNotificationDefaults: putAccountNotificationDefaultsMock,
   };
 });
 
@@ -51,6 +53,7 @@ describe('settings account notification defaults route-smoke scenarios (mocked s
   beforeEach(() => {
     resolveUserByAccessTokenMock.mockReset();
     getAccountNotificationDefaultsMock.mockReset();
+    putAccountNotificationDefaultsMock.mockReset();
 
     resolveUserByAccessTokenMock.mockResolvedValue(authedUser);
   });
@@ -91,5 +94,39 @@ describe('settings account notification defaults route-smoke scenarios (mocked s
     });
 
     expect(response.status).toBe(403);
+  });
+
+  it('PUT /api/settings/account-notification-defaults stores defaults', async () => {
+    putAccountNotificationDefaultsMock.mockResolvedValue([
+      {
+        notificationType: 'appointment_reminder',
+        preferredChannel: 'email',
+        enabled: true,
+        sendTimings: ['1h'],
+        frequency: 'immediate',
+      },
+    ]);
+
+    const response = await fetch(`${baseUrl}/api/settings/account-notification-defaults`, {
+      method: 'PUT',
+      headers: {
+        authorization: 'Bearer smoke-token',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        items: [
+          {
+            notificationType: 'appointment_reminder',
+            preferredChannel: 'email',
+            enabled: true,
+            sendTimings: ['1h'],
+            frequency: 'immediate',
+          },
+        ],
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(putAccountNotificationDefaultsMock).toHaveBeenCalledOnce();
   });
 });

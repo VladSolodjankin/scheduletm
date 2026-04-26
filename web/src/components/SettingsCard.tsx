@@ -1,7 +1,14 @@
-import { Box, FormControlLabel, Stack, Switch, Typography } from '@mui/material';
+import { Box, Checkbox, FormControl, FormControlLabel, InputLabel, ListItemText, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import type { AccountSettings, SpecialistBookingPolicy, SystemSettings, UserSettings } from '../shared/types/api';
+import type {
+  AccountNotificationDefault,
+  AccountSettings,
+  NotificationChannel,
+  SpecialistBookingPolicy,
+  SystemSettings,
+  UserSettings,
+} from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
 import { AppIcons } from '../shared/ui/AppIcons';
@@ -14,6 +21,7 @@ type SettingsCardCopy = {
   accountTab: string;
   userTab: string;
   specialistPolicyTab: string;
+  notificationsTab: string;
   systemTitle: string;
   accountTitle: string;
   userTitle: string;
@@ -41,6 +49,12 @@ type SettingsCardCopy = {
   refundOnLateCancel: string;
   autoCancelUnpaidEnabled: string;
   unpaidAutoCancelAfterHours: string;
+  notificationSettingsTitle: string;
+  reminderChannelsLabel: string;
+  appointmentReminderTimingsLabel: string;
+  paymentReminderTimingsLabel: string;
+  disabledOption: string;
+  channels: Record<NotificationChannel, string>;
 };
 
 type SettingsCardProps = {
@@ -48,6 +62,7 @@ type SettingsCardProps = {
   accountSettings: AccountSettings;
   userSettings: UserSettings;
   specialistBookingPolicy: SpecialistBookingPolicy;
+  accountNotificationDefaults: AccountNotificationDefault[];
   copy: SettingsCardCopy;
   canManageSystemSettings: boolean;
   canManageAccountSettings: boolean;
@@ -58,10 +73,12 @@ type SettingsCardProps = {
   isSavingAccount?: boolean;
   isSavingUser?: boolean;
   isSavingSpecialistBookingPolicy?: boolean;
+  isSavingNotificationDefaults?: boolean;
   onSaveSystem: (next: SystemSettings) => Promise<void> | void;
   onSaveAccount: (next: AccountSettings) => Promise<void> | void;
   onSaveUser: (next: UserSettings) => Promise<void> | void;
   onSaveSpecialistBookingPolicy: (next: SpecialistBookingPolicy) => Promise<void> | void;
+  onSaveNotificationDefaults: (items: AccountNotificationDefault[]) => Promise<void> | void;
   onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
   onDisconnectGoogle: () => void;
@@ -72,6 +89,7 @@ export function SettingsCard({
   accountSettings,
   userSettings,
   specialistBookingPolicy,
+  accountNotificationDefaults,
   copy,
   canManageSystemSettings,
   canManageAccountSettings,
@@ -82,15 +100,19 @@ export function SettingsCard({
   isSavingAccount = false,
   isSavingUser = false,
   isSavingSpecialistBookingPolicy = false,
+  isSavingNotificationDefaults = false,
   onSaveSystem,
   onSaveAccount,
   onSaveUser,
   onSaveSpecialistBookingPolicy,
+  onSaveNotificationDefaults,
   onClearTelegramBotToken,
   onConnectGoogle,
   onDisconnectGoogle
 }: SettingsCardProps) {
-  const [tab, setTab] = useState(canManageSystemSettings ? 0 : canManageAccountSettings ? 1 : canManageSpecialistBookingPolicy ? 2 : 3);
+  const timingOptions = ['disabled', ...Array.from({ length: 36 }, (_, index) => `${index * 2 + 1}h`)];
+  const selectableChannels: NotificationChannel[] = ['email', 'telegram', 'viber', 'sms', 'whatsapp'];
+  const [tab, setTab] = useState(canManageSystemSettings ? 0 : canManageAccountSettings ? 1 : canManageSpecialistBookingPolicy ? 2 : 4);
 
   const { control: systemControl, handleSubmit: handleSystemSubmit, reset: resetSystem } = useForm<SystemSettings>({
     defaultValues: systemSettings
@@ -105,6 +127,17 @@ export function SettingsCard({
   });
   const { control: specialistPolicyControl, handleSubmit: handleSpecialistPolicySubmit, reset: resetSpecialistPolicy } = useForm<SpecialistBookingPolicy>({
     defaultValues: specialistBookingPolicy
+  });
+  const { control: notificationDefaultsControl, handleSubmit: handleNotificationDefaultsSubmit, reset: resetNotificationDefaults } = useForm<{
+    channels: NotificationChannel[];
+    appointmentReminderTimings: string[];
+    paymentReminderTimings: string[];
+  }>({
+    defaultValues: {
+      channels: ['email'],
+      appointmentReminderTimings: ['disabled'],
+      paymentReminderTimings: ['disabled'],
+    }
   });
 
   useEffect(() => {
@@ -121,6 +154,21 @@ export function SettingsCard({
   useEffect(() => {
     resetSpecialistPolicy(specialistBookingPolicy);
   }, [resetSpecialistPolicy, specialistBookingPolicy]);
+  useEffect(() => {
+    const defaultsByType = new Map(accountNotificationDefaults.map((item) => [item.notificationType, item]));
+    const reminder = defaultsByType.get('appointment_reminder');
+    const payment = defaultsByType.get('payment_reminder');
+    const channels = accountNotificationDefaults
+      .filter((item) => item.enabled)
+      .map((item) => item.preferredChannel)
+      .filter((item, index, list) => list.indexOf(item) === index);
+
+    resetNotificationDefaults({
+      channels: channels.length > 0 ? channels : ['email'],
+      appointmentReminderTimings: reminder?.enabled ? reminder.sendTimings : ['disabled'],
+      paymentReminderTimings: payment?.enabled ? payment.sendTimings : ['disabled'],
+    });
+  }, [accountNotificationDefaults, resetNotificationDefaults]);
 
   return (
     <Box>
@@ -128,6 +176,7 @@ export function SettingsCard({
         <AppTab label={copy.systemTab} disabled={!canManageSystemSettings} />
         <AppTab label={copy.accountTab} disabled={!canManageAccountSettings} />
         <AppTab label={copy.specialistPolicyTab} disabled={!canManageSpecialistBookingPolicy} />
+        <AppTab label={copy.notificationsTab} disabled={!canManageAccountSettings} />
         <AppTab label={copy.userTab} />
       </AppTabs>
 
@@ -326,7 +375,130 @@ export function SettingsCard({
         </AppForm>
       )}
 
-      {tab === 3 && (
+      {tab === 3 && canManageAccountSettings && (
+        <AppForm
+          component="form"
+          onSubmit={handleNotificationDefaultsSubmit((values) => {
+            const enabledChannels = values.channels;
+            const appointmentEnabled = !values.appointmentReminderTimings.includes('disabled');
+            const paymentEnabled = !values.paymentReminderTimings.includes('disabled');
+            const appointmentTimings = values.appointmentReminderTimings.filter((item) => item !== 'disabled');
+            const paymentTimings = values.paymentReminderTimings.filter((item) => item !== 'disabled');
+
+            const next: AccountNotificationDefault[] = enabledChannels.flatMap((channel) => ([
+              {
+                notificationType: 'appointment_created',
+                preferredChannel: channel,
+                enabled: true,
+                sendTimings: ['immediate'],
+                frequency: 'immediate',
+              },
+              {
+                notificationType: 'appointment_reminder',
+                preferredChannel: channel,
+                enabled: appointmentEnabled,
+                sendTimings: appointmentEnabled ? appointmentTimings : [],
+                frequency: 'immediate',
+              },
+              {
+                notificationType: 'payment_reminder',
+                preferredChannel: channel,
+                enabled: paymentEnabled,
+                sendTimings: paymentEnabled ? paymentTimings : [],
+                frequency: 'daily',
+              },
+            ]));
+
+            return onSaveNotificationDefaults(next);
+          })}
+        >
+          <Typography variant="h5">{copy.notificationSettingsTitle}</Typography>
+
+          <Controller
+            name="channels"
+            control={notificationDefaultsControl}
+            render={({ field }: any) => (
+              <FormControl>
+                <InputLabel id="notification-channels-label">{copy.reminderChannelsLabel}</InputLabel>
+                <Select
+                  {...field}
+                  labelId="notification-channels-label"
+                  label={copy.reminderChannelsLabel}
+                  multiple
+                  value={field.value}
+                  onChange={(event) => field.onChange(event.target.value as NotificationChannel[])}
+                  renderValue={(selected) => (selected as NotificationChannel[]).map((item) => copy.channels[item]).join(', ')}
+                >
+                  {selectableChannels.map((channel) => (
+                    <MenuItem key={channel} value={channel}>
+                      <Checkbox checked={(field.value as NotificationChannel[]).includes(channel)} />
+                      <ListItemText primary={copy.channels[channel]} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          />
+
+          <Controller
+            name="appointmentReminderTimings"
+            control={notificationDefaultsControl}
+            render={({ field }: any) => (
+              <FormControl>
+                <InputLabel id="appointment-reminder-timings-label">{copy.appointmentReminderTimingsLabel}</InputLabel>
+                <Select
+                  {...field}
+                  labelId="appointment-reminder-timings-label"
+                  label={copy.appointmentReminderTimingsLabel}
+                  multiple
+                  value={field.value}
+                  onChange={(event) => field.onChange(event.target.value as string[])}
+                  renderValue={(selected) => (selected as string[]).map((item) => item === 'disabled' ? copy.disabledOption : item).join(', ')}
+                >
+                  {timingOptions.map((timing) => (
+                    <MenuItem key={timing} value={timing}>
+                      <Checkbox checked={(field.value as string[]).includes(timing)} />
+                      <ListItemText primary={timing === 'disabled' ? copy.disabledOption : timing} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          />
+
+          <Controller
+            name="paymentReminderTimings"
+            control={notificationDefaultsControl}
+            render={({ field }: any) => (
+              <FormControl>
+                <InputLabel id="payment-reminder-timings-label">{copy.paymentReminderTimingsLabel}</InputLabel>
+                <Select
+                  {...field}
+                  labelId="payment-reminder-timings-label"
+                  label={copy.paymentReminderTimingsLabel}
+                  multiple
+                  value={field.value}
+                  onChange={(event) => field.onChange(event.target.value as string[])}
+                  renderValue={(selected) => (selected as string[]).map((item) => item === 'disabled' ? copy.disabledOption : item).join(', ')}
+                >
+                  {timingOptions.map((timing) => (
+                    <MenuItem key={timing} value={timing}>
+                      <Checkbox checked={(field.value as string[]).includes(timing)} />
+                      <ListItemText primary={timing === 'disabled' ? copy.disabledOption : timing} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          />
+
+          <AppButton type="submit" startIcon={<AppIcons.save />} isLoading={isSavingNotificationDefaults}>
+            {copy.saveSettings}
+          </AppButton>
+        </AppForm>
+      )}
+
+      {tab === 4 && (
         <AppForm component="form" onSubmit={handleUserSubmit(onSaveUser)}>
           <Typography variant="h5">{copy.userTitle}</Typography>
 
