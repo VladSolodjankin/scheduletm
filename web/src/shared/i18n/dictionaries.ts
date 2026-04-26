@@ -76,6 +76,7 @@ export const dictionaries = {
       tabs: {
         system: 'System settings',
         account: 'Account settings',
+        specialistPolicy: 'Booking policies',
         user: 'User settings'
       },
       systemTitle: 'System settings',
@@ -100,6 +101,11 @@ export const dictionaries = {
       telegramBotConnected: 'Telegram bot connected',
       telegramBotNotConnected: 'Telegram bot is not connected',
       clearTelegramBotToken: 'Disconnect Telegram bot',
+      specialistPolicyTitle: 'Specialist booking policies',
+      cancelGracePeriodHours: 'Cancel grace period (hours)',
+      refundOnLateCancel: 'Refund on late cancel',
+      autoCancelUnpaidEnabled: 'Auto-cancel unpaid appointment',
+      unpaidAutoCancelAfterHours: 'Auto-cancel unpaid after (hours)',
       googleConnectedSuccessfully: 'Google Calendar connected successfully.',
       specialists: {
         title: 'Specialists',
@@ -309,6 +315,7 @@ export const dictionaries = {
       tabs: {
         system: 'Системные',
         account: 'Аккаунт',
+        specialistPolicy: 'Правила брони',
         user: 'Пользовательские'
       },
       systemTitle: 'Системные настройки',
@@ -333,6 +340,11 @@ export const dictionaries = {
       telegramBotConnected: 'Telegram-бот подключен',
       telegramBotNotConnected: 'Telegram-бот не подключен',
       clearTelegramBotToken: 'Отключить Telegram-бота',
+      specialistPolicyTitle: 'Правила бронирования специалиста',
+      cancelGracePeriodHours: 'Окно отмены без штрафа (часы)',
+      refundOnLateCancel: 'Возвращать оплату при поздней отмене',
+      autoCancelUnpaidEnabled: 'Авто-отмена неоплаченной записи',
+      unpaidAutoCancelAfterHours: 'Авто-отмена через (часы)',
       googleConnectedSuccessfully: 'Google Calendar успешно подключен.',
       specialists: {
         title: 'Специалисты',
@@ -537,6 +549,7 @@ export type TranslationKey =
   | 'settings.pageSubtitle'
   | 'settings.tabs.system'
   | 'settings.tabs.account'
+  | 'settings.tabs.specialistPolicy'
   | 'settings.tabs.user'
   | 'settings.systemTitle'
   | 'settings.accountTitle'
@@ -560,6 +573,11 @@ export type TranslationKey =
   | 'settings.telegramBotConnected'
   | 'settings.telegramBotNotConnected'
   | 'settings.clearTelegramBotToken'
+  | 'settings.specialistPolicyTitle'
+  | 'settings.cancelGracePeriodHours'
+  | 'settings.refundOnLateCancel'
+  | 'settings.autoCancelUnpaidEnabled'
+  | 'settings.unpaidAutoCancelAfterHours'
   | 'settings.googleConnectedSuccessfully'
   | 'settings.specialists.title'
   | 'settings.specialists.add'

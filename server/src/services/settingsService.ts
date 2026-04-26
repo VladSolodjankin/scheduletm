@@ -8,11 +8,22 @@ import { findWebUserIntegrationByWebUserId, updateWebUserTelegramIntegration } f
 import { findUserSettingsByWebUserId, updateUserSettingsByWebUserId } from '../repositories/userSettingsRepository.js';
 import { findUserIntegrationByWebUserId, updateUserTelegramIntegration } from '../repositories/userIntegrationRepository.js';
 import { getSystemSettingsRecord, updateSystemSettingsRecord } from '../repositories/systemSettingsRepository.js';
+import {
+  findSpecialistBookingPolicy,
+  upsertSpecialistBookingPolicy,
+} from '../repositories/specialistBookingPolicyRepository.js';
 import type { User } from '../types/domain.js';
-import { accountSettingsSchema, systemSettingsSchema, userSettingsSchema } from '../config/schemas.js';
+import {
+  accountSettingsSchema,
+  specialistBookingPolicySchema,
+  systemSettingsSchema,
+  userSettingsSchema,
+} from '../config/schemas.js';
 import { verifyTelegramBotToken } from './telegramService.js';
 import { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
 export { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
+import { findSpecialistById, findSpecialistByWebUserId } from '../repositories/specialistRepository.js';
+import { WebUserRole } from '../types/webUserRole.js';
 
 export type SystemSettings = {
   dailyDigestEnabled: boolean;
@@ -40,6 +51,14 @@ export type UserSettings = {
   telegramBotConnected: boolean;
   telegramBotName: string | null;
   telegramBotUsername: string | null;
+};
+
+export type SpecialistBookingPolicy = {
+  specialistId: number;
+  cancelGracePeriodHours: number;
+  refundOnLateCancel: boolean;
+  autoCancelUnpaidEnabled: boolean;
+  unpaidAutoCancelAfterHours: number;
 };
 
 const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
@@ -252,3 +271,70 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
   return getUserSettings(actor);
 };
 
+async function resolveSpecialistIdForPolicy(actor: User, specialistId?: number): Promise<number | null> {
+  if (actor.role === WebUserRole.Owner || actor.role === WebUserRole.Admin) {
+    if (!specialistId || !Number.isInteger(specialistId)) {
+      return null;
+    }
+
+    const specialist = await findSpecialistById(actor.accountId, specialistId);
+    return specialist ? specialist.id : null;
+  }
+
+  if (actor.role === WebUserRole.Specialist) {
+    const own = await findSpecialistByWebUserId(actor.accountId, Number(actor.id));
+    return own?.id ?? null;
+  }
+
+  return null;
+}
+
+export function canManageSpecialistBookingPolicies(role: User['role']): boolean {
+  return role === WebUserRole.Owner || role === WebUserRole.Admin || role === WebUserRole.Specialist;
+}
+
+export async function getSpecialistBookingPolicy(
+  actor: User,
+  specialistId?: number,
+): Promise<SpecialistBookingPolicy | null> {
+  const resolvedSpecialistId = await resolveSpecialistIdForPolicy(actor, specialistId);
+  if (!resolvedSpecialistId) {
+    return null;
+  }
+
+  const row = await findSpecialistBookingPolicy(actor.accountId, resolvedSpecialistId);
+  return {
+    specialistId: resolvedSpecialistId,
+    cancelGracePeriodHours: row?.cancel_grace_period_hours ?? 24,
+    refundOnLateCancel: row?.refund_on_late_cancel ?? false,
+    autoCancelUnpaidEnabled: row?.auto_cancel_unpaid_enabled ?? false,
+    unpaidAutoCancelAfterHours: row?.unpaid_auto_cancel_after_hours ?? 72,
+  };
+}
+
+export async function updateSpecialistBookingPolicy(
+  actor: User,
+  specialistId: number | undefined,
+  payload: unknown,
+): Promise<SpecialistBookingPolicy | null> {
+  const parsed = specialistBookingPolicySchema.safeParse(payload);
+  if (!parsed.success) {
+    return null;
+  }
+
+  const resolvedSpecialistId = await resolveSpecialistIdForPolicy(actor, specialistId);
+  if (!resolvedSpecialistId) {
+    return null;
+  }
+
+  await upsertSpecialistBookingPolicy({
+    accountId: actor.accountId,
+    specialistId: resolvedSpecialistId,
+    cancelGracePeriodHours: parsed.data.cancelGracePeriodHours,
+    refundOnLateCancel: parsed.data.refundOnLateCancel,
+    autoCancelUnpaidEnabled: parsed.data.autoCancelUnpaidEnabled,
+    unpaidAutoCancelAfterHours: parsed.data.unpaidAutoCancelAfterHours,
+  });
+
+  return getSpecialistBookingPolicy(actor, resolvedSpecialistId);
+}
