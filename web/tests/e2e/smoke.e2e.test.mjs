@@ -6,7 +6,7 @@ async function read(relativePath) {
   return readFile(new URL(`../../${relativePath}`, import.meta.url), 'utf8');
 }
 
-describe('web smoke (auth/settings/specialists/appointments contracts)', () => {
+describe('web smoke (auth/settings/specialists/appointments/specialist booking policy contracts)', () => {
   it('router exposes auth/settings/specialists/appointments routes', async () => {
     const router = await read('src/app/router.tsx');
 
@@ -30,9 +30,14 @@ describe('web smoke (auth/settings/specialists/appointments contracts)', () => {
     const appointmentsContainer = await read('src/containers/AppointmentsContainer.tsx');
     const appointmentDialog = await read('src/components/appointments/AppointmentFormDialog.tsx');
     const specialistsTable = await read('src/components/specialists/SpecialistsTable.tsx');
+    const settingsCard = await read('src/components/SettingsCard.tsx');
 
     assert.match(settingsContainer, /'\/api\/settings\/user'/);
     assert.match(settingsContainer, /'\/api\/settings\/system'/);
+
+    assert.match(settingsContainer, /'\/api\/settings\/specialist-booking-policy'/);
+    assert.match(settingsContainer, /canManageSpecialistBookingPolicy/);
+    assert.match(settingsContainer, /saveSpecialistBookingPolicy/);
     assert.match(specialistsContainer, /'\/api\/specialists'/);
     assert.match(specialistsContainer, /baseSessionPrice/);
     assert.match(specialistsContainer, /defaultSessionContinuationMin/);
@@ -43,6 +48,12 @@ describe('web smoke (auth/settings/specialists/appointments contracts)', () => {
     assert.match(appointmentsContainer, /\/notify/);
     assert.match(appointmentDialog, /appointments\.markPaidAction/);
     assert.match(appointmentDialog, /appointments\.notifyAction/);
+
+    assert.match(settingsCard, /specialistPolicyTitle/);
+    assert.match(settingsCard, /cancelGracePeriodHours/);
+    assert.match(settingsCard, /refundOnLateCancel/);
+    assert.match(settingsCard, /autoCancelUnpaidEnabled/);
+    assert.match(settingsCard, /unpaidAutoCancelAfterHours/);
     assert.match(specialistsTable, /AppIcons\.edit/);
     assert.match(specialistsTable, /AppIcons\.delete/);
   });
