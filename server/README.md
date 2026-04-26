@@ -26,7 +26,10 @@ Node.js/Express API для web-клиента и интеграций.
 - Email delivery через Brevo SMTP API.
 - Оповещения о записи с fallback-цепочкой: Telegram -> Email.
 - Notification defaults backend foundation: `account_notification_defaults`, `specialist_notification_settings`, `client_notification_settings` + scheduler job для автосоздания дефолтов на аккаунт.
-- Notification delivery job (MVP): email-only отправка `appointment_reminder` (24h/1h) и `payment_reminder` (24h после создания) с дедупликацией через таблицу `notifications`.
+- Notification delivery job (MVP): отправка `appointment_reminder` / `payment_reminder` по effective channel order:
+  - `telegram` (если у клиента есть `telegram_id` + `username` и в аккаунте подключён `telegram_bot_token`);
+  - fallback на `email`;
+  - дедупликация через таблицу `notifications`.
 - Локализованные API-сообщения (`ru/en`).
 
 ## Команды
@@ -71,6 +74,8 @@ npm run -w @scheduletm/server test
 
 ### Notification delivery (MVP now)
 
-- Канал доставки в scheduler: только `email` (reuse `sendAppointmentNotificationEmail`).
-- Ручной `POST /api/appointments/:id/notify` тоже использует общий email-dispatch сервис (форсированная отправка, независимо от account defaults).
-- Планово scheduler уважает `account_notification_defaults.enabled` и `preferred_channel` (`email`).
+- Каналы доставки в scheduler:
+  - `telegram` (через bot token аккаунта + `clients.telegram_id`);
+  - fallback `email`.
+- Ручной `POST /api/appointments/:id/notify` использует общий dispatch-сервис (форсированная отправка: сначала `telegram`, затем `email` при доступности контактов).
+- Scheduler уважает effective settings (`account -> specialist -> client deny`) и применяет fallback по доступным каналам.

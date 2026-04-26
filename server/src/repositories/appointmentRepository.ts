@@ -19,6 +19,7 @@ export type AppointmentRecord = {
   client_first_name?: string | null;
   client_last_name?: string | null;
   client_username?: string | null;
+  client_telegram_id?: string | null;
   client_phone?: string | null;
   client_email?: string | null;
 };
@@ -90,6 +91,7 @@ export async function listAppointments(filters: AppointmentListFilters): Promise
     'clients.first_name as client_first_name',
     'clients.last_name as client_last_name',
     'clients.username as client_username',
+    'clients.telegram_id as client_telegram_id',
     'clients.phone as client_phone',
     'clients.email as client_email',
   );
@@ -139,6 +141,7 @@ export async function listAppointmentsAllAccounts(filters: Omit<AppointmentListF
     'clients.first_name as client_first_name',
     'clients.last_name as client_last_name',
     'clients.username as client_username',
+    'clients.telegram_id as client_telegram_id',
     'clients.phone as client_phone',
     'clients.email as client_email',
   );

@@ -28,6 +28,7 @@
 7. Server: добавлено сохранение account notification defaults через `PUT /api/settings/account-notification-defaults`.
 8. Server: обновлена логика выбора канала отправки (учёт fallback-цепочки, skip неподдержанных каналов с попыткой перейти к доступному `email`).
 9. Server/DB: добавлена поддержка канала `telegram` в валидации и DB check constraints для notification settings таблиц.
+10. Server: добавлена фактическая отправка `appointment`-оповещений в `telegram` при наличии у клиента `telegram_id` + `username` и подключённого `telegram_bot_token` в аккаунте (с fallback на email).
 
 ### ⏭️ Следующая итерация
 
@@ -54,7 +55,8 @@
 
 3. **Fallback channels (после email MVP)**
    - ✅ включен выбор fallback-цепочки на уровне effective settings;
-   - ⏳ добавить реальные провайдеры/адаптеры для `telegram`, `viber`, `whatsapp`, `sms`.
+   - 🟡 `telegram`: реализован через bot token + `clients.telegram_id` (при наличии также `username`);
+   - ⏳ добавить реальные провайдеры/адаптеры для `viber`, `whatsapp`, `sms`.
 
 4. **Надёжность доставки**
    - retry policy (`pending/retry/failed`) для scheduler-отправок;
