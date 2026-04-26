@@ -11,6 +11,9 @@ export const canManageAccountSettings = (role: WebUserRole): boolean =>
 export const canManageSpecialists = (role: WebUserRole): boolean =>
   role === WebUserRole.Owner || role === WebUserRole.Admin;
 
+export const canManageSpecialistSettings = (role: WebUserRole): boolean =>
+  role === WebUserRole.Owner || role === WebUserRole.Admin || role === WebUserRole.Specialist;
+
 export const canManageAllAppointments = (role: WebUserRole): boolean =>
   role === WebUserRole.Owner || role === WebUserRole.Admin;
 

@@ -56,6 +56,12 @@ export type SpecialistRecord = {
   user_id: number | null;
   timezone: string;
   slot_step_min: number | null;
+  base_session_price?: number;
+  base_hour_price?: number;
+  work_start_hour?: number;
+  work_end_hour?: number;
+  slot_duration_min?: number;
+  default_session_continuation_min?: number;
 };
 
 type CreateSpecialistInput = {
@@ -131,16 +137,54 @@ export type SpecialistCalendarCredentials = {
 };
 
 export async function findSpecialistById(accountId: number, specialistId: number): Promise<SpecialistRecord | null> {
-  const row = await db('specialists')
-    .where({ account_id: accountId, id: specialistId })
+  const row = await db('specialists as s')
+    .leftJoin('specialist_settings as ss', function joinSpecialistSettings() {
+      this.on('ss.specialist_id', '=', 's.id').andOn('ss.account_id', '=', 's.account_id');
+    })
+    .where({ 's.account_id': accountId, 's.id': specialistId })
+    .select(
+      's.id',
+      's.account_id',
+      's.code',
+      's.name',
+      's.is_active',
+      's.user_id',
+      db.raw("'UTC' as timezone"),
+      db.raw('COALESCE(ss.slot_step_min, s.slot_step_min, 30) as slot_step_min'),
+      db.raw('COALESCE(ss.base_session_price, s.base_session_price, 0) as base_session_price'),
+      db.raw('COALESCE(ss.base_hour_price, s.base_hour_price, 0) as base_hour_price'),
+      db.raw('COALESCE(ss.work_start_hour, s.work_start_hour, 9) as work_start_hour'),
+      db.raw('COALESCE(ss.work_end_hour, s.work_end_hour, 20) as work_end_hour'),
+      db.raw('COALESCE(ss.slot_duration_min, s.slot_duration_min, 90) as slot_duration_min'),
+      db.raw('COALESCE(ss.default_session_continuation_min, s.slot_duration_min, 90) as default_session_continuation_min'),
+    )
     .first<SpecialistRecord>();
 
   return row ?? null;
 }
 
 export async function findSpecialistByIdAnyAccount(specialistId: number): Promise<SpecialistRecord | null> {
-  const row = await db('specialists')
-    .where({ id: specialistId })
+  const row = await db('specialists as s')
+    .leftJoin('specialist_settings as ss', function joinSpecialistSettings() {
+      this.on('ss.specialist_id', '=', 's.id').andOn('ss.account_id', '=', 's.account_id');
+    })
+    .where({ 's.id': specialistId })
+    .select(
+      's.id',
+      's.account_id',
+      's.code',
+      's.name',
+      's.is_active',
+      's.user_id',
+      db.raw("'UTC' as timezone"),
+      db.raw('COALESCE(ss.slot_step_min, s.slot_step_min, 30) as slot_step_min'),
+      db.raw('COALESCE(ss.base_session_price, s.base_session_price, 0) as base_session_price'),
+      db.raw('COALESCE(ss.base_hour_price, s.base_hour_price, 0) as base_hour_price'),
+      db.raw('COALESCE(ss.work_start_hour, s.work_start_hour, 9) as work_start_hour'),
+      db.raw('COALESCE(ss.work_end_hour, s.work_end_hour, 20) as work_end_hour'),
+      db.raw('COALESCE(ss.slot_duration_min, s.slot_duration_min, 90) as slot_duration_min'),
+      db.raw('COALESCE(ss.default_session_continuation_min, s.slot_duration_min, 90) as default_session_continuation_min'),
+    )
     .first<SpecialistRecord>();
 
   return row ?? null;
@@ -148,6 +192,9 @@ export async function findSpecialistByIdAnyAccount(specialistId: number): Promis
 
 export async function listSpecialistsByAccount(accountId: number): Promise<SpecialistRecord[]> {
   return db('specialists as s')
+    .leftJoin('specialist_settings as ss', function joinSpecialistSettings() {
+      this.on('ss.specialist_id', '=', 's.id').andOn('ss.account_id', '=', 's.account_id');
+    })
     .leftJoin('web_users as wu', function joinWebUsers() {
       this.on('wu.id', '=', 's.user_id').andOn('wu.account_id', '=', 's.account_id');
     })
@@ -160,13 +207,22 @@ export async function listSpecialistsByAccount(accountId: number): Promise<Speci
       's.name',
       's.is_active',
       's.user_id',
-      's.slot_step_min',
+      db.raw('COALESCE(ss.slot_step_min, s.slot_step_min, 30) as slot_step_min'),
+      db.raw('COALESCE(ss.base_session_price, s.base_session_price, 0) as base_session_price'),
+      db.raw('COALESCE(ss.base_hour_price, s.base_hour_price, 0) as base_hour_price'),
+      db.raw('COALESCE(ss.work_start_hour, s.work_start_hour, 9) as work_start_hour'),
+      db.raw('COALESCE(ss.work_end_hour, s.work_end_hour, 20) as work_end_hour'),
+      db.raw('COALESCE(ss.slot_duration_min, s.slot_duration_min, 90) as slot_duration_min'),
+      db.raw('COALESCE(ss.default_session_continuation_min, s.slot_duration_min, 90) as default_session_continuation_min'),
       db.raw("COALESCE(wu.timezone, 'UTC') as timezone"),
     );
 }
 
 export async function listSpecialistsAllAccounts(): Promise<SpecialistRecord[]> {
   return db('specialists as s')
+    .leftJoin('specialist_settings as ss', function joinSpecialistSettings() {
+      this.on('ss.specialist_id', '=', 's.id').andOn('ss.account_id', '=', 's.account_id');
+    })
     .leftJoin('web_users as wu', function joinWebUsers() {
       this.on('wu.id', '=', 's.user_id').andOn('wu.account_id', '=', 's.account_id');
     })
@@ -178,7 +234,13 @@ export async function listSpecialistsAllAccounts(): Promise<SpecialistRecord[]> 
       's.name',
       's.is_active',
       's.user_id',
-      's.slot_step_min',
+      db.raw('COALESCE(ss.slot_step_min, s.slot_step_min, 30) as slot_step_min'),
+      db.raw('COALESCE(ss.base_session_price, s.base_session_price, 0) as base_session_price'),
+      db.raw('COALESCE(ss.base_hour_price, s.base_hour_price, 0) as base_hour_price'),
+      db.raw('COALESCE(ss.work_start_hour, s.work_start_hour, 9) as work_start_hour'),
+      db.raw('COALESCE(ss.work_end_hour, s.work_end_hour, 20) as work_end_hour'),
+      db.raw('COALESCE(ss.slot_duration_min, s.slot_duration_min, 90) as slot_duration_min'),
+      db.raw('COALESCE(ss.default_session_continuation_min, s.slot_duration_min, 90) as default_session_continuation_min'),
       db.raw("COALESCE(wu.timezone, 'UTC') as timezone"),
     );
 }

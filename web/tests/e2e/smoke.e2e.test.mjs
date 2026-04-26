@@ -34,6 +34,8 @@ describe('web smoke (auth/settings/specialists/appointments contracts)', () => {
     assert.match(settingsContainer, /'\/api\/settings\/user'/);
     assert.match(settingsContainer, /'\/api\/settings\/system'/);
     assert.match(specialistsContainer, /'\/api\/specialists'/);
+    assert.match(specialistsContainer, /baseSessionPrice/);
+    assert.match(specialistsContainer, /defaultSessionContinuationMin/);
     assert.match(appointmentsContainer, /'\/api\/appointments'/);
     assert.match(appointmentsContainer, /\/cancel/);
     assert.match(appointmentsContainer, /\/reschedule/);

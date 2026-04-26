@@ -9,7 +9,8 @@ import {
 import { findWebUserById, listActiveSpecialistWebUsersWithoutProfile } from '../repositories/webUserRepository.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
-import { canManageSpecialists } from '../policies/rolePermissions.js';
+import { canManageSpecialistSettings, canManageSpecialists } from '../policies/rolePermissions.js';
+import { upsertSpecialistSettingsBySpecialistId } from '../repositories/specialistSettingsRepository.js';
 
 type SpecialistDto = {
   id: number;
@@ -18,6 +19,12 @@ type SpecialistDto = {
   timezone: string;
   isActive: boolean;
   slotStepMin: number;
+  baseSessionPrice: number;
+  baseHourPrice: number;
+  workStartHour: number;
+  workEndHour: number;
+  slotDurationMin: number;
+  defaultSessionContinuationMin: number;
 };
 
 type SpecialistCreatePayload = {
@@ -27,6 +34,13 @@ type SpecialistCreatePayload = {
 type SpecialistUpdatePayload = {
   name?: string;
   isActive?: boolean;
+  baseSessionPrice?: number;
+  baseHourPrice?: number;
+  workStartHour?: number;
+  workEndHour?: number;
+  slotDurationMin?: number;
+  slotStepMin?: number;
+  defaultSessionContinuationMin?: number;
 };
 
 export type SpecialistWebUserOptionDto = {
@@ -40,6 +54,12 @@ const mapSpecialist = (item: Awaited<ReturnType<typeof listSpecialistsByAccount>
   timezone: item.timezone || 'UTC',
   isActive: item.is_active,
   slotStepMin: item.slot_step_min ?? 30,
+  baseSessionPrice: item.base_session_price ?? 0,
+  baseHourPrice: item.base_hour_price ?? 0,
+  workStartHour: item.work_start_hour ?? 9,
+  workEndHour: item.work_end_hour ?? 20,
+  slotDurationMin: item.slot_duration_min ?? 90,
+  defaultSessionContinuationMin: item.default_session_continuation_min ?? item.slot_duration_min ?? 90,
 });
 
 const buildSpecialistCode = (name: string): string => {
@@ -100,6 +120,11 @@ export async function createSpecialistForActor(actor: User, payload: SpecialistC
     userId: payload.userId,
   });
 
+  await upsertSpecialistSettingsBySpecialistId({
+    accountId,
+    specialistId: id,
+  });
+
   const created = await findSpecialistById(accountId, id);
   if (!created) {
     throw new Error('CREATE_FAILED');
@@ -113,7 +138,7 @@ export async function updateSpecialistForActor(
   specialistId: number,
   payload: SpecialistUpdatePayload,
 ): Promise<SpecialistDto | null> {
-  if (!canManageSpecialists(actor.role)) {
+  if (!canManageSpecialistSettings(actor.role)) {
     throw new Error('FORBIDDEN');
   }
 
@@ -123,9 +148,30 @@ export async function updateSpecialistForActor(
     return null;
   }
 
-  await updateSpecialistById(accountId, specialistId, {
-    name: payload.name,
-    isActive: payload.isActive,
+  const isManager = canManageSpecialists(actor.role);
+  const isOwnSpecialist = existing.user_id === Number(actor.id);
+
+  if (!isManager && !isOwnSpecialist) {
+    throw new Error('FORBIDDEN');
+  }
+
+  if (isManager) {
+    await updateSpecialistById(accountId, specialistId, {
+      name: payload.name,
+      isActive: payload.isActive,
+    });
+  }
+
+  await upsertSpecialistSettingsBySpecialistId({
+    accountId,
+    specialistId,
+    baseSessionPrice: payload.baseSessionPrice,
+    baseHourPrice: payload.baseHourPrice,
+    workStartHour: payload.workStartHour,
+    workEndHour: payload.workEndHour,
+    slotDurationMin: payload.slotDurationMin,
+    slotStepMin: payload.slotStepMin,
+    defaultSessionContinuationMin: payload.defaultSessionContinuationMin,
   });
 
   const updated = await findSpecialistById(accountId, specialistId);
