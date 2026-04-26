@@ -107,32 +107,206 @@
 
 ### 5.2 `account_notification_defaults`
 
+Параметры по умолчанию на уровне аккаунта (глобальные правила отправки).
+
+**Поля:**
+
 * `account_id`
 * `notification_type`
-* `channel`
+* `preferred_channel` — стартовый канал отправки (первый в fallback-цепочке)
 * `enabled`
-* `send_timing`
+* `send_timings` — массив таймингов (например: `["24h", "1h"]`)
 * `frequency`
 
+**Ограничения:**
+
+* `unique(account_id, notification_type, preferred_channel)`
+
+---
+
 ### 5.3 `specialist_notification_settings`
+
+Переопределения правил отправки на уровне специалиста.
+
+**Поля:**
 
 * `account_id`
 * `specialist_id`
 * `notification_type`
-* `channel`
+* `preferred_channel`
 * `enabled`
-* `send_timing`
+* `send_timings`
 * `frequency`
 
-Смысл: когда отправлять клиентам.
+**Ограничения:**
+
+* `unique(account_id, specialist_id, notification_type, preferred_channel)`
+
+---
 
 ### 5.4 `client_notification_settings`
+
+Настройки клиента (разрешение/запрет получения уведомлений).
+
+**Смысл:** это **не управление отправкой**, а **permission layer** (можно/нельзя доставлять).
+
+**Поля:**
 
 * `account_id`
 * `client_id`
 * `notification_type`
 * `channel`
-* `enabled`
+* `enabled` — разрешено ли получать уведомление через данный канал
+
+**Ограничения:**
+
+* `unique(account_id, client_id, notification_type, channel)`
+
+---
+
+### 5.6 Рекомендация по реализации (MVP)
+
+**Рекомендуемый подход:** хранить настройки в **трёх отдельных таблицах** (как в п. 5.2–5.4) и отдавать в UI как **одну форму** с секциями:
+
+1. Дефолты аккаунта
+2. Правила отправки специалиста
+3. Предпочтения получения клиента
+
+**Почему так лучше:**
+
+* у уровней разные владельцы и права доступа;
+* разная бизнес-семантика:
+    * account / specialist — управляют отправкой;
+    * client — разрешает или запрещает получение;
+* проще переопределения (fallback: account → specialist → client deny);
+* проще эволюция без «толстой» универсальной таблицы.
+
+**Практически в MVP:**
+
+* backend хранит 3 таблицы и считает **effective settings**;
+* frontend показывает одну страницу/форму с матрицей `notification_type × channel`;
+* для `client_notification_settings` оставить только `enabled`.
+
+**Итого:**  
+👉 не делать одну таблицу, но делать один UI-экран.
+
+---
+
+### 5.7 Стратегия доставки по channel с fallback (MVP)
+
+**Нейминг:**
+
+* `preferred_channel` — стартовый канал отправки (не единственный).
+
+**Порядок fallback-отправки:**
+
+1. `preferred_channel` из effective-настроек
+2. `email`
+3. `viber`
+4. `whatsapp`
+5. `sms`
+
+**Правила:**
+
+* backend пробует отправку последовательно;
+* если отправка успешна — цепочка останавливается;
+* если ошибка/канал недоступен — следующий канал;
+* если нет контакта (email/phone) — канал пропускается;
+* если канал запрещён клиентом (`client_notification_settings.enabled = false`) — канал пропускается.
+
+**Примечание:**
+
+* список каналов допустимо захардкодить в backend (MVP);
+* позже можно вынести в конфиг без изменения API.
+
+---
+
+### 5.8 Типы оповещений
+
+#### MVP (обязательные)
+
+1. `appointment_reminder`
+    * напоминание о записи;
+    * по умолчанию: `["24h", "1h"]`;
+    * в UI:
+        * чекбокс (вкл/выкл);
+        * выбор таймингов (24h / 1h / оба).
+
+2. `payment_reminder`
+    * напоминание об оплате;
+    * **единая логика для MVP:**
+        * отправляется через `N` часов после создания записи, если статус `pending`;
+    * в UI:
+        * чекбокс;
+        * поле `N часов`.
+
+---
+
+#### Следующие (после MVP)
+
+* `appointment_created`
+* `appointment_rescheduled`
+* `appointment_cancelled`
+* `payment_received`
+* `payment_failed`
+* `late_cancel_no_refund_notice`
+* `auto_cancel_unpaid_notice`
+
+---
+
+### 5.9 Техническая реализация (MVP)
+
+1. При create/update appointment backend создаёт **notification jobs**:
+    * ключ идемпотентности:
+        * `appointment_id + notification_type + scheduled_at`.
+
+2. Worker/scheduler:
+    * берёт due-задачи;
+    * отправляет по fallback-цепочке каналов.
+
+3. Логирование попыток:
+
+**Таблицы:**
+
+* `notification_jobs`
+* `notification_delivery_attempts`
+
+**Поля attempts:**
+
+* `job_id`
+* `attempt_no`
+* `channel`
+* `status`
+* `error_code`
+
+4. Идемпотентность:
+
+* повторный запуск job не создаёт дубликаты отправки.
+
+5. Проверка перед отправкой:
+
+* запись не отменена;
+* notification всё ещё релевантен:
+    * `payment_reminder` → только если `pending`.
+
+6. Статусы задач (MVP):
+
+* `pending`
+* `processing`
+* `sent`
+* `failed`
+
+---
+
+### Итог
+
+Архитектура:
+
+* ✅ разделение на 3 уровня (account / specialist / client)
+* ✅ backend считает effective settings
+* ✅ frontend = единая форма
+* ✅ fallback-доставка
+* ✅ job-based отправка
 
 Смысл: получать или нет.
 
