@@ -623,6 +623,8 @@ export async function notifyAppointmentForActor(actor: User, appointmentId: numb
       ...existing,
       client_first_name: client?.first_name ?? existing.client_first_name,
       client_last_name: client?.last_name ?? existing.client_last_name,
+      client_username: client?.username ?? existing.client_username,
+      client_telegram_id: client?.telegram_id ?? existing.client_telegram_id,
       client_email: client?.email ?? existing.client_email,
     },
     notificationType: 'appointment_reminder',
