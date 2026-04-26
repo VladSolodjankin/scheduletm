@@ -136,9 +136,11 @@ AND
 * `account_id`
 * `specialist_id` (unique)
 * `cancel_grace_period_hours` (default 24)
-* `refund_on_late_cancel` (default false)
+* `refund_on_late_cancel` (default false) (если осталось меньше чем cancel_grace_period_hours, то эта настройка должна сработать)
 * `auto_cancel_if_unpaid` (default false)
-* `unpaid_auto_cancel_after_hours` (default 72)
+* `unpaid_auto_cancel_after_hours` (default 72) (если апоинтмент создан меньше чем unpaid_auto_cancel_after_hours, то нужно будет еще одна настройка предложи лучшую идею)
+
+Может подскажешь лучше идеи как это обычно делают и что еще нужно удет добавить в эти настройки.
 
 ---
 
