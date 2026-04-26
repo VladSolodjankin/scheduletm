@@ -30,6 +30,8 @@ type SpecialistsTableProps = {
   onAdd: () => void;
   onEdit: (item: SpecialistManagementItem) => void;
   onDelete: (item: SpecialistManagementItem) => void;
+  canAdd: boolean;
+  canDelete: boolean;
 };
 
 export function SpecialistsTable({
@@ -43,12 +45,14 @@ export function SpecialistsTable({
   onAdd,
   onEdit,
   onDelete,
+  canAdd,
+  canDelete,
 }: SpecialistsTableProps) {
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
         <Typography variant="h5">{title}</Typography>
-        <AppButton size="small" onClick={onAdd} startIcon={<AppIcons.add />}>{addLabel}</AppButton>
+        {canAdd ? <AppButton size="small" onClick={onAdd} startIcon={<AppIcons.add />}>{addLabel}</AppButton> : <span />}
       </Stack>
 
       <TableContainer component={Paper} variant="outlined">
@@ -77,9 +81,11 @@ export function SpecialistsTable({
                   <IconButton size="small" aria-label={editLabel} onClick={() => onEdit(item)}>
                     <AppIcons.edit fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" aria-label={deleteLabel} color="error" onClick={() => onDelete(item)}>
-                    <AppIcons.delete fontSize="small" />
-                  </IconButton>
+                  {canDelete && (
+                    <IconButton size="small" aria-label={deleteLabel} color="error" onClick={() => onDelete(item)}>
+                      <AppIcons.delete fontSize="small" />
+                    </IconButton>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

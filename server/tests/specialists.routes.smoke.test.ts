@@ -96,7 +96,20 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
   });
 
   it('update: PATCH /api/specialists/:id returns 200', async () => {
-    updateSpecialistForActorMock.mockResolvedValue({ id: 2, name: 'Updated', code: 'updated', timezone: 'UTC', isActive: true, slotStepMin: 30 });
+    updateSpecialistForActorMock.mockResolvedValue({
+      id: 2,
+      name: 'Updated',
+      code: 'updated',
+      timezone: 'UTC',
+      isActive: true,
+      slotStepMin: 30,
+      baseSessionPrice: 100,
+      baseHourPrice: 2500,
+      workStartHour: 9,
+      workEndHour: 20,
+      slotDurationMin: 90,
+      defaultSessionContinuationMin: 60,
+    });
 
     const response = await fetch(`${baseUrl}/api/specialists/2`, {
       method: 'PATCH',
@@ -104,7 +117,17 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
         'content-type': 'application/json',
         authorization: 'Bearer smoke-token',
       },
-      body: JSON.stringify({ name: 'Updated', isActive: true }),
+      body: JSON.stringify({
+        name: 'Updated',
+        isActive: true,
+        baseSessionPrice: 100,
+        baseHourPrice: 2500,
+        workStartHour: 9,
+        workEndHour: 20,
+        slotDurationMin: 90,
+        slotStepMin: 30,
+        defaultSessionContinuationMin: 60,
+      }),
     });
 
     expect(response.status).toBe(200);

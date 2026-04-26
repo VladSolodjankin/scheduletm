@@ -132,6 +132,12 @@ export type SpecialistManagementItem = {
   timezone: string;
   isActive: boolean;
   slotStepMin: number;
+  baseSessionPrice: number;
+  baseHourPrice: number;
+  workStartHour: number;
+  workEndHour: number;
+  slotDurationMin: number;
+  defaultSessionContinuationMin: number;
 };
 
 export type SpecialistsListResponse = {

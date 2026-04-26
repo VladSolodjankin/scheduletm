@@ -116,6 +116,15 @@ export const dictionaries = {
           actions: 'Actions'
         }
       },
+      specialistSettings: {
+        baseSessionPrice: 'Base session price',
+        baseHourPrice: 'Base hour price',
+        workStartHour: 'Work start hour',
+        workEndHour: 'Work end hour',
+        slotDurationMin: 'Slot duration (min)',
+        slotStepMin: 'Slot step (min)',
+        defaultSessionContinuationMin: 'Default session continuation (min)'
+      },
       errors: {
         load: 'Unable to load settings.',
         save: 'Unable to save settings.',
@@ -340,6 +349,15 @@ export const dictionaries = {
           actions: 'Действия'
         }
       },
+      specialistSettings: {
+        baseSessionPrice: 'Базовая цена сессии',
+        baseHourPrice: 'Базовая цена часа',
+        workStartHour: 'Час начала работы',
+        workEndHour: 'Час окончания работы',
+        slotDurationMin: 'Длительность слота (мин)',
+        slotStepMin: 'Шаг слота (мин)',
+        defaultSessionContinuationMin: 'Продление сессии по умолчанию (мин)'
+      },
       errors: {
         load: 'Не удалось загрузить настройки.',
         save: 'Не удалось сохранить настройки.',
@@ -556,6 +574,13 @@ export type TranslationKey =
   | 'settings.specialists.columns.actions'
   | 'settings.errors.saveSpecialist'
   | 'settings.errors.deleteSpecialist'
+  | 'settings.specialistSettings.baseSessionPrice'
+  | 'settings.specialistSettings.baseHourPrice'
+  | 'settings.specialistSettings.workStartHour'
+  | 'settings.specialistSettings.workEndHour'
+  | 'settings.specialistSettings.slotDurationMin'
+  | 'settings.specialistSettings.slotStepMin'
+  | 'settings.specialistSettings.defaultSessionContinuationMin'
   | 'settings.errors.load'
   | 'settings.errors.save'
   | 'settings.errors.connectGoogle'

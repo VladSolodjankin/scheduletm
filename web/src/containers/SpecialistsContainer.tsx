@@ -24,6 +24,7 @@ export function SpecialistsContainer() {
   const [isSavingSpecialist, setIsSavingSpecialist] = useState(false);
 
   const canManageSpecialists = user?.role === 'owner' || user?.role === 'admin';
+  const canManageSpecialistSettings = canManageSpecialists || user?.role === 'specialist';
 
   useEffect(() => {
     if (!accessToken) {
@@ -31,7 +32,7 @@ export function SpecialistsContainer() {
       return;
     }
 
-    if (!canManageSpecialists) {
+    if (!canManageSpecialistSettings) {
       setIsLoading(false);
       return;
     }
@@ -55,7 +56,7 @@ export function SpecialistsContainer() {
     };
 
     void load();
-  }, [accessToken, canManageSpecialists, navigate, t]);
+  }, [accessToken, canManageSpecialistSettings, navigate, t]);
 
   const openCreateSpecialistDialog = () => {
     setEditingSpecialist(null);
@@ -76,7 +77,18 @@ export function SpecialistsContainer() {
     setEditingSpecialist(null);
   };
 
-  const saveSpecialist = async (payload: { userId?: number; name?: string; isActive: boolean }) => {
+  const saveSpecialist = async (payload: {
+    userId?: number;
+    name?: string;
+    isActive: boolean;
+    baseSessionPrice: number;
+    baseHourPrice: number;
+    workStartHour: number;
+    workEndHour: number;
+    slotDurationMin: number;
+    slotStepMin: number;
+    defaultSessionContinuationMin: number;
+  }) => {
     if (!accessToken) {
       return;
     }
@@ -88,6 +100,13 @@ export function SpecialistsContainer() {
         const response = await apiClient.patch<SpecialistManagementItem>(`/api/specialists/${editingSpecialist.id}`, {
           name: payload.name,
           isActive: payload.isActive,
+          baseSessionPrice: payload.baseSessionPrice,
+          baseHourPrice: payload.baseHourPrice,
+          workStartHour: payload.workStartHour,
+          workEndHour: payload.workEndHour,
+          slotDurationMin: payload.slotDurationMin,
+          slotStepMin: payload.slotStepMin,
+          defaultSessionContinuationMin: payload.defaultSessionContinuationMin,
         }, {
           headers: authHeaders(accessToken),
         });
@@ -156,7 +175,7 @@ export function SpecialistsContainer() {
         </Box>
       )}
 
-      {!canManageSpecialists ? (
+      {!canManageSpecialistSettings ? (
         <Box sx={{ maxWidth: 900 }}>
           <Alert severity="info">{t('specialists.accessDenied')}</Alert>
         </Box>
@@ -184,6 +203,8 @@ export function SpecialistsContainer() {
               onAdd={openCreateSpecialistDialog}
               onEdit={openEditSpecialistDialog}
               onDelete={(item) => void deleteSpecialist(item)}
+              canAdd={canManageSpecialists}
+              canDelete={canManageSpecialists}
             />
           )}
         </Box>
@@ -198,6 +219,13 @@ export function SpecialistsContainer() {
         closeLabel={t('appointments.close')}
         nameLabel={t('settings.specialists.columns.name')}
         activeLabel={t('settings.specialists.columns.active')}
+        baseSessionPriceLabel={t('settings.specialistSettings.baseSessionPrice')}
+        baseHourPriceLabel={t('settings.specialistSettings.baseHourPrice')}
+        workStartHourLabel={t('settings.specialistSettings.workStartHour')}
+        workEndHourLabel={t('settings.specialistSettings.workEndHour')}
+        slotDurationMinLabel={t('settings.specialistSettings.slotDurationMin')}
+        slotStepMinLabel={t('settings.specialistSettings.slotStepMin')}
+        defaultSessionContinuationMinLabel={t('settings.specialistSettings.defaultSessionContinuationMin')}
         availableWebUsers={availableWebUsers}
         onClose={closeSpecialistDialog}
         onSubmit={saveSpecialist}

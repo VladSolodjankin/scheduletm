@@ -155,6 +155,13 @@ export const specialistCreateSchema = z.object({
 export const specialistUpdateSchema = z.object({
   name: z.string().trim().min(2, v.specialistNameMin).max(120, v.specialistNameMax).optional(),
   isActive: z.boolean().optional(),
+  baseSessionPrice: z.coerce.number().int().min(0).max(10_000_000).optional(),
+  baseHourPrice: z.coerce.number().int().min(0).max(10_000_000).optional(),
+  workStartHour: z.coerce.number().int().min(0).max(23).optional(),
+  workEndHour: z.coerce.number().int().min(1).max(24).optional(),
+  slotDurationMin: z.coerce.number().int().min(15).max(480).optional(),
+  slotStepMin: z.coerce.number().int().min(5).max(240).optional(),
+  defaultSessionContinuationMin: z.coerce.number().int().min(15).max(480).optional(),
 }).refine((value) => Object.keys(value).length > 0, {
   message: v.atLeastOneFieldToUpdate,
 });
