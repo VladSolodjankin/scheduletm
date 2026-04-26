@@ -12,6 +12,9 @@
    - отдельная таблица и repository для правил.
 2. На фронте добавлена отдельная вкладка настроек правил бронирования специалиста.
 3. В bot логика редактирования/отмены начала учитывать `cancel_grace_period_hours`.
+4. Тестовое покрытие для `specialist_booking_policies`:
+   - frontend: интеграционный smoke-контракт для загрузки/сохранения и UI-полей;
+   - backend: unit-тесты схемы/доступов и route-smoke для `GET/PUT /api/settings/specialist-booking-policy`.
 
 ### ⏭️ Следующая итерация
 
