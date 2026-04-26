@@ -6,10 +6,13 @@ import {
   canManageSystemSettings,
   getAccountSettings,
   getSystemSettings,
+  getSpecialistBookingPolicy,
   getUserSettings,
   updateAccountSettings,
+  updateSpecialistBookingPolicy,
   updateSystemSettings,
   updateUserSettings,
+  canManageSpecialistBookingPolicies,
 } from '../services/settingsService.js';
 
 export const settingsRoutes = Router();
@@ -70,6 +73,50 @@ settingsRoutes.put('/user', requireAccessToken, async (req, res) => {
   const updated = await updateUserSettings(user, req.body);
   if (!updated) {
     return res.status(400).json({ message: t(req, 'invalidPayloadUserSettings') });
+  }
+
+  return res.json(updated);
+});
+
+settingsRoutes.get('/specialist-booking-policy', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageSpecialistBookingPolicies(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenSpecialistBookingPolicySettings') });
+  }
+
+  const specialistId = typeof req.query.specialistId === 'string'
+    ? Number(req.query.specialistId)
+    : undefined;
+
+  const policy = await getSpecialistBookingPolicy(
+    user,
+    Number.isFinite(specialistId) ? specialistId : undefined,
+  );
+
+  if (!policy) {
+    return res.status(400).json({ message: t(req, 'specialistBookingPolicySpecialistRequired') });
+  }
+
+  return res.json(policy);
+});
+
+settingsRoutes.put('/specialist-booking-policy', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageSpecialistBookingPolicies(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenSpecialistBookingPolicySettings') });
+  }
+
+  const specialistId = typeof req.query.specialistId === 'string'
+    ? Number(req.query.specialistId)
+    : undefined;
+
+  const updated = await updateSpecialistBookingPolicy(
+    user,
+    Number.isFinite(specialistId) ? specialistId : undefined,
+    req.body,
+  );
+  if (!updated) {
+    return res.status(400).json({ message: t(req, 'invalidPayloadSpecialistBookingPolicy') });
   }
 
   return res.json(updated);

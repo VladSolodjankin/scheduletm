@@ -123,6 +123,13 @@ export const userSettingsSchema = z.object({
   telegramBotToken: z.string().trim().min(1, v.telegramBotTokenRequired).max(255, v.telegramBotTokenTooLong).optional().or(z.literal('')),
 }).partial();
 
+export const specialistBookingPolicySchema = z.object({
+  cancelGracePeriodHours: z.coerce.number().int().min(0).max(336),
+  refundOnLateCancel: z.boolean(),
+  autoCancelUnpaidEnabled: z.boolean(),
+  unpaidAutoCancelAfterHours: z.coerce.number().int().min(1).max(720),
+}).partial();
+
 export const specialistUserCreationSchema = z.object({
   email: z
     .string()

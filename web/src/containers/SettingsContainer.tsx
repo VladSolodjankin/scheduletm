@@ -11,6 +11,7 @@ import type {
   AccountSettings,
   GoogleOAuthDisconnectResponse,
   GoogleOAuthStartResponse,
+  SpecialistBookingPolicy,
   SystemSettings,
   UserSettings,
 } from '../shared/types/api';
@@ -44,6 +45,14 @@ const defaultUserSettings: UserSettings = {
   telegramBotToken: '',
 };
 
+const defaultSpecialistBookingPolicy: SpecialistBookingPolicy = {
+  specialistId: 0,
+  cancelGracePeriodHours: 24,
+  refundOnLateCancel: false,
+  autoCancelUnpaidEnabled: false,
+  unpaidAutoCancelAfterHours: 72,
+};
+
 export function SettingsContainer() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -59,11 +68,16 @@ export function SettingsContainer() {
   const [isSavingSystem, setIsSavingSystem] = useState(false);
   const [isSavingAccount, setIsSavingAccount] = useState(false);
   const [isSavingUser, setIsSavingUser] = useState(false);
+  const [isSavingSpecialistPolicy, setIsSavingSpecialistPolicy] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [specialistBookingPolicy, setSpecialistBookingPolicy] = useState<SpecialistBookingPolicy>(defaultSpecialistBookingPolicy);
+  const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | null>(null);
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const canManageSystemSettings = user?.role === 'owner';
   const canManageAccountSettings = user?.role === 'owner' || user?.role === 'admin';
+  const canManageSpecialistBookingPolicy =
+    user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
 
   useEffect(() => {
     if (!googleOauthStatus) {
@@ -115,6 +129,25 @@ export function SettingsContainer() {
           });
           setSystemSettings(systemResponse.data);
         }
+
+        if (canManageSpecialistBookingPolicy) {
+          const specialistId = user?.role === 'specialist'
+            ? null
+            : await (async () => {
+              const specialistsResponse = await apiClient.get<{
+                specialists: Array<{ id: number }>;
+              }>('/api/specialists', { headers: authHeaders(accessToken) });
+              const first = specialistsResponse.data.specialists[0]?.id ?? null;
+              setSelectedSpecialistId(first);
+              return first;
+            })();
+
+          const policyResponse = await apiClient.get<SpecialistBookingPolicy>('/api/settings/specialist-booking-policy', {
+            headers: authHeaders(accessToken),
+            params: specialistId ? { specialistId } : undefined
+          });
+          setSpecialistBookingPolicy(policyResponse.data);
+        }
       } catch (err) {
         setError(resolveApiError(err, {
           fallbackMessage: t('settings.errors.load'),
@@ -126,7 +159,7 @@ export function SettingsContainer() {
     };
 
     void load();
-  }, [accessToken, canManageAccountSettings, canManageSystemSettings, navigate, t]);
+  }, [accessToken, canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, navigate, t, user?.role]);
 
   const saveSystemSettings = async (nextSettings: SystemSettings) => {
     if (!accessToken || !canManageSystemSettings) {
@@ -235,6 +268,37 @@ export function SettingsContainer() {
     }
   };
 
+  const saveSpecialistBookingPolicy = async (nextPolicy: SpecialistBookingPolicy) => {
+    if (!accessToken || !canManageSpecialistBookingPolicy) {
+      return;
+    }
+
+    setIsSavingSpecialistPolicy(true);
+    try {
+      const params = user?.role === 'specialist'
+        ? undefined
+        : selectedSpecialistId
+          ? { specialistId: selectedSpecialistId }
+          : undefined;
+      const response = await apiClient.put<SpecialistBookingPolicy>(
+        '/api/settings/specialist-booking-policy',
+        nextPolicy,
+        { headers: authHeaders(accessToken), params }
+      );
+      setSpecialistBookingPolicy(response.data);
+      setError('');
+      setSuccess('');
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.save'),
+        networkMessage: t('common.errors.network')
+      }).message);
+      setSuccess('');
+    } finally {
+      setIsSavingSpecialistPolicy(false);
+    }
+  };
+
 
   const connectGoogle = async () => {
     if (!accessToken || isGoogleConnecting) {
@@ -316,11 +380,14 @@ export function SettingsContainer() {
             systemSettings={systemSettings}
             accountSettings={accountSettings}
             userSettings={userSettings}
+            specialistBookingPolicy={specialistBookingPolicy}
             canManageSystemSettings={canManageSystemSettings}
             canManageAccountSettings={canManageAccountSettings}
+            canManageSpecialistBookingPolicy={canManageSpecialistBookingPolicy}
             copy={{
               systemTab: t('settings.tabs.system'),
               accountTab: t('settings.tabs.account'),
+              specialistPolicyTab: t('settings.tabs.specialistPolicy'),
               userTab: t('settings.tabs.user'),
               systemTitle: t('settings.systemTitle'),
               accountTitle: t('settings.accountTitle'),
@@ -343,16 +410,23 @@ export function SettingsContainer() {
               telegramBotToken: t('settings.telegramBotToken'),
               telegramBotConnected: t('settings.telegramBotConnected'),
               telegramBotNotConnected: t('settings.telegramBotNotConnected'),
-              clearTelegramBotToken: t('settings.clearTelegramBotToken')
+              clearTelegramBotToken: t('settings.clearTelegramBotToken'),
+              specialistPolicyTitle: t('settings.specialistPolicyTitle'),
+              cancelGracePeriodHours: t('settings.cancelGracePeriodHours'),
+              refundOnLateCancel: t('settings.refundOnLateCancel'),
+              autoCancelUnpaidEnabled: t('settings.autoCancelUnpaidEnabled'),
+              unpaidAutoCancelAfterHours: t('settings.unpaidAutoCancelAfterHours')
             }}
             isGoogleConnecting={isGoogleConnecting}
             isGoogleDisconnecting={isGoogleDisconnecting}
             isSavingSystem={isSavingSystem}
             isSavingAccount={isSavingAccount}
             isSavingUser={isSavingUser}
+            isSavingSpecialistBookingPolicy={isSavingSpecialistPolicy}
             onSaveSystem={saveSystemSettings}
             onSaveAccount={saveAccountSettings}
             onSaveUser={saveUserSettings}
+            onSaveSpecialistBookingPolicy={saveSpecialistBookingPolicy}
             onClearTelegramBotToken={clearTelegramBotToken}
             onConnectGoogle={connectGoogle}
             onDisconnectGoogle={disconnectGoogle}

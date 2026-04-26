@@ -2,6 +2,23 @@
 
 Документ фиксирует целевую модель настроек для MVP без лишнего усложнения архитектуры.
 
+## Статус итерации (2026-04-26)
+
+### ✅ Уже сделано в этой итерации
+
+1. Начата реализация `specialist_booking_policies`:
+   - серверные endpoints чтения/обновления правил;
+   - серверная валидация payload;
+   - отдельная таблица и repository для правил.
+2. На фронте добавлена отдельная вкладка настроек правил бронирования специалиста.
+3. В bot логика редактирования/отмены начала учитывать `cancel_grace_period_hours`.
+
+### ⏭️ Следующая итерация
+
+1. Настройки оповещений (`account_notification_defaults`, `specialist_notification_settings`, `client_notification_settings`).
+2. Авто-отмена неоплаченных записей через scheduler/jobs.
+3. Полная сквозная UX-поддержка последствий поздней отмены (refund/no-refund) в web и bot.
+
 ---
 
 ## 1) Общая структура настроек
@@ -14,8 +31,8 @@
 
 Дополнительно:
 
-* `specialist_settings` — настройки специалиста (прайс, расписание, дефолтное продолжение сессии)
-* `specialist_booking_policies` — правила бронирования
+* `specialist_settings` — настройки специалиста (прайс, расписание, дефолтная длительность)
+* `specialist_booking_policies` — правила бронирования/отмены
 * `account_notification_defaults` — дефолты нотификаций
 * `specialist_notification_settings` — логика отправки
 * `client_notification_settings` — логика получения
@@ -37,15 +54,20 @@
 
 ---
 
-## 3) Миграция `app_settings` → `account_settings`
+## 3) Миграция `app_settings` → `account_settings` и `user_settings`
 
 План:
 
-1. Создать `account_settings`
-2. Скопировать данные из `app_settings`
-3. Перевести сервисы
-4. Оставить `app_settings` на 1 релиз
-5. Удалить в cleanup
+1. Создать `account_settings` и расширить `user_settings`
+2. Скопировать данные из `app_settings` в новые таблицы по зоне ответственности
+3. Перевести сервисы и API на новые источники
+4. Оставить `app_settings` read-only на 1 релиз (fallback)
+5. Удалить `app_settings` в cleanup
+
+Принцип разбиения:
+
+* account-level (TTL, брендовые/организационные дефолты, общие флаги) → `account_settings`
+* user-level (timezone, locale, UI, персональные интеграции) → `user_settings` / `user_integrations`
 
 ---
 
@@ -80,8 +102,6 @@
 2. Specialist — управляет отправкой
 3. Client — управляет получением
 
----
-
 ### 5.2 `account_notification_defaults`
 
 * `account_id`
@@ -90,8 +110,6 @@
 * `enabled`
 * `send_timing`
 * `frequency`
-
----
 
 ### 5.3 `specialist_notification_settings`
 
@@ -103,9 +121,7 @@
 * `send_timing`
 * `frequency`
 
-Смысл: когда отправлять клиентам
-
----
+Смысл: когда отправлять клиентам.
 
 ### 5.4 `client_notification_settings`
 
@@ -115,11 +131,9 @@
 * `channel`
 * `enabled`
 
-Смысл: получать или нет
+Смысл: получать или нет.
 
----
-
-### 5.5 Effective логика
+### 5.5 Effective-логика
 
 ```text
 send if:
@@ -133,42 +147,51 @@ AND
 
 ## 6) `specialist_booking_policies`
 
+### 6.1 Поля (MVP)
+
 * `account_id`
 * `specialist_id` (unique)
-* `cancel_grace_period_hours` (default 24)
-* `refund_on_late_cancel` (default false) (если осталось меньше чем cancel_grace_period_hours, то эта настройка должна сработать)
-* `auto_cancel_if_unpaid` (default false)
-* `unpaid_auto_cancel_after_hours` (default 72) (если апоинтмент создан меньше чем unpaid_auto_cancel_after_hours, то нужно будет еще одна настройка предложи лучшую идею)
+* `cancel_grace_period_hours` (default `24`)
+* `refund_on_late_cancel` (default `false`)
+* `auto_cancel_unpaid_enabled` (default `false`)
+* `unpaid_auto_cancel_after_hours` (default `72`)
+* `created_at`
+* `updated_at`
 
-Может подскажешь лучше идеи как это обычно делают и что еще нужно удет добавить в эти настройки.
+### 6.2 Что улучшили относительно исходной идеи
+
+1. Единое именование (`auto_cancel_unpaid_enabled`) вместо длинных вариаций — проще читать в коде и API.
+2. `unpaid_auto_cancel_after_hours` применяется **от времени создания** appointment (`created_at + N hours`).
+3. Если оплата пришла до job — отмена не выполняется (идемпотентная проверка в момент job).
+
+### 6.3 Опционально (не в MVP, но совместимо)
+
+* `min_advance_booking_hours` — минимальное время до начала слота для записи.
+* `max_advance_booking_days` — максимальный горизонт записи.
+* `reschedule_grace_period_hours` — отдельное окно для переноса.
 
 ---
 
 ## 7) Логика бронирования (MVP)
 
-### Отмена
+### 7.1 Отмена клиентом
 
-* < grace period AND no refund → не возвращаем
+* если до старта `< cancel_grace_period_hours` и `refund_on_late_cancel = false` → без возврата
 * иначе → обычный возврат
 
----
+### 7.2 Авто-отмена за неоплату
 
-### Авто-отмена
+* если `auto_cancel_unpaid_enabled = true` → при создании `pending` записи планируем job
+* в момент job: если запись всё ещё `pending` и не оплачена → `cancelled (auto_cancel_unpaid)`
 
-* если включено → планируем job
-* если не оплачено → `cancelled (auto_cancel_unpaid)`
+### 7.3 Edge cases
 
----
+* обрабатываем только `pending`
+* идемпотентность job
+* проверка статуса и факта оплаты перед отменой
+* аудит причины отмены (`cancel_reason = auto_cancel_unpaid`)
 
-### Edge cases
-
-* только `pending`
-* идемпотентность
-* проверка статуса перед отменой
-
----
-
-### Статусы
+### 7.4 Минимальные статусы
 
 ```text
 pending
@@ -178,14 +201,69 @@ cancelled
 
 ---
 
-## 8) RBAC
+## 8) Поддержка на фронте и в bot
+
+### 8.1 Frontend
+
+Сделать отдельную страницу настроек: `Specialist booking policies`:
+
+* форма полей из `specialist_booking_policies`
+* валидация (целые числа, диапазоны, зависимые поля)
+* локализованные тексты (`ru/en`) и подсказки
+* optimistic/pessimistic save + обработка ошибок API
+
+Плюс полная поддержка ограничений в UX:
+
+* в календаре/создании записи предупреждать о правилах отмены
+* при отмене показывать, будет ли возврат
+* при создании `pending` показывать дедлайн авто-отмены неоплаченной записи
+
+### 8.2 Bot
+
+Полная поддержка этих же ограничений:
+
+* перед подтверждением записи показывать правило отмены и дедлайн оплаты
+* при команде отмены — то же правило возврата (как в web)
+* сценарий авто-отмены: корректное клиентское сообщение о причине
+* все пользовательские сообщения через локали бота
+
+### 8.3 Единый доменный контракт
+
+Чтобы web и bot не расходились:
+
+* один server use-case/resolver для вычисления `effective booking policy`
+* один server use-case для решения `refund allowed?`
+* один server use-case для `should auto-cancel unpaid?`
+
+---
+
+## 9) Сервисы: что добавить/обновить
+
+### 9.1 Новые сервисы
+
+* `BookingPolicyService` (CRUD + effective-policy)
+* `BookingPolicyEvaluator` (refund/auto-cancel decision)
+* `UnpaidAutoCancelScheduler` (schedule/revoke/execute jobs)
+
+### 9.2 Что обновить
+
+* `AppointmentService`:
+  * create: планирование job
+  * cancel: применение refund policy
+  * mark-paid: отмена/деактивация job
+* `NotificationService`:
+  * шаблонные сообщения об авто-отмене и политике
+* bot appointment handlers:
+  * чтение effective-policy и единый текстовый вывод
+
+---
+
+## 10) RBAC
 
 ### Все
 
 * `user_settings`
 * `client_notification_settings`
-
----
 
 ### owner / admin / specialist
 
@@ -193,14 +271,10 @@ cancelled
 * `specialist_booking_policies`
 * `user_integrations`
 
----
-
 ### owner / admin
 
 * `account_settings`
 * `account_notification_defaults`
-
----
 
 ### owner
 
@@ -208,94 +282,52 @@ cancelled
 
 ---
 
-## 9) Что хранить в `system_settings`
+## 11) Что хранить в `system_settings`
 
 Только runtime-настройки без секретов:
 
-* auth TTL
-* email sender
-* security limits
+* `REFRESH_TOKEN_TTL_DAYS`
+* `ACCESS_TOKEN_TTL_SECONDS`
+* `SESSION_COOKIE_NAME`
+* email sender defaults
+* rate/security limits
 
-Google OAuth параметры и секреты храним только на уровне `.env` (не в таблицах настроек):
+Google OAuth параметры и секреты хранить только в `.env`:
 
 ```env
-GOOGLE_OAUTH_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
-GOOGLE_OAUTH_CLIENT_SECRET=your_google_client_secret
-GOOGLE_OAUTH_REDIRECT_URI=http://localhost:3003/api/integrations/google/oauth/callback
+GOOGLE_OAUTH_CLIENT_ID=...
+GOOGLE_OAUTH_CLIENT_SECRET=...
+GOOGLE_OAUTH_REDIRECT_URI=...
 ```
 
 ---
 
-## 10) Что хранить в `user_settings`
+## 12) Что хранить в `user_settings`
 
 * timezone
 * locale
 * UI настройки
 * quiet hours
 
-НЕ хранить:
-
-* API ключи → в `user_integrations`
+Не хранить секреты/API keys: их место в `user_integrations`.
 
 ---
 
-## 11) Рекомендуемый порядок внедрения
+## 13) Порядок внедрения (коротко)
 
-1. `account_settings`
-2. `system_settings`
-3. `specialist_settings`
-4. `notification tables`
-5. `booking_policies`
-6. cleanup
-
----
-
-## 12) Ограничения MVP
-
-* без сложной иерархии
-* без лишних абстракций
-* простая override-модель
-* поэтапные миграции
+1. DB migration + DTO + server services.
+2. API endpoints + RBAC + tests.
+3. Web settings page + локали + интеграция в appointment UX.
+4. Bot flow update + локали.
+5. Фоновый job авто-отмены + наблюдаемость (логи/метрики).
+6. Cleanup legacy (`app_settings`) после стабилизации.
 
 ---
 
-## 13) Практичные улучшения (необязательно сразу)
+## 14) Рекомендации по упрощению
 
-### account_settings
-
-* booking horizon
-* минимальное время до записи
-* дефолты нотификаций
-
----
-
-### user_settings
-
-* date/time format
-* week start
-* notification language
-
----
-
-### specialist_booking_policies
-
-* prepayment
-* reschedule rules
-
----
-
-## 14) UX нотификаций
-
-* показать: "унаследовано / переопределено"
-* presets: minimal / standard / verbose
-* тестовое уведомление
-
----
-
-## 15) Минимальный MVP-пакет
-
-1. cancel rules
-2. auto cancel unpaid
-3. notifications (account + override)
-4. user UI settings
-5. inheritance UI
+1. **Не делать отдельные политики на уровне account в MVP** — только specialist-level + fallback default в коде.
+2. **Оставить только 2 обязательных ограничения в MVP**: late-cancel refund и auto-cancel unpaid.
+3. **Единый вычислитель политик на сервере** (web и bot лишь отображают результат).
+4. **Без сложного rule-engine**: простые boolean + numeric поля.
+5. **Расширять через новые nullable-поля/enum**, не ломая текущий контракт.

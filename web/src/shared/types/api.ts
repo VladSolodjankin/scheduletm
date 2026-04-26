@@ -64,6 +64,14 @@ export type UserSettings = {
   telegramBotToken?: string;
 };
 
+export type SpecialistBookingPolicy = {
+  specialistId: number;
+  cancelGracePeriodHours: number;
+  refundOnLateCancel: boolean;
+  autoCancelUnpaidEnabled: boolean;
+  unpaidAutoCancelAfterHours: number;
+};
+
 export type GoogleOAuthStartResponse = {
   provider: 'google';
   authorizeUrl: string;

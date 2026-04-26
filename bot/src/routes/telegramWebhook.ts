@@ -957,6 +957,10 @@ telegramWebhookRouter.post(
           const cancelled = await cancelUserAppointment(user.account_id, user.id, appointmentId);
 
           if (!cancelled.ok) {
+            if (cancelled.reason === 'too_late_to_edit') {
+              await answerCallbackQuery(callback.id, t(lang, 'appointments.editBlocked'));
+              return res.status(200).json({ ok: true });
+            }
             await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
             return res.status(200).json({ ok: true });
           }

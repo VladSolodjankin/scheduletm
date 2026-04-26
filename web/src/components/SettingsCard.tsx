@@ -1,7 +1,7 @@
 import { Box, FormControlLabel, Stack, Switch, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import type { AccountSettings, SystemSettings, UserSettings } from '../shared/types/api';
+import type { AccountSettings, SpecialistBookingPolicy, SystemSettings, UserSettings } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
 import { AppIcons } from '../shared/ui/AppIcons';
@@ -13,6 +13,7 @@ type SettingsCardCopy = {
   systemTab: string;
   accountTab: string;
   userTab: string;
+  specialistPolicyTab: string;
   systemTitle: string;
   accountTitle: string;
   userTitle: string;
@@ -35,23 +36,32 @@ type SettingsCardCopy = {
   telegramBotConnected: string;
   telegramBotNotConnected: string;
   clearTelegramBotToken: string;
+  specialistPolicyTitle: string;
+  cancelGracePeriodHours: string;
+  refundOnLateCancel: string;
+  autoCancelUnpaidEnabled: string;
+  unpaidAutoCancelAfterHours: string;
 };
 
 type SettingsCardProps = {
   systemSettings: SystemSettings;
   accountSettings: AccountSettings;
   userSettings: UserSettings;
+  specialistBookingPolicy: SpecialistBookingPolicy;
   copy: SettingsCardCopy;
   canManageSystemSettings: boolean;
   canManageAccountSettings: boolean;
+  canManageSpecialistBookingPolicy: boolean;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
   isSavingSystem?: boolean;
   isSavingAccount?: boolean;
   isSavingUser?: boolean;
+  isSavingSpecialistBookingPolicy?: boolean;
   onSaveSystem: (next: SystemSettings) => Promise<void> | void;
   onSaveAccount: (next: AccountSettings) => Promise<void> | void;
   onSaveUser: (next: UserSettings) => Promise<void> | void;
+  onSaveSpecialistBookingPolicy: (next: SpecialistBookingPolicy) => Promise<void> | void;
   onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
   onDisconnectGoogle: () => void;
@@ -61,22 +71,26 @@ export function SettingsCard({
   systemSettings,
   accountSettings,
   userSettings,
+  specialistBookingPolicy,
   copy,
   canManageSystemSettings,
   canManageAccountSettings,
+  canManageSpecialistBookingPolicy,
   isGoogleConnecting,
   isGoogleDisconnecting,
   isSavingSystem = false,
   isSavingAccount = false,
   isSavingUser = false,
+  isSavingSpecialistBookingPolicy = false,
   onSaveSystem,
   onSaveAccount,
   onSaveUser,
+  onSaveSpecialistBookingPolicy,
   onClearTelegramBotToken,
   onConnectGoogle,
   onDisconnectGoogle
 }: SettingsCardProps) {
-  const [tab, setTab] = useState(canManageSystemSettings ? 0 : canManageAccountSettings ? 1 : 2);
+  const [tab, setTab] = useState(canManageSystemSettings ? 0 : canManageAccountSettings ? 1 : canManageSpecialistBookingPolicy ? 2 : 3);
 
   const { control: systemControl, handleSubmit: handleSystemSubmit, reset: resetSystem } = useForm<SystemSettings>({
     defaultValues: systemSettings
@@ -88,6 +102,9 @@ export function SettingsCard({
 
   const { control: userControl, handleSubmit: handleUserSubmit, reset: resetUser } = useForm<UserSettings>({
     defaultValues: { ...userSettings, telegramBotToken: '' }
+  });
+  const { control: specialistPolicyControl, handleSubmit: handleSpecialistPolicySubmit, reset: resetSpecialistPolicy } = useForm<SpecialistBookingPolicy>({
+    defaultValues: specialistBookingPolicy
   });
 
   useEffect(() => {
@@ -101,12 +118,16 @@ export function SettingsCard({
   useEffect(() => {
     resetUser({ ...userSettings, telegramBotToken: '' });
   }, [resetUser, userSettings]);
+  useEffect(() => {
+    resetSpecialistPolicy(specialistBookingPolicy);
+  }, [resetSpecialistPolicy, specialistBookingPolicy]);
 
   return (
     <Box>
       <AppTabs value={tab} onChange={(_, next) => setTab(next)} sx={{ mb: 2 }}>
         <AppTab label={copy.systemTab} disabled={!canManageSystemSettings} />
         <AppTab label={copy.accountTab} disabled={!canManageAccountSettings} />
+        <AppTab label={copy.specialistPolicyTab} disabled={!canManageSpecialistBookingPolicy} />
         <AppTab label={copy.userTab} />
       </AppTabs>
 
@@ -245,7 +266,67 @@ export function SettingsCard({
         </AppForm>
       )}
 
-      {tab === 2 && (
+      {tab === 2 && canManageSpecialistBookingPolicy && (
+        <AppForm component="form" onSubmit={handleSpecialistPolicySubmit(onSaveSpecialistBookingPolicy)}>
+          <Typography variant="h5">{copy.specialistPolicyTitle}</Typography>
+
+          <Controller
+            name="cancelGracePeriodHours"
+            control={specialistPolicyControl}
+            render={({ field }: any) => (
+              <AppRhfTextField
+                field={field}
+                label={copy.cancelGracePeriodHours}
+                type="number"
+                slotProps={{ htmlInput: { min: 0, max: 336 } }}
+                parseValue={(value) => Number(value)}
+              />
+            )}
+          />
+
+          <Controller
+            name="refundOnLateCancel"
+            control={specialistPolicyControl}
+            render={({ field }: any) => (
+              <FormControlLabel
+                control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
+                label={copy.refundOnLateCancel}
+              />
+            )}
+          />
+
+          <Controller
+            name="autoCancelUnpaidEnabled"
+            control={specialistPolicyControl}
+            render={({ field }: any) => (
+              <FormControlLabel
+                control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
+                label={copy.autoCancelUnpaidEnabled}
+              />
+            )}
+          />
+
+          <Controller
+            name="unpaidAutoCancelAfterHours"
+            control={specialistPolicyControl}
+            render={({ field }: any) => (
+              <AppRhfTextField
+                field={field}
+                label={copy.unpaidAutoCancelAfterHours}
+                type="number"
+                slotProps={{ htmlInput: { min: 1, max: 720 } }}
+                parseValue={(value) => Number(value)}
+              />
+            )}
+          />
+
+          <AppButton type="submit" startIcon={<AppIcons.save />} isLoading={isSavingSpecialistBookingPolicy}>
+            {copy.saveSettings}
+          </AppButton>
+        </AppForm>
+      )}
+
+      {tab === 3 && (
         <AppForm component="form" onSubmit={handleUserSubmit(onSaveUser)}>
           <Typography variant="h5">{copy.userTitle}</Typography>
 

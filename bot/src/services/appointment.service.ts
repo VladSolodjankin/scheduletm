@@ -10,6 +10,7 @@ import { findServiceById } from '../repositories/service.repository';
 import { findSpecialistById } from '../repositories/specialist.repository';
 import { createAppointmentGroup } from '../repositories/appointment-group.repository';
 import { toDateTimeFromUtc, toUtcIsoFromTimezone } from '../utils/timezone';
+import { getSpecialistCancelGraceHours } from '../repositories/specialist-booking-policy.repository';
 
 type CreateBookingAppointmentInput = {
   accountId: number;
@@ -242,13 +243,13 @@ export async function getUserAppointment(accountId: number, userId: number, appo
   return findUserAppointmentById(accountId, userId, appointmentId);
 }
 
-export function canEditAppointment(appointmentAt: string | Date, now = new Date()) {
+export function canEditAppointment(appointmentAt: string | Date, graceHours = 24, now = new Date()) {
   const appointmentTime = appointmentAt instanceof Date
     ? appointmentAt.getTime()
     : new Date(appointmentAt).getTime();
 
   const diffMs = appointmentTime - now.getTime();
-  return diffMs > 24 * 60 * 60 * 1000;
+  return diffMs > graceHours * 60 * 60 * 1000;
 }
 
 type RescheduleAppointmentInput = {
@@ -272,7 +273,8 @@ export async function rescheduleUserAppointment(input: RescheduleAppointmentInpu
     };
   }
 
-  if (!canEditAppointment(appointment.appointmentAt)) {
+  const graceHours = await getSpecialistCancelGraceHours(input.accountId, appointment.specialistId);
+  if (!canEditAppointment(appointment.appointmentAt, graceHours)) {
     return {
       ok: false as const,
       reason: 'too_late_to_edit',
@@ -327,6 +329,22 @@ export async function cancelUserAppointment(
   userId: number,
   appointmentId: number,
 ) {
+  const current = await findUserAppointmentById(accountId, userId, appointmentId);
+  if (!current) {
+    return {
+      ok: false as const,
+      reason: 'appointment_not_found',
+    };
+  }
+
+  const graceHours = await getSpecialistCancelGraceHours(accountId, current.specialistId);
+  if (!canEditAppointment(current.appointmentAt, graceHours)) {
+    return {
+      ok: false as const,
+      reason: 'too_late_to_edit',
+    };
+  }
+
   const appointment = await cancelAppointmentById(accountId, userId, appointmentId);
 
   if (!appointment) {
