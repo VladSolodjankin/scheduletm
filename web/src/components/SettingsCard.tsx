@@ -110,7 +110,14 @@ export function SettingsCard({
   onConnectGoogle,
   onDisconnectGoogle
 }: SettingsCardProps) {
-  const timingOptions = ['disabled', ...Array.from({ length: 36 }, (_, index) => `${index * 2 + 1}h`)];
+  const timingOptions = [
+    'disabled',
+    ...[
+      1,
+      2,
+      ...Array.from({ length: 12 }, (_, i) => 4 + i * 2) // 4 → 26
+    ].map(h => `${h}h`)
+  ];
   const selectableChannels: NotificationChannel[] = ['email', 'telegram', 'viber', 'sms', 'whatsapp'];
   const [tab, setTab] = useState(canManageSystemSettings ? 0 : canManageAccountSettings ? 1 : canManageSpecialistBookingPolicy ? 2 : 4);
 
@@ -169,6 +176,22 @@ export function SettingsCard({
       paymentReminderTimings: payment?.enabled ? payment.sendTimings : ['disabled'],
     });
   }, [accountNotificationDefaults, resetNotificationDefaults]);
+
+  const onChange= (field, event) => {
+    const value = event.target.value as string[];
+
+    if (field.value.includes('disabled') && value.length > 1) {
+      field.onChange(value.filter(v => v !== 'disabled'));
+      return;
+    }
+
+    if (value.includes('disabled')) {
+      field.onChange(['disabled']);
+      return;
+    }
+
+    field.onChange(value);
+  }
 
   return (
     <Box>
@@ -452,7 +475,7 @@ export function SettingsCard({
                   label={copy.appointmentReminderTimingsLabel}
                   multiple
                   value={field.value}
-                  onChange={(event) => field.onChange(event.target.value as string[])}
+                  onChange={(event) => onChange(field, event)}
                   renderValue={(selected) => (selected as string[]).map((item) => item === 'disabled' ? copy.disabledOption : item).join(', ')}
                 >
                   {timingOptions.map((timing) => (
@@ -478,7 +501,7 @@ export function SettingsCard({
                   label={copy.paymentReminderTimingsLabel}
                   multiple
                   value={field.value}
-                  onChange={(event) => field.onChange(event.target.value as string[])}
+                  onChange={(event) => onChange(field, event)}
                   renderValue={(selected) => (selected as string[]).map((item) => item === 'disabled' ? copy.disabledOption : item).join(', ')}
                 >
                   {timingOptions.map((timing) => (
