@@ -10,6 +10,7 @@ import { appointmentRoutes } from './routes/appointmentRoutes.js';
 import { settingsRoutes } from './routes/settingsRoutes.js';
 import { specialistRoutes } from './routes/specialistRoutes.js';
 import { userManagementRoutes } from './routes/userManagementRoutes.js';
+import { notificationRoutes } from './routes/notificationRoutes.js';
 
 export const createApp = () => {
   const app = express();
@@ -40,6 +41,7 @@ export const createApp = () => {
   app.use('/api/specialists', specialistRoutes);
   app.use('/api/users', userManagementRoutes);
   app.use('/api/integrations', integrationRoutes);
+  app.use('/api/notifications', notificationRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not found' });

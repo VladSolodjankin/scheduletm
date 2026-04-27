@@ -3,6 +3,26 @@ import { db } from '../db/knex.js';
 const DEFAULT_MAX_ATTEMPTS = 3;
 const RETRY_BACKOFF_MINUTES = [5, 15, 30] as const;
 
+export type NotificationLogRecord = {
+  id: number;
+  account_id: number;
+  user_id: number;
+  appointment_id: number;
+  specialist_id: number;
+  type: string;
+  channel: string;
+  status: string;
+  attempts: number;
+  max_attempts: number;
+  recipient_email: string | null;
+  last_error: string | null;
+  send_at: Date;
+  next_retry_at: Date | null;
+  sent_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
 function computeNextRetryAt(now: Date, attemptNo: number): Date {
   const backoffMinutes = RETRY_BACKOFF_MINUTES[Math.min(attemptNo - 1, RETRY_BACKOFF_MINUTES.length - 1)];
   return new Date(now.getTime() + backoffMinutes * 60 * 1000);
@@ -189,4 +209,110 @@ export async function insertSentNotification(input: {
       next_retry_at: null,
       updated_at: db.fn.now(),
     });
+}
+
+export async function listNotificationLogs(filters: {
+  accountId?: number;
+  specialistId?: number;
+  userId?: number;
+  limit?: number;
+}): Promise<NotificationLogRecord[]> {
+  const query = db('notifications as n')
+    .join('appointments as a', function joinAppointments() {
+      this.on('a.id', '=', 'n.appointment_id').andOn('a.account_id', '=', 'n.account_id');
+    })
+    .orderBy('n.created_at', 'desc')
+    .limit(filters.limit ?? 300);
+
+  if (filters.accountId !== undefined) {
+    query.where('n.account_id', filters.accountId);
+  }
+
+  if (filters.specialistId !== undefined) {
+    query.where('a.specialist_id', filters.specialistId);
+  }
+
+  if (filters.userId !== undefined) {
+    query.where('n.user_id', filters.userId);
+  }
+
+  return query.select<NotificationLogRecord[]>(
+    'n.id',
+    'n.account_id',
+    'n.user_id',
+    'n.appointment_id',
+    'a.specialist_id',
+    'n.type',
+    'n.channel',
+    'n.status',
+    'n.attempts',
+    'n.max_attempts',
+    'n.recipient_email',
+    'n.last_error',
+    'n.send_at',
+    'n.next_retry_at',
+    'n.sent_at',
+    'n.created_at',
+    'n.updated_at',
+  );
+}
+
+export async function findNotificationLogById(notificationId: number): Promise<NotificationLogRecord | null> {
+  const row = await db('notifications as n')
+    .join('appointments as a', function joinAppointments() {
+      this.on('a.id', '=', 'n.appointment_id').andOn('a.account_id', '=', 'n.account_id');
+    })
+    .where('n.id', notificationId)
+    .first<NotificationLogRecord>(
+      'n.id',
+      'n.account_id',
+      'n.user_id',
+      'n.appointment_id',
+      'a.specialist_id',
+      'n.type',
+      'n.channel',
+      'n.status',
+      'n.attempts',
+      'n.max_attempts',
+      'n.recipient_email',
+      'n.last_error',
+      'n.send_at',
+      'n.next_retry_at',
+      'n.sent_at',
+      'n.created_at',
+      'n.updated_at',
+    );
+
+  return row ?? null;
+}
+
+export async function resetNotificationForResend(input: {
+  notificationId: number;
+  accountId?: number;
+  specialistId?: number;
+}): Promise<boolean> {
+  const query = db('notifications as n')
+    .join('appointments as a', function joinAppointments() {
+      this.on('a.id', '=', 'n.appointment_id').andOn('a.account_id', '=', 'n.account_id');
+    })
+    .where('n.id', input.notificationId)
+    .whereIn('n.status', ['failed', 'retry', 'cancelled']);
+
+  if (input.accountId !== undefined) {
+    query.andWhere('n.account_id', input.accountId);
+  }
+
+  if (input.specialistId !== undefined) {
+    query.andWhere('a.specialist_id', input.specialistId);
+  }
+
+  const updated = await query.update({
+    status: 'pending',
+    attempts: 0,
+    last_error: null,
+    next_retry_at: db.fn.now(),
+    updated_at: db.fn.now(),
+  });
+
+  return updated > 0;
 }

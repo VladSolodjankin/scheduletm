@@ -69,7 +69,13 @@ export const dictionaries = {
       appointmentCancelFailed: 'Unable to cancel appointment',
       appointmentRescheduleFailed: 'Unable to reschedule appointment',
       appointmentMarkPaidFailed: 'Unable to confirm payment',
-      appointmentNotifyFailed: 'Unable to send notification'
+      appointmentNotifyFailed: 'Unable to send notification',
+      invalidNotificationId: 'Invalid notification id',
+      notificationNotFound: 'Notification not found',
+      forbiddenNotificationScope: 'Insufficient permissions for this notification',
+      notificationsLoadFailed: 'Unable to load notifications',
+      notificationResendSuccess: 'Notification queued for resend',
+      notificationResendFailed: 'Unable to resend notification'
     }
   },
   ru: {
@@ -142,7 +148,13 @@ export const dictionaries = {
       appointmentCancelFailed: 'Не удалось отменить запись',
       appointmentRescheduleFailed: 'Не удалось перенести запись',
       appointmentMarkPaidFailed: 'Не удалось подтвердить оплату',
-      appointmentNotifyFailed: 'Не удалось отправить уведомление'
+      appointmentNotifyFailed: 'Не удалось отправить уведомление',
+      invalidNotificationId: 'Некорректный id уведомления',
+      notificationNotFound: 'Уведомление не найдено',
+      forbiddenNotificationScope: 'Недостаточно прав для этого уведомления',
+      notificationsLoadFailed: 'Не удалось загрузить уведомления',
+      notificationResendSuccess: 'Уведомление поставлено в очередь на повторную отправку',
+      notificationResendFailed: 'Не удалось повторно отправить уведомление'
     }
   }
 } as const;
