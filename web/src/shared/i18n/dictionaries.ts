@@ -13,6 +13,7 @@ export const dictionaries = {
       appointments: 'Appointments',
       specialists: 'Specialists',
       users: 'Users',
+      notificationLogs: 'Notification logs',
       profileMenuAria: 'Open profile menu',
       appearancePaletteAria: 'Select color palette',
       themeToggleAria: 'Toggle theme mode',
@@ -206,6 +207,38 @@ export const dictionaries = {
         inviteResent: 'Invite link sent.'
       }
     },
+    notificationLogs: {
+      pageTitle: 'Notification logs',
+      pageSubtitle: 'Delivery history and retry for failed notifications.',
+      accessDenied: 'You do not have access to notification logs.',
+      empty: 'No notification logs found.',
+      resend: 'Resend',
+      filters: {
+        accountId: 'Account ID',
+        specialistId: 'Specialist ID',
+        userId: 'User ID',
+        apply: 'Apply filters'
+      },
+      columns: {
+        accountId: 'Account',
+        specialistId: 'Specialist',
+        userId: 'Client',
+        type: 'Type',
+        channel: 'Channel',
+        status: 'Status',
+        attempts: 'Attempts',
+        lastError: 'Error',
+        createdAt: 'Created at',
+        actions: 'Actions'
+      },
+      errors: {
+        load: 'Unable to load notification logs.',
+        resend: 'Unable to resend notification.'
+      },
+      success: {
+        resent: 'Notification queued for resend.'
+      }
+    },
     appointments: {
       pageTitle: 'Appointments',
       pageSubtitle: 'Calendar view with schedule by day and time.',
@@ -269,6 +302,7 @@ export const dictionaries = {
       appointments: 'Записи',
       specialists: 'Специалисты',
       users: 'Пользователи',
+      notificationLogs: 'Логи уведомлений',
       profileMenuAria: 'Открыть меню профиля',
       appearancePaletteAria: 'Выбрать цветовую палитру',
       themeToggleAria: 'Переключить тему',
@@ -462,6 +496,38 @@ export const dictionaries = {
         inviteResent: 'Ссылка-приглашение отправлена.'
       }
     },
+    notificationLogs: {
+      pageTitle: 'Логи уведомлений',
+      pageSubtitle: 'История доставки и повторная отправка недоставленных уведомлений.',
+      accessDenied: 'У вас нет доступа к логам уведомлений.',
+      empty: 'Логи уведомлений не найдены.',
+      resend: 'Повторить отправку',
+      filters: {
+        accountId: 'ID аккаунта',
+        specialistId: 'ID специалиста',
+        userId: 'ID клиента',
+        apply: 'Применить фильтры'
+      },
+      columns: {
+        accountId: 'Аккаунт',
+        specialistId: 'Специалист',
+        userId: 'Клиент',
+        type: 'Тип',
+        channel: 'Канал',
+        status: 'Статус',
+        attempts: 'Попытки',
+        lastError: 'Ошибка',
+        createdAt: 'Создано',
+        actions: 'Действия'
+      },
+      errors: {
+        load: 'Не удалось загрузить логи уведомлений.',
+        resend: 'Не удалось повторно отправить уведомление.'
+      },
+      success: {
+        resent: 'Уведомление поставлено в очередь на повторную отправку.'
+      }
+    },
     appointments: {
       pageTitle: 'Записи',
       pageSubtitle: 'Календарный вид с расписанием по дням и времени.',
@@ -528,6 +594,7 @@ export type TranslationKey =
   | 'common.appointments'
   | 'common.specialists'
   | 'common.users'
+  | 'common.notificationLogs'
   | 'common.profileMenuAria'
   | 'common.appearancePaletteAria'
   | 'common.themeToggleAria'
@@ -727,6 +794,28 @@ export type TranslationKey =
   | 'appointments.fields.scheduledAt'
   | 'appointments.fields.status'
   | 'appointments.fields.meetingLink'
+  | 'notificationLogs.pageTitle'
+  | 'notificationLogs.pageSubtitle'
+  | 'notificationLogs.accessDenied'
+  | 'notificationLogs.empty'
+  | 'notificationLogs.resend'
+  | 'notificationLogs.filters.accountId'
+  | 'notificationLogs.filters.specialistId'
+  | 'notificationLogs.filters.userId'
+  | 'notificationLogs.filters.apply'
+  | 'notificationLogs.columns.accountId'
+  | 'notificationLogs.columns.specialistId'
+  | 'notificationLogs.columns.userId'
+  | 'notificationLogs.columns.type'
+  | 'notificationLogs.columns.channel'
+  | 'notificationLogs.columns.status'
+  | 'notificationLogs.columns.attempts'
+  | 'notificationLogs.columns.lastError'
+  | 'notificationLogs.columns.createdAt'
+  | 'notificationLogs.columns.actions'
+  | 'notificationLogs.errors.load'
+  | 'notificationLogs.errors.resend'
+  | 'notificationLogs.success.resent'
   | 'appointments.fields.notes';
 
 export const DEFAULT_LOCALE: Locale = 'ru';

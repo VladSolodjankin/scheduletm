@@ -73,6 +73,15 @@ npm run -w @scheduletm/server test
   - гарантирует наличие базовых дефолтов по типам (`appointment_created`, `appointment_reminder`, `payment_reminder`) и возвращает их.
 
 
+### Notification logs API
+
+- `GET /api/notifications`
+  - доступ: `owner`, `admin`, `specialist`;
+  - scope: `owner` видит все аккаунты (опциональный фильтр `accountId`), `admin` только свой `account_id`, `specialist` только уведомления своих клиентов;
+  - фильтры: `accountId`, `specialistId`, `userId`.
+- `POST /api/notifications/:id/resend`
+  - повторно ставит в очередь только недоставленные уведомления (`failed`, `retry`, `cancelled`) в рамках доступного scope.
+
 ### Notification delivery (MVP now)
 
 - Каналы доставки в scheduler:

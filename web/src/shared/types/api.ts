@@ -185,3 +185,27 @@ export type ManagedUserItem = {
 export type ManagedUsersListResponse = {
   users: ManagedUserItem[];
 };
+
+export type NotificationLogItem = {
+  id: number;
+  accountId: number;
+  userId: number;
+  appointmentId: number;
+  specialistId: number;
+  status: string;
+  type: string;
+  channel: string;
+  attempts: number;
+  maxAttempts: number;
+  recipientEmail: string | null;
+  lastError: string | null;
+  sendAt: string;
+  nextRetryAt: string | null;
+  sentAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NotificationLogsResponse = {
+  items: NotificationLogItem[];
+};

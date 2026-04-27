@@ -7,6 +7,7 @@ import GroupRounded from '@mui/icons-material/GroupRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import LoginRounded from '@mui/icons-material/LoginRounded';
 import LogoutRounded from '@mui/icons-material/LogoutRounded';
+import NotificationsRounded from '@mui/icons-material/NotificationsRounded';
 import PaletteRounded from '@mui/icons-material/PaletteRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
@@ -23,6 +24,7 @@ export const AppIcons = {
   lightMode: LightModeRounded,
   login: LoginRounded,
   logout: LogoutRounded,
+  notifications: NotificationsRounded,
   palette: PaletteRounded,
   register: PersonAddRounded,
   users: PeopleAltRounded,
