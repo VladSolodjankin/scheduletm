@@ -14,6 +14,7 @@ export const dictionaries = {
       specialists: 'Specialists',
       users: 'Users',
       notificationLogs: 'Notification logs',
+      errorLogs: 'Error logs',
       profileMenuAria: 'Open profile menu',
       appearancePaletteAria: 'Select color palette',
       themeToggleAria: 'Toggle theme mode',
@@ -244,6 +245,23 @@ export const dictionaries = {
         resent: 'Notification queued for resend.'
       }
     },
+
+    errorLogs: {
+      pageTitle: 'Error logs',
+      pageSubtitle: 'Frontend and backend errors for the last 7 days.',
+      accessDenied: 'Only owner can view error logs.',
+      empty: 'No error logs found.',
+      columns: {
+        createdAt: 'Created at',
+        source: 'Source',
+        path: 'Path',
+        message: 'Message',
+        accountId: 'Account'
+      },
+      errors: {
+        load: 'Unable to load error logs.'
+      }
+    },
     appointments: {
       pageTitle: 'Appointments',
       pageSubtitle: 'Calendar view with schedule by day and time.',
@@ -308,6 +326,7 @@ export const dictionaries = {
       specialists: 'Специалисты',
       users: 'Пользователи',
       notificationLogs: 'Логи уведомлений',
+      errorLogs: 'Логи ошибок',
       profileMenuAria: 'Открыть меню профиля',
       appearancePaletteAria: 'Выбрать цветовую палитру',
       themeToggleAria: 'Переключить тему',
@@ -538,6 +557,23 @@ export const dictionaries = {
         resent: 'Уведомление поставлено в очередь на повторную отправку.'
       }
     },
+
+    errorLogs: {
+      pageTitle: 'Логи ошибок',
+      pageSubtitle: 'Ошибки фронтенда и бэкенда за последние 7 дней.',
+      accessDenied: 'Только owner может просматривать логи ошибок.',
+      empty: 'Логи ошибок не найдены.',
+      columns: {
+        createdAt: 'Создано',
+        source: 'Источник',
+        path: 'Путь',
+        message: 'Сообщение',
+        accountId: 'Аккаунт'
+      },
+      errors: {
+        load: 'Не удалось загрузить логи ошибок.'
+      }
+    },
     appointments: {
       pageTitle: 'Записи',
       pageSubtitle: 'Календарный вид с расписанием по дням и времени.',
@@ -605,6 +641,7 @@ export type TranslationKey =
   | 'common.specialists'
   | 'common.users'
   | 'common.notificationLogs'
+  | 'common.errorLogs'
   | 'common.profileMenuAria'
   | 'common.appearancePaletteAria'
   | 'common.themeToggleAria'
@@ -831,6 +868,16 @@ export type TranslationKey =
   | 'notificationLogs.errors.load'
   | 'notificationLogs.errors.resend'
   | 'notificationLogs.success.resent'
+  | 'errorLogs.pageTitle'
+  | 'errorLogs.pageSubtitle'
+  | 'errorLogs.accessDenied'
+  | 'errorLogs.empty'
+  | 'errorLogs.columns.createdAt'
+  | 'errorLogs.columns.source'
+  | 'errorLogs.columns.path'
+  | 'errorLogs.columns.message'
+  | 'errorLogs.columns.accountId'
+  | 'errorLogs.errors.load'
   | 'appointments.fields.notes';
 
 export const DEFAULT_LOCALE: Locale = 'ru';

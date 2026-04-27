@@ -12,6 +12,7 @@ import {
 import { createAppTheme } from '../shared/theme/createAppTheme';
 import { router } from './router';
 import { AppErrorBoundary } from './AppErrorBoundary';
+import { WebErrorTracker } from './WebErrorTracker';
 
 function getInitialMode(): ThemeMode {
   const persisted = localStorage.getItem('ui-theme-mode');
@@ -48,6 +49,7 @@ export function App() {
         <ThemeProvider theme={theme}>
           <I18nProvider>
             <AuthProvider>
+              <WebErrorTracker />
               <CssBaseline />
               <RouterProvider router={router} />
             </AuthProvider>

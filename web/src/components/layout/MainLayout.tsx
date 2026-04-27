@@ -58,6 +58,9 @@ export function MainLayout() {
     ...(user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist'
       ? [{ to: '/notification-logs', label: t('common.notificationLogs'), icon: 'notifications' as const }]
       : []),
+    ...(user?.role === 'owner'
+      ? [{ to: '/error-logs', label: t('common.errorLogs'), icon: 'errors' as const }]
+      : []),
     { to: '/settings', label: t('common.settings'), icon: 'settings' as const }
   ];
 
