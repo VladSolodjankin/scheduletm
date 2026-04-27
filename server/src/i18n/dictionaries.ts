@@ -76,7 +76,10 @@ export const dictionaries = {
       forbiddenNotificationScope: 'Insufficient permissions for this notification',
       notificationsLoadFailed: 'Unable to load notifications',
       notificationResendSuccess: 'Notification queued for resend',
-      notificationResendFailed: 'Unable to resend notification'
+      notificationResendFailed: 'Unable to resend notification',
+      forbiddenErrorLogsScope: 'Insufficient permissions for error logs',
+      errorLogsLoadFailed: 'Unable to load error logs',
+      errorLogsCreateFailed: 'Unable to create error log'
     }
   },
   ru: {
@@ -156,7 +159,10 @@ export const dictionaries = {
       forbiddenNotificationScope: 'Недостаточно прав для этого уведомления',
       notificationsLoadFailed: 'Не удалось загрузить уведомления',
       notificationResendSuccess: 'Уведомление поставлено в очередь на повторную отправку',
-      notificationResendFailed: 'Не удалось повторно отправить уведомление'
+      notificationResendFailed: 'Не удалось повторно отправить уведомление',
+      forbiddenErrorLogsScope: 'Недостаточно прав для логов ошибок',
+      errorLogsLoadFailed: 'Не удалось загрузить логи ошибок',
+      errorLogsCreateFailed: 'Не удалось сохранить лог ошибки'
     }
   }
 } as const;

@@ -9,6 +9,7 @@ import { SettingsPage } from '../pages/SettingsPage';
 import { SpecialistsPage } from '../pages/SpecialistsPage';
 import { UsersPage } from '../pages/UsersPage';
 import { NotificationLogsPage } from '../pages/NotificationLogsPage';
+import { ErrorLogsPage } from '../pages/ErrorLogsPage';
 import { useAuth } from '../shared/auth/AuthContext';
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
@@ -98,7 +99,16 @@ export const router = createBrowserRouter([
             <NotificationLogsPage />
           </ProtectedRoute>
         )
-      }
+      },
+
+      {
+        path: '/error-logs',
+        element: (
+          <ProtectedRoute>
+            <ErrorLogsPage />
+          </ProtectedRoute>
+        )
+      },
     ]
   }
 ]);

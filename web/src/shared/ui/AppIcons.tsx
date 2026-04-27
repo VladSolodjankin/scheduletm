@@ -3,6 +3,7 @@ import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import DeleteRounded from '@mui/icons-material/DeleteRounded';
 import EditRounded from '@mui/icons-material/EditRounded';
 import EventRounded from '@mui/icons-material/EventRounded';
+import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import GroupRounded from '@mui/icons-material/GroupRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import LoginRounded from '@mui/icons-material/LoginRounded';
@@ -20,6 +21,7 @@ export const AppIcons = {
   delete: DeleteRounded,
   edit: EditRounded,
   calendar: EventRounded,
+  errors: ErrorOutlineRounded,
   specialists: GroupRounded,
   lightMode: LightModeRounded,
   login: LoginRounded,

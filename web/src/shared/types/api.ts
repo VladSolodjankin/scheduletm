@@ -213,3 +213,21 @@ export type NotificationLogItem = {
 export type NotificationLogsResponse = {
   items: NotificationLogItem[];
 };
+
+export type ErrorLogItem = {
+  id: number;
+  accountId: number | null;
+  webUserId: number | null;
+  source: 'web' | 'server';
+  level: string;
+  method: string | null;
+  path: string | null;
+  message: string;
+  stack: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+};
+
+export type ErrorLogsResponse = {
+  items: ErrorLogItem[];
+};

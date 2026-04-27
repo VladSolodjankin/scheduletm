@@ -11,6 +11,8 @@ import { settingsRoutes } from './routes/settingsRoutes.js';
 import { specialistRoutes } from './routes/specialistRoutes.js';
 import { userManagementRoutes } from './routes/userManagementRoutes.js';
 import { notificationRoutes } from './routes/notificationRoutes.js';
+import { errorLogRoutes } from './routes/errorLogRoutes.js';
+import { trackServerError } from './services/errorTrackingService.js';
 
 export const createApp = () => {
   const app = express();
@@ -34,6 +36,20 @@ export const createApp = () => {
   );
   app.use(express.json({ limit: '32kb' }));
 
+  app.use((req, res, next) => {
+    res.on('finish', () => {
+      if (res.statusCode >= 500) {
+        void trackServerError({
+          method: req.method,
+          path: req.originalUrl,
+          error: new Error(`HTTP_${res.statusCode}`),
+        });
+      }
+    });
+
+    next();
+  });
+
   app.use(healthRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/settings', settingsRoutes);
@@ -42,6 +58,7 @@ export const createApp = () => {
   app.use('/api/users', userManagementRoutes);
   app.use('/api/integrations', integrationRoutes);
   app.use('/api/notifications', notificationRoutes);
+  app.use('/api/error-logs', errorLogRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({ message: 'Not found' });
