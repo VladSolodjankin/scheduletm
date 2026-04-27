@@ -74,7 +74,7 @@ scheduletm/
 - Роли: `owner` / `admin` / `specialist` / `client` (RBAC policy централизована в server).
 - Settings: system + account + user settings, plus user integrations.
 - Integrations: Google OAuth start/callback, Telegram bot token в user integrations.
-- Notifications: appointment notify flow with channel fallback (Telegram -> Email).
+- Notifications: appointment notify flow with channel fallback (Telegram -> Email) + retry/backoff pipeline in scheduler (`pending/retry/processing/sent/failed`, `next_retry_at`, `max_attempts`, idempotent key per `appointment_id + type + channel`).
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
 - Scheduler: auto-cancel unpaid appointments by specialist booking policy (`auto_cancel_unpaid_enabled`, `unpaid_auto_cancel_after_hours`) with audit reason `auto_cancel_unpaid`.
 - Specialists и Users CRUD (с role-gates).
