@@ -10,7 +10,7 @@
 
 ## Приоритет P1
 
-- [ ] Закрыть CSRF protection в refresh-cookie потоке (`server`).
+- [x] Закрыть CSRF protection в refresh-cookie потоке (`server`).
 - [ ] Добавить error tracking для `web` и `server`.
 - [ ] Довести audit/events для appointments (фильтрация, retention, actor context).
 

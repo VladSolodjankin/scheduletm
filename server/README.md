@@ -10,6 +10,9 @@ Node.js/Express API для web-клиента и интеграций.
   Для приглашённых пользователей поддерживается flow принятия приглашения `POST /api/auth/accept-invite`
   (одноразовый invite-токен в ссылке, срок жизни 24 часа, пароль задаёт сам пользователь).
   Поддерживаются `POST /api/auth/verify-email` и `POST /api/auth/resend-verification-code`.
+  Для `POST /api/auth/refresh` и `POST /api/auth/logout` включена CSRF-защита:
+  требуется заголовок `x-csrf-token`, который должен совпадать со значением cookie `<SESSION_COOKIE_NAME>_csrf`
+  (по умолчанию `scheduletm_refresh_csrf`).
 - Web roles: owner/admin/specialist/client.
 - RBAC policy (централизованные проверки прав) в `src/policies/rolePermissions.ts`.
 - Settings API: system (owner), account (owner/admin), user (all users), account notification defaults (owner/admin).
