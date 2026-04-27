@@ -2,34 +2,65 @@
 
 Кросс-модульный чеклист готовности `web + server + bot`.
 
-## Platform
+## Как читать
 
-- [ ] Зафиксировать версии Node.js и npm для всех workspace.
-- [ ] Подготовить reproducible installs и lockfile policy.
-- [ ] Убедиться, что CI воспроизводит локальные команды сборки/тестов.
+- **P0 (блокер релиза)** — без выполнения выход в production не рекомендуется.
+- **P1 (до/сразу после запуска)** — высокий риск для стабильности/поддержки.
+- **P2 (после стабилизации)** — важные улучшения, но не блокируют первый релиз.
 
-## Security
+## P0 — блокеры релиза
 
-- [ ] CSRF protection для refresh-cookie (`server`).
-- [ ] Централизованное хранение секретов (secret manager).
-- [ ] Политика маскирования PII в логах.
+### 1) Security и auth-flow (`server` + `web`)
 
-## Reliability
+- [ ] Внедрить CSRF-защиту для refresh-cookie (`/api/auth/refresh`) и logout flow.
+- [ ] Перевести секреты в Secret Manager (не хранить в репозитории/обычных env-файлах).
+- [ ] Проверить cookie policy для production: `HttpOnly`, `Secure`, `SameSite`, домен, TTL.
+- [ ] Ограничить CORS на production-домены (без широких fallback-origin).
 
-- [ ] Backup + проверяемый restore-процесс для production БД.
-- [ ] Error tracking (web/server/bot).
-- [ ] Алерты на 5xx, рост failed-уведомлений, деградацию webhook.
+### 2) Database readiness (`server` + `bot`)
 
-## Quality
+- [ ] Утвердить migration policy: forward-only + documented rollback-plan.
+- [ ] Подготовить backup + test restore (RPO/RTO, расписание, проверка восстановления).
+- [ ] Проверить индексы и query-планы для hot-path таблиц (`appointments`, `notifications`, `web_user_sessions`, `telegram_user_sessions`).
+- [ ] Разделить окружения БД (dev/stage/prod) и зафиксировать безопасные connection strings.
 
-- [ ] Web↔Server integration suite (critical flows).
-- [ ] E2E smoke для bot webhook сценариев.
-- [ ] PR + nightly прогоны критичных тестов.
+### 3) CI/CD и качество
 
-## Operations
+- [ ] Единый CI pipeline монорепо: install -> typecheck -> test -> build.
+- [ ] Отдельный job: миграции на чистой БД + smoke после миграций.
+- [ ] Добавить web↔server интеграционные тесты (critical paths без API mocks).
+- [ ] Убрать привязку тестов к внешней shared БД; тесты должны быть self-contained.
 
-- [ ] Runbook: инциденты по БД, webhook, уведомлениям.
-- [ ] Release checklist (миграции, smoke, post-release monitoring).
+### 4) Наблюдаемость и инциденты
+
+- [ ] Подключить error tracking для `web`, `server`, `bot`.
+- [ ] Ввести метрики/алерты: 5xx, latency, рост failed/retry уведомлений, webhook degradation.
+- [ ] Подготовить runbook: инциденты БД, webhook, OAuth, email/notification failures.
+
+## P1 — сделать до или сразу после запуска
+
+### Server/API
+
+- [ ] Пройти security review env/runtime-настроек (в т.ч. OAuth redirect и token TTL).
+- [ ] Проверить rate-limit стратегии для login/invite/notify endpoints.
+- [ ] Утвердить политику логирования и маскирования PII (email/phone/telegram).
+
+### Web
+
+- [ ] Прогнать role-based smoke (owner/admin/specialist/client) на staging.
+- [ ] Добавить UX-smoke на auth, invite onboarding, settings, notification logs.
+- [ ] Подготовить мониторинг фронта (ошибки рендера, API error rate, release markers).
+
+### Bot
+
+- [ ] Гарантировать idempotency по `update_id` и защиту от гонок на пользователя.
+- [ ] Проверить post-deploy smoke: `/health`, `getWebhookInfo`, отправка тестового reminder.
+
+## P2 — после стабилизации
+
+- [ ] Nightly прогоны критичных e2e/smoke сценариев.
+- [ ] Стресс-тест scheduler и notification retry pipeline.
+- [ ] Формализовать release checklist: миграции, pre/post-deploy smoke, rollback decision points.
 
 ## Модульные чеклисты
 
