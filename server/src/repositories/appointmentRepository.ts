@@ -205,6 +205,22 @@ export async function updateAppointment(input: UpdateAppointmentInput): Promise<
   return row ?? null;
 }
 
+export async function autoCancelUnpaidAppointment(input: {
+  accountId: number;
+  id: number;
+}): Promise<AppointmentRecord | null> {
+  const [row] = await db('appointments')
+    .where({ account_id: input.accountId, id: input.id, is_paid: false })
+    .whereIn('status', ['new', 'confirmed'])
+    .update({
+      status: 'cancelled',
+      updated_at: db.fn.now(),
+    })
+    .returning<AppointmentRecord[]>('*');
+
+  return row ?? null;
+}
+
 export async function createAppointmentAuditEvent(input: {
   accountId: number;
   appointmentId: number;
@@ -314,6 +330,27 @@ export async function listUnpaidAppointmentsCreatedBetweenAllAccounts(
       'clients.first_name as client_first_name',
       'clients.last_name as client_last_name',
       'clients.username as client_username',
+      'clients.telegram_id as client_telegram_id',
+      'clients.phone as client_phone',
+      'clients.email as client_email',
+    );
+}
+
+export async function listUnpaidActiveAppointmentsCreatedBeforeAllAccounts(before: Date): Promise<AppointmentRecord[]> {
+  return db('appointments')
+    .leftJoin('clients', function joinClients() {
+      this.on('clients.id', '=', 'appointments.user_id').andOn('clients.account_id', '=', 'appointments.account_id');
+    })
+    .where('appointments.is_paid', false)
+    .whereIn('appointments.status', ['new', 'confirmed'])
+    .where('appointments.created_at', '<=', before)
+    .orderBy('appointments.created_at', 'asc')
+    .select<AppointmentRecord[]>(
+      'appointments.*',
+      'clients.first_name as client_first_name',
+      'clients.last_name as client_last_name',
+      'clients.username as client_username',
+      'clients.telegram_id as client_telegram_id',
       'clients.phone as client_phone',
       'clients.email as client_email',
     );
