@@ -79,3 +79,13 @@ npm run -w @scheduletm/server test
   - fallback `email`.
 - Ручной `POST /api/appointments/:id/notify` использует общий dispatch-сервис (форсированная отправка: сначала `telegram`, затем `email` при доступности контактов).
 - Scheduler уважает effective settings (`account -> specialist -> client deny`) и применяет fallback по доступным каналам.
+
+### Telegram клиент и `web_users`: рекомендуемый flow
+
+- В Telegram webhook сначала создаём/обновляем запись в `clients` по `(account_id, telegram_id)`.
+- В процессе бронирования из Telegram email клиента обязателен.
+- После ввода email бот автоматически:
+  - создаёт (или обновляет) `web_user` с ролью `client`,
+  - связывает его с `clients.id` через `web_users.client_id`,
+  - отправляет invite-link (24h TTL) на `accept-invite`.
+- Это позволяет создавать appointment даже для неавторизованного и неактивного `web_user`, а завершение регистрации пользователь делает позже по invite-link.
