@@ -39,7 +39,13 @@ import { apiClient, authHeaders } from '../shared/api/client';
 import { resolveApiError } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
-import type { AppointmentItem, AppointmentListResponse, ClientItem, SpecialistItem } from '../shared/types/api';
+import type {
+  AppointmentItem,
+  AppointmentListResponse,
+  ClientItem,
+  SpecialistBookingPolicy,
+  SpecialistItem,
+} from '../shared/types/api';
 import { WebUserRole } from '../shared/types/roles';
 import { AppPage } from '../shared/ui/AppPage';
 
@@ -70,6 +76,7 @@ export function AppointmentsContainer() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AppointmentItem | null>(null);
   const [createInitialScheduledAtIso, setCreateInitialScheduledAtIso] = useState<string | null>(null);
+  const [bookingPolicies, setBookingPolicies] = useState<Record<number, SpecialistBookingPolicy>>({});
   const pastSlotError = t('appointments.pastSlotError');
 
   const showPastSlotError = () => {
@@ -236,6 +243,45 @@ export function AppointmentsContainer() {
     setIsCreateOpen(true);
   };
 
+  useEffect(() => {
+    const loadPolicy = async () => {
+      if (!accessToken || !editingItem?.specialistId || bookingPolicies[editingItem.specialistId]) {
+        return;
+      }
+
+      try {
+        const response = await apiClient.get<SpecialistBookingPolicy>('/api/settings/specialist-booking-policy', {
+          headers: authHeaders(accessToken),
+          params: { specialistId: editingItem.specialistId },
+        });
+        setBookingPolicies((prev) => ({
+          ...prev,
+          [editingItem.specialistId]: response.data,
+        }));
+      } catch {
+        // Do not block appointment editing if policy fetch fails.
+      }
+    };
+
+    void loadPolicy();
+  }, [accessToken, bookingPolicies, editingItem]);
+
+  const cancelRefundOutcome = useMemo(() => {
+    if (!editingItem) {
+      return 'refund';
+    }
+
+    const policy = bookingPolicies[editingItem.specialistId];
+    if (!policy) {
+      return 'refund';
+    }
+
+    const appointmentAtMs = new Date(editingItem.scheduledAt).getTime();
+    const diffMs = appointmentAtMs - Date.now();
+    const isLateCancel = diffMs <= policy.cancelGracePeriodHours * 60 * 60 * 1000;
+    return isLateCancel && !policy.refundOnLateCancel ? 'no_refund' : 'refund';
+  }, [bookingPolicies, editingItem]);
+
   const submitForm = async (payload: {
     specialistId: number;
     appointmentAt: string;
@@ -311,6 +357,13 @@ export function AppointmentsContainer() {
 
   const cancelAppointment = async () => {
     if (!editingItem || !accessToken) {
+      return;
+    }
+
+    const confirmationMessage = cancelRefundOutcome === 'no_refund'
+      ? t('appointments.cancelConfirmNoRefund')
+      : t('appointments.cancelConfirmRefund');
+    if (!window.confirm(confirmationMessage)) {
       return;
     }
 
@@ -549,6 +602,11 @@ export function AppointmentsContainer() {
           setCreateInitialScheduledAtIso(null);
         }}
         onCancel={cancelAppointment}
+        cancelPolicyText={editingItem
+          ? (cancelRefundOutcome === 'no_refund'
+            ? t('appointments.cancelPolicyNoRefund')
+            : t('appointments.cancelPolicyRefund'))
+          : ''}
         onMarkPaid={markAppointmentPaid}
         onNotifyClient={notifyClient}
         onSubmit={(payload) => submitForm({

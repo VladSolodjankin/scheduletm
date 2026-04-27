@@ -225,6 +225,10 @@ export const dictionaries = {
       dragHint: 'Drag and drop appointment to move it to another slot.',
       pastSlotError: 'Cannot create or move an appointment to a past date/time.',
       cancelAction: 'Cancel appointment',
+      cancelConfirmRefund: 'Cancel this appointment? Payment refund is allowed.',
+      cancelConfirmNoRefund: 'Cancel this appointment? Late cancellation without refund.',
+      cancelPolicyRefund: 'Cancellation policy: refund is allowed.',
+      cancelPolicyNoRefund: 'Cancellation policy: late cancellation without refund.',
       markPaidAction: 'Mark as paid',
       notifyAction: 'Notify client',
       paymentStatusPaid: 'Paid',
@@ -477,6 +481,10 @@ export const dictionaries = {
       dragHint: 'Перетащите запись в другой слот, чтобы перенести её.',
       pastSlotError: 'Нельзя создать или перенести запись на прошедшие дату и время.',
       cancelAction: 'Отменить запись',
+      cancelConfirmRefund: 'Отменить запись? Возврат оплаты разрешён.',
+      cancelConfirmNoRefund: 'Отменить запись? Поздняя отмена без возврата оплаты.',
+      cancelPolicyRefund: 'Правило отмены: возврат оплаты разрешён.',
+      cancelPolicyNoRefund: 'Правило отмены: поздняя отмена без возврата оплаты.',
       markPaidAction: 'Подтвердить оплату',
       notifyAction: 'Уведомить клиента',
       paymentStatusPaid: 'Оплачено',
@@ -696,6 +704,10 @@ export type TranslationKey =
   | 'appointments.dragHint'
   | 'appointments.pastSlotError'
   | 'appointments.cancelAction'
+  | 'appointments.cancelConfirmRefund'
+  | 'appointments.cancelConfirmNoRefund'
+  | 'appointments.cancelPolicyRefund'
+  | 'appointments.cancelPolicyNoRefund'
   | 'appointments.markPaidAction'
   | 'appointments.notifyAction'
   | 'appointments.paymentStatusPaid'

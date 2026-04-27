@@ -189,19 +189,47 @@ export function getMyAppointmentsInlineKeyboard(
 export function getAppointmentEditInlineKeyboard(
   appointmentId: number,
   lang: SupportedLanguage,
+  canEdit = true,
+) {
+  const keyboard = [];
+
+  if (canEdit) {
+    keyboard.push([
+      {
+        text: translate(lang, 'appointments.editButton'),
+        callback_data: `appointment_edit:${appointmentId}`,
+      },
+    ]);
+  }
+
+  keyboard.push([
+    {
+      text: translate(lang, 'appointments.cancelButton'),
+      callback_data: `appointment_cancel:${appointmentId}`,
+    },
+  ]);
+
+  return {
+    inline_keyboard: keyboard,
+  };
+}
+
+export function getAppointmentCancelConfirmInlineKeyboard(
+  appointmentId: number,
+  lang: SupportedLanguage,
 ) {
   return {
     inline_keyboard: [
       [
         {
-          text: translate(lang, 'appointments.editButton'),
-          callback_data: `appointment_edit:${appointmentId}`,
+          text: translate(lang, 'appointments.cancelConfirmButton'),
+          callback_data: `appointment_cancel_confirm:${appointmentId}`,
         },
       ],
       [
         {
-          text: translate(lang, 'appointments.cancelButton'),
-          callback_data: `appointment_cancel:${appointmentId}`,
+          text: `⬅️ ${translate(lang, 'common.back')}`,
+          callback_data: `appointment:${appointmentId}`,
         },
       ],
     ],

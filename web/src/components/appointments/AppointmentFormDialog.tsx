@@ -56,6 +56,7 @@ type Props = {
   isCancellingAppointment: boolean;
   isMarkingPaid: boolean;
   isNotifyingClient: boolean;
+  cancelPolicyText: string;
   onClose: () => void;
   onCancel: () => Promise<void>;
   onMarkPaid: () => Promise<void>;
@@ -111,6 +112,7 @@ export function AppointmentFormDialog({
   isCancellingAppointment,
   isMarkingPaid,
   isNotifyingClient,
+  cancelPolicyText,
   onClose,
   onCancel,
   onMarkPaid,
@@ -397,6 +399,9 @@ export function AppointmentFormDialog({
           </Box>
           {editingItem && (
             <Stack spacing={1}>
+              <Typography variant="body2" color="warning.main">
+                {cancelPolicyText}
+              </Typography>
               <Typography variant="body2" color="text.secondary">
                 {editingItem.paymentStatus === 'paid'
                   ? t('appointments.paymentStatusPaid')

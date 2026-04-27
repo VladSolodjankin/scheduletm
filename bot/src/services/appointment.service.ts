@@ -10,7 +10,7 @@ import { findServiceById } from '../repositories/service.repository';
 import { findSpecialistById } from '../repositories/specialist.repository';
 import { createAppointmentGroup } from '../repositories/appointment-group.repository';
 import { toDateTimeFromUtc, toUtcIsoFromTimezone } from '../utils/timezone';
-import { getSpecialistCancelGraceHours } from '../repositories/specialist-booking-policy.repository';
+import { getSpecialistBookingPolicy, getSpecialistCancelGraceHours } from '../repositories/specialist-booking-policy.repository';
 
 type CreateBookingAppointmentInput = {
   accountId: number;
@@ -252,6 +252,30 @@ export function canEditAppointment(appointmentAt: string | Date, graceHours = 24
   return diffMs > graceHours * 60 * 60 * 1000;
 }
 
+export function getCancelRefundOutcome(
+  appointmentAt: string | Date,
+  policy: { cancelGracePeriodHours: number; refundOnLateCancel: boolean },
+  now = new Date(),
+) {
+  const appointmentTime = appointmentAt instanceof Date
+    ? appointmentAt.getTime()
+    : new Date(appointmentAt).getTime();
+  const diffMs = appointmentTime - now.getTime();
+  const isLateCancel = diffMs <= policy.cancelGracePeriodHours * 60 * 60 * 1000;
+
+  if (isLateCancel && !policy.refundOnLateCancel) {
+    return {
+      isLateCancel: true,
+      refundOutcome: 'no_refund' as const,
+    };
+  }
+
+  return {
+    isLateCancel,
+    refundOutcome: 'refund' as const,
+  };
+}
+
 type RescheduleAppointmentInput = {
   accountId: number;
   userId: number;
@@ -337,13 +361,8 @@ export async function cancelUserAppointment(
     };
   }
 
-  const graceHours = await getSpecialistCancelGraceHours(accountId, current.specialistId);
-  if (!canEditAppointment(current.appointmentAt, graceHours)) {
-    return {
-      ok: false as const,
-      reason: 'too_late_to_edit',
-    };
-  }
+  const policy = await getSpecialistBookingPolicy(accountId, current.specialistId);
+  const cancellation = getCancelRefundOutcome(current.appointmentAt, policy);
 
   const appointment = await cancelAppointmentById(accountId, userId, appointmentId);
 
@@ -356,5 +375,7 @@ export async function cancelUserAppointment(
 
   return {
     ok: true as const,
+    refundOutcome: cancellation.refundOutcome,
+    isLateCancel: cancellation.isLateCancel,
   };
 }

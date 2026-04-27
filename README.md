@@ -76,6 +76,7 @@ scheduletm/
 - Integrations: Google OAuth start/callback, Telegram bot token в user integrations.
 - Notifications: appointment notify flow with channel fallback (Telegram -> Email) + retry/backoff pipeline in scheduler (`pending/retry/processing/sent/failed`, `next_retry_at`, `max_attempts`, idempotent key per `appointment_id + type + channel`).
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
+- Late cancellation UX (web + bot): before cancel confirmation the user sees refund/no-refund outcome according to specialist booking policy (`cancel_grace_period_hours`, `refund_on_late_cancel`), and after cancellation bot sends final refund status.
 - Scheduler: auto-cancel unpaid appointments by specialist booking policy (`auto_cancel_unpaid_enabled`, `unpaid_auto_cancel_after_hours`) with audit reason `auto_cancel_unpaid`.
 - Specialists и Users CRUD (с role-gates).
 - Client web users:
@@ -126,10 +127,14 @@ scheduletm/
 
 Идеи:
 
-Нужно сделать настройки отмены записи. Пример у каждого специалиста есть свои правила отмены записи. (user_settings)
- - Если отменяете запись меньше чем за 24 часа, то предоплата за запись не возвращается (нужно добавить какой то сеттинг cancel_appointment_grace_period, return_maney_on_cancel) 
- - Автоматическая отмена записи если не было оплаты (auto_cancel_appointment_if_not_paid)
- - 
+Настройки отмены записи реализованы на уровне `specialist_booking_policies`:
+ - `cancel_grace_period_hours` — окно до начала записи;
+ - `refund_on_late_cancel` — логика возврата при поздней отмене;
+ - `auto_cancel_unpaid_enabled` + `unpaid_auto_cancel_after_hours` — авто-отмена неоплаченных записей.
+
+UX-правило поздней отмены:
+ - в web и bot перед подтверждением отмены показывается результат (`refund` / `no-refund`);
+ - в bot после отмены приходит итоговое сообщение о результате по возврату.
 Нужно сделать system_settings следующим образом
  - Будут доступны только для Owner
  - Будут ссылаться на таблицу system_settings

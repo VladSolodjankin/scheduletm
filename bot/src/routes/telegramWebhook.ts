@@ -10,6 +10,7 @@ import {
 import { findOrCreateTelegramUser } from '../services/user.service';
 import { normalizeLanguageCode, t } from '../i18n';
 import {
+  getAppointmentCancelConfirmInlineKeyboard,
   getAppointmentEditInlineKeyboard,
   getDatesInlineKeyboard,
   getDatesInlineKeyboardWithPagination,
@@ -42,6 +43,7 @@ import { findServiceById } from '../repositories/service.repository';
 import { findSpecialistById } from '../repositories/specialist.repository';
 import {
   canEditAppointment,
+  getCancelRefundOutcome,
   createBookingAppointment,
   createBookingAppointmentsFromSlots,
   getUserAppointment,
@@ -49,6 +51,7 @@ import {
   rescheduleUserAppointment,
   cancelUserAppointment,
 } from '../services/appointment.service';
+import { getSpecialistBookingPolicy } from '../repositories/specialist-booking-policy.repository';
 import { cancelAppointmentReminders, queueAppointmentReminder, recreateAppointmentReminders } from '../services/notification.service';
 import { toDateTimeFromUtc } from '../utils/timezone';
 import { getNextAvailableDates } from '../services/date.service';
@@ -915,7 +918,7 @@ telegramWebhookRouter.post(
             chatId,
             messageId,
             buildAppointmentDetailsText(lang, timezone, appointment, editable),
-            editable ? getAppointmentEditInlineKeyboard(appointment.id, lang) : undefined,
+            getAppointmentEditInlineKeyboard(appointment.id, lang, editable),
           );
 
           return res.status(200).json({ ok: true });
@@ -955,21 +958,44 @@ telegramWebhookRouter.post(
 
         if (data.startsWith('appointment_cancel:')) {
           const appointmentId = Number(data.split(':')[1]);
-          const cancelled = await cancelUserAppointment(user.account_id, user.id, appointmentId);
-
-          if (!cancelled.ok) {
-            if (cancelled.reason === 'too_late_to_edit') {
-              await answerCallbackQuery(callback.id, t(lang, 'appointments.editBlocked'));
-              return res.status(200).json({ ok: true });
-            }
+          const appointment = await getUserAppointment(user.account_id, user.id, appointmentId);
+          if (!appointment) {
             await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
             return res.status(200).json({ ok: true });
           }
 
-          await cancelAppointmentReminders(user.account_id, appointmentId);
+          const policy = await getSpecialistBookingPolicy(user.account_id, appointment.specialistId);
+          const cancellation = getCancelRefundOutcome(appointment.appointmentAt, policy);
+          const refundPolicyText = cancellation.refundOutcome === 'refund'
+            ? t(lang, 'appointments.cancelRefundAllowed')
+            : t(lang, 'appointments.cancelNoRefund');
 
+          await answerCallbackQuery(callback.id);
+          await editMessageText(
+            chatId,
+            messageId,
+            t(lang, 'appointments.cancelConfirmPrompt', { policy: refundPolicyText }),
+            getAppointmentCancelConfirmInlineKeyboard(appointmentId, lang),
+          );
+
+          return res.status(200).json({ ok: true });
+        }
+
+        if (data.startsWith('appointment_cancel_confirm:')) {
+          const appointmentId = Number(data.split(':')[1]);
+          const cancelled = await cancelUserAppointment(user.account_id, user.id, appointmentId);
+          if (!cancelled.ok) {
+            await answerCallbackQuery(callback.id, t(lang, 'booking.sessionExpired'));
+            return res.status(200).json({ ok: true });
+          }
+
+          const refundResult = cancelled.refundOutcome === 'refund'
+            ? t(lang, 'appointments.cancelledRefund')
+            : t(lang, 'appointments.cancelledNoRefund');
+
+          await cancelAppointmentReminders(user.account_id, appointmentId);
           await answerCallbackQuery(callback.id, t(lang, 'appointments.cancelled'));
-          await editMessageText(chatId, messageId, t(lang, 'appointments.cancelled'));
+          await editMessageText(chatId, messageId, `${t(lang, 'appointments.cancelled')}\n${refundResult}`);
           await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
 
           return res.status(200).json({ ok: true });
