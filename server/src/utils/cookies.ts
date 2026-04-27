@@ -1,5 +1,7 @@
 import type { Request } from 'express';
 
+export const csrfCookieName = (sessionCookieName: string) => `${sessionCookieName}_csrf`;
+
 export const parseCookies = (req: Request) => {
   const header = req.headers.cookie;
   if (!header) {

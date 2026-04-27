@@ -25,6 +25,7 @@ import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { canManageSpecialists } from '../policies/rolePermissions.js';
 import { createToken, hashPassword, sanitizeEmail, verifyPassword } from '../utils/crypto.js';
+import { csrfCookieName } from '../utils/cookies.js';
 import { sendEmailVerificationEmail, sendRegistrationSuccessEmail } from './emailDeliveryService.js';
 
 const now = () => Date.now();
@@ -59,6 +60,7 @@ export const issueSession = async (user: Pick<User, 'id' | 'accountId'>, res: Re
 
   const accessToken = createToken();
   const refreshToken = createToken();
+  const csrfToken = createToken();
   const accessExpiresAt = new Date(now() + accessExpiresMs);
   const refreshExpiresAt = new Date(now() + cookieExpiresMs);
 
@@ -80,6 +82,13 @@ export const issueSession = async (user: Pick<User, 'id' | 'accountId'>, res: Re
   res.cookie(env.SESSION_COOKIE_NAME, refreshToken, {
     httpOnly: true,
     sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: cookieExpiresMs,
+    path: '/api/auth'
+  });
+  res.cookie(csrfCookieName(env.SESSION_COOKIE_NAME), csrfToken, {
+    httpOnly: false,
+    sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
     maxAge: cookieExpiresMs,
     path: '/api/auth'

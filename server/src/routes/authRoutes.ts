@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { env } from '../config/env.js';
 import {
   acceptInviteSchema,
@@ -27,10 +27,18 @@ import {
   verifyUserEmail,
 } from '../services/authService.js';
 import { WebUserRole } from '../types/webUserRole.js';
-import { parseCookies } from '../utils/cookies.js';
+import { csrfCookieName, parseCookies } from '../utils/cookies.js';
 import { formatZodError } from '../utils/validation.js';
 
 export const authRoutes = Router();
+const csrfHeaderName = 'x-csrf-token';
+
+const hasValidCsrf = (req: Request, cookies: Map<string, string>) => {
+  const csrfHeader = req.headers[csrfHeaderName];
+  const csrfValue = typeof csrfHeader === 'string' ? csrfHeader : '';
+  const csrfCookie = cookies.get(csrfCookieName(env.SESSION_COOKIE_NAME)) ?? '';
+  return csrfValue.length > 0 && csrfValue === csrfCookie;
+};
 
 authRoutes.post('/specialists', requireAccessToken, async (req, res) => {
   const actor = (req as AuthedRequest).user;
@@ -237,12 +245,16 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
 });
 
 authRoutes.post('/refresh', async (req, res) => {
-  const refreshToken = parseCookies(req).get(env.SESSION_COOKIE_NAME);
+  const cookies = parseCookies(req);
+  const refreshToken = cookies.get(env.SESSION_COOKIE_NAME);
 
   if (!refreshToken) {
     return res.status(401).json({
       message: t(req, 'sessionExpired')
     });
+  }
+  if (!hasValidCsrf(req, cookies)) {
+    return res.status(403).json({ message: t(req, 'csrfTokenInvalid') });
   }
 
   const refreshed = await refreshAccess(refreshToken);
@@ -260,15 +272,25 @@ authRoutes.post('/refresh', async (req, res) => {
 });
 
 authRoutes.post('/logout', async (req, res) => {
-  const refreshToken = parseCookies(req).get(env.SESSION_COOKIE_NAME);
+  const cookies = parseCookies(req);
+  const refreshToken = cookies.get(env.SESSION_COOKIE_NAME);
   const auth = req.headers.authorization;
   const accessToken = auth?.startsWith('Bearer ') ? auth.slice('Bearer '.length) : undefined;
+  if (!hasValidCsrf(req, cookies)) {
+    return res.status(403).json({ message: t(req, 'csrfTokenInvalid') });
+  }
 
   try {
     await logoutSession(refreshToken, accessToken);
     res.clearCookie(env.SESSION_COOKIE_NAME, {
       httpOnly: true,
       sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/api/auth'
+    });
+    res.clearCookie(csrfCookieName(env.SESSION_COOKIE_NAME), {
+      httpOnly: false,
+      sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
       path: '/api/auth'
     });
