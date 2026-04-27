@@ -7,6 +7,7 @@ Telegram-бот для записи клиентов (webhook + PostgreSQL + Kne
 - Прием webhook: `POST /telegram/webhook/:secret`.
 - State machine сценария записи (service -> specialist -> date/time -> контакты -> confirm).
 - Перенос и отмена записи.
+- Поздняя отмена: перед подтверждением бот показывает итог по возврату (refund/no-refund) по политике специалиста.
 - При первом `/start` бот предлагает регистрацию в web-приложении (ссылка из `APP_URL`).
 - В процессе записи email клиента обязателен: бот автоматически создаёт/связывает `web_user` (role=`client`) и отправляет invite-link для завершения регистрации.
 - Учет timezone через IANA (хранение времени в UTC).
