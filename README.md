@@ -75,6 +75,7 @@ scheduletm/
 - Settings: system + account + user settings, plus user integrations.
 - Integrations: Google OAuth start/callback, Telegram bot token в user integrations.
 - Notifications: appointment notify flow with channel fallback (Telegram -> Email) + retry/backoff pipeline in scheduler (`pending/retry/processing/sent/failed`, `next_retry_at`, `max_attempts`, idempotent key per `appointment_id + type + channel`).
+- Notification logs page (`/notification-logs`) with role-aware access (`owner/admin/specialist`), filters and human-readable fields (specialist/client names, message, Telegram, email), including manual resend for failed deliveries.
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
 - Late cancellation UX (web + bot): before cancel confirmation the user sees refund/no-refund outcome according to specialist booking policy (`cancel_grace_period_hours`, `refund_on_late_cancel`), and after cancellation bot sends final refund status.
 - Scheduler: auto-cancel unpaid appointments by specialist booking policy (`auto_cancel_unpaid_enabled`, `unpaid_auto_cancel_after_hours`) with audit reason `auto_cancel_unpaid`.

@@ -197,6 +197,10 @@ export type NotificationLogItem = {
   channel: string;
   attempts: number;
   maxAttempts: number;
+  message: string | null;
+  specialistName: string | null;
+  clientName: string | null;
+  recipientTelegram: string | null;
   recipientEmail: string | null;
   lastError: string | null;
   sendAt: string;

@@ -5,11 +5,12 @@ React SPA для owner/admin/specialist/client.
 ## Что умеет
 
 - Auth: `/login`, `/register`, `/invite/accept`, `/verify-email`.
-- Основные разделы: `/appointments`, `/specialists`, `/users`, `/settings`.
+- Основные разделы: `/appointments`, `/specialists`, `/users`, `/settings`, `/notification-logs`.
 - Role-aware UI (owner/admin/specialist/client).
 - i18n (`ru/en`), theme mode, palette variants.
 - Calendar flow: create/edit/reschedule/cancel/mark-paid/notify.
 - Client flow: клиент работает только со своим расписанием (без доступа к чужим записям).
+- Notification logs (`/notification-logs`): таблица истории отправки с фильтрами (`accountId`, `specialistId`, `userId`) и колонками для читаемых данных (`specialistName`, `clientName`, `message`, `recipientTelegram`, `recipientEmail`) + retry action для статусов `failed/retry/cancelled`.
 
 ## Команды
 

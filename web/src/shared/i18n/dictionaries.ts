@@ -223,6 +223,11 @@ export const dictionaries = {
         accountId: 'Account',
         specialistId: 'Specialist',
         userId: 'Client',
+        specialist: 'Specialist',
+        client: 'Client',
+        message: 'Message',
+        telegram: 'Telegram',
+        email: 'Email',
         type: 'Type',
         channel: 'Channel',
         status: 'Status',
@@ -512,6 +517,11 @@ export const dictionaries = {
         accountId: 'Аккаунт',
         specialistId: 'Специалист',
         userId: 'Клиент',
+        specialist: 'Специалист',
+        client: 'Клиент',
+        message: 'Сообщение',
+        telegram: 'Telegram',
+        email: 'Email',
         type: 'Тип',
         channel: 'Канал',
         status: 'Статус',
@@ -806,6 +816,11 @@ export type TranslationKey =
   | 'notificationLogs.columns.accountId'
   | 'notificationLogs.columns.specialistId'
   | 'notificationLogs.columns.userId'
+  | 'notificationLogs.columns.specialist'
+  | 'notificationLogs.columns.client'
+  | 'notificationLogs.columns.message'
+  | 'notificationLogs.columns.telegram'
+  | 'notificationLogs.columns.email'
   | 'notificationLogs.columns.type'
   | 'notificationLogs.columns.channel'
   | 'notificationLogs.columns.status'
