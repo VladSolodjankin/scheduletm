@@ -1,6 +1,8 @@
 import { Box, Checkbox, FormControl, FormControlLabel, InputLabel, ListItemText, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { SelectChangeEvent } from '@mui/material';
+
 import type {
   AccountNotificationDefault,
   AccountSettings,
@@ -177,11 +179,11 @@ export function SettingsCard({
     });
   }, [accountNotificationDefaults, resetNotificationDefaults]);
 
-  const onChange= (field, event) => {
+  const onChange = (field: any, event: SelectChangeEvent<unknown>) => {
     const value = event.target.value as string[];
 
     if (field.value.includes('disabled') && value.length > 1) {
-      field.onChange(value.filter(v => v !== 'disabled'));
+      field.onChange(value.filter((v) => v !== 'disabled'));
       return;
     }
 
@@ -191,7 +193,7 @@ export function SettingsCard({
     }
 
     field.onChange(value);
-  }
+  };
 
   return (
     <Box>
@@ -475,7 +477,7 @@ export function SettingsCard({
                   label={copy.appointmentReminderTimingsLabel}
                   multiple
                   value={field.value}
-                  onChange={(event) => onChange(field, event)}
+                  onChange={(event) => onChange(field, event as SelectChangeEvent<unknown>)}
                   renderValue={(selected) => (selected as string[]).map((item) => item === 'disabled' ? copy.disabledOption : item).join(', ')}
                 >
                   {timingOptions.map((timing) => (
@@ -501,7 +503,7 @@ export function SettingsCard({
                   label={copy.paymentReminderTimingsLabel}
                   multiple
                   value={field.value}
-                  onChange={(event) => onChange(field, event)}
+                  onChange={(event) => onChange(field, event as SelectChangeEvent<unknown>)}
                   renderValue={(selected) => (selected as string[]).map((item) => item === 'disabled' ? copy.disabledOption : item).join(', ')}
                 >
                   {timingOptions.map((timing) => (
