@@ -165,8 +165,11 @@ export function NotificationLogsContainer() {
                       <TableRow>
                         <TableCell>ID</TableCell>
                         <TableCell>{t('notificationLogs.columns.accountId')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.specialistId')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.userId')}</TableCell>
+                        <TableCell>{t('notificationLogs.columns.specialist')}</TableCell>
+                        <TableCell>{t('notificationLogs.columns.client')}</TableCell>
+                        <TableCell>{t('notificationLogs.columns.message')}</TableCell>
+                        <TableCell>{t('notificationLogs.columns.telegram')}</TableCell>
+                        <TableCell>{t('notificationLogs.columns.email')}</TableCell>
                         <TableCell>{t('notificationLogs.columns.type')}</TableCell>
                         <TableCell>{t('notificationLogs.columns.channel')}</TableCell>
                         <TableCell>{t('notificationLogs.columns.status')}</TableCell>
@@ -181,8 +184,11 @@ export function NotificationLogsContainer() {
                         <TableRow key={item.id} hover>
                           <TableCell>{item.id}</TableCell>
                           <TableCell>{item.accountId}</TableCell>
-                          <TableCell>{item.specialistId}</TableCell>
-                          <TableCell>{item.userId}</TableCell>
+                          <TableCell>{item.specialistName || `#${item.specialistId}`}</TableCell>
+                          <TableCell>{item.clientName || `#${item.userId}`}</TableCell>
+                          <TableCell sx={{ maxWidth: 220 }}>{item.message || '—'}</TableCell>
+                          <TableCell>{item.recipientTelegram || '—'}</TableCell>
+                          <TableCell>{item.recipientEmail || '—'}</TableCell>
                           <TableCell>{item.type}</TableCell>
                           <TableCell>{item.channel}</TableCell>
                           <TableCell>

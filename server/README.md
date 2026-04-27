@@ -78,7 +78,13 @@ npm run -w @scheduletm/server test
 - `GET /api/notifications`
   - доступ: `owner`, `admin`, `specialist`;
   - scope: `owner` видит все аккаунты (опциональный фильтр `accountId`), `admin` только свой `account_id`, `specialist` только уведомления своих клиентов;
-  - фильтры: `accountId`, `specialistId`, `userId`.
+  - фильтры: `accountId`, `specialistId`, `userId`;
+  - ключевые поля в `items[]`:
+    - `specialistName` — имя специалиста (если найден);
+    - `clientName` — отображаемое имя клиента (ФИО, fallback на контакт);
+    - `message` — текст сообщения из `payload_json.message` (fallback: `payload_json.timing`);
+    - `recipientTelegram` — telegram username клиента;
+    - `recipientEmail` — email получателя уведомления.
 - `POST /api/notifications/:id/resend`
   - повторно ставит в очередь только недоставленные уведомления (`failed`, `retry`, `cancelled`) в рамках доступного scope.
 

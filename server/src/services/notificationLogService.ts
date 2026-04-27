@@ -20,6 +20,10 @@ export type NotificationLogDto = {
   channel: string;
   attempts: number;
   maxAttempts: number;
+  message: string | null;
+  specialistName: string | null;
+  clientName: string | null;
+  recipientTelegram: string | null;
   recipientEmail: string | null;
   lastError: string | null;
   sendAt: string;
@@ -28,6 +32,40 @@ export type NotificationLogDto = {
   createdAt: string;
   updatedAt: string;
 };
+
+function normalizeString(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized ? normalized : null;
+}
+
+function resolveNotificationMessage(item: NotificationLogRecord): string | null {
+  const payload = item.payload_json;
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const payloadMessage = normalizeString((payload as Record<string, unknown>).message);
+  if (payloadMessage) {
+    return payloadMessage;
+  }
+
+  return normalizeString((payload as Record<string, unknown>).timing);
+}
+
+function resolveClientName(item: NotificationLogRecord): string | null {
+  const first = item.client_first_name?.trim() ?? '';
+  const last = item.client_last_name?.trim() ?? '';
+  const full = `${first} ${last}`.trim();
+  if (full) {
+    return full;
+  }
+
+  return item.client_email?.trim() || item.client_username?.trim() || null;
+}
 
 function mapLog(item: NotificationLogRecord): NotificationLogDto {
   return {
@@ -41,6 +79,10 @@ function mapLog(item: NotificationLogRecord): NotificationLogDto {
     channel: item.channel,
     attempts: item.attempts,
     maxAttempts: item.max_attempts,
+    message: resolveNotificationMessage(item),
+    specialistName: item.specialist_name?.trim() || null,
+    clientName: resolveClientName(item),
+    recipientTelegram: item.client_username?.trim() || null,
     recipientEmail: item.recipient_email,
     lastError: item.last_error,
     sendAt: item.send_at.toISOString(),

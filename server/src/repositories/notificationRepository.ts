@@ -15,12 +15,19 @@ export type NotificationLogRecord = {
   attempts: number;
   max_attempts: number;
   recipient_email: string | null;
+  recipient_chat_id: string | null;
+  payload_json: Record<string, unknown> | null;
   last_error: string | null;
   send_at: Date;
   next_retry_at: Date | null;
   sent_at: Date | null;
   created_at: Date;
   updated_at: Date;
+  specialist_name: string | null;
+  client_first_name: string | null;
+  client_last_name: string | null;
+  client_username: string | null;
+  client_email: string | null;
 };
 
 function computeNextRetryAt(now: Date, attemptNo: number): Date {
@@ -221,6 +228,12 @@ export async function listNotificationLogs(filters: {
     .join('appointments as a', function joinAppointments() {
       this.on('a.id', '=', 'n.appointment_id').andOn('a.account_id', '=', 'n.account_id');
     })
+    .leftJoin('specialists as s', function joinSpecialists() {
+      this.on('s.id', '=', 'a.specialist_id').andOn('s.account_id', '=', 'a.account_id');
+    })
+    .leftJoin('clients as c', function joinClients() {
+      this.on('c.id', '=', 'n.user_id').andOn('c.account_id', '=', 'n.account_id');
+    })
     .orderBy('n.created_at', 'desc')
     .limit(filters.limit ?? 300);
 
@@ -248,12 +261,19 @@ export async function listNotificationLogs(filters: {
     'n.attempts',
     'n.max_attempts',
     'n.recipient_email',
+    'n.recipient_chat_id',
+    'n.payload_json',
     'n.last_error',
     'n.send_at',
     'n.next_retry_at',
     'n.sent_at',
     'n.created_at',
     'n.updated_at',
+    's.name as specialist_name',
+    'c.first_name as client_first_name',
+    'c.last_name as client_last_name',
+    'c.username as client_username',
+    'c.email as client_email',
   );
 }
 
@@ -261,6 +281,12 @@ export async function findNotificationLogById(notificationId: number): Promise<N
   const row = await db('notifications as n')
     .join('appointments as a', function joinAppointments() {
       this.on('a.id', '=', 'n.appointment_id').andOn('a.account_id', '=', 'n.account_id');
+    })
+    .leftJoin('specialists as s', function joinSpecialists() {
+      this.on('s.id', '=', 'a.specialist_id').andOn('s.account_id', '=', 'a.account_id');
+    })
+    .leftJoin('clients as c', function joinClients() {
+      this.on('c.id', '=', 'n.user_id').andOn('c.account_id', '=', 'n.account_id');
     })
     .where('n.id', notificationId)
     .first<NotificationLogRecord>(
@@ -275,12 +301,19 @@ export async function findNotificationLogById(notificationId: number): Promise<N
       'n.attempts',
       'n.max_attempts',
       'n.recipient_email',
+      'n.recipient_chat_id',
+      'n.payload_json',
       'n.last_error',
       'n.send_at',
       'n.next_retry_at',
       'n.sent_at',
       'n.created_at',
       'n.updated_at',
+      's.name as specialist_name',
+      'c.first_name as client_first_name',
+      'c.last_name as client_last_name',
+      'c.username as client_username',
+      'c.email as client_email',
     );
 
   return row ?? null;
