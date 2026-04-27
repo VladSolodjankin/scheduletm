@@ -1,5 +1,9 @@
 import { canManageSystemSettings } from '../policies/rolePermissions.js';
 import { insertErrorLog, listErrorLogs, purgeExpiredErrorLogs, type ErrorLogRecord } from '../repositories/errorLogRepository.js';
+import { getSystemSettingsRecord } from '../repositories/systemSettingsRepository.js';
+import { env } from '../config/env.js';
+import { decryptText } from '../utils/crypto.js';
+import { sendTelegramBotMessage } from './telegramService.js';
 import type { User } from '../types/domain.js';
 
 const ERROR_MESSAGE_MAX = 2000;
@@ -47,6 +51,52 @@ async function cleanupExpiredLogs(): Promise<void> {
   await purgeExpiredErrorLogs(7);
 }
 
+function normalizeInline(value: string | null | undefined, max = 120): string {
+  if (!value) {
+    return '-';
+  }
+
+  return value.replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+async function notifyErrorToTelegram(input: {
+  source: 'web' | 'server';
+  message: string;
+  method?: string | null;
+  path?: string | null;
+  accountId?: number | null;
+  webUserId?: number | null;
+}): Promise<void> {
+  const encryptionKey = env.APP_ENCRYPTION_KEY.trim();
+  if (!encryptionKey) {
+    return;
+  }
+
+  const systemSettings = await getSystemSettingsRecord();
+  const botToken = systemSettings?.error_alerts_telegram_bot_token_encrypted
+    ? (decryptText(systemSettings.error_alerts_telegram_bot_token_encrypted, encryptionKey) ?? '').trim()
+    : '';
+  const chatId = systemSettings?.error_alerts_telegram_chat_id_encrypted
+    ? (decryptText(systemSettings.error_alerts_telegram_chat_id_encrypted, encryptionKey) ?? '').trim()
+    : '';
+
+  if (!botToken || !chatId) {
+    return;
+  }
+
+  const lines = [
+    '🚨 Error log',
+    `source: ${input.source}`,
+    `message: ${normalizeInline(input.message, 300)}`,
+    `method: ${normalizeInline(input.method)}`,
+    `path: ${normalizeInline(input.path, 180)}`,
+    `accountId: ${input.accountId ?? '-'}`,
+    `webUserId: ${input.webUserId ?? '-'}`,
+  ];
+
+  await sendTelegramBotMessage(botToken, chatId, lines.join('\n'));
+}
+
 export async function trackWebError(input: {
   actor: User;
   message: unknown;
@@ -71,6 +121,14 @@ export async function trackWebError(input: {
       : null,
   });
 
+  await notifyErrorToTelegram({
+    source: 'web',
+    message,
+    path: normalizeText(input.path, 255) || null,
+    accountId: input.actor.accountId,
+    webUserId: Number(input.actor.id),
+  });
+
   await cleanupExpiredLogs();
 }
 
@@ -89,6 +147,15 @@ export async function trackServerError(input: {
     path: input.path?.slice(0, 255) ?? null,
     message: normalizeText(error.message) || 'Server error',
     stack: normalizeText(error.stack, ERROR_STACK_MAX) || null,
+  });
+
+  await notifyErrorToTelegram({
+    source: 'server',
+    message: normalizeText(error.message) || 'Server error',
+    method: input.method?.slice(0, 16) ?? null,
+    path: input.path?.slice(0, 255) ?? null,
+    accountId: input.actor?.accountId ?? null,
+    webUserId: input.actor ? Number(input.actor.id) : null,
   });
 
   await cleanupExpiredLogs();

@@ -8,6 +8,8 @@ export type SystemSettingsRecord = {
   refresh_token_ttl_days: number;
   access_token_ttl_seconds: number;
   session_cookie_name: string;
+  error_alerts_telegram_bot_token_encrypted: string | null;
+  error_alerts_telegram_chat_id_encrypted: string | null;
 };
 
 export type UpdateSystemSettingsInput = {
@@ -17,6 +19,8 @@ export type UpdateSystemSettingsInput = {
   refreshTokenTtlDays?: number;
   accessTokenTtlSeconds?: number;
   sessionCookieName?: string;
+  errorAlertsTelegramBotTokenEncrypted?: string | null;
+  errorAlertsTelegramChatIdEncrypted?: string | null;
 };
 
 export async function getSystemSettingsRecord(): Promise<SystemSettingsRecord | null> {
@@ -51,6 +55,14 @@ export async function updateSystemSettingsRecord(input: UpdateSystemSettingsInpu
 
   if (input.sessionCookieName !== undefined) {
     patch.session_cookie_name = input.sessionCookieName;
+  }
+
+  if (input.errorAlertsTelegramBotTokenEncrypted !== undefined) {
+    patch.error_alerts_telegram_bot_token_encrypted = input.errorAlertsTelegramBotTokenEncrypted;
+  }
+
+  if (input.errorAlertsTelegramChatIdEncrypted !== undefined) {
+    patch.error_alerts_telegram_chat_id_encrypted = input.errorAlertsTelegramChatIdEncrypted;
   }
 
 
