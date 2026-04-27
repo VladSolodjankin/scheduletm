@@ -19,6 +19,8 @@ import {
   systemSettingsSchema,
   userSettingsSchema,
 } from '../config/schemas.js';
+import { env } from '../config/env.js';
+import { decryptText, encryptText } from '../utils/crypto.js';
 import { verifyTelegramBotToken } from './telegramService.js';
 import { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
 export { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
@@ -42,6 +44,7 @@ export type SystemSettings = {
   refreshTokenTtlDays: number;
   accessTokenTtlSeconds: number;
   sessionCookieName: string;
+  errorAlertsTelegramEnabled: boolean;
 };
 
 export type AccountSettings = {
@@ -78,6 +81,7 @@ const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   refreshTokenTtlDays: 30,
   accessTokenTtlSeconds: 900,
   sessionCookieName: 'meetli_refresh_token',
+  errorAlertsTelegramEnabled: false,
 };
 
 const mapSystemSettings = async (): Promise<SystemSettings> => {
@@ -86,6 +90,14 @@ const mapSystemSettings = async (): Promise<SystemSettings> => {
     return DEFAULT_SYSTEM_SETTINGS;
   }
 
+  const hasEncryptionKey = Boolean(env.APP_ENCRYPTION_KEY.trim());
+  const decryptedBotToken = hasEncryptionKey && row.error_alerts_telegram_bot_token_encrypted
+    ? decryptText(row.error_alerts_telegram_bot_token_encrypted, env.APP_ENCRYPTION_KEY)
+    : null;
+  const decryptedChatId = hasEncryptionKey && row.error_alerts_telegram_chat_id_encrypted
+    ? decryptText(row.error_alerts_telegram_chat_id_encrypted, env.APP_ENCRYPTION_KEY)
+    : null;
+
   return {
     dailyDigestEnabled: row.daily_digest_enabled,
     defaultMeetingDuration: row.default_meeting_duration,
@@ -93,6 +105,7 @@ const mapSystemSettings = async (): Promise<SystemSettings> => {
     refreshTokenTtlDays: row.refresh_token_ttl_days,
     accessTokenTtlSeconds: row.access_token_ttl_seconds,
     sessionCookieName: row.session_cookie_name,
+    errorAlertsTelegramEnabled: Boolean(decryptedBotToken && decryptedChatId),
   };
 };
 
@@ -137,6 +150,13 @@ export const updateSystemSettings = async (payload: unknown): Promise<SystemSett
     return null;
   }
 
+  const wantsEncryptedTelegramSettings = Boolean(
+    parsed.data.errorAlertsTelegramBotToken?.trim() || parsed.data.errorAlertsTelegramChatId?.trim(),
+  );
+  if (wantsEncryptedTelegramSettings && !env.APP_ENCRYPTION_KEY.trim()) {
+    return null;
+  }
+
   await updateSystemSettingsRecord({
     dailyDigestEnabled: parsed.data.dailyDigestEnabled,
     defaultMeetingDuration: parsed.data.defaultMeetingDuration,
@@ -144,6 +164,20 @@ export const updateSystemSettings = async (payload: unknown): Promise<SystemSett
     refreshTokenTtlDays: parsed.data.refreshTokenTtlDays,
     accessTokenTtlSeconds: parsed.data.accessTokenTtlSeconds,
     sessionCookieName: parsed.data.sessionCookieName,
+    errorAlertsTelegramBotTokenEncrypted: parsed.data.errorAlertsTelegramBotToken === undefined
+      ? undefined
+      : (!parsed.data.errorAlertsTelegramBotToken.trim()
+        ? null
+        : (env.APP_ENCRYPTION_KEY.trim()
+          ? encryptText(parsed.data.errorAlertsTelegramBotToken.trim(), env.APP_ENCRYPTION_KEY)
+          : null)),
+    errorAlertsTelegramChatIdEncrypted: parsed.data.errorAlertsTelegramChatId === undefined
+      ? undefined
+      : (!parsed.data.errorAlertsTelegramChatId.trim()
+        ? null
+        : (env.APP_ENCRYPTION_KEY.trim()
+          ? encryptText(parsed.data.errorAlertsTelegramChatId.trim(), env.APP_ENCRYPTION_KEY)
+          : null)),
   });
 
   return mapSystemSettings();

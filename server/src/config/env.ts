@@ -14,7 +14,8 @@ const envSchema = z.object({
   GOOGLE_OAUTH_CLIENT_ID: z.string().default(''),
   GOOGLE_OAUTH_CLIENT_SECRET: z.string().default(''),
   GOOGLE_OAUTH_REDIRECT_URI: z.string().url().default('http://localhost:3003/api/integrations/google/oauth/callback'),
-  GOOGLE_OAUTH_SCOPES: z.string().default('')
+  GOOGLE_OAUTH_SCOPES: z.string().default(''),
+  APP_ENCRYPTION_KEY: z.string().default(''),
 });
 
 export const env = envSchema.parse(process.env);

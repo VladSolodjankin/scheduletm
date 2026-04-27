@@ -35,6 +35,7 @@ Node.js/Express API для web-клиента и интеграций.
   - дедупликация через таблицу `notifications` по ключу `appointment_id + type + channel`;
   - retry/backoff и управление состояниями отправки: `pending -> processing -> sent` или `retry/failed` с `next_retry_at`, `attempts`, `max_attempts`.
 - Локализованные API-сообщения (`ru/en`).
+- Error tracking (`web` + `server`) с хранением в `error_logs` и optional Telegram alerts через отдельного бота (без email); bot token/chat id хранятся в `system_settings` в зашифрованном виде.
 
 ## Команды
 
@@ -61,6 +62,16 @@ npm run -w @scheduletm/server test
 - `EMAIL_FROM_ADDRESS` (default: `no-reply@meetli.cc`)
 - `EMAIL_FROM_NAME`
 - `EMAIL_VERIFY_BASE_URL` (ссылка для frontend-экрана подтверждения email)
+
+Опционально для Telegram-алертов по ошибкам:
+
+- `APP_ENCRYPTION_KEY` (обязателен для шифрования/дешифрования чувствительных значений в БД)
+
+Настройка Telegram-алертов делается через `PUT /api/settings/system` (owner only):
+
+- `errorAlertsTelegramBotToken` — токен отдельного бота для ошибок;
+- `errorAlertsTelegramChatId` — chat id (личный/групповой);
+- в `GET /api/settings/system` возвращается только флаг `errorAlertsTelegramEnabled`, сами секреты не отдаются.
 
 ## Документация
 

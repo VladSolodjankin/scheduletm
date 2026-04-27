@@ -101,6 +101,8 @@ export const systemSettingsSchema = z.object({
   refreshTokenTtlDays: z.coerce.number().int().min(1).max(365),
   accessTokenTtlSeconds: z.coerce.number().int().min(60).max(86400),
   sessionCookieName: z.string().trim().min(1).max(128),
+  errorAlertsTelegramBotToken: z.string().trim().max(512).optional().or(z.literal('')),
+  errorAlertsTelegramChatId: z.string().trim().max(255).optional().or(z.literal('')),
 }).partial();
 
 export const accountSettingsSchema = z.object({
