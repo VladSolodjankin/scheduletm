@@ -70,6 +70,7 @@ import {
 } from '../repositories/processed-update.repository';
 import { recordHttp5xx, recordIncomingUpdate } from '../monitoring/alerts';
 import { logError, logInfo, logWarn } from '../utils/logger';
+import { ensureClientWebUserInvite } from '../services/webUserOnboarding.service';
 
 export const telegramWebhookRouter = Router();
 
@@ -1033,42 +1034,46 @@ telegramWebhookRouter.post(
 
         await sendMessage(
           chatId,
-          t(lang, 'booking.enterEmail'),
-          {
-            keyboard: [[{ text: t(lang, 'booking.skipPhone') }]],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-          },
+          t(lang, 'booking.enterEmailRequired'),
         );
 
         return res.status(200).json({ ok: true });
       }
 
       if (state === UserSessionState.ENTERING_EMAIL) {
-        const skipText = t(lang, 'booking.skipPhone');
         const normalizedText = text ?? '';
-        const enteredEmail = normalizedText === skipText ? undefined : normalizedText;
-        const isValidEmail =
-          !enteredEmail || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(enteredEmail);
+        const enteredEmail = normalizedText;
+        const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(enteredEmail);
 
-        if (!isValidEmail) {
-          await sendMessage(chatId, t(lang, 'booking.enterEmail'));
+        if (!enteredEmail) {
+          await sendMessage(chatId, t(lang, 'booking.emailRequired'));
+          await sendMessage(chatId, t(lang, 'booking.enterEmailRequired'));
           return res.status(200).json({ ok: true });
         }
 
-        if (enteredEmail) {
-          const existingByEmail = await findUserByPhoneOrEmail(user.account_id, { email: enteredEmail });
-
-          if (!existingByEmail || existingByEmail.id === user.id) {
-            await updateUserByTelegramId(user.account_id, message.from.id, { email: enteredEmail });
-          } else {
-            logInfo('client.email_deduplicated', {
-              accountId: user.account_id,
-              telegramId: message.from.id,
-              existingClientId: existingByEmail.id,
-            });
-          }
+        if (!isValidEmail) {
+          await sendMessage(chatId, t(lang, 'booking.enterEmailRequired'));
+          return res.status(200).json({ ok: true });
         }
+
+        const existingByEmail = await findUserByPhoneOrEmail(user.account_id, { email: enteredEmail });
+
+        if (existingByEmail && existingByEmail.id !== user.id) {
+          await sendMessage(chatId, t(lang, 'booking.emailAlreadyInUse'));
+          await sendMessage(chatId, t(lang, 'booking.enterEmailRequired'));
+          return res.status(200).json({ ok: true });
+        }
+
+        await updateUserByTelegramId(user.account_id, message.from.id, { email: enteredEmail });
+        const inviteResult = await ensureClientWebUserInvite({
+          accountId: user.account_id,
+          clientId: user.id,
+          email: enteredEmail,
+          firstName: user.first_name ?? message.from.first_name,
+          telegramUsername: user.username,
+          timezone,
+        });
+        await sendMessage(chatId, t(lang, inviteResult.invited ? 'booking.webInviteSent' : 'booking.webInviteSendFailed'));
 
         await mergeSessionPayload(user.account_id, user.id, UserSessionState.CONFIRMING, {
           enteredEmail,
@@ -1097,6 +1102,9 @@ telegramWebhookRouter.post(
           : t(lang, 'start.welcomeBack', { name: firstName });
 
         await sendMessage(chatId, greeting, getMainMenuKeyboard(lang));
+        if (userResult.isNew) {
+          await sendMessage(chatId, t(lang, 'start.webSignupHint', { url: env.appUrl }));
+        }
         await sendMessage(chatId, t(lang, 'start.chooseAction'));
         return res.status(200).json({ ok: true });
       }
