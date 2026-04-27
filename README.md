@@ -76,6 +76,7 @@ scheduletm/
 - Integrations: Google OAuth start/callback, Telegram bot token в user integrations.
 - Notifications: appointment notify flow with channel fallback (Telegram -> Email).
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
+- Scheduler: auto-cancel unpaid appointments by specialist booking policy (`auto_cancel_unpaid_enabled`, `unpaid_auto_cancel_after_hours`) with audit reason `auto_cancel_unpaid`.
 - Specialists и Users CRUD (с role-gates).
 - Client web users:
   - owner/admin/specialist могут создавать пользователей с ролью `client`;
@@ -143,4 +144,3 @@ app_settings наверное лучше переименовать в user_sett
 нужно сделать notification_settings (нужен совет как лучше это реализовать)
  - не знаю как лучше это реализовать на уровне какого то конкретного юзера или на уровне системы или и там и там user_notification_settings и account_notification_settings
  - будет включать в себя настройки когда отправлять нужно ли оповещать о только что созданном апоинтменте, напоминание о апоинтменте, какие то информационные оповещения и т.д
-
