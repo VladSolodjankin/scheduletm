@@ -29,7 +29,8 @@ Node.js/Express API для web-клиента и интеграций.
 - Notification delivery job (MVP): отправка `appointment_reminder` / `payment_reminder` по effective channel order:
   - `telegram` (если у клиента есть `telegram_id` + `username` и в аккаунте подключён `telegram_bot_token`);
   - fallback на `email`;
-  - дедупликация через таблицу `notifications`.
+  - дедупликация через таблицу `notifications` по ключу `appointment_id + type + channel`;
+  - retry/backoff и управление состояниями отправки: `pending -> processing -> sent` или `retry/failed` с `next_retry_at`, `attempts`, `max_attempts`.
 - Локализованные API-сообщения (`ru/en`).
 
 ## Команды

@@ -2,7 +2,12 @@ import {
   listAppointmentsAllAccounts,
   listUnpaidAppointmentsCreatedBetweenAllAccounts,
 } from '../repositories/appointmentRepository.js';
-import { hasSentNotification, insertSentNotification } from '../repositories/notificationRepository.js';
+import {
+  claimNotificationForDelivery,
+  markNotificationDeliveryFailure,
+  markNotificationSent,
+  upsertNotificationJob,
+} from '../repositories/notificationRepository.js';
 import { sendAppointmentNotificationByType } from '../services/appointmentNotificationService.js';
 
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
@@ -40,19 +45,9 @@ async function deliverAndMark(input: {
   typeKey: string;
   sendAt: Date;
   payload: Record<string, unknown>;
-  sender: () => Promise<boolean>;
+  sender: () => Promise<{ delivered: boolean; reason?: string }>;
 }) {
-  const sent = await hasSentNotification(input.appointmentId, input.typeKey, 'email');
-  if (sent) {
-    return false;
-  }
-
-  const delivered = await input.sender();
-  if (!delivered) {
-    return false;
-  }
-
-  await insertSentNotification({
+  const job = await upsertNotificationJob({
     accountId: input.accountId,
     appointmentId: input.appointmentId,
     userId: input.userId,
@@ -63,7 +58,32 @@ async function deliverAndMark(input: {
     payload: input.payload,
   });
 
-  return true;
+  if (job.status === 'sent' || job.status === 'failed') {
+    return false;
+  }
+
+  const claimed = await claimNotificationForDelivery({ notificationId: job.id, now: input.sendAt });
+  if (!claimed) {
+    return false;
+  }
+
+  const result = await input.sender();
+  if (result.delivered) {
+    await markNotificationSent({
+      notificationId: job.id,
+      recipientEmail: input.email,
+      sentAt: input.sendAt,
+    });
+    return true;
+  }
+
+  await markNotificationDeliveryFailure({
+    notificationId: job.id,
+    error: result.reason ?? 'delivery_failed',
+    now: input.sendAt,
+  });
+
+  return false;
 }
 
 export function startAppointmentNotificationsJob(intervalMs = DEFAULT_INTERVAL_MS): NodeJS.Timeout {
@@ -94,13 +114,11 @@ export async function runAppointmentNotificationsJob(now = new Date(), windowMin
         sendAt: now,
         payload: { timing: timing.key },
         sender: async () => {
-          const result = await sendAppointmentNotificationByType({
+          return sendAppointmentNotificationByType({
             accountId: appointment.account_id,
             appointment,
             notificationType: 'appointment_reminder',
           });
-
-          return result.delivered;
         },
       });
 
@@ -129,13 +147,11 @@ export async function runAppointmentNotificationsJob(now = new Date(), windowMin
         sendAt: now,
         payload: { timing: timing.key },
         sender: async () => {
-          const result = await sendAppointmentNotificationByType({
+          return sendAppointmentNotificationByType({
             accountId: appointment.account_id,
             appointment,
             notificationType: 'payment_reminder',
           });
-
-          return result.delivered;
         },
       });
 
