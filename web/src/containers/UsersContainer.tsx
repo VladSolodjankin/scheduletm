@@ -136,22 +136,22 @@ export function UsersContainer() {
   return (
     <AppPage title={t('users.pageTitle')} subtitle={t('users.pageSubtitle')}>
       {error && (
-        <Box sx={{ maxWidth: 1100, mb: 2 }}>
+        <Box sx={{ mb: 2 }}>
           <Alert severity="error">{error}</Alert>
         </Box>
       )}
       {success && (
-        <Box sx={{ maxWidth: 1100, mb: 2 }}>
+        <Box sx={{ mb: 2 }}>
           <Alert severity="success">{success}</Alert>
         </Box>
       )}
 
       {!canManageUsers ? (
-        <Box sx={{ maxWidth: 900 }}>
+        <Box>
           <Alert severity="info">{t('users.accessDenied')}</Alert>
         </Box>
       ) : (
-        <Box sx={{ maxWidth: 1100 }}>
+        <Box >
           {isLoading ? (
             <Stack spacing={2}>
               <Skeleton variant="rounded" height={42} />

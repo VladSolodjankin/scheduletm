@@ -497,7 +497,7 @@ export function AppointmentsContainer() {
       subtitle={t('appointments.pageSubtitle')}
     >
       {error && (
-        <Box sx={{ mb: 2, maxWidth: 720 }}>
+        <Box sx={{ mb: 2 }}>
           <Alert severity="error">{error}</Alert>
         </Box>
       )}

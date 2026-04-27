@@ -4,13 +4,14 @@ import { APP_SPACING, APP_SIZING } from '../theme/constants';
 type AppPageProps = BoxProps & {
   title: string;
   subtitle?: string;
+  maxWidth?: number;
 };
 
-export function AppPage({ title, subtitle, children, ...rest }: AppPageProps) {
+export function AppPage({ title, subtitle, children, maxWidth, ...rest }: AppPageProps) {
   return (
     <Box
       sx={{
-        maxWidth: APP_SIZING.contentMaxWidth,
+        maxWidth: maxWidth || APP_SIZING.contentMaxWidth,
         mx: 'auto',
         px: APP_SPACING.pageX,
         py: APP_SPACING.pageY,

@@ -389,7 +389,7 @@ export function SettingsContainer() {
   };
 
   return (
-    <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')}>
+    <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')} maxWidth={800}>
       {error && (
         <Box sx={{ maxWidth: 720, mb: 2 }}>
           <Alert severity="error">{error}</Alert>

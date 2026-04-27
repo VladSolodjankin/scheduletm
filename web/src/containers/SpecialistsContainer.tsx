@@ -164,23 +164,23 @@ export function SpecialistsContainer() {
   return (
     <AppPage title={t('specialists.pageTitle')} subtitle={t('specialists.pageSubtitle')}>
       {error && (
-        <Box sx={{ maxWidth: 900, mb: 2 }}>
+        <Box sx={{ mb: 2 }}>
           <Alert severity="error">{error}</Alert>
         </Box>
       )}
 
       {success && (
-        <Box sx={{ maxWidth: 900, mb: 2 }}>
+        <Box sx={{ mb: 2 }}>
           <Alert severity="success">{success}</Alert>
         </Box>
       )}
 
       {!canManageSpecialistSettings ? (
-        <Box sx={{ maxWidth: 900 }}>
+        <Box >
           <Alert severity="info">{t('specialists.accessDenied')}</Alert>
         </Box>
       ) : (
-        <Box sx={{ maxWidth: 900 }}>
+        <Box>
           {isLoading ? (
             <Stack spacing={2}>
               <Skeleton variant="rounded" height={42} />

@@ -30,11 +30,11 @@ export const APP_SIZING = {
   radiusLg: 16,
   headerHeight: 64,
   leftMenuWidth: 260,
-  contentMaxWidth: 1200
+  contentMaxWidth: 1600
 } as const;
 
 export const APP_SPACING = {
-  pageX: { xs: 2, md: 3 },
+  pageX: { xs: 2, md: 4 },
   pageY: { xs: 2, md: 3 },
   sectionGap: 2,
   formGap: 2
