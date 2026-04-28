@@ -2,6 +2,7 @@ import { Box } from '@mui/material';
 import { useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { apiClient, authHeaders } from '../../shared/api/client';
+import { WebUserRole } from '../../shared/types/roles';
 import { useAuth } from '../../shared/auth/AuthContext';
 import { useI18n } from '../../shared/i18n/I18nContext';
 import { useThemeSettings } from '../../shared/theme/ThemeContext';
@@ -44,21 +45,22 @@ export function MainLayout() {
 
     void sync();
   }, [accessToken, isAuthenticated, locale, mode, paletteVariantId]);
+  const appointmentsText = user?.role === WebUserRole.Specialist || user?.role === WebUserRole.Client;
 
   const menuItems = [
-    { to: '/appointments', label: t('common.appointments'), icon: 'calendar' as const },
-    ...(user?.role === 'owner' || user?.role === 'admin'
+    { to: '/appointments', label: appointmentsText ? t('common.my_appointments') : t('common.appointments'), icon: 'calendar' as const },
+    ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin
       ? [
         { to: '/specialists', label: t('common.specialists'), icon: 'specialists' as const },
       ]
       : []),
-    ...(user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist'
+    ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin || user?.role === WebUserRole.Specialist
       ? [{ to: '/users', label: t('common.users'), icon: 'users' as const }]
       : []),
-    ...(user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist'
+    ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin || user?.role === WebUserRole.Specialist
       ? [{ to: '/notification-logs', label: t('common.notificationLogs'), icon: 'notifications' as const }]
       : []),
-    ...(user?.role === 'owner'
+    ...(user?.role === WebUserRole.Owner
       ? [{ to: '/error-logs', label: t('common.errorLogs'), icon: 'errors' as const }]
       : []),
     { to: '/settings', label: t('common.settings'), icon: 'settings' as const }
