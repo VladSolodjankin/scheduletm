@@ -72,7 +72,7 @@ scheduletm/
 
 - Auth: register/login/refresh/logout + OTP email verification by unique code (with resend) + invite onboarding page `/verify-email` for creating account from invitation.
 - Роли: `owner` / `admin` / `specialist` / `client` (RBAC policy централизована в server).
-- Settings: system + account + user settings, plus user integrations.
+- Settings: system + account + user settings, plus user integrations. `Default meeting duration` in system/account settings is selected from dropdown options 30–90 minutes (step 10).
 - Integrations: Google OAuth start/callback, Telegram bot token в user integrations.
 - Notifications: appointment notify flow with channel fallback (Telegram -> Email) + retry/backoff pipeline in scheduler (`pending/retry/processing/sent/failed`, `next_retry_at`, `max_attempts`, idempotent key per `appointment_id + type + channel`).
 - Notification logs page (`/notification-logs`) with role-aware access (`owner/admin/specialist`), filters and human-readable fields (specialist/client names, message, Telegram, email), including manual resend for failed deliveries.
