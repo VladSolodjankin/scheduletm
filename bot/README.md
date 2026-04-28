@@ -29,7 +29,6 @@ npm run -w bot verify
 
 Основные:
 
-- `BOT_TOKEN`
 - `WEBHOOK_SECRET`
 - `APP_URL`
 - `DATABASE_URL` / `DATABASE_PUBLIC_URL`

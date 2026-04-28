@@ -33,6 +33,6 @@
 
 ## Railway
 
-- [ ] Проверить `APP_URL`, `BOT_TOKEN`, `WEBHOOK_SECRET`, `DATABASE_URL`.
+- [ ] Проверить `APP_URL`, `, `WEBHOOK_SECRET`, `DATABASE_URL`.
 - [ ] Post-deploy smoke: `/health` + `getWebhookInfo`.
 - [ ] Разнести `app` и `worker` при росте нагрузки.
