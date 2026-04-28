@@ -36,6 +36,7 @@ export default tseslint.config(
       'eqeqeq': ['error', 'always'],
       'no-var': 'error',
       'prefer-const': 'error',
+      '@typescript-eslint/no-explicit-any': 'warn',
 
       'i18next/no-literal-string': [
         'error',
@@ -90,6 +91,7 @@ export default tseslint.config(
             'component',
             'slots',
             'slotProps',
+            'underline',
           ],
         },
       ],

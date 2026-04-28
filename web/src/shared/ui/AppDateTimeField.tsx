@@ -11,7 +11,7 @@ type AppDateTimeFieldProps = Omit<TextFieldProps, 'type'> & {
   minutesStep?: number;
 };
 
-export function AppDateTimeField({ type = 'datetime-local', minutesStep, slotProps, ...props }: AppDateTimeFieldProps) {
+export function AppDateTimeField({ type = 'datetime-local', minutesStep, ...props }: AppDateTimeFieldProps) {
   const pickerValue =
     typeof props.value === 'string' && props.value
       ? type === 'time'
