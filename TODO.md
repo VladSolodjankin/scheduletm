@@ -9,11 +9,26 @@
 - [x] Добавить базовый integration-набор ключевой бизнес-логики в `server/tests/business.integration.test.ts` (DB-backed, без моков доменных сервисов).
 - [ ] Зафиксировать политику миграций и backup/restore для production БД.
 
+### P0 — Next для автотестов web (UI e2e + интеграция с dev БД)
+
+- [ ] Подготовить выделенный e2e-account seed для dev БД (owner/admin/specialist/client) и reset-скрипт тестовых данных между прогонами.
+- [ ] Подключить запуск `web test:e2e:ui` в CI на nightly/scheduled pipeline c `E2E_BASE_URL` и роль-специфичными `E2E_*` credentials.
+- [ ] Добавить UI e2e: appointments lifecycle для owner/admin/specialist/client (create/edit/reschedule/cancel).
+- [ ] Добавить UI e2e: поздняя отмена appointment с проверкой grace period + refund/no-refund текстов подтверждения.
+- [ ] Добавить UI e2e: users management (create/edit/deactivate + resend invite).
+- [ ] Добавить UI e2e: role permissions matrix (Owner/Admin/Specialist/Client) по доступу к меню, страницам и критичным действиям.
+
 ## Приоритет P1
 
 - [x] Закрыть CSRF protection в refresh-cookie потоке (`server`).
 - [x] Добавить error tracking для `web` и `server`.
 - [ ] Довести audit/events для appointments (фильтрация, retention, actor context).
+
+### P1 — Next для стабилизации тестов
+
+- [ ] Устранить flaky-risk в UI e2e: фиксировать timezone/locale, добавить deterministic test data naming и cleanup hooks.
+- [ ] Добавить smoke-набор для notification logs и error logs с role-aware проверками видимости страниц.
+- [ ] Добавить негативные UI e2e сценарии: 401/403, network-failure fallback, validation errors в ключевых формах.
 
 ## Приоритет P2
 
