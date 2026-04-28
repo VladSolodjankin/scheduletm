@@ -81,3 +81,19 @@ export async function login(page, { email, password }) {
   await loginViaApi(page, { email, password });
   authStateCache.set(cacheKey, await page.context().storageState());
 }
+
+export async function loggedInRole(page) {
+  return page.evaluate(({ userKey }) => {
+    const raw = window.localStorage.getItem(userKey);
+
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(raw)?.role ?? null;
+    } catch {
+      return null;
+    }
+  }, { userKey: AUTH_USER_KEY });
+}

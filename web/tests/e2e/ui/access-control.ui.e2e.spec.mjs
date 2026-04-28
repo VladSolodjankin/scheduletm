@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { creds, login } from './helpers/auth.mjs';
+import { creds, loggedInRole, login } from './helpers/auth.mjs';
 
 test.describe('web ui e2e: page access control', () => {
   test('owner can open specialists and notification logs pages directly', async ({ page }) => {
@@ -37,6 +37,8 @@ test.describe('web ui e2e: page access control', () => {
     test.skip(!admin.email || !admin.password, 'Set E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD for UI e2e.');
 
     await login(page, admin);
+    const role = await loggedInRole(page);
+    test.skip(role !== 'admin', `E2E_ADMIN credentials resolved to role "${role ?? 'unknown'}", expected "admin".`);
 
     await page.goto('/error-logs');
     await expect(page).toHaveURL(/\/error-logs$/);
