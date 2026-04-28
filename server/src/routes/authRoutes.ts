@@ -92,7 +92,15 @@ authRoutes.post('/register', async (req, res) => {
   }
 
   try {
-    const user = await registerUser(parsed.data.email, parsed.data.password, parsed.data.timezone);
+    const user = await registerUser(
+      parsed.data.email,
+      parsed.data.password,
+      parsed.data.timezone,
+      parsed.data.firstName,
+      parsed.data.lastName,
+      parsed.data.phone,
+      parsed.data.telegramUsername,
+    );
     if (!user) {
       return res.status(409).json({
         message: t(req, 'userAlreadyRegistered'),

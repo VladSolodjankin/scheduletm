@@ -31,9 +31,16 @@ export const dictionaries = {
       registerSubtitle: 'Create an account and start setup.',
       formLoginTitle: 'Login',
       formRegisterTitle: 'Register',
+      firstNameLabel: 'First name',
+      lastNameLabel: 'Last name',
+      phoneLabel: 'Phone number',
+      telegramLabel: 'Telegram username',
+      requiredField: 'This field is required',
+      phoneInvalid: 'Enter a valid phone number',
+      passwordMinLength: 'Password must be at least 10 characters',
       verifyTitle: 'Verify email',
-      verifySubtitle: 'Enter the OTP code from email for {email}.',
-      verifyCodeLabel: 'OTP code',
+      verifySubtitle: 'Enter the 4-digit OTP code from email for {email}.',
+      verifyCodeLabel: 'OTP code (4 digits)',
       verifyCodeRequired: 'Enter verification code',
       verifyCodeInvalid: 'Invalid verification code',
       verifySubmit: 'Confirm email',
@@ -360,9 +367,16 @@ export const dictionaries = {
       registerSubtitle: 'Создайте аккаунт и начните настройки.',
       formLoginTitle: 'Вход',
       formRegisterTitle: 'Регистрация',
+      firstNameLabel: 'Имя',
+      lastNameLabel: 'Фамилия',
+      phoneLabel: 'Номер телефона',
+      telegramLabel: 'Telegram username',
+      requiredField: 'Поле обязательно',
+      phoneInvalid: 'Введите корректный номер телефона',
+      passwordMinLength: 'Пароль должен быть не короче 10 символов',
       verifyTitle: 'Подтверждение email',
-      verifySubtitle: 'Введите OTP-код из письма для {email}.',
-      verifyCodeLabel: 'OTP-код',
+      verifySubtitle: 'Введите 4-значный OTP-код из письма для {email}.',
+      verifyCodeLabel: 'OTP-код (4 цифры)',
       verifyCodeRequired: 'Введите код подтверждения',
       verifyCodeInvalid: 'Некорректный код подтверждения',
       verifySubmit: 'Подтвердить email',
@@ -688,6 +702,13 @@ export type TranslationKey =
   | 'auth.registerSubtitle'
   | 'auth.formLoginTitle'
   | 'auth.formRegisterTitle'
+  | 'auth.firstNameLabel'
+  | 'auth.lastNameLabel'
+  | 'auth.phoneLabel'
+  | 'auth.telegramLabel'
+  | 'auth.requiredField'
+  | 'auth.phoneInvalid'
+  | 'auth.passwordMinLength'
   | 'auth.verifyTitle'
   | 'auth.verifySubtitle'
   | 'auth.verifyCodeLabel'

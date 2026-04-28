@@ -6,6 +6,7 @@ export const hashPassword = (password: string, salt: string) =>
   crypto.pbkdf2Sync(password, salt, 310000, 32, 'sha256').toString('hex');
 
 export const createToken = () => crypto.randomBytes(32).toString('hex');
+export const createOtpCode = () => crypto.randomInt(0, 10_000).toString().padStart(4, '0');
 
 export const verifyPassword = (password: string, salt: string, hash: string) =>
   crypto.timingSafeEqual(Buffer.from(hashPassword(password, salt), 'hex'), Buffer.from(hash, 'hex'));

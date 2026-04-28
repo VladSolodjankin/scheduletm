@@ -195,6 +195,7 @@ export const schemaValidationDictionary = {
   managedUserFirstNameTooLong: 'Имя слишком длинное',
   managedUserLastNameRequired: 'Укажите фамилию',
   managedUserLastNameTooLong: 'Фамилия слишком длинная',
+  registrationPhoneRequired: 'Укажите номер телефона',
   managedUserPhoneTooLong: 'Телефон слишком длинный',
   managedUserTelegramTooLong: 'Telegram аккаунт слишком длинный',
   specialistUserIdRequired: 'Выберите пользователя специалиста',

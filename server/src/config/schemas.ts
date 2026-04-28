@@ -31,6 +31,10 @@ export const registrationSchema = z.object({
     .max(254, v.emailTooLong),
   password: passwordSchema,
   timezone: timezoneSchema.optional(),
+  firstName: z.string().trim().min(1, v.managedUserFirstNameRequired).max(120, v.managedUserFirstNameTooLong),
+  lastName: z.string().trim().min(1, v.managedUserLastNameRequired).max(120, v.managedUserLastNameTooLong),
+  phone: z.string().trim().min(1, v.registrationPhoneRequired).max(50, v.managedUserPhoneTooLong),
+  telegramUsername: z.string().trim().max(255, v.managedUserTelegramTooLong).optional().or(z.literal('')),
 });
 
 export const loginSchema = z.object({
@@ -50,8 +54,7 @@ export const verifyEmailSchema = z.object({
   code: z
     .string()
     .trim()
-    .min(8, v.emailVerificationCodeInvalid)
-    .max(128, v.emailVerificationCodeInvalid),
+    .regex(/^\d{4}$/, v.emailVerificationCodeInvalid),
 });
 
 
