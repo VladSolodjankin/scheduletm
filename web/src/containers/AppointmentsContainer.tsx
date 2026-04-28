@@ -11,6 +11,7 @@ import {
   Snackbar,
   Skeleton,
   Stack,
+  TextField,
   Typography,
   alpha,
   useTheme,
@@ -59,6 +60,11 @@ export function AppointmentsContainer() {
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [busySlots, setBusySlots] = useState<AppointmentListResponse['busySlots']>([]);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | 'all'>('all');
+  const [selectedClientId, setSelectedClientId] = useState<number | 'all'>('all');
+  const [selectedStatus, setSelectedStatus] = useState<AppointmentItem['status'] | 'all'>('all');
+  const [serviceQuery, setServiceQuery] = useState('');
+  const [fromDateFilter, setFromDateFilter] = useState('');
+  const [toDateFilter, setToDateFilter] = useState('');
   const displayTimeZone = BROWSER_TIMEZONE;
 
   const [focusDate, setFocusDate] = useState(() => startOfDay(getUtcNowByTimeZone(displayTimeZone)));
@@ -84,6 +90,10 @@ export function AppointmentsContainer() {
   };
 
   const canManageAll = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin;
+  const isOwner = user?.role === WebUserRole.Owner;
+  const isAdmin = user?.role === WebUserRole.Admin;
+  const isSpecialist = user?.role === WebUserRole.Specialist;
+  const isClient = user?.role === WebUserRole.Client;
   const selectedSpecialist = selectedSpecialistId === 'all'
     ? null
     : specialists.find((item) => item.id === selectedSpecialistId) ?? null;
@@ -104,10 +114,44 @@ export function AppointmentsContainer() {
     return Array.from({ length: 7 }, (_, index) => addDays(start, index));
   }, [focusDate, viewMode]);
 
+  const filteredAppointments = useMemo(() => appointments.filter((item) => {
+    if (selectedClientId !== 'all' && item.client.id !== selectedClientId) {
+      return false;
+    }
+
+    if (selectedStatus !== 'all' && item.status !== selectedStatus) {
+      return false;
+    }
+
+    if (serviceQuery.trim()) {
+      const serviceText = item.notes.toLowerCase();
+      if (!serviceText.includes(serviceQuery.trim().toLowerCase())) {
+        return false;
+      }
+    }
+
+    const scheduledDate = new Date(item.scheduledAt);
+    if (fromDateFilter) {
+      const fromDate = new Date(`${fromDateFilter}T00:00:00`);
+      if (scheduledDate < fromDate) {
+        return false;
+      }
+    }
+
+    if (toDateFilter) {
+      const toDate = new Date(`${toDateFilter}T23:59:59`);
+      if (scheduledDate > toDate) {
+        return false;
+      }
+    }
+
+    return true;
+  }), [appointments, fromDateFilter, selectedClientId, selectedStatus, serviceQuery, toDateFilter]);
+
   const appointmentsByCell = useMemo(() => {
     const map = new Map<string, AppointmentItem[]>();
 
-    for (const item of appointments) {
+    for (const item of filteredAppointments) {
       const date = new Date(item.scheduledAt);
       const dayKey = toDateKeyInTimezone(date, displayTimeZone);
       const key = `${dayKey}:${toTimeKeyInTimezone(date, displayTimeZone)}`;
@@ -121,7 +165,7 @@ export function AppointmentsContainer() {
     });
 
     return map;
-  }, [appointments, displayTimeZone]);
+  }, [displayTimeZone, filteredAppointments]);
 
   const busySlotsByCell = useMemo(() => {
     const map = new Map<string, AppointmentListResponse['busySlots']>();
@@ -141,7 +185,7 @@ export function AppointmentsContainer() {
   const appointmentsByDay = useMemo(() => {
     const map = new Map<string, AppointmentItem[]>();
 
-    for (const item of appointments) {
+    for (const item of filteredAppointments) {
       const date = new Date(item.scheduledAt);
       const dayKey = toDateKeyInTimezone(date, displayTimeZone);
       const list = map.get(dayKey) ?? [];
@@ -154,7 +198,24 @@ export function AppointmentsContainer() {
     });
 
     return map;
-  }, [appointments, displayTimeZone]);
+  }, [displayTimeZone, filteredAppointments]);
+
+  const pageSubtitle = useMemo(() => {
+    if (isOwner) {
+      return t('appointments.pageSubtitleOwner');
+    }
+    if (isAdmin) {
+      return t('appointments.pageSubtitleAdmin');
+    }
+    if (isSpecialist) {
+      return t('appointments.pageSubtitleSpecialist');
+    }
+    if (isClient) {
+      return t('appointments.pageSubtitleClient');
+    }
+
+    return t('appointments.pageSubtitle');
+  }, [isAdmin, isClient, isOwner, isSpecialist, t]);
 
   function getGridDayKey(day: Date) {
     const noon = new Date(day);
@@ -494,7 +555,7 @@ export function AppointmentsContainer() {
   return (
     <AppPage
       title={t('appointments.pageTitle')}
-      subtitle={t('appointments.pageSubtitle')}
+      subtitle={pageSubtitle}
     >
       {error && (
         <Box sx={{ mb: 2 }}>
@@ -512,6 +573,19 @@ export function AppointmentsContainer() {
         >
           <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
+              {isOwner && (
+                <FormControl sx={{ width: { xs: '100%', sm: 240 } }} size="small" disabled>
+                  <InputLabel id="account-filter">{t('appointments.accountFilter')}</InputLabel>
+                  <Select
+                    labelId="account-filter"
+                    label={t('appointments.accountFilter')}
+                    value="current"
+                  >
+                    <MenuItem value="current">{t('appointments.currentAccount')}</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+
               {canManageAll && (
                 <FormControl sx={{ width: { xs: '100%', sm: 360 } }} size="small">
                   <InputLabel id="specialist-filter">{t('appointments.specialistFilter')}</InputLabel>
@@ -531,6 +605,94 @@ export function AppointmentsContainer() {
                   </Select>
                 </FormControl>
               )}
+
+              {(isOwner || isAdmin || isSpecialist) && (
+                <FormControl sx={{ width: { xs: '100%', sm: 300 } }} size="small">
+                  <InputLabel id="client-filter">{t('appointments.clientFilter')}</InputLabel>
+                  <Select
+                    labelId="client-filter"
+                    label={t('appointments.clientFilter')}
+                    value={selectedClientId}
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      setSelectedClientId(raw === 'all' ? 'all' : Number(raw));
+                    }}
+                  >
+                    <MenuItem value="all">{t('appointments.allClients')}</MenuItem>
+                    {clients.map((client) => (
+                      <MenuItem key={client.id} value={client.id}>
+                        {[client.firstName, client.lastName].filter(Boolean).join(' ').trim() || client.email}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              {isClient && (
+                <FormControl sx={{ width: { xs: '100%', sm: 320 } }} size="small">
+                  <InputLabel id="specialist-filter-client">{t('appointments.specialistFilter')}</InputLabel>
+                  <Select
+                    labelId="specialist-filter-client"
+                    label={t('appointments.specialistFilter')}
+                    value={selectedSpecialistId}
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      setSelectedSpecialistId(raw === 'all' ? 'all' : Number(raw));
+                    }}
+                  >
+                    <MenuItem value="all">{t('appointments.allSpecialists')}</MenuItem>
+                    {specialists.map((specialist) => (
+                      <MenuItem key={specialist.id} value={specialist.id}>{specialist.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              <TextField
+                type="text"
+                label={t('appointments.serviceFilter')}
+                size="small"
+                value={serviceQuery}
+                onChange={(event) => setServiceQuery(event.target.value)}
+                sx={{ width: { xs: '100%', sm: 260 } }}
+              />
+
+              <FormControl sx={{ width: { xs: '100%', sm: 220 } }} size="small">
+                <InputLabel id="status-filter">{t('appointments.statusFilter')}</InputLabel>
+                <Select
+                  labelId="status-filter"
+                  label={t('appointments.statusFilter')}
+                  value={selectedStatus}
+                  onChange={(event) => {
+                    const raw = event.target.value as AppointmentItem['status'] | 'all';
+                    setSelectedStatus(raw);
+                  }}
+                >
+                  <MenuItem value="all">{t('appointments.allStatuses')}</MenuItem>
+                  <MenuItem value="new">{t('appointments.statusNew')}</MenuItem>
+                  <MenuItem value="confirmed">{t('appointments.statusConfirmed')}</MenuItem>
+                  <MenuItem value="cancelled">{t('appointments.statusCancelled')}</MenuItem>
+                </Select>
+              </FormControl>
+
+              <TextField
+                type="date"
+                label={t('appointments.fromDateFilter')}
+                size="small"
+                value={fromDateFilter}
+                onChange={(event) => setFromDateFilter(event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ width: { xs: '100%', sm: 180 } }}
+              />
+              <TextField
+                type="date"
+                label={t('appointments.toDateFilter')}
+                size="small"
+                value={toDateFilter}
+                onChange={(event) => setToDateFilter(event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ width: { xs: '100%', sm: 180 } }}
+              />
             </Stack>
           </CardContent>
         </Card>

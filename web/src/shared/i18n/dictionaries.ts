@@ -266,8 +266,24 @@ export const dictionaries = {
     appointments: {
       pageTitle: 'Appointments',
       pageSubtitle: 'Calendar view with schedule by day and time.',
+      pageSubtitleOwner: 'All appointments',
+      pageSubtitleAdmin: 'Appointments in your account',
+      pageSubtitleSpecialist: 'Appointments with you',
+      pageSubtitleClient: 'My appointments',
+      accountFilter: 'Account',
+      currentAccount: 'Current account',
       specialistFilter: 'Specialist',
       allSpecialists: 'All specialists',
+      clientFilter: 'Client',
+      allClients: 'All clients',
+      serviceFilter: 'Service',
+      statusFilter: 'Status',
+      allStatuses: 'All statuses',
+      statusNew: 'New',
+      statusConfirmed: 'Confirmed',
+      statusCancelled: 'Cancelled',
+      fromDateFilter: 'From',
+      toDateFilter: 'To',
       create: 'Create',
       createTitle: 'Create appointment',
       editTitle: 'Edit appointment',
@@ -579,8 +595,24 @@ export const dictionaries = {
     appointments: {
       pageTitle: 'Записи',
       pageSubtitle: 'Календарный вид с расписанием по дням и времени.',
+      pageSubtitleOwner: 'Все записи',
+      pageSubtitleAdmin: 'Записи в вашем аккаунте',
+      pageSubtitleSpecialist: 'Записи с вами',
+      pageSubtitleClient: 'Мои записи',
+      accountFilter: 'Аккаунт',
+      currentAccount: 'Текущий аккаунт',
       specialistFilter: 'Специалист',
       allSpecialists: 'Все специалисты',
+      clientFilter: 'Клиент',
+      allClients: 'Все клиенты',
+      serviceFilter: 'Услуга',
+      statusFilter: 'Статус',
+      allStatuses: 'Все статусы',
+      statusNew: 'Новая',
+      statusConfirmed: 'Подтверждена',
+      statusCancelled: 'Отменена',
+      fromDateFilter: 'С',
+      toDateFilter: 'По',
       create: 'Создать',
       createTitle: 'Создать запись',
       editTitle: 'Редактировать запись',
@@ -640,6 +672,7 @@ export type TranslationKey =
   | 'common.register'
   | 'common.language'
   | 'common.appointments'
+  | 'common.my_appointments'
   | 'common.specialists'
   | 'common.users'
   | 'common.notificationLogs'
@@ -804,8 +837,24 @@ export type TranslationKey =
   | 'users.success.inviteResent'
   | 'appointments.pageTitle'
   | 'appointments.pageSubtitle'
+  | 'appointments.pageSubtitleOwner'
+  | 'appointments.pageSubtitleAdmin'
+  | 'appointments.pageSubtitleSpecialist'
+  | 'appointments.pageSubtitleClient'
+  | 'appointments.accountFilter'
+  | 'appointments.currentAccount'
   | 'appointments.specialistFilter'
   | 'appointments.allSpecialists'
+  | 'appointments.clientFilter'
+  | 'appointments.allClients'
+  | 'appointments.serviceFilter'
+  | 'appointments.statusFilter'
+  | 'appointments.allStatuses'
+  | 'appointments.statusNew'
+  | 'appointments.statusConfirmed'
+  | 'appointments.statusCancelled'
+  | 'appointments.fromDateFilter'
+  | 'appointments.toDateFilter'
   | 'appointments.create'
   | 'appointments.createTitle'
   | 'appointments.editTitle'
