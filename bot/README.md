@@ -20,6 +20,7 @@ npm run -w bot dev
 npm run -w bot build
 npm run -w bot start
 npm run -w bot test
+npm run -w bot verify
 ```
 
 ## Переменные окружения

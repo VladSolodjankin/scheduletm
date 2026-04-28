@@ -37,6 +37,35 @@ npm run -w bot dev
 
 > Точные переменные окружения и команды для production — в README каждого модуля.
 
+### Рекомендуемый setup для отдельного dev-домена
+
+Если frontend доступен с `https://dev.meetli.cc`, а API с `https://apidev.meetli.cc`, держите переменные по средам раздельно:
+
+- `web/.env.development`:
+  - `VITE_API_URL=https://apidev.meetli.cc`
+- `server/.env.development`:
+  - `APP_URL=https://dev.meetli.cc`
+  - `API_BASE_URL=https://apidev.meetli.cc`
+  - `GOOGLE_OAUTH_REDIRECT_URI=https://apidev.meetli.cc/api/integrations/google/oauth/callback`
+- OAuth-секреты (`GOOGLE_OAUTH_CLIENT_SECRET`) и другие секреты — только в server env, не в web.
+
+Для локальной разработки оставляйте `localhost` значения в `.env.local`/`.env` и не смешивайте их с доменными dev-значениями.
+
+### Одна команда для миграций + тестов по каждому модулю
+
+```bash
+# web (no-op миграции + тесты)
+npm run qa:web
+
+# server (migrate:latest + тесты)
+npm run qa:server
+
+# bot (no-op миграции + тесты)
+npm run qa:bot
+```
+
+Для `qa:server` убедитесь, что в `server/.env` (или переменных окружения CI) заполнены `DATABASE_PUBLIC_URL` или `DATABASE_URL`.
+
 ---
 
 ## 2) Архитектура

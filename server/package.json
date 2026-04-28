@@ -12,7 +12,8 @@
     "migrate:make": "npm run knex -- migrate:make",
     "migrate:latest": "npm run knex -- migrate:latest",
     "migrate:rollback": "npm run knex -- migrate:rollback",
-    "test": "cross-env DATABASE_PUBLIC_URL=postgresql://postgres:IxXKRzhJVpqQwUdyNHUMQfGPfiQtFZcs@nozomi.proxy.rlwy.net:41768/railway vitest run --config vitest.config.ts"
+    "test": "vitest run --config vitest.config.ts",
+    "verify": "npm run migrate:latest && npm run test"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",

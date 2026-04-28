@@ -8,7 +8,9 @@
     "start": "node dist/app.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "migrate:latest": "node -e \"console.log('bot: migrations are not required')\"",
+    "verify": "npm run migrate:latest && npm run test"
   },
   "dependencies": {
     "@xmldom/xmldom": "^0.9.10",
