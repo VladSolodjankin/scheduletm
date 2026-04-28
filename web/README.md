@@ -9,6 +9,13 @@ React SPA для owner/admin/specialist/client.
 - Role-aware UI (owner/admin/specialist/client).
 - i18n (`ru/en`), theme mode, palette variants.
 - Calendar flow: create/edit/reschedule/cancel/mark-paid/notify.
+- Appointments page includes role-based top filters:
+  - owner: `Account`, `Specialist`, `Client`, `Service`, `Status`, `From/To` dates;
+  - admin: `Specialist`, `Client`, `Service`, `Status`, `From/To` dates;
+  - specialist: `Client`, `Service`, `Status`, `From/To` dates;
+  - client: `Specialist`, `Service`, `Status`, `From/To` dates.
+- Appointments page subtitle is role-aware (`All appointments`, `Appointments in your account`, `Appointments with you`, `My appointments`).
+- Main menu item for `/appointments` uses the same role-aware labels as the Appointments page subtitle.
 - Client flow: клиент работает только со своим расписанием (без доступа к чужим записям).
 - Notification logs (`/notification-logs`): таблица истории отправки с фильтрами (`accountId`, `specialistId`, `userId`) и колонками для читаемых данных (`specialistName`, `clientName`, `message`, `recipientTelegram`, `recipientEmail`) + retry action для статусов `failed/retry/cancelled`.
 

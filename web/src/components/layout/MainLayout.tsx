@@ -45,10 +45,25 @@ export function MainLayout() {
 
     void sync();
   }, [accessToken, isAuthenticated, locale, mode, paletteVariantId]);
-  const appointmentsText = user?.role === WebUserRole.Specialist || user?.role === WebUserRole.Client;
+
+  const appointmentsMenuLabel = (() => {
+    if (user?.role === WebUserRole.Owner) {
+      return t('appointments.pageSubtitleOwner');
+    }
+    if (user?.role === WebUserRole.Admin) {
+      return t('appointments.pageSubtitleAdmin');
+    }
+    if (user?.role === WebUserRole.Specialist) {
+      return t('appointments.pageSubtitleSpecialist');
+    }
+    if (user?.role === WebUserRole.Client) {
+      return t('appointments.pageSubtitleClient');
+    }
+    return t('common.appointments');
+  })();
 
   const menuItems = [
-    { to: '/appointments', label: appointmentsText ? t('common.my_appointments') : t('common.appointments'), icon: 'calendar' as const },
+    { to: '/appointments', label: appointmentsMenuLabel, icon: 'calendar' as const },
     ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin
       ? [
         { to: '/specialists', label: t('common.specialists'), icon: 'specialists' as const },
