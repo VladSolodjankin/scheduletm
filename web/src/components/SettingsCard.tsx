@@ -121,6 +121,7 @@ export function SettingsCard({
     ].map(h => `${h}h`)
   ];
   const selectableChannels: NotificationChannel[] = ['email', 'telegram', 'viber', 'sms', 'whatsapp'];
+  const meetingDurationOptions = Array.from({ length: 7 }, (_, i) => 30 + i * 10);
   const [tab, setTab] = useState(canManageSystemSettings ? 0 : canManageAccountSettings ? 1 : canManageSpecialistBookingPolicy ? 2 : 4);
 
   const { control: systemControl, handleSubmit: handleSystemSubmit, reset: resetSystem } = useForm<SystemSettings>({
@@ -213,13 +214,19 @@ export function SettingsCard({
             name="defaultMeetingDuration"
             control={systemControl}
             render={({ field }: any) => (
-              <AppRhfTextField
-                field={field}
-                label={copy.defaultMeetingDuration}
-                type="number"
-                slotProps={{ htmlInput: { min: 15, max: 180 } }}
-                parseValue={(value) => Number(value)}
-              />
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="system-default-meeting-duration-label">{copy.defaultMeetingDuration}</InputLabel>
+                <Select
+                  labelId="system-default-meeting-duration-label"
+                  value={String(field.value)}
+                  label={copy.defaultMeetingDuration}
+                  onChange={(event) => field.onChange(Number(event.target.value))}
+                >
+                  {meetingDurationOptions.map((duration) => (
+                    <MenuItem key={duration} value={String(duration)}>{duration}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             )}
           />
 
@@ -302,13 +309,19 @@ export function SettingsCard({
             name="defaultMeetingDuration"
             control={accountControl}
             render={({ field }: any) => (
-              <AppRhfTextField
-                field={field}
-                label={copy.defaultMeetingDuration}
-                type="number"
-                slotProps={{ htmlInput: { min: 15, max: 180 } }}
-                parseValue={(value) => Number(value)}
-              />
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="account-default-meeting-duration-label">{copy.defaultMeetingDuration}</InputLabel>
+                <Select
+                  labelId="account-default-meeting-duration-label"
+                  value={String(field.value)}
+                  label={copy.defaultMeetingDuration}
+                  onChange={(event) => field.onChange(Number(event.target.value))}
+                >
+                  {meetingDurationOptions.map((duration) => (
+                    <MenuItem key={duration} value={String(duration)}>{duration}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             )}
           />
 
