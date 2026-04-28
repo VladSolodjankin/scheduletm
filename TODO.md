@@ -6,6 +6,7 @@
 
 - [ ] Настроить единый CI pipeline для monorepo: install, lint/typecheck, test, build.
 - [ ] Добавить интеграционные web↔server тесты (без API моков) в отдельный CI job.
+- [x] Добавить базовый integration-набор ключевой бизнес-логики в `server/tests/business.integration.test.ts` (DB-backed, без моков доменных сервисов).
 - [ ] Зафиксировать политику миграций и backup/restore для production БД.
 
 ## Приоритет P1
