@@ -28,7 +28,7 @@ npm install
 # API
 npm run -w @scheduletm/server dev
 
-# Web
+# Web (включает ESLint + typecheck перед стартом)
 npm run -w @scheduletm/web dev
 
 # Bot
@@ -50,6 +50,12 @@ npm run -w bot dev
 - OAuth-секреты (`GOOGLE_OAUTH_CLIENT_SECRET`) и другие секреты — только в server env, не в web.
 
 Для локальной разработки оставляйте `localhost` значения в `.env.local`/`.env` и не смешивайте их с доменными dev-значениями.
+
+### Линтинг web
+
+```bash
+npm run -w @scheduletm/web lint
+```
 
 ### Одна команда для миграций + тестов по каждому модулю
 
