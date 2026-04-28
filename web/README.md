@@ -22,14 +22,27 @@ React SPA для owner/admin/specialist/client.
 ## Команды
 
 ```bash
-npm run -w @scheduletm/web dev
-npm run -w @scheduletm/web build
+npm run -w @scheduletm/web lint                 # ESLint (best practices + i18n markup rules)
+npm run -w @scheduletm/web dev                  # lint + typecheck + vite
+npm run -w @scheduletm/web build                # lint + tsc + vite build
 npm run -w @scheduletm/web test                 # быстрые e2e contract checks
 npm run -w @scheduletm/web test:e2e:contracts   # contract-level checks (node:test)
 npm run -w @scheduletm/web test:e2e:ui          # реальный UI e2e (Playwright, клики)
 npm run -w @scheduletm/web test:e2e             # contracts + UI
 npm run -w @scheduletm/web verify
 ```
+
+
+## Линтинг
+
+В `web` подключен ESLint и он запускается автоматически в `dev` и `build`.
+
+Правила включают:
+- базовые recommended + TypeScript checks;
+- best practices (`curly`, `eqeqeq`, `no-var`, `prefer-const`);
+- `i18next/no-literal-string` в режиме `jsx-only` с исключениями для `className`, `data-testid`, `aria-*` атрибутов;
+- для test/spec файлов правило `i18next/no-literal-string` отключено;
+- строки логирования через `console.*` исключены из этого правила.
 
 ## Переменные окружения
 
