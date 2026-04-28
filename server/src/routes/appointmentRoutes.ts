@@ -18,6 +18,8 @@ import {
 import { formatZodError } from '../utils/validation.js';
 
 export const appointmentRoutes = Router();
+type AppointmentAuditActionFilter = 'cancel' | 'reschedule' | 'mark-paid' | 'notify';
+const APPOINTMENT_AUDIT_ACTIONS = new Set<AppointmentAuditActionFilter>(['cancel', 'reschedule', 'mark-paid', 'notify']);
 
 appointmentRoutes.use(requireAccessToken);
 
@@ -28,11 +30,33 @@ appointmentRoutes.get('/', async (req, res) => {
     const specialistId = typeof req.query.specialistId === 'string'
       ? Number(req.query.specialistId)
       : undefined;
+    const parseEventActions = () => {
+      const raw = req.query.eventAction;
+      const values = Array.isArray(raw)
+        ? raw.flatMap((value) => String(value).split(','))
+        : typeof raw === 'string'
+          ? raw.split(',')
+          : [];
+
+      return values
+        .map((value) => value.trim())
+        .filter((value): value is AppointmentAuditActionFilter => APPOINTMENT_AUDIT_ACTIONS.has(value as AppointmentAuditActionFilter));
+    };
+    const eventActorWebUserIdRaw = typeof req.query.eventActorWebUserId === 'string'
+      ? Number(req.query.eventActorWebUserId)
+      : undefined;
+    const eventActions = parseEventActions();
 
     const data = await getAppointments(actor, {
       specialistId: Number.isFinite(specialistId) ? specialistId : undefined,
       from: typeof req.query.from === 'string' ? req.query.from : undefined,
       to: typeof req.query.to === 'string' ? req.query.to : undefined,
+      eventAction: eventActions.length ? eventActions : undefined,
+      eventActorWebUserId: Number.isFinite(eventActorWebUserIdRaw) && Number(eventActorWebUserIdRaw) > 0
+        ? Number(eventActorWebUserIdRaw)
+        : undefined,
+      eventFrom: typeof req.query.eventFrom === 'string' ? req.query.eventFrom : undefined,
+      eventTo: typeof req.query.eventTo === 'string' ? req.query.eventTo : undefined,
     });
 
     return res.json(data);

@@ -20,6 +20,16 @@ Node.js/Express API для web-клиента и интеграций.
   - При создании пользователей owner/admin отправляется invite-link вместо временного пароля.
   - Приглашённый пользователь создаётся неактивным и активируется только после verify-email / accept-invite.
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
+  - В `GET /api/appointments` поддерживаются фильтры для audit events:
+    - `eventAction` (`cancel|reschedule|mark-paid|notify`, можно CSV),
+    - `eventActorWebUserId`,
+    - `eventFrom`,
+    - `eventTo`.
+  - В `appointments[].events[]` возвращается actor context:
+    - `actor.id`,
+    - `actor.role`,
+    - `actor.displayName`,
+    - `actor.email`.
 - Client self-service:
   - owner/admin/specialist могут создавать web users с ролью `client`;
   - `client` видит и управляет только собственными записями (edit/reschedule/cancel);
