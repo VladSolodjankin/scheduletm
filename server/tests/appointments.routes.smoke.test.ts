@@ -4,6 +4,7 @@ import { createApp } from '../src/app.js';
 import { WebUserRole } from '../src/types/webUserRole.js';
 
 const resolveUserByAccessTokenMock = vi.hoisted(() => vi.fn());
+const getAppointmentsMock = vi.hoisted(() => vi.fn());
 const createAppointmentForActorMock = vi.hoisted(() => vi.fn());
 const rescheduleAppointmentForActorMock = vi.hoisted(() => vi.fn());
 const cancelAppointmentForActorMock = vi.hoisted(() => vi.fn());
@@ -15,7 +16,7 @@ vi.mock('../src/services/authService.js', () => ({
 }));
 
 vi.mock('../src/services/appointmentService.js', () => ({
-  getAppointments: vi.fn(),
+  getAppointments: getAppointmentsMock,
   updateAppointmentForActor: vi.fn(),
   createAppointmentForActor: createAppointmentForActorMock,
   rescheduleAppointmentForActor: rescheduleAppointmentForActorMock,
@@ -57,12 +58,60 @@ describe('appointments API route-smoke scenarios (mocked service layer)', () => 
   beforeEach(() => {
     resolveUserByAccessTokenMock.mockReset();
     createAppointmentForActorMock.mockReset();
+    getAppointmentsMock.mockReset();
     rescheduleAppointmentForActorMock.mockReset();
     cancelAppointmentForActorMock.mockReset();
     markPaidAppointmentForActorMock.mockReset();
     notifyAppointmentForActorMock.mockReset();
 
     resolveUserByAccessTokenMock.mockResolvedValue(authedUser);
+    getAppointmentsMock.mockResolvedValue({
+      appointments: [],
+      specialists: [],
+      clients: [],
+      busySlots: [],
+    });
+  });
+
+  it('list: forwards event filters to getAppointments', async () => {
+    const response = await fetch(`${baseUrl}/api/appointments?specialistId=8&from=2026-04-01T00:00:00.000Z&to=2026-04-30T23:59:59.999Z&eventAction=cancel,notify&eventActorWebUserId=101&eventFrom=2026-04-10T00:00:00.000Z&eventTo=2026-04-20T23:59:59.999Z`, {
+      method: 'GET',
+      headers: {
+        authorization: 'Bearer smoke-token',
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(getAppointmentsMock).toHaveBeenCalledWith(
+      authedUser,
+      expect.objectContaining({
+        specialistId: 8,
+        from: '2026-04-01T00:00:00.000Z',
+        to: '2026-04-30T23:59:59.999Z',
+        eventAction: ['cancel', 'notify'],
+        eventActorWebUserId: 101,
+        eventFrom: '2026-04-10T00:00:00.000Z',
+        eventTo: '2026-04-20T23:59:59.999Z',
+      }),
+    );
+  });
+
+  it('list: ignores invalid event filters (edge case)', async () => {
+    const response = await fetch(`${baseUrl}/api/appointments?eventAction=cancel,unknown,event&eventActorWebUserId=abc`, {
+      method: 'GET',
+      headers: {
+        authorization: 'Bearer smoke-token',
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(getAppointmentsMock).toHaveBeenCalledWith(
+      authedUser,
+      expect.objectContaining({
+        eventAction: ['cancel'],
+        eventActorWebUserId: undefined,
+      }),
+    );
   });
 
   it('create: POST /api/appointments returns 201', async () => {

@@ -60,6 +60,12 @@ type AppointmentDto = {
 type AppointmentEventDto = {
   action: AppointmentAuditAction;
   createdAt: string;
+  actor: {
+    id: number | null;
+    role: string;
+    displayName: string;
+    email: string;
+  };
 };
 
 type AppointmentListResult = {
@@ -171,9 +177,18 @@ function mapEventsByAppointmentId(
 
   for (const row of rows) {
     const events = eventsById.get(row.appointment_id) ?? [];
+    const actorFirstName = row.actor_first_name?.trim() ?? '';
+    const actorLastName = row.actor_last_name?.trim() ?? '';
+    const actorDisplayName = [actorFirstName, actorLastName].filter(Boolean).join(' ').trim();
     events.push({
       action: row.action,
       createdAt: row.created_at.toISOString(),
+      actor: {
+        id: row.actor_web_user_id ?? null,
+        role: row.actor_role ?? '',
+        displayName: actorDisplayName || (row.actor_email ?? ''),
+        email: row.actor_email ?? '',
+      },
     });
     eventsById.set(row.appointment_id, events);
   }
@@ -323,7 +338,15 @@ async function resolveClientId(accountId: number, payload: AppointmentClientPayl
 
 export async function getAppointments(
   actor: User,
-  filters: { from?: string; to?: string; specialistId?: number },
+  filters: {
+    from?: string;
+    to?: string;
+    specialistId?: number;
+    eventAction?: AppointmentAuditAction[];
+    eventActorWebUserId?: number;
+    eventFrom?: string;
+    eventTo?: string;
+  },
 ): Promise<AppointmentListResult> {
   const accountId = await resolveAccountId(actor);
   const allowedSpecialistId = await resolveAllowedSpecialistId(actor, accountId);
@@ -377,6 +400,12 @@ export async function getAppointments(
     await listAppointmentEventsByAppointmentIds(
       accountId,
       appointmentsForUi.map((item) => item.id),
+      {
+        actions: filters.eventAction,
+        actorWebUserId: filters.eventActorWebUserId,
+        from: filters.eventFrom ? new Date(filters.eventFrom) : undefined,
+        to: filters.eventTo ? new Date(filters.eventTo) : undefined,
+      },
     ),
   );
 

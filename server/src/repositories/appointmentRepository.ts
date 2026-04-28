@@ -32,6 +32,17 @@ export type AppointmentAuditEventRecord = {
   actor_web_user_id: number | null;
   metadata_json: string | null;
   created_at: Date;
+  actor_role?: string | null;
+  actor_first_name?: string | null;
+  actor_last_name?: string | null;
+  actor_email?: string | null;
+};
+
+type AppointmentEventsFilters = {
+  actions?: AppointmentAuditAction[];
+  actorWebUserId?: number;
+  from?: Date;
+  to?: Date;
 };
 
 type AppointmentListFilters = {
@@ -240,16 +251,49 @@ export async function createAppointmentAuditEvent(input: {
 export async function listAppointmentEventsByAppointmentIds(
   accountId: number,
   appointmentIds: number[],
+  filters?: AppointmentEventsFilters,
 ): Promise<AppointmentAuditEventRecord[]> {
   if (appointmentIds.length === 0) {
     return [];
   }
 
-  return db('appointment_events')
-    .where({ account_id: accountId })
-    .whereIn('appointment_id', appointmentIds)
-    .orderBy('created_at', 'desc')
-    .select<AppointmentAuditEventRecord[]>('*');
+  const query = db('appointment_events as ae')
+    .leftJoin('web_users as wu', function joinActors() {
+      this.on('wu.id', '=', 'ae.actor_web_user_id').andOn('wu.account_id', '=', 'ae.account_id');
+    })
+    .where({ 'ae.account_id': accountId })
+    .whereIn('ae.appointment_id', appointmentIds)
+    .orderBy('ae.created_at', 'desc');
+
+  if (filters?.actions?.length) {
+    query.whereIn('ae.action', filters.actions);
+  }
+
+  if (filters?.actorWebUserId) {
+    query.andWhere('ae.actor_web_user_id', filters.actorWebUserId);
+  }
+
+  if (filters?.from) {
+    query.andWhere('ae.created_at', '>=', filters.from);
+  }
+
+  if (filters?.to) {
+    query.andWhere('ae.created_at', '<=', filters.to);
+  }
+
+  return query.select<AppointmentAuditEventRecord[]>(
+    'ae.id',
+    'ae.account_id',
+    'ae.appointment_id',
+    'ae.action',
+    'ae.actor_web_user_id',
+    'ae.metadata_json',
+    'ae.created_at',
+    'wu.role as actor_role',
+    'wu.first_name as actor_first_name',
+    'wu.last_name as actor_last_name',
+    'wu.email as actor_email',
+  );
 }
 
 export async function ensureFallbackClientForAccount(accountId: number): Promise<number> {

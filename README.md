@@ -78,6 +78,7 @@ scheduletm/
 - Notification logs page (`/notification-logs`) with role-aware access (`owner/admin/specialist`), filters and human-readable fields (specialist/client names, message, Telegram, email), including manual resend for failed deliveries.
 - Error tracking for `web` + `server`: frontend runtime errors and backend `5xx` responses are persisted in `error_logs`; UI page `/error-logs` is available only for `owner`; retention is 7 days; optional Telegram alerts can be sent via a dedicated bot token + chat id configured in `system_settings` (encrypted at rest, without email costs).
 - Appointments lifecycle: list/create/edit/reschedule/cancel/mark-paid/notify.
+- Appointments audit/events: `GET /api/appointments` возвращает `events[]` c actor context и поддерживает event-фильтры (`eventAction`, `eventActorWebUserId`, `eventFrom`, `eventTo`).
 - Late cancellation UX (web + bot): before cancel confirmation the user sees refund/no-refund outcome according to specialist booking policy (`cancel_grace_period_hours`, `refund_on_late_cancel`), and after cancellation bot sends final refund status.
 - Scheduler: auto-cancel unpaid appointments by specialist booking policy (`auto_cancel_unpaid_enabled`, `unpaid_auto_cancel_after_hours`) with audit reason `auto_cancel_unpaid`.
 - Specialists и Users CRUD (с role-gates).
