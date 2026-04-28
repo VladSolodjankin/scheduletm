@@ -70,7 +70,9 @@ VITE_API_URL=https://apidev.meetli.cc
 Тесты в `web/tests/e2e/ui/*.spec.mjs` — это **настоящие end-to-end UI-тесты**:
 - открывают браузерный контекст;
 - делают реальные клики/ввод в интерфейсе;
-- проверяют поведение web-приложения при интеграции с backend/dev БД.
+- проверяют поведение web-приложения при интеграции с backend/dev БД;
+- покрывают owner-flow для `Users` (create/edit/deactivate), переход owner в `/error-logs`, logout из profile menu;
+- проверяют role-aware доступность пунктов меню и доступность табов `System settings`/`Account settings` на странице настроек.
 
 
 > Для запуска используется `@playwright/test` (единый раннер/DSL), чтобы избежать конфликтов вида `test.describe() called here` при смешивании разных Playwright пакетов.
