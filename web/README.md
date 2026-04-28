@@ -102,7 +102,7 @@ VITE_API_URL=http://localhost:3003
 - делают реальные клики/ввод в интерфейсе;
 - проверяют поведение web-приложения при интеграции с backend/dev БД;
 - покрывают owner-flow для `Users` (create/edit/deactivate), переход owner в `/error-logs`, logout из profile menu;
-- проверяют role-aware доступность пунктов меню и доступность табов `System settings`/`Account settings` на странице настроек;
+- проверяют role-aware доступность пунктов меню и видимость табов `System settings`/`Account settings` на странице настроек;
 - проверяют доступ к страницам по прямому URL и access denied состояния (owner/admin/client) для `/specialists`, `/notification-logs`, `/error-logs`.
 
 Структура UI e2e разнесена по файлам: `users.ui.e2e.spec.mjs`, `navigation.ui.e2e.spec.mjs`, `settings.ui.e2e.spec.mjs`, `session.ui.e2e.spec.mjs`, `access-control.ui.e2e.spec.mjs`; общие auth-хелперы вынесены в `ui/helpers/auth.mjs`.

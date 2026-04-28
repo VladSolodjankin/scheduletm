@@ -112,6 +112,14 @@ export function SettingsCard({
   onConnectGoogle,
   onDisconnectGoogle
 }: SettingsCardProps) {
+  const tabs = [
+    ...(canManageSystemSettings ? [{ key: 'system', label: copy.systemTab }] : []),
+    ...(canManageAccountSettings ? [{ key: 'account', label: copy.accountTab }] : []),
+    ...(canManageSpecialistBookingPolicy ? [{ key: 'specialistPolicy', label: copy.specialistPolicyTab }] : []),
+    ...(canManageAccountSettings ? [{ key: 'notifications', label: copy.notificationsTab }] : []),
+    { key: 'user', label: copy.userTab }
+  ] as const;
+  const initialTab = tabs[0]?.key ?? 'user';
   const timingOptions = [
     'disabled',
     ...[
@@ -122,7 +130,13 @@ export function SettingsCard({
   ];
   const selectableChannels: NotificationChannel[] = ['email', 'telegram', 'viber', 'sms', 'whatsapp'];
   const meetingDurationOptions = Array.from({ length: 7 }, (_, i) => 30 + i * 10);
-  const [tab, setTab] = useState(canManageSystemSettings ? 0 : canManageAccountSettings ? 1 : canManageSpecialistBookingPolicy ? 2 : 4);
+  const [tab, setTab] = useState<string>(initialTab);
+
+  useEffect(() => {
+    if (!tabs.some((item) => item.key === tab)) {
+      setTab(initialTab);
+    }
+  }, [initialTab, tab, tabs]);
 
   const { control: systemControl, handleSubmit: handleSystemSubmit, reset: resetSystem } = useForm<SystemSettings>({
     defaultValues: systemSettings
@@ -198,15 +212,17 @@ export function SettingsCard({
 
   return (
     <Box>
-      <AppTabs value={tab} onChange={(_, next) => setTab(next)} sx={{ mb: 2 }}>
-        <AppTab label={copy.systemTab} disabled={!canManageSystemSettings} />
-        <AppTab label={copy.accountTab} disabled={!canManageAccountSettings} />
-        <AppTab label={copy.specialistPolicyTab} disabled={!canManageSpecialistBookingPolicy} />
-        <AppTab label={copy.notificationsTab} disabled={!canManageAccountSettings} />
-        <AppTab label={copy.userTab} />
+      <AppTabs
+        value={tabs.findIndex((item) => item.key === tab)}
+        onChange={(_, next) => setTab(tabs[next]?.key ?? initialTab)}
+        sx={{ mb: 2 }}
+      >
+        {tabs.map((item) => (
+          <AppTab key={item.key} label={item.label} />
+        ))}
       </AppTabs>
 
-      {tab === 0 && canManageSystemSettings && (
+      {tab === 'system' && (
         <AppForm component="form" onSubmit={handleSystemSubmit(onSaveSystem)}>
           <Typography variant="h5">{copy.systemTitle}</Typography>
 
@@ -293,7 +309,7 @@ export function SettingsCard({
         </AppForm>
       )}
 
-      {tab === 1 && canManageAccountSettings && (
+      {tab === 'account' && (
         <AppForm component="form" onSubmit={handleAccountSubmit(onSaveAccount)}>
           <Typography variant="h5">{copy.accountTitle}</Typography>
 
@@ -353,7 +369,7 @@ export function SettingsCard({
         </AppForm>
       )}
 
-      {tab === 2 && canManageSpecialistBookingPolicy && (
+      {tab === 'specialistPolicy' && (
         <AppForm component="form" onSubmit={handleSpecialistPolicySubmit(onSaveSpecialistBookingPolicy)}>
           <Typography variant="h5">{copy.specialistPolicyTitle}</Typography>
 
@@ -413,7 +429,7 @@ export function SettingsCard({
         </AppForm>
       )}
 
-      {tab === 3 && canManageAccountSettings && (
+      {tab === 'notifications' && (
         <AppForm
           component="form"
           onSubmit={handleNotificationDefaultsSubmit((values) => {
@@ -536,7 +552,7 @@ export function SettingsCard({
         </AppForm>
       )}
 
-      {tab === 4 && (
+      {tab === 'user' && (
         <AppForm component="form" onSubmit={handleUserSubmit(onSaveUser)}>
           <Typography variant="h5">{copy.userTitle}</Typography>
 

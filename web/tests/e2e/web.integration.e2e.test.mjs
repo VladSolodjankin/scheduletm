@@ -48,9 +48,9 @@ describe('web integration contracts: appointments lifecycle + users CRUD + RBAC'
     assert.match(roles, /Specialist = 'specialist'/);
     assert.match(roles, /Client = 'client'/);
 
-    assert.match(mainLayout, /user\?\.role === 'owner' \|\| user\?\.role === 'admin'/);
-    assert.match(mainLayout, /user\?\.role === 'owner' \|\| user\?\.role === 'admin' \|\| user\?\.role === 'specialist'/);
-    assert.match(mainLayout, /user\?\.role === 'owner'[\s\S]*?\{ to: '\/error-logs'/);
+    assert.match(mainLayout, /user\?\.role === WebUserRole\.Owner \|\| user\?\.role === WebUserRole\.Admin/);
+    assert.match(mainLayout, /user\?\.role === WebUserRole\.Owner \|\| user\?\.role === WebUserRole\.Admin \|\| user\?\.role === WebUserRole\.Specialist/);
+    assert.match(mainLayout, /user\?\.role === WebUserRole\.Owner[\s\S]*?\{ to: '\/error-logs'/);
 
     assert.match(usersContainer, /const canManageUsers = user\?\.role === 'owner' \|\| user\?\.role === 'admin' \|\| user\?\.role === 'specialist'/);
     assert.match(specialistsContainer, /const canManageSpecialists = user\?\.role === 'owner' \|\| user\?\.role === 'admin'/);
