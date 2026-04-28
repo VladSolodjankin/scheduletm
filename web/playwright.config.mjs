@@ -8,6 +8,7 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
+  workers: Number(process.env.E2E_WORKERS ?? '1'),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : [['list']],
   use: {
