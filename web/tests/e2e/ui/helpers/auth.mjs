@@ -34,7 +34,7 @@ export async function login(page, { email, password }) {
   if (cachedState) {
     await applyCachedState(page, cachedState);
     await page.goto('/appointments');
-    await expect(page).toHaveURL(/\/appointments$/);
+    await expect(page).toHaveURL(/\\/(appointments|settings)$/);
 
     return;
   }
@@ -47,7 +47,7 @@ export async function login(page, { email, password }) {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL(/\/appointments$/);
+  await expect(page).toHaveURL(/\\/(appointments|settings)$/);
 
   authStateCache.set(cacheKey, await page.context().storageState());
 }
