@@ -74,6 +74,8 @@ VITE_API_URL=https://apidev.meetli.cc
 - покрывают owner-flow для `Users` (create/edit/deactivate), переход owner в `/error-logs`, logout из profile menu;
 - проверяют role-aware доступность пунктов меню и доступность табов `System settings`/`Account settings` на странице настроек.
 
+Структура UI e2e разнесена по файлам: `users.ui.e2e.spec.mjs`, `navigation.ui.e2e.spec.mjs`, `settings.ui.e2e.spec.mjs`, `session.ui.e2e.spec.mjs`; общие auth-хелперы вынесены в `ui/helpers/auth.mjs`.
+
 
 > Для запуска используется `@playwright/test` (единый раннер/DSL), чтобы избежать конфликтов вида `test.describe() called here` при смешивании разных Playwright пакетов.
 
