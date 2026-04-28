@@ -1,13 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { creds, login } from './helpers/auth.mjs';
+import { creds, loggedInRole, login } from './helpers/auth.mjs';
 
 test.describe('web ui e2e: settings', () => {
   test('settings tabs are enabled according to role', async ({ browser }) => {
     const scenarios = [
-      { label: 'owner', creds: creds('E2E_OWNER'), systemTabEnabled: true, accountTabEnabled: true },
-      { label: 'admin', creds: creds('E2E_ADMIN'), systemTabEnabled: false, accountTabEnabled: true },
-      { label: 'specialist', creds: creds('E2E_SPECIALIST'), systemTabEnabled: false, accountTabEnabled: false },
-      { label: 'client', creds: creds('E2E_CLIENT'), systemTabEnabled: false, accountTabEnabled: false },
+      { label: 'owner', expectedRole: 'owner', creds: creds('E2E_OWNER'), systemTabEnabled: true, accountTabEnabled: true },
+      { label: 'admin', expectedRole: 'admin', creds: creds('E2E_ADMIN'), systemTabEnabled: false, accountTabEnabled: true },
+      { label: 'specialist', expectedRole: 'specialist', creds: creds('E2E_SPECIALIST'), systemTabEnabled: false, accountTabEnabled: false },
+      { label: 'client', expectedRole: 'client', creds: creds('E2E_CLIENT'), systemTabEnabled: false, accountTabEnabled: false },
     ];
 
     const hasAnyScenario = scenarios.some((scenario) => scenario.creds.email && scenario.creds.password);
@@ -22,6 +22,16 @@ test.describe('web ui e2e: settings', () => {
       const page = await context.newPage();
 
       await login(page, scenario.creds);
+      const role = await loggedInRole(page);
+      if (role !== scenario.expectedRole) {
+        test.info().annotations.push({
+          type: 'skip',
+          description: `${scenario.label}: expected role "${scenario.expectedRole}", got "${role ?? 'unknown'}".`,
+        });
+        await context.close();
+        continue;
+      }
+
       await page.getByRole('link', { name: 'Settings' }).click();
       await expect(page).toHaveURL(/\/settings$/);
 

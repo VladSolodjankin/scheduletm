@@ -26,9 +26,10 @@ test.describe('web ui e2e: users', () => {
     await expect(row).toBeVisible();
 
     await row.getByRole('button', { name: 'Edit user' }).click();
-    await expect(row).toContainText('Client Updated');
+    await page.getByLabel('First name').fill('Client');
+    await page.getByLabel('Last name').fill('Updated');
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.locator('tr', { hasText: 'Client Updated' })).toBeVisible();
+    await expect(page.locator('tr', { hasText: `${email}ClientUpdated` })).toBeVisible();
 
     await row.getByRole('button', { name: 'Deactivate user' }).click();
     await expect(row).toBeVisible();

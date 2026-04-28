@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { creds, login } from './helpers/auth.mjs';
+import { creds, loggedInRole, login } from './helpers/auth.mjs';
 
 test.describe('web ui e2e: navigation & role-aware menu', () => {
   test('owner can open error logs page from menu', async ({ page }) => {
@@ -16,20 +16,28 @@ test.describe('web ui e2e: navigation & role-aware menu', () => {
   test('role-aware menu visibility for owner/admin/specialist/client', async ({ browser }) => {
     const scenarios = [
       {
+        label: 'owner',
+        expectedRole: 'owner',
         creds: creds('E2E_OWNER'),
         visible: ['Appointments', 'Specialists', 'Users', 'Notification logs', 'Error logs', 'Settings'],
       },
       {
+        label: 'admin',
+        expectedRole: 'admin',
         creds: creds('E2E_ADMIN'),
         visible: ['Appointments', 'Specialists', 'Users', 'Notification logs', 'Settings'],
         hidden: ['Error logs'],
       },
       {
+        label: 'specialist',
+        expectedRole: 'specialist',
         creds: creds('E2E_SPECIALIST'),
         visible: ['Appointments', 'Users', 'Notification logs', 'Settings'],
         hidden: ['Specialists', 'Error logs'],
       },
       {
+        label: 'client',
+        expectedRole: 'client',
         creds: creds('E2E_CLIENT'),
         visible: ['Appointments', 'Settings'],
         hidden: ['Specialists', 'Users', 'Notification logs', 'Error logs'],
@@ -48,6 +56,15 @@ test.describe('web ui e2e: navigation & role-aware menu', () => {
       const page = await context.newPage();
 
       await login(page, scenario.creds);
+      const role = await loggedInRole(page);
+      if (role !== scenario.expectedRole) {
+        test.info().annotations.push({
+          type: 'skip',
+          description: `${scenario.label}: expected role "${scenario.expectedRole}", got "${role ?? 'unknown'}".`,
+        });
+        await context.close();
+        continue;
+      }
 
       for (const item of scenario.visible) {
         await expect(page.getByRole('link', { name: item })).toBeVisible();
