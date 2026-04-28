@@ -17,7 +17,10 @@ React SPA для owner/admin/specialist/client.
 ```bash
 npm run -w @scheduletm/web dev
 npm run -w @scheduletm/web build
-npm run -w @scheduletm/web test
+npm run -w @scheduletm/web test                 # быстрые e2e contract checks
+npm run -w @scheduletm/web test:e2e:contracts   # contract-level checks (node:test)
+npm run -w @scheduletm/web test:e2e:ui          # реальный UI e2e (Playwright, клики)
+npm run -w @scheduletm/web test:e2e             # contracts + UI
 npm run -w @scheduletm/web verify
 ```
 
@@ -51,3 +54,33 @@ VITE_API_URL=https://apidev.meetli.cc
 - создание аккаунта с полями: имя, фамилия, пароль, повтор пароля, Telegram;
 - inline-ошибки (слабый пароль/несовпадение паролей) и fallback серверной ошибки;
 - запрос нового приглашения для истекших ссылок.
+
+
+## Покрытие e2e contract-тестами (быстрый слой)
+
+`web/tests/e2e/*.test.mjs` проверяют web-контракты без браузерного раннера:
+- жизненный цикл appointments: create/edit/cancel/reschedule;
+- late-cancel UX по specialist booking policy (grace period + refund/no-refund тексты подтверждения/предупреждения);
+- users CRUD: create/edit/delete;
+- role-aware ограничения для owner/admin/specialist/client на уровне web-контейнеров и меню.
+
+
+## UI e2e (Playwright) для dev-стенда
+
+Тесты в `web/tests/e2e/ui/*.spec.mjs` — это **настоящие end-to-end UI-тесты**:
+- открывают браузерный контекст;
+- делают реальные клики/ввод в интерфейсе;
+- проверяют поведение web-приложения при интеграции с backend/dev БД.
+
+
+> Для запуска используется `@playwright/test` (единый раннер/DSL), чтобы избежать конфликтов вида `test.describe() called here` при смешивании разных Playwright пакетов.
+
+### Переменные окружения для UI e2e
+
+- `E2E_BASE_URL` — URL web-приложения (например, `https://dev.meetli.cc` или локальный `http://127.0.0.1:5173`).
+- `E2E_OWNER_EMAIL` / `E2E_OWNER_PASSWORD`
+- `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`
+- `E2E_SPECIALIST_EMAIL` / `E2E_SPECIALIST_PASSWORD`
+- `E2E_CLIENT_EMAIL` / `E2E_CLIENT_PASSWORD`
+
+Если часть ролей не задана, соответствующие проверки будут пропущены (skip), чтобы можно было запускать suite постепенно.
