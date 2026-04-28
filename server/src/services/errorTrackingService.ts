@@ -139,26 +139,31 @@ export async function trackServerError(input: {
   error: unknown;
 }): Promise<void> {
   const error = input.error instanceof Error ? input.error : new Error('Unknown server error');
-  await insertErrorLog({
-    accountId: input.actor?.accountId ?? null,
-    webUserId: input.actor ? Number(input.actor.id) : null,
-    source: 'server',
-    method: input.method?.slice(0, 16) ?? null,
-    path: input.path?.slice(0, 255) ?? null,
-    message: normalizeText(error.message) || 'Server error',
-    stack: normalizeText(error.stack, ERROR_STACK_MAX) || null,
-  });
+  try {
+    await insertErrorLog({
+      accountId: input.actor?.accountId ?? null,
+      webUserId: input.actor ? Number(input.actor.id) : null,
+      source: 'server',
+      method: input.method?.slice(0, 16) ?? null,
+      path: input.path?.slice(0, 255) ?? null,
+      message: normalizeText(error.message) || 'Server error',
+      stack: normalizeText(error.stack, ERROR_STACK_MAX) || null,
+    });
 
-  await notifyErrorToTelegram({
-    source: 'server',
-    message: normalizeText(error.message) || 'Server error',
-    method: input.method?.slice(0, 16) ?? null,
-    path: input.path?.slice(0, 255) ?? null,
-    accountId: input.actor?.accountId ?? null,
-    webUserId: input.actor ? Number(input.actor.id) : null,
-  });
+    await notifyErrorToTelegram({
+      source: 'server',
+      message: normalizeText(error.message) || 'Server error',
+      method: input.method?.slice(0, 16) ?? null,
+      path: input.path?.slice(0, 255) ?? null,
+      accountId: input.actor?.accountId ?? null,
+      webUserId: input.actor ? Number(input.actor.id) : null,
+    });
 
-  await cleanupExpiredLogs();
+    await cleanupExpiredLogs();
+  } catch (trackingError) {
+    console.error('[error-tracking] trackServerError failed', trackingError);
+    console.error('[error-tracking] original server error', error);
+  }
 }
 
 export async function getErrorLogsForActor(

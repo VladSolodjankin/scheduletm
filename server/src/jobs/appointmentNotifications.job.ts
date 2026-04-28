@@ -9,6 +9,7 @@ import {
   upsertNotificationJob,
 } from '../repositories/notificationRepository.js';
 import { sendAppointmentNotificationByType } from '../services/appointmentNotificationService.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
 const DEFAULT_WINDOW_MIN = 10;
@@ -88,7 +89,13 @@ async function deliverAndMark(input: {
 
 export function startAppointmentNotificationsJob(intervalMs = DEFAULT_INTERVAL_MS): NodeJS.Timeout {
   return setInterval(() => {
-    void runAppointmentNotificationsJob();
+    void runAppointmentNotificationsJob().catch((error) => {
+      void trackServerError({
+        method: 'JOB',
+        path: '/jobs/appointment-notifications',
+        error,
+      });
+    });
   }, intervalMs);
 }
 
