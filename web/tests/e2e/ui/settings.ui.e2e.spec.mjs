@@ -2,12 +2,12 @@ import { test, expect } from '@playwright/test';
 import { creds, loggedInRole, login } from './helpers/auth.mjs';
 
 test.describe('web ui e2e: settings', () => {
-  test('settings tabs are enabled according to role', async ({ browser }) => {
+  test('settings tabs are visible according to role', async ({ browser }) => {
     const scenarios = [
-      { label: 'owner', expectedRole: 'owner', creds: creds('E2E_OWNER'), systemTabEnabled: true, accountTabEnabled: true },
-      { label: 'admin', expectedRole: 'admin', creds: creds('E2E_ADMIN'), systemTabEnabled: false, accountTabEnabled: true },
-      { label: 'specialist', expectedRole: 'specialist', creds: creds('E2E_SPECIALIST'), systemTabEnabled: false, accountTabEnabled: false },
-      { label: 'client', expectedRole: 'client', creds: creds('E2E_CLIENT'), systemTabEnabled: false, accountTabEnabled: false },
+      { label: 'owner', expectedRole: 'owner', creds: creds('E2E_OWNER'), systemTabVisible: true, accountTabVisible: true },
+      { label: 'admin', expectedRole: 'admin', creds: creds('E2E_ADMIN'), systemTabVisible: false, accountTabVisible: true },
+      { label: 'specialist', expectedRole: 'specialist', creds: creds('E2E_SPECIALIST'), systemTabVisible: false, accountTabVisible: false },
+      { label: 'client', expectedRole: 'client', creds: creds('E2E_CLIENT'), systemTabVisible: false, accountTabVisible: false },
     ];
 
     const hasAnyScenario = scenarios.some((scenario) => scenario.creds.email && scenario.creds.password);
@@ -38,16 +38,16 @@ test.describe('web ui e2e: settings', () => {
       const systemTab = page.getByRole('tab', { name: 'System settings' });
       const accountTab = page.getByRole('tab', { name: 'Account settings' });
 
-      if (scenario.systemTabEnabled) {
-        await expect(systemTab, `${scenario.label}: system tab must be enabled`).toBeEnabled();
+      if (scenario.systemTabVisible) {
+        await expect(systemTab, `${scenario.label}: system tab must be visible`).toBeVisible();
       } else {
-        await expect(systemTab, `${scenario.label}: system tab must be disabled`).toBeDisabled();
+        await expect(systemTab, `${scenario.label}: system tab must be hidden`).toHaveCount(0);
       }
 
-      if (scenario.accountTabEnabled) {
-        await expect(accountTab, `${scenario.label}: account tab must be enabled`).toBeEnabled();
+      if (scenario.accountTabVisible) {
+        await expect(accountTab, `${scenario.label}: account tab must be visible`).toBeVisible();
       } else {
-        await expect(accountTab, `${scenario.label}: account tab must be disabled`).toBeDisabled();
+        await expect(accountTab, `${scenario.label}: account tab must be hidden`).toHaveCount(0);
       }
 
       await context.close();
