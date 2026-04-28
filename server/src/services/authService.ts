@@ -24,7 +24,7 @@ import {
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { canManageSpecialists } from '../policies/rolePermissions.js';
-import { createToken, hashPassword, sanitizeEmail, verifyPassword } from '../utils/crypto.js';
+import { createOtpCode, createToken, hashPassword, sanitizeEmail, verifyPassword } from '../utils/crypto.js';
 import { csrfCookieName } from '../utils/cookies.js';
 import { sendEmailVerificationEmail, sendRegistrationSuccessEmail } from './emailDeliveryService.js';
 
@@ -121,6 +121,10 @@ export const registerUser = async (
   emailRaw: string,
   password: string,
   timezone?: string,
+  firstName?: string,
+  lastName?: string,
+  phone?: string,
+  telegramUsername?: string,
 ): Promise<User | null> => {
   const email = sanitizeEmail(emailRaw);
   const existing = await findWebUserByEmailAnyAccount(email);
@@ -131,10 +135,18 @@ export const registerUser = async (
 
     const salt = crypto.randomBytes(16).toString('hex');
     const passwordHash = hashPassword(password, salt);
-    const verificationCode = createToken();
+    const verificationCode = createOtpCode();
     const verificationCodeHash = hashPassword(verificationCode, salt);
 
     await updateWebUserCredentials(existing.account_id, existing.id, passwordHash, salt);
+    await updateWebUserProfile({
+      accountId: existing.account_id,
+      id: existing.id,
+      firstName: firstName?.trim() ?? '',
+      lastName: lastName?.trim() ?? '',
+      phone: phone?.trim() ?? '',
+      telegramUsername: telegramUsername?.trim() ?? '',
+    });
     await updateWebUserAuthState({
       accountId: existing.account_id,
       id: existing.id,
@@ -168,13 +180,17 @@ export const registerUser = async (
 
   const salt = crypto.randomBytes(16).toString('hex');
   const passwordHash = hashPassword(password, salt);
-  const verificationCode = createToken();
+  const verificationCode = createOtpCode();
   const verificationCodeHash = hashPassword(verificationCode, salt);
 
   const webUser = await createWebUser({
     accountId,
     email,
     role: WebUserRole.Admin,
+    firstName: firstName?.trim() ?? '',
+    lastName: lastName?.trim() ?? '',
+    phone: phone?.trim() ?? '',
+    telegramUsername: telegramUsername?.trim() ?? '',
     passwordHash,
     passwordSalt: salt,
     timezone,
@@ -211,7 +227,7 @@ export const resendUserEmailVerificationCode = async (emailRaw: string): Promise
     return true;
   }
 
-  const verificationCode = createToken();
+  const verificationCode = createOtpCode();
   const verificationCodeHash = hashPassword(verificationCode, user.password_salt);
 
   await updateWebUserAuthState({

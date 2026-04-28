@@ -105,7 +105,7 @@ scheduletm/
 
 ### Web + Server
 
-- Auth: register/login/refresh/logout + OTP email verification by unique code (with resend) + invite onboarding page `/verify-email` for creating account from invitation.
+- Auth: register/login/refresh/logout + 4-digit OTP email verification (with resend and auto-confirm UX) + invite onboarding page `/verify-email` for creating account from invitation.
 - Роли: `owner` / `admin` / `specialist` / `client` (RBAC policy централизована в server).
 - Settings: system + account + user settings, plus user integrations. `Default meeting duration` in system/account settings is selected from dropdown options 30–90 minutes (step 10).
 - Integrations: Google OAuth start/callback, Telegram bot token в user integrations.

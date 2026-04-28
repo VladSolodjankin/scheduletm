@@ -6,7 +6,9 @@ Node.js/Express API для web-клиента и интеграций.
 
 - Auth: register/login/refresh/logout + verify-email.
   При self-registration пользователю создаётся отдельный `account_id`, присваивается роль `admin`,
-  и отправляется письмо с OTP-кодом подтверждения email.
+  и отправляется письмо с 4-значным OTP-кодом подтверждения email.
+  Для `POST /api/auth/register` обязательны `firstName`, `lastName`, `email`, `phone`, `password`,
+  опционален `telegramUsername`.
   Для приглашённых пользователей поддерживается flow принятия приглашения `POST /api/auth/accept-invite`
   (одноразовый invite-токен в ссылке, срок жизни 24 часа, пароль задаёт сам пользователь).
   Поддерживаются `POST /api/auth/verify-email` и `POST /api/auth/resend-verification-code`.

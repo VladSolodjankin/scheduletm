@@ -1,4 +1,4 @@
-import { Alert, Box, Divider, Link, Stack, Typography } from '@mui/material';
+import { Alert, Box, Divider, Link, Stack, TextField, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,6 @@ import { useI18n } from '../shared/i18n/I18nContext';
 import type { AuthResponse, RegisterResponse, VerifyEmailResponse } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
-import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 
 type AuthMode = 'login' | 'register';
 
@@ -21,6 +20,15 @@ type AuthContainerProps = {
 
 type VerifyEmailFormValues = {
   code: string;
+};
+
+type AuthCredentialsFormValues = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  telegramUsername: string;
+  password: string;
 };
 
 type RegisterStep = 'credentials' | 'otp';
@@ -49,11 +57,13 @@ export function AuthContainer({ mode }: AuthContainerProps) {
     handleSubmit: handleVerifyEmailSubmit,
     setError: setVerifyEmailFormError,
     clearErrors: clearVerifyEmailErrors,
+    setValue: setVerifyEmailValue,
   } = useForm<VerifyEmailFormValues>({
     defaultValues: {
       code: '',
     },
   });
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '']);
 
   useEffect(() => {
     if (isLogin) {
@@ -81,7 +91,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
     });
   }, [fieldErrors.code, setVerifyEmailFormError]);
 
-  const submitCredentials = async ({ email, password }: { email: string; password: string }) => {
+  const submitCredentials = async ({ email, password, firstName, lastName, phone, telegramUsername }: AuthCredentialsFormValues) => {
     setIsSubmitting(true);
 
     try {
@@ -98,7 +108,15 @@ export function AuthContainer({ mode }: AuthContainerProps) {
         return;
       }
 
-      const response = await apiClient.post<RegisterResponse>(endpoint, { email, password, timezone });
+      const response = await apiClient.post<RegisterResponse>(endpoint, {
+        email,
+        password,
+        timezone,
+        firstName,
+        lastName,
+        phone,
+        telegramUsername,
+      });
       setError('');
       setFieldErrors({});
       setPendingEmail(response.data.user.email);
@@ -152,6 +170,11 @@ export function AuthContainer({ mode }: AuthContainerProps) {
     }
   };
 
+  const submitOtpCode = (code: string) => {
+    setVerifyEmailValue('code', code, { shouldValidate: true });
+    return handleVerifyEmailSubmit(submitOtp)();
+  };
+
   const resendCode = async () => {
     if (!pendingEmail) {
       return;
@@ -184,6 +207,18 @@ export function AuthContainer({ mode }: AuthContainerProps) {
     clearVerifyEmailErrors();
     window.sessionStorage.removeItem(REGISTER_PENDING_EMAIL_KEY);
     setPendingEmail('');
+    setOtpDigits(['', '', '', '']);
+  };
+
+  const handleOtpDigitChange = (index: number, rawValue: string) => {
+    const nextDigit = rawValue.replace(/\D/g, '').slice(-1);
+    const nextDigits = otpDigits.map((digit, digitIndex) => (digitIndex === index ? nextDigit : digit));
+    setOtpDigits(nextDigits);
+    const nextCode = nextDigits.join('');
+    setVerifyEmailValue('code', nextCode, { shouldValidate: true });
+    if (nextCode.length === 4 && nextDigits.every(Boolean) && !isSubmitting) {
+      void submitOtpCode(nextCode);
+    }
   };
 
   const authCardTitle = useMemo(() => (isLogin ? t('auth.formLoginTitle') : t('auth.formRegisterTitle')), [isLogin, t]);
@@ -259,23 +294,42 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                 control={verifyEmailControl}
                 rules={{
                   required: t('auth.verifyCodeRequired'),
-                  minLength: {
-                    value: 8,
+                  pattern: {
+                    value: /^\d{4}$/,
                     message: t('auth.verifyCodeInvalid')
                   }
                 }}
-                render={({ field, fieldState }: any) => (
-                  <AppRhfTextField
-                    field={field}
-                    label={t('auth.verifyCodeLabel')}
-                    type="text"
-                    onValueChange={() => {
-                      clearVerifyEmailErrors('code');
-                      setFieldErrors((prev) => ({ ...prev, code: '' }));
-                    }}
-                    error={Boolean(fieldState.error)}
-                    helperText={fieldState.error?.message}
-                  />
+                render={({ fieldState }: any) => (
+                  <Stack spacing={1}>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('auth.verifyCodeLabel')}
+                    </Typography>
+                    <Stack direction="row" spacing={1.5}>
+                      {otpDigits.map((digit, index) => (
+                        <TextField
+                          key={`otp-${index}`}
+                          value={digit}
+                          onChange={(event) => {
+                            clearVerifyEmailErrors('code');
+                            setFieldErrors((prev) => ({ ...prev, code: '' }));
+                            handleOtpDigitChange(index, event.target.value);
+                          }}
+                          inputProps={{
+                            inputMode: 'numeric',
+                            maxLength: 1,
+                            style: { textAlign: 'center', fontSize: 24, fontWeight: 700 }
+                          }}
+                          sx={{ width: 64 }}
+                          error={Boolean(fieldState.error)}
+                        />
+                      ))}
+                    </Stack>
+                    {fieldState.error?.message ? (
+                      <Typography variant="caption" color="error">
+                        {fieldState.error.message}
+                      </Typography>
+                    ) : null}
+                  </Stack>
                 )}
               />
 
@@ -286,7 +340,13 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                 <AppButton type="button" variant="text" onClick={resendCode} isLoading={isResending} fullWidth>
                   {t('auth.verifyResend')}
                 </AppButton>
-                <AppButton type="submit" variant="contained" isLoading={isSubmitting} fullWidth>
+                <AppButton
+                  type="button"
+                  variant="contained"
+                  isLoading={isSubmitting}
+                  onClick={() => void submitOtpCode(otpDigits.join(''))}
+                  fullWidth
+                >
                   {t('auth.verifySubmit')}
                 </AppButton>
               </Stack>
@@ -305,12 +365,27 @@ export function AuthContainer({ mode }: AuthContainerProps) {
         ) : (
           <AuthCard
             title={authCardTitle}
+            isLogin={isLogin}
+            firstNameLabel={t('auth.firstNameLabel')}
+            lastNameLabel={t('auth.lastNameLabel')}
             emailLabel={t('common.email')}
+            phoneLabel={t('auth.phoneLabel')}
+            telegramLabel={t('auth.telegramLabel')}
             passwordLabel={t('common.password')}
             submitText={isLogin ? t('auth.submitLogin') : t('auth.submitRegister')}
             switchText={isLogin ? t('auth.switchToRegister') : t('auth.switchToLogin')}
             isSubmitting={isSubmitting}
-            fieldErrors={{ email: fieldErrors.email, password: fieldErrors.password }}
+            fieldErrors={{
+              firstName: fieldErrors.firstName,
+              lastName: fieldErrors.lastName,
+              email: fieldErrors.email,
+              phone: fieldErrors.phone,
+              telegramUsername: fieldErrors.telegramUsername,
+              password: fieldErrors.password
+            }}
+            requiredMessage={t('auth.requiredField')}
+            phoneInvalidMessage={t('auth.phoneInvalid')}
+            passwordMinLengthMessage={t('auth.passwordMinLength')}
             onSubmit={submitCredentials}
             onSwitch={() => navigate(isLogin ? '/register' : '/login')}
           />

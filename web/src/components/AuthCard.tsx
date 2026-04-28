@@ -4,11 +4,16 @@ import { Controller, useForm } from 'react-hook-form';
 import logoText from '../static/images/logo_text.svg';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
+import { AppRhfPhoneField, isValidPhoneValue } from '../shared/ui/AppRhfPhoneField';
 import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 
 type AuthFormValues = {
+  firstName: string;
+  lastName: string;
   email: string;
+  phone: string;
+  telegramUsername: string;
   password: string;
 };
 
@@ -16,10 +21,18 @@ type AuthCardProps = {
   title: string;
   submitText: string;
   switchText: string;
+  isLogin: boolean;
+  firstNameLabel: string;
+  lastNameLabel: string;
   emailLabel: string;
+  phoneLabel: string;
+  telegramLabel: string;
   passwordLabel: string;
   isSubmitting?: boolean;
   fieldErrors?: Partial<Record<keyof AuthFormValues, string>>;
+  requiredMessage: string;
+  phoneInvalidMessage: string;
+  passwordMinLengthMessage: string;
   onSubmit: (values: AuthFormValues) => Promise<void> | void;
   onSwitch: () => void;
 };
@@ -28,16 +41,28 @@ export function AuthCard({
   title,
   submitText,
   switchText,
+  isLogin,
+  firstNameLabel,
+  lastNameLabel,
   emailLabel,
+  phoneLabel,
+  telegramLabel,
   passwordLabel,
   isSubmitting = false,
   fieldErrors,
+  requiredMessage,
+  phoneInvalidMessage,
+  passwordMinLengthMessage,
   onSubmit,
   onSwitch
 }: AuthCardProps) {
   const { control, handleSubmit, setError, clearErrors } = useForm<AuthFormValues>({
     defaultValues: {
+      firstName: '',
+      lastName: '',
       email: '',
+      phone: '',
+      telegramUsername: '',
       password: ''
     }
   });
@@ -49,6 +74,18 @@ export function AuthCard({
 
     if (fieldErrors.email) {
       setError('email', { type: 'server', message: fieldErrors.email });
+    }
+    if (fieldErrors.firstName) {
+      setError('firstName', { type: 'server', message: fieldErrors.firstName });
+    }
+    if (fieldErrors.lastName) {
+      setError('lastName', { type: 'server', message: fieldErrors.lastName });
+    }
+    if (fieldErrors.phone) {
+      setError('phone', { type: 'server', message: fieldErrors.phone });
+    }
+    if (fieldErrors.telegramUsername) {
+      setError('telegramUsername', { type: 'server', message: fieldErrors.telegramUsername });
     }
 
     if (fieldErrors.password) {
@@ -84,12 +121,44 @@ export function AuthCard({
           </Typography>
         </Stack>
 
+        {!isLogin && (
+          <>
+            <Controller
+              name="firstName"
+              control={control}
+              rules={{ required: requiredMessage }}
+              render={({ field, fieldState }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={firstNameLabel}
+                  onValueChange={() => clearErrors('firstName')}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+            />
+
+            <Controller
+              name="lastName"
+              control={control}
+              rules={{ required: requiredMessage }}
+              render={({ field, fieldState }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={lastNameLabel}
+                  onValueChange={() => clearErrors('lastName')}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+            />
+          </>
+        )}
+
         <Controller
           name="email"
           control={control}
-          rules={{
-            required: 'Email is required'
-          }}
+          rules={{ required: requiredMessage }}
           render={({ field, fieldState }: any) => (
             <AppRhfTextField
               field={field}
@@ -102,14 +171,50 @@ export function AuthCard({
           )}
         />
 
+        {!isLogin && (
+          <>
+            <Controller
+              name="phone"
+              control={control}
+              rules={{
+                required: requiredMessage,
+                validate: (value) => isValidPhoneValue(value) || phoneInvalidMessage
+              }}
+              render={({ field, fieldState }: any) => (
+                <AppRhfPhoneField
+                  field={field}
+                  label={phoneLabel}
+                  onChange={() => clearErrors('phone')}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+            />
+
+            <Controller
+              name="telegramUsername"
+              control={control}
+              render={({ field, fieldState }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={telegramLabel}
+                  onValueChange={() => clearErrors('telegramUsername')}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+            />
+          </>
+        )}
+
         <Controller
           name="password"
           control={control}
           rules={{
-            required: 'Password is required',
+            required: requiredMessage,
             minLength: {
               value: 10,
-              message: 'Password must be at least 10 characters'
+              message: passwordMinLengthMessage
             }
           }}
           render={({ field, fieldState }: any) => (
