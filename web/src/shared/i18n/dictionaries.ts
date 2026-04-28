@@ -640,6 +640,7 @@ export type TranslationKey =
   | 'common.register'
   | 'common.language'
   | 'common.appointments'
+  | 'common.my_appointments'
   | 'common.specialists'
   | 'common.users'
   | 'common.notificationLogs'
