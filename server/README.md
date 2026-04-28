@@ -53,7 +53,14 @@ Node.js/Express API для web-клиента и интеграций.
 npm run -w @scheduletm/server dev
 npm run -w @scheduletm/server build
 npm run -w @scheduletm/server test
+# только интеграционные бизнес-кейсы
+npm run -w @scheduletm/server test -- business.integration.test.ts
 ```
+
+Интеграционный набор `server/tests/business.integration.test.ts` покрывает ключевые кросс-слойные сценарии:
+- создание `client` через user management (web_user + clients link + invite trigger);
+- ролевую видимость users для `specialist`;
+- каскад настроек уведомлений `account -> specialist -> client deny`.
 
 ## Переменные окружения
 
