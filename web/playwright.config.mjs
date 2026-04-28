@@ -9,6 +9,7 @@ export default defineConfig({
     timeout: 10_000,
   },
   retries: process.env.CI ? 1 : 0,
+  workers: Number(process.env.E2E_WORKERS ?? '1'),
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL,
