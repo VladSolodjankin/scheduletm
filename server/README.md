@@ -44,6 +44,9 @@ Node.js/Express API для web-клиента и интеграций.
   - fallback на `email`;
   - дедупликация через таблицу `notifications` по ключу `appointment_id + type + channel`;
   - retry/backoff и управление состояниями отправки: `pending -> processing -> sent` или `retry/failed` с `next_retry_at`, `attempts`, `max_attempts`.
+  - ошибки фоновых job пишутся в `error_logs` (`source=server`, `method=JOB`) и не падают в `unhandledRejection`, чтобы не останавливать процесс API при временных проблемах сети/БД.
+  - process-level ошибки (`unhandledRejection`, `uncaughtException`, `listen error`) также трекаются в `error_logs` (`method=PROCESS`) best-effort.
+  - при `SIGTERM`/`SIGINT` сервер выполняет graceful shutdown: останавливает job-таймеры и закрывает HTTP listener.
 - Локализованные API-сообщения (`ru/en`).
 - Error tracking (`web` + `server`) с хранением в `error_logs` и optional Telegram alerts через отдельного бота (без email); bot token/chat id хранятся в `system_settings` в зашифрованном виде.
 

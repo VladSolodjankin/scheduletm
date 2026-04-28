@@ -4,6 +4,7 @@ import {
   listUnpaidActiveAppointmentsCreatedBeforeAllAccounts,
 } from '../repositories/appointmentRepository.js';
 import { findSpecialistBookingPolicy } from '../repositories/specialistBookingPolicyRepository.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
 const MIN_ELAPSED_MINUTES = 60;
@@ -19,7 +20,13 @@ function shouldAutoCancel(input: {
 
 export function startAppointmentAutoCancelUnpaidJob(intervalMs = DEFAULT_INTERVAL_MS): NodeJS.Timeout {
   return setInterval(() => {
-    void runAppointmentAutoCancelUnpaidJob();
+    void runAppointmentAutoCancelUnpaidJob().catch((error) => {
+      void trackServerError({
+        method: 'JOB',
+        path: '/jobs/appointment-auto-cancel-unpaid',
+        error,
+      });
+    });
   }, intervalMs);
 }
 
