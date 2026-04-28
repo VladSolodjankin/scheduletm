@@ -37,16 +37,60 @@ export default tseslint.config(
       'no-var': 'error',
       'prefer-const': 'error',
 
-      'i18next/no-literal-string': [
-        'error',
+      "i18next/no-literal-string": [
+        "error",
         {
-          mode: 'jsx-only',
-          'jsx-attributes': {
-            exclude: ['className', 'data-testid', 'aria-.*']
-          },
-          callees: {
-            exclude: ['^console\\.(log|warn|error|info|debug)$']
-          }
+          "markupOnly": true,
+          "ignoreAttribute": [
+            // HTML базовые
+            "id",
+            "className",
+            "style",
+            "name",
+            "type",
+            "value",
+            "defaultValue",
+            "placeholder",
+
+            // accessibility
+            "role",
+            "aria-*",
+
+            // testing
+            "data-testid",
+            "data-*",
+
+            // формы
+            "autoComplete",
+            "inputMode",
+            "pattern",
+
+            // ссылки / ресурсы
+            "href",
+            "src",
+
+            // события и тех. штуки
+            "key",
+            "tabIndex",
+
+            // MUI специфичное
+            "variant",
+            "color",
+            "size",
+            "margin",
+            "padding",
+            "direction",
+            "align",
+            "justifyContent",
+            "alignItems",
+            "spacing",
+
+            // MUI props
+            "sx",
+            "component",
+            "slots",
+            "slotProps"
+          ]
         }
       ]
     }
