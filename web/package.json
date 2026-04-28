@@ -9,7 +9,9 @@
     "start": "serve -s dist -l tcp://0.0.0.0:$PORT",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/e2e/smoke.e2e.test.mjs",
-    "test:e2e": "node --test tests/e2e/smoke.e2e.test.mjs"
+    "test:e2e": "node --test tests/e2e/smoke.e2e.test.mjs",
+    "migrate:latest": "node -e \"console.log('web: migrations are not required')\"",
+    "verify": "npm run migrate:latest && npm run test"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

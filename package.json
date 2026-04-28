@@ -13,7 +13,10 @@
     "lint": "npm run -ws lint --if-present",
     "typecheck": "npm run -ws typecheck --if-present",
     "test": "npm run -ws test --if-present",
-    "build": "npm run -ws build --if-present"
+    "build": "npm run -ws build --if-present",
+    "qa:web": "npm run -w @scheduletm/web verify",
+    "qa:server": "npm run -w @scheduletm/server verify",
+    "qa:bot": "npm run -w @scheduletm/bot verify"
   },
   "engines": {
     "node": ">=20.0.0"

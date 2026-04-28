@@ -18,6 +18,7 @@ React SPA для owner/admin/specialist/client.
 npm run -w @scheduletm/web dev
 npm run -w @scheduletm/web build
 npm run -w @scheduletm/web test
+npm run -w @scheduletm/web verify
 ```
 
 ## Переменные окружения
@@ -28,6 +29,12 @@ npm run -w @scheduletm/web test
 
 ```bash
 VITE_API_URL=https://api.example.com
+```
+
+Для отдельного dev-домена:
+
+```bash
+VITE_API_URL=https://apidev.meetli.cc
 ```
 
 ## Документация

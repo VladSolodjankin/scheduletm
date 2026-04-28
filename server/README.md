@@ -53,6 +53,7 @@ Node.js/Express API для web-клиента и интеграций.
 npm run -w @scheduletm/server dev
 npm run -w @scheduletm/server build
 npm run -w @scheduletm/server test
+npm run -w @scheduletm/server verify
 # только интеграционные бизнес-кейсы
 npm run -w @scheduletm/server test -- business.integration.test.ts
 ```
@@ -66,12 +67,23 @@ npm run -w @scheduletm/server test -- business.integration.test.ts
 
 Смотри `server/.env.example`.
 
+Минимум для новой БД:
+
+- `DATABASE_PUBLIC_URL` (или `DATABASE_URL`)
+- затем `npm run -w @scheduletm/server verify` для последовательного запуска миграций и тестов.
+
 Критичные для OAuth:
 
 - `GOOGLE_OAUTH_CLIENT_ID`
 - `GOOGLE_OAUTH_CLIENT_SECRET`
 - `GOOGLE_OAUTH_REDIRECT_URI`
 - `GOOGLE_OAUTH_SCOPES` (optional)
+
+Для dev-домена рекомендуется:
+
+- `APP_URL=https://dev.meetli.cc`
+- `API_BASE_URL=https://apidev.meetli.cc`
+- `GOOGLE_OAUTH_REDIRECT_URI=https://apidev.meetli.cc/api/integrations/google/oauth/callback`
 
 Критичные для email:
 
