@@ -35,7 +35,7 @@ export default tseslint.config(
       'eqeqeq': ['error', 'always'],
       'no-var': 'error',
       'prefer-const': 'error',
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
       'react-refresh/only-export-components': 'off',
 
       'i18next/no-literal-string': [
@@ -96,7 +96,6 @@ export default tseslint.config(
         },
       ],
 
-      'i18next/no-literal-string': 'off',
       'i18next/no-literal': 'off',
     },
 
