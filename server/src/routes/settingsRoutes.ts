@@ -258,7 +258,12 @@ settingsRoutes.post('/user/password/request', requireAccessToken, async (req, re
     emailVerificationCode: hashPassword(code, webUser.password_salt),
     emailVerificationSentAt: new Date(),
   });
-  await sendEmailVerificationEmail({ to: webUser.email, firstName: webUser.first_name ?? undefined, verificationCode: code });
+  await sendEmailVerificationEmail({
+    to: webUser.email,
+    firstName: webUser.first_name ?? undefined,
+    verificationCode: code
+  });
+})
 
 settingsRoutes.post('/user/password/confirm', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
