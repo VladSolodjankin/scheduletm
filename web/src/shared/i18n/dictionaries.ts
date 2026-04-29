@@ -171,6 +171,7 @@ export const dictionaries = {
       passwordChange: {
         openButton: 'Change password',
         title: 'Set password',
+        currentPassword: 'Current password',
         newPassword: 'New password',
         confirmPassword: 'Confirm password',
         submitPassword: 'Set a password',
@@ -542,6 +543,7 @@ export const dictionaries = {
       passwordChange: {
         openButton: 'Сменить пароль',
         title: 'Установить пароль',
+        currentPassword: 'Текущий пароль',
         newPassword: 'Новый пароль',
         confirmPassword: 'Подтвердите пароль',
         submitPassword: 'Установить пароль',
@@ -880,6 +882,7 @@ export type TranslationKey =
   | 'settings.googleConnectedSuccessfully'
   | 'settings.passwordChange.openButton'
   | 'settings.passwordChange.title'
+  | 'settings.passwordChange.currentPassword'
   | 'settings.passwordChange.newPassword'
   | 'settings.passwordChange.confirmPassword'
   | 'settings.passwordChange.submitPassword'
