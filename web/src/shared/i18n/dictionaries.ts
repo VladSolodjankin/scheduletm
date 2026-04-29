@@ -45,6 +45,7 @@ export const dictionaries = {
       verifyCodeInvalid: 'Invalid verification code',
       verifySubmit: 'Confirm email',
       verifyResend: 'Resend code',
+      verifyResendCooldown: 'Resend in',
       verifyBack: 'Back',
       inviteAcceptTitle: 'Accept invitation',
       inviteAcceptSubtitle: 'Set your password to activate access.',
@@ -381,6 +382,7 @@ export const dictionaries = {
       verifyCodeInvalid: 'Некорректный код подтверждения',
       verifySubmit: 'Подтвердить email',
       verifyResend: 'Отправить код снова',
+      verifyResendCooldown: 'Повторная отправка через',
       verifyBack: 'Назад',
       inviteAcceptTitle: 'Принять приглашение',
       inviteAcceptSubtitle: 'Задайте пароль, чтобы активировать доступ.',
@@ -716,6 +718,7 @@ export type TranslationKey =
   | 'auth.verifyCodeInvalid'
   | 'auth.verifySubmit'
   | 'auth.verifyResend'
+  | 'auth.verifyResendCooldown'
   | 'auth.verifyBack'
   | 'auth.inviteAcceptTitle'
   | 'auth.inviteAcceptSubtitle'
