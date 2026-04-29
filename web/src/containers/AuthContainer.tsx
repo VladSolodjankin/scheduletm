@@ -1,7 +1,7 @@
 import { Alert, Box, Divider, Link, Stack, TextField, Typography } from '@mui/material';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
 import logoText from '../static/images/logo_text.svg';
 import { apiClient } from '../shared/api/client';
@@ -39,6 +39,7 @@ const RESEND_COOLDOWN_SECONDS = 30;
 
 export function AuthContainer({ mode }: AuthContainerProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setAuthSession } = useAuth();
   const { t } = useI18n();
 
@@ -80,6 +81,24 @@ export function AuthContainer({ mode }: AuthContainerProps) {
 
     return () => window.clearInterval(timerId);
   }, [resendCooldown]);
+
+
+  useEffect(() => {
+    if (!isLogin) {
+      return;
+    }
+
+    const successMessage = location.state && typeof location.state === 'object' && 'successMessage' in location.state
+      ? location.state.successMessage
+      : '';
+
+    if (typeof successMessage !== 'string' || !successMessage) {
+      return;
+    }
+
+    setInfo(successMessage);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [isLogin, location.pathname, location.state, navigate]);
 
   useEffect(() => {
     if (isLogin) {
@@ -172,7 +191,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       setFieldErrors({});
       setInfo(response.data.message);
       window.sessionStorage.removeItem(REGISTER_PENDING_EMAIL_KEY);
-      navigate('/login');
+      navigate('/login', { state: { successMessage: t('auth.registerSuccessLoginHint') } });
     } catch (err) {
       const resolvedError = resolveApiError(err, {
         fallbackMessage: t('auth.errors.verifyFailed'),

@@ -7,6 +7,7 @@ React SPA для owner/admin/specialist/client.
 - Auth: `/login`, `/register`, `/invite/accept`, `/verify-email`.
   - `register`: required fields `firstName`, `lastName`, `email`, `phone`, optional `telegramUsername`.
   - `verify-email`: 4-digit OTP with auto-confirm when all digits are entered, auto-focus between inputs, full-code paste support, and resend cooldown timer.
+  - after successful email verification on registration, user is redirected to `/login` with a success message.
 - Основные разделы: `/appointments`, `/specialists`, `/users`, `/settings`, `/notification-logs`.
 - Role-aware UI (owner/admin/specialist/client).
 - i18n (`ru/en`), theme mode, palette variants.
