@@ -5,6 +5,7 @@ import { getWebhookInfo, setWebhook } from './bot/bot';
 import { startReminderJob } from './jobs/reminder.job';
 import { startAlertsJob } from './jobs/alerts.job';
 import { logError, logInfo } from './utils/logger';
+import { trackBotError } from './services/errorTracking.service';
 
 async function bootstrap() {
   const app = express();
@@ -16,6 +17,14 @@ async function bootstrap() {
   });
 
   app.use(telegramWebhookRouter);
+
+  app.use((error: unknown, _req: express.Request, _res: express.Response, _next: express.NextFunction) => {
+    void trackBotError({
+      method: 'WEBHOOK',
+      path: '/telegram/webhook',
+      error,
+    });
+  });
 
   const stopReminderJob = startReminderJob(env.notificationPollMs);
   const stopAlertsJob = startAlertsJob(
@@ -59,7 +68,28 @@ async function bootstrap() {
   process.once('SIGTERM', shutdown);
 }
 
+process.on('unhandledRejection', (reason) => {
+  void trackBotError({
+    method: 'PROCESS',
+    path: '/process/unhandled-rejection',
+    error: reason,
+  });
+});
+
+process.on('uncaughtException', (error) => {
+  void trackBotError({
+    method: 'PROCESS',
+    path: '/process/uncaught-exception',
+    error,
+  });
+});
+
 bootstrap().catch((error) => {
+  void trackBotError({
+    method: 'PROCESS',
+    path: '/process/bootstrap',
+    error,
+  });
   logError('app.bootstrap_failed', {
     error: error instanceof Error ? error.message : String(error),
   });
