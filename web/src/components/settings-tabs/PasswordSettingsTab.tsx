@@ -3,7 +3,6 @@ import { Stack, Typography } from '@mui/material';
 import type { SettingsCardCopy } from '../SettingsCard.types';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
-import { AppOtpCodeField } from '../../shared/ui/AppOtpCodeField';
 import { AppTextField } from '../../shared/ui/AppTextField';
 
 type Props = {
@@ -45,7 +44,11 @@ export function PasswordSettingsTab({
         <AppTextField value={newPassword} onChange={(event) => onNewPasswordChange(event.target.value)} label={copy.newPassword} type="password" />
         <AppTextField value={confirmPassword} onChange={(event) => onConfirmPasswordChange(event.target.value)} label={copy.confirmPassword} type="password" />
         {passwordStep === 'otp' && (
-          <AppOtpCodeField value={otpCode} onChange={onOtpCodeChange} label={copy.otpCode} />
+          <AppTextField
+            value={otpCode}
+            onChange={(event) => onOtpCodeChange(event.target.value.replace(/\D/g, '').slice(0, 4))}
+            label={copy.otpCode}
+          />
         )}
       </Stack>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
