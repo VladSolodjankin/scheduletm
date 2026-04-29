@@ -33,9 +33,21 @@
 
 ### 4) Наблюдаемость и инциденты
 
-- [ ] Подключить error tracking для `web`, `server`, `bot`.
+- [x] Подключить error tracking для `web`, `server`, `bot`.
 - [ ] Ввести метрики/алерты: 5xx, latency, рост failed/retry уведомлений, webhook degradation.
+  - Что сделать:
+    - [ ] Добавить единый endpoint/формат scrape (Prometheus/OpenMetrics) для `server` и `bot`.
+    - [ ] Зафиксировать SLI/SLO и пороги алертов:
+      - [ ] `5xx` rate (server): warn/critical пороги по окнам 5m/15m.
+      - [ ] p95 latency (server): warn/critical пороги по основным API.
+      - [ ] failed/retry growth (notifications): дельта по `notifications.status in ('failed','retry')`.
+      - [ ] webhook degradation (bot): рост 5xx и отсутствие incoming updates выше порога.
+    - [ ] Подключить доставку алертов в on-call канал (Telegram) и проверить тестовым инцидентом.
 - [ ] Подготовить runbook: инциденты БД, webhook, OAuth, email/notification failures.
+  - Что сделать:
+    - [ ] Описать для каждого инцидента: симптомы, проверки (SQL/логи/health), mitigation, rollback, критерий закрытия.
+    - [ ] Добавить “первые 15 минут” (triage + эскалация) и “после инцидента” (RCA + action items).
+    - [ ] Зафиксировать владельцев и контакты эскалации (owner/on-call/dev).
 
 ## P1 — сделать до или сразу после запуска
 
