@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ClipboardEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { Alert, Box, Divider, Link, Stack, TextField, Typography } from '@mui/material';
-import { Controller, useForm } from 'react-hook-form';
+import { Alert, Box, Divider, Link, Stack, Typography } from '@mui/material';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
 import logoText from '../static/images/logo_text.svg';
@@ -12,6 +12,7 @@ import { useI18n } from '../shared/i18n/I18nContext';
 import type { AuthResponse, RegisterResponse, VerifyEmailResponse } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
+import { AppOtpCodeField } from '../shared/ui/AppOtpCodeField';
 
 type AuthMode = 'login' | 'register';
 
@@ -35,7 +36,6 @@ type AuthCredentialsFormValues = {
 type RegisterStep = 'credentials' | 'otp';
 
 const REGISTER_PENDING_EMAIL_KEY = 'meetli_register_pending_email';
-const OTP_LENGTH = 4;
 const RESEND_COOLDOWN_SECONDS = 30;
 
 export function AuthContainer({ mode }: AuthContainerProps) {
@@ -56,7 +56,6 @@ export function AuthContainer({ mode }: AuthContainerProps) {
   const [registerStep, setRegisterStep] = useState<RegisterStep>('credentials');
   const [pendingEmail, setPendingEmail] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
-  const otpInputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   const {
     control: verifyEmailControl,
@@ -69,8 +68,9 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       code: '',
     },
   });
-  const [otpDigits, setOtpDigits] = useState(Array.from({ length: OTP_LENGTH }, () => ''));
 
+
+  const verifyCodeValue = useWatch({ control: verifyEmailControl, name: 'code' }) ?? '';
   useEffect(() => {
     if (resendCooldown <= 0) {
       return;
@@ -252,49 +252,6 @@ export function AuthContainer({ mode }: AuthContainerProps) {
     clearVerifyEmailErrors();
     window.sessionStorage.removeItem(REGISTER_PENDING_EMAIL_KEY);
     setPendingEmail('');
-    setOtpDigits(Array.from({ length: OTP_LENGTH }, () => ''));
-  };
-
-  const handleOtpDigitChange = (index: number, rawValue: string) => {
-    const digitsOnly = rawValue.replace(/\D/g, '');
-    const nextDigit = digitsOnly.slice(-1);
-    const nextDigits = otpDigits.map((digit, digitIndex) => (digitIndex === index ? nextDigit : digit));
-    setOtpDigits(nextDigits);
-    const nextCode = nextDigits.join('');
-    setVerifyEmailValue('code', nextCode, { shouldValidate: true });
-    if (nextDigit && index < OTP_LENGTH - 1) {
-      otpInputRefs.current[index + 1]?.focus();
-    }
-    if (nextCode.length === OTP_LENGTH && nextDigits.every(Boolean) && !isSubmitting) {
-      void submitOtpCode(nextCode);
-    }
-  };
-
-  const handleOtpPaste = (event: ClipboardEvent<HTMLInputElement>) => {
-    const pastedDigits = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH);
-    if (!pastedDigits) {
-      return;
-    }
-
-    event.preventDefault();
-
-    const nextDigits = Array.from({ length: OTP_LENGTH }, (_, index) => pastedDigits[index] ?? '');
-    setOtpDigits(nextDigits);
-    const nextCode = nextDigits.join('');
-    setVerifyEmailValue('code', nextCode, { shouldValidate: true });
-
-    const focusIndex = Math.min(pastedDigits.length, OTP_LENGTH - 1);
-    otpInputRefs.current[focusIndex]?.focus();
-
-    if (pastedDigits.length === OTP_LENGTH && !isSubmitting) {
-      void submitOtpCode(nextCode);
-    }
-  };
-
-  const handleOtpKeyDown = (index: number, event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Backspace' && !otpDigits[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus();
-    }
   };
 
   const authCardTitle = useMemo(() => (isLogin ? t('auth.formLoginTitle') : t('auth.formRegisterTitle')), [isLogin, t]);
@@ -377,50 +334,21 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                 }}
                 render={({ fieldState }: any) => (
                   <Stack spacing={1}>
-                    <Typography variant="body2" color="text.secondary">
-                      {t('auth.verifyCodeLabel')}
-                    </Typography>
-                    <Stack direction="row" spacing={1.5}>
-                      {otpDigits.map((digit, index) => (
-                        <TextField
-                          key={`otp-${index}`}
-                          value={digit}
-                          onChange={(event) => {
-                            clearVerifyEmailErrors('code');
-                            setFieldErrors((prev) => ({ ...prev, code: '' }));
-                            handleOtpDigitChange(index, event.target.value);
-                          }}
-                          inputRef={(element) => {
-                            otpInputRefs.current[index] = element;
-                          }}
-                          onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => handleOtpKeyDown(index, event)}
-                          onPaste={handleOtpPaste}
-                          slotProps={{
-                            htmlInput: {
-                              inputMode: 'numeric',
-                              maxLength: 1,
-                              style: { textAlign: 'center', fontSize: 24, fontWeight: 700, padding: 0, lineHeight: '64px' }
-                            }
-                          }}
-                          sx={{
-                            width: 64,
-                            '& .MuiInputBase-input': {
-                              height: 31,
-                              textAlign: 'center',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }
-                          }}
-                          error={Boolean(fieldState.error)}
-                        />
-                      ))}
-                    </Stack>
-                    {fieldState.error?.message ? (
-                      <Typography variant="caption" color="error">
-                        {fieldState.error.message}
-                      </Typography>
-                    ) : null}
+                    <AppOtpCodeField
+                      value={verifyCodeValue}
+                      label={t('auth.verifyCodeLabel')}
+                      error={Boolean(fieldState.error)}
+                      helperText={fieldState.error?.message}
+                      disabled={isSubmitting}
+                      onChange={(nextCode) => {
+                        clearVerifyEmailErrors('code');
+                        setFieldErrors((prev) => ({ ...prev, code: '' }));
+                        setVerifyEmailValue('code', nextCode, { shouldValidate: true });
+                      }}
+                      onComplete={(nextCode) => {
+                        void submitOtpCode(nextCode);
+                      }}
+                    />
                   </Stack>
                 )}
               />
@@ -436,7 +364,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                   type="button"
                   variant="contained"
                   isLoading={isSubmitting}
-                  onClick={() => void submitOtpCode(otpDigits.join(''))}
+                  onClick={() => void submitOtpCode(verifyCodeValue)}
                   fullWidth
                 >
                   {t('auth.verifySubmit')}

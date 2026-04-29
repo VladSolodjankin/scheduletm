@@ -52,9 +52,11 @@ export function PasswordSettingsTab({
         )}
       </Stack>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-        <AppButton type="button" variant="outlined" onClick={onCancel}>
-          {copy.cancel}
-        </AppButton>
+        {passwordStep === 'otp' && (
+          <AppButton type="button" variant="outlined" onClick={onCancel}>
+            {copy.cancel}
+          </AppButton>
+        )}
         {passwordStep === 'password' ? (
           <AppButton type="button" onClick={() => void onRequestOtp()}>
             {copy.sendOtp}
