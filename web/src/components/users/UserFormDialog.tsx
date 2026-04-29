@@ -1,6 +1,6 @@
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { ManagedUserItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
@@ -82,7 +82,7 @@ export function UserFormDialog({
     telegramUsername?: string;
   } | null>(null);
 
-  const { control, handleSubmit, reset, watch } = useForm<UserFormState>({
+  const { control, handleSubmit, reset } = useForm<UserFormState>({
     defaultValues: EMPTY_FORM
   });
 
@@ -105,7 +105,7 @@ export function UserFormDialog({
     });
   }, [editingUser, open, reset]);
 
-  const [email, firstName, lastName] = watch(['email', 'firstName', 'lastName']);
+  const [email, firstName, lastName] = useWatch({ control, name: ['email', 'firstName', 'lastName'] });
   const isValid = Boolean(email?.trim() && firstName?.trim() && lastName?.trim());
 
   const submitForm = handleSubmit(async (form) => {

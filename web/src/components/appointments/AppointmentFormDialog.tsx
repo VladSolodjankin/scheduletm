@@ -14,7 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { AppointmentItem, AppointmentStatus, ClientItem, SpecialistItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
@@ -173,7 +173,7 @@ export function AppointmentFormDialog({
     } satisfies AppointmentFormState;
   }, [editingItem, initialScheduledAtIso, selectedSlotStepMin, selectedSpecialistId, specialists]);
 
-  const { control, handleSubmit, reset, watch, setValue } = useForm<AppointmentFormState>({
+  const { control, handleSubmit, reset, setValue } = useForm<AppointmentFormState>({
     defaultValues: EMPTY_FORM,
   });
 
@@ -187,7 +187,7 @@ export function AppointmentFormDialog({
     setShowTimezoneSelect(false);
   }, [initialValues, open, reset]);
 
-  const selectedClientId = watch('clientId');
+  const selectedClientId = useWatch({ control, name: 'clientId' });
 
   useEffect(() => {
     const selectedClient = clients.find((item) => String(item.id) === selectedClientId);
@@ -202,8 +202,8 @@ export function AppointmentFormDialog({
     setValue('email', selectedClient.email, { shouldDirty: true });
   }, [clients, selectedClientId, setValue]);
 
-  const startDateValue = watch('startDate');
-  const startTimeValue = watch('startTime');
+  const startDateValue = useWatch({ control, name: 'startDate' });
+  const startTimeValue = useWatch({ control, name: 'startTime' });
 
   useEffect(() => {
     if (!open || editingItem || !startDateValue || !startTimeValue) {

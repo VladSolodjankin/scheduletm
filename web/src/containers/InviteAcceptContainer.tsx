@@ -7,7 +7,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import logoText from '../static/images/logo_text.svg';
 import { apiClient } from '../shared/api/client';
@@ -62,7 +62,6 @@ export function InviteAcceptContainer() {
     control,
     handleSubmit,
     formState: { isValid, errors },
-    watch,
   } = useForm<InviteAcceptFormValues>({
     mode: 'onChange',
     defaultValues: {
@@ -74,7 +73,7 @@ export function InviteAcceptContainer() {
     },
   });
 
-  const passwordValue = watch('password');
+  const passwordValue = useWatch({ control, name: 'password' });
 
   useEffect(() => {
     let isDisposed = false;
