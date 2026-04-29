@@ -3,6 +3,7 @@ export const dictionaries = {
     errors: {
       unauthorized: 'Unauthorized',
       tooManyLoginAttempts: 'Too many login attempts. Try again later.',
+      tooManyRequests: 'Too many requests. Try again later.',
       invalidPayloadSystemSettings: 'Invalid system settings payload',
       invalidPayloadUserSettings: 'Invalid user settings payload',
       invalidPayloadAccountSettings: 'Invalid account settings payload',
@@ -86,6 +87,7 @@ export const dictionaries = {
     errors: {
       unauthorized: 'Не авторизован',
       tooManyLoginAttempts: 'Слишком много попыток входа. Попробуйте позже.',
+      tooManyRequests: 'Слишком много запросов. Попробуйте позже.',
       invalidPayloadSystemSettings: 'Некорректный payload системных настроек',
       invalidPayloadUserSettings: 'Некорректный payload пользовательских настроек',
       invalidPayloadAccountSettings: 'Некорректный payload настроек аккаунта',

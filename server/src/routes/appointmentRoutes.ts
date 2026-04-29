@@ -16,8 +16,10 @@ import {
   updateAppointmentForActor,
 } from '../services/appointmentService.js';
 import { formatZodError } from '../utils/validation.js';
+import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 
 export const appointmentRoutes = Router();
+const notifyRateLimit = createRequestRateLimit({ keyPrefix: 'appointment-notify', maxRequests: 20, windowMs: 60_000 });
 type AppointmentAuditActionFilter = 'cancel' | 'reschedule' | 'mark-paid' | 'notify';
 const APPOINTMENT_AUDIT_ACTIONS = new Set<AppointmentAuditActionFilter>(['cancel', 'reschedule', 'mark-paid', 'notify']);
 
@@ -233,7 +235,7 @@ appointmentRoutes.post('/:id/mark-paid', async (req, res) => {
   }
 });
 
-appointmentRoutes.post('/:id/notify', async (req, res) => {
+appointmentRoutes.post('/:id/notify', notifyRateLimit, async (req, res) => {
   const actor = (req as unknown as AuthedRequest).user;
   const appointmentId = Number(req.params.id);
 

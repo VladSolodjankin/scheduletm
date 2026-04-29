@@ -33,11 +33,31 @@ const resolveTokenExpiresAt = (expiresIn: number) => {
   return new Date(Date.now() + expiresIn * 1000);
 };
 
+
+const hasValidRedirectUri = () => {
+  try {
+    const redirectUrl = new URL(env.GOOGLE_OAUTH_REDIRECT_URI);
+    const apiBaseUrl = new URL(env.API_BASE_URL);
+
+    const isExpectedPath = redirectUrl.pathname === '/api/integrations/google/oauth/callback';
+    const isSameOriginAsApi = redirectUrl.origin === apiBaseUrl.origin;
+    const isAllowedProtocol = env.PORT === 3003
+      ? redirectUrl.protocol === 'http:' || redirectUrl.protocol === 'https:'
+      : redirectUrl.protocol === 'https:';
+
+    return isExpectedPath && isSameOriginAsApi && isAllowedProtocol;
+  } catch {
+    return false;
+  }
+};
+
+
 const isGoogleOAuthConfigured = () => {
   return Boolean(
     env.GOOGLE_OAUTH_CLIENT_ID &&
       env.GOOGLE_OAUTH_CLIENT_SECRET &&
-      env.GOOGLE_OAUTH_REDIRECT_URI
+      env.GOOGLE_OAUTH_REDIRECT_URI &&
+      hasValidRedirectUri()
   );
 };
 

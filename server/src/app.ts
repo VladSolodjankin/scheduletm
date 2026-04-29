@@ -27,7 +27,11 @@ export const createApp = () => {
 
   app.disable('x-powered-by');
   app.use(helmet());
-  app.use(morgan('dev'));
+  morgan.token('safe-url', (req) => {
+    const rawUrl = req.url ?? '/';
+    return new URL(rawUrl, 'http://localhost').pathname;
+  });
+  app.use(morgan(':method :safe-url :status :response-time ms'));
   app.use(
     cors({
       credentials: true,
