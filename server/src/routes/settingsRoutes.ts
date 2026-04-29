@@ -1,4 +1,9 @@
 import { Router } from 'express';
+import crypto from 'node:crypto';
+import { passwordSchema } from '../config/schemas.js';
+import { hashPassword, createOtpCode } from '../utils/crypto.js';
+import { findWebUserById, updateWebUserAuthState, updateWebUserCredentials } from '../repositories/webUserRepository.js';
+import { sendEmailVerificationEmail } from '../services/emailDeliveryService.js';
 import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import {
@@ -230,4 +235,54 @@ settingsRoutes.put('/specialist-booking-policy', requireAccessToken, async (req,
   }
 
   return res.json(updated);
+});
+
+
+settingsRoutes.post('/user/password/request', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const parsedPassword = passwordSchema.safeParse(req.body?.password);
+  if (!parsedPassword.success) {
+    return res.status(400).json({ message: t(req, 'invalidPayloadUserSettings') });
+  }
+
+  const numericUserId = Number(user.id);
+  const webUser = Number.isInteger(numericUserId) ? await findWebUserById(user.accountId, numericUserId) : null;
+  if (!webUser) {
+    return res.status(400).json({ message: t(req, 'invalidUserId') });
+  }
+
+  const code = createOtpCode();
+  await updateWebUserAuthState({
+    accountId: user.accountId,
+    id: numericUserId,
+    emailVerificationCode: hashPassword(code, webUser.password_salt),
+    emailVerificationSentAt: new Date(),
+  });
+  await sendEmailVerificationEmail({ to: webUser.email, firstName: webUser.first_name ?? undefined, verificationCode: code });
+
+settingsRoutes.post('/user/password/confirm', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const parsedPassword = passwordSchema.safeParse(req.body?.password);
+  const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
+  if (!parsedPassword.success || !/^\d{4}$/.test(code)) {
+    return res.status(400).json({ message: t(req, 'invalidPayloadUserSettings') });
+  }
+
+  const numericUserId = Number(user.id);
+  const webUser = Number.isInteger(numericUserId) ? await findWebUserById(user.accountId, numericUserId) : null;
+  if (!webUser || !webUser.email_verification_code) {
+    return res.status(400).json({ message: t(req, 'emailVerificationFailed') });
+  }
+
+  const expected = hashPassword(code, webUser.password_salt);
+  if (expected !== webUser.email_verification_code) {
+    return res.status(400).json({ message: t(req, 'emailVerificationFailed') });
+  }
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  const passwordHash = hashPassword(parsedPassword.data, salt);
+  await updateWebUserCredentials(user.accountId, numericUserId, passwordHash, salt);
+  await updateWebUserAuthState({ accountId: user.accountId, id: numericUserId, emailVerificationCode: null, emailVerificationSentAt: null });
+
+  return res.json({ message: 'ok' });
 });
