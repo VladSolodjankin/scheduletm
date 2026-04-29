@@ -89,21 +89,25 @@ export function SettingsContainer() {
       return;
     }
 
-    if (googleOauthStatus === 'success') {
-      setSuccess(t('settings.googleConnectedSuccessfully'));
-      setUserSettings((prev) => ({ ...prev, googleConnected: true }));
-      setError('');
-    }
+    const timeoutId = window.setTimeout(() => {
+      if (googleOauthStatus === 'success') {
+        setSuccess(t('settings.googleConnectedSuccessfully'));
+        setUserSettings((prev) => ({ ...prev, googleConnected: true }));
+        setError('');
+      }
 
-    if (googleOauthStatus === 'error') {
-      setError(t('settings.errors.connectGoogle'));
-      setSuccess('');
-    }
+      if (googleOauthStatus === 'error') {
+        setError(t('settings.errors.connectGoogle'));
+        setSuccess('');
+      }
 
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete('google_oauth');
-    nextParams.delete('reason');
-    setSearchParams(nextParams, { replace: true });
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('google_oauth');
+      nextParams.delete('reason');
+      setSearchParams(nextParams, { replace: true });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [googleOauthStatus, searchParams, setSearchParams, t]);
 
   useEffect(() => {

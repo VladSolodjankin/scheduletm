@@ -72,16 +72,20 @@ export function SpecialistFormDialog({
       return;
     }
 
-    setName(editingSpecialist?.name ?? '');
-    setIsActive(editingSpecialist?.isActive ?? true);
-    setSelectedUserId(0);
-    setBaseSessionPrice(editingSpecialist?.baseSessionPrice ?? 0);
-    setBaseHourPrice(editingSpecialist?.baseHourPrice ?? 0);
-    setWorkStartHour(editingSpecialist?.workStartHour ?? 9);
-    setWorkEndHour(editingSpecialist?.workEndHour ?? 20);
-    setSlotDurationMin(editingSpecialist?.slotDurationMin ?? 90);
-    setSlotStepMin(editingSpecialist?.slotStepMin ?? 30);
-    setDefaultSessionContinuationMin(editingSpecialist?.defaultSessionContinuationMin ?? 60);
+    const timeoutId = window.setTimeout(() => {
+      setName(editingSpecialist?.name ?? '');
+      setIsActive(editingSpecialist?.isActive ?? true);
+      setSelectedUserId(0);
+      setBaseSessionPrice(editingSpecialist?.baseSessionPrice ?? 0);
+      setBaseHourPrice(editingSpecialist?.baseHourPrice ?? 0);
+      setWorkStartHour(editingSpecialist?.workStartHour ?? 9);
+      setWorkEndHour(editingSpecialist?.workEndHour ?? 20);
+      setSlotDurationMin(editingSpecialist?.slotDurationMin ?? 90);
+      setSlotStepMin(editingSpecialist?.slotStepMin ?? 30);
+      setDefaultSessionContinuationMin(editingSpecialist?.defaultSessionContinuationMin ?? 60);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [editingSpecialist, open]);
 
   const handleSubmit = async () => {

@@ -85,7 +85,11 @@ export function NotificationLogsContainer() {
       return;
     }
 
-    void loadLogs();
+    const timeoutId = window.setTimeout(() => {
+      void loadLogs();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [accessToken, loadLogs, navigate]);
 
   const resend = async (item: NotificationLogItem) => {

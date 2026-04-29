@@ -1,5 +1,5 @@
 import { Box, Checkbox, FormControl, FormControlLabel, InputLabel, ListItemText, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { SelectChangeEvent } from '@mui/material';
 
@@ -112,13 +112,13 @@ export function SettingsCard({
   onConnectGoogle,
   onDisconnectGoogle
 }: SettingsCardProps) {
-  const tabs = [
+  const tabs = useMemo(() => ([
     ...(canManageSystemSettings ? [{ key: 'system', label: copy.systemTab }] : []),
     ...(canManageAccountSettings ? [{ key: 'account', label: copy.accountTab }] : []),
     ...(canManageSpecialistBookingPolicy ? [{ key: 'specialistPolicy', label: copy.specialistPolicyTab }] : []),
     ...(canManageAccountSettings ? [{ key: 'notifications', label: copy.notificationsTab }] : []),
     { key: 'user', label: copy.userTab }
-  ] as const;
+  ] as const), [copy, canManageSystemSettings, canManageAccountSettings, canManageSpecialistBookingPolicy]);
   const initialTab = tabs[0]?.key ?? 'user';
   const timingOptions = [
     'disabled',
@@ -131,12 +131,6 @@ export function SettingsCard({
   const selectableChannels: NotificationChannel[] = ['email', 'telegram', 'viber', 'sms', 'whatsapp'];
   const meetingDurationOptions = Array.from({ length: 7 }, (_, i) => 30 + i * 10);
   const [tab, setTab] = useState<string>(initialTab);
-
-  useEffect(() => {
-    if (!tabs.some((item) => item.key === tab)) {
-      setTab(initialTab);
-    }
-  }, [initialTab, tab, tabs]);
 
   const { control: systemControl, handleSubmit: handleSystemSubmit, reset: resetSystem } = useForm<SystemSettings>({
     defaultValues: systemSettings

@@ -97,8 +97,12 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       return;
     }
 
-    setInfo(successMessage);
-    navigate(location.pathname, { replace: true, state: null });
+    const timeoutId = window.setTimeout(() => {
+      setInfo(successMessage);
+      navigate(location.pathname, { replace: true, state: null });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [isLogin, location.pathname, location.state, navigate]);
 
   useEffect(() => {
@@ -111,9 +115,13 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       return;
     }
 
-    setPendingEmail(savedPendingEmail);
-    setRegisterStep('otp');
-    setInfo(withEmail(t('auth.registerOtpRestoreHint'), savedPendingEmail));
+    const timeoutId = window.setTimeout(() => {
+      setPendingEmail(savedPendingEmail);
+      setRegisterStep('otp');
+      setInfo(withEmail(t('auth.registerOtpRestoreHint'), savedPendingEmail));
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [isLogin, t]);
 
   useEffect(() => {

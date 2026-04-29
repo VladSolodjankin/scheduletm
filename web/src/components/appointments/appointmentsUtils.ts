@@ -134,8 +134,12 @@ export function formatLocalTime(iso: string): string {
 }
 
 export function statusLabel(status: AppointmentStatus): string {
-  if (status === 'confirmed') return 'confirmed';
-  if (status === 'cancelled') return 'cancelled';
+  if (status === 'confirmed') {
+    return 'confirmed';
+  }
+  if (status === 'cancelled') {
+    return 'cancelled';
+  }
   return 'new';
 }
 
