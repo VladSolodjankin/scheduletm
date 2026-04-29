@@ -35,6 +35,16 @@ export type VerifyEmailResponse = {
   message: string;
 };
 
+
+export type UserPasswordOtpRequestResponse = {
+  message: string;
+};
+
+export type UserPasswordOtpConfirmPayload = {
+  password: string;
+  code: string;
+};
+
 export type SystemSettings = {
   dailyDigestEnabled: boolean;
   defaultMeetingDuration: number;

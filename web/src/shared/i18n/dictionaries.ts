@@ -166,6 +166,17 @@ export const dictionaries = {
         slotStepMin: 'Slot step (min)',
         defaultSessionContinuationMin: 'Default session continuation (min)'
       },
+      passwordChange: {
+        openButton: 'Change password',
+        title: 'Set password',
+        newPassword: 'New password',
+        confirmPassword: 'Confirm password',
+        submitPassword: 'Set a password',
+        otpLabel: 'OTP code (4 digits)',
+        confirmOtp: 'Confirm code',
+        otpSent: 'OTP code sent to your email.',
+        success: 'Password updated successfully.'
+      },
       errors: {
         load: 'Unable to load settings.',
         save: 'Unable to save settings.',
@@ -524,6 +535,17 @@ export const dictionaries = {
         slotStepMin: 'Шаг слота (мин)',
         defaultSessionContinuationMin: 'Продление сессии по умолчанию (мин)'
       },
+      passwordChange: {
+        openButton: 'Сменить пароль',
+        title: 'Установить пароль',
+        newPassword: 'Новый пароль',
+        confirmPassword: 'Подтвердите пароль',
+        submitPassword: 'Установить пароль',
+        otpLabel: 'OTP-код (4 цифры)',
+        confirmOtp: 'Подтвердить код',
+        otpSent: 'OTP-код отправлен на ваш email.',
+        success: 'Пароль успешно обновлён.'
+      },
       errors: {
         load: 'Не удалось загрузить настройки.',
         save: 'Не удалось сохранить настройки.',
@@ -850,6 +872,15 @@ export type TranslationKey =
   | 'settings.channels.sms'
   | 'settings.channels.whatsapp'
   | 'settings.googleConnectedSuccessfully'
+  | 'settings.passwordChange.openButton'
+  | 'settings.passwordChange.title'
+  | 'settings.passwordChange.newPassword'
+  | 'settings.passwordChange.confirmPassword'
+  | 'settings.passwordChange.submitPassword'
+  | 'settings.passwordChange.otpLabel'
+  | 'settings.passwordChange.confirmOtp'
+  | 'settings.passwordChange.otpSent'
+  | 'settings.passwordChange.success'
   | 'settings.specialists.title'
   | 'settings.specialists.add'
   | 'settings.specialists.edit'

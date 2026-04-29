@@ -1,4 +1,4 @@
-import { Alert, Box, Skeleton, Stack } from '@mui/material';
+import { Alert, Box, Dialog, DialogActions, DialogContent, DialogTitle, Skeleton, Stack, TextField } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
@@ -81,6 +81,12 @@ export function SettingsContainer() {
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | null>(null);
   const [accountNotificationDefaults, setAccountNotificationDefaults] = useState<AccountNotificationDefault[]>(defaultAccountNotificationDefaults);
   const [isSavingNotificationDefaults, setIsSavingNotificationDefaults] = useState(false);
+
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [passwordStep, setPasswordStep] = useState<'password' | 'otp'>('password');
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const canManageSystemSettings = user?.role === 'owner';
@@ -369,6 +375,41 @@ export function SettingsContainer() {
     }
   };
 
+
+  const requestPasswordOtp = async () => {
+    if (!accessToken || newPassword.length < 10 || newPassword !== confirmPassword) {
+      setError(t('auth.passwordMismatch'));
+      return;
+    }
+
+    try {
+      await apiClient.post('/api/settings/user/password/request', { password: newPassword }, { headers: authHeaders(accessToken) });
+      setPasswordStep('otp');
+      setError('');
+      setSuccess(t('settings.passwordChange.otpSent'));
+    } catch (err) {
+      setError(resolveApiError(err, { fallbackMessage: t('settings.errors.save'), networkMessage: t('common.errors.network') }).message);
+    }
+  };
+
+  const confirmPasswordOtp = async () => {
+    if (!accessToken) {
+      return;
+    }
+    try {
+      await apiClient.post('/api/settings/user/password/confirm', { password: newPassword, code: otpCode }, { headers: authHeaders(accessToken) });
+      setSuccess(t('settings.passwordChange.success'));
+      setError('');
+      setIsPasswordDialogOpen(false);
+      setPasswordStep('password');
+      setNewPassword('');
+      setConfirmPassword('');
+      setOtpCode('');
+    } catch (err) {
+      setError(resolveApiError(err, { fallbackMessage: t('settings.errors.save'), networkMessage: t('common.errors.network') }).message);
+    }
+  };
+
   const disconnectGoogle = async () => {
     if (!accessToken || isGoogleDisconnecting) {
       return;
@@ -410,6 +451,32 @@ export function SettingsContainer() {
         </Box>
       )}
 
+
+      <Box sx={{ maxWidth: 720, mb: 2 }}>
+        <button type="button" onClick={() => setIsPasswordDialogOpen(true)}>{t('settings.passwordChange.openButton')}</button>
+      </Box>
+
+      <Dialog open={isPasswordDialogOpen} onClose={() => setIsPasswordDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>{t('settings.passwordChange.title')}</DialogTitle>
+        <DialogContent>
+          {passwordStep === 'password' ? (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField type="password" label={t('settings.passwordChange.newPassword')} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} fullWidth />
+              <TextField type="password" label={t('settings.passwordChange.confirmPassword')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} fullWidth />
+            </Stack>
+          ) : (
+            <TextField sx={{ mt: 1 }} label={t('settings.passwordChange.otpLabel')} value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0,4))} fullWidth />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <button type="button" onClick={() => setIsPasswordDialogOpen(false)}>{t('common.cancel')}</button>
+          {passwordStep === 'password' ? (
+            <button type="button" onClick={() => void requestPasswordOtp()}>{t('settings.passwordChange.submitPassword')}</button>
+          ) : (
+            <button type="button" onClick={() => void confirmPasswordOtp()}>{t('settings.passwordChange.confirmOtp')}</button>
+          )}
+        </DialogActions>
+      </Dialog>
       <Box sx={{ maxWidth: 720 }}>
         {isLoadingSettings ? (
           <Stack spacing={2}>
