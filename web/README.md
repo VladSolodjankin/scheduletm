@@ -4,6 +4,7 @@ React SPA для owner/admin/specialist/client.
 
 ## Что умеет
 
+- Settings page UI decomposition: each settings tab is implemented as a separate UI component under `src/components/settings-tabs/` to keep `SettingsCard.tsx` lightweight.
 - Auth: `/login`, `/register`, `/invite/accept`, `/verify-email`.
   - `register`: required fields `firstName`, `lastName`, `email`, `phone`, optional `telegramUsername`.
   - `verify-email`: 4-digit OTP with auto-confirm when all digits are entered, auto-focus between inputs, full-code paste support, and resend cooldown timer.
