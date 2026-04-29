@@ -1,4 +1,4 @@
-import { Alert, Box, Dialog, DialogActions, DialogContent, DialogTitle, Skeleton, Stack, TextField } from '@mui/material';
+import { Alert, Box, Skeleton, Stack } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
@@ -82,7 +82,6 @@ export function SettingsContainer() {
   const [accountNotificationDefaults, setAccountNotificationDefaults] = useState<AccountNotificationDefault[]>(defaultAccountNotificationDefaults);
   const [isSavingNotificationDefaults, setIsSavingNotificationDefaults] = useState(false);
 
-  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -400,7 +399,6 @@ export function SettingsContainer() {
       await apiClient.post('/api/settings/user/password/confirm', { password: newPassword, code: otpCode }, { headers: authHeaders(accessToken) });
       setSuccess(t('settings.passwordChange.success'));
       setError('');
-      setIsPasswordDialogOpen(false);
       setPasswordStep('password');
       setNewPassword('');
       setConfirmPassword('');
@@ -437,6 +435,15 @@ export function SettingsContainer() {
     }
   };
 
+  const cancelPasswordChange = () => {
+    setPasswordStep('password');
+    setNewPassword('');
+    setConfirmPassword('');
+    setOtpCode('');
+    setError('');
+    setSuccess('');
+  };
+
   return (
     <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')} maxWidth={800}>
       {error && (
@@ -451,32 +458,6 @@ export function SettingsContainer() {
         </Box>
       )}
 
-
-      <Box sx={{ maxWidth: 720, mb: 2 }}>
-        <button type="button" onClick={() => setIsPasswordDialogOpen(true)}>{t('settings.passwordChange.openButton')}</button>
-      </Box>
-
-      <Dialog open={isPasswordDialogOpen} onClose={() => setIsPasswordDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{t('settings.passwordChange.title')}</DialogTitle>
-        <DialogContent>
-          {passwordStep === 'password' ? (
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              <TextField type="password" label={t('settings.passwordChange.newPassword')} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} fullWidth />
-              <TextField type="password" label={t('settings.passwordChange.confirmPassword')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} fullWidth />
-            </Stack>
-          ) : (
-            <TextField sx={{ mt: 1 }} label={t('settings.passwordChange.otpLabel')} value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0,4))} fullWidth />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <button type="button" onClick={() => setIsPasswordDialogOpen(false)}>{t('common.cancel')}</button>
-          {passwordStep === 'password' ? (
-            <button type="button" onClick={() => void requestPasswordOtp()}>{t('settings.passwordChange.submitPassword')}</button>
-          ) : (
-            <button type="button" onClick={() => void confirmPasswordOtp()}>{t('settings.passwordChange.confirmOtp')}</button>
-          )}
-        </DialogActions>
-      </Dialog>
       <Box sx={{ maxWidth: 720 }}>
         {isLoadingSettings ? (
           <Stack spacing={2}>
@@ -501,9 +482,11 @@ export function SettingsContainer() {
               accountTab: t('settings.tabs.account'),
               specialistPolicyTab: t('settings.tabs.specialistPolicy'),
               userTab: t('settings.tabs.user'),
+              passwordTab: t('settings.tabs.password'),
               systemTitle: t('settings.systemTitle'),
               accountTitle: t('settings.accountTitle'),
               userTitle: t('settings.userTitle'),
+              passwordTitle: t('settings.passwordChange.title'),
               timezone: t('settings.timezone'),
               locale: t('settings.locale'),
               firstName: t('users.form.firstName'),
@@ -538,6 +521,12 @@ export function SettingsContainer() {
               appointmentReminderTimingsLabel: t('settings.appointmentReminderTimingsLabel'),
               paymentReminderTimingsLabel: t('settings.paymentReminderTimingsLabel'),
               disabledOption: t('settings.disabledOption'),
+              newPassword: t('settings.passwordChange.newPassword'),
+              confirmPassword: t('settings.passwordChange.confirmPassword'),
+              otpCode: t('settings.passwordChange.otpLabel'),
+              sendOtp: t('settings.passwordChange.submitPassword'),
+              confirmOtp: t('settings.passwordChange.confirmOtp'),
+              cancel: t('common.cancel'),
               channels: {
                 email: t('settings.channels.email'),
                 telegram: t('settings.channels.telegram'),
@@ -553,6 +542,10 @@ export function SettingsContainer() {
             isSavingUser={isSavingUser}
             isSavingSpecialistBookingPolicy={isSavingSpecialistPolicy}
             isSavingNotificationDefaults={isSavingNotificationDefaults}
+            newPassword={newPassword}
+            confirmPassword={confirmPassword}
+            otpCode={otpCode}
+            passwordStep={passwordStep}
             onSaveSystem={saveSystemSettings}
             onSaveAccount={saveAccountSettings}
             onSaveUser={saveUserSettings}
@@ -561,6 +554,12 @@ export function SettingsContainer() {
             onClearTelegramBotToken={clearTelegramBotToken}
             onConnectGoogle={connectGoogle}
             onDisconnectGoogle={disconnectGoogle}
+            onNewPasswordChange={setNewPassword}
+            onConfirmPasswordChange={setConfirmPassword}
+            onOtpCodeChange={setOtpCode}
+            onCancelPasswordChange={cancelPasswordChange}
+            onRequestPasswordOtp={requestPasswordOtp}
+            onConfirmPasswordOtp={confirmPasswordOtp}
           />
         )}
       </Box>
