@@ -12,7 +12,7 @@ type I18nContextValue = {
   t: (key: TranslationKey) => string;
 };
 
-const I18nContext = createContext<I18nContextValue | undefined>(undefined);
+export const I18nContext = createContext<I18nContextValue | undefined>(undefined);
 
 const STORAGE_KEY = 'ui-locale';
 

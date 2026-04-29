@@ -1,5 +1,6 @@
 import { Alert, Box, Button, Stack, Typography } from '@mui/material';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { I18nContext } from '../shared/i18n/I18nContext';
 
 type AppErrorBoundaryProps = {
   children: ReactNode;
@@ -10,6 +11,8 @@ type AppErrorBoundaryState = {
 };
 
 export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
+  public static contextType = I18nContext;
+  declare context: React.ContextType<typeof I18nContext>;
   public state: AppErrorBoundaryState = {
     hasError: false
   };
@@ -28,6 +31,8 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
 
   public render() {
     if (this.state.hasError) {
+      const t = this.context?.t;
+
       return (
         <Box
           sx={{
@@ -39,13 +44,13 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
           }}
         >
           <Stack spacing={2} sx={{ maxWidth: 560, width: '100%' }}>
-            <Typography variant="h4">Что-то пошло не так</Typography>
+            <Typography variant="h4">{t?.('common.appErrorTitle')}</Typography>
             <Typography color="text.secondary">
-              Произошла непредвиденная ошибка интерфейса. Попробуйте перезагрузить страницу.
+              {t?.('common.appErrorDescription')}
             </Typography>
-            <Alert severity="error">Если проблема повторяется, обратитесь к администратору.</Alert>
+            <Alert severity="error">{t?.('common.appErrorSupport')}</Alert>
             <Button variant="contained" onClick={this.handleReload}>
-              Перезагрузить страницу
+              {t?.('common.appErrorReload')}
             </Button>
           </Stack>
         </Box>

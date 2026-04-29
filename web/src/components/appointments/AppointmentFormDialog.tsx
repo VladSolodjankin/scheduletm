@@ -252,18 +252,18 @@ export function AppointmentFormDialog({
               onClick={() => setShowTimezoneSelect((prev) => !prev)}
               sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
             >
-              {showTimezoneSelect ? 'Hide custom timezone' : 'Use custom timezone'}
+              {showTimezoneSelect ? t('appointments.hideCustomTimezone') : t('appointments.useCustomTimezone')}
             </Button>
             <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
-              {`Current timezone: ${formTimeZone}`}
+              {t('appointments.currentTimezone').replace('{timezone}', formTimeZone)}
             </Typography>
           </Stack>
           <Collapse in={showTimezoneSelect}>
             <FormControl fullWidth>
-              <InputLabel id="appointment-timezone-label">Timezone</InputLabel>
+              <InputLabel id="appointment-timezone-label">{t('appointments.timezone')}</InputLabel>
               <Select
                 labelId="appointment-timezone-label"
-                label="Timezone"
+                label={t('appointments.timezone')}
                 value={formTimeZone}
                 onChange={(event) => setFormTimeZone(String(event.target.value))}
               >
@@ -299,14 +299,14 @@ export function AppointmentFormDialog({
               control={control}
               render={({ field }: any) => (
                 <FormControl fullWidth>
-                  <InputLabel id="client-label">Client</InputLabel>
+                  <InputLabel id="client-label">{t('appointments.client')}</InputLabel>
                   <Select
                     labelId="client-label"
-                    label="Client"
+                    label={t('appointments.client')}
                     value={field.value}
                     onChange={(event) => field.onChange(String(event.target.value))}
                   >
-                    <MenuItem value="">New client</MenuItem>
+                    <MenuItem value="">{t('appointments.newClient')}</MenuItem>
                     {clients.map((client) => (
                       <MenuItem key={client.id} value={String(client.id)}>{`${client.firstName} ${client.lastName}`.trim()}</MenuItem>
                     ))}
