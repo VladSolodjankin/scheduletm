@@ -241,7 +241,7 @@ export function AuthCard({
         </AppButton>
 
         <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
-          By continuing, you agree to our <Link underline="hover">terms</Link> and <Link underline="hover">privacy policy</Link>.
+          {t('auth.legalPrefix')} <Link underline="hover">{t('auth.termsLabel')}</Link> {t('auth.legalJoin')} <Link underline="hover">{t('auth.privacyPolicyLabel')}</Link>{t('auth.legalSuffix')}
         </Typography>
       </AppForm>
     </Box>

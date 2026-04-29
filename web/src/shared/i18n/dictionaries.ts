@@ -23,7 +23,11 @@ export const dictionaries = {
       languageAria: 'Select language',
       errors: {
         network: 'Network connection issue. Please check your internet and try again.'
-      }
+      },
+      appErrorTitle: 'Something went wrong',
+      appErrorDescription: 'An unexpected UI error occurred. Try reloading the page.',
+      appErrorSupport: 'If the issue persists, contact your administrator.',
+      appErrorReload: 'Reload page'
     },
     auth: {
       loginTitle: 'Sign in to your account',
@@ -76,6 +80,11 @@ export const dictionaries = {
       submitRegister: 'Create account',
       switchToRegister: "Don't have an account? Register",
       switchToLogin: 'Already have an account? Sign in',
+      termsLabel: 'terms',
+      privacyPolicyLabel: 'privacy policy',
+      legalPrefix: 'By continuing, you agree to our',
+      legalJoin: 'and',
+      legalSuffix: '.',
       errors: {
         loginFailed: 'Unable to sign in. Check your email and password.',
         registerFailed: 'Unable to register.',
@@ -314,6 +323,16 @@ export const dictionaries = {
       cancelPolicyNoRefund: 'Cancellation policy: late cancellation without refund.',
       markPaidAction: 'Mark as paid',
       notifyAction: 'Notify client',
+      hideCustomTimezone: 'Hide custom timezone',
+      useCustomTimezone: 'Use custom timezone',
+      currentTimezone: 'Current timezone: {timezone}',
+      timezone: 'Timezone',
+      client: 'Client',
+      newClient: 'New client',
+      durationMinutesShort: '{minutes}m',
+      roleAdmin: 'admin',
+      roleSpecialist: 'specialist',
+      roleClient: 'client',
       paymentStatusPaid: 'Paid',
       paymentStatusUnpaid: 'Unpaid',
       auditTitle: 'Activity',
@@ -362,7 +381,11 @@ export const dictionaries = {
       languageAria: 'Выбрать язык',
       errors: {
         network: 'Проблема с подключением к сети. Проверьте интернет и попробуйте снова.'
-      }
+      },
+      appErrorTitle: 'Что-то пошло не так',
+      appErrorDescription: 'Произошла непредвиденная ошибка интерфейса. Попробуйте перезагрузить страницу.',
+      appErrorSupport: 'Если проблема повторяется, обратитесь к администратору.',
+      appErrorReload: 'Перезагрузить страницу'
     },
     auth: {
       loginTitle: 'Вход в аккаунт',
@@ -415,6 +438,11 @@ export const dictionaries = {
       submitRegister: 'Зарегистрироваться',
       switchToRegister: 'Нет аккаунта? Зарегистрироваться',
       switchToLogin: 'Уже есть аккаунт? Войти',
+      termsLabel: 'условиями',
+      privacyPolicyLabel: 'политикой конфиденциальности',
+      legalPrefix: 'Продолжая, вы соглашаетесь с нашими',
+      legalJoin: 'и',
+      legalSuffix: '.',
       errors: {
         loginFailed: 'Не удалось войти. Проверьте email и пароль.',
         registerFailed: 'Не удалось зарегистрироваться.',
@@ -653,6 +681,16 @@ export const dictionaries = {
       cancelPolicyNoRefund: 'Правило отмены: поздняя отмена без возврата оплаты.',
       markPaidAction: 'Подтвердить оплату',
       notifyAction: 'Уведомить клиента',
+      hideCustomTimezone: 'Скрыть выбор часового пояса',
+      useCustomTimezone: 'Использовать другой часовой пояс',
+      currentTimezone: 'Текущий часовой пояс: {timezone}',
+      timezone: 'Часовой пояс',
+      client: 'Клиент',
+      newClient: 'Новый клиент',
+      durationMinutesShort: '{minutes}м',
+      roleAdmin: 'admin',
+      roleSpecialist: 'specialist',
+      roleClient: 'client',
       paymentStatusPaid: 'Оплачено',
       paymentStatusUnpaid: 'Не оплачено',
       auditTitle: 'История действий',

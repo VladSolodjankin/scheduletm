@@ -143,9 +143,9 @@ export function UserFormDialog({
             <FormControl margin="dense" fullWidth>
               <InputLabel id="managed-user-role-label">{roleLabel}</InputLabel>
               <Select labelId="managed-user-role-label" label={roleLabel} value={field.value} onChange={(event) => field.onChange(event.target.value as 'admin' | 'specialist' | 'client')}>
-                <MenuItem value="admin">admin</MenuItem>
-                <MenuItem value="specialist">specialist</MenuItem>
-                <MenuItem value="client">client</MenuItem>
+                <MenuItem value="admin">{t('appointments.roleAdmin')}</MenuItem>
+                <MenuItem value="specialist">{t('appointments.roleSpecialist')}</MenuItem>
+                <MenuItem value="client">{t('appointments.roleClient')}</MenuItem>
               </Select>
             </FormControl>
           )}
