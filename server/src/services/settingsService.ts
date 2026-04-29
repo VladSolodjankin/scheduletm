@@ -58,6 +58,10 @@ export type AccountSettings = {
 export type UserSettings = {
   timezone: string;
   locale: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  telegramUsername: string;
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
   googleConnected: boolean;
@@ -220,6 +224,10 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
     return {
       timezone: 'UTC',
       locale: 'ru-RU',
+      firstName: '',
+      lastName: '',
+      phone: '',
+      telegramUsername: '',
       uiThemeMode: 'light',
       uiPaletteVariantId: 'default',
       googleConnected: false,
@@ -239,6 +247,10 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
   return {
     timezone: userSettings?.timezone ?? user?.timezone ?? 'UTC',
     locale: userSettings?.locale ?? user?.locale ?? 'ru-RU',
+    firstName: user?.first_name ?? '',
+    lastName: user?.last_name ?? '',
+    phone: user?.phone ?? '',
+    telegramUsername: user?.telegram_username ?? '',
     uiThemeMode: userSettings?.ui_theme_mode ?? user?.ui_theme_mode ?? 'light',
     uiPaletteVariantId: userSettings?.ui_palette_variant_id ?? user?.ui_palette_variant_id ?? 'default',
     googleConnected: Boolean(integration?.google_api_key ?? legacyIntegration?.google_api_key),
@@ -285,6 +297,10 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
     locale: parsed.data.locale,
     uiThemeMode: parsed.data.uiThemeMode,
     uiPaletteVariantId: parsed.data.uiPaletteVariantId,
+    firstName: parsed.data.firstName,
+    lastName: parsed.data.lastName,
+    phone: parsed.data.phone,
+    telegramUsername: parsed.data.telegramUsername,
   });
 
   await updateUserSettingsByWebUserId({

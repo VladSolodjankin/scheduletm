@@ -55,6 +55,10 @@ export type AccountSettings = {
 export type UserSettings = {
   timezone: string;
   locale: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  telegramUsername: string;
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
   googleConnected: boolean;

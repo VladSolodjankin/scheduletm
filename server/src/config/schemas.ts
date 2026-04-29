@@ -123,6 +123,10 @@ export const accountSettingsSchema = z.object({
 export const userSettingsSchema = z.object({
   timezone: timezoneSchema,
   locale: z.string().min(2, v.localeRequired).max(16, v.localeTooLong),
+  firstName: z.string().trim().min(1, v.managedUserFirstNameRequired).max(120, v.managedUserFirstNameTooLong),
+  lastName: z.string().trim().min(1, v.managedUserLastNameRequired).max(120, v.managedUserLastNameTooLong),
+  phone: z.string().trim().max(50, v.managedUserPhoneTooLong).optional().or(z.literal('')),
+  telegramUsername: z.string().trim().max(255, v.managedUserTelegramTooLong).optional().or(z.literal('')),
   uiThemeMode: z.enum(['light', 'dark']),
   uiPaletteVariantId: z.string().min(1, v.paletteIdRequired).max(64, v.paletteIdTooLong),
   telegramBotToken: z.string().trim().min(1, v.telegramBotTokenRequired).max(255, v.telegramBotTokenTooLong).optional().or(z.literal('')),
