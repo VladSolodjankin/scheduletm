@@ -3,8 +3,7 @@ import { Stack, Typography } from '@mui/material';
 import type { SettingsCardCopy } from '../SettingsCard.types';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
-import { AppRhfPasswordField } from '../../shared/ui/AppRhfPasswordField';
-import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
+import { AppTextField } from '../../shared/ui/AppTextField';
 
 type Props = {
   copy: SettingsCardCopy;
@@ -41,12 +40,13 @@ export function PasswordSettingsTab({
     <AppForm component="form" onSubmit={(event) => event.preventDefault()}>
       <Typography variant="h5">{copy.passwordTitle}</Typography>
       <Stack spacing={2}>
-        <AppRhfPasswordField field={{ value: currentPassword, onChange: (e: any) => onCurrentPasswordChange(e.target.value) } as any} label={copy.currentPassword} />
-        <AppRhfPasswordField field={{ value: newPassword, onChange: (e: any) => onNewPasswordChange(e.target.value) } as any} label={copy.newPassword} />
-        <AppRhfPasswordField field={{ value: confirmPassword, onChange: (e: any) => onConfirmPasswordChange(e.target.value) } as any} label={copy.confirmPassword} />
+        <AppTextField value={currentPassword} onChange={(event) => onCurrentPasswordChange(event.target.value)} label={copy.currentPassword} type="password" />
+        <AppTextField value={newPassword} onChange={(event) => onNewPasswordChange(event.target.value)} label={copy.newPassword} type="password" />
+        <AppTextField value={confirmPassword} onChange={(event) => onConfirmPasswordChange(event.target.value)} label={copy.confirmPassword} type="password" />
         {passwordStep === 'otp' && (
-          <AppRhfTextField
-            field={{ value: otpCode, onChange: (e: any) => onOtpCodeChange(e.target.value.replace(/\D/g, '').slice(0, 4)) } as any}
+          <AppTextField
+            value={otpCode}
+            onChange={(event) => onOtpCodeChange(event.target.value.replace(/\D/g, '').slice(0, 4))}
             label={copy.otpCode}
           />
         )}
