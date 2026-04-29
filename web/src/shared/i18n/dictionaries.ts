@@ -766,6 +766,7 @@ export type TranslationKey =
   | 'common.appErrorSupport'
   | 'common.appErrorDescription'
   | 'common.appErrorTitle'
+  | 'common.cancel'
   | 'common.errors.network'
   | 'auth.loginTitle'
   | 'auth.loginSubtitle'
