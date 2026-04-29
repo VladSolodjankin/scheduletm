@@ -36,7 +36,6 @@ type AuthCredentialsFormValues = {
 type RegisterStep = 'credentials' | 'otp';
 
 const REGISTER_PENDING_EMAIL_KEY = 'meetli_register_pending_email';
-const OTP_LENGTH = 4;
 const RESEND_COOLDOWN_SECONDS = 30;
 
 export function AuthContainer({ mode }: AuthContainerProps) {
