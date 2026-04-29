@@ -12,10 +12,10 @@
 
 ### 1) Security и auth-flow (`server` + `web`)
 
-- [ ] Внедрить CSRF-защиту для refresh-cookie (`/api/auth/refresh`) и logout flow.
+- [x] Внедрить CSRF-защиту для refresh-cookie (`/api/auth/refresh`) и logout flow.
 - [ ] Перевести секреты в Secret Manager (не хранить в репозитории/обычных env-файлах).
-- [ ] Проверить cookie policy для production: `HttpOnly`, `Secure`, `SameSite`, домен, TTL.
-- [ ] Ограничить CORS на production-домены (без широких fallback-origin).
+- [x] Проверить cookie policy для production: `HttpOnly`, `Secure`, `SameSite`, домен, TTL.
+- [x] Ограничить CORS на production-домены (без широких fallback-origin).
 
 ### 2) Database readiness (`server` + `bot`)
 
