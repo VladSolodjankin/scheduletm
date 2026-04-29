@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import crypto from 'node:crypto';
 import { passwordSchema } from '../config/schemas.js';
-import { hashPassword, createOtpCode } from '../utils/crypto.js';
+import { hashPassword, createOtpCode, verifyPassword } from '../utils/crypto.js';
 import { findWebUserById, updateWebUserAuthState, updateWebUserCredentials } from '../repositories/webUserRepository.js';
 import { sendEmailVerificationEmail } from '../services/emailDeliveryService.js';
 import { t } from '../i18n/index.js';
@@ -241,7 +241,8 @@ settingsRoutes.put('/specialist-booking-policy', requireAccessToken, async (req,
 settingsRoutes.post('/user/password/request', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
   const parsedPassword = passwordSchema.safeParse(req.body?.password);
-  if (!parsedPassword.success) {
+  const currentPassword = typeof req.body?.currentPassword === 'string' ? req.body.currentPassword : '';
+  if (!parsedPassword.success || !currentPassword) {
     return res.status(400).json({ message: t(req, 'invalidPayloadUserSettings') });
   }
 
@@ -249,6 +250,11 @@ settingsRoutes.post('/user/password/request', requireAccessToken, async (req, re
   const webUser = Number.isInteger(numericUserId) ? await findWebUserById(user.accountId, numericUserId) : null;
   if (!webUser) {
     return res.status(400).json({ message: t(req, 'invalidUserId') });
+  }
+
+  const isCurrentPasswordValid = verifyPassword(currentPassword, webUser.password_salt, webUser.password_hash);
+  if (!isCurrentPasswordValid) {
+    return res.status(400).json({ message: t(req, 'invalidCurrentPassword') });
   }
 
   const code = createOtpCode();
@@ -263,6 +269,8 @@ settingsRoutes.post('/user/password/request', requireAccessToken, async (req, re
     firstName: webUser.first_name ?? undefined,
     verificationCode: code
   });
+
+  return res.json({ message: 'ok' });
 })
 
 settingsRoutes.post('/user/password/confirm', requireAccessToken, async (req, res) => {
