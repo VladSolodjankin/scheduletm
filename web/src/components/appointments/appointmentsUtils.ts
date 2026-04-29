@@ -17,10 +17,24 @@ export const DEFAULT_SLOT_STEP_MIN = 30;
 export const SLOT_ROWS = Array.from({ length: 48 }, (_, index) => index * 30);
 export const BROWSER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
-const FALLBACK_TIMEZONES = ['UTC', BROWSER_TIMEZONE];
-export const AVAILABLE_TIMEZONES = typeof Intl.supportedValuesOf === 'function'
-  ? Intl.supportedValuesOf('timeZone')
-  : FALLBACK_TIMEZONES;
+export const AVAILABLE_TIMEZONES = [
+  'UTC',
+  'Europe/London',
+  'Europe/Berlin',
+  'Europe/Moscow',
+  'Asia/Dubai',
+  'Asia/Tbilisi',
+  'Asia/Almaty',
+  'Asia/Bangkok',
+  'Asia/Singapore',
+  'Asia/Tokyo',
+  'Australia/Sydney',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Sao_Paulo',
+];
 
 export function getDateTimeParts(date: Date, timeZone: string) {
   const parts = new Intl.DateTimeFormat('en-CA', {

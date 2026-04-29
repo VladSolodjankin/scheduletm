@@ -21,7 +21,6 @@ import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
 import { isValidPhoneValue } from '../../shared/ui/phoneUtils';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
 import {
-  AVAILABLE_TIMEZONES,
   BROWSER_TIMEZONE,
   buildStartEndIso,
   composeFormDateTime,
@@ -34,6 +33,7 @@ import {
 } from './appointmentsUtils';
 
 import type { TranslationKey } from '../../shared/i18n/dictionaries';
+import { TimezoneSelect } from '../TimezoneSelect';
 
 type AppointmentFormState = EditFormState & {
   clientId: string;
@@ -263,19 +263,12 @@ export function AppointmentFormDialog({
             </Typography>
           </Stack>
           <Collapse in={showTimezoneSelect}>
-            <FormControl fullWidth>
-              <InputLabel id="appointment-timezone-label">{t('appointments.timezone')}</InputLabel>
-              <Select
-                labelId="appointment-timezone-label"
-                label={t('appointments.timezone')}
-                value={formTimeZone}
-                onChange={(event) => setFormTimeZone(String(event.target.value))}
-              >
-                {AVAILABLE_TIMEZONES.map((timeZone) => (
-                  <MenuItem key={timeZone} value={timeZone}>{timeZone}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TimezoneSelect
+              label={t('appointments.timezone')}
+              labelId="appointment-timezone-label"
+              value={formTimeZone}
+              onChange={setFormTimeZone}
+            />
           </Collapse>
           <Box sx={createResponsiveFieldGridSx(2)}>
             <Controller
