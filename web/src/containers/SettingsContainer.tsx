@@ -82,6 +82,7 @@ export function SettingsContainer() {
   const [accountNotificationDefaults, setAccountNotificationDefaults] = useState<AccountNotificationDefault[]>(defaultAccountNotificationDefaults);
   const [isSavingNotificationDefaults, setIsSavingNotificationDefaults] = useState(false);
 
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -376,13 +377,13 @@ export function SettingsContainer() {
 
 
   const requestPasswordOtp = async () => {
-    if (!accessToken || newPassword.length < 10 || newPassword !== confirmPassword) {
+    if (!accessToken || !currentPassword.trim() || newPassword.length < 10 || newPassword !== confirmPassword) {
       setError(t('auth.passwordMismatch'));
       return;
     }
 
     try {
-      await apiClient.post('/api/settings/user/password/request', { password: newPassword }, { headers: authHeaders(accessToken) });
+      await apiClient.post('/api/settings/user/password/request', { currentPassword, password: newPassword }, { headers: authHeaders(accessToken) });
       setPasswordStep('otp');
       setError('');
       setSuccess(t('settings.passwordChange.otpSent'));
@@ -400,6 +401,7 @@ export function SettingsContainer() {
       setSuccess(t('settings.passwordChange.success'));
       setError('');
       setPasswordStep('password');
+      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setOtpCode('');
@@ -437,6 +439,7 @@ export function SettingsContainer() {
 
   const cancelPasswordChange = () => {
     setPasswordStep('password');
+    setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
     setOtpCode('');
@@ -521,6 +524,7 @@ export function SettingsContainer() {
               appointmentReminderTimingsLabel: t('settings.appointmentReminderTimingsLabel'),
               paymentReminderTimingsLabel: t('settings.paymentReminderTimingsLabel'),
               disabledOption: t('settings.disabledOption'),
+              currentPassword: t('settings.passwordChange.currentPassword'),
               newPassword: t('settings.passwordChange.newPassword'),
               confirmPassword: t('settings.passwordChange.confirmPassword'),
               otpCode: t('settings.passwordChange.otpLabel'),
@@ -542,6 +546,7 @@ export function SettingsContainer() {
             isSavingUser={isSavingUser}
             isSavingSpecialistBookingPolicy={isSavingSpecialistPolicy}
             isSavingNotificationDefaults={isSavingNotificationDefaults}
+            currentPassword={currentPassword}
             newPassword={newPassword}
             confirmPassword={confirmPassword}
             otpCode={otpCode}
@@ -554,6 +559,7 @@ export function SettingsContainer() {
             onClearTelegramBotToken={clearTelegramBotToken}
             onConnectGoogle={connectGoogle}
             onDisconnectGoogle={disconnectGoogle}
+            onCurrentPasswordChange={setCurrentPassword}
             onNewPasswordChange={setNewPassword}
             onConfirmPasswordChange={setConfirmPassword}
             onOtpCodeChange={setOtpCode}

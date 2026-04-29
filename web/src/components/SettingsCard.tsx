@@ -36,6 +36,7 @@ type SettingsCardProps = {
   isSavingUser?: boolean;
   isSavingSpecialistBookingPolicy?: boolean;
   isSavingNotificationDefaults?: boolean;
+  currentPassword: string;
   newPassword: string;
   confirmPassword: string;
   otpCode: string;
@@ -48,6 +49,7 @@ type SettingsCardProps = {
   onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
   onDisconnectGoogle: () => void;
+  onCurrentPasswordChange: (value: string) => void;
   onNewPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
   onOtpCodeChange: (value: string) => void;
@@ -73,6 +75,7 @@ export function SettingsCard({
   isSavingUser = false,
   isSavingSpecialistBookingPolicy = false,
   isSavingNotificationDefaults = false,
+  currentPassword,
   newPassword,
   confirmPassword,
   otpCode,
@@ -85,6 +88,7 @@ export function SettingsCard({
   onClearTelegramBotToken,
   onConnectGoogle,
   onDisconnectGoogle
+  ,onCurrentPasswordChange
   ,onNewPasswordChange
   ,onConfirmPasswordChange
   ,onOtpCodeChange
@@ -165,10 +169,12 @@ export function SettingsCard({
       {tab === 'password' && (
         <PasswordSettingsTab
           copy={copy}
+          currentPassword={currentPassword}
           newPassword={newPassword}
           confirmPassword={confirmPassword}
           otpCode={otpCode}
           passwordStep={passwordStep}
+          onCurrentPasswordChange={onCurrentPasswordChange}
           onNewPasswordChange={onNewPasswordChange}
           onConfirmPasswordChange={onConfirmPasswordChange}
           onOtpCodeChange={onOtpCodeChange}

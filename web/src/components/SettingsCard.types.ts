@@ -45,6 +45,7 @@ export type SettingsCardCopy = {
   paymentReminderTimingsLabel: string;
   disabledOption: string;
   channels: Record<NotificationChannel, string>;
+  currentPassword: string;
   newPassword: string;
   confirmPassword: string;
   otpCode: string;
