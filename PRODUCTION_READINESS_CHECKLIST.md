@@ -53,20 +53,37 @@
 
 ### Server/API
 
-- [ ] Пройти security review env/runtime-настроек (в т.ч. OAuth redirect и token TTL).
-- [ ] Проверить rate-limit стратегии для login/invite/notify endpoints.
-- [ ] Утвердить политику логирования и маскирования PII (email/phone/telegram).
+- [x] Пройти security review **runtime**-настроек (без блока secret storage):
+  - [x] OAuth redirect: callback дополнительно валидируется по origin/path на сервере.
+  - [x] Token TTL: значения централизованы в runtime config (`ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_TOKEN_TTL_DAYS`) и применяются при issue/refresh cookie+session.
+- [x] Проверить rate-limit стратегии для login/invite/notify endpoints:
+  - [x] Добавлены runtime limiter-ы: login (IP), resend-invite (user/ip), appointment notify (user/ip).
+  - [x] 429 + `Retry-After` возвращаются middleware-ограничителем.
+- [x] Утвердить политику логирования и маскирования PII (email/phone/telegram):
+  - [x] HTTP access-лог переведен на безопасный формат без query-string (`req.path`), чтобы не логировать OAuth `code`/PII из URL.
+  - [ ] Маскирование PII в application/error/webhook логах и проверка выборкой реальных записей.
 
 ### Web
 
-- [ ] Прогнать role-based smoke (owner/admin/specialist/client) на staging.
-- [ ] Добавить UX-smoke на auth, invite onboarding, settings, notification logs.
-- [ ] Подготовить мониторинг фронта (ошибки рендера, API error rate, release markers).
+- [ ] Прогнать role-based smoke (owner/admin/specialist/client) на staging:
+  - [ ] Для каждой роли проверить доступ к разрешенным страницам/действиям.
+  - [ ] Для запрещенных действий убедиться в корректных 403/guard redirect.
+- [ ] Добавить UX-smoke на auth, invite onboarding, settings, notification logs:
+  - [ ] Проверить happy-path + невалидные сценарии (валидация, пустые состояния, recover после refresh/back).
+  - [ ] Проверить ключевые потоки в мобильном viewport.
+- [ ] Подготовить мониторинг фронта:
+  - [ ] Runtime JS errors + unhandled rejections.
+  - [ ] API error rate + release markers (версия/commit) для корреляции инцидентов.
 
 ### Bot
 
-- [ ] Гарантировать idempotency по `update_id` и защиту от гонок на пользователя.
-- [ ] Проверить post-deploy smoke: `/health`, `getWebhookInfo`, отправка тестового reminder.
+- [ ] Гарантировать idempotency по `update_id` и защиту от гонок на пользователя:
+  - [ ] Dedup по `update_id` с TTL и без повторного бизнес-эффекта.
+  - [ ] Последовательная обработка/локи для одного пользователя при конкурентных callback/update.
+- [ ] Проверить post-deploy smoke:
+  - [ ] `/health` (приложение + зависимости).
+  - [ ] `getWebhookInfo` (валидный webhook URL, без `last_error_message`, контролируемый `pending_update_count`).
+  - [ ] Отправка тестового reminder и контроль отсутствия дублей.
 
 ## P2 — после стабилизации
 

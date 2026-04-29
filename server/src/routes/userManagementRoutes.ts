@@ -10,8 +10,10 @@ import {
   updateManagedUser,
 } from '../services/userManagementService.js';
 import { formatZodError } from '../utils/validation.js';
+import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 
 export const userManagementRoutes = Router();
+const resendInviteRateLimit = createRequestRateLimit({ keyPrefix: 'resend-invite', maxRequests: 10, windowMs: 60_000 });
 
 userManagementRoutes.use(requireAccessToken);
 
@@ -111,7 +113,7 @@ userManagementRoutes.delete('/:id', async (req, res) => {
   }
 });
 
-userManagementRoutes.post('/:id/resend-invite', async (req, res) => {
+userManagementRoutes.post('/:id/resend-invite', resendInviteRateLimit, async (req, res) => {
   const actor = (req as unknown as AuthedRequest).user;
   const userId = Number(req.params.id);
   if (!Number.isInteger(userId) || userId <= 0) {
