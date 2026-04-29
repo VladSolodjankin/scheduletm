@@ -79,6 +79,8 @@ export function InviteAcceptContainer() {
     let isDisposed = false;
 
     const verifyInvite = async () => {
+      setInviteState({ status: 'loading' });
+
       if (!token || !fallbackEmail) {
         setInviteState({ status: 'invalid' });
         return;
@@ -113,8 +115,7 @@ export function InviteAcceptContainer() {
       }
     };
 
-    setInviteState({ status: 'loading' });
-    verifyInvite();
+    void verifyInvite();
 
     return () => {
       isDisposed = true;
