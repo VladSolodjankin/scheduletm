@@ -5,6 +5,7 @@ import type { ManagedUserItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
+import { useI18n } from '../../shared/i18n/I18nContext';
 
 type UserFormDialogProps = {
   open: boolean;
@@ -81,7 +82,7 @@ export function UserFormDialog({
     phone?: string;
     telegramUsername?: string;
   } | null>(null);
-
+  const { t } = useI18n();
   const { control, handleSubmit, reset } = useForm<UserFormState>({
     defaultValues: EMPTY_FORM
   });

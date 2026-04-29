@@ -8,6 +8,7 @@ import { AppRhfPhoneField } from '../shared/ui/AppRhfPhoneField';
 import { isValidPhoneValue } from '../shared/ui/phoneUtils';
 import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
+import { useI18n } from '../shared/i18n/I18nContext';
 
 type AuthFormValues = {
   firstName: string;
@@ -57,6 +58,7 @@ export function AuthCard({
   onSubmit,
   onSwitch
 }: AuthCardProps) {
+  const { t } = useI18n();
   const { control, handleSubmit, setError, clearErrors } = useForm<AuthFormValues>({
     defaultValues: {
       firstName: '',
