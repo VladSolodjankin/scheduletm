@@ -17,7 +17,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { AppointmentItem, AppointmentStatus, ClientItem, SpecialistItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
-import { AppRhfPhoneField, isValidPhoneValue } from '../../shared/ui/AppRhfPhoneField';
+import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
+import { isValidPhoneValue } from '../../shared/ui/phoneUtils';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
 import {
   AVAILABLE_TIMEZONES,

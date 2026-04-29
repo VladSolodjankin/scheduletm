@@ -33,29 +33,45 @@ export function SpecialistsContainer() {
     }
 
     if (!canManageSpecialistSettings) {
-      setIsLoading(false);
       return;
     }
 
+    let isActive = true;
+
     const load = async () => {
-      setIsLoading(true);
       try {
         const response = await apiClient.get<SpecialistsListResponse>('/api/specialists', {
           headers: authHeaders(accessToken),
         });
+
+        if (!isActive) {
+          return;
+        }
+
         setSpecialists(response.data.specialists);
         setAvailableWebUsers(response.data.availableWebUsers ?? []);
+        setError('');
       } catch (err) {
+        if (!isActive) {
+          return;
+        }
+
         setError(resolveApiError(err, {
           fallbackMessage: t('settings.errors.load'),
-          networkMessage: t('common.errors.network')
+          networkMessage: t('common.errors.network'),
         }).message);
       } finally {
-        setIsLoading(false);
+        if (isActive) {
+          setIsLoading(false);
+        }
       }
     };
 
     void load();
+
+    return () => {
+      isActive = false;
+    };
   }, [accessToken, canManageSpecialistSettings, navigate, t]);
 
   const openCreateSpecialistDialog = () => {
@@ -132,7 +148,7 @@ export function SpecialistsContainer() {
     } catch (err) {
       setError(resolveApiError(err, {
         fallbackMessage: t('settings.errors.saveSpecialist'),
-        networkMessage: t('common.errors.network')
+        networkMessage: t('common.errors.network'),
       }).message);
       setSuccess('');
     } finally {
@@ -149,13 +165,14 @@ export function SpecialistsContainer() {
       const response = await apiClient.delete<SpecialistManagementItem>(`/api/specialists/${specialist.id}`, {
         headers: authHeaders(accessToken),
       });
+
       setSpecialists((prev) => prev.map((item) => (item.id === response.data.id ? response.data : item)));
       setError('');
       setSuccess('');
     } catch (err) {
       setError(resolveApiError(err, {
         fallbackMessage: t('settings.errors.deleteSpecialist'),
-        networkMessage: t('common.errors.network')
+        networkMessage: t('common.errors.network'),
       }).message);
       setSuccess('');
     }
@@ -176,7 +193,7 @@ export function SpecialistsContainer() {
       )}
 
       {!canManageSpecialistSettings ? (
-        <Box >
+        <Box>
           <Alert severity="info">{t('specialists.accessDenied')}</Alert>
         </Box>
       ) : (

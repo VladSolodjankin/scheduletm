@@ -4,7 +4,8 @@ import { Controller, useForm } from 'react-hook-form';
 import logoText from '../static/images/logo_text.svg';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
-import { AppRhfPhoneField, isValidPhoneValue } from '../shared/ui/AppRhfPhoneField';
+import { AppRhfPhoneField } from '../shared/ui/AppRhfPhoneField';
+import { isValidPhoneValue } from '../shared/ui/phoneUtils';
 import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 
@@ -184,7 +185,7 @@ export function AuthCard({
                 <AppRhfPhoneField
                   field={field}
                   label={phoneLabel}
-                  onChange={() => clearErrors('phone')}
+                  onValueChange={() => clearErrors('phone')}
                   error={Boolean(fieldState.error)}
                   helperText={fieldState.error?.message}
                 />

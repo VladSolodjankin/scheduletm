@@ -1,5 +1,6 @@
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ClipboardEvent } from 'react';
+
 import { Alert, Box, Divider, Link, Stack, TextField, Typography } from '@mui/material';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
@@ -261,7 +262,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
     }
   };
 
-  const handleOtpPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+  const handleOtpPaste = (event: ClipboardEvent<HTMLInputElement>) => {
     const pastedDigits = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH);
     if (!pastedDigits) {
       return;
@@ -282,7 +283,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
     }
   };
 
-  const handleOtpKeyDown = (index: number, event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleOtpKeyDown = (index: number, event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Backspace' && !otpDigits[index] && index > 0) {
       otpInputRefs.current[index - 1]?.focus();
     }
@@ -384,17 +385,19 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                           inputRef={(element) => {
                             otpInputRefs.current[index] = element;
                           }}
-                          onKeyDown={(event) => handleOtpKeyDown(index, event)}
+                          onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => handleOtpKeyDown(index, event)}
                           onPaste={handleOtpPaste}
-                          inputProps={{
-                            inputMode: 'numeric',
-                            maxLength: 1,
-                            style: { textAlign: 'center', fontSize: 24, fontWeight: 700, padding: 0, lineHeight: '64px' }
+                          slotProps={{
+                            htmlInput: {
+                              inputMode: 'numeric',
+                              maxLength: 1,
+                              style: { textAlign: 'center', fontSize: 24, fontWeight: 700, padding: 0, lineHeight: '64px' }
+                            }
                           }}
                           sx={{
                             width: 64,
                             '& .MuiInputBase-input': {
-                              height: 64,
+                              height: 31,
                               textAlign: 'center',
                               display: 'flex',
                               alignItems: 'center',

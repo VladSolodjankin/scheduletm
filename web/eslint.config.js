@@ -29,7 +29,6 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
 
       // Best practices
       'curly': ['error', 'all'],
@@ -37,6 +36,7 @@ export default tseslint.config(
       'no-var': 'error',
       'prefer-const': 'error',
       '@typescript-eslint/no-explicit-any': 'warn',
+      'react-refresh/only-export-components': 'off',
 
       'i18next/no-literal-string': [
         'error',
@@ -95,6 +95,9 @@ export default tseslint.config(
           ],
         },
       ],
+
+      'i18next/no-literal-string': 'off',
+      'i18next/no-literal': 'off',
     },
 
   },

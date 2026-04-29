@@ -15,15 +15,15 @@ export function UsersContainer() {
   const { accessToken, user } = useAuth();
   const { t } = useI18n();
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isResendingInviteForUserId, setIsResendingInviteForUserId] = useState<number | null>(null);
   const [success, setSuccess] = useState('');
   const [users, setUsers] = useState<ManagedUserItem[]>([]);
   const [editingUser, setEditingUser] = useState<ManagedUserItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+  const [isUsersLoading, setIsUsersLoading] = useState(false);
   const canManageUsers = user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
+  const isLoading = canManageUsers && isUsersLoading;
 
   useEffect(() => {
     if (!accessToken) {
@@ -32,12 +32,11 @@ export function UsersContainer() {
     }
 
     if (!canManageUsers) {
-      setIsLoading(false);
       return;
     }
 
     const load = async () => {
-      setIsLoading(true);
+      setIsUsersLoading(true);
       try {
         const response = await apiClient.get<ManagedUsersListResponse>('/api/users', {
           headers: authHeaders(accessToken),
@@ -50,7 +49,7 @@ export function UsersContainer() {
           networkMessage: t('common.errors.network')
         }).message);
       } finally {
-        setIsLoading(false);
+        setIsUsersLoading(false);
       }
     };
 

@@ -12,6 +12,7 @@ export const dictionaries = {
       language: 'Language',
       appointments: 'Appointments',
       my_appointments: 'My Appointments',
+      country: 'Country',
       specialists: 'Specialists',
       users: 'Users',
       notificationLogs: 'Notification logs',
@@ -351,6 +352,7 @@ export const dictionaries = {
       appointments: 'Записи',
       my_appointments: 'Мои Записи',
       specialists: 'Специалисты',
+      country: 'Страна',
       users: 'Пользователи',
       notificationLogs: 'Логи уведомлений',
       errorLogs: 'Логи ошибок',
@@ -689,6 +691,7 @@ export type TranslationKey =
   | 'common.login'
   | 'common.register'
   | 'common.language'
+  | 'common.country'
   | 'common.appointments'
   | 'common.my_appointments'
   | 'common.specialists'
