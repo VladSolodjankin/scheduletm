@@ -269,7 +269,10 @@ export function AppointmentsContainer() {
   };
 
   useEffect(() => {
-    void loadAppointments(selectedSpecialistId);
+    const timeoutId = window.setTimeout(() => {
+      void loadAppointments(selectedSpecialistId);
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken, focusDate, viewMode, selectedSpecialistId]);
 
@@ -337,7 +340,7 @@ export function AppointmentsContainer() {
     }
 
     const appointmentAtMs = new Date(editingItem.scheduledAt).getTime();
-    const diffMs = appointmentAtMs - Date.now();
+    const diffMs = appointmentAtMs - new Date().getTime();
     const isLateCancel = diffMs <= policy.cancelGracePeriodHours * 60 * 60 * 1000;
     return isLateCancel && !policy.refundOnLateCancel ? 'no_refund' : 'refund';
   }, [bookingPolicies, editingItem]);
