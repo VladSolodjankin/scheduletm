@@ -108,8 +108,10 @@ VITE_API_URL=http://localhost:3003
 - покрывают owner-flow для `Users` (create/edit/deactivate), переход owner в `/error-logs`, logout из profile menu;
 - проверяют role-aware доступность пунктов меню и видимость табов `System settings`/`Account settings` на странице настроек;
 - проверяют доступ к страницам по прямому URL и access denied состояния (owner/admin/client) для `/specialists`, `/notification-logs`, `/error-logs`.
+- покрывают публичные auth-экраны: переключение `/login` ↔ `/register`, а также invalid-состояния `/invite/accept` и `/verify-email` без token/email.
+- отдельно нужно расширить покрытие **негативных UI-сценариев**: невалидные формы, серверные ошибки, access denied действия, просроченные/некорректные токены, пустые и error состояния страниц.
 
-Структура UI e2e разнесена по файлам: `users.ui.e2e.spec.mjs`, `navigation.ui.e2e.spec.mjs`, `settings.ui.e2e.spec.mjs`, `session.ui.e2e.spec.mjs`, `access-control.ui.e2e.spec.mjs`; общие auth-хелперы вынесены в `ui/helpers/auth.mjs`.
+Структура UI e2e разнесена по файлам: `auth.ui.e2e.spec.mjs`, `users.ui.e2e.spec.mjs`, `navigation.ui.e2e.spec.mjs`, `settings.ui.e2e.spec.mjs`, `session.ui.e2e.spec.mjs`, `access-control.ui.e2e.spec.mjs`; общие auth-хелперы вынесены в `ui/helpers/auth.mjs`.
 
 
 > Для запуска используется `@playwright/test` (единый раннер/DSL), чтобы избежать конфликтов вида `test.describe() called here` при смешивании разных Playwright пакетов.
