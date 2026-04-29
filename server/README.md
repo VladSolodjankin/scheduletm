@@ -120,6 +120,7 @@ npm run -w @scheduletm/server test -- business.integration.test.ts
 - Глобальный обзор: [`../README.md`](../README.md)
 - Карта модуля: [`./PROJECT_MAP.md`](./PROJECT_MAP.md)
 - Роли и права (RBAC): [`./docs/rbac.md`](./docs/rbac.md)
+- Database readiness: [`./docs/db-readiness.md`](./docs/db-readiness.md)
 
 
 ### Notification defaults endpoint

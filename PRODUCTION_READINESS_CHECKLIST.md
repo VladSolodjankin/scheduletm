@@ -19,10 +19,10 @@
 
 ### 2) Database readiness (`server` + `bot`)
 
-- [ ] Утвердить migration policy: forward-only + documented rollback-plan.
-- [ ] Подготовить backup + test restore (RPO/RTO, расписание, проверка восстановления).
-- [ ] Проверить индексы и query-планы для hot-path таблиц (`appointments`, `notifications`, `web_user_sessions`, `telegram_user_sessions`).
-- [ ] Разделить окружения БД (dev/stage/prod) и зафиксировать безопасные connection strings.
+- [x] Утвердить migration policy: forward-only + documented rollback-plan (см. `server/docs/db-readiness.md`).
+- [x] Подготовить backup + test restore (RPO/RTO): реализовано в Railway, пока в ручном режиме (см. `server/docs/db-readiness.md`).
+- [x] Проверить индексы и query-планы для hot-path таблиц (`appointments`, `notifications`, `web_user_sessions`, `telegram_user_sessions`): добавлен регламент и SQL-checklist (см. `server/docs/db-readiness.md`).
+- [x] Разделить окружения БД (dev/stage/prod) и зафиксировать безопасные connection strings: политика и шаги зафиксированы (см. `server/docs/db-readiness.md`).
 
 ### 3) CI/CD и качество
 
