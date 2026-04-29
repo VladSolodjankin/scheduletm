@@ -183,9 +183,13 @@ export function AppointmentFormDialog({
     }
 
     reset(initialValues);
+  }, [initialValues, open, reset]);
+
+  const handleClose = () => {
     setFormTimeZone(BROWSER_TIMEZONE);
     setShowTimezoneSelect(false);
-  }, [initialValues, open, reset]);
+    onClose();
+  };
 
   const selectedClientId = useWatch({ control, name: 'clientId' });
 
@@ -241,7 +245,7 @@ export function AppointmentFormDialog({
   });
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{editingItem ? t('appointments.editTitle') : t('appointments.createTitle')}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
@@ -446,7 +450,7 @@ export function AppointmentFormDialog({
             {t('appointments.notifyAction')}
           </AppButton>
         )}
-        <Button onClick={onClose} disabled={isSubmittingForm || isCancellingAppointment}>{t('appointments.close')}</Button>
+        <Button onClick={handleClose} disabled={isSubmittingForm || isCancellingAppointment}>{t('appointments.close')}</Button>
         <AppButton variant="contained" onClick={submitForm} isLoading={isSubmittingForm}>
           {t('appointments.save')}
         </AppButton>
