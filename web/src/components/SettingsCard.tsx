@@ -18,6 +18,7 @@ import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfPhoneField } from '../shared/ui/AppRhfPhoneField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 import { AppTab, AppTabs } from '../shared/ui/AppTabs';
+import { TimezoneSelect } from './TimezoneSelect';
 
 type SettingsCardCopy = {
   systemTab: string;
@@ -312,9 +313,19 @@ export function SettingsCard({
         <AppForm component="form" onSubmit={handleAccountSubmit(onSaveAccount)}>
           <Typography variant="h5">{copy.accountTitle}</Typography>
 
-          <Controller name="timezone" control={accountControl} render={({ field }: any) => (
-            <AppRhfTextField field={field} label={copy.timezone} />
-          )} />
+          <Controller
+            name="timezone"
+            control={accountControl}
+            render={({ field }: any) => (
+              <TimezoneSelect
+                label={copy.timezone}
+                labelId="account-timezone-label"
+                value={field.value}
+                onChange={field.onChange}
+                margin="normal"
+              />
+            )}
+          />
 
           <Controller name="locale" control={accountControl} render={({ field }: any) => (
             <AppRhfTextField field={field} label={copy.locale} />
@@ -559,7 +570,13 @@ export function SettingsCard({
             name="timezone"
             control={userControl}
             render={({ field }: any) => (
-              <AppRhfTextField field={field} label={copy.timezone} />
+              <TimezoneSelect
+                label={copy.timezone}
+                labelId="user-timezone-label"
+                value={field.value}
+                onChange={field.onChange}
+                margin="normal"
+              />
             )}
           />
 
