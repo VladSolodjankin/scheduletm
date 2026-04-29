@@ -21,6 +21,7 @@ export const dictionaries = {
       appearancePaletteAria: 'Select color palette',
       themeToggleAria: 'Toggle theme mode',
       languageAria: 'Select language',
+      cancel: 'Cancel',
       errors: {
         network: 'Network connection issue. Please check your internet and try again.'
       },
@@ -391,6 +392,7 @@ export const dictionaries = {
       appearancePaletteAria: 'Выбрать цветовую палитру',
       themeToggleAria: 'Переключить тему',
       languageAria: 'Выбрать язык',
+      cancel: 'Отмена',
       errors: {
         network: 'Проблема с подключением к сети. Проверьте интернет и попробуйте снова.'
       },
