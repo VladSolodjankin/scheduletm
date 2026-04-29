@@ -158,6 +158,10 @@ type UpdateWebUserSettingsInput = {
   id: number;
   timezone?: string;
   locale?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  telegramUsername?: string;
   uiThemeMode?: 'light' | 'dark';
   uiPaletteVariantId?: string;
 };
@@ -216,6 +220,18 @@ export async function updateWebUserSettings(input: UpdateWebUserSettingsInput): 
 
   if (input.uiPaletteVariantId !== undefined) {
     patch.ui_palette_variant_id = input.uiPaletteVariantId;
+  }
+  if (input.firstName !== undefined) {
+    patch.first_name = input.firstName;
+  }
+  if (input.lastName !== undefined) {
+    patch.last_name = input.lastName;
+  }
+  if (input.phone !== undefined) {
+    patch.phone = input.phone;
+  }
+  if (input.telegramUsername !== undefined) {
+    patch.telegram_username = input.telegramUsername;
   }
 
   await db('web_users')

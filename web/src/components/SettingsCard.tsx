@@ -15,6 +15,7 @@ import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
 import { AppIcons } from '../shared/ui/AppIcons';
 import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
+import { AppRhfPhoneField } from '../shared/ui/AppRhfPhoneField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 import { AppTab, AppTabs } from '../shared/ui/AppTabs';
 
@@ -29,6 +30,10 @@ type SettingsCardCopy = {
   userTitle: string;
   timezone: string;
   locale: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  telegram: string;
   defaultMeetingDuration: string;
   dailyDigestEnabled: string;
   weekStartsOnMonday: string;
@@ -563,6 +568,40 @@ export function SettingsCard({
             control={userControl}
             render={({ field }: any) => (
               <AppRhfTextField field={field} label={copy.locale} />
+            )}
+          />
+
+          <Controller
+            name="firstName"
+            control={userControl}
+            rules={{ required: copy.firstName }}
+            render={({ field, fieldState }: any) => (
+              <AppRhfTextField field={field} label={copy.firstName} required error={Boolean(fieldState.error)} helperText={fieldState.error?.message} />
+            )}
+          />
+
+          <Controller
+            name="lastName"
+            control={userControl}
+            rules={{ required: copy.lastName }}
+            render={({ field, fieldState }: any) => (
+              <AppRhfTextField field={field} label={copy.lastName} required error={Boolean(fieldState.error)} helperText={fieldState.error?.message} />
+            )}
+          />
+
+          <Controller
+            name="phone"
+            control={userControl}
+            render={({ field }: any) => (
+              <AppRhfPhoneField field={field} label={copy.phone} sx={{ mt: 1 }} />
+            )}
+          />
+
+          <Controller
+            name="telegramUsername"
+            control={userControl}
+            render={({ field }: any) => (
+              <AppRhfTextField field={field} label={copy.telegram} />
             )}
           />
 
