@@ -70,6 +70,7 @@ export const dictionaries = {
       inviteAcceptedSuccess: 'Invitation accepted. You can now sign in.',
       registerOtpSentHint: 'Verification code sent to {email}.',
       registerOtpRestoreHint: 'Continue verification for {email}.',
+      registerSuccessLoginHint: 'Registration successful. You can now sign in.',
       submitLogin: 'Sign in',
       submitRegister: 'Create account',
       switchToRegister: "Don't have an account? Register",
@@ -407,6 +408,7 @@ export const dictionaries = {
       inviteAcceptedSuccess: 'Приглашение принято. Теперь можно войти.',
       registerOtpSentHint: 'Код подтверждения отправлен на {email}.',
       registerOtpRestoreHint: 'Продолжите подтверждение для {email}.',
+      registerSuccessLoginHint: 'Регистрация прошла успешно. Теперь можно войти.',
       submitLogin: 'Войти',
       submitRegister: 'Зарегистрироваться',
       switchToRegister: 'Нет аккаунта? Зарегистрироваться',
@@ -744,6 +746,7 @@ export type TranslationKey =
   | 'auth.inviteAcceptedSuccess'
   | 'auth.registerOtpSentHint'
   | 'auth.registerOtpRestoreHint'
+  | 'auth.registerSuccessLoginHint'
   | 'auth.submitLogin'
   | 'auth.submitRegister'
   | 'auth.switchToRegister'
