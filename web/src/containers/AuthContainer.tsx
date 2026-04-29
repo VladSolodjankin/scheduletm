@@ -1,5 +1,5 @@
 import { Alert, Box, Divider, Link, Stack, TextField, Typography } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
@@ -34,6 +34,8 @@ type AuthCredentialsFormValues = {
 type RegisterStep = 'credentials' | 'otp';
 
 const REGISTER_PENDING_EMAIL_KEY = 'meetli_register_pending_email';
+const OTP_LENGTH = 4;
+const RESEND_COOLDOWN_SECONDS = 30;
 
 export function AuthContainer({ mode }: AuthContainerProps) {
   const navigate = useNavigate();
@@ -51,6 +53,8 @@ export function AuthContainer({ mode }: AuthContainerProps) {
   const [isResending, setIsResending] = useState(false);
   const [registerStep, setRegisterStep] = useState<RegisterStep>('credentials');
   const [pendingEmail, setPendingEmail] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const otpInputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   const {
     control: verifyEmailControl,
@@ -63,7 +67,19 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       code: '',
     },
   });
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '']);
+  const [otpDigits, setOtpDigits] = useState(Array.from({ length: OTP_LENGTH }, () => ''));
+
+  useEffect(() => {
+    if (resendCooldown <= 0) {
+      return;
+    }
+
+    const timerId = window.setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
+  }, [resendCooldown]);
 
   useEffect(() => {
     if (isLogin) {
@@ -176,7 +192,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
   };
 
   const resendCode = async () => {
-    if (!pendingEmail) {
+    if (!pendingEmail || resendCooldown > 0) {
       return;
     }
 
@@ -188,6 +204,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       });
       setError('');
       setInfo(response.data.message);
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (err) {
       const resolvedError = resolveApiError(err, {
         fallbackMessage: t('auth.errors.verifyResendFailed'),
@@ -207,17 +224,48 @@ export function AuthContainer({ mode }: AuthContainerProps) {
     clearVerifyEmailErrors();
     window.sessionStorage.removeItem(REGISTER_PENDING_EMAIL_KEY);
     setPendingEmail('');
-    setOtpDigits(['', '', '', '']);
+    setOtpDigits(Array.from({ length: OTP_LENGTH }, () => ''));
   };
 
   const handleOtpDigitChange = (index: number, rawValue: string) => {
-    const nextDigit = rawValue.replace(/\D/g, '').slice(-1);
+    const digitsOnly = rawValue.replace(/\D/g, '');
+    const nextDigit = digitsOnly.slice(-1);
     const nextDigits = otpDigits.map((digit, digitIndex) => (digitIndex === index ? nextDigit : digit));
     setOtpDigits(nextDigits);
     const nextCode = nextDigits.join('');
     setVerifyEmailValue('code', nextCode, { shouldValidate: true });
-    if (nextCode.length === 4 && nextDigits.every(Boolean) && !isSubmitting) {
+    if (nextDigit && index < OTP_LENGTH - 1) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+    if (nextCode.length === OTP_LENGTH && nextDigits.every(Boolean) && !isSubmitting) {
       void submitOtpCode(nextCode);
+    }
+  };
+
+  const handleOtpPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedDigits = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH);
+    if (!pastedDigits) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const nextDigits = Array.from({ length: OTP_LENGTH }, (_, index) => pastedDigits[index] ?? '');
+    setOtpDigits(nextDigits);
+    const nextCode = nextDigits.join('');
+    setVerifyEmailValue('code', nextCode, { shouldValidate: true });
+
+    const focusIndex = Math.min(pastedDigits.length, OTP_LENGTH - 1);
+    otpInputRefs.current[focusIndex]?.focus();
+
+    if (pastedDigits.length === OTP_LENGTH && !isSubmitting) {
+      void submitOtpCode(nextCode);
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
     }
   };
 
@@ -314,12 +362,26 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                             setFieldErrors((prev) => ({ ...prev, code: '' }));
                             handleOtpDigitChange(index, event.target.value);
                           }}
+                          inputRef={(element) => {
+                            otpInputRefs.current[index] = element;
+                          }}
+                          onKeyDown={(event) => handleOtpKeyDown(index, event)}
+                          onPaste={handleOtpPaste}
                           inputProps={{
                             inputMode: 'numeric',
                             maxLength: 1,
-                            style: { textAlign: 'center', fontSize: 24, fontWeight: 700 }
+                            style: { textAlign: 'center', fontSize: 24, fontWeight: 700, padding: 0, lineHeight: '64px' }
                           }}
-                          sx={{ width: 64 }}
+                          sx={{
+                            width: 64,
+                            '& .MuiInputBase-input': {
+                              height: 64,
+                              textAlign: 'center',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }
+                          }}
                           error={Boolean(fieldState.error)}
                         />
                       ))}
@@ -337,8 +399,8 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                 <AppButton type="button" variant="outlined" onClick={backToRegister} fullWidth>
                   {t('auth.verifyBack')}
                 </AppButton>
-                <AppButton type="button" variant="text" onClick={resendCode} isLoading={isResending} fullWidth>
-                  {t('auth.verifyResend')}
+                <AppButton type="button" variant="text" onClick={resendCode} isLoading={isResending} disabled={resendCooldown > 0} fullWidth>
+                  {resendCooldown > 0 ? `${t('auth.verifyResendCooldown')} ${resendCooldown}s` : t('auth.verifyResend')}
                 </AppButton>
                 <AppButton
                   type="button"
