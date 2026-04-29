@@ -16,7 +16,14 @@ import { trackServerError } from './services/errorTrackingService.js';
 
 export const createApp = () => {
   const app = express();
-  const allowedOrigins = Array.from(new Set([env.APP_URL, 'http://localhost:5173']));
+  const allowedOrigins = Array.from(
+    new Set(
+      env.CORS_ALLOWED_ORIGINS
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0),
+    ),
+  );
 
   app.disable('x-powered-by');
   app.use(helmet());

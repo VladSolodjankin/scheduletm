@@ -32,6 +32,7 @@ import { formatZodError } from '../utils/validation.js';
 
 export const authRoutes = Router();
 const csrfHeaderName = 'x-csrf-token';
+const sessionCookieDomain = env.SESSION_COOKIE_DOMAIN.trim() || undefined;
 
 const hasValidCsrf = (req: Request, cookies: Map<string, string>) => {
   const csrfHeader = req.headers[csrfHeaderName];
@@ -294,13 +295,15 @@ authRoutes.post('/logout', async (req, res) => {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      path: '/api/auth'
+      path: '/api/auth',
+      domain: sessionCookieDomain,
     });
     res.clearCookie(csrfCookieName(env.SESSION_COOKIE_NAME), {
       httpOnly: false,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
-      path: '/api/auth'
+      path: '/api/auth',
+      domain: sessionCookieDomain,
     });
     return res.status(204).send();
   } catch (error) {

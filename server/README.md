@@ -15,6 +15,9 @@ Node.js/Express API для web-клиента и интеграций.
   Для `POST /api/auth/refresh` и `POST /api/auth/logout` включена CSRF-защита:
   требуется заголовок `x-csrf-token`, который должен совпадать со значением cookie `<SESSION_COOKIE_NAME>_csrf`
   (по умолчанию `scheduletm_refresh_csrf`).
+  Cookie policy для refresh/csrf: `Secure` в production, `SameSite=lax/strict`, `path=/api/auth`,
+  `maxAge` от `REFRESH_TOKEN_TTL_DAYS`, а домен задаётся через `SESSION_COOKIE_DOMAIN`
+  (например, `.meetli.cc` для production и пустое значение для локальной разработки).
 - Web roles: owner/admin/specialist/client.
 - RBAC policy (централизованные проверки прав) в `src/policies/rolePermissions.ts`.
 - Settings API: system (owner), account (owner/admin), user (all users), account notification defaults (owner/admin).
@@ -89,6 +92,11 @@ npm run -w @scheduletm/server test -- business.integration.test.ts
 - `APP_URL=https://dev.meetli.cc`
 - `API_BASE_URL=https://apidev.meetli.cc`
 - `GOOGLE_OAUTH_REDIRECT_URI=https://apidev.meetli.cc/api/integrations/google/oauth/callback`
+
+Для CORS и cookie в локальной разработке + production:
+
+- `CORS_ALLOWED_ORIGINS=http://localhost:5173,https://meetli.cc,https://www.meetli.cc`
+- `SESSION_COOKIE_DOMAIN=.meetli.cc` (production), пустое значение в локальной разработке.
 
 Критичные для email:
 

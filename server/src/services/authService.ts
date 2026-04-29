@@ -32,6 +32,7 @@ const now = () => Date.now();
 const cookieExpiresMs = env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;
 const accessExpiresMs = env.ACCESS_TOKEN_TTL_SECONDS * 1000;
 const inviteTtlMs = 24 * 60 * 60 * 1000;
+const sessionCookieDomain = env.SESSION_COOKIE_DOMAIN.trim() || undefined;
 
 export const isLockedIp = async (ip: string) => {
   const attempt = await findLoginAttemptByIp(ip);
@@ -84,14 +85,16 @@ export const issueSession = async (user: Pick<User, 'id' | 'accountId'>, res: Re
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     maxAge: cookieExpiresMs,
-    path: '/api/auth'
+    path: '/api/auth',
+    domain: sessionCookieDomain,
   });
   res.cookie(csrfCookieName(env.SESSION_COOKIE_NAME), csrfToken, {
     httpOnly: false,
     sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
     maxAge: cookieExpiresMs,
-    path: '/api/auth'
+    path: '/api/auth',
+    domain: sessionCookieDomain,
   });
 
   return accessToken;
