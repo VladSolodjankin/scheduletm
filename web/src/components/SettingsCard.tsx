@@ -14,6 +14,7 @@ import type { SettingsCardCopy } from './SettingsCard.types';
 import { AppTab, AppTabs } from '../shared/ui/AppTabs';
 import { AccountSettingsTab } from './settings-tabs/AccountSettingsTab';
 import { NotificationSettingsTab } from './settings-tabs/NotificationSettingsTab';
+import { PasswordSettingsTab } from './settings-tabs/PasswordSettingsTab';
 import { SpecialistPolicyTab } from './settings-tabs/SpecialistPolicyTab';
 import { SystemSettingsTab } from './settings-tabs/SystemSettingsTab';
 import { UserSettingsTab } from './settings-tabs/UserSettingsTab';
@@ -35,6 +36,10 @@ type SettingsCardProps = {
   isSavingUser?: boolean;
   isSavingSpecialistBookingPolicy?: boolean;
   isSavingNotificationDefaults?: boolean;
+  newPassword: string;
+  confirmPassword: string;
+  otpCode: string;
+  passwordStep: 'password' | 'otp';
   onSaveSystem: (next: SystemSettings) => Promise<void> | void;
   onSaveAccount: (next: AccountSettings) => Promise<void> | void;
   onSaveUser: (next: UserSettings) => Promise<void> | void;
@@ -43,6 +48,12 @@ type SettingsCardProps = {
   onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
   onDisconnectGoogle: () => void;
+  onNewPasswordChange: (value: string) => void;
+  onConfirmPasswordChange: (value: string) => void;
+  onOtpCodeChange: (value: string) => void;
+  onCancelPasswordChange: () => void;
+  onRequestPasswordOtp: () => Promise<void> | void;
+  onConfirmPasswordOtp: () => Promise<void> | void;
 };
 
 export function SettingsCard({
@@ -62,6 +73,10 @@ export function SettingsCard({
   isSavingUser = false,
   isSavingSpecialistBookingPolicy = false,
   isSavingNotificationDefaults = false,
+  newPassword,
+  confirmPassword,
+  otpCode,
+  passwordStep,
   onSaveSystem,
   onSaveAccount,
   onSaveUser,
@@ -70,13 +85,20 @@ export function SettingsCard({
   onClearTelegramBotToken,
   onConnectGoogle,
   onDisconnectGoogle
+  ,onNewPasswordChange
+  ,onConfirmPasswordChange
+  ,onOtpCodeChange
+  ,onCancelPasswordChange
+  ,onRequestPasswordOtp
+  ,onConfirmPasswordOtp
 }: SettingsCardProps) {
   const tabs = useMemo(() => ([
     ...(canManageSystemSettings ? [{ key: 'system', label: copy.systemTab }] : []),
     ...(canManageAccountSettings ? [{ key: 'account', label: copy.accountTab }] : []),
     ...(canManageSpecialistBookingPolicy ? [{ key: 'specialistPolicy', label: copy.specialistPolicyTab }] : []),
     ...(canManageAccountSettings ? [{ key: 'notifications', label: copy.notificationsTab }] : []),
-    { key: 'user', label: copy.userTab }
+    { key: 'user', label: copy.userTab },
+    { key: 'password', label: copy.passwordTab }
   ] as const), [copy, canManageSystemSettings, canManageAccountSettings, canManageSpecialistBookingPolicy]);
 
   const initialTab = tabs[0]?.key ?? 'user';
@@ -138,6 +160,21 @@ export function SettingsCard({
           onClearTelegramBotToken={onClearTelegramBotToken}
           onConnectGoogle={onConnectGoogle}
           onDisconnectGoogle={onDisconnectGoogle}
+        />
+      )}
+      {tab === 'password' && (
+        <PasswordSettingsTab
+          copy={copy}
+          newPassword={newPassword}
+          confirmPassword={confirmPassword}
+          otpCode={otpCode}
+          passwordStep={passwordStep}
+          onNewPasswordChange={onNewPasswordChange}
+          onConfirmPasswordChange={onConfirmPasswordChange}
+          onOtpCodeChange={onOtpCodeChange}
+          onCancel={onCancelPasswordChange}
+          onRequestOtp={onRequestPasswordOtp}
+          onConfirmOtp={onConfirmPasswordOtp}
         />
       )}
       {tab === 'notifications' && (

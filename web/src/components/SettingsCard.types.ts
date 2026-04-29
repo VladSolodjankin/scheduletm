@@ -4,11 +4,13 @@ export type SettingsCardCopy = {
   systemTab: string;
   accountTab: string;
   userTab: string;
+  passwordTab: string;
   specialistPolicyTab: string;
   notificationsTab: string;
   systemTitle: string;
   accountTitle: string;
   userTitle: string;
+  passwordTitle: string;
   timezone: string;
   locale: string;
   firstName: string;
@@ -43,4 +45,10 @@ export type SettingsCardCopy = {
   paymentReminderTimingsLabel: string;
   disabledOption: string;
   channels: Record<NotificationChannel, string>;
+  newPassword: string;
+  confirmPassword: string;
+  otpCode: string;
+  sendOtp: string;
+  confirmOtp: string;
+  cancel: string;
 };
