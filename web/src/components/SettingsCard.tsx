@@ -17,6 +17,7 @@ import { NotificationSettingsTab } from './settings-tabs/NotificationSettingsTab
 import { PasswordSettingsTab } from './settings-tabs/PasswordSettingsTab';
 import { SpecialistPolicyTab } from './settings-tabs/SpecialistPolicyTab';
 import { SystemSettingsTab } from './settings-tabs/SystemSettingsTab';
+import { IntegrationsSettingsTab } from './settings-tabs/IntegrationsSettingsTab';
 import { UserSettingsTab } from './settings-tabs/UserSettingsTab';
 
 type SettingsCardProps = {
@@ -102,6 +103,7 @@ export function SettingsCard({
     ...(canManageSpecialistBookingPolicy ? [{ key: 'specialistPolicy', label: copy.specialistPolicyTab }] : []),
     ...(canManageAccountSettings ? [{ key: 'notifications', label: copy.notificationsTab }] : []),
     { key: 'user', label: copy.userTab },
+    { key: 'integrations', label: copy.integrationsTab },
     { key: 'password', label: copy.passwordTab }
   ] as const), [copy, canManageSystemSettings, canManageAccountSettings, canManageSpecialistBookingPolicy]);
 
@@ -154,6 +156,14 @@ export function SettingsCard({
       {tab === 'specialistPolicy' && <SpecialistPolicyTab copy={copy} control={specialistPolicyControl} isSaving={isSavingSpecialistBookingPolicy} onSubmit={handleSpecialistPolicySubmit(onSaveSpecialistBookingPolicy)} />}
       {tab === 'user' && (
         <UserSettingsTab
+          copy={copy}
+          control={userControl}
+          isSaving={isSavingUser}
+          onSubmit={handleUserSubmit(onSaveUser)}
+        />
+      )}
+      {tab === 'integrations' && (
+        <IntegrationsSettingsTab
           copy={copy}
           control={userControl}
           userSettings={userSettings}
