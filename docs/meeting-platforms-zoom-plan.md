@@ -120,12 +120,12 @@
 Сделан первый шаг UI-интеграции на странице `Settings` в табе `Integrations`:
 
 - добавлена брендированная кнопка `Connect Zoom` с логотипом Zoom;
-- по клику запускается backend-интеграция через `POST /api/integrations/zoom/meetings`;
+- по клику запускается user-level OAuth flow через `POST /api/integrations/zoom/oauth/start` (c последующим redirect в Zoom);
 - при успешном ответе показывается success-уведомление;
 - при ошибке показывается локализованная ошибка `connectZoom` (ru/en);
 - все строки добавлены в i18n-словари (без hardcoded текста).
 
-Текущая реализация запускает тестовое создание Zoom meeting (MVP handshake), чтобы пользователь мог быстро проверить, что интеграция доступна с его аккаунтом.
+Текущая реализация инициирует OAuth-подключение пользователя; создание встреч выполняется отдельно через `POST /api/integrations/zoom/meetings` после успешного callback.
 
 Следующие шаги:
 - привязать создание Zoom meeting к flow создания `appointment`;
@@ -139,4 +139,4 @@
 - в `GET /api/settings/user` добавлен флаг `zoomConnected`;
 - значение `zoomConnected=true` возвращается, если в `web_user_integrations` есть `zoom_access_token` и `zoom_token_expires_at` еще не истек;
 - на frontend в `Settings -> Integrations` кнопка Zoom теперь показывает состояние `Zoom connected` и блокируется после успешного подключения;
-- состояние также обновляется локально сразу после успешного `POST /api/integrations/zoom/meetings`.
+- состояние обновляется локально после возврата из Zoom callback (`zoom_oauth=success`) и при последующей загрузке `GET /api/settings/user`.
