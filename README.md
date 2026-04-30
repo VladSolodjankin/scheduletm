@@ -142,6 +142,7 @@ scheduletm/
 ## 4) Документация и статус
 
 - Глобальный roadmap: [`TODO.md`](./TODO.md)
+- План по Zoom/meeting providers: [`docs/meeting-platforms-zoom-plan.md`](./docs/meeting-platforms-zoom-plan.md)
 - Глобальная production-ready проверка: [`PRODUCTION_READINESS_CHECKLIST.md`](./PRODUCTION_READINESS_CHECKLIST.md)
 - Bot-специфика:
   - [`bot/TODO.md`](./bot/TODO.md)
