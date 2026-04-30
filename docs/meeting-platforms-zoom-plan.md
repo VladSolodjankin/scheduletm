@@ -94,6 +94,8 @@
 
 ## Старт backend-интеграции (2026-04-30)
 
+Обновление (2026-04-30, позднее): переход на user-level Zoom OAuth 2.0 (General App) с redirect callback. Теперь каждый специалист подключает личный Zoom-аккаунт через `POST /api/integrations/zoom/oauth/start` и `GET /api/integrations/zoom/oauth/callback`, после чего `POST /api/integrations/zoom/meetings` создает встречи от имени подключенного пользователя.
+
 Реализован базовый server-side Zoom MVP:
 
 - добавлен endpoint `POST /api/integrations/zoom/meetings` (только backend вызов, без раскрытия секретов в браузере);

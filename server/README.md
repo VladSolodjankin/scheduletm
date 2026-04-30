@@ -42,7 +42,7 @@ Node.js/Express API для web-клиента и интеграций.
   - `client` может создавать appointment только для себя;
   - `client` не может отмечать оплату и отправлять уведомления.
 - Google OAuth (`start` + `callback`).
-- Zoom Server-to-Server OAuth + meeting creation endpoint `POST /api/integrations/zoom/meetings`.
+- Zoom OAuth 2.0 (per-user) with `start` + `callback` + `disconnect` and meeting creation endpoint `POST /api/integrations/zoom/meetings`.
 - Email delivery через Brevo SMTP API.
 - Оповещения о записи с fallback-цепочкой: Telegram -> Email.
 - Notification defaults backend foundation: `account_notification_defaults`, `specialist_notification_settings`, `client_notification_settings` + scheduler job для автосоздания дефолтов на аккаунт.
@@ -88,9 +88,10 @@ npm run -w @scheduletm/server test -- business.integration.test.ts
 - `GOOGLE_OAUTH_CLIENT_SECRET`
 - `GOOGLE_OAUTH_REDIRECT_URI`
 - `GOOGLE_OAUTH_SCOPES` (optional)
-- `ZOOM_ACCOUNT_ID`
-- `ZOOM_CLIENT_ID`
-- `ZOOM_CLIENT_SECRET`
+- `ZOOM_OAUTH_CLIENT_ID`
+- `ZOOM_OAUTH_CLIENT_SECRET`
+- `ZOOM_OAUTH_REDIRECT_URI`
+- `ZOOM_OAUTH_SCOPES` (optional)
 
 Для dev-домена рекомендуется:
 

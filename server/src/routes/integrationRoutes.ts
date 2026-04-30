@@ -5,6 +5,7 @@ import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { completeGoogleOAuth, createGoogleOAuthUrl, disconnectGoogleOAuth } from '../services/googleOAuthService.js';
 import { createZoomMeeting } from '../services/zoomService.js';
+import { completeZoomOAuth, createZoomOAuthUrl, disconnectZoomOAuth } from '../services/zoomOAuthService.js';
 import { formatZodError } from '../utils/validation.js';
 
 export const integrationRoutes = Router();
@@ -68,6 +69,59 @@ integrationRoutes.post('/google/disconnect', requireAccessToken, async (req, res
   });
 });
 
+
+integrationRoutes.post('/zoom/oauth/start', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const oauthInit = await createZoomOAuthUrl(user.id);
+
+  if (!oauthInit) {
+    return res.status(503).json({
+      message: t(req, 'zoomOAuthNotConfigured'),
+      requiredEnv: [
+        'ZOOM_OAUTH_CLIENT_ID',
+        'ZOOM_OAUTH_CLIENT_SECRET',
+        'ZOOM_OAUTH_REDIRECT_URI'
+      ]
+    });
+  }
+
+  return res.json({
+    provider: 'zoom',
+    authorizeUrl: oauthInit.url,
+    state: oauthInit.state
+  });
+});
+
+integrationRoutes.get('/zoom/oauth/callback', async (req, res) => {
+  const state = String(req.query.state ?? '');
+  const code = String(req.query.code ?? '');
+
+  if (!state || !code) {
+    return res.redirect(`${env.APP_URL}/settings?zoom_oauth=error&reason=missing_code_or_state`);
+  }
+
+  const result = await completeZoomOAuth(state, code);
+
+  if (!result.ok) {
+    return res.redirect(`${env.APP_URL}/settings?zoom_oauth=error&reason=${result.reason}`);
+  }
+
+  return res.redirect(`${env.APP_URL}/settings?zoom_oauth=success`);
+});
+
+integrationRoutes.post('/zoom/disconnect', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const ok = await disconnectZoomOAuth(user.id);
+  if (!ok) {
+    return res.status(400).json({ message: t(req, 'invalidUserId') });
+  }
+
+  return res.json({
+    provider: 'zoom',
+    connected: false,
+  });
+});
+
 integrationRoutes.post('/zoom/meetings', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
   const parsed = zoomCreateMeetingSchema.safeParse(req.body);
@@ -86,9 +140,13 @@ integrationRoutes.post('/zoom/meetings', requireAccessToken, async (req, res) =>
   if (!result.ok) {
     if (result.reason === 'zoom_not_configured') {
       return res.status(503).json({
-        message: t(req, 'zoomNotConfigured'),
-        requiredEnv: ['ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET'],
+        message: t(req, 'zoomOAuthNotConfigured'),
+        requiredEnv: ['ZOOM_OAUTH_CLIENT_ID', 'ZOOM_OAUTH_CLIENT_SECRET', 'ZOOM_OAUTH_REDIRECT_URI'],
       });
+    }
+
+    if (result.reason === 'zoom_not_connected' || result.reason === 'zoom_auth_failed') {
+      return res.status(401).json({ message: t(req, 'zoomNotConnected') });
     }
 
     if (result.reason === 'invalid_user') {
