@@ -424,20 +424,23 @@ export function AppointmentFormDialog({
                 </FormControl>
               )}
             />
-            <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}>
-              <AppButton
-                onClick={handleGenerateMeetingLink}
-                isLoading={isGeneratingMeetingLink}
-                disabled={isSubmittingForm || isCancellingAppointment}
-              >
-                {t('appointments.generateMeetingLink')}
-              </AppButton>
-              {generateMeetingLinkError ? (
-                <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
-                  {generateMeetingLinkError}
-                </Typography>
-              ) : null}
-            </Box>
+            {meetingProviderValue === 'zoom' && (
+              <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}>
+                <AppButton
+                  onClick={handleGenerateMeetingLink}
+                  isLoading={isGeneratingMeetingLink}
+                  disabled={isSubmittingForm || isCancellingAppointment}
+                >
+                  {t('appointments.generateMeetingLink')}
+                </AppButton>
+                {generateMeetingLinkError ? (
+                  <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
+                    {generateMeetingLinkError}
+                  </Typography>
+                ) : null}
+              </Box>
+            )}
+
             <Controller
               name="meetingLink"
               control={control}
