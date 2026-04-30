@@ -1,10 +1,20 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { env } from '../config/env.js';
 import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { completeGoogleOAuth, createGoogleOAuthUrl, disconnectGoogleOAuth } from '../services/googleOAuthService.js';
+import { createZoomMeeting } from '../services/zoomService.js';
+import { formatZodError } from '../utils/validation.js';
 
 export const integrationRoutes = Router();
+
+const zoomCreateMeetingSchema = z.object({
+  topic: z.string().trim().min(1).max(200),
+  startTime: z.string().datetime(),
+  duration: z.number().int().min(15).max(480),
+  timezone: z.string().trim().min(1).max(100),
+});
 
 integrationRoutes.post('/google/oauth/start', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
@@ -56,4 +66,37 @@ integrationRoutes.post('/google/disconnect', requireAccessToken, async (req, res
     provider: 'google',
     connected: false,
   });
+});
+
+integrationRoutes.post('/zoom/meetings', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const parsed = zoomCreateMeetingSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json(formatZodError(parsed.error));
+  }
+
+  const result = await createZoomMeeting({
+    userId: user.id,
+    topic: parsed.data.topic,
+    startTime: parsed.data.startTime,
+    duration: parsed.data.duration,
+    timezone: parsed.data.timezone,
+  });
+
+  if (!result.ok) {
+    if (result.reason === 'zoom_not_configured') {
+      return res.status(503).json({
+        message: t(req, 'zoomNotConfigured'),
+        requiredEnv: ['ZOOM_ACCOUNT_ID', 'ZOOM_CLIENT_ID', 'ZOOM_CLIENT_SECRET'],
+      });
+    }
+
+    if (result.reason === 'invalid_user') {
+      return res.status(400).json({ message: t(req, 'invalidUserId') });
+    }
+
+    return res.status(502).json({ message: t(req, 'zoomMeetingCreateFailed') });
+  }
+
+  return res.status(201).json(result.meeting);
 });

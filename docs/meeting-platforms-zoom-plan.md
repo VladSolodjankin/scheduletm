@@ -91,3 +91,27 @@
 - Создание appointment не падает из-за сбоя внешнего meeting API.
 - Клиент получает в уведомлении либо online-ссылку, либо offline-адрес/карту.
 - Для `manual`: при добавлении ссылки специалистом после создания записи клиент получает отдельное уведомление с новой ссылкой.
+
+## Старт backend-интеграции (2026-04-30)
+
+Реализован базовый server-side Zoom MVP без frontend-части:
+
+- добавлен endpoint `POST /api/integrations/zoom/meetings` (только backend вызов, без раскрытия секретов в браузере);
+- endpoint валидирует payload (`topic`, `startTime`, `duration`, `timezone`) и создает встречу через Zoom API `POST /v2/users/me/meetings`;
+- для авторизации используется Zoom Server-to-Server OAuth (`grant_type=account_credentials`);
+- переменные окружения хранятся только на backend:
+  - `ZOOM_ACCOUNT_ID`
+  - `ZOOM_CLIENT_ID`
+  - `ZOOM_CLIENT_SECRET`
+- в `web_user_integrations` добавлено хранение Zoom-данных:
+  - `zoom_access_token`, `zoom_token_expires_at`, `zoom_connected_at`
+  - `zoom_last_meeting_id`, `zoom_last_join_url`, `zoom_last_start_url`
+
+Ответ endpoint:
+
+- `zoomMeetingId`
+- `joinUrl` (для клиента)
+- `startUrl` (только для организатора/служебного использования)
+
+Следующий шаг:
+- привязать создание Zoom meeting к flow создания `appointment` и хранению meeting provider в appointment-модели.
