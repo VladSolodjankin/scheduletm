@@ -6,7 +6,7 @@ import type { SettingsCardCopy } from '../SettingsCard.types';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
 import { AppIcons } from '../../shared/ui/AppIcons';
-import { AppRhfPasswordField } from '../../shared/ui/AppRhfPasswordField';
+import { AppRhfSecretKeyField } from '../../shared/ui/AppRhfSecretKeyField';
 import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
 import { TimezoneSelect } from '../TimezoneSelect';
@@ -100,7 +100,7 @@ export function UserSettingsTab({
         name="telegramBotToken"
         control={control}
         render={({ field }: any) => (
-          <AppRhfPasswordField field={field} label={copy.telegramBotToken} autoComplete="telegram-bot-token" />
+          <AppRhfSecretKeyField field={field} label={copy.telegramBotToken} autoComplete="off" />
         )}
       />
 
