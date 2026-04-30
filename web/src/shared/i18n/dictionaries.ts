@@ -129,6 +129,7 @@ export const dictionaries = {
       telegramBotToken: 'Telegram Bot Token',
       telegramBotConnected: 'Telegram bot connected',
       telegramBotNotConnected: 'Telegram bot is not connected',
+      editTelegramBotToken: 'Edit Telegram bot token',
       clearTelegramBotToken: 'Disconnect Telegram bot',
       specialistPolicyTitle: 'Specialist booking policies',
       cancelGracePeriodHours: 'Cancel grace period (hours)',
@@ -521,6 +522,7 @@ export const dictionaries = {
       telegramBotToken: 'Telegram Bot Token',
       telegramBotConnected: 'Telegram-бот подключен',
       telegramBotNotConnected: 'Telegram-бот не подключен',
+      editTelegramBotToken: 'Редактировать токен Telegram-бота',
       clearTelegramBotToken: 'Отключить Telegram-бота',
       specialistPolicyTitle: 'Правила бронирования специалиста',
       cancelGracePeriodHours: 'Окно отмены без штрафа (часы)',
@@ -907,6 +909,7 @@ export type TranslationKey =
   | 'settings.telegramBotToken'
   | 'settings.telegramBotConnected'
   | 'settings.telegramBotNotConnected'
+  | 'settings.editTelegramBotToken'
   | 'settings.clearTelegramBotToken'
   | 'settings.specialistPolicyTitle'
   | 'settings.cancelGracePeriodHours'

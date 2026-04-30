@@ -37,6 +37,7 @@ export type SettingsCardCopy = {
   telegramBotToken: string;
   telegramBotConnected: string;
   telegramBotNotConnected: string;
+  editTelegramBotToken: string;
   clearTelegramBotToken: string;
   specialistPolicyTitle: string;
   cancelGracePeriodHours: string;
