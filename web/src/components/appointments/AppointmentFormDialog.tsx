@@ -288,7 +288,7 @@ export function AppointmentFormDialog({
 
       setValue('meetingLink', String(response.data?.joinUrl ?? ''), { shouldDirty: true });
     } catch (error) {
-      setGenerateMeetingLinkError(resolveApiError(error, t('appointments.errors.generateMeetingLink')));
+      setGenerateMeetingLinkError(resolveApiError(error, { fallbackMessage: t('appointments.errors.generateMeetingLink') }).message ?? '');
     } finally {
       setIsGeneratingMeetingLink(false);
     }
