@@ -1,10 +1,12 @@
-import { Stack, Typography } from '@mui/material';
+import { IconButton, Stack, Typography } from '@mui/material';
+import { useState } from 'react';
 import { Control, Controller } from 'react-hook-form';
 
 import type { UserSettings } from '../../shared/types/api';
 import type { SettingsCardCopy } from '../SettingsCard.types';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
+import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppRhfSecretKeyField } from '../../shared/ui/AppRhfSecretKeyField';
 
 type Props = {
@@ -70,6 +72,9 @@ export function IntegrationsSettingsTab({
   onConnectZoom,
   onDisconnectGoogle,
 }: Props) {
+  const [isEditingTelegramToken, setIsEditingTelegramToken] = useState(false);
+  const shouldShowTelegramTokenField = !userSettings.telegramBotConnected || isEditingTelegramToken;
+
   return (
     <AppForm component="form" onSubmit={onSubmit}>
       <Typography variant="h5">{copy.integrationsTitle}</Typography>
@@ -77,19 +82,32 @@ export function IntegrationsSettingsTab({
         {copy.integrationsSubtitle}
       </Typography>
 
-      <Controller
-        name="telegramBotToken"
-        control={control}
-        render={({ field }: any) => (
-          <AppRhfSecretKeyField field={field} label={copy.telegramBotToken} autoComplete="off" />
-        )}
-      />
+      {shouldShowTelegramTokenField && (
+        <Controller
+          name="telegramBotToken"
+          control={control}
+          render={({ field }: any) => (
+            <AppRhfSecretKeyField field={field} label={copy.telegramBotToken} autoComplete="off" />
+          )}
+        />
+      )}
 
-      <Typography variant="body2" color="text.secondary">
-        {userSettings.telegramBotConnected
-          ? `${copy.telegramBotConnected}: ${userSettings.telegramBotName ?? '@unknown'}${userSettings.telegramBotUsername ? ` (@${userSettings.telegramBotUsername})` : ''}`
-          : copy.telegramBotNotConnected}
-      </Typography>
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+        <Typography variant="body2" color="text.secondary">
+          {userSettings.telegramBotConnected
+            ? `${copy.telegramBotConnected}: ${userSettings.telegramBotName ?? '@unknown'}${userSettings.telegramBotUsername ? ` (@${userSettings.telegramBotUsername})` : ''}`
+            : copy.telegramBotNotConnected}
+        </Typography>
+        {userSettings.telegramBotConnected && !isEditingTelegramToken && (
+          <IconButton
+            size="small"
+            aria-label={copy.editTelegramBotToken}
+            onClick={() => setIsEditingTelegramToken(true)}
+          >
+            <AppIcons.edit fontSize="small" />
+          </IconButton>
+        )}
+      </Stack>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
         <AppButton
