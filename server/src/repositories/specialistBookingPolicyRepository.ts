@@ -8,6 +8,9 @@ export type SpecialistBookingPolicyRecord = {
   refund_on_late_cancel: boolean;
   auto_cancel_unpaid_enabled: boolean;
   unpaid_auto_cancel_after_hours: number;
+  meeting_providers_priority: string;
+  allowed_meeting_providers: string;
+  meeting_provider_override_enabled: boolean;
 };
 
 export type UpsertSpecialistBookingPolicyInput = {
@@ -17,6 +20,9 @@ export type UpsertSpecialistBookingPolicyInput = {
   refundOnLateCancel?: boolean;
   autoCancelUnpaidEnabled?: boolean;
   unpaidAutoCancelAfterHours?: number;
+  meetingProvidersPriority?: string;
+  allowedMeetingProviders?: string;
+  meetingProviderOverrideEnabled?: boolean;
 };
 
 export async function findSpecialistBookingPolicy(
@@ -47,6 +53,15 @@ export async function upsertSpecialistBookingPolicy(input: UpsertSpecialistBooki
   if (input.unpaidAutoCancelAfterHours !== undefined) {
     patch.unpaid_auto_cancel_after_hours = input.unpaidAutoCancelAfterHours;
   }
+  if (input.meetingProvidersPriority !== undefined) {
+    patch.meeting_providers_priority = input.meetingProvidersPriority;
+  }
+  if (input.allowedMeetingProviders !== undefined) {
+    patch.allowed_meeting_providers = input.allowedMeetingProviders;
+  }
+  if (input.meetingProviderOverrideEnabled !== undefined) {
+    patch.meeting_provider_override_enabled = input.meetingProviderOverrideEnabled;
+  }
 
   await db('specialist_booking_policies')
     .insert({
@@ -56,6 +71,9 @@ export async function upsertSpecialistBookingPolicy(input: UpsertSpecialistBooki
       refund_on_late_cancel: input.refundOnLateCancel ?? false,
       auto_cancel_unpaid_enabled: input.autoCancelUnpaidEnabled ?? false,
       unpaid_auto_cancel_after_hours: input.unpaidAutoCancelAfterHours ?? 72,
+      meeting_providers_priority: input.meetingProvidersPriority ?? 'zoom,manual',
+      allowed_meeting_providers: input.allowedMeetingProviders ?? 'zoom,manual',
+      meeting_provider_override_enabled: input.meetingProviderOverrideEnabled ?? false,
       created_at: db.fn.now(),
       updated_at: db.fn.now(),
     })

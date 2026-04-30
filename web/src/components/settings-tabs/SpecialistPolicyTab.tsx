@@ -69,6 +69,30 @@ export function SpecialistPolicyTab({ copy, control, isSaving, onSubmit }: Props
           />
         )}
       />
+      <Controller
+        name="meetingProvidersPriority"
+        control={control}
+        render={({ field }: any) => (
+          <AppRhfTextField field={field} label={copy.meetingProvidersPriority} />
+        )}
+      />
+      <Controller
+        name="allowedMeetingProviders"
+        control={control}
+        render={({ field }: any) => (
+          <AppRhfTextField field={field} label={copy.allowedMeetingProviders} />
+        )}
+      />
+      <Controller
+        name="meetingProviderOverrideEnabled"
+        control={control}
+        render={({ field }: any) => (
+          <FormControlLabel
+            control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
+            label={copy.meetingProviderOverrideEnabled}
+          />
+        )}
+      />
 
       <AppButton type="submit" startIcon={<AppIcons.save />} isLoading={isSaving}>
         {copy.saveSettings}

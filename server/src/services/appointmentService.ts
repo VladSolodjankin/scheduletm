@@ -18,8 +18,10 @@ import {
   findClientById,
   listClientsByAccount,
   type ClientRecord,
+  updateClientPreferredMeetingProvider,
   updateClientById,
 } from '../repositories/clientRepository.js';
+import { findSpecialistBookingPolicy } from '../repositories/specialistBookingPolicyRepository.js';
 import {
   findSpecialistById,
   findSpecialistByIdAnyAccount,
@@ -93,6 +95,7 @@ type CreateAppointmentPayload = {
   status?: AppointmentStatus;
   meetingLink?: string;
   meetingProvider?: 'manual' | 'zoom';
+  saveClientMeetingPreference?: boolean;
   notes?: string;
 } & AppointmentClientPayload;
 
@@ -470,8 +473,13 @@ export async function createAppointmentForActor(
     throw new Error('CLIENT_PROFILE_NOT_FOUND');
   }
 
+  const client = await findClientById(accountId, userId);
+  const specialistPolicy = await findSpecialistBookingPolicy(accountId, payload.specialistId);
+  const preferred = client?.preferred_meeting_provider;
+  const allowedProviders = (specialistPolicy?.allowed_meeting_providers ?? 'zoom,manual').split(',').map((item) => item.trim()).filter(Boolean);
   let meetingLink = payload.meetingLink?.trim() ?? '';
-  const meetingProvider = payload.meetingProvider ?? (meetingLink ? 'manual' : 'zoom');
+  const meetingProvider = payload.meetingProvider
+    ?? ((preferred && allowedProviders.includes(preferred)) ? preferred : (meetingLink ? 'manual' : 'zoom'));
   if (meetingProvider === 'zoom' && !meetingLink) {
     const zoom = await createZoomMeeting({
       userId: actor.id,
@@ -495,6 +503,10 @@ export async function createAppointmentForActor(
     serviceId,
     durationMin: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
   });
+
+  if ((payload.saveClientMeetingPreference || !preferred) && (meetingProvider === 'manual' || meetingProvider === 'zoom')) {
+    await updateClientPreferredMeetingProvider(accountId, userId, meetingProvider).catch(() => undefined);
+  }
 
   const rows = await listAppointments({ accountId, specialistId: created.specialist_id });
   const hydrated = rows.find((item) => item.id === created.id) ?? created;

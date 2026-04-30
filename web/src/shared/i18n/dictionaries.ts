@@ -135,6 +135,9 @@ export const dictionaries = {
       refundOnLateCancel: 'Refund on late cancel',
       autoCancelUnpaidEnabled: 'Auto-cancel unpaid appointment',
       unpaidAutoCancelAfterHours: 'Auto-cancel unpaid after (hours)',
+      meetingProvidersPriority: 'Meeting providers priority',
+      allowedMeetingProviders: 'Allowed meeting providers',
+      meetingProviderOverrideEnabled: 'Enable specialist provider override',
       notificationSettingsTitle: 'Notification settings',
       reminderChannelsLabel: 'Channels',
       appointmentReminderTimingsLabel: 'Appointment reminder timings',
@@ -516,6 +519,9 @@ export const dictionaries = {
       refundOnLateCancel: 'Возвращать оплату при поздней отмене',
       autoCancelUnpaidEnabled: 'Авто-отмена неоплаченной записи',
       unpaidAutoCancelAfterHours: 'Авто-отмена через (часы)',
+      meetingProvidersPriority: 'Приоритет провайдеров встреч',
+      allowedMeetingProviders: 'Разрешенные провайдеры встреч',
+      meetingProviderOverrideEnabled: 'Разрешить override провайдера специалистом',
       notificationSettingsTitle: 'Настройки оповещений',
       reminderChannelsLabel: 'Каналы',
       appointmentReminderTimingsLabel: 'Напоминание о записи',
@@ -891,6 +897,9 @@ export type TranslationKey =
   | 'settings.refundOnLateCancel'
   | 'settings.autoCancelUnpaidEnabled'
   | 'settings.unpaidAutoCancelAfterHours'
+  | 'settings.meetingProvidersPriority'
+  | 'settings.allowedMeetingProviders'
+  | 'settings.meetingProviderOverrideEnabled'
   | 'settings.notificationSettingsTitle'
   | 'settings.reminderChannelsLabel'
   | 'settings.appointmentReminderTimingsLabel'

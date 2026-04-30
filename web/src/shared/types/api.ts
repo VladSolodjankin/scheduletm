@@ -85,6 +85,9 @@ export type SpecialistBookingPolicy = {
   refundOnLateCancel: boolean;
   autoCancelUnpaidEnabled: boolean;
   unpaidAutoCancelAfterHours: number;
+  meetingProvidersPriority: string;
+  allowedMeetingProviders: string;
+  meetingProviderOverrideEnabled: boolean;
 };
 
 export type NotificationType = 'appointment_created' | 'appointment_reminder' | 'payment_reminder';

@@ -147,3 +147,12 @@
 - в appointment API добавлен `meetingProvider` (`manual | zoom`) и он сохраняется/читается вместе с `meetingLink`;
 - в UI формы записи добавлен выбор провайдера встречи (`Manual link`/`Zoom`);
 - в календарных карточках записи отображается выбранный `meetingProvider`.
+
+## Обновление preferences и booking settings (2026-04-30)
+
+- добавлено сохранение `preferred_meeting_provider` у клиента (`manual | zoom`) и авто-запоминание первого выбора провайдера при создании записи;
+- в specialist booking policy добавлены поля:
+  - `meeting_providers_priority`
+  - `allowed_meeting_providers`
+  - `meeting_provider_override_enabled`;
+- расширены backend/frontend контракты settings для чтения/сохранения этих полей.
