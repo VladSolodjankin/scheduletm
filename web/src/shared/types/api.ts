@@ -105,6 +105,13 @@ export type GoogleOAuthStartResponse = {
   state: string;
 };
 
+
+export type ZoomOAuthStartResponse = {
+  provider: 'zoom';
+  authorizeUrl: string;
+  state: string;
+};
+
 export type GoogleOAuthDisconnectResponse = {
   provider: 'google';
   connected: boolean;

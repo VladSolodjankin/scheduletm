@@ -12,6 +12,7 @@ import type {
   AccountSettings,
   GoogleOAuthDisconnectResponse,
   GoogleOAuthStartResponse,
+  ZoomOAuthStartResponse,
   SpecialistBookingPolicy,
   SystemSettings,
   UserSettings,
@@ -91,13 +92,14 @@ export function SettingsContainer() {
   const [passwordStep, setPasswordStep] = useState<'password' | 'otp'>('password');
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
+  const zoomOauthStatus = useMemo(() => searchParams.get('zoom_oauth'), [searchParams]);
   const canManageSystemSettings = user?.role === 'owner';
   const canManageAccountSettings = user?.role === 'owner' || user?.role === 'admin';
   const canManageSpecialistBookingPolicy =
     user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
 
   useEffect(() => {
-    if (!googleOauthStatus) {
+    if (!googleOauthStatus && !zoomOauthStatus) {
       return;
     }
 
@@ -113,14 +115,26 @@ export function SettingsContainer() {
         setSuccess('');
       }
 
+      if (zoomOauthStatus === 'success') {
+        setSuccess(t('settings.zoomConnectedSuccessfully'));
+        setUserSettings((prev) => ({ ...prev, zoomConnected: true }));
+        setError('');
+      }
+
+      if (zoomOauthStatus === 'error') {
+        setError(t('settings.errors.connectZoom'));
+        setSuccess('');
+      }
+
       const nextParams = new URLSearchParams(searchParams);
       nextParams.delete('google_oauth');
+      nextParams.delete('zoom_oauth');
       nextParams.delete('reason');
       setSearchParams(nextParams, { replace: true });
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [googleOauthStatus, searchParams, setSearchParams, t]);
+  }, [googleOauthStatus, searchParams, setSearchParams, t, zoomOauthStatus]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -385,26 +399,19 @@ export function SettingsContainer() {
     setIsZoomConnecting(true);
 
     try {
-      await apiClient.post(
-        '/api/integrations/zoom/meetings',
-        {
-          topic: 'Meetli Zoom integration test',
-          startTime: new Date(Date.now() + 5 * 60_000).toISOString(),
-          duration: 30,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-        },
+      const response = await apiClient.post<ZoomOAuthStartResponse>(
+        '/api/integrations/zoom/oauth/start',
+        {},
         { headers: authHeaders(accessToken) }
       );
-      setError('');
-      setSuccess(t('settings.zoomConnectedSuccessfully'));
-      setUserSettings((prev) => ({ ...prev, zoomConnected: true }));
+
+      window.location.assign(response.data.authorizeUrl);
     } catch (err) {
       setError(resolveApiError(err, {
         fallbackMessage: t('settings.errors.connectZoom'),
         networkMessage: t('common.errors.network')
       }).message);
       setSuccess('');
-    } finally {
       setIsZoomConnecting(false);
     }
   };
