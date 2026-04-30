@@ -137,6 +137,9 @@ export const specialistBookingPolicySchema = z.object({
   refundOnLateCancel: z.boolean(),
   autoCancelUnpaidEnabled: z.boolean(),
   unpaidAutoCancelAfterHours: z.coerce.number().int().min(1).max(720),
+  meetingProvidersPriority: z.string().trim().min(1).max(120),
+  allowedMeetingProviders: z.string().trim().min(1).max(120),
+  meetingProviderOverrideEnabled: z.boolean(),
 }).partial();
 
 const notificationTypeSchema = z.enum(['appointment_created', 'appointment_reminder', 'payment_reminder']);
@@ -231,6 +234,7 @@ export const appointmentCreateSchema = z.object({
   status: appointmentStatusSchema.optional(),
   meetingLink: z.string().trim().url(v.appointmentLinkInvalid).max(2048).optional().or(z.literal('')),
   meetingProvider: appointmentMeetingProviderSchema.optional(),
+  saveClientMeetingPreference: z.boolean().optional(),
   notes: z.string().trim().max(2000, v.appointmentNotesTooLong).optional(),
 }).merge(appointmentClientSchema).superRefine((value, ctx) => {
   if (!value.firstName) {

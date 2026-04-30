@@ -10,9 +10,23 @@ export type ClientRecord = {
   phone: string | null;
   email: string | null;
   timezone: string;
+  preferred_meeting_provider: 'manual' | 'zoom' | null;
   created_at: Date;
   updated_at: Date;
 };
+
+export async function updateClientPreferredMeetingProvider(
+  accountId: number,
+  id: number,
+  preferredMeetingProvider: 'manual' | 'zoom',
+): Promise<void> {
+  await db('clients')
+    .where({ account_id: accountId, id })
+    .update({
+      preferred_meeting_provider: preferredMeetingProvider,
+      updated_at: db.fn.now(),
+    });
+}
 
 export type UpsertClientInput = {
   accountId: number;

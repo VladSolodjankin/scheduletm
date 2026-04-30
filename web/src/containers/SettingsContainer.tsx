@@ -58,6 +58,9 @@ const defaultSpecialistBookingPolicy: SpecialistBookingPolicy = {
   refundOnLateCancel: false,
   autoCancelUnpaidEnabled: false,
   unpaidAutoCancelAfterHours: 72,
+  meetingProvidersPriority: 'zoom,manual',
+  allowedMeetingProviders: 'zoom,manual',
+  meetingProviderOverrideEnabled: false,
 };
 
 const defaultAccountNotificationDefaults: AccountNotificationDefault[] = [];
@@ -592,6 +595,9 @@ export function SettingsContainer() {
               refundOnLateCancel: t('settings.refundOnLateCancel'),
               autoCancelUnpaidEnabled: t('settings.autoCancelUnpaidEnabled'),
               unpaidAutoCancelAfterHours: t('settings.unpaidAutoCancelAfterHours'),
+              meetingProvidersPriority: t('settings.meetingProvidersPriority'),
+              allowedMeetingProviders: t('settings.allowedMeetingProviders'),
+              meetingProviderOverrideEnabled: t('settings.meetingProviderOverrideEnabled'),
               notificationsTab: t('settings.tabs.notifications'),
               notificationSettingsTitle: t('settings.notificationSettingsTitle'),
               reminderChannelsLabel: t('settings.reminderChannelsLabel'),

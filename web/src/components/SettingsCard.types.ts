@@ -43,6 +43,9 @@ export type SettingsCardCopy = {
   refundOnLateCancel: string;
   autoCancelUnpaidEnabled: string;
   unpaidAutoCancelAfterHours: string;
+  meetingProvidersPriority: string;
+  allowedMeetingProviders: string;
+  meetingProviderOverrideEnabled: string;
   notificationSettingsTitle: string;
   reminderChannelsLabel: string;
   appointmentReminderTimingsLabel: string;

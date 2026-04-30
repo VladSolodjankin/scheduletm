@@ -77,6 +77,9 @@ export type SpecialistBookingPolicy = {
   refundOnLateCancel: boolean;
   autoCancelUnpaidEnabled: boolean;
   unpaidAutoCancelAfterHours: number;
+  meetingProvidersPriority: string;
+  allowedMeetingProviders: string;
+  meetingProviderOverrideEnabled: boolean;
 };
 
 const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
@@ -376,6 +379,9 @@ export async function getSpecialistBookingPolicy(
     refundOnLateCancel: row?.refund_on_late_cancel ?? false,
     autoCancelUnpaidEnabled: row?.auto_cancel_unpaid_enabled ?? false,
     unpaidAutoCancelAfterHours: row?.unpaid_auto_cancel_after_hours ?? 72,
+    meetingProvidersPriority: row?.meeting_providers_priority ?? 'zoom,manual',
+    allowedMeetingProviders: row?.allowed_meeting_providers ?? 'zoom,manual',
+    meetingProviderOverrideEnabled: row?.meeting_provider_override_enabled ?? false,
   };
 }
 
@@ -401,6 +407,9 @@ export async function updateSpecialistBookingPolicy(
     refundOnLateCancel: parsed.data.refundOnLateCancel,
     autoCancelUnpaidEnabled: parsed.data.autoCancelUnpaidEnabled,
     unpaidAutoCancelAfterHours: parsed.data.unpaidAutoCancelAfterHours,
+    meetingProvidersPriority: parsed.data.meetingProvidersPriority,
+    allowedMeetingProviders: parsed.data.allowedMeetingProviders,
+    meetingProviderOverrideEnabled: parsed.data.meetingProviderOverrideEnabled,
   });
 
   return getSpecialistBookingPolicy(actor, resolvedSpecialistId);
