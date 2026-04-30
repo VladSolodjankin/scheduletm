@@ -485,6 +485,7 @@ export function SettingsContainer() {
               accountTab: t('settings.tabs.account'),
               specialistPolicyTab: t('settings.tabs.specialistPolicy'),
               userTab: t('settings.tabs.user'),
+              integrationsTab: t('settings.tabs.integrations'),
               passwordTab: t('settings.tabs.password'),
               systemTitle: t('settings.systemTitle'),
               accountTitle: t('settings.accountTitle'),

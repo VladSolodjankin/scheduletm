@@ -102,6 +102,7 @@ export const dictionaries = {
         specialistPolicy: 'Booking policies',
         notifications: 'Notifications',
         user: 'User settings',
+        integrations: 'Integrations',
         password: 'Password'
       },
       systemTitle: 'System settings',
@@ -474,6 +475,7 @@ export const dictionaries = {
         specialistPolicy: 'Правила брони',
         notifications: 'Оповещения',
         user: 'Пользовательские',
+        integrations: 'Интеграции',
         password: 'Пароль'
       },
       systemTitle: 'Системные настройки',
@@ -841,6 +843,7 @@ export type TranslationKey =
   | 'settings.tabs.specialistPolicy'
   | 'settings.tabs.notifications'
   | 'settings.tabs.user'
+  | 'settings.tabs.integrations'
   | 'settings.tabs.password'
   | 'settings.systemTitle'
   | 'settings.accountTitle'

@@ -4,12 +4,14 @@ export type SettingsCardCopy = {
   systemTab: string;
   accountTab: string;
   userTab: string;
+  integrationsTab: string;
   passwordTab: string;
   specialistPolicyTab: string;
   notificationsTab: string;
   systemTitle: string;
   accountTitle: string;
   userTitle: string;
+  integrationsTitle: string;
   passwordTitle: string;
   timezone: string;
   locale: string;
@@ -24,7 +26,6 @@ export type SettingsCardCopy = {
   accessTokenTtlSeconds: string;
   sessionCookieName: string;
   saveSettings: string;
-  integrationsTitle: string;
   integrationsSubtitle: string;
   connectGoogle: string;
   connectingGoogle: string;
