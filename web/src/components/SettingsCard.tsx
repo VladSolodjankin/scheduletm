@@ -32,6 +32,7 @@ type SettingsCardProps = {
   canManageSpecialistBookingPolicy: boolean;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
+  isZoomConnecting: boolean;
   isSavingSystem?: boolean;
   isSavingAccount?: boolean;
   isSavingUser?: boolean;
@@ -49,6 +50,7 @@ type SettingsCardProps = {
   onSaveNotificationDefaults: (items: AccountNotificationDefault[]) => Promise<void> | void;
   onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
+  onConnectZoom: () => void;
   onDisconnectGoogle: () => void;
   onCurrentPasswordChange: (value: string) => void;
   onNewPasswordChange: (value: string) => void;
@@ -71,6 +73,7 @@ export function SettingsCard({
   canManageSpecialistBookingPolicy,
   isGoogleConnecting,
   isGoogleDisconnecting,
+  isZoomConnecting,
   isSavingSystem = false,
   isSavingAccount = false,
   isSavingUser = false,
@@ -88,6 +91,7 @@ export function SettingsCard({
   onSaveNotificationDefaults,
   onClearTelegramBotToken,
   onConnectGoogle,
+  onConnectZoom,
   onDisconnectGoogle
   ,onCurrentPasswordChange
   ,onNewPasswordChange
@@ -170,9 +174,11 @@ export function SettingsCard({
           isSaving={isSavingUser}
           isGoogleConnecting={isGoogleConnecting}
           isGoogleDisconnecting={isGoogleDisconnecting}
+          isZoomConnecting={isZoomConnecting}
           onSubmit={handleUserSubmit(onSaveUser)}
           onClearTelegramBotToken={onClearTelegramBotToken}
           onConnectGoogle={onConnectGoogle}
+          onConnectZoom={onConnectZoom}
           onDisconnectGoogle={onDisconnectGoogle}
         />
       )}

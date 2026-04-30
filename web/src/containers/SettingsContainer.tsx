@@ -72,6 +72,7 @@ export function SettingsContainer() {
   const [success, setSuccess] = useState('');
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
   const [isGoogleDisconnecting, setIsGoogleDisconnecting] = useState(false);
+  const [isZoomConnecting, setIsZoomConnecting] = useState(false);
   const [isSavingSystem, setIsSavingSystem] = useState(false);
   const [isSavingAccount, setIsSavingAccount] = useState(false);
   const [isSavingUser, setIsSavingUser] = useState(false);
@@ -375,6 +376,37 @@ export function SettingsContainer() {
     }
   };
 
+  const connectZoom = async () => {
+    if (!accessToken || isZoomConnecting) {
+      return;
+    }
+
+    setIsZoomConnecting(true);
+
+    try {
+      await apiClient.post(
+        '/api/integrations/zoom/meetings',
+        {
+          topic: 'Meetli Zoom integration test',
+          startTime: new Date(Date.now() + 5 * 60_000).toISOString(),
+          duration: 30,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        },
+        { headers: authHeaders(accessToken) }
+      );
+      setError('');
+      setSuccess(t('settings.zoomConnectedSuccessfully'));
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('settings.errors.connectZoom'),
+        networkMessage: t('common.errors.network')
+      }).message);
+      setSuccess('');
+    } finally {
+      setIsZoomConnecting(false);
+    }
+  };
+
 
   const requestPasswordOtp = async () => {
     if (!accessToken || !currentPassword.trim() || newPassword.length < 10 || newPassword !== confirmPassword) {
@@ -510,6 +542,8 @@ export function SettingsContainer() {
               connectingGoogle: t('settings.connectingGoogle'),
               disconnectGoogle: t('settings.disconnectGoogle'),
               disconnectingGoogle: t('settings.disconnectingGoogle'),
+              connectZoom: t('settings.connectZoom'),
+              connectingZoom: t('settings.connectingZoom'),
               telegramBotToken: t('settings.telegramBotToken'),
               telegramBotConnected: t('settings.telegramBotConnected'),
               telegramBotNotConnected: t('settings.telegramBotNotConnected'),
@@ -542,6 +576,7 @@ export function SettingsContainer() {
             }}
             isGoogleConnecting={isGoogleConnecting}
             isGoogleDisconnecting={isGoogleDisconnecting}
+            isZoomConnecting={isZoomConnecting}
             isSavingSystem={isSavingSystem}
             isSavingAccount={isSavingAccount}
             isSavingUser={isSavingUser}
@@ -559,6 +594,7 @@ export function SettingsContainer() {
             onSaveNotificationDefaults={saveAccountNotificationDefaults}
             onClearTelegramBotToken={clearTelegramBotToken}
             onConnectGoogle={connectGoogle}
+            onConnectZoom={connectZoom}
             onDisconnectGoogle={disconnectGoogle}
             onCurrentPasswordChange={setCurrentPassword}
             onNewPasswordChange={setNewPassword}

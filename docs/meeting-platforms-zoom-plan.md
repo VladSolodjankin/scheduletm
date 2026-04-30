@@ -94,7 +94,7 @@
 
 ## Старт backend-интеграции (2026-04-30)
 
-Реализован базовый server-side Zoom MVP без frontend-части:
+Реализован базовый server-side Zoom MVP:
 
 - добавлен endpoint `POST /api/integrations/zoom/meetings` (только backend вызов, без раскрытия секретов в браузере);
 - endpoint валидирует payload (`topic`, `startTime`, `duration`, `timezone`) и создает встречу через Zoom API `POST /v2/users/me/meetings`;
@@ -113,5 +113,19 @@
 - `joinUrl` (для клиента)
 - `startUrl` (только для организатора/служебного использования)
 
-Следующий шаг:
-- привязать создание Zoom meeting к flow создания `appointment` и хранению meeting provider в appointment-модели.
+## Обновление frontend (2026-04-30)
+
+Сделан первый шаг UI-интеграции на странице `Settings` в табе `Integrations`:
+
+- добавлена брендированная кнопка `Connect Zoom` с логотипом Zoom;
+- по клику запускается backend-интеграция через `POST /api/integrations/zoom/meetings`;
+- при успешном ответе показывается success-уведомление;
+- при ошибке показывается локализованная ошибка `connectZoom` (ru/en);
+- все строки добавлены в i18n-словари (без hardcoded текста).
+
+Текущая реализация запускает тестовое создание Zoom meeting (MVP handshake), чтобы пользователь мог быстро проверить, что интеграция доступна с его аккаунтом.
+
+Следующие шаги:
+- привязать создание Zoom meeting к flow создания `appointment`;
+- сохранять/показывать `meetingProvider` в UI записи;
+- добавить явный connected-state для Zoom в user integrations API (по аналогии с `googleConnected`).

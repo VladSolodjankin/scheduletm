@@ -14,9 +14,11 @@ type Props = {
   isSaving: boolean;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
+  isZoomConnecting: boolean;
   onSubmit: () => void;
   onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
+  onConnectZoom: () => void;
   onDisconnectGoogle: () => void;
 };
 
@@ -43,6 +45,17 @@ function GoogleGIcon() {
   );
 }
 
+function ZoomIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        fill="#2D8CFF"
+        d="M7.5 6.75h5.4c2.1 0 3.15 0 3.9.41.66.36 1.19.89 1.55 1.55.41.75.41 1.8.41 3.9v.78c0 2.1 0 3.15-.41 3.9a3.75 3.75 0 0 1-1.55 1.55c-.75.41-1.8.41-3.9.41H7.5c-2.1 0-3.15 0-3.9-.41a3.75 3.75 0 0 1-1.55-1.55c-.41-.75-.41-1.8-.41-3.9v-.78c0-2.1 0-3.15.41-3.9A3.75 3.75 0 0 1 3.6 7.16c.75-.41 1.8-.41 3.9-.41Zm12.08 2.85 2.92-1.83c.57-.36 1.3.05 1.3.72v7.02c0 .67-.73 1.08-1.3.72l-2.92-1.83V9.6Z"
+      />
+    </svg>
+  );
+}
+
 export function IntegrationsSettingsTab({
   copy,
   control,
@@ -50,9 +63,11 @@ export function IntegrationsSettingsTab({
   isSaving,
   isGoogleConnecting,
   isGoogleDisconnecting,
+  isZoomConnecting,
   onSubmit,
   onClearTelegramBotToken,
   onConnectGoogle,
+  onConnectZoom,
   onDisconnectGoogle,
 }: Props) {
   return (
@@ -77,6 +92,26 @@ export function IntegrationsSettingsTab({
       </Typography>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+        <AppButton
+          variant="outlined"
+          onClick={onConnectZoom}
+          isLoading={isZoomConnecting}
+          disabled={isGoogleConnecting || isGoogleDisconnecting}
+          startIcon={!isZoomConnecting ? <ZoomIcon /> : undefined}
+          sx={{
+            textTransform: 'none',
+            borderColor: '#2D8CFF',
+            color: '#2D8CFF',
+            backgroundColor: '#FFFFFF',
+            '&:hover': {
+              borderColor: '#2274D9',
+              backgroundColor: '#F4F9FF',
+            },
+          }}
+        >
+          {isZoomConnecting ? copy.connectingZoom : copy.connectZoom}
+        </AppButton>
+
         <AppButton
           variant="outlined"
           onClick={onConnectGoogle}
