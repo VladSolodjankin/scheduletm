@@ -84,6 +84,9 @@ export function AppointmentsCalendar({
     ]
       .filter(Boolean)
       .join(' · ');
+  const getMeetingProviderLabel = (provider: AppointmentItem['meetingProvider']) => (
+    provider === 'zoom' ? t('appointments.meetingProviderZoom') : t('appointments.meetingProviderManual')
+  );
 
   return (
     <>
@@ -193,7 +196,7 @@ export function AppointmentsCalendar({
                                   {formatLocalTime(item.scheduledAt)}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                  {`${statusLabel(item.status)} · ${t('appointments.durationMinutesShort').replace('{minutes}', String(item.durationMin))}`}
+                                  {`${statusLabel(item.status)} · ${getMeetingProviderLabel(item.meetingProvider)} · ${t('appointments.durationMinutesShort').replace('{minutes}', String(item.durationMin))}`}
                                 </Typography>
                               </Box>
                             ))
@@ -400,7 +403,7 @@ export function AppointmentsCalendar({
                                     {formatLocalTime(item.scheduledAt)}
                                   </Typography>
                                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                    {`${statusLabel(item.status)} · ${t('appointments.durationMinutesShort').replace('{minutes}', String(item.durationMin))}`}
+                                    {`${statusLabel(item.status)} · ${getMeetingProviderLabel(item.meetingProvider)} · ${t('appointments.durationMinutesShort').replace('{minutes}', String(item.durationMin))}`}
                                   </Typography>
                                 </Box>
                               ))}

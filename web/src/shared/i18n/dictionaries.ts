@@ -360,6 +360,8 @@ export const dictionaries = {
       eventReschedule: 'Appointment rescheduled',
       eventMarkPaid: 'Payment confirmed',
       eventNotify: 'Manual notification sent',
+      meetingProviderManual: 'Manual link',
+      meetingProviderZoom: 'Zoom',
       errors: {
         load: 'Unable to load appointments.',
         save: 'Unable to save appointment.',
@@ -372,6 +374,7 @@ export const dictionaries = {
       fields: {
         scheduledAt: 'Date and time',
         status: 'Status',
+        meetingProvider: 'Meeting provider',
         meetingLink: 'Meeting link',
         notes: 'Notes'
       }
@@ -738,6 +741,8 @@ export const dictionaries = {
       eventReschedule: 'Запись перенесена',
       eventMarkPaid: 'Оплата подтверждена',
       eventNotify: 'Ручное уведомление отправлено',
+      meetingProviderManual: 'Ручная ссылка',
+      meetingProviderZoom: 'Zoom',
       errors: {
         load: 'Не удалось загрузить записи.',
         save: 'Не удалось сохранить запись.',
@@ -750,6 +755,7 @@ export const dictionaries = {
       fields: {
         scheduledAt: 'Дата и время',
         status: 'Статус',
+        meetingProvider: 'Провайдер встречи',
         meetingLink: 'Ссылка на встречу',
         notes: 'Комментарий'
       }
@@ -1027,6 +1033,8 @@ export type TranslationKey =
   | 'appointments.eventReschedule'
   | 'appointments.eventMarkPaid'
   | 'appointments.eventNotify'
+  | 'appointments.meetingProviderManual'
+  | 'appointments.meetingProviderZoom'
   | 'appointments.errors.load'
   | 'appointments.errors.save'
   | 'appointments.errors.cancel'
@@ -1036,6 +1044,7 @@ export type TranslationKey =
   | 'appointments.errors.createSpecialistFirst'
   | 'appointments.fields.scheduledAt'
   | 'appointments.fields.status'
+  | 'appointments.fields.meetingProvider'
   | 'appointments.fields.meetingLink'
   | 'notificationLogs.pageTitle'
   | 'notificationLogs.pageSubtitle'

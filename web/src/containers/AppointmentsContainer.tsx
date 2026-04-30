@@ -350,6 +350,7 @@ export function AppointmentsContainer() {
     appointmentAt: string;
     appointmentEndAt: string;
     status: AppointmentItem['status'];
+    meetingProvider: 'manual' | 'zoom';
     meetingLink: string;
     notes: string;
     clientId?: number;
@@ -376,6 +377,7 @@ export function AppointmentsContainer() {
           appointmentAt: payload.appointmentAt,
           appointmentEndAt: payload.appointmentEndAt,
           status: payload.status,
+          meetingProvider: payload.meetingProvider,
           meetingLink: payload.meetingLink,
           notes: payload.notes,
           clientId: payload.clientId,
@@ -393,6 +395,7 @@ export function AppointmentsContainer() {
           appointmentAt: payload.appointmentAt,
           appointmentEndAt: payload.appointmentEndAt,
           status: payload.status,
+          meetingProvider: payload.meetingProvider,
           meetingLink: payload.meetingLink,
           notes: payload.notes,
           clientId: payload.clientId,
@@ -778,6 +781,7 @@ export function AppointmentsContainer() {
           appointmentAt: payload.appointmentAt,
           appointmentEndAt: payload.appointmentEndAt,
           status: payload.status,
+          meetingProvider: payload.meetingProvider,
           meetingLink: payload.meetingLink,
           notes: payload.notes,
           clientId: payload.clientId,

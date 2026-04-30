@@ -140,3 +140,10 @@
 - значение `zoomConnected=true` возвращается, если в `web_user_integrations` есть `zoom_access_token` и `zoom_token_expires_at` еще не истек;
 - на frontend в `Settings -> Integrations` кнопка Zoom теперь показывает состояние `Zoom connected` и блокируется после успешного подключения;
 - состояние обновляется локально после возврата из Zoom callback (`zoom_oauth=success`) и при последующей загрузке `GET /api/settings/user`.
+
+## Обновление appointment flow (2026-04-30)
+
+- создание Zoom meeting привязано к `POST /api/appointments`: если выбран `meetingProvider=zoom` и ссылка не указана, backend пытается автоматически создать Zoom-встречу от имени текущего пользователя (specialist/admin/owner с подключенным Zoom OAuth) и сохраняет `joinUrl` в appointment;
+- в appointment API добавлен `meetingProvider` (`manual | zoom`) и он сохраняется/читается вместе с `meetingLink`;
+- в UI формы записи добавлен выбор провайдера встречи (`Manual link`/`Zoom`);
+- в календарных карточках записи отображается выбранный `meetingProvider`.
