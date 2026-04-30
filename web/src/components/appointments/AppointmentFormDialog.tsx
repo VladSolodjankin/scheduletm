@@ -351,6 +351,15 @@ export function AppointmentFormDialog({
                     labelId="client-label"
                     label={t('appointments.client')}
                     value={field.value}
+                    displayEmpty
+                    renderValue={(value) => {
+                      if (!value) {
+                        return t('appointments.newClient');
+                      }
+
+                      const selectedClient = clients.find((client) => String(client.id) === String(value));
+                      return selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}`.trim() : t('appointments.newClient');
+                    }}
                     onChange={(event) => field.onChange(String(event.target.value))}
                   >
                     <MenuItem value="">{t('appointments.newClient')}</MenuItem>
@@ -440,8 +449,8 @@ export function AppointmentFormDialog({
                 />
               )}
             />
-            <Controller name="firstName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="First name" />} />
-            <Controller name="lastName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Last name" />} />
+            <Controller name="firstName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.clientFirstName')} />} />
+            <Controller name="lastName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.clientLastName')} />} />
             <Controller
               name="phone"
               control={control}
@@ -451,17 +460,18 @@ export function AppointmentFormDialog({
               render={({ field, fieldState }) => (
                 <AppRhfPhoneField
                   field={field}
-                  label="Phone"
+                  label={t('appointments.fields.clientPhone')}
                   error={Boolean(fieldState.error)}
                   helperText={fieldState.error?.message}
+                  countryLabel={t('appointments.fields.clientCountryName')}
                 />
               )}
             />
-            <Controller name="email" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Email" />} />
+            <Controller name="email" control={control} render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.clientEmail')} />} />
             <Controller
               name="username"
               control={control}
-              render={({ field }: any) => <AppRhfTextField field={field} label="Telegram username" />}
+              render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.clientTelegramUsername')} />}
             />
             <Controller
               name="notes"
