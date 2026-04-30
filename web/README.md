@@ -12,6 +12,7 @@ React SPA для owner/admin/specialist/client.
 - Основные разделы: `/appointments`, `/specialists`, `/users`, `/settings`, `/notification-logs`.
 - Role-aware UI (owner/admin/specialist/client).
 - i18n (`ru/en`), theme mode, palette variants.
+- Phone fields with country selector auto-detect default country from browser locale and can still be changed manually.
 - Calendar flow: create/edit/reschedule/cancel/mark-paid/notify.
 - Appointments page includes role-based top filters:
   - owner: `Account`, `Specialist`, `Client`, `Service`, `Status`, `From/To` dates;

@@ -3,7 +3,7 @@ import { useMemo, useState, type ChangeEvent } from 'react';
 import { FormControl, InputLabel, MenuItem, Select, Stack, TextField, type TextFieldProps } from '@mui/material';
 import type { ControllerRenderProps, FieldValues, Path } from 'react-hook-form';
 import { useI18n } from '../i18n/I18nContext';
-import { getCountryByPhone, getCountryByIso, DEFAULT_COUNTRY, PHONE_COUNTRIES, onlyDigits, parseLocalDigits } from './phoneUtils';
+import { getCountryByLocale, getCountryByPhone, getCountryByIso, DEFAULT_COUNTRY, PHONE_COUNTRIES, onlyDigits, parseLocalDigits } from './phoneUtils';
 
 type AppRhfPhoneFieldProps<TFieldValues extends FieldValues> = Omit<
   TextFieldProps,
@@ -72,6 +72,14 @@ export function AppRhfPhoneField<TFieldValues extends FieldValues>({
   const { t } = useI18n();
   const [manualCountryIso, setManualCountryIso] = useState<string | null>(null);
 
+  const localeCountryIso = useMemo(() => {
+    if (typeof navigator === 'undefined') {
+      return null;
+    }
+
+    return getCountryByLocale(navigator.language)?.isoCode ?? null;
+  }, []);
+
   const detectedCountry = useMemo(
     () => getCountryByPhone(String(field.value ?? '')),
     [field.value],
@@ -79,7 +87,7 @@ export function AppRhfPhoneField<TFieldValues extends FieldValues>({
 
   const selectedCountryIso =
     manualCountryIso ??
-    (field.value ? detectedCountry.isoCode : DEFAULT_COUNTRY.isoCode);
+    (field.value ? detectedCountry.isoCode : (localeCountryIso ?? DEFAULT_COUNTRY.isoCode));
 
   const selectedCountry = getCountryByIso(selectedCountryIso);
 
