@@ -13,6 +13,7 @@ export type WebUserIntegrationRecord = {
   telegram_bot_username: string | null;
   telegram_bot_name: string | null;
   zoom_access_token: string | null;
+  zoom_refresh_token: string | null;
   zoom_token_expires_at: Date | null;
   zoom_connected_at: Date | null;
   zoom_last_meeting_id: string | null;
@@ -43,6 +44,7 @@ type UpdateWebUserZoomIntegrationInput = {
   accountId: number;
   webUserId: number;
   zoomAccessToken?: string | null;
+  zoomRefreshToken?: string | null;
   zoomTokenExpiresAt?: Date | null;
   zoomConnectedAt?: Date | null;
   zoomLastMeetingId?: string | null;
@@ -144,11 +146,26 @@ export async function updateWebUserTelegramIntegration(input: UpdateWebUserTeleg
   await upsertPatch(input.accountId, input.webUserId, patch);
 }
 
+
+export async function clearWebUserZoomCredentials(accountId: number, webUserId: number): Promise<void> {
+  await upsertPatch(accountId, webUserId, {
+    zoom_access_token: null,
+    zoom_refresh_token: null,
+    zoom_token_expires_at: null,
+    zoom_connected_at: null,
+    zoom_last_meeting_id: null,
+    zoom_last_join_url: null,
+    zoom_last_start_url: null,
+  });
+}
 export async function updateWebUserZoomIntegration(input: UpdateWebUserZoomIntegrationInput): Promise<void> {
   const patch: Record<string, unknown> = {};
 
   if (input.zoomAccessToken !== undefined) {
     patch.zoom_access_token = input.zoomAccessToken;
+  }
+  if (input.zoomRefreshToken !== undefined) {
+    patch.zoom_refresh_token = input.zoomRefreshToken;
   }
   if (input.zoomTokenExpiresAt !== undefined) {
     patch.zoom_token_expires_at = input.zoomTokenExpiresAt;
