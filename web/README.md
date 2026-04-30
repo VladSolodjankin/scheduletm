@@ -13,6 +13,7 @@ React SPA для owner/admin/specialist/client.
 - Role-aware UI (owner/admin/specialist/client).
 - i18n (`ru/en`), theme mode, palette variants.
 - Phone fields with country selector auto-detect default country from browser locale and can still be changed manually.
+- `AppRhfPasswordField` is used for real password inputs with native browser autofill hints (`current-password`, `new-password`), while secrets/tokens use dedicated `AppRhfSecretKeyField` with manual show/hide toggle and custom masking in `type="text"` mode.
 - Calendar flow: create/edit/reschedule/cancel/mark-paid/notify.
 - Appointments page includes role-based top filters:
   - owner: `Account`, `Specialist`, `Client`, `Service`, `Status`, `From/To` dates;
