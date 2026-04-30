@@ -21,6 +21,7 @@ Node.js/Express API для web-клиента и интеграций.
 - Web roles: owner/admin/specialist/client.
 - RBAC policy (централизованные проверки прав) в `src/policies/rolePermissions.ts`.
 - Settings API: system (owner), account (owner/admin), user (all users), account notification defaults (owner/admin).
+  - `GET /api/settings/user` возвращает статусы интеграций `googleConnected` и `zoomConnected` для текущего пользователя.
 - CRUD: users, specialists.
   - При создании пользователей owner/admin отправляется invite-link вместо временного пароля.
   - Приглашённый пользователь создаётся неактивным и активируется только после verify-email / accept-invite.

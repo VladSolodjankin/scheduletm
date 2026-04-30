@@ -96,7 +96,7 @@ export function IntegrationsSettingsTab({
           variant="outlined"
           onClick={onConnectZoom}
           isLoading={isZoomConnecting}
-          disabled={isGoogleConnecting || isGoogleDisconnecting}
+          disabled={userSettings.zoomConnected || isGoogleConnecting || isGoogleDisconnecting}
           startIcon={!isZoomConnecting ? <ZoomIcon /> : undefined}
           sx={{
             textTransform: 'none',
@@ -109,7 +109,9 @@ export function IntegrationsSettingsTab({
             },
           }}
         >
-          {isZoomConnecting ? copy.connectingZoom : copy.connectZoom}
+          {isZoomConnecting
+            ? copy.connectingZoom
+            : (userSettings.zoomConnected ? copy.zoomConnected : copy.connectZoom)}
         </AppButton>
 
         <AppButton

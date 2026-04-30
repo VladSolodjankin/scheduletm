@@ -129,3 +129,12 @@
 - привязать создание Zoom meeting к flow создания `appointment`;
 - сохранять/показывать `meetingProvider` в UI записи;
 - добавить явный connected-state для Zoom в user integrations API (по аналогии с `googleConnected`).
+
+## Обновление connected-state Zoom (2026-04-30)
+
+Сделан следующий шаг по интеграции:
+
+- в `GET /api/settings/user` добавлен флаг `zoomConnected`;
+- значение `zoomConnected=true` возвращается, если в `web_user_integrations` есть `zoom_access_token` и `zoom_token_expires_at` еще не истек;
+- на frontend в `Settings -> Integrations` кнопка Zoom теперь показывает состояние `Zoom connected` и блокируется после успешного подключения;
+- состояние также обновляется локально сразу после успешного `POST /api/integrations/zoom/meetings`.

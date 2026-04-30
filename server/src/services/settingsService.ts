@@ -65,6 +65,7 @@ export type UserSettings = {
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
   googleConnected: boolean;
+  zoomConnected: boolean;
   telegramBotConnected: boolean;
   telegramBotName: string | null;
   telegramBotUsername: string | null;
@@ -231,6 +232,7 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
       uiThemeMode: 'light',
       uiPaletteVariantId: 'default',
       googleConnected: false,
+      zoomConnected: false,
       telegramBotConnected: false,
       telegramBotName: null,
       telegramBotUsername: null,
@@ -254,6 +256,11 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
     uiThemeMode: userSettings?.ui_theme_mode ?? user?.ui_theme_mode ?? 'light',
     uiPaletteVariantId: userSettings?.ui_palette_variant_id ?? user?.ui_palette_variant_id ?? 'default',
     googleConnected: Boolean(integration?.google_api_key ?? legacyIntegration?.google_api_key),
+    zoomConnected: Boolean(
+      legacyIntegration?.zoom_access_token
+      && legacyIntegration?.zoom_token_expires_at
+      && new Date(legacyIntegration.zoom_token_expires_at).getTime() > Date.now(),
+    ),
     telegramBotConnected: Boolean(integration?.telegram_bot_token ?? legacyIntegration?.telegram_bot_token),
     telegramBotName: integration?.telegram_bot_name ?? legacyIntegration?.telegram_bot_name ?? null,
     telegramBotUsername: integration?.telegram_bot_username ?? legacyIntegration?.telegram_bot_username ?? null,

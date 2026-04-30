@@ -125,6 +125,7 @@ export const dictionaries = {
       connectZoom: 'Connect Zoom',
       connectingZoom: 'Connecting Zoom...',
       googleConnected: 'Google connected',
+      zoomConnected: 'Zoom connected',
       telegramBotToken: 'Telegram Bot Token',
       telegramBotConnected: 'Telegram bot connected',
       telegramBotNotConnected: 'Telegram bot is not connected',
@@ -502,6 +503,7 @@ export const dictionaries = {
       connectZoom: 'Подключить Zoom',
       connectingZoom: 'Подключаем Zoom...',
       googleConnected: 'Google подключен',
+      zoomConnected: 'Zoom подключен',
       telegramBotToken: 'Telegram Bot Token',
       telegramBotConnected: 'Telegram-бот подключен',
       telegramBotNotConnected: 'Telegram-бот не подключен',
@@ -873,6 +875,7 @@ export type TranslationKey =
   | 'settings.connectZoom'
   | 'settings.connectingZoom'
   | 'settings.googleConnected'
+  | 'settings.zoomConnected'
   | 'settings.telegramBotToken'
   | 'settings.telegramBotConnected'
   | 'settings.telegramBotNotConnected'

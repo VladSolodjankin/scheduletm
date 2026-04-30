@@ -44,6 +44,7 @@ const defaultUserSettings: UserSettings = {
   uiThemeMode: 'light',
   uiPaletteVariantId: 'default',
   googleConnected: false,
+  zoomConnected: false,
   telegramBotConnected: false,
   telegramBotName: null,
   telegramBotUsername: null,
@@ -396,6 +397,7 @@ export function SettingsContainer() {
       );
       setError('');
       setSuccess(t('settings.zoomConnectedSuccessfully'));
+      setUserSettings((prev) => ({ ...prev, zoomConnected: true }));
     } catch (err) {
       setError(resolveApiError(err, {
         fallbackMessage: t('settings.errors.connectZoom'),
@@ -544,6 +546,7 @@ export function SettingsContainer() {
               disconnectingGoogle: t('settings.disconnectingGoogle'),
               connectZoom: t('settings.connectZoom'),
               connectingZoom: t('settings.connectingZoom'),
+              zoomConnected: t('settings.zoomConnected'),
               telegramBotToken: t('settings.telegramBotToken'),
               telegramBotConnected: t('settings.telegramBotConnected'),
               telegramBotNotConnected: t('settings.telegramBotNotConnected'),
