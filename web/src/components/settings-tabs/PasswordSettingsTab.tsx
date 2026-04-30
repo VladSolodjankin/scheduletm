@@ -3,6 +3,7 @@ import { Stack, Typography } from '@mui/material';
 import type { SettingsCardCopy } from '../SettingsCard.types';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
+import { AppRhfPasswordField } from '../../shared/ui/AppRhfPasswordField';
 import { AppTextField } from '../../shared/ui/AppTextField';
 
 type Props = {
@@ -36,13 +37,30 @@ export function PasswordSettingsTab({
   onRequestOtp,
   onConfirmOtp,
 }: Props) {
+  const passwordFieldBase = {
+    onBlur: () => undefined,
+    ref: () => undefined,
+  };
+
   return (
     <AppForm component="form" onSubmit={(event) => event.preventDefault()}>
       <Typography variant="h5">{copy.passwordTitle}</Typography>
       <Stack spacing={2}>
-        <AppTextField value={currentPassword} onChange={(event) => onCurrentPasswordChange(event.target.value)} label={copy.currentPassword} type="password" />
-        <AppTextField value={newPassword} onChange={(event) => onNewPasswordChange(event.target.value)} label={copy.newPassword} type="password" />
-        <AppTextField value={confirmPassword} onChange={(event) => onConfirmPasswordChange(event.target.value)} label={copy.confirmPassword} type="password" />
+        <AppRhfPasswordField
+          field={{ ...passwordFieldBase, name: 'currentPassword', value: currentPassword, onChange: onCurrentPasswordChange }}
+          label={copy.currentPassword}
+          autoComplete="current-password"
+        />
+        <AppRhfPasswordField
+          field={{ ...passwordFieldBase, name: 'newPassword', value: newPassword, onChange: onNewPasswordChange }}
+          label={copy.newPassword}
+          autoComplete="new-password"
+        />
+        <AppRhfPasswordField
+          field={{ ...passwordFieldBase, name: 'confirmPassword', value: confirmPassword, onChange: onConfirmPasswordChange }}
+          label={copy.confirmPassword}
+          autoComplete="new-password-confirm"
+        />
         {passwordStep === 'otp' && (
           <AppTextField
             value={otpCode}
