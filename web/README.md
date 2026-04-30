@@ -16,6 +16,7 @@ React SPA для owner/admin/specialist/client.
 - Phone fields with country selector auto-detect default country from browser locale and can still be changed manually.
 - `AppRhfPasswordField` is used for real password inputs with native browser autofill hints (`current-password`, `new-password`), while secrets/tokens use dedicated `AppRhfSecretKeyField` with manual show/hide toggle and custom masking in `type="text"` mode.
 - Calendar flow: create/edit/reschedule/cancel/mark-paid/notify.
+- In appointment dialog, `Meeting provider` and `Meeting link` are placed together; link can be generated directly from the form (`Zoom` via API integration, `Manual` via generated unique URL).
 - Appointments page includes role-based top filters:
   - owner: `Account`, `Specialist`, `Client`, `Service`, `Status`, `From/To` dates;
   - admin: `Specialist`, `Client`, `Service`, `Status`, `From/To` dates;
