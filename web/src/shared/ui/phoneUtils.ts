@@ -79,6 +79,23 @@ export const parseLocalDigits = (value: string, country: PhoneCountry) => {
   return fullDigits.slice(0, country.localDigitsCount);
 };
 
+
+export const getCountryByLocale = (locale: string | undefined) => {
+  if (!locale) {
+    return null;
+  }
+
+  const normalizedLocale = locale.replace('_', '-');
+  const localeParts = normalizedLocale.split('-');
+  const maybeIsoCode = localeParts.at(-1)?.toUpperCase();
+
+  if (!maybeIsoCode || maybeIsoCode.length !== 2) {
+    return null;
+  }
+
+  return PHONE_COUNTRIES.find((country) => country.isoCode === maybeIsoCode) ?? null;
+};
+
 export const getCountryByPhone = (value: string) => {
   const digits = onlyDigits(value.startsWith('+') ? value.slice(1) : value);
 
