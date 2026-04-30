@@ -381,7 +381,13 @@ export const dictionaries = {
         status: 'Status',
         meetingProvider: 'Meeting provider',
         meetingLink: 'Meeting link',
-        notes: 'Notes'
+        notes: 'Notes',
+        clientFirstName: 'Client first name',
+        clientLastName: 'Client last name',
+        clientCountryName: 'Client country name',
+        clientPhone: 'Client phone',
+        clientEmail: 'Client email',
+        clientTelegramUsername: 'Client Telegram username'
       }
     }
   },
@@ -767,7 +773,13 @@ export const dictionaries = {
         status: 'Статус',
         meetingProvider: 'Провайдер встречи',
         meetingLink: 'Ссылка на встречу',
-        notes: 'Комментарий'
+        notes: 'Комментарий',
+        clientFirstName: 'Имя клиента',
+        clientLastName: 'Фамилия клиента',
+        clientCountryName: 'Страна клиента',
+        clientPhone: 'Телефон клиента',
+        clientEmail: 'Email клиента',
+        clientTelegramUsername: 'Telegram username клиента'
       }
     }
   }
@@ -1098,6 +1110,12 @@ export type TranslationKey =
   | 'errorLogs.columns.message'
   | 'errorLogs.columns.accountId'
   | 'errorLogs.errors.load'
-  | 'appointments.fields.notes';
+  | 'appointments.fields.notes'
+  | 'appointments.fields.clientTelegramUsername'
+  | 'appointments.fields.clientEmail'
+  | 'appointments.fields.clientPhone'
+  | 'appointments.fields.clientLastName'
+  | 'appointments.fields.clientFirstName'
+  | 'appointments.fields.clientCountryName';
 
 export const DEFAULT_LOCALE: Locale = 'ru';

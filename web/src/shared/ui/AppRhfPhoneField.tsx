@@ -13,6 +13,7 @@ type AppRhfPhoneFieldProps<TFieldValues extends FieldValues> = Omit<
   error?: boolean;
   helperText?: string;
   onValueChange?: () => void;
+  countryLabel?: string;
 };
 
 const formatMaskedValue = (digits: string, mask: string) => {
@@ -67,6 +68,7 @@ export function AppRhfPhoneField<TFieldValues extends FieldValues>({
   error,
   helperText,
   onValueChange,
+  countryLabel,
   ...props
 }: AppRhfPhoneFieldProps<TFieldValues>) {
   const { t } = useI18n();
@@ -95,7 +97,7 @@ export function AppRhfPhoneField<TFieldValues extends FieldValues>({
   const mask = buildMask(selectedCountry.localDigitsCount);
   const maskedValue = formatMaskedValue(localDigits, mask);
 
-  const countryLabel = t('common.country');
+  const resolvedCountryLabel = countryLabel ?? t('common.country');
 
   const handleCountryChange = (nextCountryIso: string) => {
     const nextCountry = getCountryByIso(nextCountryIso);
@@ -121,12 +123,12 @@ export function AppRhfPhoneField<TFieldValues extends FieldValues>({
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
       <FormControl sx={{ minWidth: 180 }}>
         <InputLabel id={`${field.name}-country-label`}>
-          {countryLabel}
+          {resolvedCountryLabel}
         </InputLabel>
 
         <Select
           labelId={`${field.name}-country-label`}
-          label={countryLabel}
+          label={resolvedCountryLabel}
           value={selectedCountry.isoCode}
           onChange={(event) => handleCountryChange(String(event.target.value))}
         >
