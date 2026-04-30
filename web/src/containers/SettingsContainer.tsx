@@ -1,6 +1,6 @@
 import { Alert, Box, Skeleton, Stack } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { resolveApiError } from '../shared/api/error';
@@ -65,6 +65,7 @@ const defaultAccountNotificationDefaults: AccountNotificationDefault[] = [];
 export function SettingsContainer() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { tab } = useParams<{ tab?: string }>();
   const { accessToken, user } = useAuth();
   const { t } = useI18n();
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(defaultSystemSettings);
@@ -97,6 +98,34 @@ export function SettingsContainer() {
   const canManageAccountSettings = user?.role === 'owner' || user?.role === 'admin';
   const canManageSpecialistBookingPolicy =
     user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
+
+  const allowedTabs = useMemo(() => ([
+    ...(canManageSystemSettings ? ['system'] : []),
+    ...(canManageAccountSettings ? ['account'] : []),
+    ...(canManageSpecialistBookingPolicy ? ['specialistPolicy'] : []),
+    ...(canManageAccountSettings ? ['notifications'] : []),
+    'user',
+    'integrations',
+    'password'
+  ] as const), [canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings]);
+
+  const activeTab = useMemo(() => {
+    if (!tab) {
+      return allowedTabs[0] ?? 'user';
+    }
+
+    return allowedTabs.includes(tab as (typeof allowedTabs)[number]) ? tab : (allowedTabs[0] ?? 'user');
+  }, [allowedTabs, tab]);
+
+  useEffect(() => {
+    if (!tab || !allowedTabs.includes(tab as (typeof allowedTabs)[number])) {
+      navigate(`/settings/${allowedTabs[0] ?? 'user'}`, { replace: true });
+    }
+  }, [allowedTabs, navigate, tab]);
+
+  const handleTabChange = (nextTab: string) => {
+    navigate(`/settings/${nextTab}`);
+  };
 
   useEffect(() => {
     if (!googleOauthStatus && !zoomOauthStatus) {
@@ -613,6 +642,8 @@ export function SettingsContainer() {
             onCancelPasswordChange={cancelPasswordChange}
             onRequestPasswordOtp={requestPasswordOtp}
             onConfirmPasswordOtp={confirmPasswordOtp}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
           />
         )}
       </Box>
