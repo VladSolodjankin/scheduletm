@@ -12,6 +12,12 @@ export type WebUserIntegrationRecord = {
   telegram_bot_token: string | null;
   telegram_bot_username: string | null;
   telegram_bot_name: string | null;
+  zoom_access_token: string | null;
+  zoom_token_expires_at: Date | null;
+  zoom_connected_at: Date | null;
+  zoom_last_meeting_id: string | null;
+  zoom_last_join_url: string | null;
+  zoom_last_start_url: string | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -31,6 +37,17 @@ type UpdateWebUserTelegramIntegrationInput = {
   telegramBotToken?: string | null;
   telegramBotUsername?: string | null;
   telegramBotName?: string | null;
+};
+
+type UpdateWebUserZoomIntegrationInput = {
+  accountId: number;
+  webUserId: number;
+  zoomAccessToken?: string | null;
+  zoomTokenExpiresAt?: Date | null;
+  zoomConnectedAt?: Date | null;
+  zoomLastMeetingId?: string | null;
+  zoomLastJoinUrl?: string | null;
+  zoomLastStartUrl?: string | null;
 };
 
 async function upsertPatch(
@@ -118,6 +135,35 @@ export async function updateWebUserTelegramIntegration(input: UpdateWebUserTeleg
 
   if (input.telegramBotName !== undefined) {
     patch.telegram_bot_name = input.telegramBotName;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return;
+  }
+
+  await upsertPatch(input.accountId, input.webUserId, patch);
+}
+
+export async function updateWebUserZoomIntegration(input: UpdateWebUserZoomIntegrationInput): Promise<void> {
+  const patch: Record<string, unknown> = {};
+
+  if (input.zoomAccessToken !== undefined) {
+    patch.zoom_access_token = input.zoomAccessToken;
+  }
+  if (input.zoomTokenExpiresAt !== undefined) {
+    patch.zoom_token_expires_at = input.zoomTokenExpiresAt;
+  }
+  if (input.zoomConnectedAt !== undefined) {
+    patch.zoom_connected_at = input.zoomConnectedAt;
+  }
+  if (input.zoomLastMeetingId !== undefined) {
+    patch.zoom_last_meeting_id = input.zoomLastMeetingId;
+  }
+  if (input.zoomLastJoinUrl !== undefined) {
+    patch.zoom_last_join_url = input.zoomLastJoinUrl;
+  }
+  if (input.zoomLastStartUrl !== undefined) {
+    patch.zoom_last_start_url = input.zoomLastStartUrl;
   }
 
   if (Object.keys(patch).length === 0) {
