@@ -34,6 +34,8 @@ import {
 
 import type { TranslationKey } from '../../shared/i18n/dictionaries';
 import { TimezoneSelect } from '../TimezoneSelect';
+import { apiClient, authHeaders } from '../../shared/api/client';
+import { resolveApiError } from '../../shared/api/error';
 
 type AppointmentFormState = EditFormState & {
   clientId: string;
@@ -54,6 +56,7 @@ type Props = {
   selectedSlotStepMin: number;
   initialScheduledAtIso: string | null;
   isSubmittingForm: boolean;
+  accessToken: string;
   isCancellingAppointment: boolean;
   isMarkingPaid: boolean;
   isNotifyingClient: boolean;
@@ -112,6 +115,7 @@ export function AppointmentFormDialog({
   selectedSlotStepMin,
   initialScheduledAtIso,
   isSubmittingForm,
+  accessToken,
   isCancellingAppointment,
   isMarkingPaid,
   isNotifyingClient,
@@ -124,6 +128,8 @@ export function AppointmentFormDialog({
 }: Props) {
   const [showTimezoneSelect, setShowTimezoneSelect] = useState(false);
   const [formTimeZone, setFormTimeZone] = useState(BROWSER_TIMEZONE);
+  const [isGeneratingMeetingLink, setIsGeneratingMeetingLink] = useState(false);
+  const [generateMeetingLinkError, setGenerateMeetingLinkError] = useState('');
 
   const initialValues = useMemo(() => {
     const defaultSpecialistId = selectedSpecialistId === 'all' ? specialists[0]?.id : selectedSpecialistId;
@@ -212,6 +218,8 @@ export function AppointmentFormDialog({
 
   const startDateValue = useWatch({ control, name: 'startDate' });
   const startTimeValue = useWatch({ control, name: 'startTime' });
+  const endTimeValue = useWatch({ control, name: 'endTime' });
+  const meetingProviderValue = useWatch({ control, name: 'meetingProvider' });
 
   useEffect(() => {
     if (!open || editingItem || !startDateValue || !startTimeValue) {
@@ -248,6 +256,43 @@ export function AppointmentFormDialog({
       email: form.email,
     });
   });
+
+  const handleGenerateMeetingLink = async () => {
+    setGenerateMeetingLinkError('');
+    const provider = meetingProviderValue;
+
+    if (provider === 'manual') {
+      setValue('meetingLink', `https://meetli.link/manual/${crypto.randomUUID()}`, { shouldDirty: true });
+      return;
+    }
+
+    if (provider !== 'zoom') {
+      return;
+    }
+
+    const startAt = composeFormDateTime(startDateValue, startTimeValue);
+    const startAtIso = new Date(startAt).toISOString();
+    const endAtIso = new Date(composeFormDateTime(startDateValue, endTimeValue)).toISOString();
+    const durationMin = Math.max(1, Math.round((new Date(endAtIso).getTime() - new Date(startAtIso).getTime()) / 60000));
+
+    setIsGeneratingMeetingLink(true);
+    try {
+      const response = await apiClient.post('/api/integrations/zoom/meetings', {
+        topic: editingItem ? t('appointments.editTitle') : t('appointments.createTitle'),
+        startTime: startAtIso,
+        duration: durationMin,
+        timezone: formTimeZone,
+      }, {
+        headers: authHeaders(accessToken),
+      });
+
+      setValue('meetingLink', String(response.data?.joinUrl ?? ''), { shouldDirty: true });
+    } catch (error) {
+      setGenerateMeetingLinkError(resolveApiError(error, t('appointments.errors.generateMeetingLink')));
+    } finally {
+      setIsGeneratingMeetingLink(false);
+    }
+  };
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
@@ -370,6 +415,31 @@ export function AppointmentFormDialog({
                 </FormControl>
               )}
             />
+            <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}>
+              <AppButton
+                onClick={handleGenerateMeetingLink}
+                isLoading={isGeneratingMeetingLink}
+                disabled={isSubmittingForm || isCancellingAppointment}
+              >
+                {t('appointments.generateMeetingLink')}
+              </AppButton>
+              {generateMeetingLinkError ? (
+                <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
+                  {generateMeetingLinkError}
+                </Typography>
+              ) : null}
+            </Box>
+            <Controller
+              name="meetingLink"
+              control={control}
+              render={({ field }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={t('appointments.fields.meetingLink')}
+                  sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}
+                />
+              )}
+            />
             <Controller name="firstName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="First name" />} />
             <Controller name="lastName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Last name" />} />
             <Controller
@@ -392,17 +462,6 @@ export function AppointmentFormDialog({
               name="username"
               control={control}
               render={({ field }: any) => <AppRhfTextField field={field} label="Telegram username" />}
-            />
-            <Controller
-              name="meetingLink"
-              control={control}
-              render={({ field }: any) => (
-                <AppRhfTextField
-                  field={field}
-                  label={t('appointments.fields.meetingLink')}
-                  sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}
-                />
-              )}
             />
             <Controller
               name="notes"

@@ -365,6 +365,7 @@ export const dictionaries = {
       eventNotify: 'Manual notification sent',
       meetingProviderManual: 'Manual link',
       meetingProviderZoom: 'Zoom',
+      generateMeetingLink: 'Generate meeting link',
       errors: {
         load: 'Unable to load appointments.',
         save: 'Unable to save appointment.',
@@ -372,6 +373,7 @@ export const dictionaries = {
         reschedule: 'Unable to reschedule appointment.',
         markPaid: 'Unable to confirm payment.',
         notify: 'Unable to send notification.',
+        generateMeetingLink: 'Unable to generate meeting link.',
         createSpecialistFirst: 'Create at least one specialist first.',
       },
       fields: {
@@ -749,6 +751,7 @@ export const dictionaries = {
       eventNotify: 'Ручное уведомление отправлено',
       meetingProviderManual: 'Ручная ссылка',
       meetingProviderZoom: 'Zoom',
+      generateMeetingLink: 'Сгенерировать ссылку на встречу',
       errors: {
         load: 'Не удалось загрузить записи.',
         save: 'Не удалось сохранить запись.',
@@ -756,6 +759,7 @@ export const dictionaries = {
         reschedule: 'Не удалось перенести запись.',
         markPaid: 'Не удалось подтвердить оплату.',
         notify: 'Не удалось отправить уведомление.',
+        generateMeetingLink: 'Не удалось сгенерировать ссылку на встречу.',
         createSpecialistFirst: 'Сначала создайте хотя бы одного специалиста.',
       },
       fields: {
@@ -1044,12 +1048,14 @@ export type TranslationKey =
   | 'appointments.eventNotify'
   | 'appointments.meetingProviderManual'
   | 'appointments.meetingProviderZoom'
+  | 'appointments.generateMeetingLink'
   | 'appointments.errors.load'
   | 'appointments.errors.save'
   | 'appointments.errors.cancel'
   | 'appointments.errors.reschedule'
   | 'appointments.errors.markPaid'
   | 'appointments.errors.notify'
+  | 'appointments.errors.generateMeetingLink'
   | 'appointments.errors.createSpecialistFirst'
   | 'appointments.fields.scheduledAt'
   | 'appointments.fields.status'

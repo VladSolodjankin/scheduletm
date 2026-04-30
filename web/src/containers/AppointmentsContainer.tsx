@@ -753,6 +753,7 @@ export function AppointmentsContainer() {
 
       <AppointmentFormDialog
         t={t}
+        accessToken={accessToken}
         open={isCreateOpen}
         editingItem={editingItem}
         specialists={specialists}
