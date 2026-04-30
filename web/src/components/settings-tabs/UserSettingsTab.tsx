@@ -92,7 +92,7 @@ export function UserSettingsTab({
         name="telegramUsername"
         control={control}
         render={({ field }: any) => (
-          <AppRhfTextField field={field} label={copy.telegram} />
+          <AppRhfTextField field={field} label={copy.telegram} autoComplete="off" />
         )}
       />
 
@@ -100,7 +100,7 @@ export function UserSettingsTab({
         name="telegramBotToken"
         control={control}
         render={({ field }: any) => (
-          <AppRhfPasswordField field={field} label={copy.telegramBotToken} />
+          <AppRhfPasswordField field={field} label={copy.telegramBotToken} autoComplete="telegram-bot-token" />
         )}
       />
 
