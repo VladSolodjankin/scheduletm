@@ -34,6 +34,7 @@ import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { canCreateAppointments, canManageAllAppointments, canMarkPaidAndNotify, isClientRole } from '../policies/rolePermissions.js';
 import { sendAppointmentNotificationByType } from './appointmentNotificationService.js';
+import { createZoomMeeting } from './zoomService.js';
 
 type AppointmentClientDto = {
   id: number;
@@ -51,6 +52,7 @@ type AppointmentDto = {
   durationMin: number;
   status: AppointmentStatus;
   paymentStatus: 'paid' | 'unpaid';
+  meetingProvider: 'manual' | 'zoom';
   meetingLink: string;
   notes: string;
   client: AppointmentClientDto;
@@ -90,6 +92,7 @@ type CreateAppointmentPayload = {
   appointmentEndAt: string;
   status?: AppointmentStatus;
   meetingLink?: string;
+  meetingProvider?: 'manual' | 'zoom';
   notes?: string;
 } & AppointmentClientPayload;
 
@@ -99,40 +102,50 @@ type UpdateAppointmentPayload = {
   durationMin?: number;
   status?: AppointmentStatus;
   meetingLink?: string;
+  meetingProvider?: 'manual' | 'zoom';
   notes?: string;
 } & AppointmentClientPayload;
 
-function parseMeetingLinkFromNotes(notes: string | null): { notes: string; meetingLink: string } {
+function parseMeetingMetaFromNotes(notes: string | null): { notes: string; meetingLink: string; meetingProvider: 'manual' | 'zoom' } {
   if (!notes) {
-    return { notes: '', meetingLink: '' };
+    return { notes: '', meetingLink: '', meetingProvider: 'manual' };
   }
 
-  const [firstLine, ...restLines] = notes.split('\n');
-  const prefix = 'meetingLink: ';
-
-  if (!firstLine.startsWith(prefix)) {
-    return { notes, meetingLink: '' };
+  const lines = notes.split('\n');
+  let meetingLink = '';
+  let meetingProvider: 'manual' | 'zoom' = 'manual';
+  const restLines: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith('meetingLink: ')) {
+      meetingLink = line.slice('meetingLink: '.length).trim();
+      continue;
+    }
+    if (line.startsWith('meetingProvider: ')) {
+      const parsed = line.slice('meetingProvider: '.length).trim();
+      meetingProvider = parsed === 'zoom' ? 'zoom' : 'manual';
+      continue;
+    }
+    restLines.push(line);
   }
-
-  return {
-    meetingLink: firstLine.slice(prefix.length).trim(),
-    notes: restLines.join('\n').trim(),
-  };
+  return { meetingLink, meetingProvider, notes: restLines.join('\n').trim() };
 }
 
-function composeNotes(meetingLink: string | undefined, notes: string | undefined): string | null {
+function composeNotes(meetingLink: string | undefined, notes: string | undefined, meetingProvider: 'manual' | 'zoom' | undefined): string | null {
   const normalizedMeetingLink = meetingLink?.trim() ?? '';
   const normalizedNotes = notes?.trim() ?? '';
+  const normalizedProvider = meetingProvider ?? 'manual';
 
-  if (!normalizedMeetingLink && !normalizedNotes) {
+  if (!normalizedMeetingLink && !normalizedNotes && !normalizedProvider) {
     return null;
   }
-
-  if (!normalizedMeetingLink) {
-    return normalizedNotes;
+  const lines = [`meetingProvider: ${normalizedProvider}`];
+  if (normalizedMeetingLink) {
+    lines.push(`meetingLink: ${normalizedMeetingLink}`);
   }
-
-  return [`meetingLink: ${normalizedMeetingLink}`, normalizedNotes].filter(Boolean).join('\n');
+  if (normalizedNotes) {
+    lines.push(normalizedNotes);
+  }
+  return lines.filter(Boolean).join('\n');
 }
 
 function mapClient(row: ClientRecord): AppointmentClientDto {
@@ -147,7 +160,7 @@ function mapClient(row: ClientRecord): AppointmentClientDto {
 }
 
 function mapAppointment(row: AppointmentRecord): AppointmentDto {
-  const parsed = parseMeetingLinkFromNotes(row.comment);
+  const parsed = parseMeetingMetaFromNotes(row.comment);
 
   return {
     id: row.id,
@@ -156,6 +169,7 @@ function mapAppointment(row: AppointmentRecord): AppointmentDto {
     durationMin: row.duration_min,
     status: row.status,
     paymentStatus: row.is_paid ? 'paid' : 'unpaid',
+    meetingProvider: parsed.meetingProvider,
     notes: parsed.notes,
     meetingLink: parsed.meetingLink,
     client: {
@@ -456,12 +470,27 @@ export async function createAppointmentForActor(
     throw new Error('CLIENT_PROFILE_NOT_FOUND');
   }
 
+  let meetingLink = payload.meetingLink?.trim() ?? '';
+  const meetingProvider = payload.meetingProvider ?? (meetingLink ? 'manual' : 'zoom');
+  if (meetingProvider === 'zoom' && !meetingLink) {
+    const zoom = await createZoomMeeting({
+      userId: actor.id,
+      topic: 'Appointment',
+      startTime: payload.appointmentAt,
+      duration: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
+      timezone: specialist.timezone || 'UTC',
+    });
+    if (zoom.ok) {
+      meetingLink = zoom.meeting.joinUrl;
+    }
+  }
+
   const created = await createAppointment({
     accountId,
     specialistId: payload.specialistId,
     scheduledAt: new Date(payload.appointmentAt),
     status: payload.status ?? 'new',
-    notes: composeNotes(payload.meetingLink, payload.notes),
+    notes: composeNotes(meetingLink, payload.notes, meetingProvider),
     userId,
     serviceId,
     durationMin: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
@@ -552,8 +581,8 @@ export async function updateAppointmentForActor(
     durationMin,
     status: payload.status,
     userId,
-    notes: Object.prototype.hasOwnProperty.call(payload, 'notes') || Object.prototype.hasOwnProperty.call(payload, 'meetingLink')
-      ? composeNotes(payload.meetingLink, payload.notes)
+    notes: Object.prototype.hasOwnProperty.call(payload, 'notes') || Object.prototype.hasOwnProperty.call(payload, 'meetingLink') || Object.prototype.hasOwnProperty.call(payload, 'meetingProvider')
+      ? composeNotes(payload.meetingLink, payload.notes, payload.meetingProvider)
       : undefined,
   });
 

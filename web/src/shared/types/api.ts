@@ -133,6 +133,7 @@ export type AppointmentItem = {
   durationMin: number;
   status: AppointmentStatus;
   paymentStatus: 'paid' | 'unpaid';
+  meetingProvider: 'manual' | 'zoom';
   meetingLink: string;
   notes: string;
   client: ClientItem;

@@ -65,6 +65,7 @@ type Props = {
   onSubmit: (payload: {
     specialistId: number;
     status: AppointmentStatus;
+    meetingProvider: 'manual' | 'zoom';
     meetingLink: string;
     notes: string;
     appointmentAt: string;
@@ -85,6 +86,7 @@ const EMPTY_FORM: AppointmentFormState = {
   startTime: '',
   endTime: '',
   status: 'new',
+  meetingProvider: 'manual',
   meetingLink: '',
   notes: '',
   username: '',
@@ -140,6 +142,7 @@ export function AppointmentFormDialog({
         startTime: times.startTime,
         endTime: times.endTime,
         status: editingItem.status,
+        meetingProvider: editingItem.meetingProvider ?? 'manual',
         meetingLink: editingItem.meetingLink,
         notes: editingItem.notes,
         username: editingItem.client?.username ?? '',
@@ -163,6 +166,7 @@ export function AppointmentFormDialog({
       startTime: times.startTime,
       endTime: times.endTime,
       status: 'new',
+      meetingProvider: 'manual',
       meetingLink: '',
       notes: '',
       username: '',
@@ -231,6 +235,7 @@ export function AppointmentFormDialog({
     await onSubmit({
       specialistId,
       status: form.status,
+      meetingProvider: form.meetingProvider,
       meetingLink: form.meetingLink,
       notes: form.notes,
       appointmentAt: startIso,
@@ -343,6 +348,24 @@ export function AppointmentFormDialog({
                     {STATUS_OPTIONS.map((status) => (
                       <MenuItem key={status} value={status}>{statusLabel(status)}</MenuItem>
                     ))}
+                  </Select>
+                </FormControl>
+              )}
+            />
+            <Controller
+              name="meetingProvider"
+              control={control}
+              render={({ field }: any) => (
+                <FormControl fullWidth sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}>
+                  <InputLabel id="meeting-provider-label">{t('appointments.fields.meetingProvider')}</InputLabel>
+                  <Select
+                    labelId="meeting-provider-label"
+                    label={t('appointments.fields.meetingProvider')}
+                    value={field.value}
+                    onChange={(event) => field.onChange(event.target.value as 'manual' | 'zoom')}
+                  >
+                    <MenuItem value="manual">{t('appointments.meetingProviderManual')}</MenuItem>
+                    <MenuItem value="zoom">{t('appointments.meetingProviderZoom')}</MenuItem>
                   </Select>
                 </FormControl>
               )}
