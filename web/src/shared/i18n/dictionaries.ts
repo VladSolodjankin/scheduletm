@@ -122,6 +122,8 @@ export const dictionaries = {
       connectingGoogle: 'Redirecting to Google...',
       disconnectGoogle: 'Disconnect Google',
       disconnectingGoogle: 'Disconnecting...',
+      connectZoom: 'Connect Zoom',
+      connectingZoom: 'Connecting Zoom...',
       googleConnected: 'Google connected',
       telegramBotToken: 'Telegram Bot Token',
       telegramBotConnected: 'Telegram bot connected',
@@ -145,6 +147,7 @@ export const dictionaries = {
         whatsapp: 'WhatsApp',
       },
       googleConnectedSuccessfully: 'Google Calendar connected successfully.',
+      zoomConnectedSuccessfully: 'Zoom connected successfully.',
       specialists: {
         title: 'Specialists',
         add: 'Add specialist',
@@ -186,6 +189,7 @@ export const dictionaries = {
         save: 'Unable to save settings.',
         connectGoogle: 'Unable to connect Google.',
         disconnectGoogle: 'Unable to disconnect Google.',
+        connectZoom: 'Unable to connect Zoom.',
         saveSpecialist: 'Unable to save specialist.',
         deleteSpecialist: 'Unable to delete specialist.'
       }
@@ -495,6 +499,8 @@ export const dictionaries = {
       connectingGoogle: 'Переходим в Google...',
       disconnectGoogle: 'Отключить Google',
       disconnectingGoogle: 'Отключаем...',
+      connectZoom: 'Подключить Zoom',
+      connectingZoom: 'Подключаем Zoom...',
       googleConnected: 'Google подключен',
       telegramBotToken: 'Telegram Bot Token',
       telegramBotConnected: 'Telegram-бот подключен',
@@ -518,6 +524,7 @@ export const dictionaries = {
         whatsapp: 'WhatsApp',
       },
       googleConnectedSuccessfully: 'Google Calendar успешно подключен.',
+      zoomConnectedSuccessfully: 'Zoom успешно подключен.',
       specialists: {
         title: 'Специалисты',
         add: 'Добавить специалиста',
@@ -559,6 +566,7 @@ export const dictionaries = {
         save: 'Не удалось сохранить настройки.',
         connectGoogle: 'Не удалось подключить Google.',
         disconnectGoogle: 'Не удалось отключить Google.',
+        connectZoom: 'Не удалось подключить Zoom.',
         saveSpecialist: 'Не удалось сохранить специалиста.',
         deleteSpecialist: 'Не удалось удалить специалиста.'
       }
@@ -862,6 +870,8 @@ export type TranslationKey =
   | 'settings.connectingGoogle'
   | 'settings.disconnectGoogle'
   | 'settings.disconnectingGoogle'
+  | 'settings.connectZoom'
+  | 'settings.connectingZoom'
   | 'settings.googleConnected'
   | 'settings.telegramBotToken'
   | 'settings.telegramBotConnected'
@@ -883,6 +893,7 @@ export type TranslationKey =
   | 'settings.channels.sms'
   | 'settings.channels.whatsapp'
   | 'settings.googleConnectedSuccessfully'
+  | 'settings.zoomConnectedSuccessfully'
   | 'settings.passwordChange.openButton'
   | 'settings.passwordChange.title'
   | 'settings.passwordChange.currentPassword'
@@ -917,6 +928,7 @@ export type TranslationKey =
   | 'settings.errors.save'
   | 'settings.errors.connectGoogle'
   | 'settings.errors.disconnectGoogle'
+  | 'settings.errors.connectZoom'
   | 'specialists.pageTitle'
   | 'specialists.pageSubtitle'
   | 'specialists.accessDenied'
