@@ -69,7 +69,7 @@ export const router = createBrowserRouter([
         )
       },
       {
-        path: '/settings',
+        path: '/settings/:tab?',
         element: (
           <ProtectedRoute>
             <SettingsPage />

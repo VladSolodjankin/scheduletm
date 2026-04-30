@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
 import type {
@@ -59,6 +59,8 @@ type SettingsCardProps = {
   onCancelPasswordChange: () => void;
   onRequestPasswordOtp: () => Promise<void> | void;
   onConfirmPasswordOtp: () => Promise<void> | void;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 };
 
 export function SettingsCard({
@@ -100,6 +102,8 @@ export function SettingsCard({
   ,onCancelPasswordChange
   ,onRequestPasswordOtp
   ,onConfirmPasswordOtp
+  ,activeTab
+  ,onTabChange
 }: SettingsCardProps) {
   const tabs = useMemo(() => ([
     ...(canManageSystemSettings ? [{ key: 'system', label: copy.systemTab }] : []),
@@ -115,7 +119,6 @@ export function SettingsCard({
   const timingOptions = ['disabled', ...[1, 2, ...Array.from({ length: 12 }, (_, i) => 4 + i * 2)].map(h => `${h}h`)];
   const selectableChannels: NotificationChannel[] = ['email', 'telegram', 'viber', 'sms', 'whatsapp'];
   const meetingDurationOptions = Array.from({ length: 7 }, (_, i) => 30 + i * 10);
-  const [tab, setTab] = useState<string>(initialTab);
 
   const { control: systemControl, handleSubmit: handleSystemSubmit, reset: resetSystem } = useForm<SystemSettings>({ defaultValues: systemSettings });
   const { control: accountControl, handleSubmit: handleAccountSubmit, reset: resetAccount } = useForm<AccountSettings>({ defaultValues: accountSettings });
@@ -149,16 +152,18 @@ export function SettingsCard({
     });
   }, [accountNotificationDefaults, resetNotificationDefaults]);
 
+  const resolvedTab = tabs.some((item) => item.key === activeTab) ? activeTab : initialTab;
+
   return (
     <Box>
-      <AppTabs value={tabs.findIndex((item) => item.key === tab)} onChange={(_, next) => setTab(tabs[next]?.key ?? initialTab)} sx={{ mb: 2 }}>
+      <AppTabs value={tabs.findIndex((item) => item.key === resolvedTab)} onChange={(_, next) => onTabChange(tabs[next]?.key ?? initialTab)} sx={{ mb: 2 }}>
         {tabs.map((item) => <AppTab key={item.key} label={item.label} />)}
       </AppTabs>
 
-      {tab === 'system' && <SystemSettingsTab copy={copy} control={systemControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingSystem} onSubmit={handleSystemSubmit(onSaveSystem)} />}
-      {tab === 'account' && <AccountSettingsTab copy={copy} control={accountControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingAccount} onSubmit={handleAccountSubmit(onSaveAccount)} />}
-      {tab === 'specialistPolicy' && <SpecialistPolicyTab copy={copy} control={specialistPolicyControl} isSaving={isSavingSpecialistBookingPolicy} onSubmit={handleSpecialistPolicySubmit(onSaveSpecialistBookingPolicy)} />}
-      {tab === 'user' && (
+      {resolvedTab === 'system' && <SystemSettingsTab copy={copy} control={systemControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingSystem} onSubmit={handleSystemSubmit(onSaveSystem)} />}
+      {resolvedTab === 'account' && <AccountSettingsTab copy={copy} control={accountControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingAccount} onSubmit={handleAccountSubmit(onSaveAccount)} />}
+      {resolvedTab === 'specialistPolicy' && <SpecialistPolicyTab copy={copy} control={specialistPolicyControl} isSaving={isSavingSpecialistBookingPolicy} onSubmit={handleSpecialistPolicySubmit(onSaveSpecialistBookingPolicy)} />}
+      {resolvedTab === 'user' && (
         <UserSettingsTab
           copy={copy}
           control={userControl}
@@ -166,7 +171,7 @@ export function SettingsCard({
           onSubmit={handleUserSubmit(onSaveUser)}
         />
       )}
-      {tab === 'integrations' && (
+      {resolvedTab === 'integrations' && (
         <IntegrationsSettingsTab
           copy={copy}
           control={userControl}
@@ -182,7 +187,7 @@ export function SettingsCard({
           onDisconnectGoogle={onDisconnectGoogle}
         />
       )}
-      {tab === 'password' && (
+      {resolvedTab === 'password' && (
         <PasswordSettingsTab
           copy={copy}
           currentPassword={currentPassword}
@@ -199,7 +204,7 @@ export function SettingsCard({
           onConfirmOtp={onConfirmPasswordOtp}
         />
       )}
-      {tab === 'notifications' && (
+      {resolvedTab === 'notifications' && (
         <NotificationSettingsTab
           copy={copy}
           control={notificationDefaultsControl}
