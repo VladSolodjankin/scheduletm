@@ -1,11 +1,22 @@
-import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
-import { useEffect, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
-import type { ManagedUserItem } from '../../shared/types/api';
-import { AppButton } from '../../shared/ui/AppButton';
-import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
-import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
-import { useI18n } from '../../shared/i18n/I18nContext';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import type { ManagedUserItem } from "../../shared/types/api";
+import { AppButton } from "../../shared/ui/AppButton";
+import { AppRhfPhoneField } from "../../shared/ui/AppRhfPhoneField";
+import { AppRhfTextField } from "../../shared/ui/AppRhfTextField";
+import { FormContainer } from "../../shared/ui/FormContainer";
+import { useI18n } from "../../shared/i18n/I18nContext";
 
 type UserFormDialogProps = {
   open: boolean;
@@ -27,7 +38,7 @@ type UserFormDialogProps = {
   onClose: () => void;
   onSubmit: (payload: {
     email: string;
-    role: 'admin' | 'specialist' | 'client';
+    role: "admin" | "specialist" | "client";
     firstName: string;
     lastName: string;
     phone?: string;
@@ -37,7 +48,7 @@ type UserFormDialogProps = {
 
 type UserFormState = {
   email: string;
-  role: 'admin' | 'specialist' | 'client';
+  role: "admin" | "specialist" | "client";
   firstName: string;
   lastName: string;
   phone: string;
@@ -45,12 +56,12 @@ type UserFormState = {
 };
 
 const EMPTY_FORM: UserFormState = {
-  email: '',
-  role: 'specialist',
-  firstName: '',
-  lastName: '',
-  phone: '',
-  telegramUsername: '',
+  email: "",
+  role: "specialist",
+  firstName: "",
+  lastName: "",
+  phone: "",
+  telegramUsername: "",
 };
 
 export function UserFormDialog({
@@ -71,12 +82,12 @@ export function UserFormDialog({
   adminConfirmCancelLabel,
   adminConfirmSubmitLabel,
   onClose,
-  onSubmit
+  onSubmit,
 }: UserFormDialogProps) {
   const [isAdminConfirmOpen, setIsAdminConfirmOpen] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<{
     email: string;
-    role: 'admin' | 'specialist' | 'client';
+    role: "admin" | "specialist" | "client";
     firstName: string;
     lastName: string;
     phone?: string;
@@ -84,7 +95,7 @@ export function UserFormDialog({
   } | null>(null);
   const { t } = useI18n();
   const { control, handleSubmit, reset } = useForm<UserFormState>({
-    defaultValues: EMPTY_FORM
+    defaultValues: EMPTY_FORM,
   });
 
   useEffect(() => {
@@ -93,21 +104,27 @@ export function UserFormDialog({
     }
 
     reset({
-      email: editingUser?.email ?? '',
-      role: editingUser?.role === 'admin'
-        ? 'admin'
-        : editingUser?.role === 'client'
-          ? 'client'
-          : 'specialist',
-      firstName: editingUser?.firstName ?? '',
-      lastName: editingUser?.lastName ?? '',
-      phone: editingUser?.phone ?? '',
-      telegramUsername: editingUser?.telegramUsername ?? '',
+      email: editingUser?.email ?? "",
+      role:
+        editingUser?.role === "admin"
+          ? "admin"
+          : editingUser?.role === "client"
+            ? "client"
+            : "specialist",
+      firstName: editingUser?.firstName ?? "",
+      lastName: editingUser?.lastName ?? "",
+      phone: editingUser?.phone ?? "",
+      telegramUsername: editingUser?.telegramUsername ?? "",
     });
   }, [editingUser, open, reset]);
 
-  const [email, firstName, lastName] = useWatch({ control, name: ['email', 'firstName', 'lastName'] });
-  const isValid = Boolean(email?.trim() && firstName?.trim() && lastName?.trim());
+  const [email, firstName, lastName] = useWatch({
+    control,
+    name: ["email", "firstName", "lastName"],
+  });
+  const isValid = Boolean(
+    email?.trim() && firstName?.trim() && lastName?.trim(),
+  );
 
   const submitForm = handleSubmit(async (form) => {
     const payload = {
@@ -119,7 +136,7 @@ export function UserFormDialog({
       telegramUsername: form.telegramUsername.trim(),
     };
 
-    if (!editingUser && payload.role === 'admin') {
+    if (!editingUser && payload.role === "admin") {
       setPendingPayload(payload);
       setIsAdminConfirmOpen(true);
       return;
@@ -132,58 +149,127 @@ export function UserFormDialog({
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <Controller
-          name="email"
-          control={control}
-          render={({ field }) => <AppRhfTextField margin="dense" fullWidth label={emailLabel} field={field} />}
-        />
-        <Controller
-          name="role"
-          control={control}
-          render={({ field }) => (
-            <FormControl margin="dense" fullWidth>
-              <InputLabel id="managed-user-role-label">{roleLabel}</InputLabel>
-              <Select labelId="managed-user-role-label" label={roleLabel} value={field.value} onChange={(event) => field.onChange(event.target.value as 'admin' | 'specialist' | 'client')}>
-                <MenuItem value="admin">{t('appointments.roleAdmin')}</MenuItem>
-                <MenuItem value="specialist">{t('appointments.roleSpecialist')}</MenuItem>
-                <MenuItem value="client">{t('appointments.roleClient')}</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-        />
-        <Controller
-          name="firstName"
-          control={control}
-          render={({ field }) => <AppRhfTextField margin="dense" fullWidth label={firstNameLabel} field={field} />}
-        />
-        <Controller
-          name="lastName"
-          control={control}
-          render={({ field }) => <AppRhfTextField margin="dense" fullWidth label={lastNameLabel} field={field} />}
-        />
-        <Controller
-          name="phone"
-          control={control}
-          render={({ field }) => <AppRhfPhoneField field={field} label={phoneLabel} sx={{ mt: 1 }} />}
-        />
-        <Controller
-          name="telegramUsername"
-          control={control}
-          render={({ field }) => <AppRhfTextField margin="dense" fullWidth label={telegramLabel} field={field} />}
-        />
+        <FormContainer>
+          <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+              <AppRhfTextField
+                margin="none"
+                fullWidth
+                label={emailLabel}
+                field={field}
+              />
+            )}
+          />
+          <Controller
+            name="role"
+            control={control}
+            render={({ field }) => (
+              <FormControl margin="none" fullWidth>
+                <InputLabel id="managed-user-role-label">
+                  {roleLabel}
+                </InputLabel>
+                <Select
+                  labelId="managed-user-role-label"
+                  label={roleLabel}
+                  value={field.value}
+                  onChange={(event) =>
+                    field.onChange(
+                      event.target.value as "admin" | "specialist" | "client",
+                    )
+                  }
+                >
+                  <MenuItem value="admin">
+                    {t("appointments.roleAdmin")}
+                  </MenuItem>
+                  <MenuItem value="specialist">
+                    {t("appointments.roleSpecialist")}
+                  </MenuItem>
+                  <MenuItem value="client">
+                    {t("appointments.roleClient")}
+                  </MenuItem>
+                </Select>
+              </FormControl>
+            )}
+          />
+          <Controller
+            name="firstName"
+            control={control}
+            render={({ field }) => (
+              <AppRhfTextField
+                margin="none"
+                fullWidth
+                label={firstNameLabel}
+                field={field}
+              />
+            )}
+          />
+          <Controller
+            name="lastName"
+            control={control}
+            render={({ field }) => (
+              <AppRhfTextField
+                margin="none"
+                fullWidth
+                label={lastNameLabel}
+                field={field}
+              />
+            )}
+          />
+          <Controller
+            name="phone"
+            control={control}
+            render={({ field }) => (
+              <AppRhfPhoneField
+                field={field}
+                label={phoneLabel}
+                sx={{ mt: 1 }}
+              />
+            )}
+          />
+          <Controller
+            name="telegramUsername"
+            control={control}
+            render={({ field }) => (
+              <AppRhfTextField
+                margin="none"
+                fullWidth
+                label={telegramLabel}
+                field={field}
+              />
+            )}
+          />
+        </FormContainer>
       </DialogContent>
       <DialogActions>
-        <AppButton variant="text" onClick={onClose}>{closeLabel}</AppButton>
-        <AppButton onClick={() => void submitForm()} isLoading={isSaving} disabled={!isValid}>{saveLabel}</AppButton>
+        <AppButton variant="text" onClick={onClose}>
+          {closeLabel}
+        </AppButton>
+        <AppButton
+          onClick={() => void submitForm()}
+          isLoading={isSaving}
+          disabled={!isValid}
+        >
+          {saveLabel}
+        </AppButton>
       </DialogActions>
 
-      <Dialog open={isAdminConfirmOpen} onClose={() => setIsAdminConfirmOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={isAdminConfirmOpen}
+        onClose={() => setIsAdminConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>{adminConfirmTitle}</DialogTitle>
         <DialogContent>
           <DialogContentText>{adminConfirmDescription}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <AppButton variant="text" onClick={() => setIsAdminConfirmOpen(false)}>
+          <AppButton
+            variant="text"
+            onClick={() => setIsAdminConfirmOpen(false)}
+          >
             {adminConfirmCancelLabel}
           </AppButton>
           <AppButton

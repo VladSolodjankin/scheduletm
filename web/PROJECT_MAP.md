@@ -10,7 +10,7 @@
 - `src/pages/` — страницы (`/login`, `/register`, `/appointments`, `/specialists`, `/users`, `/settings`).
 - `src/containers/` — контейнеры с загрузкой данных и orchestration UI.
 - `src/components/` — презентационные компоненты и layout.
-- `src/shared/` — api-client, i18n, theme, ui-kit, типы, utils.
+- `src/shared/` — api-client, i18n, theme, ui-kit (включая единый `FormContainer` для диалоговых форм), типы, utils.
 - `tests/` — smoke/e2e проверки.
 
 ## Ключевые потоки
