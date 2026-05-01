@@ -1,5 +1,5 @@
-import { Box, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
-import { Controller, Control, useWatch } from 'react-hook-form';
+import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
+import { Controller, Control, useController, useWatch } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 
 import type { AccountSettings } from '../../shared/types/api';
@@ -9,6 +9,7 @@ import { AppForm } from '../../shared/ui/AppForm';
 import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
 import { TimezoneSelect } from '../TimezoneSelect';
+import { BusinessLocationMap } from './BusinessLocationMap';
 
 type Props = {
   copy: SettingsCardCopy;
@@ -20,9 +21,10 @@ type Props = {
 
 export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSaving, onSubmit }: Props) {
   const businessAddress = useWatch({ control, name: 'businessAddress' }) ?? '';
-  const businessLat = useWatch({ control, name: 'businessLat' });
-  const businessLng = useWatch({ control, name: 'businessLng' });
-  const mapboxToken = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN as string | undefined;
+  const { field: businessLatField } = useController({ control, name: 'businessLat' });
+  const { field: businessLngField } = useController({ control, name: 'businessLng' });
+  const businessLat = businessLatField.value;
+  const businessLng = businessLngField.value;
   const [defaultCoordinates, setDefaultCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
@@ -44,10 +46,6 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
 
   const mapLat = typeof businessLat === 'number' ? businessLat : defaultCoordinates?.lat;
   const mapLng = typeof businessLng === 'number' ? businessLng : defaultCoordinates?.lng;
-  const hasCoordinates = typeof mapLat === 'number' && typeof mapLng === 'number';
-  const staticMapUrl = hasCoordinates && mapboxToken
-    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+285A98(${mapLng},${mapLat})/${mapLng},${mapLat},14/720x320?access_token=${mapboxToken}`
-    : '';
 
   return (
     <AppForm component="form" onSubmit={onSubmit}>
@@ -102,20 +100,20 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
       />
 
       <Stack spacing={1} sx={{ mt: 1, mb: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          {copy.businessMapPreview}
-        </Typography>
-        {mapboxToken && staticMapUrl ? (
-          <Box component="img" src={staticMapUrl} alt={copy.businessAddress} sx={{ width: '100%', borderRadius: 1, border: '1px solid', borderColor: 'divider' }} />
-        ) : (
-          <Typography variant="caption" color="text.secondary">
-            {copy.mapboxTokenMissingHint}
-          </Typography>
-        )}
+        <BusinessLocationMap
+          initialCoordinates={typeof mapLat === 'number' && typeof mapLng === 'number' ? { lat: mapLat, lng: mapLng } : null}
+          hintLabel={copy.businessMapPreview}
+          saveLabel={copy.saveSettings}
+          onSave={({ lat, lng }) => {
+            businessLatField.onChange(lat);
+            businessLngField.onChange(lng);
+          }}
+          tokenMissingLabel={copy.mapboxTokenMissingHint}
+        />
         {businessAddress.trim() ? (
           <AppButton
             variant="outlined"
-            onClick={() => window.open(`https://www.mapbox.com/search/?query=${encodeURIComponent(businessAddress.trim())}`, '_blank', 'noopener,noreferrer')}
+            onClick={() => window.open(`https://www.openstreetmap.org/search?query=${encodeURIComponent(businessAddress.trim())}`, '_blank', 'noopener,noreferrer')}
           >
             {copy.openMapboxSearch}
           </AppButton>
