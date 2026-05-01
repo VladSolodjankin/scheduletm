@@ -85,7 +85,7 @@ export function AppointmentsCalendar({
       .filter(Boolean)
       .join(' · ');
   const getMeetingProviderLabel = (provider: AppointmentItem['meetingProvider']) => (
-    provider === 'zoom' ? t('appointments.meetingProviderZoom') : t('appointments.meetingProviderManual')
+    provider === 'zoom' ? t('appointments.meetingProviderZoom') : provider === 'offline' ? t('appointments.meetingProviderOffline') : t('appointments.meetingProviderManual')
   );
 
   return (

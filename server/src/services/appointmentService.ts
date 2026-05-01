@@ -54,7 +54,7 @@ type AppointmentDto = {
   durationMin: number;
   status: AppointmentStatus;
   paymentStatus: 'paid' | 'unpaid';
-  meetingProvider: 'manual' | 'zoom';
+  meetingProvider: 'manual' | 'zoom' | 'offline';
   meetingLink: string;
   notes: string;
   client: AppointmentClientDto;
@@ -94,7 +94,7 @@ type CreateAppointmentPayload = {
   appointmentEndAt: string;
   status?: AppointmentStatus;
   meetingLink?: string;
-  meetingProvider?: 'manual' | 'zoom';
+  meetingProvider?: 'manual' | 'zoom' | 'offline';
   saveClientMeetingPreference?: boolean;
   notes?: string;
 } & AppointmentClientPayload;
@@ -105,18 +105,18 @@ type UpdateAppointmentPayload = {
   durationMin?: number;
   status?: AppointmentStatus;
   meetingLink?: string;
-  meetingProvider?: 'manual' | 'zoom';
+  meetingProvider?: 'manual' | 'zoom' | 'offline';
   notes?: string;
 } & AppointmentClientPayload;
 
-function parseMeetingMetaFromNotes(notes: string | null): { notes: string; meetingLink: string; meetingProvider: 'manual' | 'zoom' } {
+function parseMeetingMetaFromNotes(notes: string | null): { notes: string; meetingLink: string; meetingProvider: 'manual' | 'zoom' | 'offline' } {
   if (!notes) {
     return { notes: '', meetingLink: '', meetingProvider: 'manual' };
   }
 
   const lines = notes.split('\n');
   let meetingLink = '';
-  let meetingProvider: 'manual' | 'zoom' = 'manual';
+  let meetingProvider: 'manual' | 'zoom' | 'offline' = 'manual';
   const restLines: string[] = [];
   for (const line of lines) {
     if (line.startsWith('meetingLink: ')) {
@@ -125,7 +125,7 @@ function parseMeetingMetaFromNotes(notes: string | null): { notes: string; meeti
     }
     if (line.startsWith('meetingProvider: ')) {
       const parsed = line.slice('meetingProvider: '.length).trim();
-      meetingProvider = parsed === 'zoom' ? 'zoom' : 'manual';
+      meetingProvider = parsed === 'zoom' ? 'zoom' : parsed === 'offline' ? 'offline' : 'manual';
       continue;
     }
     restLines.push(line);
@@ -133,7 +133,7 @@ function parseMeetingMetaFromNotes(notes: string | null): { notes: string; meeti
   return { meetingLink, meetingProvider, notes: restLines.join('\n').trim() };
 }
 
-function composeNotes(meetingLink: string | undefined, notes: string | undefined, meetingProvider: 'manual' | 'zoom' | undefined): string | null {
+function composeNotes(meetingLink: string | undefined, notes: string | undefined, meetingProvider: 'manual' | 'zoom' | 'offline' | undefined): string | null {
   const normalizedMeetingLink = meetingLink?.trim() ?? '';
   const normalizedNotes = notes?.trim() ?? '';
   const normalizedProvider = meetingProvider ?? 'manual';
@@ -476,7 +476,7 @@ export async function createAppointmentForActor(
   const client = await findClientById(accountId, userId);
   const specialistPolicy = await findSpecialistBookingPolicy(accountId, payload.specialistId);
   const preferred = client?.preferred_meeting_provider;
-  const allowedProviders = (specialistPolicy?.allowed_meeting_providers ?? 'zoom,manual').split(',').map((item) => item.trim()).filter(Boolean);
+  const allowedProviders = (specialistPolicy?.allowed_meeting_providers ?? 'offline,zoom,manual').split(',').map((item) => item.trim()).filter(Boolean);
   let meetingLink = payload.meetingLink?.trim() ?? '';
   const meetingProvider = payload.meetingProvider
     ?? ((preferred && allowedProviders.includes(preferred)) ? preferred : (meetingLink ? 'manual' : 'zoom'));

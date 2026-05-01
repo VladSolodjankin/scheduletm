@@ -6,7 +6,7 @@ export type EditFormState = {
   startTime: string;
   endTime: string;
   status: AppointmentStatus;
-  meetingProvider: 'manual' | 'zoom';
+  meetingProvider: 'manual' | 'zoom' | 'offline';
   meetingLink: string;
   notes: string;
 };

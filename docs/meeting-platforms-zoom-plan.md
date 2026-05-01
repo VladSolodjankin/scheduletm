@@ -165,3 +165,19 @@
   - `business_lng`
 - контракты `GET/PUT /api/settings/account` расширены новыми полями;
 - зафиксирован MVP-подход для offline-карты: Mapbox (карта + geocoding/reverse geocoding) в админке и read-only карта в публичной части.
+
+## Обновление offline provider в appointment flow (2026-05-01)
+
+Закрыта следующая часть MVP для meeting providers:
+
+- `offline` добавлен в типы и контракты appointment API/web;
+- в форме создания/редактирования записи появился явный выбор `Offline`;
+- в календаре и карточках записи отображается `meetingProvider=offline`;
+- дефолтные provider-цепочки в booking policy обновлены на `offline,zoom,manual`;
+- добавлена миграция для расширения `preferred_meeting_provider` и default-приоритетов в БД.
+
+Что осталось по этому плану (следующий шаг):
+- добавить реальное хранение `locationAddress` в appointment (сейчас для `offline` пока без отдельного поля адреса);
+- добавить Mapbox UI (выбор адреса в админке + read-only карта в публичной части);
+- довести fallback-цепочку online->offline/manual при ошибках внешних API;
+- добавить уведомления для offline с адресом/картой и отдельное событие для обновления manual-ссылки после создания записи.

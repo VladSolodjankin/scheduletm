@@ -350,7 +350,7 @@ export function AppointmentsContainer() {
     appointmentAt: string;
     appointmentEndAt: string;
     status: AppointmentItem['status'];
-    meetingProvider: 'manual' | 'zoom';
+    meetingProvider: 'manual' | 'zoom' | 'offline';
     meetingLink: string;
     notes: string;
     clientId?: number;

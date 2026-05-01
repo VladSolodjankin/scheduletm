@@ -58,8 +58,8 @@ const defaultSpecialistBookingPolicy: SpecialistBookingPolicy = {
   refundOnLateCancel: false,
   autoCancelUnpaidEnabled: false,
   unpaidAutoCancelAfterHours: 72,
-  meetingProvidersPriority: 'zoom,manual',
-  allowedMeetingProviders: 'zoom,manual',
+  meetingProvidersPriority: 'offline,zoom,manual',
+  allowedMeetingProviders: 'offline,zoom,manual',
   meetingProviderOverrideEnabled: false,
 };
 

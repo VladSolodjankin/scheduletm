@@ -68,7 +68,7 @@ type Props = {
   onSubmit: (payload: {
     specialistId: number;
     status: AppointmentStatus;
-    meetingProvider: 'manual' | 'zoom';
+    meetingProvider: 'manual' | 'zoom' | 'offline';
     meetingLink: string;
     notes: string;
     appointmentAt: string;
@@ -416,10 +416,11 @@ export function AppointmentFormDialog({
                     labelId="meeting-provider-label"
                     label={t('appointments.fields.meetingProvider')}
                     value={field.value}
-                    onChange={(event) => field.onChange(event.target.value as 'manual' | 'zoom')}
+                    onChange={(event) => field.onChange(event.target.value as 'manual' | 'zoom' | 'offline')}
                   >
                     <MenuItem value="manual">{t('appointments.meetingProviderManual')}</MenuItem>
                     <MenuItem value="zoom">{t('appointments.meetingProviderZoom')}</MenuItem>
+                    <MenuItem value="offline">{t('appointments.meetingProviderOffline')}</MenuItem>
                   </Select>
                 </FormControl>
               )}
