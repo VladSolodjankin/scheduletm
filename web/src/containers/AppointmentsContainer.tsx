@@ -787,6 +787,7 @@ export function AppointmentsContainer() {
           status: payload.status,
           meetingProvider: payload.meetingProvider,
           meetingLink: payload.meetingLink,
+          locationAddress: payload.locationAddress,
           notes: payload.notes,
           clientId: payload.clientId,
           username: payload.username,
