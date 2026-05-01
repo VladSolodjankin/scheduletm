@@ -215,6 +215,12 @@
   - при наличии `businessAddress` показывается кнопка перехода в Mapbox Search;
 - для включения используется `VITE_MAPBOX_PUBLIC_TOKEN` на frontend.
 
+## Обновление Mapbox UX fallback в Account Settings (2026-05-01)
+
+- блок карты в `Settings -> Account settings` теперь всегда отображается (даже без токена);
+- если `VITE_MAPBOX_PUBLIC_TOKEN` не задан или координаты пустые, показывается явная подсказка о необходимости токена вместо «пропавшей» карты;
+- кнопка перехода в `Mapbox Search` по `businessAddress` остается доступной отдельно.
+
 ## Что осталось доделать (актуально на 2026-05-01)
 
 Ниже — короткий actionable backlog именно по Zoom/multi-provider направлению, синхронизированный с `README.md`, `TODO.md` и текущим состоянием этого плана.

@@ -55,11 +55,13 @@ npm run -w @scheduletm/web verify
 ## Переменные окружения
 
 - `VITE_API_URL` — базовый URL API (build-time).
+- `VITE_MAPBOX_PUBLIC_TOKEN` — публичный токен Mapbox для предпросмотра карты в `Settings -> Account settings`.
 
 Пример:
 
 ```bash
 VITE_API_URL=https://api.example.com
+VITE_MAPBOX_PUBLIC_TOKEN=pk.xxxxx
 ```
 
 Для отдельного dev-домена:
@@ -73,7 +75,10 @@ VITE_API_URL=https://apidev.meetli.cc
 
 ```bash
 VITE_API_URL=http://localhost:3003
+VITE_MAPBOX_PUBLIC_TOKEN=pk.xxxxx
 ```
+
+Если `VITE_MAPBOX_PUBLIC_TOKEN` не задан, в `Account settings` вместо карты показывается явная подсказка, а кнопка `Open in Mapbox search` продолжает работать по `Business address`.
 
 Если оставить удалённый `VITE_API_URL` (например `https://apidev.meetli.cc`) при локальном запуске, на странице `/login` может появляться `Network connection issue`, и login-шаг UI e2e не пройдет.
 

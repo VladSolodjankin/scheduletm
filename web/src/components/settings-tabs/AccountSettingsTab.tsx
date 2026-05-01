@@ -79,22 +79,26 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
         )}
       />
 
-      {mapboxToken ? (
-        <Stack spacing={1} sx={{ mt: 1, mb: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            {copy.businessMapPreview}
+      <Stack spacing={1} sx={{ mt: 1, mb: 2 }}>
+        <Typography variant="body2" color="text.secondary">
+          {copy.businessMapPreview}
+        </Typography>
+        {mapboxToken && staticMapUrl ? (
+          <Box component="img" src={staticMapUrl} alt={copy.businessAddress} sx={{ width: '100%', borderRadius: 1, border: '1px solid', borderColor: 'divider' }} />
+        ) : (
+          <Typography variant="caption" color="text.secondary">
+            {copy.mapboxTokenMissingHint}
           </Typography>
-          {staticMapUrl ? <Box component="img" src={staticMapUrl} alt={copy.businessAddress} sx={{ width: '100%', borderRadius: 1, border: '1px solid', borderColor: 'divider' }} /> : null}
-          {businessAddress.trim() ? (
-            <AppButton
-              variant="outlined"
-              onClick={() => window.open(`https://www.mapbox.com/search/?query=${encodeURIComponent(businessAddress.trim())}`, '_blank', 'noopener,noreferrer')}
-            >
-              {copy.openMapboxSearch}
-            </AppButton>
-          ) : null}
-        </Stack>
-      ) : null}
+        )}
+        {businessAddress.trim() ? (
+          <AppButton
+            variant="outlined"
+            onClick={() => window.open(`https://www.mapbox.com/search/?query=${encodeURIComponent(businessAddress.trim())}`, '_blank', 'noopener,noreferrer')}
+          >
+            {copy.openMapboxSearch}
+          </AppButton>
+        ) : null}
+      </Stack>
 
       <Controller
         name="defaultMeetingDuration"
