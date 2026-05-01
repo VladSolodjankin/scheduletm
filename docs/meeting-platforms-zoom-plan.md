@@ -214,3 +214,42 @@
   - при наличии `businessLat/businessLng` показывается статическая карта с маркером;
   - при наличии `businessAddress` показывается кнопка перехода в Mapbox Search;
 - для включения используется `VITE_MAPBOX_PUBLIC_TOKEN` на frontend.
+
+## Что осталось доделать (актуально на 2026-05-01)
+
+Ниже — короткий actionable backlog именно по Zoom/multi-provider направлению, синхронизированный с `README.md`, `TODO.md` и текущим состоянием этого плана.
+
+### P0 (закрыть до production)
+
+1. Привязать end-to-end уведомления к провайдеру встречи:
+   - для `offline` отправлять `locationAddress` (+ ссылка на карту, если доступна);
+   - для `manual` отправлять отдельное уведомление, если ссылка добавлена/обновлена после создания записи;
+   - для `zoom` гарантировать отправку валидного `joinUrl` после fallback-логики.
+2. Добавить e2e/интеграционные тесты критичного appointment-flow без моков meeting provider логики:
+   - создание записи с `zoom` (успех);
+   - создание записи с ошибкой Zoom и fallback на `offline/manual`;
+   - сценарий с `preferred_meeting_provider` клиента и override политикой specialist.
+3. Довести observability по интеграциям:
+   - метрики/алерты по ошибкам Zoom API и частоте fallback-срабатываний;
+   - явные reason-коды в логах/событиях appointment при переключении провайдера.
+
+### P1 (сразу после P0)
+
+1. Добавить connected-state и UX для следующих провайдеров (`telemost`, затем Google/Outlook/iCal по roadmap).
+2. Вынести provider-specific тексты и уведомления в i18n-ключи с единым шаблоном для web+bot.
+3. Расширить UI booking settings:
+   - более явное управление приоритетом провайдеров (drag/drop или up/down);
+   - валидация конфликтных конфигураций (например, `offline` разрешен, но нет адреса аккаунта).
+
+### P2 (после стабилизации)
+
+1. Отвязать `locationAddress` от `comment`-payload и вынести в отдельное нормализованное поле/колонку с миграцией данных.
+2. Добавить idempotency-ключ для повторных попыток создания external meetings (Zoom и будущие провайдеры).
+3. Добавить runbook инцидентов meeting providers (rate limits, revoke токена, деградация API, массовый fallback).
+
+## Быстрый срез статуса (2026-05-01)
+
+- ✅ Базовый Zoom OAuth + создание meetings и fallback-цепочка уже есть.
+- ✅ `offline` провайдер и MVP-хранение `locationAddress` в appointment-flow уже есть.
+- ⚠️ Не завершены provider-aware уведомления и отдельное событие для обновления `manual` ссылки.
+- ⚠️ Нет полного набора автотестов и продуктовых метрик/алертов по meeting providers.
