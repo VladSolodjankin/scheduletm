@@ -618,7 +618,11 @@ export function SettingsContainer() {
                 viber: t('settings.channels.viber'),
                 sms: t('settings.channels.sms'),
                 whatsapp: t('settings.channels.whatsapp')
-              }
+              },
+              connectZoomHelpTitle: t('settings.connectZoomHelpTitle'),
+              connectZoomHelpDescription: t('settings.connectZoomHelpDescription'),
+              connectGoogleHelpDescription: t('settings.connectGoogleHelpDescription'),
+              connectGoogleHelpTitle: t('settings.connectGoogleHelpTitle'),
             }}
             isGoogleConnecting={isGoogleConnecting}
             isGoogleDisconnecting={isGoogleDisconnecting}
