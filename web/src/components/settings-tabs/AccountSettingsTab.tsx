@@ -21,6 +21,7 @@ type Props = {
 
 export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSaving, onSubmit }: Props) {
   const businessAddress = useWatch({ control, name: 'businessAddress' }) ?? '';
+  const { field: businessAddressField } = useController({ control, name: 'businessAddress' });
   const { field: businessLatField } = useController({ control, name: 'businessLat' });
   const { field: businessLngField } = useController({ control, name: 'businessLng' });
   const businessLat = businessLatField.value;
@@ -73,40 +74,17 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
         <AppRhfTextField field={field} label={copy.businessAddress} />
       )} />
 
-      <Controller
-        name="businessLat"
-        control={control}
-        render={({ field }: any) => (
-          <AppRhfTextField
-            field={field}
-            label={copy.businessLat}
-            type="number"
-            parseValue={(value) => (value.trim() === '' ? null : Number(value))}
-          />
-        )}
-      />
-
-      <Controller
-        name="businessLng"
-        control={control}
-        render={({ field }: any) => (
-          <AppRhfTextField
-            field={field}
-            label={copy.businessLng}
-            type="number"
-            parseValue={(value) => (value.trim() === '' ? null : Number(value))}
-          />
-        )}
-      />
-
       <Stack spacing={1} sx={{ mt: 1, mb: 2 }}>
         <BusinessLocationMap
           initialCoordinates={typeof mapLat === 'number' && typeof mapLng === 'number' ? { lat: mapLat, lng: mapLng } : null}
           hintLabel={copy.businessMapPreview}
           saveLabel={copy.saveSettings}
-          onSave={({ lat, lng }) => {
+          onSave={({ lat, lng, fullAddress }) => {
             businessLatField.onChange(lat);
             businessLngField.onChange(lng);
+            if (fullAddress) {
+              businessAddressField.onChange(fullAddress);
+            }
           }}
           tokenMissingLabel={copy.mapboxTokenMissingHint}
         />

@@ -6,7 +6,7 @@ import { MapStore, type MapCoordinates } from '../map/mapStore';
 
 type Props = {
   initialCoordinates: MapCoordinates | null;
-  onSave: (coordinates: MapCoordinates) => void;
+  onSave: (payload: MapCoordinates & { fullAddress: string | null }) => void;
   saveLabel: string;
   hintLabel: string;
   tokenMissingLabel: string;
