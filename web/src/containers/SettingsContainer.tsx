@@ -33,6 +33,9 @@ const defaultAccountSettings: AccountSettings = {
   dailyDigestEnabled: true,
   defaultMeetingDuration: 30,
   weekStartsOnMonday: true,
+  businessAddress: '',
+  businessLat: null,
+  businessLng: null,
 };
 
 const defaultUserSettings: UserSettings = {
@@ -573,6 +576,11 @@ export function SettingsContainer() {
               defaultMeetingDuration: t('settings.defaultMeetingDuration'),
               dailyDigestEnabled: t('settings.dailyDigestEnabled'),
               weekStartsOnMonday: t('settings.weekStartsOnMonday'),
+              businessAddress: t('settings.businessAddress'),
+              businessLat: t('settings.businessLat'),
+              businessLng: t('settings.businessLng'),
+              businessMapPreview: t('settings.businessMapPreview'),
+              openMapboxSearch: t('settings.openMapboxSearch'),
               refreshTokenTtlDays: t('settings.refreshTokenTtlDays'),
               accessTokenTtlSeconds: t('settings.accessTokenTtlSeconds'),
               sessionCookieName: t('settings.sessionCookieName'),

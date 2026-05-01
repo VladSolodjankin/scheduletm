@@ -189,3 +189,28 @@
 - адрес сохраняется и читается через существующий `comment`-payload (`locationAddress: ...`) вместе с `meetingProvider`/`meetingLink`;
 - в форме записи (`web`) для `meetingProvider=offline` добавлено поле адреса встречи;
 - добавлены i18n-ключи `appointments.fields.locationAddress` (ru/en).
+
+## Обновление fallback meeting providers (2026-05-01)
+
+- в `POST /api/appointments` добавлена последовательная fallback-цепочка выбора провайдера:
+  - сначала явный выбор из payload;
+  - затем `preferred_meeting_provider` клиента (если разрешен политикой specialist);
+  - затем `meeting_providers_priority` specialist с фильтрацией по `allowed_meeting_providers`;
+- при `meetingProvider=zoom` без ссылки система пробует создать Zoom-встречу, и при ошибке автоматически переходит к следующему провайдеру из цепочки (без падения создания appointment);
+- если клиент ничего не выбирал, а ссылка уже введена вручную, сохраняется `manual`;
+- `preferred_meeting_provider` теперь сохраняется также для `offline` (а не только для `manual/zoom`), чтобы первый офлайн-выбор клиента мог стать дефолтом.
+
+## Обновление Account Settings UI для offline-адреса (2026-05-01)
+
+- в `Settings -> Account settings` добавлены поля:
+  - `businessAddress`
+  - `businessLat`
+  - `businessLng`
+- поля привязаны к существующим `GET/PUT /api/settings/account` контрактам и сохраняются через текущий save-flow без дополнительного API.
+
+## Обновление Mapbox preview в Account Settings (2026-05-01)
+
+- в `Settings -> Account settings` добавлен базовый Mapbox preview для offline-локации:
+  - при наличии `businessLat/businessLng` показывается статическая карта с маркером;
+  - при наличии `businessAddress` показывается кнопка перехода в Mapbox Search;
+- для включения используется `VITE_MAPBOX_PUBLIC_TOKEN` на frontend.

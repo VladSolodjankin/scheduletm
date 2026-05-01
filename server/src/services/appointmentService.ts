@@ -489,21 +489,51 @@ export async function createAppointmentForActor(
   const client = await findClientById(accountId, userId);
   const specialistPolicy = await findSpecialistBookingPolicy(accountId, payload.specialistId);
   const preferred = client?.preferred_meeting_provider;
-  const allowedProviders = (specialistPolicy?.allowed_meeting_providers ?? 'offline,zoom,manual').split(',').map((item) => item.trim()).filter(Boolean);
+  const allowedProviders = (specialistPolicy?.allowed_meeting_providers ?? 'offline,zoom,manual')
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item): item is 'manual' | 'zoom' | 'offline' => item === 'manual' || item === 'zoom' || item === 'offline');
+  const priorityProviders = (specialistPolicy?.meeting_providers_priority ?? 'offline,zoom,manual')
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item): item is 'manual' | 'zoom' | 'offline' => item === 'manual' || item === 'zoom' || item === 'offline')
+    .filter((item, index, list) => list.indexOf(item) === index);
+  const candidateProviders = [
+    payload.meetingProvider,
+    preferred && allowedProviders.includes(preferred) ? preferred : undefined,
+    ...priorityProviders.filter((provider) => allowedProviders.includes(provider)),
+  ].filter((provider, index, list): provider is 'manual' | 'zoom' | 'offline' => Boolean(provider) && list.indexOf(provider) === index);
+
   let meetingLink = payload.meetingLink?.trim() ?? '';
-  const meetingProvider = payload.meetingProvider
-    ?? ((preferred && allowedProviders.includes(preferred)) ? preferred : (meetingLink ? 'manual' : 'zoom'));
-  if (meetingProvider === 'zoom' && !meetingLink) {
-    const zoom = await createZoomMeeting({
-      userId: actor.id,
-      topic: 'Appointment',
-      startTime: payload.appointmentAt,
-      duration: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
-      timezone: specialist.timezone || 'UTC',
-    });
-    if (zoom.ok) {
-      meetingLink = zoom.meeting.joinUrl;
+  let meetingProvider: 'manual' | 'zoom' | 'offline' = candidateProviders[0] ?? (meetingLink ? 'manual' : 'offline');
+  if (!payload.meetingProvider && !preferred && meetingLink && meetingProvider !== 'manual' && allowedProviders.includes('manual')) {
+    meetingProvider = 'manual';
+  }
+
+  if (!candidateProviders.length) {
+    candidateProviders.push(meetingProvider);
+  }
+
+  for (const provider of candidateProviders) {
+    if (provider === 'zoom' && !meetingLink) {
+      const zoom = await createZoomMeeting({
+        userId: actor.id,
+        topic: 'Appointment',
+        startTime: payload.appointmentAt,
+        duration: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
+        timezone: specialist.timezone || 'UTC',
+      });
+      if (zoom.ok) {
+        meetingLink = zoom.meeting.joinUrl;
+        meetingProvider = 'zoom';
+        break;
+      }
+
+      continue;
     }
+
+    meetingProvider = provider;
+    break;
   }
 
   const created = await createAppointment({
@@ -517,7 +547,7 @@ export async function createAppointmentForActor(
     durationMin: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
   });
 
-  if ((payload.saveClientMeetingPreference || !preferred) && (meetingProvider === 'manual' || meetingProvider === 'zoom')) {
+  if (payload.saveClientMeetingPreference || !preferred) {
     await updateClientPreferredMeetingProvider(accountId, userId, meetingProvider).catch(() => undefined);
   }
 
