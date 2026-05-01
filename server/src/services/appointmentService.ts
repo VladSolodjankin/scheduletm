@@ -56,6 +56,7 @@ type AppointmentDto = {
   paymentStatus: 'paid' | 'unpaid';
   meetingProvider: 'manual' | 'zoom' | 'offline';
   meetingLink: string;
+  locationAddress: string;
   notes: string;
   client: AppointmentClientDto;
   events: AppointmentEventDto[];
@@ -95,6 +96,7 @@ type CreateAppointmentPayload = {
   status?: AppointmentStatus;
   meetingLink?: string;
   meetingProvider?: 'manual' | 'zoom' | 'offline';
+  locationAddress?: string;
   saveClientMeetingPreference?: boolean;
   notes?: string;
 } & AppointmentClientPayload;
@@ -106,16 +108,18 @@ type UpdateAppointmentPayload = {
   status?: AppointmentStatus;
   meetingLink?: string;
   meetingProvider?: 'manual' | 'zoom' | 'offline';
+  locationAddress?: string;
   notes?: string;
 } & AppointmentClientPayload;
 
-function parseMeetingMetaFromNotes(notes: string | null): { notes: string; meetingLink: string; meetingProvider: 'manual' | 'zoom' | 'offline' } {
+function parseMeetingMetaFromNotes(notes: string | null): { notes: string; meetingLink: string; locationAddress: string; meetingProvider: 'manual' | 'zoom' | 'offline' } {
   if (!notes) {
-    return { notes: '', meetingLink: '', meetingProvider: 'manual' };
+    return { notes: '', meetingLink: '', locationAddress: '', meetingProvider: 'manual' };
   }
 
   const lines = notes.split('\n');
   let meetingLink = '';
+  let locationAddress = '';
   let meetingProvider: 'manual' | 'zoom' | 'offline' = 'manual';
   const restLines: string[] = [];
   for (const line of lines) {
@@ -128,13 +132,18 @@ function parseMeetingMetaFromNotes(notes: string | null): { notes: string; meeti
       meetingProvider = parsed === 'zoom' ? 'zoom' : parsed === 'offline' ? 'offline' : 'manual';
       continue;
     }
+    if (line.startsWith('locationAddress: ')) {
+      locationAddress = line.slice('locationAddress: '.length).trim();
+      continue;
+    }
     restLines.push(line);
   }
-  return { meetingLink, meetingProvider, notes: restLines.join('\n').trim() };
+  return { meetingLink, locationAddress, meetingProvider, notes: restLines.join('\n').trim() };
 }
 
-function composeNotes(meetingLink: string | undefined, notes: string | undefined, meetingProvider: 'manual' | 'zoom' | 'offline' | undefined): string | null {
+function composeNotes(meetingLink: string | undefined, locationAddress: string | undefined, notes: string | undefined, meetingProvider: 'manual' | 'zoom' | 'offline' | undefined): string | null {
   const normalizedMeetingLink = meetingLink?.trim() ?? '';
+  const normalizedLocationAddress = locationAddress?.trim() ?? '';
   const normalizedNotes = notes?.trim() ?? '';
   const normalizedProvider = meetingProvider ?? 'manual';
 
@@ -144,6 +153,9 @@ function composeNotes(meetingLink: string | undefined, notes: string | undefined
   const lines = [`meetingProvider: ${normalizedProvider}`];
   if (normalizedMeetingLink) {
     lines.push(`meetingLink: ${normalizedMeetingLink}`);
+  }
+  if (normalizedLocationAddress) {
+    lines.push(`locationAddress: ${normalizedLocationAddress}`);
   }
   if (normalizedNotes) {
     lines.push(normalizedNotes);
@@ -175,6 +187,7 @@ function mapAppointment(row: AppointmentRecord): AppointmentDto {
     meetingProvider: parsed.meetingProvider,
     notes: parsed.notes,
     meetingLink: parsed.meetingLink,
+    locationAddress: parsed.locationAddress,
     client: {
       id: row.user_id,
       username: row.client_username ?? '',
@@ -498,7 +511,7 @@ export async function createAppointmentForActor(
     specialistId: payload.specialistId,
     scheduledAt: new Date(payload.appointmentAt),
     status: payload.status ?? 'new',
-    notes: composeNotes(meetingLink, payload.notes, meetingProvider),
+    notes: composeNotes(meetingLink, payload.locationAddress, payload.notes, meetingProvider),
     userId,
     serviceId,
     durationMin: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
@@ -593,8 +606,8 @@ export async function updateAppointmentForActor(
     durationMin,
     status: payload.status,
     userId,
-    notes: Object.prototype.hasOwnProperty.call(payload, 'notes') || Object.prototype.hasOwnProperty.call(payload, 'meetingLink') || Object.prototype.hasOwnProperty.call(payload, 'meetingProvider')
-      ? composeNotes(payload.meetingLink, payload.notes, payload.meetingProvider)
+    notes: Object.prototype.hasOwnProperty.call(payload, 'notes') || Object.prototype.hasOwnProperty.call(payload, 'meetingLink') || Object.prototype.hasOwnProperty.call(payload, 'meetingProvider') || Object.prototype.hasOwnProperty.call(payload, 'locationAddress')
+      ? composeNotes(payload.meetingLink, payload.locationAddress, payload.notes, payload.meetingProvider)
       : undefined,
   });
 

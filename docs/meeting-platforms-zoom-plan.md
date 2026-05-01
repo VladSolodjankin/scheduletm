@@ -181,3 +181,11 @@
 - добавить Mapbox UI (выбор адреса в админке + read-only карта в публичной части);
 - довести fallback-цепочку online->offline/manual при ошибках внешних API;
 - добавить уведомления для offline с адресом/картой и отдельное событие для обновления manual-ссылки после создания записи.
+
+
+## Обновление locationAddress в appointment (2026-05-01)
+
+- в `POST/PATCH /api/appointments` добавлено поле `locationAddress` (MVP-хранение для `offline`);
+- адрес сохраняется и читается через существующий `comment`-payload (`locationAddress: ...`) вместе с `meetingProvider`/`meetingLink`;
+- в форме записи (`web`) для `meetingProvider=offline` добавлено поле адреса встречи;
+- добавлены i18n-ключи `appointments.fields.locationAddress` (ru/en).

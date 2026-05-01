@@ -141,6 +141,7 @@ export type AppointmentItem = {
   paymentStatus: 'paid' | 'unpaid';
   meetingProvider: 'manual' | 'zoom' | 'offline';
   meetingLink: string;
+  locationAddress: string;
   notes: string;
   client: ClientItem;
   events: Array<{

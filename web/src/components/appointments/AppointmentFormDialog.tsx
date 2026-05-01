@@ -70,6 +70,7 @@ type Props = {
     status: AppointmentStatus;
     meetingProvider: 'manual' | 'zoom' | 'offline';
     meetingLink: string;
+    locationAddress: string;
     notes: string;
     appointmentAt: string;
     appointmentEndAt: string;
@@ -91,6 +92,7 @@ const EMPTY_FORM: AppointmentFormState = {
   status: 'new',
   meetingProvider: 'manual',
   meetingLink: '',
+  locationAddress: '',
   notes: '',
   username: '',
   firstName: '',
@@ -150,6 +152,7 @@ export function AppointmentFormDialog({
         status: editingItem.status,
         meetingProvider: editingItem.meetingProvider ?? 'manual',
         meetingLink: editingItem.meetingLink,
+        locationAddress: editingItem.locationAddress ?? '',
         notes: editingItem.notes,
         username: editingItem.client?.username ?? '',
         firstName: editingItem.client?.firstName ?? '',
@@ -174,6 +177,7 @@ export function AppointmentFormDialog({
       status: 'new',
       meetingProvider: 'manual',
       meetingLink: '',
+      locationAddress: '',
       notes: '',
       username: '',
       firstName: '',
@@ -245,6 +249,7 @@ export function AppointmentFormDialog({
       status: form.status,
       meetingProvider: form.meetingProvider,
       meetingLink: form.meetingLink,
+      locationAddress: form.locationAddress,
       notes: form.notes,
       appointmentAt: startIso,
       appointmentEndAt: endIso,
@@ -453,6 +458,19 @@ export function AppointmentFormDialog({
                 />
               )}
             />
+            {meetingProviderValue === 'offline' && (
+              <Controller
+                name="locationAddress"
+                control={control}
+                render={({ field }: any) => (
+                  <AppRhfTextField
+                    field={field}
+                    label={t('appointments.fields.locationAddress')}
+                    sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}
+                  />
+                )}
+              />
+            )}
             <Controller name="firstName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.clientFirstName')} />} />
             <Controller name="lastName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.clientLastName')} />} />
             <Controller
