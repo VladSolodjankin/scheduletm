@@ -1,5 +1,5 @@
-import { IconButton, Stack, Typography } from '@mui/material';
-import { useState } from 'react';
+import { IconButton, Popover, Stack, Typography } from '@mui/material';
+import { MouseEvent, useState } from 'react';
 import { Control, Controller } from 'react-hook-form';
 
 import type { UserSettings } from '../../shared/types/api';
@@ -73,7 +73,26 @@ export function IntegrationsSettingsTab({
   onDisconnectGoogle,
 }: Props) {
   const [isEditingTelegramToken, setIsEditingTelegramToken] = useState(false);
+  const [helpAnchorEl, setHelpAnchorEl] = useState<HTMLElement | null>(null);
+  const [openHelpKey, setOpenHelpKey] = useState<'zoom' | 'google' | null>(null);
   const shouldShowTelegramTokenField = !userSettings.telegramBotConnected || isEditingTelegramToken;
+
+  const handleOpenHelp = (event: MouseEvent<HTMLElement>, key: 'zoom' | 'google') => {
+    setHelpAnchorEl(event.currentTarget);
+    setOpenHelpKey(key);
+  };
+
+  const handleCloseHelp = () => {
+    setHelpAnchorEl(null);
+    setOpenHelpKey(null);
+  };
+
+  const helpCopy =
+    openHelpKey === 'zoom'
+      ? { title: copy.connectZoomHelpTitle, description: copy.connectZoomHelpDescription }
+      : openHelpKey === 'google'
+        ? { title: copy.connectGoogleHelpTitle, description: copy.connectGoogleHelpDescription }
+        : null;
 
   return (
     <AppForm component="form" onSubmit={onSubmit}>
@@ -109,48 +128,73 @@ export function IntegrationsSettingsTab({
         )}
       </Stack>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-        <AppButton
-          variant="outlined"
-          onClick={onConnectZoom}
-          isLoading={isZoomConnecting}
-          disabled={userSettings.zoomConnected || isGoogleConnecting || isGoogleDisconnecting}
-          startIcon={!isZoomConnecting ? <ZoomIcon /> : undefined}
-          sx={{
-            textTransform: 'none',
-            borderColor: '#2D8CFF',
-            color: '#2D8CFF',
-            backgroundColor: '#FFFFFF',
-            '&:hover': {
-              borderColor: '#2274D9',
-              backgroundColor: '#F4F9FF',
-            },
-          }}
-        >
-          {isZoomConnecting
-            ? copy.connectingZoom
-            : (userSettings.zoomConnected ? copy.zoomConnected : copy.connectZoom)}
-        </AppButton>
+      <Stack spacing={1.5}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <AppButton
+            variant="outlined"
+            onClick={onConnectZoom}
+            isLoading={isZoomConnecting}
+            disabled={userSettings.zoomConnected || isGoogleConnecting || isGoogleDisconnecting}
+            startIcon={!isZoomConnecting ? <ZoomIcon /> : undefined}
+            sx={{
+              textTransform: 'none',
+              borderColor: '#2D8CFF',
+              color: '#2D8CFF',
+              backgroundColor: '#FFFFFF',
+              '&:hover': {
+                borderColor: '#2274D9',
+                backgroundColor: '#F4F9FF',
+              },
+            }}
+          >
+            {isZoomConnecting
+              ? copy.connectingZoom
+              : (userSettings.zoomConnected ? copy.zoomConnected : copy.connectZoom)}
+          </AppButton>
+          <IconButton size="small" aria-label={copy.connectZoomHelpTitle} onClick={(event) => handleOpenHelp(event, 'zoom')}>
+            <AppIcons.info fontSize="small" />
+          </IconButton>
+        </Stack>
 
-        <AppButton
-          variant="outlined"
-          onClick={onConnectGoogle}
-          disabled={userSettings.googleConnected || isGoogleDisconnecting}
-          isLoading={isGoogleConnecting}
-          startIcon={!isGoogleConnecting ? <GoogleGIcon /> : undefined}
-          sx={{
-            textTransform: 'none',
-            borderColor: '#DADCE0',
-            color: '#3C4043',
-            backgroundColor: '#FFFFFF',
-            '&:hover': {
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <AppButton
+            variant="outlined"
+            onClick={onConnectGoogle}
+            disabled={userSettings.googleConnected || isGoogleDisconnecting}
+            isLoading={isGoogleConnecting}
+            startIcon={!isGoogleConnecting ? <GoogleGIcon /> : undefined}
+            sx={{
+              textTransform: 'none',
               borderColor: '#DADCE0',
-              backgroundColor: '#F8F9FA',
-            },
-          }}
+              color: '#3C4043',
+              backgroundColor: '#FFFFFF',
+              '&:hover': {
+                borderColor: '#DADCE0',
+                backgroundColor: '#F8F9FA',
+              },
+            }}
+          >
+            {isGoogleConnecting ? copy.connectingGoogle : copy.connectGoogle}
+          </AppButton>
+          <IconButton size="small" aria-label={copy.connectGoogleHelpTitle} onClick={(event) => handleOpenHelp(event, 'google')}>
+            <AppIcons.info fontSize="small" />
+          </IconButton>
+        </Stack>
+
+        <Popover
+          open={Boolean(helpAnchorEl) && Boolean(helpCopy)}
+          anchorEl={helpAnchorEl}
+          onClose={handleCloseHelp}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         >
-          {isGoogleConnecting ? copy.connectingGoogle : copy.connectGoogle}
-        </AppButton>
+          <Stack spacing={0.5} sx={{ p: 1.5, maxWidth: 320 }}>
+            <Typography variant="subtitle2">{helpCopy?.title}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {helpCopy?.description}
+            </Typography>
+          </Stack>
+        </Popover>
 
         {userSettings.googleConnected && (
           <AppButton

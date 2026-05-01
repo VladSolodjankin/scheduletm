@@ -33,6 +33,10 @@ export type SettingsCardCopy = {
   disconnectingGoogle: string;
   connectZoom: string;
   connectingZoom: string;
+  connectZoomHelpTitle: string;
+  connectZoomHelpDescription: string;
+  connectGoogleHelpTitle: string;
+  connectGoogleHelpDescription: string;
   zoomConnected: string;
   telegramBotToken: string;
   telegramBotConnected: string;
