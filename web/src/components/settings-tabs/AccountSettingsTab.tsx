@@ -1,5 +1,5 @@
-import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, Typography } from '@mui/material';
-import { Controller, Control } from 'react-hook-form';
+import { Box, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
+import { Controller, Control, useWatch } from 'react-hook-form';
 
 import type { AccountSettings } from '../../shared/types/api';
 import type { SettingsCardCopy } from '../SettingsCard.types';
@@ -18,6 +18,15 @@ type Props = {
 };
 
 export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSaving, onSubmit }: Props) {
+  const businessAddress = useWatch({ control, name: 'businessAddress' }) ?? '';
+  const businessLat = useWatch({ control, name: 'businessLat' });
+  const businessLng = useWatch({ control, name: 'businessLng' });
+  const mapboxToken = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN as string | undefined;
+  const hasCoordinates = typeof businessLat === 'number' && typeof businessLng === 'number';
+  const staticMapUrl = hasCoordinates && mapboxToken
+    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+285A98(${businessLng},${businessLat})/${businessLng},${businessLat},14/720x320?access_token=${mapboxToken}`
+    : '';
+
   return (
     <AppForm component="form" onSubmit={onSubmit}>
       <Typography variant="h5">{copy.accountTitle}</Typography>
@@ -52,6 +61,7 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
             field={field}
             label={copy.businessLat}
             type="number"
+            parseValue={(value) => (value.trim() === '' ? null : Number(value))}
           />
         )}
       />
@@ -64,9 +74,27 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
             field={field}
             label={copy.businessLng}
             type="number"
+            parseValue={(value) => (value.trim() === '' ? null : Number(value))}
           />
         )}
       />
+
+      {mapboxToken ? (
+        <Stack spacing={1} sx={{ mt: 1, mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {copy.businessMapPreview}
+          </Typography>
+          {staticMapUrl ? <Box component="img" src={staticMapUrl} alt={copy.businessAddress} sx={{ width: '100%', borderRadius: 1, border: '1px solid', borderColor: 'divider' }} /> : null}
+          {businessAddress.trim() ? (
+            <AppButton
+              variant="outlined"
+              onClick={() => window.open(`https://www.mapbox.com/search/?query=${encodeURIComponent(businessAddress.trim())}`, '_blank', 'noopener,noreferrer')}
+            >
+              {copy.openMapboxSearch}
+            </AppButton>
+          ) : null}
+        </Stack>
+      ) : null}
 
       <Controller
         name="defaultMeetingDuration"

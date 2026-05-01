@@ -207,3 +207,10 @@
   - `businessLat`
   - `businessLng`
 - поля привязаны к существующим `GET/PUT /api/settings/account` контрактам и сохраняются через текущий save-flow без дополнительного API.
+
+## Обновление Mapbox preview в Account Settings (2026-05-01)
+
+- в `Settings -> Account settings` добавлен базовый Mapbox preview для offline-локации:
+  - при наличии `businessLat/businessLng` показывается статическая карта с маркером;
+  - при наличии `businessAddress` показывается кнопка перехода в Mapbox Search;
+- для включения используется `VITE_MAPBOX_PUBLIC_TOKEN` на frontend.

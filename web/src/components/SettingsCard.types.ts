@@ -25,6 +25,8 @@ export type SettingsCardCopy = {
   businessAddress: string;
   businessLat: string;
   businessLng: string;
+  businessMapPreview: string;
+  openMapboxSearch: string;
   refreshTokenTtlDays: string;
   accessTokenTtlSeconds: string;
   sessionCookieName: string;

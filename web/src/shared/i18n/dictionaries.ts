@@ -116,6 +116,8 @@ export const dictionaries = {
       businessAddress: 'Business address',
       businessLat: 'Business latitude',
       businessLng: 'Business longitude',
+      businessMapPreview: 'Map preview',
+      openMapboxSearch: 'Open in Mapbox search',
       refreshTokenTtlDays: 'Refresh token TTL (days)',
       accessTokenTtlSeconds: 'Access token TTL (seconds)',
       sessionCookieName: 'Session cookie name',
@@ -518,6 +520,8 @@ export const dictionaries = {
       businessAddress: 'Адрес офлайн-встреч',
       businessLat: 'Широта',
       businessLng: 'Долгота',
+      businessMapPreview: 'Предпросмотр на карте',
+      openMapboxSearch: 'Открыть поиск в Mapbox',
       refreshTokenTtlDays: 'TTL refresh token (дни)',
       accessTokenTtlSeconds: 'TTL access token (сек)',
       sessionCookieName: 'Имя session cookie',
@@ -914,6 +918,8 @@ export type TranslationKey =
   | 'settings.businessAddress'
   | 'settings.businessLat'
   | 'settings.businessLng'
+  | 'settings.businessMapPreview'
+  | 'settings.openMapboxSearch'
   | 'settings.refreshTokenTtlDays'
   | 'settings.accessTokenTtlSeconds'
   | 'settings.sessionCookieName'

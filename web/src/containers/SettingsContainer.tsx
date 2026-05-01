@@ -579,6 +579,8 @@ export function SettingsContainer() {
               businessAddress: t('settings.businessAddress'),
               businessLat: t('settings.businessLat'),
               businessLng: t('settings.businessLng'),
+              businessMapPreview: t('settings.businessMapPreview'),
+              openMapboxSearch: t('settings.openMapboxSearch'),
               refreshTokenTtlDays: t('settings.refreshTokenTtlDays'),
               accessTokenTtlSeconds: t('settings.accessTokenTtlSeconds'),
               sessionCookieName: t('settings.sessionCookieName'),
