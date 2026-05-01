@@ -387,6 +387,7 @@ export const dictionaries = {
         status: 'Status',
         meetingProvider: 'Meeting provider',
         meetingLink: 'Meeting link',
+        locationAddress: 'Location address',
         notes: 'Notes',
         clientFirstName: 'Client first name',
         clientLastName: 'Client last name',
@@ -785,6 +786,7 @@ export const dictionaries = {
         status: 'Статус',
         meetingProvider: 'Провайдер встречи',
         meetingLink: 'Ссылка на встречу',
+        locationAddress: 'Адрес встречи',
         notes: 'Комментарий',
         clientFirstName: 'Имя клиента',
         clientLastName: 'Фамилия клиента',
@@ -1091,6 +1093,7 @@ export type TranslationKey =
   | 'appointments.fields.status'
   | 'appointments.fields.meetingProvider'
   | 'appointments.fields.meetingLink'
+  | 'appointments.fields.locationAddress'
   | 'notificationLogs.pageTitle'
   | 'notificationLogs.pageSubtitle'
   | 'notificationLogs.accessDenied'

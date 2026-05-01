@@ -352,6 +352,7 @@ export function AppointmentsContainer() {
     status: AppointmentItem['status'];
     meetingProvider: 'manual' | 'zoom' | 'offline';
     meetingLink: string;
+    locationAddress: string;
     notes: string;
     clientId?: number;
     username: string;
@@ -379,6 +380,7 @@ export function AppointmentsContainer() {
           status: payload.status,
           meetingProvider: payload.meetingProvider,
           meetingLink: payload.meetingLink,
+          locationAddress: payload.locationAddress,
           notes: payload.notes,
           clientId: payload.clientId,
           username: payload.username,
@@ -397,6 +399,7 @@ export function AppointmentsContainer() {
           status: payload.status,
           meetingProvider: payload.meetingProvider,
           meetingLink: payload.meetingLink,
+          locationAddress: payload.locationAddress,
           notes: payload.notes,
           clientId: payload.clientId,
           username: payload.username,

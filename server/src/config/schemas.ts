@@ -219,7 +219,7 @@ export const specialistUpdateSchema = z.object({
 });
 
 const appointmentStatusSchema = z.enum(['new', 'confirmed', 'cancelled']);
-const appointmentMeetingProviderSchema = z.enum(['manual', 'zoom']);
+const appointmentMeetingProviderSchema = z.enum(['manual', 'zoom', 'offline']);
 
 const appointmentClientSchema = z.object({
   clientId: z.coerce.number().int().positive().optional(),
@@ -236,6 +236,7 @@ export const appointmentCreateSchema = z.object({
   appointmentEndAt: z.string().datetime(v.appointmentEndInvalid),
   status: appointmentStatusSchema.optional(),
   meetingLink: z.string().trim().url(v.appointmentLinkInvalid).max(2048).optional().or(z.literal('')),
+  locationAddress: z.string().trim().max(500).optional(),
   meetingProvider: appointmentMeetingProviderSchema.optional(),
   saveClientMeetingPreference: z.boolean().optional(),
   notes: z.string().trim().max(2000, v.appointmentNotesTooLong).optional(),
@@ -283,6 +284,7 @@ export const appointmentUpdateSchema = z.object({
   durationMin: z.coerce.number().int().min(15, v.appointmentDurationMin).max(480, v.appointmentDurationMax).optional(),
   status: appointmentStatusSchema.optional(),
   meetingLink: z.string().trim().url(v.appointmentLinkInvalid).max(2048).optional().or(z.literal('')),
+  locationAddress: z.string().trim().max(500).optional(),
   meetingProvider: appointmentMeetingProviderSchema.optional(),
   notes: z.string().trim().max(2000, v.appointmentNotesTooLong).optional(),
 }).merge(appointmentClientSchema).superRefine((value, ctx) => {
