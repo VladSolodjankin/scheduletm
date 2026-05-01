@@ -1,7 +1,12 @@
+<<<<<<< codex/create-interactive-map-component-with-pin
 import MyLocationRounded from '@mui/icons-material/MyLocationRounded';
 import { Box, IconButton, Stack } from '@mui/material';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
+=======
+import { Box, Stack } from '@mui/material';
+import { observer } from 'mobx-react-lite';
+>>>>>>> main
 
 import { AppButton } from '../../shared/ui/AppButton';
 import { BaseMap } from './BaseMap';
@@ -11,6 +16,7 @@ type Props = {
   token: string;
   mapStore: MapStore;
   saveLabel: string;
+<<<<<<< codex/create-interactive-map-component-with-pin
   onSave: (payload: { lat: number; lng: number; fullAddress: string | null }) => void;
 };
 
@@ -43,6 +49,12 @@ export const CroshairMap = observer(function CroshairMap({ token, mapStore, save
     });
   };
 
+=======
+  onSave: (coords: { lat: number; lng: number }) => void;
+};
+
+export const CroshairMap = observer(function CroshairMap({ token, mapStore, saveLabel, onSave }: Props) {
+>>>>>>> main
   return (
     <Stack spacing={1} sx={{ position: 'relative' }}>
       <BaseMap token={token} center={mapStore.center} onCenterChange={(coords) => mapStore.setCenter(coords)} />
@@ -50,6 +62,7 @@ export const CroshairMap = observer(function CroshairMap({ token, mapStore, save
         <Box sx={{ position: 'absolute', top: '50%', left: '50%', width: 24, height: 2, bgcolor: 'error.main', transform: 'translate(-50%, -50%)' }} />
         <Box sx={{ position: 'absolute', top: '50%', left: '50%', width: 2, height: 24, bgcolor: 'error.main', transform: 'translate(-50%, -50%)' }} />
       </Box>
+<<<<<<< codex/create-interactive-map-component-with-pin
       <IconButton
         onClick={handleZoomToMyPosition}
         sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'background.paper' }}
@@ -58,6 +71,9 @@ export const CroshairMap = observer(function CroshairMap({ token, mapStore, save
         <MyLocationRounded fontSize="small" />
       </IconButton>
       <AppButton onClick={handleSave} isLoading={isSaving}>{saveLabel}</AppButton>
+=======
+      <AppButton onClick={() => onSave(mapStore.center)}>{saveLabel}</AppButton>
+>>>>>>> main
     </Stack>
   );
 });
