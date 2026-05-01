@@ -60,6 +60,9 @@ export type AccountSettings = {
   dailyDigestEnabled: boolean;
   defaultMeetingDuration: number;
   weekStartsOnMonday: boolean;
+  businessAddress: string;
+  businessLat: number | null;
+  businessLng: number | null;
 };
 
 export type UserSettings = {

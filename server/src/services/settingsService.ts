@@ -53,6 +53,9 @@ export type AccountSettings = {
   dailyDigestEnabled: boolean;
   defaultMeetingDuration: number;
   weekStartsOnMonday: boolean;
+  businessAddress: string;
+  businessLat: number | null;
+  businessLng: number | null;
 };
 
 export type UserSettings = {
@@ -127,6 +130,9 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
       dailyDigestEnabled: row.daily_digest_enabled,
       defaultMeetingDuration: row.slot_duration_min,
       weekStartsOnMonday: row.week_starts_on_monday,
+      businessAddress: row.business_address ?? '',
+      businessLat: row.business_lat === null ? null : Number(row.business_lat),
+      businessLng: row.business_lng === null ? null : Number(row.business_lng),
     };
   }
 
@@ -138,6 +144,9 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
       dailyDigestEnabled: legacy.daily_digest_enabled,
       defaultMeetingDuration: legacy.slot_duration_min,
       weekStartsOnMonday: legacy.week_starts_on_monday,
+      businessAddress: '',
+      businessLat: null,
+      businessLng: null,
     };
   }
 
@@ -147,6 +156,9 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
     dailyDigestEnabled: true,
     defaultMeetingDuration: 30,
     weekStartsOnMonday: true,
+    businessAddress: '',
+    businessLat: null,
+    businessLng: null,
   };
 };
 
@@ -208,6 +220,9 @@ export const updateAccountSettings = async (actor: User, payload: unknown): Prom
     slotDurationMin: parsed.data.defaultMeetingDuration,
     dailyDigestEnabled: parsed.data.dailyDigestEnabled,
     weekStartsOnMonday: parsed.data.weekStartsOnMonday,
+    businessAddress: parsed.data.businessAddress,
+    businessLat: parsed.data.businessLat,
+    businessLng: parsed.data.businessLng,
   });
 
   await updateAppSettingsByAccountId({

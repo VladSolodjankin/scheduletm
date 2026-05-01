@@ -8,6 +8,9 @@ export type AccountSettingsRecord = {
   daily_digest_enabled: boolean;
   week_starts_on_monday: boolean;
   locale: string;
+  business_address: string;
+  business_lat: string | null;
+  business_lng: string | null;
 };
 
 export type UpdateAccountSettingsInput = {
@@ -17,6 +20,9 @@ export type UpdateAccountSettingsInput = {
   dailyDigestEnabled?: boolean;
   weekStartsOnMonday?: boolean;
   locale?: string;
+  businessAddress?: string;
+  businessLat?: number | null;
+  businessLng?: number | null;
 };
 
 const baseQuery = (accountId: number) => db('account_settings').where({ account_id: accountId });
@@ -50,6 +56,15 @@ export async function updateAccountSettingsByAccountId(input: UpdateAccountSetti
   if (input.locale !== undefined) {
     patch.locale = input.locale;
   }
+  if (input.businessAddress !== undefined) {
+    patch.business_address = input.businessAddress;
+  }
+  if (input.businessLat !== undefined) {
+    patch.business_lat = input.businessLat;
+  }
+  if (input.businessLng !== undefined) {
+    patch.business_lng = input.businessLng;
+  }
 
   await db('account_settings')
     .insert({
@@ -59,6 +74,9 @@ export async function updateAccountSettingsByAccountId(input: UpdateAccountSetti
       daily_digest_enabled: input.dailyDigestEnabled ?? true,
       week_starts_on_monday: input.weekStartsOnMonday ?? true,
       locale: input.locale ?? 'ru-RU',
+      business_address: input.businessAddress ?? '',
+      business_lat: input.businessLat ?? null,
+      business_lng: input.businessLng ?? null,
       created_at: db.fn.now(),
       updated_at: db.fn.now(),
     })
