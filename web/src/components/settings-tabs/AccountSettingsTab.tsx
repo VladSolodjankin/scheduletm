@@ -1,5 +1,6 @@
 import { Box, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
 import { Controller, Control, useWatch } from 'react-hook-form';
+import { useEffect, useState } from 'react';
 
 import type { AccountSettings } from '../../shared/types/api';
 import type { SettingsCardCopy } from '../SettingsCard.types';
@@ -22,9 +23,30 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
   const businessLat = useWatch({ control, name: 'businessLat' });
   const businessLng = useWatch({ control, name: 'businessLng' });
   const mapboxToken = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN as string | undefined;
-  const hasCoordinates = typeof businessLat === 'number' && typeof businessLng === 'number';
+  const [defaultCoordinates, setDefaultCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (typeof businessLat === 'number' && typeof businessLng === 'number') {
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition((position) => {
+      setDefaultCoordinates({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      });
+    });
+  }, [businessLat, businessLng]);
+
+  const mapLat = typeof businessLat === 'number' ? businessLat : defaultCoordinates?.lat;
+  const mapLng = typeof businessLng === 'number' ? businessLng : defaultCoordinates?.lng;
+  const hasCoordinates = typeof mapLat === 'number' && typeof mapLng === 'number';
   const staticMapUrl = hasCoordinates && mapboxToken
-    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+285A98(${businessLng},${businessLat})/${businessLng},${businessLat},14/720x320?access_token=${mapboxToken}`
+    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+285A98(${mapLng},${mapLat})/${mapLng},${mapLat},14/720x320?access_token=${mapboxToken}`
     : '';
 
   return (
