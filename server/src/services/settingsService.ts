@@ -394,8 +394,8 @@ export async function getSpecialistBookingPolicy(
     refundOnLateCancel: row?.refund_on_late_cancel ?? false,
     autoCancelUnpaidEnabled: row?.auto_cancel_unpaid_enabled ?? false,
     unpaidAutoCancelAfterHours: row?.unpaid_auto_cancel_after_hours ?? 72,
-    meetingProvidersPriority: row?.meeting_providers_priority ?? 'zoom,manual',
-    allowedMeetingProviders: row?.allowed_meeting_providers ?? 'zoom,manual',
+    meetingProvidersPriority: row?.meeting_providers_priority ?? 'offline,zoom,manual',
+    allowedMeetingProviders: row?.allowed_meeting_providers ?? 'offline,zoom,manual',
     meetingProviderOverrideEnabled: row?.meeting_provider_override_enabled ?? false,
   };
 }

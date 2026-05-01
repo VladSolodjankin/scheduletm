@@ -370,6 +370,7 @@ export const dictionaries = {
       eventNotify: 'Manual notification sent',
       meetingProviderManual: 'Manual link',
       meetingProviderZoom: 'Zoom',
+      meetingProviderOffline: 'Offline',
       generateMeetingLink: 'Generate meeting link',
       errors: {
         load: 'Unable to load appointments.',
@@ -767,6 +768,7 @@ export const dictionaries = {
       eventNotify: 'Ручное уведомление отправлено',
       meetingProviderManual: 'Ручная ссылка',
       meetingProviderZoom: 'Zoom',
+      meetingProviderOffline: 'Офлайн',
       generateMeetingLink: 'Сгенерировать ссылку на встречу',
       errors: {
         load: 'Не удалось загрузить записи.',
@@ -1075,6 +1077,7 @@ export type TranslationKey =
   | 'appointments.eventNotify'
   | 'appointments.meetingProviderManual'
   | 'appointments.meetingProviderZoom'
+  | 'appointments.meetingProviderOffline'
   | 'appointments.generateMeetingLink'
   | 'appointments.errors.load'
   | 'appointments.errors.save'
