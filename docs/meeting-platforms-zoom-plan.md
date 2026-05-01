@@ -214,3 +214,8 @@
   - при наличии `businessLat/businessLng` показывается статическая карта с маркером;
   - при наличии `businessAddress` показывается кнопка перехода в Mapbox Search;
 - для включения используется `VITE_MAPBOX_PUBLIC_TOKEN` на frontend.
+
+## Исправление typecheck в web для offline-адреса (2026-05-01)
+
+- `locationAddress` добавлен в общий `EditFormState` (web appointments utils), чтобы состояние формы записи и submit payload для `meetingProvider=offline` были согласованы типами;
+- устранены ошибки `tsc --noEmit` в `AppointmentFormDialog` и `AppointmentsContainer`, связанные с отсутствием `locationAddress` в базовом типе формы.

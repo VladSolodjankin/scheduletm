@@ -8,6 +8,7 @@ export type EditFormState = {
   status: AppointmentStatus;
   meetingProvider: 'manual' | 'zoom' | 'offline';
   meetingLink: string;
+  locationAddress: string;
   notes: string;
 };
 
