@@ -156,3 +156,12 @@
   - `allowed_meeting_providers`
   - `meeting_provider_override_enabled`;
 - расширены backend/frontend контракты settings для чтения/сохранения этих полей.
+
+## Обновление offline location foundation (2026-05-01)
+
+- для `account_settings` добавлены поля офлайн-локации бизнеса:
+  - `business_address`
+  - `business_lat`
+  - `business_lng`
+- контракты `GET/PUT /api/settings/account` расширены новыми полями;
+- зафиксирован MVP-подход для offline-карты: Mapbox (карта + geocoding/reverse geocoding) в админке и read-only карта в публичной части.
