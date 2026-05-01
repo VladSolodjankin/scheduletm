@@ -189,3 +189,13 @@
 - адрес сохраняется и читается через существующий `comment`-payload (`locationAddress: ...`) вместе с `meetingProvider`/`meetingLink`;
 - в форме записи (`web`) для `meetingProvider=offline` добавлено поле адреса встречи;
 - добавлены i18n-ключи `appointments.fields.locationAddress` (ru/en).
+
+## Обновление fallback meeting providers (2026-05-01)
+
+- в `POST /api/appointments` добавлена последовательная fallback-цепочка выбора провайдера:
+  - сначала явный выбор из payload;
+  - затем `preferred_meeting_provider` клиента (если разрешен политикой specialist);
+  - затем `meeting_providers_priority` specialist с фильтрацией по `allowed_meeting_providers`;
+- при `meetingProvider=zoom` без ссылки система пробует создать Zoom-встречу, и при ошибке автоматически переходит к следующему провайдеру из цепочки (без падения создания appointment);
+- если клиент ничего не выбирал, а ссылка уже введена вручную, сохраняется `manual`;
+- `preferred_meeting_provider` теперь сохраняется также для `offline` (а не только для `manual/zoom`), чтобы первый офлайн-выбор клиента мог стать дефолтом.
