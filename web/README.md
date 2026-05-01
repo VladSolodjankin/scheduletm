@@ -78,6 +78,8 @@ VITE_API_URL=http://localhost:3003
 VITE_MAPBOX_PUBLIC_TOKEN=pk.xxxxx
 ```
 
+Если `VITE_MAPBOX_PUBLIC_TOKEN` задан, предпросмотр карты в `Account settings` сначала берет `Business lat/lng`, а если они пустые — пытается использовать текущие координаты браузера (через `navigator.geolocation`, с разрешением пользователя).
+
 Если `VITE_MAPBOX_PUBLIC_TOKEN` не задан, в `Account settings` вместо карты показывается явная подсказка, а кнопка `Open in Mapbox search` продолжает работать по `Business address`.
 
 Если оставить удалённый `VITE_API_URL` (например `https://apidev.meetli.cc`) при локальном запуске, на странице `/login` может появляться `Network connection issue`, и login-шаг UI e2e не пройдет.
