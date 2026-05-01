@@ -113,6 +113,9 @@ export const dictionaries = {
       defaultMeetingDuration: 'Default meeting duration (min)',
       dailyDigestEnabled: 'Daily digest enabled',
       weekStartsOnMonday: 'Week starts on Monday',
+      businessAddress: 'Business address',
+      businessLat: 'Business latitude',
+      businessLng: 'Business longitude',
       refreshTokenTtlDays: 'Refresh token TTL (days)',
       accessTokenTtlSeconds: 'Access token TTL (seconds)',
       sessionCookieName: 'Session cookie name',
@@ -512,6 +515,9 @@ export const dictionaries = {
       defaultMeetingDuration: 'Длительность встречи по умолчанию (мин)',
       dailyDigestEnabled: 'Ежедневный дайджест включен',
       weekStartsOnMonday: 'Неделя начинается с понедельника',
+      businessAddress: 'Адрес офлайн-встреч',
+      businessLat: 'Широта',
+      businessLng: 'Долгота',
       refreshTokenTtlDays: 'TTL refresh token (дни)',
       accessTokenTtlSeconds: 'TTL access token (сек)',
       sessionCookieName: 'Имя session cookie',
@@ -905,6 +911,9 @@ export type TranslationKey =
   | 'settings.defaultMeetingDuration'
   | 'settings.dailyDigestEnabled'
   | 'settings.weekStartsOnMonday'
+  | 'settings.businessAddress'
+  | 'settings.businessLat'
+  | 'settings.businessLng'
   | 'settings.refreshTokenTtlDays'
   | 'settings.accessTokenTtlSeconds'
   | 'settings.sessionCookieName'

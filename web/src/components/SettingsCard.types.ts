@@ -22,6 +22,9 @@ export type SettingsCardCopy = {
   defaultMeetingDuration: string;
   dailyDigestEnabled: string;
   weekStartsOnMonday: string;
+  businessAddress: string;
+  businessLat: string;
+  businessLng: string;
   refreshTokenTtlDays: string;
   accessTokenTtlSeconds: string;
   sessionCookieName: string;

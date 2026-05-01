@@ -40,6 +40,34 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
         <AppRhfTextField field={field} label={copy.locale} />
       )} />
 
+      <Controller name="businessAddress" control={control} render={({ field }: any) => (
+        <AppRhfTextField field={field} label={copy.businessAddress} />
+      )} />
+
+      <Controller
+        name="businessLat"
+        control={control}
+        render={({ field }: any) => (
+          <AppRhfTextField
+            field={field}
+            label={copy.businessLat}
+            type="number"
+          />
+        )}
+      />
+
+      <Controller
+        name="businessLng"
+        control={control}
+        render={({ field }: any) => (
+          <AppRhfTextField
+            field={field}
+            label={copy.businessLng}
+            type="number"
+          />
+        )}
+      />
+
       <Controller
         name="defaultMeetingDuration"
         control={control}
