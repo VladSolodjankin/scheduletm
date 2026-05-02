@@ -145,7 +145,6 @@ jobs:
     name: Build Evidence Bundle
     runs-on: ubuntu-latest
     needs:
-      - docs-check
       - tls-evidence
       - dast-evidence
       - sast-codeql-evidence
