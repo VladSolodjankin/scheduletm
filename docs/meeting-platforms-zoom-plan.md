@@ -259,3 +259,51 @@
 - ✅ `offline` провайдер и MVP-хранение `locationAddress` в appointment-flow уже есть.
 - ⚠️ Не завершены provider-aware уведомления и отдельное событие для обновления `manual` ссылки.
 - ⚠️ Нет полного набора автотестов и продуктовых метрик/алертов по meeting providers.
+
+
+## Zoom Beta Compliance: next steps after "Insufficient Evidence" (2026-05-02)
+
+Если Zoom отклонил Beta-заявку с формулировкой **Insufficient Evidence**, это не блокирует обычную публикацию, но блокирует статус Beta до досдачи пакета документов.
+
+### Что нужно дослать в Zoom (минимум)
+1. **SSDLC evidence** — краткое описание secure SDLC + артефакты (чеклисты PR/релизов, policy, pipeline шаги).
+2. **SAST results** — результаты статического анализа кода (дата запуска, tool, найдено/исправлено, текущий статус).
+3. **DAST results** — результаты динамического сканирования (стенд, покрытие, critical/high findings status).
+4. **Privacy Policy** — публичная ссылка на актуальную политику приватности.
+
+### Дополнительно: выбрать любые 3 документа из списка Zoom
+- executive summary penetration test;
+- security policy;
+- incident response/management policy;
+- vulnerability management procedure;
+- infrastructure/dependency management policy.
+
+### Технический чек Zoom
+- Подтвердить и задокументировать поддержку **TLS 1.2+** для всех публичных endpoint'ов (web + server callback URLs).
+
+### KISS-план для нашей команды
+1. **Собрать пакет доказательств v1** в `docs/compliance/zoom-beta/` (без секретов, только summary + redacted evidence).
+2. **Зафиксировать базовые security scans в CI**:
+   - SAST: npm audit + semgrep (или эквивалент);
+   - DAST: OWASP ZAP baseline против staging URL.
+3. **Сделать короткий Security Technical Design addendum** (1-2 страницы):
+   - архитектура auth/token handling;
+   - data flow по Zoom OAuth;
+   - где храним секреты (`.env` only, backend only);
+   - как логируем инциденты и ротацию токенов.
+4. **Проверить Privacy Policy**: наличие разделов про Zoom данные, retention, deletion request, контакты DPO/security.
+5. **Resubmit в Zoom Beta** с полным пакетом и ссылками на документы.
+
+### Рекомендуемый минимум артефактов в репозитории
+- `docs/compliance/zoom-beta/README.md` — индекс доказательств.
+- `docs/compliance/zoom-beta/ssdlc.md`
+- `docs/compliance/zoom-beta/security-policy.md`
+- `docs/compliance/zoom-beta/incident-response.md`
+- `docs/compliance/zoom-beta/vulnerability-management.md`
+- `docs/compliance/zoom-beta/sast-latest.md`
+- `docs/compliance/zoom-beta/dast-latest.md`
+- `docs/compliance/zoom-beta/tls-1.2-evidence.md`
+
+### Decision point
+Если цель — быстрый go-live в Marketplace, можно идти в **Published/Unlisted** без Beta.
+Если нужен именно **Beta badge/workflow**, обязательно закрываем пакет evidence выше.
