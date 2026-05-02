@@ -6,7 +6,7 @@ const envSchema = z.object({
   API_BASE_URL: z.string().url().default('http://localhost:3003'),
   SESSION_COOKIE_NAME: z.string().default('scheduletm_refresh'),
   SESSION_COOKIE_DOMAIN: z.string().default(''),
-  CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:5173,https://meetli.cc,https://www.meetli.cc'),
+  CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:5173,https://meetli.cc,https://www.meetli.cc,https://dev.meetli.cc,https://apidev.meetli.cc'),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
   BREVO_API_KEY: z.string().default(''),

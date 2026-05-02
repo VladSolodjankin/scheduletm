@@ -101,7 +101,7 @@ npm run -w @scheduletm/server test -- business.integration.test.ts
 
 Для CORS и cookie в локальной разработке + production:
 
-- `CORS_ALLOWED_ORIGINS=http://localhost:5173,https://meetli.cc,https://www.meetli.cc`
+- `CORS_ALLOWED_ORIGINS=http://localhost:5173,https://meetli.cc,https://www.meetli.cc,https://dev.meetli.cc,https://apidev.meetli.cc`
 - `SESSION_COOKIE_DOMAIN=.meetli.cc` (production), пустое значение в локальной разработке.
 
 Критичные для email:
