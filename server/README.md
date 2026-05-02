@@ -121,6 +121,39 @@ npm run -w @scheduletm/server test -- business.integration.test.ts
 - `errorAlertsTelegramChatId` — chat id (личный/групповой);
 - в `GET /api/settings/system` возвращается только флаг `errorAlertsTelegramEnabled`, сами секреты не отдаются.
 
+
+## FAQ: почему разлогинивает после рестарта локального фронта/бэка
+
+Коротко: web-сессии **не хранятся в памяти процесса** и не должны теряться из-за restart самого Node.js.
+
+Сроки жизни по умолчанию:
+- `ACCESS_TOKEN_TTL_SECONDS=900` (15 минут).
+- `REFRESH_TOKEN_TTL_DAYS=30` (30 дней).
+
+- Refresh/access токены сохраняются в таблице `web_user_sessions` (PostgreSQL).
+- В браузере хранится только refresh cookie (`SESSION_COOKIE_NAME`) и csrf cookie (`<SESSION_COOKIE_NAME>_csrf`).
+
+Если после локального рестарта вылетает логин, обычно причина в окружении/cookie:
+
+1. Меняется `SESSION_COOKIE_NAME` между запусками (или между `.env` файлами).
+2. Неверный `SESSION_COOKIE_DOMAIN` для локалки (должен быть пустой).
+3. Фронт и API ходят на другой origin, который не входит в `CORS_ALLOWED_ORIGINS`.
+4. В dev фронт не отправляет credentials (cookie не прикладываются к `/api/auth/refresh`).
+5. Вы пересоздали БД/применили миграции в другую БД, и `web_user_sessions` пустая.
+
+
+Важно по безопасности (OAuth 2.0 / BCP):
+- Текущий web-auth flow — это cookie + session-tokens backend-а (не сторонний OAuth authorization server).
+- Silent refresh на 401 допустим, если сохраняются CSRF-проверка и rotation refresh-токена (у нас refresh одноразовый: старый сразу revoke).
+- Для production рекомендуется минимизировать хранение access token в `localStorage` (предпочтительнее in-memory), чтобы снизить риск при XSS.
+
+Практичный чек для локалки:
+
+- `SESSION_COOKIE_DOMAIN=` (пусто)
+- одинаковый `SESSION_COOKIE_NAME` во всех локальных env
+- `CORS_ALLOWED_ORIGINS` содержит origin фронта (например, `http://localhost:5173`)
+- в браузере у запроса `POST /api/auth/refresh` реально уходит cookie + `x-csrf-token`
+
 ## Документация
 
 - Глобальный обзор: [`../README.md`](../README.md)
