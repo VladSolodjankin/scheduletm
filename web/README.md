@@ -5,6 +5,7 @@ React SPA для owner/admin/specialist/client.
 ## Что умеет
 
 - Settings page UI decomposition: each settings tab is implemented as a separate UI component under `src/components/settings-tabs/` to keep `SettingsCard.tsx` lightweight.
+- Locale fields in `Settings -> Account` and `Settings -> User` are dropdowns (`ru-RU`/`en-US`) via reusable `LocaleSelect` component.
 - Settings tabs support deeplinks via route segment: `/settings/:tab` (for example `/settings/integrations`, `/settings/password`).
 - Auth: `/login`, `/register`, `/invite/accept`, `/verify-email`.
   - `register`: required fields `firstName`, `lastName`, `email`, `phone`, optional `telegramUsername`.

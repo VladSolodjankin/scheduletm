@@ -7,6 +7,7 @@ import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
 import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
+import { LocaleSelect } from '../LocaleSelect';
 import { TimezoneSelect } from '../TimezoneSelect';
 
 type Props = {
@@ -44,7 +45,13 @@ export function UserSettingsTab({
         name="locale"
         control={control}
         render={({ field }: any) => (
-          <AppRhfTextField field={field} label={copy.locale} />
+          <LocaleSelect
+            label={copy.locale}
+            labelId="user-locale-label"
+            value={field.value}
+            onChange={field.onChange}
+            margin="normal"
+          />
         )}
       />
 
