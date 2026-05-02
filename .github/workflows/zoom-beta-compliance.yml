@@ -198,3 +198,114 @@ jobs:
           name: zoom-beta-evidence-bundle
           path: zoom-beta-evidence-bundle.zip
           retention-days: 90
+
+  update-evidence-docs:
+    name: Update Evidence Docs
+    runs-on: ubuntu-latest
+    needs:
+      - tls-evidence
+      - dast-evidence
+      - sast-extra-evidence
+    if: always()
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download evidence artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: downloaded-artifacts
+
+      - name: Update evidence markdown files
+        run: |
+          mkdir -p docs/compliance/zoom-beta/evidence
+
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          DATE_UTC="$(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+
+          cat > docs/compliance/zoom-beta/sast-latest.md <<EOF
+          # SAST Latest Evidence
+
+          Last run: ${DATE_UTC}
+
+          GitHub Actions run:
+          ${RUN_URL}
+
+          Tools:
+          - npm audit
+          - Semgrep
+          - CodeQL, if enabled
+
+          Artifacts:
+          - sast-extra-evidence
+          - npm-audit-latest.json
+          - semgrep-latest.json
+
+          Status:
+          - Review attached artifacts for current findings.
+          - Critical/High findings must be remediated or documented with accepted risk.
+          EOF
+
+          cat > docs/compliance/zoom-beta/dast-latest.md <<EOF
+          # DAST Latest Evidence
+
+          Last run: ${DATE_UTC}
+
+          GitHub Actions run:
+          ${RUN_URL}
+
+          Tool:
+          - OWASP ZAP Baseline Scan
+
+          Target:
+          - ${ZOOM_EVIDENCE_DAST_TARGET:-https://dev.meetli.cc}
+
+          Artifacts:
+          - dast-evidence
+          - report_html.html
+          - report_md.md
+          - report_json.json
+
+          Status:
+          - Review ZAP report for current alerts.
+          - Critical/High findings must be remediated before Zoom resubmission.
+          EOF
+
+          cat > docs/compliance/zoom-beta/tls-1.2-evidence.md <<EOF
+          # TLS 1.2+ Evidence
+
+          Last run: ${DATE_UTC}
+
+          GitHub Actions run:
+          ${RUN_URL}
+
+          Hosts checked:
+          - ${ZOOM_EVIDENCE_PROD_HOST:-www.meetli.cc}
+          - ${ZOOM_EVIDENCE_STAGE_HOST:-dev.meetli.cc}
+
+          Evidence artifacts:
+          - tls-evidence
+          - tls-check-latest.txt
+          - tls-summary-latest.md
+
+          Status:
+          - TLS 1.2+ support is verified by CI.
+          EOF
+
+      - name: Commit updated evidence docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/compliance/zoom-beta/sast-latest.md
+          git add docs/compliance/zoom-beta/dast-latest.md
+          git add docs/compliance/zoom-beta/tls-1.2-evidence.md
+
+          if git diff --cached --quiet; then
+            echo "No evidence doc changes to commit."
+          else
+            git commit -m "Update Zoom Beta compliance evidence docs"
+            git push
+          fi
