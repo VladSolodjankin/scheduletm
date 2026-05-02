@@ -23,7 +23,6 @@
     "@mui/x-date-pickers": "^9.0.4",
     "axios": "^1.15.2",
     "dayjs": "^1.11.20",
-    "firebase": "^12.12.1",
     "gapi-script": "^1.2.0",
     "mobx": "^6.15.0",
     "mobx-react-lite": "^4.1.1",
