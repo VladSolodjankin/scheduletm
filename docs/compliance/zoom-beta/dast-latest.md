@@ -1,9 +1,9 @@
 # DAST Latest Evidence
 
-Last run: 2026-05-02 14:51:55 UTC
+Last run: 2026-05-02 15:03:50 UTC
 
 GitHub Actions run:
-https://github.com/VladSolodjankin/scheduletm/actions/runs/25254557076
+https://github.com/VladSolodjankin/scheduletm/actions/runs/25254791197
 
 Tool:
 - OWASP ZAP Baseline Scan
@@ -11,12 +11,12 @@ Tool:
 Target:
 - https://dev.meetli.cc
 
-Artifacts:
-- dast-evidence
-- report_html.html
-- report_md.md
-- report_json.json
+Evidence files:
+- docs/compliance/zoom-beta/evidence/zap-report.html
+- docs/compliance/zoom-beta/evidence/zap-report.md
+- docs/compliance/zoom-beta/evidence/zap-report.json
 
 Status:
+- DAST evidence is generated automatically by GitHub Actions.
 - Review ZAP report for current alerts.
 - Critical/High findings must be remediated before Zoom resubmission.

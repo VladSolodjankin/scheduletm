@@ -1,0 +1,216 @@
+=== www.meetli.cc TLS1.2 ===
+depth=2 C = US, O = Internet Security Research Group, CN = ISRG Root X1
+verify return:1
+depth=1 C = US, O = Let's Encrypt, CN = E7
+verify return:1
+depth=0 CN = meetli.cc
+verify return:1
+CONNECTED(00000003)
+---
+Certificate chain
+ 0 s:CN = meetli.cc
+   i:C = US, O = Let's Encrypt, CN = E7
+   a:PKEY: id-ecPublicKey, 256 (bit); sigalg: ecdsa-with-SHA384
+   v:NotBefore: Apr 30 10:40:47 2026 GMT; NotAfter: Jul 29 10:40:46 2026 GMT
+ 1 s:C = US, O = Let's Encrypt, CN = E7
+   i:C = US, O = Internet Security Research Group, CN = ISRG Root X1
+   a:PKEY: id-ecPublicKey, 384 (bit); sigalg: RSA-SHA256
+   v:NotBefore: Mar 13 00:00:00 2024 GMT; NotAfter: Mar 12 23:59:59 2027 GMT
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIIDiTCCAxCgAwIBAgISBZzxVvGoaCuVsPulBhh0NA0hMAoGCCqGSM49BAMDMDIx
+CzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQDEwJF
+NzAeFw0yNjA0MzAxMDQwNDdaFw0yNjA3MjkxMDQwNDZaMBQxEjAQBgNVBAMTCW1l
+ZXRsaS5jYzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABPeXsBL8rSO3YDfwM5ai
+lsto5bb2iVHTaD0NZe+zAHFqeRhW6izfhThXVEvPgi236aQbUB7mBZ1f/hdSRPLS
+wlCjggIiMIICHjAOBgNVHQ8BAf8EBAMCB4AwEwYDVR0lBAwwCgYIKwYBBQUHAwEw
+DAYDVR0TAQH/BAIwADAdBgNVHQ4EFgQUm7EkZZFlmPex5vA17n1deKk8STYwHwYD
+VR0jBBgwFoAUrkie3IcdRKBv2qLlYHQEeMKcAIAwMgYIKwYBBQUHAQEEJjAkMCIG
+CCsGAQUFBzAChhZodHRwOi8vZTcuaS5sZW5jci5vcmcvMCEGA1UdEQQaMBiCCyou
+bWVldGxpLmNjggltZWV0bGkuY2MwEwYDVR0gBAwwCjAIBgZngQwBAgEwLQYDVR0f
+BCYwJDAioCCgHoYcaHR0cDovL2U3LmMubGVuY3Iub3JnLzM0LmNybDCCAQwGCisG
+AQQB1nkCBAIEgf0EgfoA+AB1AMs49xWJfIShRF9bwd37yW7ymlnNRwppBYWwyxTD
+FFjnAAABnd4vpmIAAAQDAEYwRAIgC1njpbXuBgFYOmM1x0YtcFcmNFuTNB4UyXgV
+6yxUP0kCIDXpdJDKr+SuEDNibQLptij6c+IkbxkBWwOXuYdvjvk+AH8AJuNkblhp
+ISO8ND9HJDWbN5LNJFqI2BXTkzP9mRirRyMAAAGd3i+mZgAIAAAFAAuyt38EAwBI
+MEYCIQCtM7P8veGc8arZmeG7Pfjl4UxMHkl91ehjK/PbB+4bqQIhALarieXiPZlI
+577ncQ9cs8+VCE1ecI7rOW1tmiM/OfaKMAoGCCqGSM49BAMDA2cAMGQCMCMu5Aok
+uKgcYjv8gzxN4yoQYSwOARZTmmPbHH2oCZygxt75Jei0rZwHPX1f7kl6OwIwTYkq
+C1id4DwZJc3YVEtLzv2nmrleXLY8Cg9e/DR3Gch03UO9d4HquFHwj5hN2RPg
+-----END CERTIFICATE-----
+subject=CN = meetli.cc
+issuer=C = US, O = Let's Encrypt, CN = E7
+---
+No client certificate CA names sent
+Peer signing digest: SHA256
+Peer signature type: ECDSA
+Server Temp Key: X25519, 253 bits
+---
+SSL handshake has read 2493 bytes and written 295 bytes
+Verification: OK
+---
+New, TLSv1.2, Cipher is ECDHE-ECDSA-CHACHA20-POLY1305
+Server public key is 256 bit
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : ECDHE-ECDSA-CHACHA20-POLY1305
+    Session-ID: 5AAF2A8DE5259F5D9A514D1AF5B7009CA60B54901B4BF71E0B7DC0C6412F392F
+    Session-ID-ctx: 
+    Master-Key: 4223C7381014A2C923325CC33C087E5EC8A32252ACB4FE409766E79DE0AFC7B61C59329F51A06ACB5D30384FE24571FB
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 64800 (seconds)
+    TLS session ticket:
+    0000 - 37 3e f0 23 69 70 11 b1-bf a3 8c 89 ee 90 0f dd   7>.#ip..........
+    0010 - 1a cc 53 95 ec 44 d8 bb-0d 19 a5 8a 69 aa e2 d0   ..S..D......i...
+    0020 - a7 6e f4 59 40 57 6e 6d-8c 0c 7e 30 a0 ef 2f b0   .n.Y@Wnm..~0../.
+    0030 - ee 8c f8 55 06 83 60 39-78 23 f6 8d 16 1c c7 bb   ...U..`9x#......
+    0040 - 1c 83 af 7d 3c 01 1e 37-7c a6 32 20 1d e8 e8 3b   ...}<..7|.2 ...;
+    0050 - 3b 06 ad 46 de d4 ab b8-a3 6d b2 f7 dc c0 8d 9e   ;..F.....m......
+    0060 - 7e 05 b3 17 a9 90 4f 8a-a8 c7 c6 75 ce 09 60 97   ~.....O....u..`.
+    0070 - 7e 15 fa 53 6a fb 51 95-97 db 0d 52 e8 0a 58 17   ~..Sj.Q....R..X.
+    0080 - 60 7c ca 59 d9 d6 6a 9e-d0 4f c8 52 28 0f 35 fe   `|.Y..j..O.R(.5.
+    0090 - 3f 8d 4b 2c 0a ed e2 ea-bd a6 e0 87 a3 f6 bb 14   ?.K,............
+    00a0 - 32 02 f1 ef 7c 2c 65 80-ef 59 fc 66 31 d8 1b 29   2...|,e..Y.f1..)
+    00b0 - 90 27 a8 40 b7 5d 1f 3e-19 be 0d 2f 9d 72 d2 8f   .'.@.].>.../.r..
+
+    Start Time: 1777734151
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: yes
+---
+DONE
+=== www.meetli.cc TLS1.1 ===
+40E78759437F0000:error:0A0000BF:SSL routines:tls_setup_handshake:no protocols available:../ssl/statem/statem_lib.c:104:
+CONNECTED(00000003)
+---
+no peer certificate available
+---
+No client certificate CA names sent
+---
+SSL handshake has read 0 bytes and written 7 bytes
+Verification: OK
+---
+New, (NONE), Cipher is (NONE)
+Secure Renegotiation IS NOT supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+Early data was not sent
+Verify return code: 0 (ok)
+---
+
+=== dev.meetli.cc TLS1.2 ===
+depth=2 C = US, O = Internet Security Research Group, CN = ISRG Root X1
+verify return:1
+depth=1 C = US, O = Let's Encrypt, CN = E7
+verify return:1
+depth=0 CN = meetli.cc
+verify return:1
+CONNECTED(00000003)
+---
+Certificate chain
+ 0 s:CN = meetli.cc
+   i:C = US, O = Let's Encrypt, CN = E7
+   a:PKEY: id-ecPublicKey, 256 (bit); sigalg: ecdsa-with-SHA384
+   v:NotBefore: Apr 30 10:40:47 2026 GMT; NotAfter: Jul 29 10:40:46 2026 GMT
+ 1 s:C = US, O = Let's Encrypt, CN = E7
+   i:C = US, O = Internet Security Research Group, CN = ISRG Root X1
+   a:PKEY: id-ecPublicKey, 384 (bit); sigalg: RSA-SHA256
+   v:NotBefore: Mar 13 00:00:00 2024 GMT; NotAfter: Mar 12 23:59:59 2027 GMT
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIIDiTCCAxCgAwIBAgISBZzxVvGoaCuVsPulBhh0NA0hMAoGCCqGSM49BAMDMDIx
+CzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQDEwJF
+NzAeFw0yNjA0MzAxMDQwNDdaFw0yNjA3MjkxMDQwNDZaMBQxEjAQBgNVBAMTCW1l
+ZXRsaS5jYzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABPeXsBL8rSO3YDfwM5ai
+lsto5bb2iVHTaD0NZe+zAHFqeRhW6izfhThXVEvPgi236aQbUB7mBZ1f/hdSRPLS
+wlCjggIiMIICHjAOBgNVHQ8BAf8EBAMCB4AwEwYDVR0lBAwwCgYIKwYBBQUHAwEw
+DAYDVR0TAQH/BAIwADAdBgNVHQ4EFgQUm7EkZZFlmPex5vA17n1deKk8STYwHwYD
+VR0jBBgwFoAUrkie3IcdRKBv2qLlYHQEeMKcAIAwMgYIKwYBBQUHAQEEJjAkMCIG
+CCsGAQUFBzAChhZodHRwOi8vZTcuaS5sZW5jci5vcmcvMCEGA1UdEQQaMBiCCyou
+bWVldGxpLmNjggltZWV0bGkuY2MwEwYDVR0gBAwwCjAIBgZngQwBAgEwLQYDVR0f
+BCYwJDAioCCgHoYcaHR0cDovL2U3LmMubGVuY3Iub3JnLzM0LmNybDCCAQwGCisG
+AQQB1nkCBAIEgf0EgfoA+AB1AMs49xWJfIShRF9bwd37yW7ymlnNRwppBYWwyxTD
+FFjnAAABnd4vpmIAAAQDAEYwRAIgC1njpbXuBgFYOmM1x0YtcFcmNFuTNB4UyXgV
+6yxUP0kCIDXpdJDKr+SuEDNibQLptij6c+IkbxkBWwOXuYdvjvk+AH8AJuNkblhp
+ISO8ND9HJDWbN5LNJFqI2BXTkzP9mRirRyMAAAGd3i+mZgAIAAAFAAuyt38EAwBI
+MEYCIQCtM7P8veGc8arZmeG7Pfjl4UxMHkl91ehjK/PbB+4bqQIhALarieXiPZlI
+577ncQ9cs8+VCE1ecI7rOW1tmiM/OfaKMAoGCCqGSM49BAMDA2cAMGQCMCMu5Aok
+uKgcYjv8gzxN4yoQYSwOARZTmmPbHH2oCZygxt75Jei0rZwHPX1f7kl6OwIwTYkq
+C1id4DwZJc3YVEtLzv2nmrleXLY8Cg9e/DR3Gch03UO9d4HquFHwj5hN2RPg
+-----END CERTIFICATE-----
+subject=CN = meetli.cc
+issuer=C = US, O = Let's Encrypt, CN = E7
+---
+No client certificate CA names sent
+Peer signing digest: SHA256
+Peer signature type: ECDSA
+Server Temp Key: X25519, 253 bits
+---
+SSL handshake has read 2493 bytes and written 295 bytes
+Verification: OK
+---
+New, TLSv1.2, Cipher is ECDHE-ECDSA-CHACHA20-POLY1305
+Server public key is 256 bit
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : ECDHE-ECDSA-CHACHA20-POLY1305
+    Session-ID: DA2B933993E871E0CC2322E2E9B7813F9C4D4125C669CAAB059A73F07B43DBB1
+    Session-ID-ctx: 
+    Master-Key: DC928B417BF3CBB3F72B3C0E741125995C5E667DC7C18C896904C094488F83E46A865D78702775D74133C52AEBE8BF8D
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 64799 (seconds)
+    TLS session ticket:
+    0000 - 75 69 52 04 7f e0 0b f1-fc 44 c3 63 09 d2 d8 06   uiR......D.c....
+    0010 - f9 3e 48 ff 75 e8 22 d7-76 87 ee d8 aa c0 d2 a2   .>H.u.".v.......
+    0020 - eb 0d 31 ce 3d b6 27 b6-47 96 cb 07 33 80 0b 52   ..1.=.'.G...3..R
+    0030 - 21 16 4e 26 93 29 5d aa-73 5c 45 2c 5e 9e e3 d2   !.N&.)].s\E,^...
+    0040 - 7b 4c 96 b1 01 a8 f0 95-a5 6e 10 e8 74 d9 07 89   {L.......n..t...
+    0050 - f5 72 3e 38 e7 e7 3e 56-96 59 71 4c bb bc 38 c0   .r>8..>V.YqL..8.
+    0060 - 7d 6d 59 49 b1 d0 6b 3d-fa 12 5b b7 b8 7a 98 4b   }mYI..k=..[..z.K
+    0070 - c9 f1 fa dd d8 16 97 ea-c6 18 e6 be b7 6d 33 3f   .............m3?
+    0080 - 8c 34 bd fe 64 16 bc fd-91 90 a9 65 7b f1 ae bf   .4..d......e{...
+    0090 - 5c ff 88 d3 b4 6e 6f cc-10 e3 ff 4e f9 a9 c0 71   \....no....N...q
+    00a0 - 21 b9 e4 7b 70 03 74 f2-57 45 5b c7 a5 85 d1 81   !..{p.t.WE[.....
+    00b0 - 9d 8e d8 a3 f6 a4 81 8a-7c 63 12 f3 e6 94 64 90   ........|c....d.
+
+    Start Time: 1777734152
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: yes
+---
+DONE
+=== dev.meetli.cc TLS1.1 ===
+400761AEA87F0000:error:0A0000BF:SSL routines:tls_setup_handshake:no protocols available:../ssl/statem/statem_lib.c:104:
+CONNECTED(00000003)
+---
+no peer certificate available
+---
+No client certificate CA names sent
+---
+SSL handshake has read 0 bytes and written 7 bytes
+Verification: OK
+---
+New, (NONE), Cipher is (NONE)
+Secure Renegotiation IS NOT supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+Early data was not sent
+Verify return code: 0 (ok)
+---
+
