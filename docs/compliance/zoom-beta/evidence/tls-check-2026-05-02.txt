@@ -1,0 +1,14 @@
+=== www TLS1.2 ===
+=== dev TLS1.2 ===
+=== www TLS1.1 expected fail ===
+40D7867DBF7F0000:error:80000065:system library:BIO_connect:Network is unreachable:../crypto/bio/bio_sock2.c:114:calling connect()
+40D7867DBF7F0000:error:10000067:BIO routines:BIO_connect:connect error:../crypto/bio/bio_sock2.c:116:
+40D7867DBF7F0000:error:80000065:system library:BIO_connect:Network is unreachable:../crypto/bio/bio_sock2.c:114:calling connect()
+40D7867DBF7F0000:error:10000067:BIO routines:BIO_connect:connect error:../crypto/bio/bio_sock2.c:116:
+40D7867DBF7F0000:error:80000065:system library:BIO_connect:Network is unreachable:../crypto/bio/bio_sock2.c:114:calling connect()
+=== dev TLS1.1 expected fail ===
+40B78A35017F0000:error:80000065:system library:BIO_connect:Network is unreachable:../crypto/bio/bio_sock2.c:114:calling connect()
+40B78A35017F0000:error:10000067:BIO routines:BIO_connect:connect error:../crypto/bio/bio_sock2.c:116:
+40B78A35017F0000:error:80000065:system library:BIO_connect:Network is unreachable:../crypto/bio/bio_sock2.c:114:calling connect()
+40B78A35017F0000:error:10000067:BIO routines:BIO_connect:connect error:../crypto/bio/bio_sock2.c:116:
+40B78A35017F0000:error:80000065:system library:BIO_connect:Network is unreachable:../crypto/bio/bio_sock2.c:114:calling connect()

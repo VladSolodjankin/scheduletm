@@ -1,0 +1,152 @@
+name: Zoom Beta Compliance Evidence
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  docs-check:
+    name: Compliance Docs Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required Zoom evidence docs
+        run: |
+          test -f docs/compliance/zoom-beta/README.md
+          test -f docs/compliance/zoom-beta/ssdlc.md
+          test -f docs/compliance/zoom-beta/security-policy.md
+          test -f docs/compliance/zoom-beta/incident-response.md
+          test -f docs/compliance/zoom-beta/vulnerability-management.md
+          test -f docs/compliance/zoom-beta/sast-latest.md
+          test -f docs/compliance/zoom-beta/dast-latest.md
+          test -f docs/compliance/zoom-beta/tls-1.2-evidence.md
+
+  tls-evidence:
+    name: TLS 1.2+ Evidence
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PROD_HOST: ${{ vars.ZOOM_EVIDENCE_PROD_HOST }}
+      STAGE_HOST: ${{ vars.ZOOM_EVIDENCE_STAGE_HOST }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set default hosts
+        run: |
+          echo "PROD_HOST=${PROD_HOST:-www.meetli.cc}" >> "$GITHUB_ENV"
+          echo "STAGE_HOST=${STAGE_HOST:-dev.meetli.cc}" >> "$GITHUB_ENV"
+
+      - name: Run TLS checks
+        run: bash scripts/compliance/tls_evidence.sh "$PROD_HOST" "$STAGE_HOST"
+
+      - name: Upload TLS evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tls-evidence
+          path: |
+            docs/compliance/zoom-beta/evidence/tls-check-latest.txt
+            docs/compliance/zoom-beta/evidence/tls-summary-latest.md
+          retention-days: 90
+
+  dast-evidence:
+    name: DAST Baseline Evidence
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DAST_TARGET: ${{ vars.ZOOM_EVIDENCE_DAST_TARGET }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set default DAST target
+        run: |
+          echo "DAST_TARGET=${DAST_TARGET:-https://dev.meetli.cc}" >> "$GITHUB_ENV"
+
+      - name: Run OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ env.DAST_TARGET }}
+          cmd_options: "-a -m 5"
+          allow_issue_writing: false
+          fail_action: true
+
+      - name: Upload DAST evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dast-evidence
+          path: |
+            report_html.html
+            report_md.md
+            report_json.json
+          retention-days: 90
+
+  sast-codeql-evidence:
+    name: SAST Evidence - CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+
+  sast-extra-evidence:
+    name: SAST Evidence - npm audit and Semgrep
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high --json > npm-audit-latest.json
+
+      - name: Install Semgrep
+        run: python -m pip install semgrep
+
+      - name: Run Semgrep
+        run: semgrep scan --config auto --json > semgrep-latest.json
+
+      - name: Upload SAST extra evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-extra-evidence
+          path: |
+            npm-audit-latest.json
+            semgrep-latest.json
+          retention-days: 90
