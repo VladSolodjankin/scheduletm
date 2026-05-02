@@ -6,24 +6,26 @@ This directory stores redacted artifacts for Zoom Beta review.
 
 ## Status
 
-- [~] TLS 1.2+ evidence for `www.meetli.cc` and `dev.meetli.cc` — commands and logs were added, but the current CI/container has no outbound access (`Network is unreachable`); rerun is required in a staging/prod connected runner.
-- [~] DAST evidence on staging — a minimal report template and run command were added; the actual scan must be executed from an environment with network access to `dev.meetli.cc`.
+- [x] TLS 1.2+ evidence for `www.meetli.cc` and `dev.meetli.cc` is collected in `evidence/tls-check-latest.txt` and `evidence/tls-summary-latest.md`.
+- [x] DAST baseline evidence on staging is collected in `evidence/zap-report.md` and `evidence/zap-report.json` (current result: `High=0`, `Medium=2`).
 - [x] Zoom Beta evidence package (structure) — SSDLC, Privacy Policy, security policy documents, and index were added.
-- [ ] Full compliance-block closure — pending real SAST/DAST/TLS runs from a connected runner.
+- [~] Full compliance-block closure — findings remediation is tracked in `evidence/remediation-plan-2026-05-02.md`.
 
 ## Artifact index
 
 - `index.md` — consolidated evidence table and current status.
-- `tls-evidence.md` — TLS verification method and results.
-- `dast-evidence.md` — DAST baseline method and results.
-- `sast-evidence.md` — SAST report template and requirements.
-- `ssdlc.md` — SSDLC summary for Zoom Beta.
+- `tls-1.2-evidence.md` — TLS verification method and results.
+- `dast-latest.md` — DAST baseline method and latest status.
+- `sast-latest.md` — SAST report template and latest status.
 - `privacy-policy.md` — privacy controls (redacted).
 - `security-policy-access-control.md` — policy: access control and least privilege.
 - `security-policy-vulnerability-management.md` — policy: vulnerability and patch management.
 - `security-policy-incident-response.md` — policy: incident response and escalation.
-- `evidence/tls-check-2026-05-02.txt` — raw output of TLS verification commands in this environment.
-
+- `evidence/tls-check-latest.txt` — latest raw output of TLS verification commands.
+- `evidence/npm-audit-latest.json` — latest production dependency vulnerability report.
+- `evidence/semgrep-latest.json` — latest SAST findings export.
+- `evidence/zap-report.md` and `evidence/zap-report.json` — latest DAST findings.
+- `evidence/remediation-plan-2026-05-02.md` — prioritized remediation plan based on current findings.
 
 ## GitHub Actions automation
 
@@ -36,7 +38,6 @@ Recommended repository variables:
 - `ZOOM_EVIDENCE_PROD_HOST` (default: `www.meetli.cc`)
 - `ZOOM_EVIDENCE_STAGE_HOST` (default: `dev.meetli.cc`)
 - `ZOOM_EVIDENCE_DAST_TARGET` (default: `https://dev.meetli.cc`)
-
 
 Compatibility docs for CI docs-check:
 - `security-policy.md`

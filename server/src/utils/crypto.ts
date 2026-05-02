@@ -39,6 +39,9 @@ export function decryptText(value: string, secret: string): string | null {
     const iv = Buffer.from(parts[0], 'hex');
     const tag = Buffer.from(parts[1], 'hex');
     const encrypted = Buffer.from(parts[2], 'hex');
+    if (iv.length !== 12 || tag.length !== 16 || encrypted.length === 0) {
+      return null;
+    }
     const key = buildEncryptionKey(secret);
     const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
     decipher.setAuthTag(tag);
