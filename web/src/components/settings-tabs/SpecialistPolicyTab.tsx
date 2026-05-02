@@ -21,6 +21,8 @@ const providerLabelById: Record<string, string> = {
   manual: 'Manual link'
 };
 
+const providerIds = ['offline', 'zoom', 'manual'];
+
 const providerPriorityOptions = [
   'offline,zoom,manual',
   'offline,manual,zoom',
@@ -31,19 +33,6 @@ const providerPriorityOptions = [
 ].map((value) => ({
   value,
   label: value.split(',').map((id) => providerLabelById[id] ?? id).join(' → ')
-}));
-
-const allowedProviderOptions = [
-  'offline,zoom,manual',
-  'offline,zoom',
-  'offline,manual',
-  'zoom,manual',
-  'offline',
-  'zoom',
-  'manual'
-].map((value) => ({
-  value,
-  label: value.split(',').map((id) => providerLabelById[id] ?? id).join(', ')
 }));
 
 export function SpecialistPolicyTab({ copy, control, isSaving, onSubmit }: Props) {
@@ -119,16 +108,31 @@ export function SpecialistPolicyTab({ copy, control, isSaving, onSubmit }: Props
       <Controller
         name="allowedMeetingProviders"
         control={control}
-        render={({ field }: any) => (
-          <FormControl fullWidth>
-            <InputLabel>{copy.allowedMeetingProviders}</InputLabel>
-            <Select {...field} label={copy.allowedMeetingProviders}>
-              {allowedProviderOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
+        render={({ field }: any) => {
+          const selectedProviders = (field.value || '').split(',').filter(Boolean);
+
+          return (
+            <FormControl fullWidth>
+              <InputLabel>{copy.allowedMeetingProviders}</InputLabel>
+              <Select
+                multiple
+                value={selectedProviders}
+                label={copy.allowedMeetingProviders}
+                onChange={(event) => {
+                  const next = [...(event.target.value as string[])].join(',');
+                  field.onChange(next);
+                }}
+                renderValue={(selected) => (selected as string[])
+                  .map((id) => providerLabelById[id] ?? id)
+                  .join(', ')}
+              >
+                {providerIds.map((providerId) => (
+                  <MenuItem key={providerId} value={providerId}>{providerLabelById[providerId]}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          );
+        }}
       />
       <Controller
         name="meetingProviderOverrideEnabled"
