@@ -24,6 +24,13 @@
 - [x] Добавить error tracking для `web` и `server`.
 - [ ] Довести audit/events для appointments (фильтрация, retention, actor context).
 
+### P1 — Zoom Beta compliance (2026-05-02)
+
+- [ ] Подготовить пакет доказательств для Zoom Beta review: SSDLC, SAST, DAST, Privacy Policy + любые 3 дополнительных security-policy документа.
+- [ ] Вынести compliance-артефакты в `docs/compliance/zoom-beta/` (redacted, без секретов) и добавить индекс evidence.
+- [ ] Добавить CI-прогоны/отчеты для SAST и DAST на staging, с датой и статусом high/critical findings.
+- [ ] Зафиксировать evidence поддержки TLS 1.2+ для всех публичных web/server endpoint'ов, связанных с Zoom OAuth/API.
+
 ### P1 — Новые задачи продукта (из заметок Vladislav, 2026-04-27 — 2026-04-28)
 
 - [ ] Интеграции встреч: добавить Google/Outlook/iCal календари, Zoom, Телемост и другие meeting providers.
