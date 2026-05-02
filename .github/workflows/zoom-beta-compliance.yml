@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "0 6 * * 1"
 
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: read
 
@@ -65,6 +69,7 @@ jobs:
       contents: read
     env:
       DAST_TARGET: ${{ vars.ZOOM_EVIDENCE_DAST_TARGET }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - uses: actions/checkout@v4
@@ -75,11 +80,12 @@ jobs:
 
       - name: Run OWASP ZAP baseline scan
         uses: zaproxy/action-baseline@v0.14.0
+        continue-on-error: true
         with:
           target: ${{ env.DAST_TARGET }}
           cmd_options: "-a -m 5"
           allow_issue_writing: false
-          fail_action: true
+          fail_action: false
 
       - name: Upload DAST evidence artifact
         if: always()

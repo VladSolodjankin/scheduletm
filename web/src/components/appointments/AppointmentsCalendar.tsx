@@ -276,7 +276,9 @@ export function AppointmentsCalendar({
                       const externalBusy = busySlotsByCell.get(key) ?? [];
                       const isPastSlot = isSlotInPast(dayKey, hour, minute, displayTimeZone);
                       const isPast = isPastDay(dayKey);
-
+                      console.log('isPast', isPast);
+                      console.log('dayKey', dayKey);
+                      console.log('isPastSlot', isPastSlot);
                       return (
                         <Box
                           key={`${key}-cell`}
