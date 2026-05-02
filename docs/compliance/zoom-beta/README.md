@@ -7,7 +7,7 @@ This directory stores redacted artifacts for Zoom Beta review.
 ## Status
 
 - [x] TLS 1.2+ evidence for `www.meetli.cc` and `dev.meetli.cc` is collected in `evidence/tls-check-latest.txt` and `evidence/tls-summary-latest.md`.
-- [x] DAST baseline evidence on staging is collected in `evidence/zap-report.md` and `evidence/zap-report.json` (current result: `High=0`, `Medium=2`).
+- [x] DAST baseline evidence on staging is collected in `evidence/zap-report.md` and `evidence/zap-report.json` (current result: `High=0`, `Medium=1`).
 - [x] Zoom Beta evidence package (structure) — SSDLC, Privacy Policy, security policy documents, and index were added.
 - [~] Full compliance-block closure — findings remediation is tracked in `evidence/remediation-plan-2026-05-02.md`.
 
