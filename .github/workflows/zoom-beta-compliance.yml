@@ -164,84 +164,84 @@ jobs:
           DATE_UTC="$(date -u +"%Y-%m-%d %H:%M:%S UTC")"
 
           cat > docs/compliance/zoom-beta/sast-latest.md <<EOF
-# SAST Latest Evidence
+          # SAST Latest Evidence
 
-Last run: ${DATE_UTC}
+          Last run: ${DATE_UTC}
 
-GitHub Actions run:
-  ${RUN_URL}
+          GitHub Actions run:
+          ${RUN_URL}
 
-Tools:
-  - npm audit
-  - Semgrep
+          Tools:
+          - npm audit
+          - Semgrep
 
-Evidence files:
-  - docs/compliance/zoom-beta/evidence/npm-audit-latest.json
-  - docs/compliance/zoom-beta/evidence/semgrep-latest.json
+          Evidence files:
+          - docs/compliance/zoom-beta/evidence/npm-audit-latest.json
+          - docs/compliance/zoom-beta/evidence/semgrep-latest.json
 
-Status:
-  - SAST evidence is generated automatically by GitHub Actions.
-  - Critical/High findings must be remediated or documented with accepted risk.
-  EOF
-  
-  cat > docs/compliance/zoom-beta/dast-latest.md <<EOF
-# DAST Latest Evidence
+          Status:
+          - SAST evidence is generated automatically by GitHub Actions.
+          - Critical/High findings must be remediated or documented with accepted risk.
+          EOF
 
-Last run: ${DATE_UTC}
+          cat > docs/compliance/zoom-beta/dast-latest.md <<EOF
+          # DAST Latest Evidence
 
-GitHub Actions run:
-  ${RUN_URL}
+          Last run: ${DATE_UTC}
 
-Tool:
-  - OWASP ZAP Baseline Scan
+          GitHub Actions run:
+          ${RUN_URL}
 
-Target:
-  - ${DAST_TARGET:-https://dev.meetli.cc}
+          Tool:
+          - OWASP ZAP Baseline Scan
 
-Evidence files:
-  - docs/compliance/zoom-beta/evidence/zap-report.html
-  - docs/compliance/zoom-beta/evidence/zap-report.md
-  - docs/compliance/zoom-beta/evidence/zap-report.json
+          Target:
+          - ${DAST_TARGET:-https://dev.meetli.cc}
 
-Status:
-  - DAST evidence is generated automatically by GitHub Actions.
-  - Review ZAP report for current alerts.
-  - Critical/High findings must be remediated before Zoom resubmission.
-  EOF
-  
-  cat > docs/compliance/zoom-beta/tls-1.2-evidence.md <<EOF
-# TLS 1.2+ Evidence
+          Evidence files:
+          - docs/compliance/zoom-beta/evidence/zap-report.html
+          - docs/compliance/zoom-beta/evidence/zap-report.md
+          - docs/compliance/zoom-beta/evidence/zap-report.json
 
-Last run: ${DATE_UTC}
+          Status:
+          - DAST evidence is generated automatically by GitHub Actions.
+          - Review ZAP report for current alerts.
+          - Critical/High findings must be remediated before Zoom resubmission.
+          EOF
 
-GitHub Actions run:
-  ${RUN_URL}
+          cat > docs/compliance/zoom-beta/tls-1.2-evidence.md <<EOF
+          # TLS 1.2+ Evidence
 
-Hosts checked:
-  - ${PROD_HOST:-www.meetli.cc}
-  - ${STAGE_HOST:-dev.meetli.cc}
+          Last run: ${DATE_UTC}
 
-Evidence files:
-  - docs/compliance/zoom-beta/evidence/tls-check-latest.txt
-  - docs/compliance/zoom-beta/evidence/tls-summary-latest.md
+          GitHub Actions run:
+          ${RUN_URL}
 
-Status:
-  - TLS 1.2+ support is verified automatically by GitHub Actions.
-  EOF
+          Hosts checked:
+          - ${PROD_HOST:-www.meetli.cc}
+          - ${STAGE_HOST:-dev.meetli.cc}
 
-- name: Commit evidence files
-  run: |
-    git config user.name "github-actions[bot]"
-    git config user.email "github-actions[bot]@users.noreply.github.com"
-    
-    git add docs/compliance/zoom-beta/sast-latest.md
-    git add docs/compliance/zoom-beta/dast-latest.md
-    git add docs/compliance/zoom-beta/tls-1.2-evidence.md
-    git add docs/compliance/zoom-beta/evidence/
-    
-    if git diff --cached --quiet; then
-      echo "No evidence changes to commit."
-    else
-      git commit -m "Update Zoom Beta compliance evidence"
-      git push
-    fi
+          Evidence files:
+          - docs/compliance/zoom-beta/evidence/tls-check-latest.txt
+          - docs/compliance/zoom-beta/evidence/tls-summary-latest.md
+
+          Status:
+          - TLS 1.2+ support is verified automatically by GitHub Actions.
+          EOF
+
+      - name: Commit evidence files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/compliance/zoom-beta/sast-latest.md
+          git add docs/compliance/zoom-beta/dast-latest.md
+          git add docs/compliance/zoom-beta/tls-1.2-evidence.md
+          git add docs/compliance/zoom-beta/evidence/
+
+          if git diff --cached --quiet; then
+            echo "No evidence changes to commit."
+          else
+            git commit -m "Update Zoom Beta compliance evidence"
+            git push
+          fi
