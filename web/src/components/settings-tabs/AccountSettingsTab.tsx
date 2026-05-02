@@ -8,6 +8,7 @@ import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
 import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
+import { LocaleSelect } from '../LocaleSelect';
 import { TimezoneSelect } from '../TimezoneSelect';
 import { BusinessLocationMap } from './BusinessLocationMap';
 
@@ -65,9 +66,19 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
         )}
       />
 
-      <Controller name="locale" control={control} render={({ field }: any) => (
-        <AppRhfTextField field={field} label={copy.locale} />
-      )} />
+      <Controller
+        name="locale"
+        control={control}
+        render={({ field }: any) => (
+          <LocaleSelect
+            label={copy.locale}
+            labelId="account-locale-label"
+            value={field.value}
+            onChange={field.onChange}
+            margin="normal"
+          />
+        )}
+      />
 
       <Controller name="businessAddress" control={control} render={({ field }: any) => (
         <AppRhfTextField field={field} label={copy.businessAddress} />
