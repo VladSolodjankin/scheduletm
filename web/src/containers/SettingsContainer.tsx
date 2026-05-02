@@ -580,6 +580,7 @@ export function SettingsContainer() {
               businessLat: t('settings.businessLat'),
               businessLng: t('settings.businessLng'),
               businessMapPreview: t('settings.businessMapPreview'),
+              selectAddress: t('settings.selectAddress'),
               mapboxTokenMissingHint: t('settings.mapboxTokenMissingHint'),
               refreshTokenTtlDays: t('settings.refreshTokenTtlDays'),
               accessTokenTtlSeconds: t('settings.accessTokenTtlSeconds'),

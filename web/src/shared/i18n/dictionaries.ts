@@ -117,6 +117,7 @@ export const dictionaries = {
       businessLat: 'Business latitude',
       businessLng: 'Business longitude',
       businessMapPreview: 'Map preview',
+      selectAddress: 'Select Address',
       mapboxTokenMissingHint: 'Set VITE_MAPBOX_PUBLIC_TOKEN to show map preview.',
       refreshTokenTtlDays: 'Refresh token TTL (days)',
       accessTokenTtlSeconds: 'Access token TTL (seconds)',
@@ -521,6 +522,7 @@ export const dictionaries = {
       businessLat: 'Широта',
       businessLng: 'Долгота',
       businessMapPreview: 'Предпросмотр на карте',
+      selectAddress: 'Выбрать адрес',
       mapboxTokenMissingHint: 'Укажите VITE_MAPBOX_PUBLIC_TOKEN, чтобы включить предпросмотр карты.',
       refreshTokenTtlDays: 'TTL refresh token (дни)',
       accessTokenTtlSeconds: 'TTL access token (сек)',
@@ -919,6 +921,7 @@ export type TranslationKey =
   | 'settings.businessLat'
   | 'settings.businessLng'
   | 'settings.businessMapPreview'
+  | 'settings.selectAddress'
   | 'settings.mapboxTokenMissingHint'
   | 'settings.refreshTokenTtlDays'
   | 'settings.accessTokenTtlSeconds'

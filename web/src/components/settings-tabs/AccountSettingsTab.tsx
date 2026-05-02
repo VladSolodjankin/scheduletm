@@ -1,5 +1,5 @@
 import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
-import { Controller, Control, useController, useWatch } from 'react-hook-form';
+import { Controller, Control, useController } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 
 import type { AccountSettings } from '../../shared/types/api';
@@ -20,7 +20,6 @@ type Props = {
 };
 
 export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSaving, onSubmit }: Props) {
-  const businessAddress = useWatch({ control, name: 'businessAddress' }) ?? '';
   const { field: businessAddressField } = useController({ control, name: 'businessAddress' });
   const { field: businessLatField } = useController({ control, name: 'businessLat' });
   const { field: businessLngField } = useController({ control, name: 'businessLng' });
@@ -78,7 +77,7 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
         <BusinessLocationMap
           initialCoordinates={typeof mapLat === 'number' && typeof mapLng === 'number' ? { lat: mapLat, lng: mapLng } : null}
           hintLabel={copy.businessMapPreview}
-          saveLabel={copy.saveSettings}
+          saveLabel={copy.selectAddress}
           onSave={({ lat, lng, fullAddress }) => {
             businessLatField.onChange(lat);
             businessLngField.onChange(lng);
