@@ -1,6 +1,19 @@
 import fs from 'fs';
 import xpath from 'xpath';
 import { DOMParser } from '@xmldom/xmldom';
+const UNSAFE_JSON_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function mergeSafeJson(target: Record<string, unknown>, source: unknown): void {
+  if (!source || typeof source !== 'object' || Array.isArray(source)) {
+    return;
+  }
+  for (const [key, value] of Object.entries(source)) {
+    if (UNSAFE_JSON_KEYS.has(key)) {
+      continue;
+    }
+    target[key] = value;
+  }
+}
 
 export function readBPMN(filePathFromRoot: string): any {
   const fullFilePath = (process.env.MS_API_ROOT || "/var/www/html/api") + filePathFromRoot;
@@ -41,8 +54,8 @@ export function getNext(doc: any, taskId: string): BPMNBlockFlow[] {
     blockAnnotations.forEach((an: string|null) => {
       try {
         let clean = (an ?? '{}').replace(/[\u0000-\u001F\u007F\u00A0\u200B\uFEFF]/g, '');
-        let anjson = JSON.parse(clean);
-        Object.assign(annotationProps, anjson);
+        const anjson = JSON.parse(clean);
+        mergeSafeJson(annotationProps, anjson);
       } catch (e: any) {
         errors.push(`${e.message} ${an}`);
         console.error("Failed to parse block annotation:", an, e);
@@ -83,7 +96,7 @@ export function getCurrent(doc: any, taskId: string): BPMNBlockFlow | null {
       const raw = a.blockText ?? "{}";
       const clean = raw.replace(/[\u0000-\u001F\u007F\u00A0\u200B\uFEFF]/g, "");
       const parsed = JSON.parse(clean);
-      Object.assign(annotationProps, parsed);
+      mergeSafeJson(annotationProps, parsed);
     } catch (e: any) {
       errors.push(`${e.message} ${a.blockText}`);
       console.error("Failed to parse block annotation:", a.blockText, e);
