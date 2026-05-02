@@ -118,7 +118,7 @@ export function SettingsCard({
   const initialTab = tabs[0]?.key ?? 'user';
   const timingOptions = ['disabled', ...[1, 2, ...Array.from({ length: 12 }, (_, i) => 4 + i * 2)].map(h => `${h}h`)];
   const selectableChannels: NotificationChannel[] = ['email', 'telegram', 'viber', 'sms', 'whatsapp'];
-  const meetingDurationOptions = Array.from({ length: 7 }, (_, i) => 30 + i * 10);
+  const meetingDurationOptions = Array.from({ length: 15 }, (_, i) => 30 + i * 5);
 
   const { control: systemControl, handleSubmit: handleSystemSubmit, reset: resetSystem } = useForm<SystemSettings>({ defaultValues: systemSettings });
   const { control: accountControl, handleSubmit: handleAccountSubmit, reset: resetAccount } = useForm<AccountSettings>({ defaultValues: accountSettings });

@@ -126,7 +126,7 @@ apiClient.interceptors.response.use((response) => {
   const status = error?.response?.status;
   const url = String(originalRequest?.url ?? '');
 
-  if (status === 401 && !originalRequest?.skipAuthRefresh && !originalRequest?._retry && !url.includes('/api/auth/refresh')) {
+  if (status === 401 && !originalRequest?.skipAuthRefresh && !originalRequest?._retry && !url.includes('/api/auth/refresh') && originalRequest) {
     originalRequest._retry = true;
     const nextAccessToken = await refreshAccessToken();
     if (nextAccessToken) {
