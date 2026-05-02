@@ -27,7 +27,6 @@ export type SettingsCardCopy = {
   businessLng: string;
   businessMapPreview: string;
   mapboxTokenMissingHint: string;
-  openMapboxSearch: string;
   refreshTokenTtlDays: string;
   accessTokenTtlSeconds: string;
   sessionCookieName: string;

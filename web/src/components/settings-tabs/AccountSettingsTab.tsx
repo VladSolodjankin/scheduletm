@@ -88,14 +88,6 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
           }}
           tokenMissingLabel={copy.mapboxTokenMissingHint}
         />
-        {businessAddress.trim() ? (
-          <AppButton
-            variant="outlined"
-            onClick={() => window.open(`https://www.openstreetmap.org/search?query=${encodeURIComponent(businessAddress.trim())}`, '_blank', 'noopener,noreferrer')}
-          >
-            {copy.openMapboxSearch}
-          </AppButton>
-        ) : null}
       </Stack>
 
       <Controller

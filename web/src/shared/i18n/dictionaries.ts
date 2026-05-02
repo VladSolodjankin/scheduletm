@@ -118,7 +118,6 @@ export const dictionaries = {
       businessLng: 'Business longitude',
       businessMapPreview: 'Map preview',
       mapboxTokenMissingHint: 'Set VITE_MAPBOX_PUBLIC_TOKEN to show map preview.',
-      openMapboxSearch: 'Open in Mapbox search',
       refreshTokenTtlDays: 'Refresh token TTL (days)',
       accessTokenTtlSeconds: 'Access token TTL (seconds)',
       sessionCookieName: 'Session cookie name',
@@ -523,7 +522,6 @@ export const dictionaries = {
       businessLng: 'Долгота',
       businessMapPreview: 'Предпросмотр на карте',
       mapboxTokenMissingHint: 'Укажите VITE_MAPBOX_PUBLIC_TOKEN, чтобы включить предпросмотр карты.',
-      openMapboxSearch: 'Открыть поиск в Mapbox',
       refreshTokenTtlDays: 'TTL refresh token (дни)',
       accessTokenTtlSeconds: 'TTL access token (сек)',
       sessionCookieName: 'Имя session cookie',
@@ -922,7 +920,6 @@ export type TranslationKey =
   | 'settings.businessLng'
   | 'settings.businessMapPreview'
   | 'settings.mapboxTokenMissingHint'
-  | 'settings.openMapboxSearch'
   | 'settings.refreshTokenTtlDays'
   | 'settings.accessTokenTtlSeconds'
   | 'settings.sessionCookieName'
