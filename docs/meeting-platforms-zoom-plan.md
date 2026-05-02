@@ -307,3 +307,18 @@
 ### Decision point
 Если цель — быстрый go-live в Marketplace, можно идти в **Published/Unlisted** без Beta.
 Если нужен именно **Beta badge/workflow**, обязательно закрываем пакет evidence выше.
+
+## UI update: specialist meeting provider selectors (2026-05-02)
+
+- Вкладка Specialist policy в настройках теперь использует dropdown для:
+  - `meeting_providers_priority`
+  - `allowed_meeting_providers`
+- В UI показываются человекочитаемые названия (`Offline`, `Zoom`, `Manual link`),
+  а в payload на backend по-прежнему уходит строка с ID провайдеров (например `offline,zoom,manual`).
+- Решение сделано в формате KISS: фиксированные MVP-наборы комбинаций для приоритета и allowed-списка.
+
+## UI update: allowed meeting providers multiselect (2026-05-02)
+
+- Поле `allowed_meeting_providers` на вкладке Specialist policy переведено в **multi-select** по отдельным провайдерам (`offline`, `zoom`, `manual`).
+- UI показывает читаемые названия провайдеров, а на backend сохраняется прежний формат строки с ID через запятую (например `offline,manual`).
+- Это упрощает поведение: пользователь отмечает нужные провайдеры напрямую, без выбора заранее подготовленных комбинаций.

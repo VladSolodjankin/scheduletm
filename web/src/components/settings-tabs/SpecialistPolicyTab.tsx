@@ -1,4 +1,4 @@
-import { FormControlLabel, Switch, Typography } from '@mui/material';
+import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, Typography } from '@mui/material';
 import { Controller, Control } from 'react-hook-form';
 
 import type { SpecialistBookingPolicy } from '../../shared/types/api';
@@ -14,6 +14,26 @@ type Props = {
   isSaving: boolean;
   onSubmit: () => void;
 };
+
+const providerLabelById: Record<string, string> = {
+  offline: 'Offline',
+  zoom: 'Zoom',
+  manual: 'Manual link'
+};
+
+const providerIds = ['offline', 'zoom', 'manual'];
+
+const providerPriorityOptions = [
+  'offline,zoom,manual',
+  'offline,manual,zoom',
+  'zoom,offline,manual',
+  'zoom,manual,offline',
+  'manual,offline,zoom',
+  'manual,zoom,offline'
+].map((value) => ({
+  value,
+  label: value.split(',').map((id) => providerLabelById[id] ?? id).join(' → ')
+}));
 
 export function SpecialistPolicyTab({ copy, control, isSaving, onSubmit }: Props) {
   return (
@@ -69,19 +89,50 @@ export function SpecialistPolicyTab({ copy, control, isSaving, onSubmit }: Props
           />
         )}
       />
+
       <Controller
         name="meetingProvidersPriority"
         control={control}
         render={({ field }: any) => (
-          <AppRhfTextField field={field} label={copy.meetingProvidersPriority} />
+          <FormControl fullWidth>
+            <InputLabel>{copy.meetingProvidersPriority}</InputLabel>
+            <Select {...field} label={copy.meetingProvidersPriority}>
+              {providerPriorityOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         )}
       />
+
       <Controller
         name="allowedMeetingProviders"
         control={control}
-        render={({ field }: any) => (
-          <AppRhfTextField field={field} label={copy.allowedMeetingProviders} />
-        )}
+        render={({ field }: any) => {
+          const selectedProviders = (field.value || '').split(',').filter(Boolean);
+
+          return (
+            <FormControl fullWidth>
+              <InputLabel>{copy.allowedMeetingProviders}</InputLabel>
+              <Select
+                multiple
+                value={selectedProviders}
+                label={copy.allowedMeetingProviders}
+                onChange={(event) => {
+                  const next = [...(event.target.value as string[])].join(',');
+                  field.onChange(next);
+                }}
+                renderValue={(selected) => (selected as string[])
+                  .map((id) => providerLabelById[id] ?? id)
+                  .join(', ')}
+              >
+                {providerIds.map((providerId) => (
+                  <MenuItem key={providerId} value={providerId}>{providerLabelById[providerId]}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          );
+        }}
       />
       <Controller
         name="meetingProviderOverrideEnabled"
