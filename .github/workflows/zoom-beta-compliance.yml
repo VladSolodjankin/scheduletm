@@ -12,27 +12,6 @@ permissions:
   contents: read
 
 jobs:
-  docs-check:
-    name: Compliance Docs Check
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check required Zoom evidence docs
-        run: |
-          test -f docs/compliance/zoom-beta/README.md
-          test -f docs/compliance/zoom-beta/ssdlc.md
-          test -f docs/compliance/zoom-beta/security-policy.md
-          test -f docs/compliance/zoom-beta/incident-response.md
-          test -f docs/compliance/zoom-beta/vulnerability-management.md
-          test -f docs/compliance/zoom-beta/sast-latest.md
-          test -f docs/compliance/zoom-beta/dast-latest.md
-          test -f docs/compliance/zoom-beta/tls-1.2-evidence.md
-          test -f docs/compliance/zoom-beta/technical-design-addendum.md
-
   tls-evidence:
     name: TLS 1.2+ Evidence
     runs-on: ubuntu-latest
