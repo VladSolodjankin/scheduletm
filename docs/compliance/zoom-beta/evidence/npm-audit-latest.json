@@ -15,11 +15,7 @@
       "nodes": [
         "node_modules/@google-cloud/firestore"
       ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.1.0",
-        "isSemVerMajor": true
-      }
+      "fixAvailable": true
     },
     "@google-cloud/storage": {
       "name": "@google-cloud/storage",
@@ -37,11 +33,7 @@
       "nodes": [
         "node_modules/@google-cloud/storage"
       ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.1.0",
-        "isSemVerMajor": true
-      }
+      "fixAvailable": true
     },
     "@tootallnate/once": {
       "name": "@tootallnate/once",
@@ -72,16 +64,12 @@
       "nodes": [
         "node_modules/@tootallnate/once"
       ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.1.0",
-        "isSemVerMajor": true
-      }
+      "fixAvailable": true
     },
     "firebase-admin": {
       "name": "firebase-admin",
       "severity": "moderate",
-      "isDirect": true,
+      "isDirect": false,
       "via": [
         "@google-cloud/firestore",
         "@google-cloud/storage",
@@ -92,11 +80,7 @@
       "nodes": [
         "node_modules/firebase-admin"
       ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.1.0",
-        "isSemVerMajor": true
-      }
+      "fixAvailable": true
     },
     "gaxios": {
       "name": "gaxios",
@@ -127,11 +111,7 @@
       "nodes": [
         "node_modules/google-gax"
       ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.1.0",
-        "isSemVerMajor": true
-      }
+      "fixAvailable": true
     },
     "http-proxy-agent": {
       "name": "http-proxy-agent",
@@ -147,11 +127,7 @@
       "nodes": [
         "node_modules/http-proxy-agent"
       ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.1.0",
-        "isSemVerMajor": true
-      }
+      "fixAvailable": true
     },
     "retry-request": {
       "name": "retry-request",
@@ -168,11 +144,7 @@
       "nodes": [
         "node_modules/retry-request"
       ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.1.0",
-        "isSemVerMajor": true
-      }
+      "fixAvailable": true
     },
     "teeny-request": {
       "name": "teeny-request",
@@ -190,11 +162,7 @@
       "nodes": [
         "node_modules/teeny-request"
       ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.1.0",
-        "isSemVerMajor": true
-      }
+      "fixAvailable": true
     },
     "uuid": {
       "name": "uuid",
@@ -234,11 +202,7 @@
         "node_modules/teeny-request/node_modules/uuid",
         "node_modules/uuid"
       ],
-      "fixAvailable": {
-        "name": "firebase-admin",
-        "version": "10.1.0",
-        "isSemVerMajor": true
-      }
+      "fixAvailable": true
     }
   },
   "metadata": {

@@ -8,9 +8,9 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Risk Level | Number of Alerts |
 | --- | --- |
 | High | 0 |
-| Medium | 2 |
+| Medium | 1 |
 | Low | 7 |
-| Informational | 10 |
+| Informational | 9 |
 
 
 
@@ -27,7 +27,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type text/plain | 20 % |
 | Info | Informational | https://dev.meetli.cc | Percentage of endpoints with method GET | 100 % |
 | Info | Informational | https://dev.meetli.cc | Count of total endpoints | 5    |
-| Info | Informational | https://dev.meetli.cc | Percentage of slow responses | 71 % |
+| Info | Informational | https://dev.meetli.cc | Percentage of slow responses | 100 % |
 
 
 
@@ -36,24 +36,22 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 | Name | Risk Level | Number of Instances |
 | --- | --- | --- |
-| Content Security Policy (CSP) Header Not Set | Medium | 3 |
-| Missing Anti-clickjacking Header | Medium | 3 |
+| CSP: Failure to Define Directive with No Fallback | Medium | 3 |
 | Cross-Origin-Embedder-Policy Header Missing or Invalid | Low | 3 |
 | Cross-Origin-Opener-Policy Header Missing or Invalid | Low | 3 |
 | Cross-Origin-Resource-Policy Header Missing or Invalid | Low | 5 |
 | Permissions Policy Header Not Set | Low | 4 |
-| Strict-Transport-Security Header Not Set | Low | Systemic |
+| Strict-Transport-Security Header Not Set | Low | 1 |
 | Timestamp Disclosure - Unix | Low | 1 |
-| X-Content-Type-Options Header Missing | Low | Systemic |
+| X-Content-Type-Options Header Missing | Low | 1 |
 | Base64 Disclosure | Informational | 7 |
 | Information Disclosure - Suspicious Comments | Informational | 1 |
 | Modern Web Application | Informational | 3 |
 | Re-examine Cache-control Directives | Informational | 4 |
-| Retrieved from Cache | Informational | 2 |
-| Sec-Fetch-Dest Header is Missing | Informational | 2 |
-| Sec-Fetch-Mode Header is Missing | Informational | 2 |
-| Sec-Fetch-Site Header is Missing | Informational | 2 |
-| Sec-Fetch-User Header is Missing | Informational | 2 |
+| Sec-Fetch-Dest Header is Missing | Informational | 4 |
+| Sec-Fetch-Mode Header is Missing | Informational | 4 |
+| Sec-Fetch-Site Header is Missing | Informational | 4 |
+| Sec-Fetch-User Header is Missing | Informational | 4 |
 | Storable and Cacheable Content | Informational | Systemic |
 
 
@@ -63,7 +61,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 
 
-### [ Content Security Policy (CSP) Header Not Set ](https://www.zaproxy.org/docs/alerts/10038/)
+### [ CSP: Failure to Define Directive with No Fallback ](https://www.zaproxy.org/docs/alerts/10055/)
 
 
 
@@ -71,103 +69,48 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 ### Description
 
-Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks, including Cross Site Scripting (XSS) and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page — covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.
+The Content Security Policy fails to define one of the directives that has no fallback. Missing/excluding them is the same as allowing anything.
 
 * URL: https://dev.meetli.cc
   * Node Name: `https://dev.meetli.cc`
   * Method: `GET`
-  * Parameter: ``
+  * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
+  * Evidence: `default-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'`
+  * Other Info: `The directive(s): form-action is/are among the directives that do not fallback to default-src.`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
-  * Parameter: ``
+  * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
+  * Evidence: `default-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'`
+  * Other Info: `The directive(s): form-action is/are among the directives that do not fallback to default-src.`
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
-  * Parameter: ``
+  * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
+  * Evidence: `default-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'`
+  * Other Info: `The directive(s): form-action is/are among the directives that do not fallback to default-src.`
 
 
 Instances: 3
 
 ### Solution
 
-Ensure that your web server, application server, load balancer, etc. is configured to set the Content-Security-Policy header.
+Ensure that your web server, application server, load balancer, etc. is properly configured to set the Content-Security-Policy header.
 
 ### Reference
 
 
-* [ https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP ](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP)
-* [ https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html ](https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html)
 * [ https://www.w3.org/TR/CSP/ ](https://www.w3.org/TR/CSP/)
-* [ https://w3c.github.io/webappsec-csp/ ](https://w3c.github.io/webappsec-csp/)
-* [ https://web.dev/articles/csp ](https://web.dev/articles/csp)
-* [ https://caniuse.com/#feat=contentsecuritypolicy ](https://caniuse.com/#feat=contentsecuritypolicy)
+* [ https://caniuse.com/#search=content+security+policy ](https://caniuse.com/#search=content+security+policy)
 * [ https://content-security-policy.com/ ](https://content-security-policy.com/)
+* [ https://github.com/HtmlUnit/htmlunit-csp ](https://github.com/HtmlUnit/htmlunit-csp)
+* [ https://web.dev/articles/csp#resource-options ](https://web.dev/articles/csp#resource-options)
 
 
 #### CWE Id: [ 693 ](https://cwe.mitre.org/data/definitions/693.html)
-
-
-#### WASC Id: 15
-
-#### Source ID: 3
-
-### [ Missing Anti-clickjacking Header ](https://www.zaproxy.org/docs/alerts/10020/)
-
-
-
-##### Medium (Medium)
-
-### Description
-
-The response does not protect against 'ClickJacking' attacks. It should include either Content-Security-Policy with 'frame-ancestors' directive or X-Frame-Options.
-
-* URL: https://dev.meetli.cc
-  * Node Name: `https://dev.meetli.cc`
-  * Method: `GET`
-  * Parameter: `x-frame-options`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: https://dev.meetli.cc/
-  * Node Name: `https://dev.meetli.cc/`
-  * Method: `GET`
-  * Parameter: `x-frame-options`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: https://dev.meetli.cc/sitemap.xml
-  * Node Name: `https://dev.meetli.cc/sitemap.xml`
-  * Method: `GET`
-  * Parameter: `x-frame-options`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-
-
-Instances: 3
-
-### Solution
-
-Modern Web browsers support the Content-Security-Policy and X-Frame-Options HTTP headers. Ensure one of them is set on all web pages returned by your site/app.
-If you expect the page to be framed only by pages on your server (e.g. it's part of a FRAMESET) then you'll want to use SAMEORIGIN, otherwise if you never expect the page to be framed, you should use DENY. Alternatively consider implementing Content Security Policy's "frame-ancestors" directive.
-
-### Reference
-
-
-* [ https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options ](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Frame-Options)
-
-
-#### CWE Id: [ 1021 ](https://cwe.mitre.org/data/definitions/1021.html)
 
 
 #### WASC Id: 15
@@ -374,8 +317,8 @@ Permissions Policy Header is an added layer of security that helps to restrict f
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
-* URL: https://dev.meetli.cc/assets/index-BX69s5fb.js
-  * Node Name: `https://dev.meetli.cc/assets/index-BX69s5fb.js`
+* URL: https://dev.meetli.cc/assets/index-DDzlBgBt.js
+  * Node Name: `https://dev.meetli.cc/assets/index-DDzlBgBt.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -423,27 +366,6 @@ Ensure that your web server, application server, load balancer, etc. is configur
 
 HTTP Strict Transport Security (HSTS) is a web security policy mechanism whereby a web server declares that complying user agents (such as a web browser) are to interact with it using only secure HTTPS connections (i.e. HTTP layered over TLS/SSL). HSTS is an IETF standards track protocol and is specified in RFC 6797.
 
-* URL: https://dev.meetli.cc
-  * Node Name: `https://dev.meetli.cc`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: https://dev.meetli.cc/
-  * Node Name: `https://dev.meetli.cc/`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
-  * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -451,16 +373,9 @@ HTTP Strict Transport Security (HSTS) is a web security policy mechanism whereby
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
-* URL: https://dev.meetli.cc/sitemap.xml
-  * Node Name: `https://dev.meetli.cc/sitemap.xml`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
 
-Instances: Systemic
 
+Instances: 1
 
 ### Solution
 
@@ -493,8 +408,8 @@ Ensure that your web server, application server, load balancer, etc. is configur
 
 A timestamp was disclosed by the application/web server. - Unix
 
-* URL: https://dev.meetli.cc/assets/index-BX69s5fb.js
-  * Node Name: `https://dev.meetli.cc/assets/index-BX69s5fb.js`
+* URL: https://dev.meetli.cc/assets/index-DDzlBgBt.js
+  * Node Name: `https://dev.meetli.cc/assets/index-DDzlBgBt.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -531,30 +446,6 @@ Manually confirm that the timestamp data is not sensitive, and that the data can
 
 The Anti-MIME-Sniffing header X-Content-Type-Options was not set to 'nosniff'. This allows older versions of Internet Explorer and Chrome to perform MIME-sniffing on the response body, potentially causing the response body to be interpreted and displayed as a content type other than the declared content type. Current (early 2014) and legacy versions of Firefox will use the declared content type (if one is set), rather than performing MIME-sniffing.
 
-* URL: https://dev.meetli.cc
-  * Node Name: `https://dev.meetli.cc`
-  * Method: `GET`
-  * Parameter: `x-content-type-options`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: `This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.
-At "High" threshold this scan rule will not alert on client or server error responses.`
-* URL: https://dev.meetli.cc/
-  * Node Name: `https://dev.meetli.cc/`
-  * Method: `GET`
-  * Parameter: `x-content-type-options`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: `This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.
-At "High" threshold this scan rule will not alert on client or server error responses.`
-* URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
-  * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
-  * Method: `GET`
-  * Parameter: `x-content-type-options`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: `This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.
-At "High" threshold this scan rule will not alert on client or server error responses.`
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -563,17 +454,9 @@ At "High" threshold this scan rule will not alert on client or server error resp
   * Evidence: ``
   * Other Info: `This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.
 At "High" threshold this scan rule will not alert on client or server error responses.`
-* URL: https://dev.meetli.cc/sitemap.xml
-  * Node Name: `https://dev.meetli.cc/sitemap.xml`
-  * Method: `GET`
-  * Parameter: `x-content-type-options`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: `This issue still applies to error type pages (401, 403, 500, etc.) as those pages are often still affected by injection issues, in which case there is still concern for browsers sniffing pages away from their actual content type.
-At "High" threshold this scan rule will not alert on client or server error responses.`
 
-Instances: Systemic
 
+Instances: 1
 
 ### Solution
 
@@ -609,36 +492,36 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-iad-kiad7000023-IAD`
-  * Other Info: `}�-�/�i�^�&��H�w�4�M���`
+  * Evidence: `fastly/cache-chi-klot8100160-CHI`
+  * Other Info: `}�-�/�i�^��b�Ih��t�^��!�`
 * URL: https://dev.meetli.cc
   * Node Name: `https://dev.meetli.cc`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-iad-kiad7000151-IAD`
-  * Other Info: `}�-�/�i�^�&��H�w�4�^u��`
+  * Evidence: `fastly/cache-chi-klot8100173-CHI`
+  * Other Info: `}�-�/�i�^��b�Ih��t�^��!�`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-iad-kiad7000075-IAD`
-  * Other Info: `}�-�/�i�^�&��H�w�4�N���`
-* URL: https://dev.meetli.cc/assets/index-BX69s5fb.js
-  * Node Name: `https://dev.meetli.cc/assets/index-BX69s5fb.js`
+  * Evidence: `2FChEwuA9YuOKQPr2pGebthKW7edHabPgYPdbXDSoKxcpEjZ`
+  * Other Info: `�P�����)�ڑ�n�J[���ρ��mpҠ�\�H�`
+* URL: https://dev.meetli.cc/assets/index-DDzlBgBt.js
+  * Node Name: `https://dev.meetli.cc/assets/index-DDzlBgBt.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FhG2jrWNomy1ktUOyNZdUidlUYANGzESE7`
-  * Other Info: `�XF�:�6���KT;#YuH��F 4l�HN`
+  * Evidence: `fastly/cache-chi-klot8100168-CHI`
+  * Other Info: `}�-�/�i�^��b�Ih��t�^��!�`
 * URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
   * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-iad-kiad7000169-IAD`
-  * Other Info: `}�-�/�i�^�&��H�w�4�^���`
+  * Evidence: `fastly/cache-chi-klot8100082-CHI`
+  * Other Info: `}�-�/�i�^��b�Ih��t�O6�!�`
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -651,8 +534,8 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-iad-kiad7000072-IAD`
-  * Other Info: `}�-�/�i�^�&��H�w�4�N���`
+  * Evidence: `fastly/cache-chi-klot8100151-CHI`
+  * Other Info: `}�-�/�i�^��b�Ih��t�^u�!�`
 
 
 Instances: 7
@@ -684,8 +567,8 @@ Manually confirm that the Base64 data does not leak sensitive information, and t
 
 The response appears to contain suspicious comments which may help an attacker.
 
-* URL: https://dev.meetli.cc/assets/index-BX69s5fb.js
-  * Node Name: `https://dev.meetli.cc/assets/index-BX69s5fb.js`
+* URL: https://dev.meetli.cc/assets/index-DDzlBgBt.js
+  * Node Name: `https://dev.meetli.cc/assets/index-DDzlBgBt.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -725,21 +608,21 @@ The application appears to be a modern web application. If you need to explore i
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `<script type="module" crossorigin src="/assets/index-BX69s5fb.js"></script>`
+  * Evidence: `<script type="module" crossorigin src="/assets/index-DDzlBgBt.js"></script>`
   * Other Info: `No links have been found while there are scripts, which is an indication that this is a modern web application.`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `<script type="module" crossorigin src="/assets/index-BX69s5fb.js"></script>`
+  * Evidence: `<script type="module" crossorigin src="/assets/index-DDzlBgBt.js"></script>`
   * Other Info: `No links have been found while there are scripts, which is an indication that this is a modern web application.`
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `<script type="module" crossorigin src="/assets/index-BX69s5fb.js"></script>`
+  * Evidence: `<script type="module" crossorigin src="/assets/index-DDzlBgBt.js"></script>`
   * Other Info: `No links have been found while there are scripts, which is an indication that this is a modern web application.`
 
 
@@ -817,55 +700,6 @@ For secure content, ensure the cache-control HTTP header is set with "no-cache, 
 
 #### Source ID: 3
 
-### [ Retrieved from Cache ](https://www.zaproxy.org/docs/alerts/10050/)
-
-
-
-##### Informational (Medium)
-
-### Description
-
-The content was retrieved from a shared cache. If the response data is sensitive, personal or user-specific, this may result in sensitive information being leaked. In some cases, this may even result in a user gaining complete control of the session of another user, depending on the configuration of the caching components in use in their environment. This is primarily an issue where caching servers such as "proxy" caches are configured on the local network. This configuration is typically found in corporate or educational environments, for instance.
-
-* URL: https://dev.meetli.cc/assets/index-BX69s5fb.js
-  * Node Name: `https://dev.meetli.cc/assets/index-BX69s5fb.js`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: `Age: 2154`
-  * Other Info: `The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use.`
-* URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
-  * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: `Age: 2154`
-  * Other Info: `The presence of the 'Age' header indicates that a HTTP/1.1 compliant caching server is in use.`
-
-
-Instances: 2
-
-### Solution
-
-Validate that the response does not contain sensitive, personal or user-specific information. If it does, consider the use of the following HTTP response headers, to limit, or prevent the content being stored and retrieved from the cache by another user:
-Cache-Control: no-cache, no-store, must-revalidate, private
-Pragma: no-cache
-Expires: 0
-This configuration directs both HTTP 1.0 and HTTP 1.1 compliant caching servers to not store the response, and to not retrieve the response (without validation) from the cache, in response to a similar request.
-
-### Reference
-
-
-* [ https://datatracker.ietf.org/doc/html/rfc7234 ](https://datatracker.ietf.org/doc/html/rfc7234)
-* [ https://datatracker.ietf.org/doc/html/rfc7231 ](https://datatracker.ietf.org/doc/html/rfc7231)
-* [ https://www.rfc-editor.org/rfc/rfc9110.html ](https://www.rfc-editor.org/rfc/rfc9110.html)
-
-
-#### CWE Id: [ 525 ](https://cwe.mitre.org/data/definitions/525.html)
-
-
-#### Source ID: 3
-
 ### [ Sec-Fetch-Dest Header is Missing ](https://www.zaproxy.org/docs/alerts/90005/)
 
 
@@ -883,6 +717,13 @@ Specifies how and where the data would be used. For instance, if the value is au
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
+  * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-Dest`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -890,9 +731,16 @@ Specifies how and where the data would be used. For instance, if the value is au
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/sitemap.xml
+  * Node Name: `https://dev.meetli.cc/sitemap.xml`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-Dest`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 
 
-Instances: 2
+Instances: 4
 
 ### Solution
 
@@ -928,6 +776,13 @@ Allows to differentiate between requests for navigating between HTML pages and r
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
+  * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-Mode`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -935,9 +790,16 @@ Allows to differentiate between requests for navigating between HTML pages and r
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/sitemap.xml
+  * Node Name: `https://dev.meetli.cc/sitemap.xml`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-Mode`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 
 
-Instances: 2
+Instances: 4
 
 ### Solution
 
@@ -973,6 +835,13 @@ Specifies the relationship between request initiator's origin and target's origi
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
+  * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-Site`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -980,9 +849,16 @@ Specifies the relationship between request initiator's origin and target's origi
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/sitemap.xml
+  * Node Name: `https://dev.meetli.cc/sitemap.xml`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-Site`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 
 
-Instances: 2
+Instances: 4
 
 ### Solution
 
@@ -1018,6 +894,13 @@ Specifies if a navigation request was initiated by a user.
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
+  * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-User`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -1025,9 +908,16 @@ Specifies if a navigation request was initiated by a user.
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/sitemap.xml
+  * Node Name: `https://dev.meetli.cc/sitemap.xml`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-User`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 
 
-Instances: 2
+Instances: 4
 
 ### Solution
 
