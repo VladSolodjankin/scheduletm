@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run lint && npm run typecheck && vite",
+    "dev": "vite && npm run lint && npm run typecheck",
     "build": "npm run lint && tsc -p tsconfig.json && vite build",
     "start": "serve -s dist -l tcp://0.0.0.0:$PORT",
     "typecheck": "tsc --noEmit",
@@ -12,7 +12,6 @@
     "test:e2e:contracts": "node --test tests/e2e/*.test.mjs",
     "test:e2e:ui": "node --env-file=.dev.env ../node_modules/@playwright/test/cli.js test --config=playwright.config.mjs",
     "test:e2e": "npm run test:e2e:contracts && npm run test:e2e:ui",
-    "migrate:latest": "node -e \"console.log('web: migrations are not required')\"",
     "verify": "npm run migrate:latest && npm run test",
     "lint": "eslint ."
   },
