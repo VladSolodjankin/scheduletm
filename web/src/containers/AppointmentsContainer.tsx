@@ -368,7 +368,7 @@ export function AppointmentsContainer() {
     setIsSubmittingForm(true);
 
     try {
-      if (!editingItem && new Date(payload.appointmentAt).getTime() < Date.now()) {
+      if (new Date(payload.appointmentAt).getTime() < Date.now()) {
         showPastSlotError();
         return;
       }
