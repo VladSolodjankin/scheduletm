@@ -102,13 +102,18 @@ export function IntegrationsSettingsTab({
       </Typography>
 
       {shouldShowTelegramTokenField && (
-        <Controller
-          name="telegramBotToken"
-          control={control}
-          render={({ field }: any) => (
-            <AppRhfSecretKeyField field={field} label={copy.telegramBotToken} autoComplete="off" />
-          )}
-        />
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-end' }}>
+          <Controller
+            name="telegramBotToken"
+            control={control}
+            render={({ field }: any) => (
+              <AppRhfSecretKeyField field={field} label={copy.telegramBotToken} autoComplete="off" />
+            )}
+          />
+          <AppButton type="submit" isLoading={isSaving}>
+            {userSettings.telegramBotConnected ? copy.saveSettings : copy.integrateTelegramBot}
+          </AppButton>
+        </Stack>
       )}
 
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
@@ -209,9 +214,6 @@ export function IntegrationsSettingsTab({
         )}
       </Stack>
 
-      <AppButton type="submit" isLoading={isSaving}>
-        {copy.saveSettings}
-      </AppButton>
 
       {userSettings.telegramBotConnected && (
         <AppButton

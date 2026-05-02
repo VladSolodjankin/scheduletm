@@ -600,6 +600,7 @@ export function SettingsContainer() {
               telegramBotNotConnected: t('settings.telegramBotNotConnected'),
               editTelegramBotToken: t('settings.editTelegramBotToken'),
               clearTelegramBotToken: t('settings.clearTelegramBotToken'),
+              integrateTelegramBot: t('settings.integrateTelegramBot'),
               specialistPolicyTitle: t('settings.specialistPolicyTitle'),
               cancelGracePeriodHours: t('settings.cancelGracePeriodHours'),
               refundOnLateCancel: t('settings.refundOnLateCancel'),

@@ -49,6 +49,7 @@ export type SettingsCardCopy = {
   telegramBotNotConnected: string;
   editTelegramBotToken: string;
   clearTelegramBotToken: string;
+  integrateTelegramBot: string;
   specialistPolicyTitle: string;
   cancelGracePeriodHours: string;
   refundOnLateCancel: string;
