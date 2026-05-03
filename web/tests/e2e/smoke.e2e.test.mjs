@@ -11,7 +11,7 @@ describe('web smoke (auth/settings/specialists/appointments/specialist booking p
     const router = await read('src/app/router.tsx');
 
     assert.match(router, /path:\s*'\/login'/);
-    assert.match(router, /path:\s*'\/settings'/);
+    assert.match(router, /path:\s*'\/settings\/:tab\?'/);
     assert.match(router, /path:\s*'\/specialists'/);
     assert.match(router, /path:\s*'\/appointments'/);
     assert.match(router, /ProtectedRoute/);
@@ -31,6 +31,8 @@ describe('web smoke (auth/settings/specialists/appointments/specialist booking p
     const appointmentDialog = await read('src/components/appointments/AppointmentFormDialog.tsx');
     const specialistsTable = await read('src/components/specialists/SpecialistsTable.tsx');
     const settingsCard = await read('src/components/SettingsCard.tsx');
+    const settingsCardTypes = await read('src/components/SettingsCard.types.ts');
+    const specialistPolicyTab = await read('src/components/settings-tabs/SpecialistPolicyTab.tsx');
 
     assert.match(settingsContainer, /'\/api\/settings\/user'/);
     assert.match(settingsContainer, /'\/api\/settings\/system'/);
@@ -49,11 +51,13 @@ describe('web smoke (auth/settings/specialists/appointments/specialist booking p
     assert.match(appointmentDialog, /appointments\.markPaidAction/);
     assert.match(appointmentDialog, /appointments\.notifyAction/);
 
-    assert.match(settingsCard, /specialistPolicyTitle/);
-    assert.match(settingsCard, /cancelGracePeriodHours/);
-    assert.match(settingsCard, /refundOnLateCancel/);
-    assert.match(settingsCard, /autoCancelUnpaidEnabled/);
-    assert.match(settingsCard, /unpaidAutoCancelAfterHours/);
+    assert.match(settingsCard, /specialistPolicyTab/);
+    assert.match(settingsCardTypes, /specialistPolicyTitle:\s*string;/);
+    assert.match(specialistPolicyTab, /copy\.specialistPolicyTitle/);
+    assert.match(specialistPolicyTab, /copy\.cancelGracePeriodHours/);
+    assert.match(specialistPolicyTab, /copy\.refundOnLateCancel/);
+    assert.match(specialistPolicyTab, /copy\.autoCancelUnpaidEnabled/);
+    assert.match(specialistPolicyTab, /copy\.unpaidAutoCancelAfterHours/);
     assert.match(specialistsTable, /AppIcons\.edit/);
     assert.match(specialistsTable, /AppIcons\.delete/);
   });
