@@ -105,6 +105,22 @@ export type AccountNotificationDefault = {
   frequency: NotificationFrequency;
 };
 
+export type SettingsScopeAccount = {
+  id: number;
+  name: string;
+};
+
+export type SettingsScopeSpecialist = {
+  id: number;
+  accountId: number;
+  name: string;
+};
+
+export type SettingsScopeOptionsResponse = {
+  accounts: SettingsScopeAccount[];
+  specialists: SettingsScopeSpecialist[];
+};
+
 export type GoogleOAuthStartResponse = {
   provider: 'google';
   authorizeUrl: string;

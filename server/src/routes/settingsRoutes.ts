@@ -21,6 +21,7 @@ import {
   getAccountNotificationDefaults,
   getClientNotificationSettings,
   getEffectiveNotificationSetting,
+  getSettingsScopeOptions,
   getSpecialistNotificationSettings,
   putClientNotificationSettings,
   putAccountNotificationDefaults,
@@ -28,6 +29,15 @@ import {
 } from '../services/settingsService.js';
 
 export const settingsRoutes = Router();
+
+function parsePositiveInt(value: unknown): number | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
 
 settingsRoutes.get('/system', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
@@ -52,13 +62,28 @@ settingsRoutes.put('/system', requireAccessToken, async (req, res) => {
   return res.json(updated);
 });
 
+settingsRoutes.get('/scope-options', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const options = await getSettingsScopeOptions(user);
+  if (!options) {
+    return res.status(403).json({ message: t(req, 'forbiddenSystemSettings') });
+  }
+
+  return res.json(options);
+});
+
 settingsRoutes.get('/account', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
   if (!canManageAccountSettings(user.role)) {
     return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
   }
 
-  return res.json(await getAccountSettings(user));
+  const settings = await getAccountSettings(user, parsePositiveInt(req.query.accountId));
+  if (!settings) {
+    return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
+  }
+
+  return res.json(settings);
 });
 
 settingsRoutes.put('/account', requireAccessToken, async (req, res) => {
@@ -67,7 +92,7 @@ settingsRoutes.put('/account', requireAccessToken, async (req, res) => {
     return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
   }
 
-  const updated = await updateAccountSettings(user, req.body);
+  const updated = await updateAccountSettings(user, req.body, parsePositiveInt(req.query.accountId));
   if (!updated) {
     return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
   }
@@ -82,7 +107,12 @@ settingsRoutes.get('/account-notification-defaults', requireAccessToken, async (
     return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
   }
 
-  return res.json({ items: await getAccountNotificationDefaults(user) });
+  const items = await getAccountNotificationDefaults(user, parsePositiveInt(req.query.accountId));
+  if (!items) {
+    return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
+  }
+
+  return res.json({ items });
 });
 
 settingsRoutes.put('/account-notification-defaults', requireAccessToken, async (req, res) => {
@@ -91,7 +121,7 @@ settingsRoutes.put('/account-notification-defaults', requireAccessToken, async (
     return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
   }
 
-  const items = await putAccountNotificationDefaults(user, req.body);
+  const items = await putAccountNotificationDefaults(user, req.body, parsePositiveInt(req.query.accountId));
   if (!items) {
     return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
   }
@@ -101,8 +131,8 @@ settingsRoutes.put('/account-notification-defaults', requireAccessToken, async (
 
 settingsRoutes.get('/specialist-notification-settings', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  const specialistId = typeof req.query.specialistId === 'string' ? Number(req.query.specialistId) : undefined;
-  const items = await getSpecialistNotificationSettings(user, Number.isFinite(specialistId) ? specialistId : undefined);
+  const specialistId = parsePositiveInt(req.query.specialistId);
+  const items = await getSpecialistNotificationSettings(user, specialistId);
 
   if (!items) {
     return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
@@ -113,10 +143,10 @@ settingsRoutes.get('/specialist-notification-settings', requireAccessToken, asyn
 
 settingsRoutes.put('/specialist-notification-settings', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  const specialistId = typeof req.query.specialistId === 'string' ? Number(req.query.specialistId) : undefined;
+  const specialistId = parsePositiveInt(req.query.specialistId);
   const items = await putSpecialistNotificationSettings(
     user,
-    Number.isFinite(specialistId) ? specialistId : undefined,
+    specialistId,
     req.body,
   );
 
@@ -129,8 +159,8 @@ settingsRoutes.put('/specialist-notification-settings', requireAccessToken, asyn
 
 settingsRoutes.get('/client-notification-settings', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  const clientId = typeof req.query.clientId === 'string' ? Number(req.query.clientId) : undefined;
-  const items = await getClientNotificationSettings(user, Number.isFinite(clientId) ? clientId : undefined);
+  const clientId = parsePositiveInt(req.query.clientId);
+  const items = await getClientNotificationSettings(user, clientId);
 
   if (!items) {
     return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
@@ -141,8 +171,8 @@ settingsRoutes.get('/client-notification-settings', requireAccessToken, async (r
 
 settingsRoutes.put('/client-notification-settings', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  const clientId = typeof req.query.clientId === 'string' ? Number(req.query.clientId) : undefined;
-  const items = await putClientNotificationSettings(user, Number.isFinite(clientId) ? clientId : undefined, req.body);
+  const clientId = parsePositiveInt(req.query.clientId);
+  const items = await putClientNotificationSettings(user, clientId, req.body);
 
   if (!items) {
     return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
@@ -154,8 +184,8 @@ settingsRoutes.put('/client-notification-settings', requireAccessToken, async (r
 settingsRoutes.get('/effective-notification-setting', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
   const notificationType = req.query.notificationType;
-  const specialistId = typeof req.query.specialistId === 'string' ? Number(req.query.specialistId) : undefined;
-  const clientId = typeof req.query.clientId === 'string' ? Number(req.query.clientId) : undefined;
+  const specialistId = parsePositiveInt(req.query.specialistId);
+  const clientId = parsePositiveInt(req.query.clientId);
   const supported = notificationType === 'appointment_created'
     || notificationType === 'appointment_reminder'
     || notificationType === 'payment_reminder';
@@ -167,8 +197,8 @@ settingsRoutes.get('/effective-notification-setting', requireAccessToken, async 
   const item = await getEffectiveNotificationSetting(
     user,
     notificationType,
-    Number.isFinite(specialistId) ? specialistId : undefined,
-    Number.isFinite(clientId) ? clientId : undefined,
+    specialistId,
+    clientId,
   );
 
   if (!item) {
@@ -199,13 +229,13 @@ settingsRoutes.get('/specialist-booking-policy', requireAccessToken, async (req,
     return res.status(403).json({ message: t(req, 'forbiddenSpecialistBookingPolicySettings') });
   }
 
-  const specialistId = typeof req.query.specialistId === 'string'
-    ? Number(req.query.specialistId)
-    : undefined;
+  const specialistId = parsePositiveInt(req.query.specialistId);
+  const accountId = parsePositiveInt(req.query.accountId);
 
   const policy = await getSpecialistBookingPolicy(
     user,
-    Number.isFinite(specialistId) ? specialistId : undefined,
+    specialistId,
+    accountId,
   );
 
   if (!policy) {
@@ -221,14 +251,14 @@ settingsRoutes.put('/specialist-booking-policy', requireAccessToken, async (req,
     return res.status(403).json({ message: t(req, 'forbiddenSpecialistBookingPolicySettings') });
   }
 
-  const specialistId = typeof req.query.specialistId === 'string'
-    ? Number(req.query.specialistId)
-    : undefined;
+  const specialistId = parsePositiveInt(req.query.specialistId);
+  const accountId = parsePositiveInt(req.query.accountId);
 
   const updated = await updateSpecialistBookingPolicy(
     user,
-    Number.isFinite(specialistId) ? specialistId : undefined,
+    specialistId,
     req.body,
+    accountId,
   );
   if (!updated) {
     return res.status(400).json({ message: t(req, 'invalidPayloadSpecialistBookingPolicy') });

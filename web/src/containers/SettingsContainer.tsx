@@ -1,4 +1,4 @@
-import { Alert, Box, Skeleton, Stack } from '@mui/material';
+import { Alert, Box, Card, CardContent, FormControl, InputLabel, MenuItem, Select, Skeleton, Stack } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
@@ -12,6 +12,9 @@ import type {
   AccountSettings,
   GoogleOAuthDisconnectResponse,
   GoogleOAuthStartResponse,
+  SettingsScopeAccount,
+  SettingsScopeOptionsResponse,
+  SettingsScopeSpecialist,
   ZoomOAuthStartResponse,
   SpecialistBookingPolicy,
   SystemSettings,
@@ -89,6 +92,9 @@ export function SettingsContainer() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [specialistBookingPolicy, setSpecialistBookingPolicy] = useState<SpecialistBookingPolicy>(defaultSpecialistBookingPolicy);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | null>(null);
+  const [scopeAccounts, setScopeAccounts] = useState<SettingsScopeAccount[]>([]);
+  const [scopeSpecialists, setScopeSpecialists] = useState<SettingsScopeSpecialist[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
   const [accountNotificationDefaults, setAccountNotificationDefaults] = useState<AccountNotificationDefault[]>(defaultAccountNotificationDefaults);
   const [isSavingNotificationDefaults, setIsSavingNotificationDefaults] = useState(false);
 
@@ -104,6 +110,13 @@ export function SettingsContainer() {
   const canManageAccountSettings = user?.role === 'owner' || user?.role === 'admin';
   const canManageSpecialistBookingPolicy =
     user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
+  const isOwner = user?.role === 'owner';
+
+  const filteredScopeSpecialists = useMemo(() => (
+    selectedAccountId
+      ? scopeSpecialists.filter((item) => item.accountId === selectedAccountId)
+      : scopeSpecialists
+  ), [scopeSpecialists, selectedAccountId]);
 
   const allowedTabs = useMemo(() => ([
     ...(canManageSystemSettings ? ['system'] : []),
@@ -181,6 +194,26 @@ export function SettingsContainer() {
       setIsLoadingSettings(true);
 
       try {
+        let resolvedAccountId = selectedAccountId;
+        let resolvedScopeSpecialists: SettingsScopeSpecialist[] = [];
+
+        if (isOwner) {
+          const scopeResponse = await apiClient.get<SettingsScopeOptionsResponse>('/api/settings/scope-options', {
+            headers: authHeaders(accessToken)
+          });
+          resolvedScopeSpecialists = scopeResponse.data.specialists;
+          setScopeAccounts(scopeResponse.data.accounts);
+          setScopeSpecialists(scopeResponse.data.specialists);
+
+          resolvedAccountId = selectedAccountId
+            ?? scopeResponse.data.accounts[0]?.id
+            ?? null;
+
+          if (resolvedAccountId !== selectedAccountId) {
+            setSelectedAccountId(resolvedAccountId);
+          }
+        }
+
         const userResponse = await apiClient.get<UserSettings>('/api/settings/user', {
           headers: authHeaders(accessToken)
         });
@@ -188,12 +221,14 @@ export function SettingsContainer() {
 
         if (canManageAccountSettings) {
           const accountResponse = await apiClient.get<AccountSettings>('/api/settings/account', {
-            headers: authHeaders(accessToken)
+            headers: authHeaders(accessToken),
+            params: resolvedAccountId ? { accountId: resolvedAccountId } : undefined
           });
           setAccountSettings(accountResponse.data);
 
           const notificationDefaultsResponse = await apiClient.get<{ items: AccountNotificationDefault[] }>('/api/settings/account-notification-defaults', {
-            headers: authHeaders(accessToken)
+            headers: authHeaders(accessToken),
+            params: resolvedAccountId ? { accountId: resolvedAccountId } : undefined
           });
           setAccountNotificationDefaults(notificationDefaultsResponse.data.items);
         }
@@ -209,19 +244,29 @@ export function SettingsContainer() {
           const specialistId = user?.role === 'specialist'
             ? null
             : await (async () => {
-              const specialistsResponse = await apiClient.get<{
-                specialists: Array<{ id: number }>;
-              }>('/api/specialists', { headers: authHeaders(accessToken) });
-              const first = specialistsResponse.data.specialists[0]?.id ?? null;
-              setSelectedSpecialistId(first);
+              const specialists = isOwner
+                ? resolvedScopeSpecialists.filter((item) => !resolvedAccountId || item.accountId === resolvedAccountId)
+                : (await apiClient.get<{ specialists: Array<{ id: number }> }>('/api/specialists', { headers: authHeaders(accessToken) })).data.specialists;
+              const stillValid = selectedSpecialistId
+                ? specialists.some((specialist) => specialist.id === selectedSpecialistId)
+                : false;
+              const first = stillValid ? selectedSpecialistId : (specialists[0]?.id ?? null);
+              if (first !== selectedSpecialistId) {
+                setSelectedSpecialistId(first);
+              }
               return first;
             })();
 
-          const policyResponse = await apiClient.get<SpecialistBookingPolicy>('/api/settings/specialist-booking-policy', {
-            headers: authHeaders(accessToken),
-            params: specialistId ? { specialistId } : undefined
-          });
-          setSpecialistBookingPolicy(policyResponse.data);
+          if (user?.role === 'specialist' || specialistId) {
+            const policyResponse = await apiClient.get<SpecialistBookingPolicy>('/api/settings/specialist-booking-policy', {
+              headers: authHeaders(accessToken),
+              params: {
+                ...(resolvedAccountId ? { accountId: resolvedAccountId } : {}),
+                ...(specialistId ? { specialistId } : {}),
+              }
+            });
+            setSpecialistBookingPolicy(policyResponse.data);
+          }
         }
       } catch (err) {
         setError(resolveApiError(err, {
@@ -234,7 +279,7 @@ export function SettingsContainer() {
     };
 
     void load();
-  }, [accessToken, canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, navigate, t, user?.role]);
+  }, [accessToken, canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, isOwner, navigate, selectedAccountId, selectedSpecialistId, t, user?.role]);
 
   const saveSystemSettings = async (nextSettings: SystemSettings) => {
     if (!accessToken || !canManageSystemSettings) {
@@ -271,7 +316,7 @@ export function SettingsContainer() {
       const response = await apiClient.put<{ items: AccountNotificationDefault[] }>(
         '/api/settings/account-notification-defaults',
         { items },
-        { headers: authHeaders(accessToken) }
+        { headers: authHeaders(accessToken), params: selectedAccountId ? { accountId: selectedAccountId } : undefined }
       );
       setAccountNotificationDefaults(response.data.items);
       setError('');
@@ -296,7 +341,8 @@ export function SettingsContainer() {
 
     try {
       const response = await apiClient.put<AccountSettings>('/api/settings/account', nextSettings, {
-        headers: authHeaders(accessToken)
+        headers: authHeaders(accessToken),
+        params: selectedAccountId ? { accountId: selectedAccountId } : undefined
       });
       setAccountSettings(response.data);
       setError('');
@@ -379,7 +425,10 @@ export function SettingsContainer() {
       const params = user?.role === 'specialist'
         ? undefined
         : selectedSpecialistId
-          ? { specialistId: selectedSpecialistId }
+          ? {
+            ...(selectedAccountId ? { accountId: selectedAccountId } : {}),
+            specialistId: selectedSpecialistId,
+          }
           : undefined;
       const response = await apiClient.put<SpecialistBookingPolicy>(
         '/api/settings/specialist-booking-policy',
@@ -524,7 +573,54 @@ export function SettingsContainer() {
   };
 
   return (
-    <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')} maxWidth={800}>
+    <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')} maxWidth={900}>
+      {isOwner && (
+        <Card variant="outlined" sx={{ mb: 2, borderRadius: 2 }}>
+          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <FormControl size="small" sx={{ width: { xs: '100%', sm: 320 } }}>
+                <InputLabel id="settings-account-filter">{t('settings.scopeAccount')}</InputLabel>
+                <Select
+                  labelId="settings-account-filter"
+                  label={t('settings.scopeAccount')}
+                  value={selectedAccountId ?? ''}
+                  onChange={(event) => {
+                    const nextAccountId = Number(event.target.value);
+                    setSelectedAccountId(Number.isInteger(nextAccountId) ? nextAccountId : null);
+                    setSelectedSpecialistId(null);
+                  }}
+                >
+                  {scopeAccounts.map((account) => (
+                    <MenuItem key={account.id} value={account.id}>
+                      {account.id} - {account.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ width: { xs: '100%', sm: 360 } }} disabled={filteredScopeSpecialists.length === 0}>
+                <InputLabel id="settings-specialist-filter">{t('settings.scopeSpecialist')}</InputLabel>
+                <Select
+                  labelId="settings-specialist-filter"
+                  label={t('settings.scopeSpecialist')}
+                  value={selectedSpecialistId ?? ''}
+                  onChange={(event) => {
+                    const nextSpecialistId = Number(event.target.value);
+                    setSelectedSpecialistId(Number.isInteger(nextSpecialistId) ? nextSpecialistId : null);
+                  }}
+                >
+                  {filteredScopeSpecialists.map((specialist) => (
+                    <MenuItem key={specialist.id} value={specialist.id}>
+                      {specialist.id} - {specialist.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
+
       {error && (
         <Box sx={{ maxWidth: 720, mb: 2 }}>
           <Alert severity="error">{error}</Alert>
@@ -537,7 +633,7 @@ export function SettingsContainer() {
         </Box>
       )}
 
-      <Box sx={{ maxWidth: 720 }}>
+      <Box>
         {isLoadingSettings ? (
           <Stack spacing={2}>
             <Skeleton variant="rounded" height={42} />

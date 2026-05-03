@@ -24,7 +24,8 @@ import { decryptText, encryptText } from '../utils/crypto.js';
 import { verifyTelegramBotToken } from './telegramService.js';
 import { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
 export { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
-import { findSpecialistById, findSpecialistByWebUserId } from '../repositories/specialistRepository.js';
+import { findAccountById, listActiveAccounts } from '../repositories/accountRepository.js';
+import { findSpecialistById, findSpecialistByIdAnyAccount, findSpecialistByWebUserId, listSpecialistsAllAccounts } from '../repositories/specialistRepository.js';
 import { findClientById } from '../repositories/clientRepository.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import {
@@ -83,6 +84,11 @@ export type SpecialistBookingPolicy = {
   meetingProvidersPriority: string;
   allowedMeetingProviders: string;
   meetingProviderOverrideEnabled: boolean;
+};
+
+export type SettingsScopeOptions = {
+  accounts: Array<{ id: number; name: string }>;
+  specialists: Array<{ id: number; accountId: number; name: string }>;
 };
 
 const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
@@ -164,6 +170,39 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
 
 export const getSystemSettings = async (): Promise<SystemSettings> => mapSystemSettings();
 
+async function resolveManagedAccountId(actor: User, requestedAccountId?: number): Promise<number | null> {
+  if (actor.role !== WebUserRole.Owner) {
+    return actor.accountId;
+  }
+
+  if (!requestedAccountId || !Number.isInteger(requestedAccountId)) {
+    return actor.accountId;
+  }
+
+  const account = await findAccountById(requestedAccountId);
+  return account ? account.id : null;
+}
+
+export async function getSettingsScopeOptions(actor: User): Promise<SettingsScopeOptions | null> {
+  if (actor.role !== WebUserRole.Owner) {
+    return null;
+  }
+
+  const [accounts, specialists] = await Promise.all([
+    listActiveAccounts(),
+    listSpecialistsAllAccounts(),
+  ]);
+
+  return {
+    accounts,
+    specialists: specialists.map((item) => ({
+      id: item.id,
+      accountId: item.account_id,
+      name: item.name,
+    })),
+  };
+}
+
 export const updateSystemSettings = async (payload: unknown): Promise<SystemSettings | null> => {
   const parsed = systemSettingsSchema.safeParse(payload);
   if (!parsed.success) {
@@ -203,18 +242,24 @@ export const updateSystemSettings = async (payload: unknown): Promise<SystemSett
   return mapSystemSettings();
 };
 
-export const getAccountSettings = async (actor: User): Promise<AccountSettings> => {
-  return mapAccountSettings(actor.accountId);
+export const getAccountSettings = async (actor: User, requestedAccountId?: number): Promise<AccountSettings | null> => {
+  const accountId = await resolveManagedAccountId(actor, requestedAccountId);
+  return accountId ? mapAccountSettings(accountId) : null;
 };
 
-export const updateAccountSettings = async (actor: User, payload: unknown): Promise<AccountSettings | null> => {
+export const updateAccountSettings = async (actor: User, payload: unknown, requestedAccountId?: number): Promise<AccountSettings | null> => {
   const parsed = accountSettingsSchema.safeParse(payload);
   if (!parsed.success) {
     return null;
   }
 
+  const accountId = await resolveManagedAccountId(actor, requestedAccountId);
+  if (!accountId) {
+    return null;
+  }
+
   await updateAccountSettingsByAccountId({
-    accountId: actor.accountId,
+    accountId,
     timezone: parsed.data.timezone,
     locale: parsed.data.locale,
     slotDurationMin: parsed.data.defaultMeetingDuration,
@@ -226,7 +271,7 @@ export const updateAccountSettings = async (actor: User, payload: unknown): Prom
   });
 
   await updateAppSettingsByAccountId({
-    accountId: actor.accountId,
+    accountId,
     timezone: parsed.data.timezone,
     locale: parsed.data.locale,
     slotDurationMin: parsed.data.defaultMeetingDuration,
@@ -234,7 +279,7 @@ export const updateAccountSettings = async (actor: User, payload: unknown): Prom
     weekStartsOnMonday: parsed.data.weekStartsOnMonday,
   });
 
-  return mapAccountSettings(actor.accountId);
+  return mapAccountSettings(accountId);
 };
 
 export const getUserSettings = async (actor: User): Promise<UserSettings> => {
@@ -356,19 +401,31 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
   return getUserSettings(actor);
 };
 
-async function resolveSpecialistIdForPolicy(actor: User, specialistId?: number): Promise<number | null> {
-  if (actor.role === WebUserRole.Owner || actor.role === WebUserRole.Admin) {
+async function resolveSpecialistForPolicy(actor: User, specialistId?: number, requestedAccountId?: number): Promise<{ accountId: number; specialistId: number } | null> {
+  if (actor.role === WebUserRole.Owner) {
+    if (!specialistId || !Number.isInteger(specialistId)) {
+      return null;
+    }
+
+    const accountId = await resolveManagedAccountId(actor, requestedAccountId);
+    const specialist = accountId
+      ? await findSpecialistById(accountId, specialistId)
+      : await findSpecialistByIdAnyAccount(specialistId);
+    return specialist ? { accountId: specialist.account_id, specialistId: specialist.id } : null;
+  }
+
+  if (actor.role === WebUserRole.Admin) {
     if (!specialistId || !Number.isInteger(specialistId)) {
       return null;
     }
 
     const specialist = await findSpecialistById(actor.accountId, specialistId);
-    return specialist ? specialist.id : null;
+    return specialist ? { accountId: actor.accountId, specialistId: specialist.id } : null;
   }
 
   if (actor.role === WebUserRole.Specialist) {
     const own = await findSpecialistByWebUserId(actor.accountId, Number(actor.id));
-    return own?.id ?? null;
+    return own ? { accountId: actor.accountId, specialistId: own.id } : null;
   }
 
   return null;
@@ -381,15 +438,16 @@ export function canManageSpecialistBookingPolicies(role: User['role']): boolean 
 export async function getSpecialistBookingPolicy(
   actor: User,
   specialistId?: number,
+  requestedAccountId?: number,
 ): Promise<SpecialistBookingPolicy | null> {
-  const resolvedSpecialistId = await resolveSpecialistIdForPolicy(actor, specialistId);
-  if (!resolvedSpecialistId) {
+  const resolved = await resolveSpecialistForPolicy(actor, specialistId, requestedAccountId);
+  if (!resolved) {
     return null;
   }
 
-  const row = await findSpecialistBookingPolicy(actor.accountId, resolvedSpecialistId);
+  const row = await findSpecialistBookingPolicy(resolved.accountId, resolved.specialistId);
   return {
-    specialistId: resolvedSpecialistId,
+    specialistId: resolved.specialistId,
     cancelGracePeriodHours: row?.cancel_grace_period_hours ?? 24,
     refundOnLateCancel: row?.refund_on_late_cancel ?? false,
     autoCancelUnpaidEnabled: row?.auto_cancel_unpaid_enabled ?? false,
@@ -404,20 +462,21 @@ export async function updateSpecialistBookingPolicy(
   actor: User,
   specialistId: number | undefined,
   payload: unknown,
+  requestedAccountId?: number,
 ): Promise<SpecialistBookingPolicy | null> {
   const parsed = specialistBookingPolicySchema.safeParse(payload);
   if (!parsed.success) {
     return null;
   }
 
-  const resolvedSpecialistId = await resolveSpecialistIdForPolicy(actor, specialistId);
-  if (!resolvedSpecialistId) {
+  const resolved = await resolveSpecialistForPolicy(actor, specialistId, requestedAccountId);
+  if (!resolved) {
     return null;
   }
 
   await upsertSpecialistBookingPolicy({
-    accountId: actor.accountId,
-    specialistId: resolvedSpecialistId,
+    accountId: resolved.accountId,
+    specialistId: resolved.specialistId,
     cancelGracePeriodHours: parsed.data.cancelGracePeriodHours,
     refundOnLateCancel: parsed.data.refundOnLateCancel,
     autoCancelUnpaidEnabled: parsed.data.autoCancelUnpaidEnabled,
@@ -427,15 +486,17 @@ export async function updateSpecialistBookingPolicy(
     meetingProviderOverrideEnabled: parsed.data.meetingProviderOverrideEnabled,
   });
 
-  return getSpecialistBookingPolicy(actor, resolvedSpecialistId);
+  return getSpecialistBookingPolicy(actor, resolved.specialistId, resolved.accountId);
 }
 
-export async function getAccountNotificationDefaults(actor: User) {
-  return getAccountNotificationDefaultsCore(actor.accountId);
+export async function getAccountNotificationDefaults(actor: User, requestedAccountId?: number) {
+  const accountId = await resolveManagedAccountId(actor, requestedAccountId);
+  return accountId ? getAccountNotificationDefaultsCore(accountId) : null;
 }
 
-export async function putAccountNotificationDefaults(actor: User, payload: unknown) {
-  return putAccountNotificationDefaultsCore(actor.accountId, payload);
+export async function putAccountNotificationDefaults(actor: User, payload: unknown, requestedAccountId?: number) {
+  const accountId = await resolveManagedAccountId(actor, requestedAccountId);
+  return accountId ? putAccountNotificationDefaultsCore(accountId, payload) : null;
 }
 
 async function resolveSpecialistIdForNotifications(actor: User, specialistId?: number): Promise<number | null> {

@@ -108,6 +108,8 @@ export const dictionaries = {
       systemTitle: 'System settings',
       accountTitle: 'Account settings',
       userTitle: 'User settings',
+      scopeAccount: 'Account',
+      scopeSpecialist: 'Specialist',
       timezone: 'Timezone',
       locale: 'Locale',
       defaultMeetingDuration: 'Default meeting duration (min)',
@@ -514,6 +516,8 @@ export const dictionaries = {
       systemTitle: 'Системные настройки',
       accountTitle: 'Настройки аккаунта',
       userTitle: 'Пользовательские настройки',
+      scopeAccount: 'Аккаунт',
+      scopeSpecialist: 'Специалист',
       timezone: 'Часовой пояс',
       locale: 'Локаль',
       defaultMeetingDuration: 'Длительность встречи по умолчанию (мин)',
@@ -914,6 +918,8 @@ export type TranslationKey =
   | 'settings.systemTitle'
   | 'settings.accountTitle'
   | 'settings.userTitle'
+  | 'settings.scopeAccount'
+  | 'settings.scopeSpecialist'
   | 'settings.timezone'
   | 'settings.locale'
   | 'settings.defaultMeetingDuration'

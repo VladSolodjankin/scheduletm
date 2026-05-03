@@ -33,3 +33,10 @@ export async function findAccountById(id: number): Promise<{ id: number; name: s
 
   return account ?? null;
 }
+
+export async function listActiveAccounts(): Promise<Array<{ id: number; name: string }>> {
+  return db('accounts')
+    .where({ is_active: true })
+    .orderBy('name', 'asc')
+    .select<Array<{ id: number; name: string }>>('id', 'name');
+}
