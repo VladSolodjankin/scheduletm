@@ -3,19 +3,16 @@ version = 1
 name = "scheduletm"
 
 [setup]
-script = '''
-npm install
-
-'''
+script = "npm ci"
 
 [[actions]]
 name = "web dev"
-icon = "tool"
+icon = "run"
 command = "npm run -w @scheduletm/web dev"
 
 [[actions]]
 name = "server dev"
-icon = "tool"
+icon = "run"
 command = "npm run -w @scheduletm/server dev"
 
 [[actions]]
@@ -27,3 +24,28 @@ command = "npm run -w @scheduletm/web typecheck"
 name = "server typecheck"
 icon = "tool"
 command = "npm run -w @scheduletm/server typecheck"
+
+[[actions]]
+name = "all typecheck"
+icon = "tool"
+command = "npm run typecheck"
+
+[[actions]]
+name = "all test"
+icon = "tool"
+command = "npm run test"
+
+[[actions]]
+name = "all lint"
+icon = "tool"
+command = "npm run lint"
+
+[[actions]]
+name = "web e2e  ui tests"
+icon = "tool"
+command = "npm run -w @scheduletm/web test:e2e:ui"
+
+[[actions]]
+name = "web e2e contract tests"
+icon = "tool"
+command = "npm run -w @scheduletm/web test:e2e:contracts"
