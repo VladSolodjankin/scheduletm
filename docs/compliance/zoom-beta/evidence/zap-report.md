@@ -73,21 +73,21 @@ Content Security Policy (CSP) is an added layer of security that helps to detect
   * Method: `GET`
   * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; worker-src blob:; child-src blob:; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;`
+  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com https://api.mapbox.com; script-src-elem 'self' https://static.cloudflareinsights.com https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://api.mapbox.com; style-src-elem 'self' 'unsafe-inline' https://api.mapbox.com; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data: https://api.mapbox.com; worker-src 'self' blob:; child-src 'self' blob:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;`
   * Other Info: `style-src includes unsafe-inline.`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; worker-src blob:; child-src blob:; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;`
+  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com https://api.mapbox.com; script-src-elem 'self' https://static.cloudflareinsights.com https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://api.mapbox.com; style-src-elem 'self' 'unsafe-inline' https://api.mapbox.com; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data: https://api.mapbox.com; worker-src 'self' blob:; child-src 'self' blob:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;`
   * Other Info: `style-src includes unsafe-inline.`
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
   * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; worker-src blob:; child-src blob:; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;`
+  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com https://api.mapbox.com; script-src-elem 'self' https://static.cloudflareinsights.com https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://api.mapbox.com; style-src-elem 'self' 'unsafe-inline' https://api.mapbox.com; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data: https://api.mapbox.com; worker-src 'self' blob:; child-src 'self' blob:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;`
   * Other Info: `style-src includes unsafe-inline.`
 
 
@@ -207,8 +207,8 @@ Ensure that your web server, application server, load balancer, etc. is configur
 
 A timestamp was disclosed by the application/web server. - Unix
 
-* URL: https://dev.meetli.cc/assets/index-DDzlBgBt.js
-  * Node Name: `https://dev.meetli.cc/assets/index-DDzlBgBt.js`
+* URL: https://dev.meetli.cc/assets/index-BddktECP.js
+  * Node Name: `https://dev.meetli.cc/assets/index-BddktECP.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -291,36 +291,36 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-dfw-kdfw8210082-DFW`
-  * Other Info: `}�-�/�i�^����G_�͵�O6�1V`
+  * Evidence: `fastly/cache-iad-kiad7000096-IAD`
+  * Other Info: `}�-�/�i�^�&��H�w�4�Oz��`
 * URL: https://dev.meetli.cc
   * Node Name: `https://dev.meetli.cc`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-dfw-kdfw8210100-DFW`
-  * Other Info: `}�-�/�i�^����G_�͵�]4�1V`
+  * Evidence: `fastly/cache-iad-kiad7000129-IAD`
+  * Other Info: `}�-�/�i�^�&��H�w�4�]���`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-chi-klot8100061-CHI`
-  * Other Info: `}�-�/�i�^��b�Ih��t�N��!�`
-* URL: https://dev.meetli.cc/assets/index-DDzlBgBt.js
-  * Node Name: `https://dev.meetli.cc/assets/index-DDzlBgBt.js`
+  * Evidence: `fastly/cache-iad-kiad7000077-IAD`
+  * Other Info: `}�-�/�i�^�&��H�w�4�N���`
+* URL: https://dev.meetli.cc/assets/index-BddktECP.js
+  * Node Name: `https://dev.meetli.cc/assets/index-BddktECP.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-chi-klot8100030-CHI`
-  * Other Info: `}�-�/�i�^��b�Ih��t�M��!�`
+  * Evidence: `fastly/cache-iad-kiad7000064-IAD`
+  * Other Info: `}�-�/�i�^�&��H�w�4�N���`
 * URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
   * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-dfw-kdfw8210033-DFW`
-  * Other Info: `}�-�/�i�^����G_�͵�M��1V`
+  * Evidence: `fastly/cache-iad-kiad7000120-IAD`
+  * Other Info: `}�-�/�i�^�&��H�w�4�]���`
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -333,8 +333,8 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-chi-klot8100045-CHI`
-  * Other Info: `}�-�/�i�^��b�Ih��t�N9�!�`
+  * Evidence: `fastly/cache-iad-kiad7000125-IAD`
+  * Other Info: `}�-�/�i�^�&��H�w�4�]���`
 
 
 Instances: 7
@@ -366,8 +366,8 @@ Manually confirm that the Base64 data does not leak sensitive information, and t
 
 The response appears to contain suspicious comments which may help an attacker.
 
-* URL: https://dev.meetli.cc/assets/index-DDzlBgBt.js
-  * Node Name: `https://dev.meetli.cc/assets/index-DDzlBgBt.js`
+* URL: https://dev.meetli.cc/assets/index-BddktECP.js
+  * Node Name: `https://dev.meetli.cc/assets/index-BddktECP.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
@@ -407,21 +407,21 @@ The application appears to be a modern web application. If you need to explore i
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `<script type="module" crossorigin src="/assets/index-DDzlBgBt.js"></script>`
+  * Evidence: `<script type="module" crossorigin src="/assets/index-BddktECP.js"></script>`
   * Other Info: `No links have been found while there are scripts, which is an indication that this is a modern web application.`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `<script type="module" crossorigin src="/assets/index-DDzlBgBt.js"></script>`
+  * Evidence: `<script type="module" crossorigin src="/assets/index-BddktECP.js"></script>`
   * Other Info: `No links have been found while there are scripts, which is an indication that this is a modern web application.`
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `<script type="module" crossorigin src="/assets/index-DDzlBgBt.js"></script>`
+  * Evidence: `<script type="module" crossorigin src="/assets/index-BddktECP.js"></script>`
   * Other Info: `No links have been found while there are scripts, which is an indication that this is a modern web application.`
 
 

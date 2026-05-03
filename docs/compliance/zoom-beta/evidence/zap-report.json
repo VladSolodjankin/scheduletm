@@ -1,8 +1,8 @@
 {
 	"@programName": "ZAP",
 	"@version": "2.17.0",
-	"@generated": "Sun, 3 May 2026 08:32:08",
-	"created": "2026-05-03T08:32:08.878394368Z",
+	"@generated": "Sun, 3 May 2026 09:10:25",
+	"created": "2026-05-03T09:10:25.804595864Z",
 	"insights":[
 		{
 			"level": "Low",
@@ -101,27 +101,27 @@
 							"method": "GET",
 							"param": "Content-Security-Policy",
 							"attack": "",
-							"evidence": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; worker-src blob:; child-src blob:; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;",
+							"evidence": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com https://api.mapbox.com; script-src-elem 'self' https://static.cloudflareinsights.com https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://api.mapbox.com; style-src-elem 'self' 'unsafe-inline' https://api.mapbox.com; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data: https://api.mapbox.com; worker-src 'self' blob:; child-src 'self' blob:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;",
 							"otherinfo": "style-src includes unsafe-inline."
 						},
 						{
-							"id": "24",
+							"id": "22",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
 							"param": "Content-Security-Policy",
 							"attack": "",
-							"evidence": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; worker-src blob:; child-src blob:; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;",
+							"evidence": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com https://api.mapbox.com; script-src-elem 'self' https://static.cloudflareinsights.com https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://api.mapbox.com; style-src-elem 'self' 'unsafe-inline' https://api.mapbox.com; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data: https://api.mapbox.com; worker-src 'self' blob:; child-src 'self' blob:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;",
 							"otherinfo": "style-src includes unsafe-inline."
 						},
 						{
-							"id": "22",
+							"id": "23",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
 							"param": "Content-Security-Policy",
 							"attack": "",
-							"evidence": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; worker-src blob:; child-src blob:; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;",
+							"evidence": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com https://api.mapbox.com; script-src-elem 'self' https://static.cloudflareinsights.com https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://api.mapbox.com; style-src-elem 'self' 'unsafe-inline' https://api.mapbox.com; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com; font-src 'self' data: https://api.mapbox.com; worker-src 'self' blob:; child-src 'self' blob:; connect-src 'self' https://dev.meetli.cc https://www.meetli.cc https://apidev.meetli.cc https://api.meetli.cc https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com;",
 							"otherinfo": "style-src includes unsafe-inline."
 						}
 					],
@@ -145,7 +145,7 @@
 					"desc": "<p>Cross-Origin-Resource-Policy header is an opt-in header designed to counter side-channels attacks like Spectre. Resource should be specifically set as shareable amongst different origins.</p>",
 					"instances":[ 
 						{
-							"id": "23",
+							"id": "21",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -206,8 +206,8 @@
 					"instances":[ 
 						{
 							"id": "49",
-							"uri": "https://dev.meetli.cc/assets/index-DDzlBgBt.js",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-DDzlBgBt.js",
+							"uri": "https://dev.meetli.cc/assets/index-BddktECP.js",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-BddktECP.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -265,54 +265,54 @@
 					"desc": "<p>Base64 encoded data was disclosed by the application/web server. Note: in the interests of performance not all base64 strings in the response were analyzed individually, the entire response should be looked at by the analyst/security team/developer(s).</p>",
 					"instances":[ 
 						{
-							"id": "29",
-							"uri": "https://dev.meetli.cc",
-							"nodeName": "https:\/\/dev.meetli.cc",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "fastly/cache-dfw-kdfw8210082-DFW",
-							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD\uFFFD\uFFFD\uFFFDG_\uFFFD\u0375\uFFFDO6\uFFFD1V"
-						},
-						{
 							"id": "3",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "fastly/cache-dfw-kdfw8210100-DFW",
-							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD\uFFFD\uFFFD\uFFFDG_\uFFFD\u0375\uFFFD]4\uFFFD1V"
+							"evidence": "fastly/cache-iad-kiad7000096-IAD",
+							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD&\uFFFD\uFFFDH\uFFFDw\uFFFD4\uFFFDOz\uFFFD\uFFFD\\x0003"
 						},
 						{
-							"id": "32",
+							"id": "29",
+							"uri": "https://dev.meetli.cc",
+							"nodeName": "https:\/\/dev.meetli.cc",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "fastly/cache-iad-kiad7000129-IAD",
+							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD&\uFFFD\uFFFDH\uFFFDw\uFFFD4\uFFFD]\uFFFD\uFFFD\uFFFD\\x0003"
+						},
+						{
+							"id": "28",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "fastly/cache-chi-klot8100061-CHI",
-							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD\uFFFDb\uFFFDIh\uFFFD\uFFFDt\uFFFDN\uFFFD\uFFFD!\uFFFD"
+							"evidence": "fastly/cache-iad-kiad7000077-IAD",
+							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD&\uFFFD\uFFFDH\uFFFDw\uFFFD4\uFFFDN\uFFFD\uFFFD\uFFFD\\x0003"
 						},
 						{
 							"id": "54",
-							"uri": "https://dev.meetli.cc/assets/index-DDzlBgBt.js",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-DDzlBgBt.js",
+							"uri": "https://dev.meetli.cc/assets/index-BddktECP.js",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-BddktECP.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "fastly/cache-chi-klot8100030-CHI",
-							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD\uFFFDb\uFFFDIh\uFFFD\uFFFDt\uFFFDM\uFFFD\uFFFD!\uFFFD"
+							"evidence": "fastly/cache-iad-kiad7000064-IAD",
+							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD&\uFFFD\uFFFDH\uFFFDw\uFFFD4\uFFFDN\uFFFD\uFFFD\uFFFD\\x0003"
 						},
 						{
-							"id": "42",
+							"id": "36",
 							"uri": "https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/logo_one_latter-DesWG7-J.svg",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "fastly/cache-dfw-kdfw8210033-DFW",
-							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD\uFFFD\uFFFD\uFFFDG_\uFFFD\u0375\uFFFDM\uFFFD\uFFFD1V"
+							"evidence": "fastly/cache-iad-kiad7000120-IAD",
+							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD&\uFFFD\uFFFDH\uFFFDw\uFFFD4\uFFFD]\uFFFD\uFFFD\uFFFD\\x0003"
 						},
 						{
 							"id": "12",
@@ -325,24 +325,24 @@
 							"otherinfo": "\uFFFD\uFFFD,z\uFFFD?\uFFFD\uFFFD(\uFFFD\uFFFD\uFFFD\uFFFDV\uFFFD\uFFFD\uFFFD\uFFFD\r\uFFFD\\x0016\\x001b\uFFFD\uFFFD"
 						},
 						{
-							"id": "28",
+							"id": "31",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "fastly/cache-chi-klot8100045-CHI",
-							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD\uFFFDb\uFFFDIh\uFFFD\uFFFDt\uFFFDN9\uFFFD!\uFFFD"
+							"evidence": "fastly/cache-iad-kiad7000125-IAD",
+							"otherinfo": "}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD&\uFFFD\uFFFDH\uFFFDw\uFFFD4\uFFFD]\uFFFD\uFFFD\uFFFD\\x0003"
 						}
 					],
 					"count": "7",
 					"systemic": false,
 					"solution": "<p>Manually confirm that the Base64 data does not leak sensitive information, and that the data cannot be aggregated/used to exploit other vulnerabilities.</p>",
-					"otherinfo": "<p>}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD\uFFFD\uFFFD\uFFFDG_\uFFFD\u0375\uFFFDO6\uFFFD1V</p>",
+					"otherinfo": "<p>}\uFFFD-\uFFFD/\uFFFDi\uFFFD^\uFFFD&\uFFFD\uFFFDH\uFFFDw\uFFFD4\uFFFDOz\uFFFD\uFFFD\\x0003</p>",
 					"reference": "<p>https://projects.webappsec.org/w/page/13246936/Information%20Leakage</p>",
 					"cweid": "319",
 					"wascid": "13",
-					"sourceid": "11"
+					"sourceid": "1"
 				},
 				{
 					"pluginid": "10027",
@@ -356,8 +356,8 @@
 					"instances":[ 
 						{
 							"id": "48",
-							"uri": "https://dev.meetli.cc/assets/index-DDzlBgBt.js",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-DDzlBgBt.js",
+							"uri": "https://dev.meetli.cc/assets/index-BddktECP.js",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-BddktECP.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -391,27 +391,27 @@
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DDzlBgBt.js\"></script>",
+							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-BddktECP.js\"></script>",
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						},
 						{
-							"id": "27",
+							"id": "25",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DDzlBgBt.js\"></script>",
+							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-BddktECP.js\"></script>",
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						},
 						{
-							"id": "26",
+							"id": "27",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DDzlBgBt.js\"></script>",
+							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-BddktECP.js\"></script>",
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						}
 					],
@@ -465,7 +465,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "20",
+							"id": "18",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -505,7 +505,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "44",
+							"id": "43",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
@@ -525,7 +525,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "33",
+							"id": "37",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -585,7 +585,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "31",
+							"id": "35",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -625,7 +625,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "35",
+							"id": "32",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
@@ -645,7 +645,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "30",
+							"id": "34",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -685,7 +685,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "46",
+							"id": "45",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
@@ -705,7 +705,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "39",
+							"id": "42",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -745,7 +745,7 @@
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						},
 						{
-							"id": "47",
+							"id": "46",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
@@ -755,7 +755,7 @@
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						},
 						{
-							"id": "45",
+							"id": "40",
 							"uri": "https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/logo_one_latter-DesWG7-J.svg",
 							"method": "GET",
@@ -775,7 +775,7 @@
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						},
 						{
-							"id": "43",
+							"id": "47",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
