@@ -8,8 +8,8 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Risk Level | Number of Alerts |
 | --- | --- |
 | High | 0 |
-| Medium | 3 |
-| Low | 7 |
+| Medium | 2 |
+| Low | 5 |
 | Informational | 9 |
 
 
@@ -36,20 +36,17 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 | Name | Risk Level | Number of Instances |
 | --- | --- | --- |
-| CSP: Failure to Define Directive with No Fallback | Medium | 3 |
 | CSP: Wildcard Directive | Medium | 3 |
 | CSP: style-src unsafe-inline | Medium | 3 |
 | Cross-Origin-Embedder-Policy Header Missing or Invalid | Low | 3 |
-| Cross-Origin-Opener-Policy Header Missing or Invalid | Low | 3 |
-| Cross-Origin-Resource-Policy Header Missing or Invalid | Low | 4 |
-| Permissions Policy Header Not Set | Low | 4 |
+| Cross-Origin-Resource-Policy Header Missing or Invalid | Low | Systemic |
 | Strict-Transport-Security Header Not Set | Low | 1 |
 | Timestamp Disclosure - Unix | Low | 1 |
 | X-Content-Type-Options Header Missing | Low | 1 |
 | Base64 Disclosure | Informational | 7 |
 | Information Disclosure - Suspicious Comments | Informational | 1 |
 | Modern Web Application | Informational | 3 |
-| Re-examine Cache-control Directives | Informational | 4 |
+| Re-examine Cache-control Directives | Informational | 3 |
 | Sec-Fetch-Dest Header is Missing | Informational | 3 |
 | Sec-Fetch-Mode Header is Missing | Informational | 3 |
 | Sec-Fetch-Site Header is Missing | Informational | 3 |
@@ -62,62 +59,6 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 ## Alert Detail
 
 
-
-### [ CSP: Failure to Define Directive with No Fallback ](https://www.zaproxy.org/docs/alerts/10055/)
-
-
-
-##### Medium (High)
-
-### Description
-
-The Content Security Policy fails to define one of the directives that has no fallback. Missing/excluding them is the same as allowing anything.
-
-* URL: https://dev.meetli.cc
-  * Node Name: `https://dev.meetli.cc`
-  * Method: `GET`
-  * Parameter: `Content-Security-Policy`
-  * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
-  * Other Info: `The directive(s): form-action is/are among the directives that do not fallback to default-src.`
-* URL: https://dev.meetli.cc/
-  * Node Name: `https://dev.meetli.cc/`
-  * Method: `GET`
-  * Parameter: `Content-Security-Policy`
-  * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
-  * Other Info: `The directive(s): form-action is/are among the directives that do not fallback to default-src.`
-* URL: https://dev.meetli.cc/sitemap.xml
-  * Node Name: `https://dev.meetli.cc/sitemap.xml`
-  * Method: `GET`
-  * Parameter: `Content-Security-Policy`
-  * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
-  * Other Info: `The directive(s): form-action is/are among the directives that do not fallback to default-src.`
-
-
-Instances: 3
-
-### Solution
-
-Ensure that your web server, application server, load balancer, etc. is properly configured to set the Content-Security-Policy header.
-
-### Reference
-
-
-* [ https://www.w3.org/TR/CSP/ ](https://www.w3.org/TR/CSP/)
-* [ https://caniuse.com/#search=content+security+policy ](https://caniuse.com/#search=content+security+policy)
-* [ https://content-security-policy.com/ ](https://content-security-policy.com/)
-* [ https://github.com/HtmlUnit/htmlunit-csp ](https://github.com/HtmlUnit/htmlunit-csp)
-* [ https://web.dev/articles/csp#resource-options ](https://web.dev/articles/csp#resource-options)
-
-
-#### CWE Id: [ 693 ](https://cwe.mitre.org/data/definitions/693.html)
-
-
-#### WASC Id: 15
-
-#### Source ID: 3
 
 ### [ CSP: Wildcard Directive ](https://www.zaproxy.org/docs/alerts/10055/)
 
@@ -134,7 +75,7 @@ Content Security Policy (CSP) is an added layer of security that helps to detect
   * Method: `GET`
   * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
+  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
   * Other Info: `The following directives either allow wildcard sources (or ancestors), are not defined, or are overly broadly defined:
 connect-src`
 * URL: https://dev.meetli.cc/
@@ -142,7 +83,7 @@ connect-src`
   * Method: `GET`
   * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
+  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
   * Other Info: `The following directives either allow wildcard sources (or ancestors), are not defined, or are overly broadly defined:
 connect-src`
 * URL: https://dev.meetli.cc/sitemap.xml
@@ -150,7 +91,7 @@ connect-src`
   * Method: `GET`
   * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
+  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
   * Other Info: `The following directives either allow wildcard sources (or ancestors), are not defined, or are overly broadly defined:
 connect-src`
 
@@ -193,21 +134,21 @@ Content Security Policy (CSP) is an added layer of security that helps to detect
   * Method: `GET`
   * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
+  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
   * Other Info: `style-src includes unsafe-inline.`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
+  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
   * Other Info: `style-src includes unsafe-inline.`
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
   * Parameter: `Content-Security-Policy`
   * Attack: ``
-  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
+  * Evidence: `default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https: wss:;`
   * Other Info: `style-src includes unsafe-inline.`
 
 
@@ -287,60 +228,6 @@ If possible, ensure that the end user uses a standards-compliant and modern web 
 
 #### Source ID: 3
 
-### [ Cross-Origin-Opener-Policy Header Missing or Invalid ](https://www.zaproxy.org/docs/alerts/90004/)
-
-
-
-##### Low (Medium)
-
-### Description
-
-Cross-Origin-Opener-Policy header is a response header that allows a site to control if others included documents share the same browsing context. Sharing the same browsing context with untrusted documents might lead to data leak.
-
-* URL: https://dev.meetli.cc
-  * Node Name: `https://dev.meetli.cc`
-  * Method: `GET`
-  * Parameter: `Cross-Origin-Opener-Policy`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: https://dev.meetli.cc/
-  * Node Name: `https://dev.meetli.cc/`
-  * Method: `GET`
-  * Parameter: `Cross-Origin-Opener-Policy`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: https://dev.meetli.cc/sitemap.xml
-  * Node Name: `https://dev.meetli.cc/sitemap.xml`
-  * Method: `GET`
-  * Parameter: `Cross-Origin-Opener-Policy`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-
-
-Instances: 3
-
-### Solution
-
-Ensure that the application/web server sets the Cross-Origin-Opener-Policy header appropriately, and that it sets the Cross-Origin-Opener-Policy header to 'same-origin' for documents.
-'same-origin-allow-popups' is considered as less secured and should be avoided.
-If possible, ensure that the end user uses a standards-compliant and modern web browser that supports the Cross-Origin-Opener-Policy header (https://caniuse.com/mdn-http_headers_cross-origin-opener-policy).
-
-### Reference
-
-
-* [ https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy ](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Opener-Policy)
-
-
-#### CWE Id: [ 693 ](https://cwe.mitre.org/data/definitions/693.html)
-
-
-#### WASC Id: 14
-
-#### Source ID: 3
-
 ### [ Cross-Origin-Resource-Policy Header Missing or Invalid ](https://www.zaproxy.org/docs/alerts/90004/)
 
 
@@ -356,14 +243,21 @@ Cross-Origin-Resource-Policy header is an opt-in header designed to counter side
   * Method: `GET`
   * Parameter: `Cross-Origin-Resource-Policy`
   * Attack: ``
-  * Evidence: ``
+  * Evidence: `same-site`
   * Other Info: ``
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: `Cross-Origin-Resource-Policy`
   * Attack: ``
-  * Evidence: ``
+  * Evidence: `same-site`
+  * Other Info: ``
+* URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
+  * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
+  * Method: `GET`
+  * Parameter: `Cross-Origin-Resource-Policy`
+  * Attack: ``
+  * Evidence: `same-site`
   * Other Info: ``
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
@@ -377,11 +271,11 @@ Cross-Origin-Resource-Policy header is an opt-in header designed to counter side
   * Method: `GET`
   * Parameter: `Cross-Origin-Resource-Policy`
   * Attack: ``
-  * Evidence: ``
+  * Evidence: `same-site`
   * Other Info: ``
 
+Instances: Systemic
 
-Instances: 4
 
 ### Solution
 
@@ -400,69 +294,6 @@ If possible, ensure that the end user uses a standards-compliant and modern web 
 
 
 #### WASC Id: 14
-
-#### Source ID: 3
-
-### [ Permissions Policy Header Not Set ](https://www.zaproxy.org/docs/alerts/10063/)
-
-
-
-##### Low (Medium)
-
-### Description
-
-Permissions Policy Header is an added layer of security that helps to restrict from unauthorized access or usage of browser/client features by web resources. This policy ensures the user privacy by limiting or specifying the features of the browsers can be used by the web resources. Permissions Policy provides a set of standard HTTP headers that allow website owners to limit which features of browsers can be used by the page such as camera, microphone, location, full screen etc.
-
-* URL: https://dev.meetli.cc
-  * Node Name: `https://dev.meetli.cc`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: https://dev.meetli.cc/
-  * Node Name: `https://dev.meetli.cc/`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: https://dev.meetli.cc/assets/index-DDzlBgBt.js
-  * Node Name: `https://dev.meetli.cc/assets/index-DDzlBgBt.js`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-* URL: https://dev.meetli.cc/sitemap.xml
-  * Node Name: `https://dev.meetli.cc/sitemap.xml`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
-
-
-Instances: 4
-
-### Solution
-
-Ensure that your web server, application server, load balancer, etc. is configured to set the Permissions-Policy header.
-
-### Reference
-
-
-* [ https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy ](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy)
-* [ https://developer.chrome.com/blog/feature-policy/ ](https://developer.chrome.com/blog/feature-policy/)
-* [ https://scotthelme.co.uk/a-new-security-header-feature-policy/ ](https://scotthelme.co.uk/a-new-security-header-feature-policy/)
-* [ https://w3c.github.io/webappsec-feature-policy/ ](https://w3c.github.io/webappsec-feature-policy/)
-* [ https://www.smashingmagazine.com/2018/12/feature-policy/ ](https://www.smashingmagazine.com/2018/12/feature-policy/)
-
-
-#### CWE Id: [ 693 ](https://cwe.mitre.org/data/definitions/693.html)
-
-
-#### WASC Id: 15
 
 #### Source ID: 3
 
@@ -602,36 +433,36 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-chi-klot8100055-CHI`
-  * Other Info: `}�-�/�i�^��b�Ih��t�Ny�!�`
+  * Evidence: `fastly/cache-bur-kbur8200053-BUR`
+  * Other Info: `}�-�/�i�^����F�ʹ�Nw�`
 * URL: https://dev.meetli.cc
   * Node Name: `https://dev.meetli.cc`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-chi-klot8100141-CHI`
-  * Other Info: `}�-�/�i�^��b�Ih��t�^5�!�`
+  * Evidence: `fastly/cache-bur-kbur8200123-BUR`
+  * Other Info: `}�-�/�i�^����F�ʹ�]��`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-dfw-kdfw8210066-DFW`
-  * Other Info: `}�-�/�i�^����G_�͵�N��1V`
+  * Evidence: `fastly/cache-lax-kwhp1940033-LAX`
+  * Other Info: `}�-�/�i�^�V��L!�_x�M���`
 * URL: https://dev.meetli.cc/assets/index-DDzlBgBt.js
   * Node Name: `https://dev.meetli.cc/assets/index-DDzlBgBt.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-chi-klot8100177-CHI`
-  * Other Info: `}�-�/�i�^��b�Ih��t�^��!�`
+  * Evidence: `fastly/cache-bur-kbur8200035-BUR`
+  * Other Info: `}�-�/�i�^����F�ʹ�M��`
 * URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
   * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-dfw-kdfw8210148-DFW`
-  * Other Info: `}�-�/�i�^����G_�͵�^<�1V`
+  * Evidence: `fastly/cache-bur-kbur8200170-BUR`
+  * Other Info: `}�-�/�i�^����F�ʹ�^��`
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -644,8 +475,8 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `fastly/cache-chi-klot8100107-CHI`
-  * Other Info: `}�-�/�i�^��b�Ih��t�];�!�`
+  * Evidence: `fastly/cache-lax-kwhp1940144-LAX`
+  * Other Info: `}�-�/�i�^�V��L!�_x�^8��`
 
 
 Instances: 7
@@ -780,16 +611,9 @@ The cache-control header has not been set properly or is missing, allowing the b
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
-* URL: https://dev.meetli.cc/sitemap.xml
-  * Node Name: `https://dev.meetli.cc/sitemap.xml`
-  * Method: `GET`
-  * Parameter: `cache-control`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
 
 
-Instances: 4
+Instances: 3
 
 ### Solution
 
