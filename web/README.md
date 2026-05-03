@@ -57,6 +57,7 @@ npm run -w @scheduletm/web verify
 
 - `VITE_API_URL` — базовый URL API (build-time).
 - `VITE_MAPBOX_PUBLIC_TOKEN` — публичный токен Mapbox для предпросмотра карты в `Settings -> Account settings`.
+- Компонент карты использует npm-пакет `mapbox-gl` (без runtime-подгрузки script/style с CDN).
 
 Пример:
 

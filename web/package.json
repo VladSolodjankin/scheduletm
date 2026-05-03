@@ -30,7 +30,8 @@
     "react-dom": "^19.2.5",
     "react-hook-form": "^7.74.0",
     "react-router-dom": "^7.14.2",
-    "serve": "^14.2.6"
+    "serve": "^14.2.6",
+    "mapbox-gl": "^3.16.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
