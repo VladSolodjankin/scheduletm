@@ -275,10 +275,7 @@ export function AppointmentsCalendar({
                       const items = appointmentsByCell.get(key) ?? [];
                       const externalBusy = busySlotsByCell.get(key) ?? [];
                       const isPastSlot = isSlotInPast(dayKey, hour, minute, displayTimeZone);
-                      const isPast = isPastDay(dayKey);
-                      console.log('isPast', isPast);
-                      console.log('dayKey', dayKey);
-                      console.log('isPastSlot', isPastSlot);
+
                       return (
                         <Box
                           key={`${key}-cell`}
@@ -289,13 +286,13 @@ export function AppointmentsCalendar({
                             borderColor: 'divider',
                             minHeight: 36,
                             p: 0.5,
-                            bgcolor: isPast
+                            bgcolor: isPastSlot
                               ? 'action.disabledBackground'
                               : alpha(theme.palette.background.paper, 0.92),
-                            opacity: isPast ? 0.82 : 1,
+                            opacity: isPastSlot ? 0.82 : 1,
                             transition: 'background-color 0.15s ease',
                             '&:hover': {
-                              bgcolor: isPast ? 'action.disabledBackground' : 'action.hover',
+                              bgcolor: isPastSlot ? 'action.disabledBackground' : 'action.hover',
                             },
                           }}
                           onDragOver={(event) => {

@@ -90,7 +90,15 @@ export function MainLayout() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: 'background.default',
+        overflow: 'hidden'
+      }}
+    >
       <Header
         title={t('common.appTitle')}
         mode={mode}
@@ -105,9 +113,23 @@ export function MainLayout() {
         onChangeLocale={setLocale}
       />
 
-      <Box sx={{ display: 'flex', minHeight: 'calc(100vh - 64px)' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexGrow: 1,
+          minHeight: 0
+        }}
+      >
         <LeftMenu items={menuItems} />
-        <Box component="main" sx={{ flexGrow: 1 }}>
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            minWidth: 0,
+            minHeight: 0,
+            overflowY: 'auto'
+          }}
+        >
           <Outlet />
         </Box>
       </Box>

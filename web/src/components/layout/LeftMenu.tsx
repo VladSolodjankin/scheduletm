@@ -19,10 +19,12 @@ export function LeftMenu({ items }: LeftMenuProps) {
       component="aside"
       sx={{
         width: APP_SIZING.leftMenuWidth,
+        flexShrink: 0,
         borderRight: 1,
         borderColor: 'divider',
         p: 1.5,
-        display: { xs: 'none', md: 'block' }
+        display: { xs: 'none', md: 'block' },
+        overflowY: 'auto'
       }}
     >
       <List>
