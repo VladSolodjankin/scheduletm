@@ -4,7 +4,9 @@ import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import {
   createManagedUser,
+  deleteManagedUser,
   deactivateManagedUser,
+  getManagedUserDeleteImpact,
   listManagedUsers,
   resendManagedUserInvite,
   updateManagedUser,
@@ -89,7 +91,31 @@ userManagementRoutes.patch('/:id', async (req, res) => {
   }
 });
 
-userManagementRoutes.delete('/:id', async (req, res) => {
+userManagementRoutes.get('/:id/delete-impact', async (req, res) => {
+  const actor = (req as unknown as AuthedRequest).user;
+  const userId = Number(req.params.id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(400).json({ message: t(req, 'invalidUserId') });
+  }
+
+  try {
+    const impact = await getManagedUserDeleteImpact(actor, userId);
+    if (!impact) {
+      return res.status(404).json({ message: t(req, 'managedUserNotFound') });
+    }
+
+    return res.json(impact);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'FORBIDDEN') {
+      return res.status(403).json({ message: t(req, 'forbiddenManageUsers') });
+    }
+
+    console.error(error);
+    return res.status(500).json({ message: t(req, 'userDeleteFailed') });
+  }
+});
+
+userManagementRoutes.post('/:id/deactivate', async (req, res) => {
   const actor = (req as unknown as AuthedRequest).user;
   const userId = Number(req.params.id);
   if (!Number.isInteger(userId) || userId <= 0) {
@@ -103,6 +129,30 @@ userManagementRoutes.delete('/:id', async (req, res) => {
     }
 
     return res.json(updated);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'FORBIDDEN') {
+      return res.status(403).json({ message: t(req, 'forbiddenManageUsers') });
+    }
+
+    console.error(error);
+    return res.status(500).json({ message: t(req, 'userUpdateFailed') });
+  }
+});
+
+userManagementRoutes.delete('/:id', async (req, res) => {
+  const actor = (req as unknown as AuthedRequest).user;
+  const userId = Number(req.params.id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return res.status(400).json({ message: t(req, 'invalidUserId') });
+  }
+
+  try {
+    const deleted = await deleteManagedUser(actor, userId);
+    if (!deleted) {
+      return res.status(404).json({ message: t(req, 'managedUserNotFound') });
+    }
+
+    return res.json(deleted);
   } catch (error) {
     if (error instanceof Error && error.message === 'FORBIDDEN') {
       return res.status(403).json({ message: t(req, 'forbiddenManageUsers') });

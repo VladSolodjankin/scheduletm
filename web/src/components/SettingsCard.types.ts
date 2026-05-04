@@ -71,4 +71,14 @@ export type SettingsCardCopy = {
   sendOtp: string;
   confirmOtp: string;
   cancel: string;
+  accountDeleteButton: string;
+  accountCancelDeleteButton: string;
+  accountDeleteConfirmTitle: string;
+  accountDeleteConfirmDescription: string;
+  accountDeleteScheduledAt: string;
+  userDeleteButton: string;
+  userCancelDeleteButton: string;
+  userDeleteConfirmTitle: string;
+  userDeleteConfirmDescription: string;
+  userDeleteScheduledAt: string;
 };

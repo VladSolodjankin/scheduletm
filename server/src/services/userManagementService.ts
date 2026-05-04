@@ -1,12 +1,14 @@
 import crypto from 'node:crypto';
 import { createClient } from '../repositories/clientRepository.js';
-import { deactivateSpecialistByWebUserId } from '../repositories/specialistRepository.js';
+import { deactivateSpecialistByWebUserId, findSpecialistByWebUserId } from '../repositories/specialistRepository.js';
 import {
+  cancelWebUserDeletion,
   createWebUser,
   findWebUserByEmail,
   findWebUserById,
   listWebUsersAllAccounts,
   listWebUsersByAccount,
+  softDeleteWebUser,
   updateWebUserAuthState,
   updateWebUserProfile,
 } from '../repositories/webUserRepository.js';
@@ -16,6 +18,8 @@ import { canCreateUserRole, canManageClients, canManageFullUserDirectory } from 
 import { createToken, hashPassword, sanitizeEmail } from '../utils/crypto.js';
 import { env } from '../config/env.js';
 import { sendManagedUserInviteEmail } from './emailDeliveryService.js';
+import { deleteWebUserSessionsByWebUserId } from '../repositories/webUserSessionRepository.js';
+import { countAppointmentsByClientId, countAppointmentsBySpecialistId } from '../repositories/appointmentRepository.js';
 
 export type UserManagementItem = {
   id: number;
@@ -27,7 +31,16 @@ export type UserManagementItem = {
   telegramUsername: string;
   isActive: boolean;
   isVerified: boolean;
+  deleteScheduledAt: string | null;
   createdAt: string;
+};
+
+export type ManagedUserDeleteImpact = {
+  userId: number;
+  specialistAppointmentCount: number;
+  clientAppointmentCount: number;
+  totalAppointmentCount: number;
+  hasAppointments: boolean;
 };
 
 type UserCreatePayload = {
@@ -58,11 +71,35 @@ const mapUser = (item: Awaited<ReturnType<typeof listWebUsersByAccount>>[number]
   telegramUsername: item.telegram_username ?? '',
   isActive: item.is_active,
   isVerified: Boolean(item.email_verified_at || item.phone_verified_at),
+  deleteScheduledAt: item.delete_scheduled_at ? item.delete_scheduled_at.toISOString() : null,
   createdAt: item.created_at.toISOString(),
 });
 
 async function resolveAccountId(actor: User): Promise<number> {
   return actor.accountId;
+}
+
+async function resolveDeleteImpact(accountId: number, userId: number): Promise<ManagedUserDeleteImpact | null> {
+  const existing = await findWebUserById(accountId, userId);
+  if (!existing || existing.is_deleted) {
+    return null;
+  }
+
+  const specialist = await findSpecialistByWebUserId(accountId, userId);
+  const specialistAppointmentCount = specialist
+    ? await countAppointmentsBySpecialistId(accountId, specialist.id)
+    : 0;
+  const clientAppointmentCount = existing.client_id
+    ? await countAppointmentsByClientId(accountId, existing.client_id)
+    : 0;
+
+  return {
+    userId,
+    specialistAppointmentCount,
+    clientAppointmentCount,
+    totalAppointmentCount: specialistAppointmentCount + clientAppointmentCount,
+    hasAppointments: specialistAppointmentCount + clientAppointmentCount > 0,
+  };
 }
 
 export async function listManagedUsers(actor: User): Promise<UserManagementItem[]> {
@@ -174,7 +211,9 @@ export async function updateManagedUser(actor: User, userId: number, payload: Us
     lastName: payload.lastName.trim(),
     phone: payload.phone?.trim() ?? '',
     telegramUsername: payload.telegramUsername?.trim() ?? '',
+    isActive: true,
   });
+  await cancelWebUserDeletion(accountId, userId);
 
   const updated = await findWebUserById(accountId, userId);
   return updated ? mapUser(updated) : null;
@@ -199,10 +238,56 @@ export async function deactivateManagedUser(actor: User, userId: number): Promis
     id: userId,
     isActive: false,
   });
+  await deleteWebUserSessionsByWebUserId(accountId, userId);
   await deactivateSpecialistByWebUserId(accountId, userId);
 
   const updated = await findWebUserById(accountId, userId);
   return updated ? mapUser(updated) : null;
+}
+
+export async function getManagedUserDeleteImpact(actor: User, userId: number): Promise<ManagedUserDeleteImpact | null> {
+  if (!canManageClients(actor.role)) {
+    throw new Error('FORBIDDEN');
+  }
+
+  const accountId = await resolveAccountId(actor);
+  const existing = await findWebUserById(accountId, userId);
+  if (!existing || existing.is_deleted) {
+    return null;
+  }
+  if (Number(actor.id) === userId) {
+    throw new Error('FORBIDDEN');
+  }
+  if (!canManageFullUserDirectory(actor.role) && existing.role !== WebUserRole.Client) {
+    throw new Error('FORBIDDEN');
+  }
+
+  return resolveDeleteImpact(accountId, userId);
+}
+
+export async function deleteManagedUser(actor: User, userId: number): Promise<ManagedUserDeleteImpact | null> {
+  if (!canManageClients(actor.role)) {
+    throw new Error('FORBIDDEN');
+  }
+
+  const accountId = await resolveAccountId(actor);
+  const existing = await findWebUserById(accountId, userId);
+  if (!existing || existing.is_deleted) {
+    return null;
+  }
+  if (Number(actor.id) === userId) {
+    throw new Error('FORBIDDEN');
+  }
+  if (!canManageFullUserDirectory(actor.role) && existing.role !== WebUserRole.Client) {
+    throw new Error('FORBIDDEN');
+  }
+
+  const impact = await resolveDeleteImpact(accountId, userId);
+  await softDeleteWebUser(accountId, userId);
+  await deleteWebUserSessionsByWebUserId(accountId, userId);
+  await deactivateSpecialistByWebUserId(accountId, userId);
+
+  return impact;
 }
 
 export async function resendManagedUserInvite(actor: User, userId: number): Promise<void> {

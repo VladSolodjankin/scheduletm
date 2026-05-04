@@ -2,12 +2,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const [{ createApp }, { env }, { startNotificationDefaultsJob }, { startAppointmentNotificationsJob }, { startAppointmentAutoCancelUnpaidJob }] = await Promise.all([
+const [{ createApp }, { env }, { startNotificationDefaultsJob }, { startAppointmentNotificationsJob }, { startAppointmentAutoCancelUnpaidJob }, { startDeletionCleanupJob }] = await Promise.all([
   import('./app.js'),
   import('./config/env.js'),
   import('./jobs/notificationDefaults.job.js'),
   import('./jobs/appointmentNotifications.job.js'),
   import('./jobs/appointmentAutoCancelUnpaid.job.js'),
+  import('./jobs/deletionCleanup.job.js'),
 ]);
 const { trackServerError } = await import('./services/errorTrackingService.js');
 const jobTimers: NodeJS.Timeout[] = [];
@@ -67,6 +68,7 @@ const server = app.listen(env.PORT, () => {
   jobTimers.push(startNotificationDefaultsJob());
   jobTimers.push(startAppointmentNotificationsJob());
   jobTimers.push(startAppointmentAutoCancelUnpaidJob());
+  jobTimers.push(startDeletionCleanupJob());
   console.log(`server listening on http://localhost:${env.PORT}`);
 });
 

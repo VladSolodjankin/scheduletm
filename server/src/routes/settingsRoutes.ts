@@ -26,6 +26,10 @@ import {
   putClientNotificationSettings,
   putAccountNotificationDefaults,
   putSpecialistNotificationSettings,
+  requestAccountDeletion,
+  requestUserDeletion,
+  undoAccountDeletion,
+  undoUserDeletion,
 } from '../services/settingsService.js';
 
 export const settingsRoutes = Router();
@@ -95,6 +99,54 @@ settingsRoutes.put('/account', requireAccessToken, async (req, res) => {
   const updated = await updateAccountSettings(user, req.body, parsePositiveInt(req.query.accountId));
   if (!updated) {
     return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
+  }
+
+  return res.json(updated);
+});
+
+settingsRoutes.post('/account/delete', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageAccountSettings(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
+  }
+
+  const updated = await requestAccountDeletion(user, parsePositiveInt(req.query.accountId));
+  if (!updated) {
+    return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
+  }
+
+  return res.json(updated);
+});
+
+settingsRoutes.post('/account/delete/cancel', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageAccountSettings(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
+  }
+
+  const updated = await undoAccountDeletion(user, parsePositiveInt(req.query.accountId));
+  if (!updated) {
+    return res.status(400).json({ message: t(req, 'invalidPayloadAccountSettings') });
+  }
+
+  return res.json(updated);
+});
+
+settingsRoutes.post('/user/delete', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const updated = await requestUserDeletion(user);
+  if (!updated) {
+    return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
+  }
+
+  return res.json(updated);
+});
+
+settingsRoutes.post('/user/delete/cancel', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const updated = await undoUserDeletion(user);
+  if (!updated) {
+    return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
   }
 
   return res.json(updated);

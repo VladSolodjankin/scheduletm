@@ -1,4 +1,4 @@
-import { Alert, Box, Skeleton, Stack } from '@mui/material';
+import { Alert, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Skeleton, Stack, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserFormDialog } from '../components/users/UserFormDialog';
@@ -7,8 +7,9 @@ import { apiClient, authHeaders } from '../shared/api/client';
 import { resolveApiError } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
+import { AppButton } from '../shared/ui/AppButton';
 import { AppPage } from '../shared/ui/AppPage';
-import type { ManagedUserItem, ManagedUsersListResponse, VerifyEmailResponse } from '../shared/types/api';
+import type { ManagedUserDeleteImpact, ManagedUserItem, ManagedUsersListResponse, VerifyEmailResponse } from '../shared/types/api';
 
 export function UsersContainer() {
   const navigate = useNavigate();
@@ -20,6 +21,10 @@ export function UsersContainer() {
   const [success, setSuccess] = useState('');
   const [users, setUsers] = useState<ManagedUserItem[]>([]);
   const [editingUser, setEditingUser] = useState<ManagedUserItem | null>(null);
+  const [deactivatingUser, setDeactivatingUser] = useState<ManagedUserItem | null>(null);
+  const [deletingUser, setDeletingUser] = useState<ManagedUserItem | null>(null);
+  const [deleteImpact, setDeleteImpact] = useState<ManagedUserDeleteImpact | null>(null);
+  const [isDeleteImpactLoading, setIsDeleteImpactLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUsersLoading, setIsUsersLoading] = useState(false);
   const canManageUsers = user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
@@ -89,23 +94,77 @@ export function UsersContainer() {
     }
   };
 
-  const deleteUser = async (item: ManagedUserItem) => {
+  const deactivateUser = async (item: ManagedUserItem) => {
     if (!accessToken) {
       return;
     }
 
+    setIsSaving(true);
     try {
-      const response = await apiClient.delete<ManagedUserItem>(`/api/users/${item.id}`, {
+      const response = await apiClient.post<ManagedUserItem>(`/api/users/${item.id}/deactivate`, {}, {
         headers: authHeaders(accessToken),
       });
       setUsers((prev) => prev.map((userItem) => (userItem.id === response.data.id ? response.data : userItem)));
       setError('');
       setSuccess('');
+      setDeactivatingUser(null);
+    } catch (err) {
+      setError(resolveApiError(err, {
+        fallbackMessage: t('users.errors.deactivate'),
+        networkMessage: t('common.errors.network')
+      }).message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const openDeleteDialog = async (item: ManagedUserItem) => {
+    if (!accessToken) {
+      return;
+    }
+
+    setDeletingUser(item);
+    setDeleteImpact(null);
+    setIsDeleteImpactLoading(true);
+    try {
+      const response = await apiClient.get<ManagedUserDeleteImpact>(`/api/users/${item.id}/delete-impact`, {
+        headers: authHeaders(accessToken),
+      });
+      setDeleteImpact(response.data);
+      setError('');
+    } catch (err) {
+      setDeletingUser(null);
+      setError(resolveApiError(err, {
+        fallbackMessage: t('users.errors.deleteImpact'),
+        networkMessage: t('common.errors.network')
+      }).message);
+    } finally {
+      setIsDeleteImpactLoading(false);
+    }
+  };
+
+  const deleteUser = async (item: ManagedUserItem) => {
+    if (!accessToken) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await apiClient.delete<ManagedUserDeleteImpact>(`/api/users/${item.id}`, {
+        headers: authHeaders(accessToken),
+      });
+      setUsers((prev) => prev.filter((userItem) => userItem.id !== item.id));
+      setError('');
+      setSuccess('');
+      setDeletingUser(null);
+      setDeleteImpact(null);
     } catch (err) {
       setError(resolveApiError(err, {
         fallbackMessage: t('users.errors.delete'),
         networkMessage: t('common.errors.network')
       }).message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -162,6 +221,7 @@ export function UsersContainer() {
               emptyText={t('users.empty')}
               addLabel={t('users.add')}
               editLabel={t('users.edit')}
+              deactivateLabel={t('users.deactivate')}
               deleteLabel={t('users.delete')}
               resendInviteLabel={t('users.resendInvite')}
               emailColumnLabel={t('users.columns.email')}
@@ -180,7 +240,8 @@ export function UsersContainer() {
                 setEditingUser(item);
                 setIsDialogOpen(true);
               }}
-              onDelete={(item) => void deleteUser(item)}
+              onDeactivate={(item) => setDeactivatingUser(item)}
+              onDelete={(item) => void openDeleteDialog(item)}
               onResendInvite={(item) => void resendInvite(item)}
               isResendingInviteForUserId={isResendingInviteForUserId}
             />
@@ -213,6 +274,78 @@ export function UsersContainer() {
         }}
         onSubmit={saveUser}
       />
+
+      <Dialog open={Boolean(deactivatingUser)} onClose={() => !isSaving && setDeactivatingUser(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('users.deactivateConfirm.title')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {t('users.deactivateConfirm.description')}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <AppButton type="button" variant="text" onClick={() => setDeactivatingUser(null)} disabled={isSaving}>
+            {t('users.deactivateConfirm.cancel')}
+          </AppButton>
+          <AppButton
+            type="button"
+            onClick={() => deactivatingUser && void deactivateUser(deactivatingUser)}
+            isLoading={isSaving}
+          >
+            {t('users.deactivateConfirm.confirm')}
+          </AppButton>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(deletingUser)} onClose={() => !isSaving && setDeletingUser(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('users.deleteConfirm.title')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            {t('users.deleteConfirm.description')}
+          </DialogContentText>
+          {isDeleteImpactLoading ? (
+            <Skeleton variant="rounded" height={72} />
+          ) : deleteImpact && (
+            <Stack spacing={0.75}>
+              <Typography variant="body2">
+                {t('users.deleteConfirm.totalAppointments').replace('{count}', String(deleteImpact.totalAppointmentCount))}
+              </Typography>
+              <Typography variant="body2">
+                {t('users.deleteConfirm.specialistAppointments').replace('{count}', String(deleteImpact.specialistAppointmentCount))}
+              </Typography>
+              <Typography variant="body2">
+                {t('users.deleteConfirm.clientAppointments').replace('{count}', String(deleteImpact.clientAppointmentCount))}
+              </Typography>
+              {deleteImpact.hasAppointments && (
+                <Typography variant="body2" color="warning.main">
+                  {t('users.deleteConfirm.warningHasAppointments')}
+                </Typography>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <AppButton
+            type="button"
+            variant="text"
+            onClick={() => {
+              setDeletingUser(null);
+              setDeleteImpact(null);
+            }}
+            disabled={isSaving}
+          >
+            {t('users.deleteConfirm.cancel')}
+          </AppButton>
+          <AppButton
+            type="button"
+            color="error"
+            onClick={() => deletingUser && void deleteUser(deletingUser)}
+            isLoading={isSaving}
+            disabled={isDeleteImpactLoading}
+          >
+            {t('users.deleteConfirm.confirm')}
+          </AppButton>
+        </DialogActions>
+      </Dialog>
     </AppPage>
   );
 }

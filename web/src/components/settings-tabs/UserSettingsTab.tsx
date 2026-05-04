@@ -1,5 +1,6 @@
-import { Typography } from '@mui/material';
-import { Controller, Control } from 'react-hook-form';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, Typography } from '@mui/material';
+import { Controller, Control, useController } from 'react-hook-form';
+import { useState } from 'react';
 
 import type { UserSettings } from '../../shared/types/api';
 import type { SettingsCardCopy } from '../SettingsCard.types';
@@ -14,15 +15,24 @@ type Props = {
   copy: SettingsCardCopy;
   control: Control<UserSettings>;
   isSaving: boolean;
+  canSelfDeleteUser: boolean;
   onSubmit: () => void;
+  onRequestUserDeletion: () => Promise<void> | void;
+  onCancelUserDeletion: () => Promise<void> | void;
 };
 
 export function UserSettingsTab({
   copy,
   control,
   isSaving,
+  canSelfDeleteUser,
   onSubmit,
+  onRequestUserDeletion,
+  onCancelUserDeletion,
 }: Props) {
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const { field: deleteScheduledAtField } = useController({ control, name: 'deleteScheduledAt' });
+
   return (
     <AppForm component="form" onSubmit={onSubmit}>
       <Typography variant="h5">{copy.userTitle}</Typography>
@@ -92,6 +102,49 @@ export function UserSettingsTab({
       <AppButton type="submit" isLoading={isSaving}>
         {copy.saveSettings}
       </AppButton>
+
+      {canSelfDeleteUser && (
+        <Stack spacing={1} sx={{ mt: 4 }}>
+          {deleteScheduledAtField.value && (
+            <Typography variant="body2">
+              {copy.userDeleteScheduledAt.replace('{date}', new Date(deleteScheduledAtField.value).toLocaleString())}
+            </Typography>
+          )}
+          <AppButton
+            color={deleteScheduledAtField.value ? 'inherit' : 'error'}
+            type="button"
+            onClick={() => {
+              if (deleteScheduledAtField.value) {
+                void onCancelUserDeletion();
+                return;
+              }
+              setIsDeleteConfirmOpen(true);
+            }}
+          >
+            {deleteScheduledAtField.value ? copy.userCancelDeleteButton : copy.userDeleteButton}
+          </AppButton>
+        </Stack>
+      )}
+
+      <Dialog open={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)}>
+        <DialogTitle>{copy.userDeleteConfirmTitle}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{copy.userDeleteConfirmDescription}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <AppButton type="button" onClick={() => setIsDeleteConfirmOpen(false)}>{copy.cancel}</AppButton>
+          <AppButton
+            type="button"
+            color="error"
+            onClick={() => {
+              void onRequestUserDeletion();
+              setIsDeleteConfirmOpen(false);
+            }}
+          >
+            {copy.userDeleteButton}
+          </AppButton>
+        </DialogActions>
+      </Dialog>
     </AppForm>
   );
 }

@@ -1,4 +1,4 @@
-import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
 import { Controller, Control, useController } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 
@@ -18,15 +18,19 @@ type Props = {
   meetingDurationOptions: number[];
   isSaving: boolean;
   onSubmit: () => void;
+  onRequestAccountDeletion: () => Promise<void> | void;
+  onCancelAccountDeletion: () => Promise<void> | void;
 };
 
-export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSaving, onSubmit }: Props) {
+export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSaving, onSubmit, onRequestAccountDeletion, onCancelAccountDeletion }: Props) {
   const { field: businessAddressField } = useController({ control, name: 'businessAddress' });
   const { field: businessLatField } = useController({ control, name: 'businessLat' });
   const { field: businessLngField } = useController({ control, name: 'businessLng' });
   const businessLat = businessLatField.value;
   const businessLng = businessLngField.value;
   const [defaultCoordinates, setDefaultCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const { field: deleteScheduledAtField } = useController({ control, name: 'deleteScheduledAt' });
 
   useEffect(() => {
     if (typeof businessLat === 'number' && typeof businessLng === 'number') {
@@ -145,6 +149,29 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
       <AppButton type="submit" startIcon={<AppIcons.save />} isLoading={isSaving}>
         {copy.saveSettings}
       </AppButton>
+      <Stack spacing={1} sx={{ mt: 4 }}>
+        {deleteScheduledAtField.value && <Typography variant="body2">{copy.accountDeleteScheduledAt.replace('{date}', new Date(deleteScheduledAtField.value).toLocaleString())}</Typography>}
+        <AppButton color={deleteScheduledAtField.value ? 'inherit' : 'error'} type="button" onClick={() => {
+          if (deleteScheduledAtField.value) {
+            void onCancelAccountDeletion();
+            return;
+          }
+          setIsDeleteConfirmOpen(true);
+        }}>
+          {deleteScheduledAtField.value ? copy.accountCancelDeleteButton : copy.accountDeleteButton}
+        </AppButton>
+      </Stack>
+
+      <Dialog open={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)}>
+        <DialogTitle>{copy.accountDeleteConfirmTitle}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{copy.accountDeleteConfirmDescription}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <AppButton type="button" onClick={() => setIsDeleteConfirmOpen(false)}>{copy.cancel}</AppButton>
+          <AppButton type="button" color="error" onClick={() => { void onRequestAccountDeletion(); setIsDeleteConfirmOpen(false); }}>{copy.accountDeleteButton}</AppButton>
+        </DialogActions>
+      </Dialog>
     </AppForm>
   );
 }

@@ -39,6 +39,7 @@ const defaultAccountSettings: AccountSettings = {
   businessAddress: '',
   businessLat: null,
   businessLng: null,
+  deleteScheduledAt: null,
 };
 
 const defaultUserSettings: UserSettings = {
@@ -55,6 +56,7 @@ const defaultUserSettings: UserSettings = {
   telegramBotConnected: false,
   telegramBotName: null,
   telegramBotUsername: null,
+  deleteScheduledAt: null,
   telegramBotToken: '',
 };
 
@@ -111,6 +113,7 @@ export function SettingsContainer() {
   const canManageSpecialistBookingPolicy =
     user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
   const isOwner = user?.role === 'owner';
+  const canSelfDeleteUser = Boolean(user && !canManageAccountSettings);
 
   const filteredScopeSpecialists = useMemo(() => (
     selectedAccountId
@@ -356,6 +359,48 @@ export function SettingsContainer() {
     } finally {
       setIsSavingAccount(false);
     }
+  };
+
+  const requestAccountDeletion = async () => {
+    if (!accessToken || !canManageAccountSettings) {
+      return;
+    }
+    const response = await apiClient.post<AccountSettings>('/api/settings/account/delete', {}, {
+      headers: authHeaders(accessToken),
+      params: selectedAccountId ? { accountId: selectedAccountId } : undefined
+    });
+    setAccountSettings(response.data);
+  };
+
+  const cancelAccountDeletion = async () => {
+    if (!accessToken || !canManageAccountSettings) {
+      return;
+    }
+    const response = await apiClient.post<AccountSettings>('/api/settings/account/delete/cancel', {}, {
+      headers: authHeaders(accessToken),
+      params: selectedAccountId ? { accountId: selectedAccountId } : undefined
+    });
+    setAccountSettings(response.data);
+  };
+
+  const requestUserDeletion = async () => {
+    if (!accessToken || !canSelfDeleteUser) {
+      return;
+    }
+    const response = await apiClient.post<UserSettings>('/api/settings/user/delete', {}, {
+      headers: authHeaders(accessToken),
+    });
+    setUserSettings(response.data);
+  };
+
+  const cancelUserDeletion = async () => {
+    if (!accessToken || !canSelfDeleteUser) {
+      return;
+    }
+    const response = await apiClient.post<UserSettings>('/api/settings/user/delete/cancel', {}, {
+      headers: authHeaders(accessToken),
+    });
+    setUserSettings(response.data);
   };
 
   const saveUserSettings = async (nextSettings: UserSettings) => {
@@ -652,6 +697,7 @@ export function SettingsContainer() {
             canManageSystemSettings={canManageSystemSettings}
             canManageAccountSettings={canManageAccountSettings}
             canManageSpecialistBookingPolicy={canManageSpecialistBookingPolicy}
+            canSelfDeleteUser={canSelfDeleteUser}
             copy={{
               systemTab: t('settings.tabs.system'),
               accountTab: t('settings.tabs.account'),
@@ -678,6 +724,16 @@ export function SettingsContainer() {
               businessMapPreview: t('settings.businessMapPreview'),
               selectAddress: t('settings.selectAddress'),
               mapboxTokenMissingHint: t('settings.mapboxTokenMissingHint'),
+              accountDeleteButton: t('settings.accountDeleteButton'),
+              accountCancelDeleteButton: t('settings.accountCancelDeleteButton'),
+              accountDeleteConfirmTitle: t('settings.accountDeleteConfirmTitle'),
+              accountDeleteConfirmDescription: t('settings.accountDeleteConfirmDescription'),
+              accountDeleteScheduledAt: t('settings.accountDeleteScheduledAt'),
+              userDeleteButton: t('settings.userDeleteButton'),
+              userCancelDeleteButton: t('settings.userCancelDeleteButton'),
+              userDeleteConfirmTitle: t('settings.userDeleteConfirmTitle'),
+              userDeleteConfirmDescription: t('settings.userDeleteConfirmDescription'),
+              userDeleteScheduledAt: t('settings.userDeleteScheduledAt'),
               refreshTokenTtlDays: t('settings.refreshTokenTtlDays'),
               accessTokenTtlSeconds: t('settings.accessTokenTtlSeconds'),
               sessionCookieName: t('settings.sessionCookieName'),
@@ -745,6 +801,10 @@ export function SettingsContainer() {
             passwordStep={passwordStep}
             onSaveSystem={saveSystemSettings}
             onSaveAccount={saveAccountSettings}
+            onRequestAccountDeletion={requestAccountDeletion}
+            onCancelAccountDeletion={cancelAccountDeletion}
+            onRequestUserDeletion={requestUserDeletion}
+            onCancelUserDeletion={cancelUserDeletion}
             onSaveUser={saveUserSettings}
             onSaveSpecialistBookingPolicy={saveSpecialistBookingPolicy}
             onSaveNotificationDefaults={saveAccountNotificationDefaults}

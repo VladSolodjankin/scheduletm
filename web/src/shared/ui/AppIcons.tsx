@@ -1,4 +1,5 @@
 import AddRounded from '@mui/icons-material/AddRounded';
+import BlockRounded from '@mui/icons-material/BlockRounded';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import DeleteRounded from '@mui/icons-material/DeleteRounded';
 import EditRounded from '@mui/icons-material/EditRounded';
@@ -18,6 +19,7 @@ import SettingsRounded from '@mui/icons-material/SettingsRounded';
 
 export const AppIcons = {
   add: AddRounded,
+  deactivate: BlockRounded,
   darkMode: DarkModeRounded,
   delete: DeleteRounded,
   edit: EditRounded,

@@ -3,7 +3,7 @@ import {
   findAccountSettingsByAccountId,
   updateAccountSettingsByAccountId,
 } from '../repositories/accountSettingsRepository.js';
-import { findWebUserById, updateWebUserSettings } from '../repositories/webUserRepository.js';
+import { cancelWebUserDeletion, findWebUserById, scheduleWebUserDeletion, updateWebUserSettings } from '../repositories/webUserRepository.js';
 import { findWebUserIntegrationByWebUserId, updateWebUserTelegramIntegration } from '../repositories/webUserIntegrationRepository.js';
 import { findUserSettingsByWebUserId, updateUserSettingsByWebUserId } from '../repositories/userSettingsRepository.js';
 import { findUserIntegrationByWebUserId, updateUserTelegramIntegration } from '../repositories/userIntegrationRepository.js';
@@ -24,7 +24,7 @@ import { decryptText, encryptText } from '../utils/crypto.js';
 import { verifyTelegramBotToken } from './telegramService.js';
 import { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
 export { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
-import { findAccountById, listActiveAccounts } from '../repositories/accountRepository.js';
+import { cancelAccountDeletion, findAccountById, listActiveAccounts, scheduleAccountDeletion } from '../repositories/accountRepository.js';
 import { findSpecialistById, findSpecialistByIdAnyAccount, findSpecialistByWebUserId, listSpecialistsAllAccounts } from '../repositories/specialistRepository.js';
 import { findClientById } from '../repositories/clientRepository.js';
 import { WebUserRole } from '../types/webUserRole.js';
@@ -57,6 +57,7 @@ export type AccountSettings = {
   businessAddress: string;
   businessLat: number | null;
   businessLng: number | null;
+  deleteScheduledAt: string | null;
 };
 
 export type UserSettings = {
@@ -73,6 +74,7 @@ export type UserSettings = {
   telegramBotConnected: boolean;
   telegramBotName: string | null;
   telegramBotUsername: string | null;
+  deleteScheduledAt: string | null;
 };
 
 export type SpecialistBookingPolicy = {
@@ -128,6 +130,8 @@ const mapSystemSettings = async (): Promise<SystemSettings> => {
 
 const mapAccountSettings = async (accountId: number): Promise<AccountSettings> => {
   const row = await findAccountSettingsByAccountId(accountId);
+  const account = await findAccountById(accountId);
+  const deleteScheduledAt = (account as { delete_scheduled_at?: Date | string | null } | null)?.delete_scheduled_at;
 
   if (row) {
     return {
@@ -139,6 +143,7 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
       businessAddress: row.business_address ?? '',
       businessLat: row.business_lat === null ? null : Number(row.business_lat),
       businessLng: row.business_lng === null ? null : Number(row.business_lng),
+      deleteScheduledAt: deleteScheduledAt ? new Date(deleteScheduledAt).toISOString() : null,
     };
   }
 
@@ -153,6 +158,7 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
       businessAddress: '',
       businessLat: null,
       businessLng: null,
+      deleteScheduledAt: deleteScheduledAt ? new Date(deleteScheduledAt).toISOString() : null,
     };
   }
 
@@ -165,8 +171,24 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
     businessAddress: '',
     businessLat: null,
     businessLng: null,
+    deleteScheduledAt: deleteScheduledAt ? new Date(deleteScheduledAt).toISOString() : null,
   };
 };
+
+export async function requestAccountDeletion(actor: User, requestedAccountId?: number): Promise<AccountSettings | null> {
+  const accountId = await resolveManagedAccountId(actor, requestedAccountId);
+  if (!accountId) return null;
+  const deleteScheduledAt = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+  await scheduleAccountDeletion(accountId, deleteScheduledAt);
+  return mapAccountSettings(accountId);
+}
+
+export async function undoAccountDeletion(actor: User, requestedAccountId?: number): Promise<AccountSettings | null> {
+  const accountId = await resolveManagedAccountId(actor, requestedAccountId);
+  if (!accountId) return null;
+  await cancelAccountDeletion(accountId);
+  return mapAccountSettings(accountId);
+}
 
 export const getSystemSettings = async (): Promise<SystemSettings> => mapSystemSettings();
 
@@ -299,6 +321,7 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
       telegramBotConnected: false,
       telegramBotName: null,
       telegramBotUsername: null,
+      deleteScheduledAt: null,
     };
   }
 
@@ -327,6 +350,7 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
     telegramBotConnected: Boolean(integration?.telegram_bot_token ?? legacyIntegration?.telegram_bot_token),
     telegramBotName: integration?.telegram_bot_name ?? legacyIntegration?.telegram_bot_name ?? null,
     telegramBotUsername: integration?.telegram_bot_username ?? legacyIntegration?.telegram_bot_username ?? null,
+    deleteScheduledAt: user?.delete_scheduled_at ? new Date(user.delete_scheduled_at).toISOString() : null,
   };
 };
 
@@ -400,6 +424,39 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
 
   return getUserSettings(actor);
 };
+
+export async function requestUserDeletion(actor: User): Promise<UserSettings | null> {
+  if (canManageAccountSettings(actor.role)) {
+    return null;
+  }
+
+  const numericUserId = Number(actor.id);
+  if (!Number.isInteger(numericUserId)) {
+    return null;
+  }
+
+  await scheduleWebUserDeletion(
+    actor.accountId,
+    numericUserId,
+    new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+  );
+
+  return getUserSettings(actor);
+}
+
+export async function undoUserDeletion(actor: User): Promise<UserSettings | null> {
+  if (canManageAccountSettings(actor.role)) {
+    return null;
+  }
+
+  const numericUserId = Number(actor.id);
+  if (!Number.isInteger(numericUserId)) {
+    return null;
+  }
+
+  await cancelWebUserDeletion(actor.accountId, numericUserId);
+  return getUserSettings(actor);
+}
 
 async function resolveSpecialistForPolicy(actor: User, specialistId?: number, requestedAccountId?: number): Promise<{ accountId: number; specialistId: number } | null> {
   if (actor.role === WebUserRole.Owner) {

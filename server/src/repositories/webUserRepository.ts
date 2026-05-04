@@ -21,6 +21,8 @@ export type WebUserRecord = {
   created_at: Date;
   updated_at: Date;
   last_login_at: Date | null;
+  delete_scheduled_at: Date | null;
+  is_deleted: boolean;
   email_verified_at: Date | null;
   email_verification_code: string | null;
   email_verification_sent_at: Date | null;
@@ -84,12 +86,13 @@ export async function findWebUserByIdAnyAccount(id: number): Promise<WebUserReco
 
 export async function listWebUsersByAccount(accountId: number): Promise<WebUserRecord[]> {
   return db('web_users')
-    .where({ account_id: accountId })
+    .where({ account_id: accountId, is_deleted: false })
     .orderBy('created_at', 'desc');
 }
 
 export async function listWebUsersAllAccounts(): Promise<WebUserRecord[]> {
   return db('web_users')
+    .where({ is_deleted: false })
     .orderBy('created_at', 'desc');
 }
 
@@ -101,6 +104,7 @@ export async function listActiveSpecialistWebUsersWithoutProfile(accountId: numb
     .where('wu.account_id', accountId)
     .where('wu.role', 'specialist')
     .where('wu.is_active', true)
+    .where('wu.is_deleted', false)
     .whereNull('s.id')
     .orderBy('wu.email', 'asc')
     .select('wu.id', 'wu.email');
@@ -123,6 +127,7 @@ export async function createWebUser(input: CreateWebUserInput): Promise<WebUserR
       email_verification_sent_at: input.emailVerificationSentAt ?? null,
       email_verified_at: input.emailVerifiedAt ?? null,
       is_active: input.isActive ?? true,
+      is_deleted: false,
     })
     .returning<WebUserRecord[]>('*');
 
@@ -292,4 +297,47 @@ export async function updateWebUserProfile(input: UpdateWebUserProfileInput): Pr
   await db('web_users')
     .where({ account_id: input.accountId, id: input.id })
     .update(patch);
+}
+
+export async function scheduleWebUserDeletion(accountId: number, id: number, deleteScheduledAt: Date): Promise<void> {
+  await db('web_users')
+    .where({ account_id: accountId, id })
+    .update({
+      delete_scheduled_at: deleteScheduledAt,
+      updated_at: db.fn.now(),
+    });
+}
+
+export async function cancelWebUserDeletion(accountId: number, id: number): Promise<void> {
+  await db('web_users')
+    .where({ account_id: accountId, id })
+    .update({
+      delete_scheduled_at: null,
+      updated_at: db.fn.now(),
+    });
+}
+
+export async function listWebUsersDueForDeletion(now: Date): Promise<Array<Pick<WebUserRecord, 'id' | 'account_id' | 'client_id'>>> {
+  return db('web_users')
+    .where({ is_deleted: false })
+    .whereNotNull('delete_scheduled_at')
+    .andWhere('delete_scheduled_at', '<=', now)
+    .select<Array<Pick<WebUserRecord, 'id' | 'account_id' | 'client_id'>>>('id', 'account_id', 'client_id');
+}
+
+export async function softDeleteWebUser(accountId: number, id: number): Promise<void> {
+  await db('web_users')
+    .where({ account_id: accountId, id })
+    .update({
+      is_deleted: true,
+      is_active: false,
+      delete_scheduled_at: null,
+      updated_at: db.fn.now(),
+    });
+}
+
+export async function deleteWebUserById(accountId: number, id: number): Promise<void> {
+  await db('web_users')
+    .where({ account_id: accountId, id })
+    .delete();
 }

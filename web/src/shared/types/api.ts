@@ -63,6 +63,7 @@ export type AccountSettings = {
   businessAddress: string;
   businessLat: number | null;
   businessLng: number | null;
+  deleteScheduledAt: string | null;
 };
 
 export type UserSettings = {
@@ -79,6 +80,7 @@ export type UserSettings = {
   telegramBotConnected: boolean;
   telegramBotName: string | null;
   telegramBotUsername: string | null;
+  deleteScheduledAt: string | null;
   telegramBotToken?: string;
 };
 
@@ -225,7 +227,16 @@ export type ManagedUserItem = {
   telegramUsername: string;
   isActive: boolean;
   isVerified: boolean;
+  deleteScheduledAt: string | null;
   createdAt: string;
+};
+
+export type ManagedUserDeleteImpact = {
+  userId: number;
+  specialistAppointmentCount: number;
+  clientAppointmentCount: number;
+  totalAppointmentCount: number;
+  hasAppointments: boolean;
 };
 
 export type ManagedUsersListResponse = {

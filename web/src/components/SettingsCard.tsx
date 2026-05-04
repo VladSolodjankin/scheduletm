@@ -30,6 +30,7 @@ type SettingsCardProps = {
   canManageSystemSettings: boolean;
   canManageAccountSettings: boolean;
   canManageSpecialistBookingPolicy: boolean;
+  canSelfDeleteUser: boolean;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
   isZoomConnecting: boolean;
@@ -45,6 +46,10 @@ type SettingsCardProps = {
   passwordStep: 'password' | 'otp';
   onSaveSystem: (next: SystemSettings) => Promise<void> | void;
   onSaveAccount: (next: AccountSettings) => Promise<void> | void;
+  onRequestAccountDeletion: () => Promise<void> | void;
+  onCancelAccountDeletion: () => Promise<void> | void;
+  onRequestUserDeletion: () => Promise<void> | void;
+  onCancelUserDeletion: () => Promise<void> | void;
   onSaveUser: (next: UserSettings) => Promise<void> | void;
   onSaveSpecialistBookingPolicy: (next: SpecialistBookingPolicy) => Promise<void> | void;
   onSaveNotificationDefaults: (items: AccountNotificationDefault[]) => Promise<void> | void;
@@ -73,6 +78,7 @@ export function SettingsCard({
   canManageSystemSettings,
   canManageAccountSettings,
   canManageSpecialistBookingPolicy,
+  canSelfDeleteUser,
   isGoogleConnecting,
   isGoogleDisconnecting,
   isZoomConnecting,
@@ -88,6 +94,10 @@ export function SettingsCard({
   passwordStep,
   onSaveSystem,
   onSaveAccount,
+  onRequestAccountDeletion,
+  onCancelAccountDeletion,
+  onRequestUserDeletion,
+  onCancelUserDeletion,
   onSaveUser,
   onSaveSpecialistBookingPolicy,
   onSaveNotificationDefaults,
@@ -161,14 +171,17 @@ export function SettingsCard({
       </AppTabs>
 
       {resolvedTab === 'system' && <SystemSettingsTab copy={copy} control={systemControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingSystem} onSubmit={handleSystemSubmit(onSaveSystem)} />}
-      {resolvedTab === 'account' && <AccountSettingsTab copy={copy} control={accountControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingAccount} onSubmit={handleAccountSubmit(onSaveAccount)} />}
+      {resolvedTab === 'account' && <AccountSettingsTab copy={copy} control={accountControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingAccount} onSubmit={handleAccountSubmit(onSaveAccount)} onRequestAccountDeletion={onRequestAccountDeletion} onCancelAccountDeletion={onCancelAccountDeletion} />}
       {resolvedTab === 'specialistPolicy' && <SpecialistPolicyTab copy={copy} control={specialistPolicyControl} isSaving={isSavingSpecialistBookingPolicy} onSubmit={handleSpecialistPolicySubmit(onSaveSpecialistBookingPolicy)} />}
       {resolvedTab === 'user' && (
         <UserSettingsTab
           copy={copy}
           control={userControl}
           isSaving={isSavingUser}
+          canSelfDeleteUser={canSelfDeleteUser}
           onSubmit={handleUserSubmit(onSaveUser)}
+          onRequestUserDeletion={onRequestUserDeletion}
+          onCancelUserDeletion={onCancelUserDeletion}
         />
       )}
       {resolvedTab === 'integrations' && (

@@ -98,3 +98,9 @@ export async function deleteWebUserSessionByTokenAnyAccount(token: string): Prom
     .where({ token })
     .del();
 }
+
+export async function deleteWebUserSessionsByWebUserId(accountId: number, webUserId: number): Promise<void> {
+  await db('web_user_sessions')
+    .where({ account_id: accountId, web_user_id: webUserId })
+    .delete();
+}

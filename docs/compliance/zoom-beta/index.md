@@ -1,19 +1,21 @@
-# Zoom Beta evidence index
+# Zoom Beta Evidence Index
+
+Last updated: 2026-05-03
 
 | Control / requirement | Artifact | Status | Notes |
 |---|---|---|---|
-| SSDLC | `ssdlc.md` | ✅ Ready | Redacted summary. |
-| Privacy Policy | `privacy-policy.md` | ✅ Ready | Policy mapping + TODO link to the public legal page. |
-| Security policy #1 | `security-policy-access-control.md` | ✅ Ready | RBAC, MFA, least privilege. |
-| Security policy #2 | `security-policy-vulnerability-management.md` | ✅ Ready | SAST/DAST, patch SLA. |
-| Security policy #3 | `security-policy-incident-response.md` | ✅ Ready | Detection/triage/escalation/RCA. |
-| TLS 1.2+ evidence | `tls-1.2-evidence.md`, `evidence/tls-check-latest.txt`, `evidence/tls-summary-latest.md` | ✅ Ready | Latest run: 2026-05-02. |
-| DAST on staging | `dast-latest.md`, `evidence/zap-report.md`, `evidence/zap-report.json` | ⚠️ In progress | Latest run: High=0, Medium=1; hardening still required. |
-| SAST in CI | `sast-latest.md`, `evidence/npm-audit-latest.json`, `evidence/semgrep-latest.json` | ⚠️ In progress | Findings must be closed or risk-accepted. |
+| Privacy policy | `privacy-policy.md` | Ready for external review | Public-facing policy aligned to current product scope and Zoom workflow. |
+| Security policy overview | `security-policy.md` | Ready for external review | Public-facing overview with transparent control posture. |
+| Access control policy | `security-policy-access-control.md` | Ready for external review | RBAC, least privilege, tenant scoping, and session protections. |
+| Vulnerability policy | `security-policy-vulnerability-management.md`, `vulnerability-management.md` | Ready for external review | Public-facing process and release-gate expectations. |
+| Incident response policy | `security-policy-incident-response.md`, `incident-response.md` | Ready for external review | Public-facing response lifecycle summary. |
+| TLS 1.2+ evidence | `tls-1.2-evidence.md`, `evidence/tls-check-latest.txt`, `evidence/tls-summary-latest.md` | Ready | Latest evidence files are present. |
+| DAST on staging | `dast-latest.md`, `evidence/zap-report.md`, `evidence/zap-report.json` | Review with remediation plan | Evidence is present; current findings status should be checked before making formal assurance claims. |
+| SAST and dependency review | `sast-latest.md`, `evidence/npm-audit-latest.json`, `evidence/semgrep-latest.json` | Review with remediation plan | Evidence is present; open findings must be evaluated before release sign-off. |
 
-## Definition of Done
+## Definition of Done for External Sharing
 
-1. TLS evidence contains successful checks for production + staging endpoints, including Zoom OAuth callback/API path.
-2. DAST report on staging contains date, commit, tool version, and High/Critical findings status (`High=0`, `Critical=0`).
-3. SAST report from CI contains date, commit, and High/Critical findings status (`High=0`, `Critical=0`).
-4. All documents in this directory are redacted (no secrets, tokens, or personal data).
+1. Public-facing policy documents contain no placeholders, TODO items, secrets, or unsupported claims.
+2. Policy language matches the implemented product behavior closely enough to avoid misleading users or reviewers.
+3. Technical evidence files remain redacted and can be reviewed independently from policy texts.
+4. Formal production-readiness or compliance claims are made only after open findings in the evidence set are resolved or risk-accepted.

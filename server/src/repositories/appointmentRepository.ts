@@ -355,6 +355,15 @@ export async function countAppointmentsBySpecialistId(accountId: number, special
   return Number(row?.count ?? 0);
 }
 
+export async function countAppointmentsByClientId(accountId: number, clientId: number): Promise<number> {
+  const row = await db('appointments')
+    .where({ account_id: accountId, user_id: clientId })
+    .count<{ count: string }[]>({ count: '*' })
+    .first();
+
+  return Number(row?.count ?? 0);
+}
+
 
 export async function listUnpaidAppointmentsCreatedBetweenAllAccounts(
   from: Date,

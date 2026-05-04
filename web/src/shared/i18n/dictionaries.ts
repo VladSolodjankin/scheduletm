@@ -121,6 +121,16 @@ export const dictionaries = {
       businessMapPreview: 'Map preview',
       selectAddress: 'Select Address',
       mapboxTokenMissingHint: 'Set VITE_MAPBOX_PUBLIC_TOKEN to show map preview.',
+      accountDeleteButton: 'Delete account',
+      accountCancelDeleteButton: 'Cancel account deletion',
+      accountDeleteConfirmTitle: 'Delete account?',
+      accountDeleteConfirmDescription: 'Deleting this account will remove all user/account data and related appointments, specialists, services, passwords, and credentials. Permanent deletion happens in 10 days.',
+      accountDeleteScheduledAt: 'Account deletion scheduled for {date}. You can cancel before this time.',
+      userDeleteButton: 'Delete account',
+      userCancelDeleteButton: 'Cancel account deletion',
+      userDeleteConfirmTitle: 'Delete your account?',
+      userDeleteConfirmDescription: 'Deleting your account will schedule permanent removal of your user profile, passwords, appointments, integrations, and integration credentials in 10 days. You can cancel before this time.',
+      userDeleteScheduledAt: 'Account deletion scheduled for {date}. You can cancel before this time.',
       refreshTokenTtlDays: 'Refresh token TTL (days)',
       accessTokenTtlSeconds: 'Access token TTL (seconds)',
       sessionCookieName: 'Session cookie name',
@@ -220,12 +230,13 @@ export const dictionaries = {
 
     users: {
       pageTitle: 'Users',
-      pageSubtitle: 'Create, edit and deactivate users for your account.',
-      accessDenied: 'Only owner or admin can manage users.',
+      pageSubtitle: 'Create, edit, deactivate, and delete users for your account.',
+      accessDenied: 'Only owner, admin, or specialist can manage users allowed by their role.',
       tableTitle: 'Users',
       add: 'Add user',
       edit: 'Edit user',
-      delete: 'Deactivate user',
+      deactivate: 'Deactivate user',
+      delete: 'Delete user',
       resendInvite: 'Resend invite',
       empty: 'No users yet.',
       save: 'Save',
@@ -246,6 +257,22 @@ export const dictionaries = {
         cancel: 'Cancel',
         confirm: 'Create admin'
       },
+      deactivateConfirm: {
+        title: 'Deactivate user?',
+        description: 'The user will immediately lose access to the account, but will remain visible in the users list.',
+        cancel: 'Cancel',
+        confirm: 'Deactivate'
+      },
+      deleteConfirm: {
+        title: 'Delete user?',
+        description: 'Deleting a user will hide them from the users list and revoke access immediately.',
+        totalAppointments: 'Total linked appointments: {count}',
+        specialistAppointments: 'As specialist: {count}',
+        clientAppointments: 'As client: {count}',
+        warningHasAppointments: 'This user still has linked appointments. Review the impact before confirming.',
+        cancel: 'Cancel',
+        confirm: 'Delete user'
+      },
       columns: {
         email: 'Email',
         firstName: 'First name',
@@ -258,7 +285,9 @@ export const dictionaries = {
       errors: {
         load: 'Unable to load users.',
         save: 'Unable to save user.',
+        deactivate: 'Unable to deactivate user.',
         delete: 'Unable to delete user.',
+        deleteImpact: 'Unable to load linked appointments for this user.',
         inviteResend: 'Unable to resend invite.'
       },
       success: {
@@ -529,6 +558,16 @@ export const dictionaries = {
       businessMapPreview: 'Предпросмотр на карте',
       selectAddress: 'Выбрать адрес',
       mapboxTokenMissingHint: 'Укажите VITE_MAPBOX_PUBLIC_TOKEN, чтобы включить предпросмотр карты.',
+      accountDeleteButton: 'Удалить аккаунт',
+      accountCancelDeleteButton: 'Отменить удаление аккаунта',
+      accountDeleteConfirmTitle: 'Удалить аккаунт?',
+      accountDeleteConfirmDescription: 'При удалении аккаунта будут удалены все данные текущего пользователя и всё, что связано с аккаунтом: записи, специалисты, услуги, пароли и данные. Безвозвратное удаление произойдёт через 10 дней.',
+      accountDeleteScheduledAt: 'Удаление аккаунта запланировано на {date}. До этого времени его можно отменить.',
+      userDeleteButton: 'Удалить аккаунт',
+      userCancelDeleteButton: 'Отменить удаление аккаунта',
+      userDeleteConfirmTitle: 'Удалить ваш аккаунт?',
+      userDeleteConfirmDescription: 'Удаление аккаунта запланирует безвозвратное удаление вашего профиля, паролей, записей, интеграций и ключей интеграций через 10 дней. До этого момента удаление можно отменить.',
+      userDeleteScheduledAt: 'Удаление аккаунта запланировано на {date}. До этого времени его можно отменить.',
       refreshTokenTtlDays: 'TTL refresh token (дни)',
       accessTokenTtlSeconds: 'TTL access token (сек)',
       sessionCookieName: 'Имя session cookie',
@@ -628,12 +667,13 @@ export const dictionaries = {
 
     users: {
       pageTitle: 'Пользователи',
-      pageSubtitle: 'Добавляйте, редактируйте и деактивируйте пользователей аккаунта.',
-      accessDenied: 'Управлять пользователями может только владелец или администратор.',
+      pageSubtitle: 'Добавляйте, редактируйте, деактивируйте и удаляйте пользователей аккаунта.',
+      accessDenied: 'Только owner, admin или specialist могут управлять доступными им пользователями.',
       tableTitle: 'Пользователи',
       add: 'Добавить пользователя',
       edit: 'Редактировать пользователя',
-      delete: 'Деактивировать пользователя',
+      deactivate: 'Деактивировать пользователя',
+      delete: 'Удалить пользователя',
       resendInvite: 'Отправить инвайт повторно',
       empty: 'Пользователи пока не добавлены.',
       save: 'Сохранить',
@@ -654,6 +694,22 @@ export const dictionaries = {
         cancel: 'Отмена',
         confirm: 'Создать admin'
       },
+      deactivateConfirm: {
+        title: 'Деактивировать пользователя?',
+        description: 'Пользователь сразу потеряет доступ к аккаунту, но останется в списке пользователей.',
+        cancel: 'Отмена',
+        confirm: 'Деактивировать'
+      },
+      deleteConfirm: {
+        title: 'Удалить пользователя?',
+        description: 'Удаление пользователя сразу отзовёт ему доступ и скроет его из списка пользователей.',
+        totalAppointments: 'Всего связанных записей: {count}',
+        specialistAppointments: 'Как специалист: {count}',
+        clientAppointments: 'Как клиент: {count}',
+        warningHasAppointments: 'У пользователя остались связанные записи. Перед подтверждением проверьте влияние удаления.',
+        cancel: 'Отмена',
+        confirm: 'Удалить пользователя'
+      },
       columns: {
         email: 'Email',
         firstName: 'Имя',
@@ -666,7 +722,9 @@ export const dictionaries = {
       errors: {
         load: 'Не удалось загрузить пользователей.',
         save: 'Не удалось сохранить пользователя.',
+        deactivate: 'Не удалось деактивировать пользователя.',
         delete: 'Не удалось удалить пользователя.',
+        deleteImpact: 'Не удалось загрузить связанные записи пользователя.',
         inviteResend: 'Не удалось отправить приглашение повторно.'
       },
       success: {
@@ -931,6 +989,16 @@ export type TranslationKey =
   | 'settings.businessMapPreview'
   | 'settings.selectAddress'
   | 'settings.mapboxTokenMissingHint'
+  | 'settings.accountDeleteButton'
+  | 'settings.accountCancelDeleteButton'
+  | 'settings.accountDeleteConfirmTitle'
+  | 'settings.accountDeleteConfirmDescription'
+  | 'settings.accountDeleteScheduledAt'
+  | 'settings.userDeleteButton'
+  | 'settings.userCancelDeleteButton'
+  | 'settings.userDeleteConfirmTitle'
+  | 'settings.userDeleteConfirmDescription'
+  | 'settings.userDeleteScheduledAt'
   | 'settings.refreshTokenTtlDays'
   | 'settings.accessTokenTtlSeconds'
   | 'settings.sessionCookieName'
@@ -1018,6 +1086,7 @@ export type TranslationKey =
   | 'users.tableTitle'
   | 'users.add'
   | 'users.edit'
+  | 'users.deactivate'
   | 'users.delete'
   | 'users.resendInvite'
   | 'users.empty'
@@ -1035,6 +1104,18 @@ export type TranslationKey =
   | 'users.adminConfirm.description'
   | 'users.adminConfirm.cancel'
   | 'users.adminConfirm.confirm'
+  | 'users.deactivateConfirm.title'
+  | 'users.deactivateConfirm.description'
+  | 'users.deactivateConfirm.cancel'
+  | 'users.deactivateConfirm.confirm'
+  | 'users.deleteConfirm.title'
+  | 'users.deleteConfirm.description'
+  | 'users.deleteConfirm.totalAppointments'
+  | 'users.deleteConfirm.specialistAppointments'
+  | 'users.deleteConfirm.clientAppointments'
+  | 'users.deleteConfirm.warningHasAppointments'
+  | 'users.deleteConfirm.cancel'
+  | 'users.deleteConfirm.confirm'
   | 'users.columns.email'
   | 'users.columns.firstName'
   | 'users.columns.lastName'
@@ -1044,7 +1125,9 @@ export type TranslationKey =
   | 'users.columns.actions'
   | 'users.errors.load'
   | 'users.errors.save'
+  | 'users.errors.deactivate'
   | 'users.errors.delete'
+  | 'users.errors.deleteImpact'
   | 'users.errors.inviteResend'
   | 'users.success.inviteResent'
   | 'appointments.roleClient'

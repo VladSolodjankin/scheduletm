@@ -24,6 +24,13 @@ export async function up(knex: Knex): Promise<void> {
       table.decimal('business_lng', 10, 7).nullable();
     });
   }
+
+  const hasDeleteScheduledAt = await knex.schema.hasColumn('accounts', 'delete_scheduled_at');
+  if (!hasDeleteScheduledAt) {
+    await knex.schema.alterTable('accounts', (table) => {
+      table.timestamp('delete_scheduled_at').nullable();
+    });
+  }
 }
 
 export async function down(knex: Knex): Promise<void> {
@@ -39,6 +46,13 @@ export async function down(knex: Knex): Promise<void> {
       if (hasAddress) table.dropColumn('business_address');
       if (hasLat) table.dropColumn('business_lat');
       if (hasLng) table.dropColumn('business_lng');
+    });
+  }
+
+  const hasDeleteScheduledAt = await knex.schema.hasColumn('accounts', 'delete_scheduled_at');
+  if (hasDeleteScheduledAt) {
+    await knex.schema.alterTable('accounts', (table) => {
+      table.dropColumn('delete_scheduled_at');
     });
   }
 }

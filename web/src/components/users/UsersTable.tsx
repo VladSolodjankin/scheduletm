@@ -19,6 +19,7 @@ type UsersTableProps = {
   emptyText: string;
   addLabel: string;
   editLabel: string;
+  deactivateLabel: string;
   deleteLabel: string;
   resendInviteLabel: string;
   emailColumnLabel: string;
@@ -31,6 +32,7 @@ type UsersTableProps = {
   users: ManagedUserItem[];
   onAdd: () => void;
   onEdit: (item: ManagedUserItem) => void;
+  onDeactivate: (item: ManagedUserItem) => void;
   onDelete: (item: ManagedUserItem) => void;
   onResendInvite: (item: ManagedUserItem) => void;
   isResendingInviteForUserId: number | null;
@@ -41,6 +43,7 @@ export function UsersTable({
   emptyText,
   addLabel,
   editLabel,
+  deactivateLabel,
   deleteLabel,
   resendInviteLabel,
   emailColumnLabel,
@@ -53,6 +56,7 @@ export function UsersTable({
   users,
   onAdd,
   onEdit,
+  onDeactivate,
   onDelete,
   onResendInvite,
   isResendingInviteForUserId
@@ -106,6 +110,11 @@ export function UsersTable({
                   <IconButton size="small" aria-label={editLabel} onClick={() => onEdit(item)}>
                     <AppIcons.edit fontSize="small" />
                   </IconButton>
+                  {item.isActive && (
+                    <IconButton size="small" aria-label={deactivateLabel} onClick={() => onDeactivate(item)}>
+                      <AppIcons.deactivate fontSize="small" />
+                    </IconButton>
+                  )}
                   <IconButton size="small" aria-label={deleteLabel} color="error" onClick={() => onDelete(item)}>
                     <AppIcons.delete fontSize="small" />
                   </IconButton>

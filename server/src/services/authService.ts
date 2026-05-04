@@ -319,7 +319,7 @@ export const authenticateUser = async (
     throw new Error('EMAIL_NOT_VERIFIED');
   }
 
-  if (!user.is_active) {
+  if (!user.is_active || user.is_deleted) {
     throw new Error('ACCOUNT_INACTIVE');
   }
 
@@ -505,7 +505,7 @@ export const resolveUserByAccessToken = async (token: string): Promise<User | nu
   }
 
   const user = await findWebUserByIdAnyAccount(session.web_user_id);
-  if (!user) {
+  if (!user || user.is_deleted || !user.is_active) {
     return null;
   }
 
