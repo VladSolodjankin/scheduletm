@@ -1,5 +1,5 @@
-import privacyPolicyMarkdown from '../../../docs/compliance/privacy-policy.md?raw';
-import securityPolicyMarkdown from '../../../docs/compliance/security-policy.md?raw';
+import privacyPolicyMarkdown from './legal/privacy-policy.md?raw';
+import securityPolicyMarkdown from './legal/security-policy.md?raw';
 
 export type LegalDocumentSection = {
   title: string;
