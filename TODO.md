@@ -28,6 +28,9 @@
 
 - [~] Подготовить пакет доказательств для Zoom Beta review: SSDLC, SAST, DAST, Privacy Policy + любые 3 дополнительных security-policy документа. *(добавлены redacted docs/шаблоны, нужен фактический CI evidence)*
 - [x] Вынести compliance-артефакты в `docs/compliance/zoom-beta/` (redacted, без секретов) и добавить индекс evidence.
+- [ ] Опубликовать явные public legal/security contact channels: support/privacy/security email или page, и использовать их в `docs/compliance/*.md` вместо общих формулировок про `public website or support workflow`.
+- [ ] Довести public legal surface в продукте: добавить реальные ссылки на privacy/security pages в web UI и проверить, что legal footer/entrypoints не содержат пустых `Link`-элементов.
+- [ ] Финализировать policy wording после публикации legal channels: privacy requests, security disclosure channel, subprocessors notice, notice about policy updates.
 - [~] Добавить CI-прогоны/отчеты для SAST и DAST на staging, с датой и статусом high/critical findings. *(добавлен GitHub Actions workflow, нужен реальный запуск и артефакты)*
 - [~] Зафиксировать evidence поддержки TLS 1.2+ для всех публичных web/server endpoint'ов, связанных с Zoom OAuth/API. *(добавлен GitHub Actions TLS job, нужен успешный прогон и артефакты)*
 

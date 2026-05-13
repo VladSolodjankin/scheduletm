@@ -297,9 +297,9 @@
 ### Рекомендуемый минимум артефактов в репозитории
 - `docs/compliance/zoom-beta/README.md` — индекс доказательств.
 - `docs/compliance/zoom-beta/ssdlc.md`
-- `docs/compliance/zoom-beta/security-policy.md`
-- `docs/compliance/zoom-beta/incident-response.md`
-- `docs/compliance/zoom-beta/vulnerability-management.md`
+- `docs/compliance/security-policy.md`
+- `docs/compliance/incident-response.md`
+- `docs/compliance/vulnerability-management.md`
 - `docs/compliance/zoom-beta/sast-latest.md`
 - `docs/compliance/zoom-beta/dast-latest.md`
 - `docs/compliance/zoom-beta/tls-1.2-evidence.md`

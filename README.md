@@ -1,4 +1,4 @@
-# Meetli (`scheduletm`) Monorepo
+# Meetli Monorepo
 
 Единый репозиторий платформы управления расписанием:
 

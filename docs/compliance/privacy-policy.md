@@ -2,9 +2,9 @@
 
 Effective date: 2026-05-03
 
-This Privacy Policy describes how Meetli processes personal data when customers, team members, and clients use the Meetli web application, scheduling workflows, notifications, and the optional Zoom integration.
+This Privacy Policy describes how Meetli processes personal data when customers, team members, and clients use the Meetli web application, scheduling workflows, notifications, and optional third-party integrations.
 
-This document is written for external review and public sharing. It summarizes the current production-intended behavior of the application as implemented in this repository. It does not grant contractual rights beyond applicable law or separate written agreements.
+This document is intended for public access. It summarizes the current production-intended behavior of the application as implemented in this repository. It does not grant contractual rights beyond applicable law or separate written agreements.
 
 ## 1. Scope
 
@@ -28,7 +28,7 @@ Depending on how the service is used, Meetli may process:
 - Security and audit data, such as login attempts, session records, appointment event history, and error logs.
 - Technical request data, such as IP-based anti-abuse signals, request path, browser-origin data required for CORS validation, and security headers/cookies needed for authentication.
 
-Meetli does not intentionally request special-category personal data for the Zoom Beta workflow.
+Meetli does not intentionally request special-category personal data as part of the standard product workflow.
 
 ## 3. Sources of Data
 
@@ -83,6 +83,8 @@ Meetli may share data with service providers and infrastructure vendors strictly
 - Mapping providers used for business location features, including Mapbox where enabled.
 - Hosting, database, networking, logging, and operational support providers used to run the service.
 
+These providers act only within the scope needed to deliver the relevant product feature or operational service. Meetli does not authorize subprocessors to use customer personal data for their own independent marketing purposes.
+
 Meetli does not sell personal data.
 
 ## 8. Security Measures
@@ -120,6 +122,8 @@ Meetli also supports deletion workflows initiated by authorized users and admini
 - Self-service user deletion for specialist or client roles schedules permanent removal of that user's profile, passwords, appointments, integrations, and stored integration credentials after 10 days. Until the scheduled deletion date, that user can still sign in and cancel the deletion request.
 - Administrative deletion of a managed user revokes that user's access immediately and removes the deleted user from standard user-management listings. Related records such as appointments may remain in the account for operational continuity unless separately removed through account-level deletion or other administrative action.
 
+Where deletion is requested by a customer account for its own users or clients, Meetli processes that request within the product workflow and according to the configured retention and account ownership model.
+
 Operational business records such as users, clients, appointments, notifications, and audit events may remain for the lifetime of the customer account unless deleted earlier by authorized administrators, removed in response to a valid request, or retained longer where required for security, dispute handling, or legal compliance.
 
 ## 10. User Rights and Requests
@@ -132,7 +136,9 @@ Subject to applicable law, data subjects may have rights to:
 - Object to or request restriction of certain processing.
 - Request data portability where applicable.
 
-Requests should be submitted through the customer account administrator or Meetli support channel published on the applicable public service page or customer support workflow. Meetli may require reasonable verification before acting on a request.
+Requests should be submitted through the customer account administrator or by contacting Meetli at `support@meetli.cc`. Meetli may require reasonable verification before acting on a request.
+
+Where the product exposes in-app deletion or cancellation controls, those controls are part of the supported request workflow.
 
 ## 11. Children
 
@@ -144,4 +150,4 @@ Meetli may process data in infrastructure locations used by its hosting and subp
 
 ## 13. Changes to This Policy
 
-Meetli may update this Privacy Policy from time to time. The effective date at the top of this document indicates the latest revision date for this version.
+Meetli may update this Privacy Policy from time to time to reflect changes in the service, legal requirements, integrations, or operational practices. The effective date at the top of this document indicates the latest revision date for this version.

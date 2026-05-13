@@ -10,6 +10,8 @@ import { SpecialistsPage } from '../pages/SpecialistsPage';
 import { UsersPage } from '../pages/UsersPage';
 import { NotificationLogsPage } from '../pages/NotificationLogsPage';
 import { ErrorLogsPage } from '../pages/ErrorLogsPage';
+import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
+import { SecurityPolicyPage } from '../pages/SecurityPolicyPage';
 import { useAuth } from '../shared/auth/AuthContext';
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
@@ -59,6 +61,14 @@ export const router = createBrowserRouter([
             <InviteAcceptPage />
           </PublicOnlyRoute>
         )
+      },
+      {
+        path: '/privacy-policy',
+        element: <PrivacyPolicyPage />
+      },
+      {
+        path: '/security-policy',
+        element: <SecurityPolicyPage />
       },
       {
         path: '/appointments',

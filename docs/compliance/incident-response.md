@@ -2,7 +2,7 @@
 
 Effective date: 2026-05-03
 
-This document summarizes Meetli's incident response process for public review.
+This document summarizes Meetli's incident response process for public access.
 
 The detailed policy is also maintained in:
 

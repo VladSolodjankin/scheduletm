@@ -8,6 +8,7 @@ export const dictionaries = {
       logout: 'Log out',
       settings: 'Settings',
       login: 'Login',
+      back: 'Back',
       register: 'Register',
       language: 'Language',
       appointments: 'Appointments',
@@ -28,7 +29,9 @@ export const dictionaries = {
       appErrorTitle: 'Something went wrong',
       appErrorDescription: 'An unexpected UI error occurred. Try reloading the page.',
       appErrorSupport: 'If the issue persists, contact your administrator.',
-      appErrorReload: 'Reload page'
+      appErrorReload: 'Reload page',
+      privacyPolicy: 'Privacy Policy',
+      securityPolicy: 'Security Policy'
     },
     auth: {
       loginTitle: 'Sign in to your account',
@@ -81,9 +84,9 @@ export const dictionaries = {
       submitRegister: 'Create account',
       switchToRegister: "Don't have an account? Register",
       switchToLogin: 'Already have an account? Sign in',
-      termsLabel: 'terms',
+      termsLabel: 'security policy',
       privacyPolicyLabel: 'privacy policy',
-      legalPrefix: 'By continuing, you agree to our',
+      legalPrefix: 'By continuing, you acknowledge our',
       legalJoin: 'and',
       legalSuffix: '.',
       errors: {
@@ -465,9 +468,12 @@ export const dictionaries = {
       appErrorTitle: 'Что-то пошло не так',
       appErrorDescription: 'Произошла непредвиденная ошибка интерфейса. Попробуйте перезагрузить страницу.',
       appErrorSupport: 'Если проблема повторяется, обратитесь к администратору.',
-      appErrorReload: 'Перезагрузить страницу'
+      appErrorReload: 'Перезагрузить страницу',
+      privacyPolicy: 'Политика конфиденциальности',
+      securityPolicy: 'Политика безопасности'
     },
     auth: {
+      back: 'Назад',
       loginTitle: 'Вход в аккаунт',
       loginSubtitle: 'Продолжайте работу со своим расписанием.',
       registerTitle: 'Регистрация',
@@ -518,9 +524,9 @@ export const dictionaries = {
       submitRegister: 'Зарегистрироваться',
       switchToRegister: 'Нет аккаунта? Зарегистрироваться',
       switchToLogin: 'Уже есть аккаунт? Войти',
-      termsLabel: 'условиями',
+      termsLabel: 'политикой безопасности',
       privacyPolicyLabel: 'политикой конфиденциальности',
-      legalPrefix: 'Продолжая, вы соглашаетесь с нашими',
+      legalPrefix: 'Продолжая, вы подтверждаете ознакомление с нашими',
       legalJoin: 'и',
       legalSuffix: '.',
       errors: {
@@ -885,6 +891,7 @@ export type TranslationKey =
   | 'common.logout'
   | 'common.settings'
   | 'common.login'
+  | 'common.back'
   | 'common.register'
   | 'common.language'
   | 'common.country'
@@ -899,6 +906,8 @@ export type TranslationKey =
   | 'common.themeToggleAria'
   | 'common.languageAria'
   | 'common.appErrorReload'
+  | 'common.privacyPolicy'
+  | 'common.securityPolicy'
   | 'common.appErrorSupport'
   | 'common.appErrorDescription'
   | 'common.appErrorTitle'

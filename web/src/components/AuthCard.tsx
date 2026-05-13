@@ -1,14 +1,14 @@
-import { Box, Divider, Link, Stack, Typography } from '@mui/material';
+import { Box, Divider, Stack, Typography } from '@mui/material';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import logoText from '../static/images/logo_text.svg';
+import { AuthLegalNotice } from './legal/AuthLegalNotice';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
 import { AppRhfPhoneField } from '../shared/ui/AppRhfPhoneField';
 import { isValidPhoneValue } from '../shared/ui/phoneUtils';
 import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
-import { useI18n } from '../shared/i18n/I18nContext';
 
 type AuthFormValues = {
   firstName: string;
@@ -58,7 +58,6 @@ export function AuthCard({
   onSubmit,
   onSwitch
 }: AuthCardProps) {
-  const { t } = useI18n();
   const { control, handleSubmit, setError, clearErrors } = useForm<AuthFormValues>({
     defaultValues: {
       firstName: '',
@@ -242,9 +241,7 @@ export function AuthCard({
           {switchText}
         </AppButton>
 
-        <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
-          {t('auth.legalPrefix')} <Link underline="hover">{t('auth.termsLabel')}</Link> {t('auth.legalJoin')} <Link underline="hover">{t('auth.privacyPolicyLabel')}</Link>{t('auth.legalSuffix')}
-        </Typography>
+        <AuthLegalNotice />
       </AppForm>
     </Box>
   );

@@ -1,20 +1,20 @@
-# Zoom Beta Compliance Package
+# Zoom Beta Evidence Package
 
-Last updated: 2026-05-03
+Last updated: 2026-05-13
 
-This directory contains the external-review documentation and supporting technical evidence prepared for the Meetli Zoom Beta package.
+This directory contains the technical evidence and review artifacts prepared for the Meetli Zoom Beta package.
 
-The policy documents in this folder are intended to be shareable with external reviewers and customers. Technical evidence files remain operational artifacts and may show ongoing remediation status where hardening work is still in progress.
+Public-facing policy documents now live at the parent level in `docs/compliance/`. This directory is reserved for review evidence, scan summaries, and Marketplace-supporting artifacts.
 
 ## Public-facing documents
 
-- `privacy-policy.md`
-- `security-policy.md`
-- `security-policy-access-control.md`
-- `security-policy-vulnerability-management.md`
-- `security-policy-incident-response.md`
-- `vulnerability-management.md`
-- `incident-response.md`
+- `../privacy-policy.md`
+- `../security-policy.md`
+- `../security-policy-access-control.md`
+- `../security-policy-vulnerability-management.md`
+- `../security-policy-incident-response.md`
+- `../vulnerability-management.md`
+- `../incident-response.md`
 
 ## Evidence and supporting artifacts
 
@@ -32,5 +32,5 @@ The policy documents in this folder are intended to be shareable with external r
 
 ## Notes
 
-- Policy documents in this directory were rewritten to remove placeholder text, TODOs, and internal-only wording.
+- Public policies are intentionally separated from this evidence package so they can be published or shared without mixing them with scan artifacts.
 - Technical evidence should be reviewed alongside the remediation plan before making formal assurance statements to customers.

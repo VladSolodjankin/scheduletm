@@ -9,6 +9,7 @@ import { useThemeSettings } from '../../shared/theme/ThemeContext';
 import type { PaletteVariantId } from '../../shared/theme/constants';
 import { Header } from './Header';
 import { LeftMenu } from './LeftMenu';
+import { LegalFooter } from '../legal/LegalFooter';
 
 export function MainLayout() {
   const { mode, paletteVariantId, toggleMode, setPaletteVariantId } = useThemeSettings();
@@ -83,8 +84,18 @@ export function MainLayout() {
 
   if (!isAuthenticated) {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <Outlet />
+      <Box
+        sx={{
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        <Box sx={{ flexGrow: 1 }}>
+          <Outlet />
+        </Box>
+        <LegalFooter />
       </Box>
     );
   }
@@ -133,6 +144,8 @@ export function MainLayout() {
           <Outlet />
         </Box>
       </Box>
+
+      <LegalFooter />
     </Box>
   );
 }

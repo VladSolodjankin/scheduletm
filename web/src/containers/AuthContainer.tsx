@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { Alert, Box, Divider, Link, Stack, Typography } from '@mui/material';
+import { Alert, Box, Divider, Stack, Typography } from '@mui/material';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
+import { AuthLegalNotice } from '../components/legal/AuthLegalNotice';
 import logoText from '../static/images/logo_text.svg';
 import { apiClient } from '../shared/api/client';
 import { resolveApiError } from '../shared/api/error';
@@ -377,9 +378,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                 {t('auth.switchToLogin')}
               </AppButton>
 
-              <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
-                {t('auth.legalPrefix')} <Link underline="hover">{t('auth.termsLabel')}</Link> {t('auth.legalJoin')} <Link underline="hover">{t('auth.privacyPolicyLabel')}</Link>{t('auth.legalSuffix')}
-              </Typography>
+              <AuthLegalNotice />
             </AppForm>
           </Box>
         ) : (

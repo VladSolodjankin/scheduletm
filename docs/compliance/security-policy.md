@@ -2,9 +2,9 @@
 
 Effective date: 2026-05-03
 
-This Security Policy describes the baseline security controls and operating practices used for Meetli and the Zoom Beta integration workflow.
+This Security Policy describes the baseline security controls and operating practices used for Meetli and its supported integration workflows, including Zoom.
 
-This document is intended for public review. It is written to reflect the current production-intended control posture in this repository and should be read together with:
+This document is intended for public access. It is written to reflect the current production-intended control posture in this repository and should be read together with:
 
 - `security-policy-access-control.md`
 - `security-policy-vulnerability-management.md`
@@ -12,7 +12,7 @@ This document is intended for public review. It is written to reflect the curren
 
 ## 1. Scope
 
-This policy covers the Meetli web application, backend API, supporting scheduling workflows, notification processing, account/session management, and user-authorized Zoom meeting integration.
+This policy covers the Meetli web application, backend API, supporting scheduling workflows, notification processing, account/session management, and user-authorized meeting integrations.
 
 ## 2. Security Principles
 
@@ -109,7 +109,7 @@ Meetli is designed to support administrator-initiated removal of accounts and us
 
 ## 10. Secure Development and Change Management
 
-Meetli uses code review, repository-based change tracking, security scanning artifacts, and documented evidence under `docs/compliance/zoom-beta/` to support the Zoom Beta review process.
+Meetli uses code review, repository-based change tracking, and documented technical evidence under `zoom-beta/` to support security validation and external review workflows.
 
 Security validation activities include:
 
@@ -127,4 +127,4 @@ Meetli maintains separate documented procedures for:
 
 ## 12. Limitations and Transparency
 
-This policy describes the current intended control posture. It is not a certification statement and should not be interpreted as a claim that every control is fully mature or fully automated in every environment. Where evidence or hardening work remains in progress, Meetli tracks that work separately and aims to avoid making unsupported security claims.
+This policy describes the current intended control posture. It is not a certification statement and should not be interpreted as a claim that every control is fully mature or fully automated in every environment. Where evidence or hardening work remains in progress, Meetli tracks that work separately and avoids making unsupported security claims.
