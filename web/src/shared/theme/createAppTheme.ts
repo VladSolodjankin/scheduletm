@@ -4,6 +4,7 @@ import {
   APP_SIZING,
   DEFAULT_PALETTE_VARIANT_ID,
   PALETTE_VARIANTS,
+  rem,
   type PaletteVariantId,
   type ThemeMode
 } from './constants';
@@ -99,11 +100,11 @@ export function createAppTheme(mode: ThemeMode, paletteVariantId: PaletteVariant
         styleOverrides: {
           root: {
             borderRadius: APP_SIZING.radiusMd,
-            minHeight: 42,
-            paddingInline: 16,
+            minHeight: rem(42),
+            paddingInline: rem(16),
             transition: 'background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
             '&:focus-visible': {
-              outline: `3px solid ${isLight ? 'rgba(37, 99, 235, 0.24)' : 'rgba(96, 165, 250, 0.28)'}`,
+              outline: `${rem(3)} solid ${isLight ? 'rgba(37, 99, 235, 0.24)' : 'rgba(96, 165, 250, 0.28)'}`,
               outlineOffset: 2
             }
           },
@@ -111,7 +112,7 @@ export function createAppTheme(mode: ThemeMode, paletteVariantId: PaletteVariant
             boxShadow: isLight ? APP_SHADOWS.softLight : 'none',
             '&:hover': {
               boxShadow: isLight ? APP_SHADOWS.surfaceLight : APP_SHADOWS.softDark,
-              transform: 'translateY(-1px)'
+              transform: `translateY(-${rem(1)})`
             }
           },
           outlined: {
@@ -139,7 +140,7 @@ export function createAppTheme(mode: ThemeMode, paletteVariantId: PaletteVariant
               borderColor: isLight ? 'rgba(15, 23, 42, 0.24)' : 'rgba(148, 163, 184, 0.28)'
             },
             '&.Mui-focused': {
-              boxShadow: `0 0 0 4px ${isLight ? 'rgba(37, 99, 235, 0.12)' : 'rgba(96, 165, 250, 0.16)'}`
+              boxShadow: `0 0 0 ${rem(4)} ${isLight ? 'rgba(37, 99, 235, 0.12)' : 'rgba(96, 165, 250, 0.16)'}`
             }
           },
           input: {
@@ -177,21 +178,21 @@ export function createAppTheme(mode: ThemeMode, paletteVariantId: PaletteVariant
       MuiDialogTitle: {
         styleOverrides: {
           root: {
-            padding: '24px 24px 8px'
+            padding: `${rem(24)} ${rem(24)} ${rem(8)}`
           }
         }
       },
       MuiDialogContent: {
         styleOverrides: {
           root: {
-            padding: '16px 24px'
+            padding: `${rem(16)} ${rem(24)}`
           }
         }
       },
       MuiDialogActions: {
         styleOverrides: {
           root: {
-            padding: '16px 24px 24px'
+            padding: `${rem(16)} ${rem(24)} ${rem(24)}`
           }
         }
       },

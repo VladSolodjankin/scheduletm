@@ -4,6 +4,7 @@ import { AppPage } from '../../shared/ui/AppPage';
 import type { LegalDocument } from '../../content/legalDocuments';
 import { useAuth } from '../../shared/auth/AuthContext';
 import { useI18n } from '../../shared/i18n/I18nContext';
+import { rem } from '../../shared/theme/constants';
 import { AppButton } from '../../shared/ui/AppButton';
 
 type LegalDocumentPageProps = {
@@ -28,7 +29,7 @@ export function LegalDocumentPage({ document }: LegalDocumentPageProps) {
     <AppPage title={document.title} subtitle={`Effective date: ${document.effectiveDate}`} maxWidth={960}>
       <Box
         sx={{
-          border: '1px solid',
+          border: `${rem(1)} solid`,
           borderColor: 'divider',
           borderRadius: 3,
           bgcolor: 'background.paper',

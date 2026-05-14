@@ -1,6 +1,6 @@
 import { Box, Stack, Typography, alpha, useTheme } from '@mui/material';
 import type { ReactNode } from 'react';
-import { APP_SIZING } from '../theme/constants';
+import { rem } from '../theme/constants';
 
 type AppSectionHeaderProps = {
   title?: string;
@@ -29,14 +29,13 @@ export function AppSectionHeader({ title, description, action, icon }: AppSectio
         {icon ? (
           <Box
             sx={{
-              width: 40,
-              height: 40,
-              borderRadius: APP_SIZING.radiusMd,
+              width: rem(40),
+              height: rem(40),
               display: 'grid',
               placeItems: 'center',
               color: 'primary.main',
               bgcolor: alpha(theme.palette.primary.main, 0.1),
-              border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
+              border: `${rem(1)} solid ${alpha(theme.palette.primary.main, 0.14)}`,
               flexShrink: 0,
             }}
           >

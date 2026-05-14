@@ -15,6 +15,7 @@ import {
   useTheme
 } from '@mui/material';
 import type { ReactNode } from 'react';
+import { rem } from '../theme/constants';
 import { AppSurface } from './AppSurface';
 
 export type AppTableColumn<T> = {
@@ -67,7 +68,7 @@ export function AppDataTable<T>({
       contentSx={{ spacing: 0 }}
     >
       <TableContainer>
-        <Table sx={{ minWidth: 760 }}>
+        <Table sx={{ minWidth: rem(760) }}>
           <TableHead>
             <TableRow>
               {columns.map((column) => (
@@ -78,7 +79,7 @@ export function AppDataTable<T>({
                     width: column.width,
                     px: { xs: 2, md: 2.5 },
                     py: 1.75,
-                    borderBottom: `1px solid ${alpha(theme.palette.divider, 1)}`,
+                    borderBottom: `${rem(1)} solid ${alpha(theme.palette.divider, 1)}`,
                   }}
                 >
                   {column.label}
@@ -151,7 +152,7 @@ export function AppBooleanBadge({ value, trueLabel, falseLabel }: AppBooleanBadg
         borderRadius: 999,
         ...(value
           ? {
-              boxShadow: `inset 0 0 0 1px ${alpha(theme.palette.success.main, 0.08)}`,
+              boxShadow: `inset 0 0 0 ${rem(1)} ${alpha(theme.palette.success.main, 0.08)}`,
             }
           : {
               borderColor: alpha(theme.palette.text.secondary, 0.2),
@@ -182,9 +183,9 @@ export function AppTableIconAction({ label, icon, color = 'default', onClick }: 
         aria-label={label}
         onClick={onClick}
         sx={{
-          width: 34,
-          height: 34,
-          border: '1px solid',
+          width: rem(34),
+          height: rem(34),
+          border: `${rem(1)} solid`,
           borderColor: color === 'error' ? 'error.light' : 'divider',
           backgroundColor: 'background.paper',
           '&:hover': {

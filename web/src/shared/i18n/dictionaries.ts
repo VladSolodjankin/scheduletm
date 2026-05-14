@@ -13,6 +13,7 @@ export const dictionaries = {
       language: 'Language',
       appointments: 'Appointments',
       my_appointments: 'My Appointments',
+      workspace: 'Workspace',
       country: 'Country',
       specialists: 'Specialists',
       users: 'Users',
@@ -453,6 +454,7 @@ export const dictionaries = {
       language: 'Язык',
       appointments: 'Записи',
       my_appointments: 'Мои Записи',
+      workspace: 'Рабочая область',
       specialists: 'Специалисты',
       country: 'Страна',
       users: 'Пользователи',
@@ -899,6 +901,7 @@ export type TranslationKey =
   | 'common.country'
   | 'common.appointments'
   | 'common.my_appointments'
+  | 'common.workspace'
   | 'common.specialists'
   | 'common.users'
   | 'common.notificationLogs'

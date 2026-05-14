@@ -63,5 +63,5 @@ export function BaseMap({ token, center, onCenterChange }: Props) {
     mapRef.current.setCenter([center.lng, center.lat]);
   }, [center.lat, center.lng]);
 
-  return <Box ref={mapContainerRef} sx={{ width: '100%', height: 320, borderRadius: 1, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }} />;
+  return <Box ref={mapContainerRef} sx={{ width: '100%', height: '20rem', borderRadius: 1, border: '0.0625rem solid', borderColor: 'divider', overflow: 'hidden' }} />;
 }

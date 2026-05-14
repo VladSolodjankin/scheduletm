@@ -1,6 +1,6 @@
-import { Box, List, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material';
+import { Box, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Stack, Typography } from '@mui/material';
 import { NavLink } from 'react-router-dom';
-import { APP_SIZING } from '../../shared/theme/constants';
+import { APP_SIZING, rem } from '../../shared/theme/constants';
 import { AppIcons } from '../../shared/ui/AppIcons';
 
 type MenuItem = {
@@ -11,26 +11,40 @@ type MenuItem = {
 
 type LeftMenuProps = {
   items: MenuItem[];
+  headingLabel: string;
+  mobile?: boolean;
+  onClose?: () => void;
+  onNavigate?: () => void;
 };
 
-export function LeftMenu({ items }: LeftMenuProps) {
+export function LeftMenu({ items, headingLabel, mobile = false, onClose, onNavigate }: LeftMenuProps) {
+  const CloseIcon = AppIcons.close;
+
   return (
     <Box
       component="aside"
       sx={{
-        width: APP_SIZING.leftMenuWidth,
+        width: mobile ? '100%' : rem(APP_SIZING.leftMenuWidth),
         flexShrink: 0,
-        borderRight: 1,
+        borderRight: mobile ? 0 : 1,
         borderColor: 'divider',
         px: 1.5,
         py: 2,
-        display: { xs: 'none', md: 'block' },
-        overflowY: 'auto'
+        display: mobile ? 'block' : { xs: 'none', md: 'block' },
+        overflowY: 'auto',
+        height: '100%',
       }}
     >
-      <Typography variant="overline" color="text.secondary" sx={{ px: 1.5, letterSpacing: '0.08em' }}>
-        Workspace
-      </Typography>
+      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', px: 1.5 }}>
+        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.08em' }}>
+          {headingLabel}
+        </Typography>
+        {mobile ? (
+          <IconButton onClick={onClose} aria-label="Close navigation menu" size="small">
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        ) : null}
+      </Stack>
       <List sx={{ mt: 1 }}>
         {items.map((item) => {
           const Icon = AppIcons[item.icon];
@@ -39,10 +53,11 @@ export function LeftMenu({ items }: LeftMenuProps) {
               key={item.to}
               component={NavLink}
               to={item.to}
+              onClick={onNavigate}
               sx={{
                 borderRadius: 3,
                 marginBottom: 1,
-                minHeight: 46,
+                minHeight: rem(46),
                 '&.active': {
                   bgcolor: 'action.selected',
                   color: 'primary.main',
@@ -52,7 +67,7 @@ export function LeftMenu({ items }: LeftMenuProps) {
                 }
               }}
             >
-              <ListItemIcon sx={{ minWidth: 36 }}>
+              <ListItemIcon sx={{ minWidth: rem(36) }}>
                 <Icon fontSize="small" />
               </ListItemIcon>
               <ListItemText primary={item.label} />

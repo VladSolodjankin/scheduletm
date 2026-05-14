@@ -1,6 +1,6 @@
 import { Paper, Stack, type PaperProps, type SxProps, type Theme } from '@mui/material';
 import type { ReactNode } from 'react';
-import { APP_SHADOWS, APP_SIZING, APP_SPACING } from '../theme/constants';
+import { APP_SHADOWS, APP_SPACING } from '../theme/constants';
 import { AppSectionHeader } from './AppSectionHeader';
 
 type AppSurfaceProps = PaperProps & {
@@ -27,7 +27,6 @@ export function AppSurface({
       elevation={0}
       sx={{
         p: APP_SPACING.surfacePadding,
-        borderRadius: `${APP_SIZING.surfaceRadius}px`,
         borderColor: 'divider',
         boxShadow: (theme) => theme.palette.mode === 'light' ? APP_SHADOWS.softLight : APP_SHADOWS.softDark,
         bgcolor: 'background.paper',

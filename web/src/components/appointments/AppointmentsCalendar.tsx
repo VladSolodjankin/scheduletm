@@ -15,7 +15,7 @@ import {
 import { Fragment, useState } from 'react';
 import type { AppointmentItem, AppointmentListResponse } from '../../shared/types/api';
 import type { TranslationKey } from '../../shared/i18n/dictionaries';
-import { APP_SIZING, APP_SPACING } from '../../shared/theme/constants';
+import { APP_SIZING, APP_SPACING, rem } from '../../shared/theme/constants';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppSurface } from '../../shared/ui/AppSurface';
@@ -184,7 +184,7 @@ export function AppointmentsCalendar({
                   transition: 'background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease',
                   '&:hover': {
                     bgcolor: isPast ? 'action.disabledBackground' : 'action.hover',
-                    transform: isPast ? 'none' : 'translateY(-1px)',
+                    transform: isPast ? 'none' : `translateY(-${rem(1)})`,
                   },
                 }}
               >
@@ -247,17 +247,17 @@ export function AppointmentsCalendar({
           sx={{
             border: 1,
             borderColor: 'divider',
-            borderRadius: `${APP_SIZING.surfaceRadius}px`,
+            borderRadius: rem(APP_SIZING.surfaceRadius),
             overflowX: 'auto',
             backgroundColor: 'background.paper',
-            boxShadow: `0 18px 38px ${alpha(theme.palette.primary.main, 0.08)}`,
+            boxShadow: `0 ${rem(18)} ${rem(38)} ${alpha(theme.palette.primary.main, 0.08)}`,
           }}
         >
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: `72px repeat(${visibleDays.length}, minmax(180px, 1fr))`,
-              minWidth: viewMode === 'week' ? 1100 : 560,
+              gridTemplateColumns: `${rem(72)} repeat(${visibleDays.length}, minmax(${rem(180)}, 1fr))`,
+              minWidth: viewMode === 'week' ? rem(1100) : rem(560),
             }}
           >
             <Box sx={{ borderRight: 1, borderColor: 'divider', p: 1, bgcolor: alpha(theme.palette.primary.main, 0.05) }} />
@@ -332,7 +332,7 @@ export function AppointmentsCalendar({
                           borderTop: 1,
                           borderRight: 1,
                           borderColor: 'divider',
-                          minHeight: 40,
+                          minHeight: rem(40),
                           p: 0.5,
                           bgcolor: isPastSlot
                             ? 'action.disabledBackground'

@@ -2,6 +2,7 @@ import { Box, Link, Stack, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { PRIVACY_POLICY_ROUTE, SECURITY_POLICY_ROUTE } from '../../shared/legal/routes';
 import { useI18n } from '../../shared/i18n/I18nContext';
+import { rem } from '../../shared/theme/constants';
 
 export function LegalFooter() {
   const { t } = useI18n();
@@ -10,7 +11,7 @@ export function LegalFooter() {
     <Box
       component="footer"
       sx={{
-        borderTop: '1px solid',
+        borderTop: `${rem(1)} solid`,
         borderColor: 'divider',
         bgcolor: 'background.paper',
         px: { xs: 2, sm: 3 },

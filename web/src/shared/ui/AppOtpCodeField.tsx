@@ -87,13 +87,13 @@ export function AppOtpCodeField({
               htmlInput: {
                 inputMode: 'numeric',
                 maxLength: 1,
-                style: { textAlign: 'center', fontSize: 24, fontWeight: 700, padding: 0, lineHeight: '64px' }
+                style: { textAlign: 'center', fontSize: '1.5rem', fontWeight: 700, padding: 0, lineHeight: '4rem' }
               }
             }}
             sx={{
-              width: 64,
+              width: '4rem',
               '& .MuiInputBase-input': {
-                height: 31,
+                height: '1.9375rem',
                 textAlign: 'center',
                 display: 'flex',
                 alignItems: 'center',

@@ -5,6 +5,7 @@ import { Control, Controller } from 'react-hook-form';
 
 import type { UserSettings } from '../../shared/types/api';
 import type { SettingsCardCopy } from '../SettingsCard.types';
+import { rem } from '../../shared/theme/constants';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
 import { AppIcons } from '../../shared/ui/AppIcons';
@@ -54,7 +55,7 @@ function IntegrationPanel({ accentColor, icon, statusLabel, title, description, 
         borderRadius: 3,
         borderColor: alpha(accentColor, 0.18),
         background: `linear-gradient(180deg, ${alpha(accentColor, 0.09)} 0%, ${alpha(accentColor, 0.03)} 28%, #FFFFFF 100%)`,
-        boxShadow: `0 12px 30px ${alpha(accentColor, 0.08)}`,
+        boxShadow: `0 ${rem(12)} ${rem(30)} ${alpha(accentColor, 0.08)}`,
       }}
     >
       <CardContent
@@ -78,7 +79,7 @@ function IntegrationPanel({ accentColor, icon, statusLabel, title, description, 
                     justifyContent: 'center',
                     color: accentColor,
                     backgroundColor: alpha(accentColor, 0.12),
-                    border: `1px solid ${alpha(accentColor, 0.18)}`,
+                    border: `${rem(1)} solid ${alpha(accentColor, 0.18)}`,
                     flexShrink: 0,
                   }}
                 >
@@ -193,7 +194,7 @@ export function IntegrationsSettingsTab({
         sx={{
           display: 'grid',
           gap: 2,
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: `repeat(auto-fit, minmax(${rem(280)}, 1fr))`,
           alignItems: 'stretch',
         }}
       >
@@ -224,7 +225,7 @@ export function IntegrationsSettingsTab({
                     sx={{
                       alignSelf: 'flex-start',
                       minWidth: 164,
-                      boxShadow: `0 10px 22px ${alpha('#229ED9', 0.22)}`,
+                      boxShadow: `0 ${rem(10)} ${rem(22)} ${alpha('#229ED9', 0.22)}`,
                     }}
                   >
                     {userSettings.telegramBotConnected ? copy.saveSettings : copy.integrateTelegramBot}
@@ -290,7 +291,7 @@ export function IntegrationsSettingsTab({
                     borderColor: '#2D8CFF',
                     color: '#2D8CFF',
                     backgroundColor: '#FFFFFF',
-                    boxShadow: `0 8px 18px ${alpha('#2D8CFF', 0.12)}`,
+                    boxShadow: `0 ${rem(8)} ${rem(18)} ${alpha('#2D8CFF', 0.12)}`,
                     '&:hover': {
                       borderColor: '#2274D9',
                       backgroundColor: '#F4F9FF',
@@ -330,7 +331,7 @@ export function IntegrationsSettingsTab({
                     borderColor: '#DADCE0',
                     color: '#3C4043',
                     backgroundColor: '#FFFFFF',
-                    boxShadow: `0 8px 18px ${alpha('#DB4437', 0.08)}`,
+                    boxShadow: `0 ${rem(8)} ${rem(18)} ${alpha('#DB4437', 0.08)}`,
                     '&:hover': {
                       borderColor: '#DADCE0',
                       backgroundColor: '#F8F9FA',

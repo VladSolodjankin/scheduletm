@@ -1,5 +1,5 @@
-import { Box } from '@mui/material';
-import { useEffect, useRef } from 'react';
+import { Box, Drawer, useMediaQuery, useTheme } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { apiClient, authHeaders } from '../../shared/api/client';
 import { WebUserRole } from '../../shared/types/roles';
@@ -12,10 +12,13 @@ import { LeftMenu } from './LeftMenu';
 import { LegalFooter } from '../legal/LegalFooter';
 
 export function MainLayout() {
+  const theme = useTheme();
+  const isCompactNavigation = useMediaQuery(theme.breakpoints.down('md'));
   const { mode, paletteVariantId, toggleMode, setPaletteVariantId } = useThemeSettings();
   const { t, locale, setLocale } = useI18n();
   const { isAuthenticated, accessToken, user } = useAuth();
   const lastSyncedPreferencesRef = useRef('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !accessToken) {
@@ -119,7 +122,9 @@ export function MainLayout() {
         languageSelectAriaLabel={t('common.languageAria')}
         localeLabel={t('common.language')}
         locale={locale}
+        showMobileMenuButton={isCompactNavigation}
         onToggleMode={toggleMode}
+        onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
         onChangePalette={(id: PaletteVariantId) => setPaletteVariantId(id)}
         onChangeLocale={setLocale}
       />
@@ -131,7 +136,28 @@ export function MainLayout() {
           minHeight: 0
         }}
       >
-        <LeftMenu items={menuItems} />
+        <LeftMenu items={menuItems} headingLabel={t('common.workspace')} />
+        <Drawer
+          anchor="left"
+          open={isCompactNavigation && isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+          slotProps={{
+            paper: {
+              sx: {
+                width: 'min(88vw, 18rem)',
+                bgcolor: 'background.paper',
+              }
+            }
+          }}
+        >
+          <LeftMenu
+            items={menuItems}
+            headingLabel={t('common.workspace')}
+            mobile
+            onClose={() => setIsMobileMenuOpen(false)}
+            onNavigate={() => setIsMobileMenuOpen(false)}
+          />
+        </Drawer>
         <Box
           component="main"
           sx={{

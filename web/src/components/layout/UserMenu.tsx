@@ -99,7 +99,7 @@ export function UserMenu() {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <Box sx={{ px: 2, py: 1.25, minWidth: 220 }}>
+        <Box sx={{ px: 2, py: 1.25, minWidth: '13.75rem' }}>
           <Stack spacing={0.25}>
             <Typography variant="subtitle2" noWrap>{displayName}</Typography>
             <Typography variant="caption" color="text.secondary" noWrap>

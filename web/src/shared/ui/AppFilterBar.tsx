@@ -3,6 +3,7 @@ import {
   ButtonBase,
   Chip,
   Drawer,
+  IconButton,
   Stack,
   Typography,
   alpha,
@@ -11,7 +12,7 @@ import {
   type BoxProps,
 } from '@mui/material';
 import { useState } from 'react';
-import { APP_SHADOWS, APP_SIZING, APP_SPACING } from '../theme/constants';
+import { APP_SHADOWS, APP_SIZING, APP_SPACING, rem } from '../theme/constants';
 import { AppIcons } from './AppIcons';
 
 type AppFilterBarProps = BoxProps & {
@@ -32,12 +33,13 @@ export function AppFilterBar({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const FilterIcon = AppIcons.filters;
+  const CloseIcon = AppIcons.close;
 
   const panelSx = {
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: `${APP_SIZING.surfaceRadius}px`,
-    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: rem(APP_SIZING.surfaceRadius),
+    border: `${rem(1)} solid ${theme.palette.divider}`,
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.palette.mode === 'light' ? APP_SHADOWS.softLight : APP_SHADOWS.softDark,
   } as const;
@@ -49,9 +51,15 @@ export function AppFilterBar({
     gap: 1.5,
     gridTemplateColumns: isMobile
       ? 'minmax(0, 1fr)'
-      : 'repeat(auto-fit, minmax(180px, 1fr))',
+      : `repeat(auto-fit, minmax(${rem(180)}, 1fr))`,
     p: APP_SPACING.surfacePadding,
     alignItems: 'start',
+  } as const;
+
+  const mobilePanelSx = {
+    border: 'none',
+    boxShadow: 'none',
+    backgroundColor: 'transparent',
   } as const;
 
   if (isMobile) {
@@ -82,7 +90,7 @@ export function AppFilterBar({
               <Box
                 sx={{
                   width: 40,
-                  height: 40,
+                  height: rem(40),
                   borderRadius: APP_SIZING.radiusMd,
                   display: 'grid',
                   placeItems: 'center',
@@ -121,7 +129,7 @@ export function AppFilterBar({
           slotProps={{
             paper: {
               sx: {
-                width: 'min(92vw, 420px)',
+                width: `min(92vw, ${rem(420)})`,
                 bgcolor: 'background.default',
               }
             }
@@ -135,15 +143,20 @@ export function AppFilterBar({
                   {mobileLabel}
                 </Typography>
               </Stack>
-              <Chip
-                size="small"
-                icon={<FilterIcon fontSize="small" />}
-                label={typeof activeFiltersCount === 'number' && activeFiltersCount > 0 ? activeFiltersCount : mobileLabel}
-                sx={{ borderRadius: 999 }}
-              />
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                <Chip
+                  size="small"
+                  icon={<FilterIcon fontSize="small" />}
+                  label={typeof activeFiltersCount === 'number' && activeFiltersCount > 0 ? activeFiltersCount : mobileLabel}
+                  sx={{ borderRadius: 999 }}
+                />
+                <IconButton onClick={() => setIsMobileOpen(false)} aria-label="Close filters">
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Stack>
             </Stack>
 
-            <Box sx={{ ...panelSx, flexGrow: 1, minHeight: 0, ...sx }}>
+            <Box sx={{ ...panelSx, ...mobilePanelSx, flexGrow: 1, minHeight: 0, ...sx }}>
               <Box sx={gridSx}>{children}</Box>
             </Box>
           </Stack>

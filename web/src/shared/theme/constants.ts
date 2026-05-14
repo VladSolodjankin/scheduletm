@@ -24,6 +24,8 @@ export type PaletteVariant = {
   };
 };
 
+export const rem = (px: number) => `${px / 16}rem`;
+
 export const APP_SIZING = {
   radiusXs: 8,
   radiusSm: 10,
@@ -47,10 +49,10 @@ export const APP_SPACING = {
 } as const;
 
 export const APP_SHADOWS = {
-  surfaceLight: '0 24px 60px rgba(15, 23, 42, 0.08)',
-  surfaceDark: '0 24px 60px rgba(2, 6, 23, 0.32)',
-  softLight: '0 10px 30px rgba(15, 23, 42, 0.05)',
-  softDark: '0 10px 28px rgba(2, 6, 23, 0.24)'
+  surfaceLight: `0 ${rem(24)} ${rem(60)} rgba(15, 23, 42, 0.08)`,
+  surfaceDark: `0 ${rem(24)} ${rem(60)} rgba(2, 6, 23, 0.32)`,
+  softLight: `0 ${rem(10)} ${rem(30)} rgba(15, 23, 42, 0.05)`,
+  softDark: `0 ${rem(10)} ${rem(28)} rgba(2, 6, 23, 0.24)`
 } as const;
 
 export const PALETTE_VARIANTS: readonly PaletteVariant[] = [
