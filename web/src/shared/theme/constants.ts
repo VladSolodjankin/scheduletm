@@ -34,7 +34,7 @@ export const APP_SIZING = {
   radiusXl: 24,
   surfaceRadius: 16,
   headerHeight: 64,
-  leftMenuWidth: 260,
+  leftMenuWidth: 320,
   contentMaxWidth: 1600
 } as const;
 

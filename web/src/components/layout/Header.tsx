@@ -17,7 +17,6 @@ import type { PaletteVariantId } from '../../shared/theme/constants';
 import { PALETTE_VARIANTS, rem } from '../../shared/theme/constants';
 import { AppIcons } from '../../shared/ui/AppIcons';
 import logoText from '../../static/images/logo_text.svg';
-import logoShort from '../../static/images/logo_short.svg';
 import { UserMenu } from './UserMenu';
 
 type HeaderProps = {
@@ -87,13 +86,7 @@ export function Header({
             component="img"
             src={logoText}
             alt={title}
-            sx={{ height: rem(28), display: { xs: 'none', sm: 'block' } }}
-          />
-          <Box
-            component="img"
-            src={logoShort}
-            alt={title}
-            sx={{ height: rem(30), display: { xs: 'block', sm: 'none' } }}
+            sx={{ height: { xs: rem(30), sm: rem(28) } }}
           />
         </Box>
 

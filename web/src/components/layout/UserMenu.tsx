@@ -1,6 +1,7 @@
 import {
   Avatar,
   Box,
+  ButtonBase,
   Divider,
   IconButton,
   Menu,
@@ -45,7 +46,11 @@ function toInitials(displayName: string) {
   return (words[0] ?? '').slice(0, 2).toUpperCase();
 }
 
-export function UserMenu() {
+type UserMenuProps = {
+  variant?: 'icon' | 'sidebar';
+};
+
+export function UserMenu({ variant = 'icon' }: UserMenuProps) {
   const { user, accessToken, clearAuth } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -84,13 +89,44 @@ export function UserMenu() {
     navigate('/login');
   };
 
-  return (
-    <>
-      <IconButton onClick={openMenu} aria-label={t('common.profileMenuAria')} sx={{ p: 0.25 }}>
-        <Avatar src={user?.avatarUrl} alt={displayName} sx={{ width: 36, height: 36, fontSize: 14, fontWeight: 600 }}>
+  const trigger = variant === 'sidebar' ? (
+    <ButtonBase
+      onClick={openMenu}
+      aria-label={t('common.profileMenuAria')}
+      sx={{
+        width: '100%',
+        borderRadius: 3,
+        px: 1.25,
+        py: 1,
+        justifyContent: 'flex-start'
+      }}
+    >
+      <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', width: '100%' }}>
+        <Avatar src={user?.avatarUrl} alt={displayName} sx={{ width: 40, height: 40, fontSize: 14, fontWeight: 700 }}>
           {!user?.avatarUrl ? initials : null}
         </Avatar>
-      </IconButton>
+        <Box sx={{ minWidth: 0, flexGrow: 1, textAlign: 'left' }}>
+          <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>
+            {displayName}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" noWrap>
+            {user?.email}
+          </Typography>
+        </Box>
+        <AppIcons.settings fontSize="small" color="action" />
+      </Stack>
+    </ButtonBase>
+  ) : (
+    <IconButton onClick={openMenu} aria-label={t('common.profileMenuAria')} sx={{ p: 0.25 }}>
+      <Avatar src={user?.avatarUrl} alt={displayName} sx={{ width: 36, height: 36, fontSize: 14, fontWeight: 600 }}>
+        {!user?.avatarUrl ? initials : null}
+      </Avatar>
+    </IconButton>
+  );
+
+  return (
+    <>
+      {trigger}
 
       <Menu
         anchorEl={anchorEl}

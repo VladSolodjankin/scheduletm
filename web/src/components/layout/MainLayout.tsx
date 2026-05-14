@@ -113,21 +113,23 @@ export function MainLayout() {
         overflow: 'hidden'
       }}
     >
-      <Header
-        title={t('common.appTitle')}
-        mode={mode}
-        paletteVariantId={paletteVariantId}
-        paletteSelectAriaLabel={t('common.appearancePaletteAria')}
-        themeToggleAriaLabel={t('common.themeToggleAria')}
-        languageSelectAriaLabel={t('common.languageAria')}
-        localeLabel={t('common.language')}
-        locale={locale}
-        showMobileMenuButton={isCompactNavigation}
-        onToggleMode={toggleMode}
-        onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-        onChangePalette={(id: PaletteVariantId) => setPaletteVariantId(id)}
-        onChangeLocale={setLocale}
-      />
+      {isCompactNavigation ? (
+        <Header
+          title={t('common.appTitle')}
+          mode={mode}
+          paletteVariantId={paletteVariantId}
+          paletteSelectAriaLabel={t('common.appearancePaletteAria')}
+          themeToggleAriaLabel={t('common.themeToggleAria')}
+          languageSelectAriaLabel={t('common.languageAria')}
+          localeLabel={t('common.language')}
+          locale={locale}
+          showMobileMenuButton
+          onToggleMode={toggleMode}
+          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          onChangePalette={(id: PaletteVariantId) => setPaletteVariantId(id)}
+          onChangeLocale={setLocale}
+        />
+      ) : null}
 
       <Box
         sx={{
@@ -136,7 +138,20 @@ export function MainLayout() {
           minHeight: 0
         }}
       >
-        <LeftMenu items={menuItems} headingLabel={t('common.workspace')} />
+        <LeftMenu
+          items={menuItems}
+          headingLabel={t('common.workspace')}
+          title={t('common.appTitle')}
+          mode={mode}
+          paletteVariantId={paletteVariantId}
+          locale={locale}
+          paletteSelectAriaLabel={t('common.appearancePaletteAria')}
+          themeToggleAriaLabel={t('common.themeToggleAria')}
+          languageSelectAriaLabel={t('common.languageAria')}
+          onToggleMode={toggleMode}
+          onChangePalette={(id: PaletteVariantId) => setPaletteVariantId(id)}
+          onChangeLocale={setLocale}
+        />
         <Drawer
           anchor="left"
           open={isCompactNavigation && isMobileMenuOpen}
@@ -154,9 +169,19 @@ export function MainLayout() {
           <LeftMenu
             items={menuItems}
             headingLabel={t('common.workspace')}
+            title={t('common.appTitle')}
+            mode={mode}
+            paletteVariantId={paletteVariantId}
+            locale={locale}
+            paletteSelectAriaLabel={t('common.appearancePaletteAria')}
+            themeToggleAriaLabel={t('common.themeToggleAria')}
+            languageSelectAriaLabel={t('common.languageAria')}
             mobile
             onClose={() => setIsMobileMenuOpen(false)}
             onNavigate={() => setIsMobileMenuOpen(false)}
+            onToggleMode={toggleMode}
+            onChangePalette={(id: PaletteVariantId) => setPaletteVariantId(id)}
+            onChangeLocale={setLocale}
           />
         </Drawer>
         <Box
