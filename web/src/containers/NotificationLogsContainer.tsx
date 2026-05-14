@@ -1,7 +1,6 @@
 import {
   Alert,
   Box,
-  Button,
   Card,
   CardContent,
   Chip,
@@ -23,6 +22,8 @@ import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import type { NotificationLogItem, NotificationLogsResponse, VerifyEmailResponse } from '../shared/types/api';
 import { WebUserRole } from '../shared/types/roles';
+import { AppButton } from '../shared/ui/AppButton';
+import { AppFilterBar } from '../shared/ui/AppFilterBar';
 import { AppPage } from '../shared/ui/AppPage';
 
 type Filters = {
@@ -125,33 +126,44 @@ export function NotificationLogsContainer() {
         <Alert severity="info">{t('notificationLogs.accessDenied')}</Alert>
       ) : (
         <Stack spacing={2}>
-          <Card>
-            <CardContent>
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                {user?.role === WebUserRole.Owner && (
-                  <TextField
-                    label={t('notificationLogs.filters.accountId')}
-                    value={filters.accountId}
-                    onChange={(event) => setFilters((prev) => ({ ...prev, accountId: event.target.value.replace(/\D/g, '') }))}
-                    size="small"
-                  />
-                )}
-                <TextField
-                  label={t('notificationLogs.filters.specialistId')}
-                  value={filters.specialistId}
-                  onChange={(event) => setFilters((prev) => ({ ...prev, specialistId: event.target.value.replace(/\D/g, '') }))}
-                  size="small"
-                />
-                <TextField
-                  label={t('notificationLogs.filters.userId')}
-                  value={filters.userId}
-                  onChange={(event) => setFilters((prev) => ({ ...prev, userId: event.target.value.replace(/\D/g, '') }))}
-                  size="small"
-                />
-                <Button variant="contained" onClick={() => void loadLogs()}>{t('notificationLogs.filters.apply')}</Button>
-              </Stack>
-            </CardContent>
-          </Card>
+          <AppFilterBar
+            mobileLabel={t('common.filters')}
+            mobileTitle={t('notificationLogs.pageTitle')}
+            activeFiltersCount={[filters.accountId, filters.specialistId, filters.userId].filter(Boolean).length}
+          >
+            {user?.role === WebUserRole.Owner && (
+              <TextField
+                label={t('notificationLogs.filters.accountId')}
+                value={filters.accountId}
+                onChange={(event) => setFilters((prev) => ({ ...prev, accountId: event.target.value.replace(/\D/g, '') }))}
+                size="small"
+              />
+            )}
+            <TextField
+              label={t('notificationLogs.filters.specialistId')}
+              value={filters.specialistId}
+              onChange={(event) => setFilters((prev) => ({ ...prev, specialistId: event.target.value.replace(/\D/g, '') }))}
+              size="small"
+            />
+            <TextField
+              label={t('notificationLogs.filters.userId')}
+              value={filters.userId}
+              onChange={(event) => setFilters((prev) => ({ ...prev, userId: event.target.value.replace(/\D/g, '') }))}
+              size="small"
+            />
+            <AppButton
+              onClick={() => void loadLogs()}
+              sx={{
+                minHeight: 40,
+                alignSelf: 'stretch',
+                borderRadius: 999,
+                px: 2.5,
+                justifySelf: 'start',
+              }}
+            >
+              {t('notificationLogs.filters.apply')}
+            </AppButton>
+          </AppFilterBar>
 
           <Card>
             <CardContent>
@@ -202,14 +214,14 @@ export function NotificationLogsContainer() {
                           <TableCell sx={{ maxWidth: 280 }}>{item.lastError || '—'}</TableCell>
                           <TableCell>{new Date(item.createdAt).toLocaleString()}</TableCell>
                           <TableCell>
-                            <Button
+                            <AppButton
                               variant="outlined"
                               size="small"
                               disabled={!FAILED_STATUSES.has(item.status) || isResendingId === item.id}
                               onClick={() => void resend(item)}
                             >
                               {t('notificationLogs.resend')}
-                            </Button>
+                            </AppButton>
                           </TableCell>
                         </TableRow>
                       ))}

@@ -1,9 +1,5 @@
 import type { ChangeEvent } from "react";
 import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControl,
   FormControlLabel,
   InputLabel,
@@ -14,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import type { SpecialistManagementItem } from "../../shared/types/api";
 import { AppButton } from "../../shared/ui/AppButton";
+import { AppDialog } from "../../shared/ui/AppDialog";
 import { AppTextField } from "../../shared/ui/AppTextField";
 import { FormContainer } from "../../shared/ui/FormContainer";
 
@@ -141,9 +138,26 @@ export function SpecialistFormDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
+    <AppDialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      title={title}
+      actions={(
+        <>
+          <AppButton variant="text" onClick={onClose}>
+            {closeLabel}
+          </AppButton>
+          <AppButton
+            onClick={() => void handleSubmit()}
+            isLoading={isSaving}
+            disabled={editingSpecialist ? !name.trim() : !selectedUserId}
+          >
+            {saveLabel}
+          </AppButton>
+        </>
+      )}
+    >
         <FormContainer>
           {editingSpecialist ? (
             <AppTextField
@@ -246,19 +260,6 @@ export function SpecialistFormDialog({
             }
           />
         </FormContainer>
-      </DialogContent>
-      <DialogActions>
-        <AppButton variant="text" onClick={onClose}>
-          {closeLabel}
-        </AppButton>
-        <AppButton
-          onClick={() => void handleSubmit()}
-          isLoading={isSaving}
-          disabled={editingSpecialist ? !name.trim() : !selectedUserId}
-        >
-          {saveLabel}
-        </AppButton>
-      </DialogActions>
-    </Dialog>
+    </AppDialog>
   );
 }

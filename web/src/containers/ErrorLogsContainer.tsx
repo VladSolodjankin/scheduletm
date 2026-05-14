@@ -1,4 +1,4 @@
-import { Alert, Card, CardContent, Chip, Skeleton, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Alert, Chip, Skeleton, Stack } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, authHeaders } from '../shared/api/client';
@@ -7,6 +7,8 @@ import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import type { ErrorLogItem, ErrorLogsResponse } from '../shared/types/api';
 import { WebUserRole } from '../shared/types/roles';
+import { AppDataTable } from '../shared/ui/AppDataTable';
+import { AppIcons } from '../shared/ui/AppIcons';
 import { AppPage } from '../shared/ui/AppPage';
 
 export function ErrorLogsContainer() {
@@ -61,46 +63,59 @@ export function ErrorLogsContainer() {
 
       {!canViewLogs ? (
         <Alert severity="info">{t('errorLogs.accessDenied')}</Alert>
+      ) : isLoading ? (
+        <Stack spacing={2}>
+          <Skeleton variant="rounded" height={40} />
+          <Skeleton variant="rounded" height={240} />
+        </Stack>
       ) : (
-        <Card>
-          <CardContent>
-            {isLoading ? (
-              <Stack spacing={2}>
-                <Skeleton variant="rounded" height={40} />
-                <Skeleton variant="rounded" height={240} />
-              </Stack>
-            ) : items.length === 0 ? (
-              <Typography color="text.secondary">{t('errorLogs.empty')}</Typography>
-            ) : (
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>{t('errorLogs.columns.createdAt')}</TableCell>
-                    <TableCell>{t('errorLogs.columns.source')}</TableCell>
-                    <TableCell>{t('errorLogs.columns.path')}</TableCell>
-                    <TableCell>{t('errorLogs.columns.message')}</TableCell>
-                    <TableCell>{t('errorLogs.columns.accountId')}</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {items.map((item) => (
-                    <TableRow key={item.id} hover>
-                      <TableCell>{item.id}</TableCell>
-                      <TableCell>{new Date(item.createdAt).toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Chip size="small" label={item.source} color={item.source === 'server' ? 'warning' : 'default'} />
-                      </TableCell>
-                      <TableCell>{item.path || '—'}</TableCell>
-                      <TableCell sx={{ maxWidth: 420 }}>{item.message}</TableCell>
-                      <TableCell>{item.accountId ?? '—'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+        <AppDataTable
+          title=""
+          icon={<AppIcons.errors fontSize="small" />}
+          columns={[
+            {
+              key: 'id',
+              label: 'ID',
+              width: 80,
+              render: (item) => item.id
+            },
+            {
+              key: 'createdAt',
+              label: t('errorLogs.columns.createdAt'),
+              width: 210,
+              render: (item) => new Date(item.createdAt).toLocaleString()
+            },
+            {
+              key: 'source',
+              label: t('errorLogs.columns.source'),
+              width: 120,
+              render: (item) => (
+                <Chip size="small" label={item.source} color={item.source === 'server' ? 'warning' : 'default'} />
+              )
+            },
+            {
+              key: 'path',
+              label: t('errorLogs.columns.path'),
+              width: 260,
+              render: (item) => item.path || '-'
+            },
+            {
+              key: 'message',
+              label: t('errorLogs.columns.message'),
+              width: 420,
+              render: (item) => item.message
+            },
+            {
+              key: 'accountId',
+              label: t('errorLogs.columns.accountId'),
+              width: 120,
+              render: (item) => item.accountId ?? '-'
+            }
+          ]}
+          rows={items}
+          getRowKey={(item) => item.id}
+          emptyTitle={t('errorLogs.empty')}
+        />
       )}
     </AppPage>
   );

@@ -1,5 +1,5 @@
-import { Stack, type StackProps } from "@mui/material";
-import { APP_SPACING } from "../theme/constants";
+import { Stack, type StackProps } from '@mui/material';
+import { APP_SPACING } from '../theme/constants';
 
 type FormContainerProps = StackProps;
 
@@ -8,13 +8,17 @@ export function FormContainer({ children, sx, ...props }: FormContainerProps) {
     <Stack
       spacing={APP_SPACING.formGap}
       sx={{
-        mt: 1,
-        "& .MuiInputLabel-root": {
+        mt: 0.5,
+        '& .MuiInputLabel-root': {
           px: 0.5,
-          backgroundColor: "background.paper",
+          backgroundColor: 'background.paper',
         },
-        "& .MuiOutlinedInput-root": {
-          borderRadius: 2,
+        '& .MuiFormControl-root': {
+          width: '100%'
+        },
+        '& .MuiFormControlLabel-root': {
+          ml: 0,
+          mr: 0
         },
         ...sx,
       }}

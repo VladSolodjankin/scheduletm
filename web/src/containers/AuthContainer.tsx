@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { Alert, Box, Divider, Stack, Typography } from '@mui/material';
+import { Box, Divider, Stack, Typography, alpha, useTheme } from '@mui/material';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
@@ -14,6 +14,8 @@ import type { AuthResponse, RegisterResponse, VerifyEmailResponse } from '../sha
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
 import { AppOtpCodeField } from '../shared/ui/AppOtpCodeField';
+import { AppStatusMessage } from '../shared/ui/AppStatus';
+import { APP_SHADOWS } from '../shared/theme/constants';
 
 type AuthMode = 'login' | 'register';
 
@@ -40,6 +42,7 @@ const REGISTER_PENDING_EMAIL_KEY = 'meetli_register_pending_email';
 const RESEND_COOLDOWN_SECONDS = 30;
 
 export function AuthContainer({ mode }: AuthContainerProps) {
+  const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const { setAuthSession } = useAuth();
@@ -265,13 +268,14 @@ export function AuthContainer({ mode }: AuthContainerProps) {
         display: 'flex',
         justifyContent: 'center',
         px: { xs: 2, sm: 3 },
-        py: { xs: 4, sm: 6 }
+        py: { xs: 4, sm: 6 },
+        background: `radial-gradient(circle at top, ${alpha(theme.palette.primary.main, 0.08)} 0%, transparent 35%), ${theme.palette.background.default}`
       }}
     >
       <Stack spacing={{ xs: 3, sm: 4 }} sx={{ width: '100%', maxWidth: 840, alignItems: 'center' }}>
         <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
           <Stack spacing={1.25}>
-            <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
+            <Typography variant="h3" sx={{ fontWeight: 700 }}>
               {isLogin ? t('auth.loginTitle') : t('auth.registerTitle')}
             </Typography>
             <Typography color="text.secondary" variant="body1">
@@ -282,13 +286,13 @@ export function AuthContainer({ mode }: AuthContainerProps) {
 
         {error && (
           <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
-            <Alert severity="error">{error}</Alert>
+            <AppStatusMessage severity="error" message={error} />
           </Box>
         )}
 
         {info && (
           <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
-            <Alert severity="info">{info}</Alert>
+            <AppStatusMessage severity="info" message={info} />
           </Box>
         )}
 
@@ -303,8 +307,8 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                 py: { xs: 3, sm: 4 },
                 boxShadow: (theme) =>
                   theme.palette.mode === 'light'
-                    ? '0 20px 50px rgba(15, 23, 42, 0.08)'
-                    : '0 20px 50px rgba(0, 0, 0, 0.35)'
+                    ? APP_SHADOWS.surfaceLight
+                    : APP_SHADOWS.surfaceDark
               }}
               stackProps={{ spacing: 2.5 }}
             >

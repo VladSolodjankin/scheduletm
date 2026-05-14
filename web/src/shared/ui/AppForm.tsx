@@ -7,7 +7,12 @@ type AppFormProps = PaperProps & {
 
 export function AppForm({ children, stackProps, ...paperProps }: AppFormProps) {
   return (
-    <Paper elevation={0} variant="outlined" sx={{ p: 3 }} {...paperProps}>
+    <Paper
+      elevation={0}
+      variant="outlined"
+      sx={{ p: APP_SPACING.cardPadding }}
+      {...paperProps}
+    >
       <Stack spacing={APP_SPACING.formGap} {...stackProps}>
         {children}
       </Stack>

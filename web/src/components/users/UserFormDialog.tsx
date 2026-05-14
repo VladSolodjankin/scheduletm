@@ -1,9 +1,4 @@
 import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   FormControl,
   InputLabel,
   MenuItem,
@@ -13,6 +8,7 @@ import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import type { ManagedUserItem } from "../../shared/types/api";
 import { AppButton } from "../../shared/ui/AppButton";
+import { AppConfirmDialog, AppDialog } from "../../shared/ui/AppDialog";
 import { AppRhfPhoneField } from "../../shared/ui/AppRhfPhoneField";
 import { AppRhfTextField } from "../../shared/ui/AppRhfTextField";
 import { FormContainer } from "../../shared/ui/FormContainer";
@@ -146,9 +142,27 @@ export function UserFormDialog({
   });
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
+    <>
+      <AppDialog
+        open={open}
+        onClose={onClose}
+        maxWidth="sm"
+        title={title}
+        actions={(
+          <>
+            <AppButton variant="text" onClick={onClose}>
+              {closeLabel}
+            </AppButton>
+            <AppButton
+              onClick={() => void submitForm()}
+              isLoading={isSaving}
+              disabled={!isValid}
+            >
+              {saveLabel}
+            </AppButton>
+          </>
+        )}
+      >
         <FormContainer>
           <Controller
             name="email"
@@ -241,52 +255,27 @@ export function UserFormDialog({
             )}
           />
         </FormContainer>
-      </DialogContent>
-      <DialogActions>
-        <AppButton variant="text" onClick={onClose}>
-          {closeLabel}
-        </AppButton>
-        <AppButton
-          onClick={() => void submitForm()}
-          isLoading={isSaving}
-          disabled={!isValid}
-        >
-          {saveLabel}
-        </AppButton>
-      </DialogActions>
+      </AppDialog>
 
-      <Dialog
+      <AppConfirmDialog
         open={isAdminConfirmOpen}
         onClose={() => setIsAdminConfirmOpen(false)}
         maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>{adminConfirmTitle}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>{adminConfirmDescription}</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <AppButton
-            variant="text"
-            onClick={() => setIsAdminConfirmOpen(false)}
-          >
-            {adminConfirmCancelLabel}
-          </AppButton>
-          <AppButton
-            onClick={() => {
-              if (!pendingPayload) {
-                return;
-              }
+        title={adminConfirmTitle}
+        description={adminConfirmDescription}
+        cancelLabel={adminConfirmCancelLabel}
+        confirmLabel={adminConfirmSubmitLabel}
+        isLoading={isSaving}
+        onCancel={() => setIsAdminConfirmOpen(false)}
+        onConfirm={() => {
+          if (!pendingPayload) {
+            return;
+          }
 
-              setIsAdminConfirmOpen(false);
-              void onSubmit(pendingPayload);
-            }}
-            isLoading={isSaving}
-          >
-            {adminConfirmSubmitLabel}
-          </AppButton>
-        </DialogActions>
-      </Dialog>
-    </Dialog>
+          setIsAdminConfirmOpen(false);
+          void onSubmit(pendingPayload);
+        }}
+      />
+    </>
   );
 }

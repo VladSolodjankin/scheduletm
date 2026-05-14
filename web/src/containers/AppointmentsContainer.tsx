@@ -1,19 +1,12 @@
 import {
   Alert,
-  Box,
-  Card,
-  CardContent,
   FormControl,
   InputLabel,
   MenuItem,
   Select,
   Snackbar,
-  Skeleton,
   Stack,
   TextField,
-  Typography,
-  alpha,
-  useTheme,
 } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { AppointmentFormDialog } from '../components/appointments/AppointmentFormDialog';
@@ -47,12 +40,13 @@ import type {
   SpecialistItem,
 } from '../shared/types/api';
 import { WebUserRole } from '../shared/types/roles';
+import { AppFilterBar } from '../shared/ui/AppFilterBar';
 import { AppPage } from '../shared/ui/AppPage';
+import { AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 
 export function AppointmentsContainer() {
   const { t } = useI18n();
   const { accessToken, user } = useAuth();
-  const theme = useTheme();
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistItem[]>([]);
@@ -565,24 +559,23 @@ export function AppointmentsContainer() {
       title={t('appointments.pageTitle')}
       subtitle={pageSubtitle}
     >
-      {error && (
-        <Box sx={{ mb: 2 }}>
-          <Alert severity="error">{error}</Alert>
-        </Box>
-      )}
-
       <Stack spacing={2}>
-        <Card
-          variant="outlined"
-          sx={{
-            borderRadius: 3,
-            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.14)} 0%, ${alpha(theme.palette.info.light, 0.12)} 100%)`,
-          }}
+        {error ? <AppStatusMessage severity="error" message={error} /> : null}
+
+        <AppFilterBar
+          mobileLabel={t('common.filters')}
+          mobileTitle={t('appointments.pageTitle')}
+          activeFiltersCount={[
+            selectedSpecialistId !== 'all',
+            selectedClientId !== 'all',
+            selectedStatus !== 'all',
+            serviceQuery.trim().length > 0,
+            Boolean(fromDateFilter),
+            Boolean(toDateFilter),
+          ].filter(Boolean).length}
         >
-          <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', alignItems: { md: 'center' } }}>
               {isOwner && (
-                <FormControl sx={{ width: { xs: '100%', sm: 240 } }} size="small" disabled>
+                <FormControl sx={{ minWidth: 0 }} size="small" disabled>
                   <InputLabel id="account-filter">{t('appointments.accountFilter')}</InputLabel>
                   <Select
                     labelId="account-filter"
@@ -595,7 +588,7 @@ export function AppointmentsContainer() {
               )}
 
               {canManageAll && (
-                <FormControl sx={{ width: { xs: '100%', sm: 360 } }} size="small">
+                <FormControl sx={{ minWidth: 0, gridColumn: { md: 'span 2' } }} size="small">
                   <InputLabel id="specialist-filter">{t('appointments.specialistFilter')}</InputLabel>
                   <Select
                     labelId="specialist-filter"
@@ -615,7 +608,7 @@ export function AppointmentsContainer() {
               )}
 
               {(isOwner || isAdmin || isSpecialist) && (
-                <FormControl sx={{ width: { xs: '100%', sm: 300 } }} size="small">
+                <FormControl sx={{ minWidth: 0, gridColumn: { md: 'span 2' } }} size="small">
                   <InputLabel id="client-filter">{t('appointments.clientFilter')}</InputLabel>
                   <Select
                     labelId="client-filter"
@@ -637,7 +630,7 @@ export function AppointmentsContainer() {
               )}
 
               {isClient && (
-                <FormControl sx={{ width: { xs: '100%', sm: 320 } }} size="small">
+                <FormControl sx={{ minWidth: 0, gridColumn: { md: 'span 2' } }} size="small">
                   <InputLabel id="specialist-filter-client">{t('appointments.specialistFilter')}</InputLabel>
                   <Select
                     labelId="specialist-filter-client"
@@ -662,10 +655,10 @@ export function AppointmentsContainer() {
                 size="small"
                 value={serviceQuery}
                 onChange={(event) => setServiceQuery(event.target.value)}
-                sx={{ width: { xs: '100%', sm: 260 } }}
+                sx={{ minWidth: 0, gridColumn: { md: 'span 2' } }}
               />
 
-              <FormControl sx={{ width: { xs: '100%', sm: 220 } }} size="small">
+              <FormControl sx={{ minWidth: 0 }} size="small">
                 <InputLabel id="status-filter">{t('appointments.statusFilter')}</InputLabel>
                 <Select
                   labelId="status-filter"
@@ -690,7 +683,7 @@ export function AppointmentsContainer() {
                 value={fromDateFilter}
                 onChange={(event) => setFromDateFilter(event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ width: { xs: '100%', sm: 180 } }}
+                sx={{ minWidth: 0 }}
               />
               <TextField
                 type="date"
@@ -699,22 +692,12 @@ export function AppointmentsContainer() {
                 value={toDateFilter}
                 onChange={(event) => setToDateFilter(event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ width: { xs: '100%', sm: 180 } }}
+                sx={{ minWidth: 0 }}
               />
-            </Stack>
-          </CardContent>
-        </Card>
+        </AppFilterBar>
 
         {isInitialLoading ? (
-          <Card variant="outlined" sx={{ borderRadius: 3 }}>
-            <CardContent sx={{ p: 2 }}>
-              <Stack spacing={1.5}>
-                <Typography variant="body2" color="text.secondary">{t('appointments.loading')}</Typography>
-                <Skeleton variant="rounded" height={42} />
-                <Skeleton variant="rounded" height={520} />
-              </Stack>
-            </CardContent>
-          </Card>
+          <AppLoadingState lines={2} />
         ) : (
           <AppointmentsCalendar
             t={t}

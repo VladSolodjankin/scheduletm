@@ -1,4 +1,4 @@
-import { Alert, Box, Card, CardContent, FormControl, InputLabel, MenuItem, Select, Skeleton, Stack } from '@mui/material';
+import { Box, FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
@@ -6,7 +6,9 @@ import { apiClient, authHeaders } from '../shared/api/client';
 import { resolveApiError } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
+import { AppFilterBar } from '../shared/ui/AppFilterBar';
 import { AppPage } from '../shared/ui/AppPage';
+import { AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 import type {
   AccountNotificationDefault,
   AccountSettings,
@@ -619,76 +621,65 @@ export function SettingsContainer() {
 
   return (
     <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')} maxWidth={900}>
-      {isOwner && (
-        <Card variant="outlined" sx={{ mb: 2, borderRadius: 2 }}>
-          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-              <FormControl size="small" sx={{ width: { xs: '100%', sm: 320 } }}>
-                <InputLabel id="settings-account-filter">{t('settings.scopeAccount')}</InputLabel>
-                <Select
-                  labelId="settings-account-filter"
-                  label={t('settings.scopeAccount')}
-                  value={selectedAccountId ?? ''}
-                  onChange={(event) => {
-                    const nextAccountId = Number(event.target.value);
-                    setSelectedAccountId(Number.isInteger(nextAccountId) ? nextAccountId : null);
-                    setSelectedSpecialistId(null);
-                  }}
-                >
-                  {scopeAccounts.map((account) => (
-                    <MenuItem key={account.id} value={account.id}>
-                      {account.id} - {account.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+      <Stack spacing={2.5}>
+        {isOwner && (
+          <AppFilterBar
+            mobileLabel={t('common.filters')}
+            mobileTitle={t('settings.pageTitle')}
+          >
+            <FormControl size="small" sx={{ minWidth: 0, gridColumn: { md: 'span 2' } }}>
+              <InputLabel id="settings-account-filter">{t('settings.scopeAccount')}</InputLabel>
+              <Select
+                labelId="settings-account-filter"
+                label={t('settings.scopeAccount')}
+                value={selectedAccountId ?? ''}
+                onChange={(event) => {
+                  const nextAccountId = Number(event.target.value);
+                  setSelectedAccountId(Number.isInteger(nextAccountId) ? nextAccountId : null);
+                  setSelectedSpecialistId(null);
+                }}
+              >
+                {scopeAccounts.map((account) => (
+                  <MenuItem key={account.id} value={account.id}>
+                    {account.id} - {account.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-              <FormControl size="small" sx={{ width: { xs: '100%', sm: 360 } }} disabled={filteredScopeSpecialists.length === 0}>
-                <InputLabel id="settings-specialist-filter">{t('settings.scopeSpecialist')}</InputLabel>
-                <Select
-                  labelId="settings-specialist-filter"
-                  label={t('settings.scopeSpecialist')}
-                  value={selectedSpecialistId ?? ''}
-                  onChange={(event) => {
-                    const nextSpecialistId = Number(event.target.value);
-                    setSelectedSpecialistId(Number.isInteger(nextSpecialistId) ? nextSpecialistId : null);
-                  }}
-                >
-                  {filteredScopeSpecialists.map((specialist) => (
-                    <MenuItem key={specialist.id} value={specialist.id}>
-                      {specialist.id} - {specialist.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-          </CardContent>
-        </Card>
-      )}
+            <FormControl
+              size="small"
+              sx={{ minWidth: 0, gridColumn: { md: 'span 2' } }}
+              disabled={filteredScopeSpecialists.length === 0}
+            >
+              <InputLabel id="settings-specialist-filter">{t('settings.scopeSpecialist')}</InputLabel>
+              <Select
+                labelId="settings-specialist-filter"
+                label={t('settings.scopeSpecialist')}
+                value={selectedSpecialistId ?? ''}
+                onChange={(event) => {
+                  const nextSpecialistId = Number(event.target.value);
+                  setSelectedSpecialistId(Number.isInteger(nextSpecialistId) ? nextSpecialistId : null);
+                }}
+              >
+                {filteredScopeSpecialists.map((specialist) => (
+                  <MenuItem key={specialist.id} value={specialist.id}>
+                    {specialist.id} - {specialist.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </AppFilterBar>
+        )}
 
-      {error && (
-        <Box sx={{ maxWidth: 720, mb: 2 }}>
-          <Alert severity="error">{error}</Alert>
-        </Box>
-      )}
+        {error ? <AppStatusMessage severity="error" message={error} /> : null}
+        {success ? <AppStatusMessage severity="success" message={success} /> : null}
 
-      {success && (
-        <Box sx={{ maxWidth: 720, mb: 2 }}>
-          <Alert severity="success">{success}</Alert>
-        </Box>
-      )}
-
-      <Box>
-        {isLoadingSettings ? (
-          <Stack spacing={2}>
-            <Skeleton variant="rounded" height={42} />
-            <Skeleton variant="rounded" height={56} />
-            <Skeleton variant="rounded" height={56} />
-            <Skeleton variant="rounded" height={56} />
-            <Skeleton variant="rounded" height={46} width={180} />
-          </Stack>
-        ) : (
-          <SettingsCard
+        <Box>
+          {isLoadingSettings ? (
+            <AppLoadingState lines={5} />
+          ) : (
+            <SettingsCard
             systemSettings={systemSettings}
             accountSettings={accountSettings}
             userSettings={userSettings}
@@ -821,9 +812,10 @@ export function SettingsContainer() {
             onConfirmPasswordOtp={confirmPasswordOtp}
             activeTab={activeTab}
             onTabChange={handleTabChange}
-          />
-        )}
-      </Box>
+            />
+          )}
+        </Box>
+      </Stack>
     </AppPage>
   );
 }

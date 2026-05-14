@@ -1,4 +1,4 @@
-import { Box, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, List, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import { APP_SIZING } from '../../shared/theme/constants';
 import { AppIcons } from '../../shared/ui/AppIcons';
@@ -22,12 +22,16 @@ export function LeftMenu({ items }: LeftMenuProps) {
         flexShrink: 0,
         borderRight: 1,
         borderColor: 'divider',
-        p: 1.5,
+        px: 1.5,
+        py: 2,
         display: { xs: 'none', md: 'block' },
         overflowY: 'auto'
       }}
     >
-      <List>
+      <Typography variant="overline" color="text.secondary" sx={{ px: 1.5, letterSpacing: '0.08em' }}>
+        Workspace
+      </Typography>
+      <List sx={{ mt: 1 }}>
         {items.map((item) => {
           const Icon = AppIcons[item.icon];
           return (
@@ -36,10 +40,15 @@ export function LeftMenu({ items }: LeftMenuProps) {
               component={NavLink}
               to={item.to}
               sx={{
-                borderRadius: 2,
+                borderRadius: 3,
                 marginBottom: 1,
+                minHeight: 46,
                 '&.active': {
-                  bgcolor: 'action.selected'
+                  bgcolor: 'action.selected',
+                  color: 'primary.main',
+                  '& .MuiListItemIcon-root': {
+                    color: 'primary.main'
+                  }
                 }
               }}
             >

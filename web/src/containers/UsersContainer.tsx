@@ -1,4 +1,4 @@
-import { Alert, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserFormDialog } from '../components/users/UserFormDialog';
@@ -8,7 +8,10 @@ import { resolveApiError } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppButton } from '../shared/ui/AppButton';
+import { AppConfirmDialog } from '../shared/ui/AppDialog';
+import { AppIcons } from '../shared/ui/AppIcons';
 import { AppPage } from '../shared/ui/AppPage';
+import { AppEmptyState, AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 import type { ManagedUserDeleteImpact, ManagedUserItem, ManagedUsersListResponse, VerifyEmailResponse } from '../shared/types/api';
 
 export function UsersContainer() {
@@ -192,62 +195,60 @@ export function UsersContainer() {
   };
 
   return (
-    <AppPage title={t('users.pageTitle')} subtitle={t('users.pageSubtitle')}>
-      {error && (
-        <Box sx={{ mb: 2 }}>
-          <Alert severity="error">{error}</Alert>
-        </Box>
-      )}
-      {success && (
-        <Box sx={{ mb: 2 }}>
-          <Alert severity="success">{success}</Alert>
-        </Box>
-      )}
+    <AppPage
+      title={t('users.pageTitle')}
+      subtitle={t('users.pageSubtitle')}
+      action={canManageUsers ? (
+        <AppButton
+          size="small"
+          onClick={() => {
+            setEditingUser(null);
+            setIsDialogOpen(true);
+          }}
+          startIcon={<AppIcons.add />}
+        >
+          {t('users.add')}
+        </AppButton>
+      ) : null}
+    >
+      <Stack spacing={2.5}>
+        {error ? <AppStatusMessage severity="error" message={error} /> : null}
+        {success ? <AppStatusMessage severity="success" message={success} /> : null}
 
-      {!canManageUsers ? (
-        <Box>
-          <Alert severity="info">{t('users.accessDenied')}</Alert>
-        </Box>
-      ) : (
-        <Box >
-          {isLoading ? (
-            <Stack spacing={2}>
-              <Skeleton variant="rounded" height={42} />
-              <Skeleton variant="rounded" height={260} />
-            </Stack>
-          ) : (
-            <UsersTable
-              title={t('users.tableTitle')}
-              emptyText={t('users.empty')}
-              addLabel={t('users.add')}
-              editLabel={t('users.edit')}
-              deactivateLabel={t('users.deactivate')}
-              deleteLabel={t('users.delete')}
-              resendInviteLabel={t('users.resendInvite')}
-              emailColumnLabel={t('users.columns.email')}
-              firstNameColumnLabel={t('users.columns.firstName')}
-              lastNameColumnLabel={t('users.columns.lastName')}
-              roleColumnLabel={t('users.columns.role')}
-              verifiedColumnLabel={t('users.columns.verified')}
-              activeColumnLabel={t('users.columns.active')}
-              actionsColumnLabel={t('users.columns.actions')}
-              users={users}
-              onAdd={() => {
-                setEditingUser(null);
-                setIsDialogOpen(true);
-              }}
-              onEdit={(item) => {
-                setEditingUser(item);
-                setIsDialogOpen(true);
-              }}
-              onDeactivate={(item) => setDeactivatingUser(item)}
-              onDelete={(item) => void openDeleteDialog(item)}
-              onResendInvite={(item) => void resendInvite(item)}
-              isResendingInviteForUserId={isResendingInviteForUserId}
-            />
-          )}
-        </Box>
-      )}
+        {!canManageUsers ? (
+          <AppEmptyState title={t('users.accessDenied')} />
+        ) : (
+          <Box>
+            {isLoading ? (
+              <AppLoadingState lines={2} />
+            ) : (
+              <UsersTable
+                emptyText={t('users.empty')}
+                editLabel={t('users.edit')}
+                deactivateLabel={t('users.deactivate')}
+                deleteLabel={t('users.delete')}
+                resendInviteLabel={t('users.resendInvite')}
+                emailColumnLabel={t('users.columns.email')}
+                firstNameColumnLabel={t('users.columns.firstName')}
+                lastNameColumnLabel={t('users.columns.lastName')}
+                roleColumnLabel={t('users.columns.role')}
+                verifiedColumnLabel={t('users.columns.verified')}
+                activeColumnLabel={t('users.columns.active')}
+                actionsColumnLabel={t('users.columns.actions')}
+                users={users}
+                onEdit={(item) => {
+                  setEditingUser(item);
+                  setIsDialogOpen(true);
+                }}
+                onDeactivate={(item) => setDeactivatingUser(item)}
+                onDelete={(item) => void openDeleteDialog(item)}
+                onResendInvite={(item) => void resendInvite(item)}
+                isResendingInviteForUserId={isResendingInviteForUserId}
+              />
+            )}
+          </Box>
+        )}
+      </Stack>
 
       <UserFormDialog
         open={isDialogOpen}
@@ -275,77 +276,63 @@ export function UsersContainer() {
         onSubmit={saveUser}
       />
 
-      <Dialog open={Boolean(deactivatingUser)} onClose={() => !isSaving && setDeactivatingUser(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('users.deactivateConfirm.title')}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {t('users.deactivateConfirm.description')}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <AppButton type="button" variant="text" onClick={() => setDeactivatingUser(null)} disabled={isSaving}>
-            {t('users.deactivateConfirm.cancel')}
-          </AppButton>
-          <AppButton
-            type="button"
-            onClick={() => deactivatingUser && void deactivateUser(deactivatingUser)}
-            isLoading={isSaving}
-          >
-            {t('users.deactivateConfirm.confirm')}
-          </AppButton>
-        </DialogActions>
-      </Dialog>
+      <AppConfirmDialog
+        open={Boolean(deactivatingUser)}
+        onClose={() => !isSaving && setDeactivatingUser(null)}
+        title={t('users.deactivateConfirm.title')}
+        description={t('users.deactivateConfirm.description')}
+        cancelLabel={t('users.deactivateConfirm.cancel')}
+        confirmLabel={t('users.deactivateConfirm.confirm')}
+        isLoading={isSaving}
+        onCancel={() => setDeactivatingUser(null)}
+        onConfirm={() => {
+          if (deactivatingUser) {
+            void deactivateUser(deactivatingUser);
+          }
+        }}
+      />
 
-      <Dialog open={Boolean(deletingUser)} onClose={() => !isSaving && setDeletingUser(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('users.deleteConfirm.title')}</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
-            {t('users.deleteConfirm.description')}
-          </DialogContentText>
-          {isDeleteImpactLoading ? (
-            <Skeleton variant="rounded" height={72} />
-          ) : deleteImpact && (
-            <Stack spacing={0.75}>
-              <Typography variant="body2">
-                {t('users.deleteConfirm.totalAppointments').replace('{count}', String(deleteImpact.totalAppointmentCount))}
+      <AppConfirmDialog
+        open={Boolean(deletingUser)}
+        onClose={() => !isSaving && setDeletingUser(null)}
+        title={t('users.deleteConfirm.title')}
+        description={t('users.deleteConfirm.description')}
+        cancelLabel={t('users.deleteConfirm.cancel')}
+        confirmLabel={t('users.deleteConfirm.confirm')}
+        confirmColor="error"
+        isLoading={isSaving}
+        disabled={isDeleteImpactLoading}
+        onCancel={() => {
+          setDeletingUser(null);
+          setDeleteImpact(null);
+        }}
+        onConfirm={() => {
+          if (deletingUser) {
+            void deleteUser(deletingUser);
+          }
+        }}
+      >
+        {isDeleteImpactLoading ? (
+          <AppLoadingState lines={1} hasHeader={false} />
+        ) : deleteImpact ? (
+          <Stack spacing={0.75}>
+            <Typography variant="body2">
+              {t('users.deleteConfirm.totalAppointments').replace('{count}', String(deleteImpact.totalAppointmentCount))}
+            </Typography>
+            <Typography variant="body2">
+              {t('users.deleteConfirm.specialistAppointments').replace('{count}', String(deleteImpact.specialistAppointmentCount))}
+            </Typography>
+            <Typography variant="body2">
+              {t('users.deleteConfirm.clientAppointments').replace('{count}', String(deleteImpact.clientAppointmentCount))}
+            </Typography>
+            {deleteImpact.hasAppointments ? (
+              <Typography variant="body2" color="warning.main">
+                {t('users.deleteConfirm.warningHasAppointments')}
               </Typography>
-              <Typography variant="body2">
-                {t('users.deleteConfirm.specialistAppointments').replace('{count}', String(deleteImpact.specialistAppointmentCount))}
-              </Typography>
-              <Typography variant="body2">
-                {t('users.deleteConfirm.clientAppointments').replace('{count}', String(deleteImpact.clientAppointmentCount))}
-              </Typography>
-              {deleteImpact.hasAppointments && (
-                <Typography variant="body2" color="warning.main">
-                  {t('users.deleteConfirm.warningHasAppointments')}
-                </Typography>
-              )}
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <AppButton
-            type="button"
-            variant="text"
-            onClick={() => {
-              setDeletingUser(null);
-              setDeleteImpact(null);
-            }}
-            disabled={isSaving}
-          >
-            {t('users.deleteConfirm.cancel')}
-          </AppButton>
-          <AppButton
-            type="button"
-            color="error"
-            onClick={() => deletingUser && void deleteUser(deletingUser)}
-            isLoading={isSaving}
-            disabled={isDeleteImpactLoading}
-          >
-            {t('users.deleteConfirm.confirm')}
-          </AppButton>
-        </DialogActions>
-      </Dialog>
+            ) : null}
+          </Stack>
+        ) : null}
+      </AppConfirmDialog>
     </AppPage>
   );
 }

@@ -9,6 +9,7 @@ import { AppRhfPhoneField } from '../shared/ui/AppRhfPhoneField';
 import { isValidPhoneValue } from '../shared/ui/phoneUtils';
 import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
+import { APP_SHADOWS } from '../shared/theme/constants';
 
 type AuthFormValues = {
   firstName: string;
@@ -106,8 +107,8 @@ export function AuthCard({
           py: { xs: 3, sm: 4 },
           boxShadow: (theme) =>
             theme.palette.mode === 'light'
-              ? '0 20px 50px rgba(15, 23, 42, 0.08)'
-              : '0 20px 50px rgba(0, 0, 0, 0.35)'
+              ? APP_SHADOWS.surfaceLight
+              : APP_SHADOWS.surfaceDark
         }}
         stackProps={{ spacing: 2.5 }}
       >
@@ -229,7 +230,7 @@ export function AuthCard({
               helperText={fieldState.error?.message}
             />
           )}
-        />
+          />
 
         <AppButton type="submit" variant="contained" isLoading={isSubmitting} sx={{ minHeight: 46 }}>
           {submitText}

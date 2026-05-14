@@ -23,6 +23,7 @@ export const dictionaries = {
       themeToggleAria: 'Toggle theme mode',
       languageAria: 'Select language',
       cancel: 'Cancel',
+      filters: 'Filters',
       errors: {
         network: 'Network connection issue. Please check your internet and try again.'
       },
@@ -462,6 +463,7 @@ export const dictionaries = {
       themeToggleAria: 'Переключить тему',
       languageAria: 'Выбрать язык',
       cancel: 'Отмена',
+      filters: 'Фильтры',
       errors: {
         network: 'Проблема с подключением к сети. Проверьте интернет и попробуйте снова.'
       },
@@ -912,6 +914,7 @@ export type TranslationKey =
   | 'common.appErrorDescription'
   | 'common.appErrorTitle'
   | 'common.cancel'
+  | 'common.filters'
   | 'common.errors.network'
   | 'auth.loginTitle'
   | 'auth.loginSubtitle'

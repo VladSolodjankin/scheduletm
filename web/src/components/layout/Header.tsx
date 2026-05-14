@@ -3,10 +3,11 @@ import {
   Box,
   IconButton,
   MenuItem,
+  Paper,
   Select,
   Stack,
   Toolbar,
-  Typography,
+  Tooltip,
   useMediaQuery,
   useTheme
 } from '@mui/material';
@@ -50,8 +51,19 @@ export function Header({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
-    <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-      <Toolbar sx={{ gap: { xs: 1, sm: 2 }, minHeight: { xs: 56, sm: 64 } }}>
+    <AppBar
+      position="sticky"
+      color="inherit"
+      elevation={0}
+      sx={{
+        borderBottom: 1,
+        borderColor: 'divider',
+        bgcolor: 'rgba(255,255,255,0.72)',
+        backdropFilter: 'blur(14px)',
+        ...(theme.palette.mode === 'dark' ? { bgcolor: 'rgba(15, 23, 42, 0.72)' } : {})
+      }}
+    >
+      <Toolbar sx={{ gap: { xs: 1, sm: 2 }, minHeight: { xs: 56, sm: 64 }, px: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Box
             component="img"
@@ -69,42 +81,55 @@ export function Header({
 
         <Box sx={{ flexGrow: 1 }} />
 
-        <Stack direction="row" spacing={{ xs: 1, sm: 1.5 }} sx={{ alignItems: 'center' }}>
+        <Stack direction="row" spacing={{ xs: 1, sm: 1.25 }} sx={{ alignItems: 'center' }}>
           {!isMobile && (
-            <>
-              <AppIcons.palette color="action" />
-              <Select
-                size="small"
-                value={paletteVariantId}
-                onChange={(event) => onChangePalette(event.target.value as PaletteVariantId)}
-                aria-label={paletteSelectAriaLabel}
-              >
-                {PALETTE_VARIANTS.map((variant) => (
-                  <MenuItem key={variant.id} value={variant.id}>
-                    {variant.label}
-                  </MenuItem>
-                ))}
-              </Select>
-
-              <Typography variant="body2" color="text.secondary">
-                {localeLabel}
-              </Typography>
-            </>
+            <Paper variant="outlined" sx={{ px: 1, py: 0.75, borderRadius: 999 }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                <AppIcons.palette color="action" fontSize="small" />
+                <Select
+                  size="small"
+                  variant="standard"
+                  disableUnderline
+                  value={paletteVariantId}
+                  onChange={(event) => onChangePalette(event.target.value as PaletteVariantId)}
+                  aria-label={paletteSelectAriaLabel}
+                  sx={{ minWidth: 130 }}
+                >
+                  {PALETTE_VARIANTS.map((variant) => (
+                    <MenuItem key={variant.id} value={variant.id}>
+                      {variant.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </Stack>
+            </Paper>
           )}
-          <Select
-            size="small"
-            value={locale}
-            onChange={(event) => onChangeLocale(event.target.value as Locale)}
-            aria-label={languageSelectAriaLabel}
-            sx={isMobile ? { minWidth: 72 } : undefined}
-          >
-            <MenuItem value="ru">RU</MenuItem>
-            <MenuItem value="en">EN</MenuItem>
-          </Select>
 
-          <IconButton onClick={onToggleMode} color="primary" aria-label={themeToggleAriaLabel}>
-            <ThemeIcon />
-          </IconButton>
+          <Tooltip title={localeLabel}>
+            <Paper variant="outlined" sx={{ px: 1, py: 0.75, borderRadius: 999 }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                {!isMobile && <AppIcons.settings color="action" fontSize="small" />}
+                <Select
+                  size="small"
+                  variant="standard"
+                  disableUnderline
+                  value={locale}
+                  onChange={(event) => onChangeLocale(event.target.value as Locale)}
+                  aria-label={languageSelectAriaLabel}
+                  sx={isMobile ? { minWidth: 52 } : { minWidth: 72 }}
+                >
+                  <MenuItem value="ru">RU</MenuItem>
+                  <MenuItem value="en">EN</MenuItem>
+                </Select>
+              </Stack>
+            </Paper>
+          </Tooltip>
+
+          <Tooltip title={themeToggleAriaLabel}>
+            <IconButton onClick={onToggleMode} color="primary" aria-label={themeToggleAriaLabel}>
+              <ThemeIcon />
+            </IconButton>
+          </Tooltip>
 
           <UserMenu />
         </Stack>

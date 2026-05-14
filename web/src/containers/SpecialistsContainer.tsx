@@ -1,4 +1,4 @@
-import { Alert, Box, Skeleton, Stack } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SpecialistFormDialog } from '../components/specialists/SpecialistFormDialog';
@@ -8,6 +8,9 @@ import { resolveApiError } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
+import { AppButton } from '../shared/ui/AppButton';
+import { AppIcons } from '../shared/ui/AppIcons';
+import { AppEmptyState, AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 import type { SpecialistsListResponse, SpecialistManagementItem } from '../shared/types/api';
 
 export function SpecialistsContainer() {
@@ -179,53 +182,45 @@ export function SpecialistsContainer() {
   };
 
   return (
-    <AppPage title={t('specialists.pageTitle')} subtitle={t('specialists.pageSubtitle')}>
-      {error && (
-        <Box sx={{ mb: 2 }}>
-          <Alert severity="error">{error}</Alert>
-        </Box>
-      )}
+    <AppPage
+      title={t('specialists.pageTitle')}
+      subtitle={t('specialists.pageSubtitle')}
+      action={canManageSpecialists ? (
+        <AppButton size="small" onClick={openCreateSpecialistDialog} startIcon={<AppIcons.add />}>
+          {t('settings.specialists.add')}
+        </AppButton>
+      ) : null}
+    >
+      <Stack spacing={2.5}>
+        {error ? <AppStatusMessage severity="error" message={error} /> : null}
+        {success ? <AppStatusMessage severity="success" message={success} /> : null}
 
-      {success && (
-        <Box sx={{ mb: 2 }}>
-          <Alert severity="success">{success}</Alert>
-        </Box>
-      )}
-
-      {!canManageSpecialistSettings ? (
-        <Box>
-          <Alert severity="info">{t('specialists.accessDenied')}</Alert>
-        </Box>
-      ) : (
-        <Box>
-          {isLoading ? (
-            <Stack spacing={2}>
-              <Skeleton variant="rounded" height={42} />
-              <Skeleton variant="rounded" height={260} />
-            </Stack>
-          ) : (
-            <SpecialistsTable
-              title={t('settings.specialists.title')}
-              addLabel={t('settings.specialists.add')}
-              editLabel={t('settings.specialists.edit')}
-              deleteLabel={t('settings.specialists.delete')}
-              emptyText={t('settings.specialists.empty')}
-              columns={{
-                name: t('settings.specialists.columns.name'),
-                timezone: t('settings.specialists.columns.timezone'),
-                active: t('settings.specialists.columns.active'),
-                actions: t('settings.specialists.columns.actions'),
-              }}
-              specialists={specialists}
-              onAdd={openCreateSpecialistDialog}
-              onEdit={openEditSpecialistDialog}
-              onDelete={(item) => void deleteSpecialist(item)}
-              canAdd={canManageSpecialists}
-              canDelete={canManageSpecialists}
-            />
-          )}
-        </Box>
-      )}
+        {!canManageSpecialistSettings ? (
+          <AppEmptyState title={t('specialists.accessDenied')} />
+        ) : (
+          <Box>
+            {isLoading ? (
+              <AppLoadingState lines={2} />
+            ) : (
+              <SpecialistsTable
+                editLabel={t('settings.specialists.edit')}
+                deleteLabel={t('settings.specialists.delete')}
+                emptyText={t('settings.specialists.empty')}
+                columns={{
+                  name: t('settings.specialists.columns.name'),
+                  timezone: t('settings.specialists.columns.timezone'),
+                  active: t('settings.specialists.columns.active'),
+                  actions: t('settings.specialists.columns.actions'),
+                }}
+                specialists={specialists}
+                onEdit={openEditSpecialistDialog}
+                onDelete={(item) => void deleteSpecialist(item)}
+                canDelete={canManageSpecialists}
+              />
+            )}
+          </Box>
+        )}
+      </Stack>
 
       <SpecialistFormDialog
         open={isSpecialistDialogOpen}

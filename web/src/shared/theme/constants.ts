@@ -25,19 +25,32 @@ export type PaletteVariant = {
 };
 
 export const APP_SIZING = {
-  radiusSm: 8,
-  radiusMd: 12,
-  radiusLg: 16,
+  radiusXs: 8,
+  radiusSm: 10,
+  radiusMd: 14,
+  radiusLg: 18,
+  radiusXl: 24,
+  surfaceRadius: 16,
   headerHeight: 64,
   leftMenuWidth: 260,
   contentMaxWidth: 1600
 } as const;
 
 export const APP_SPACING = {
-  pageX: { xs: 2, md: 4 },
-  pageY: { xs: 2, md: 3 },
-  sectionGap: 2,
-  formGap: 2
+  pageX: { xs: 2, sm: 3, lg: 4 },
+  pageY: { xs: 2.5, sm: 3, lg: 4 },
+  sectionGap: 2.5,
+  formGap: 2,
+  surfacePadding: 2,
+  cardPadding: { xs: 2, sm: 2.5, lg: 3 },
+  pageHeaderGap: 0.75
+} as const;
+
+export const APP_SHADOWS = {
+  surfaceLight: '0 24px 60px rgba(15, 23, 42, 0.08)',
+  surfaceDark: '0 24px 60px rgba(2, 6, 23, 0.32)',
+  softLight: '0 10px 30px rgba(15, 23, 42, 0.05)',
+  softDark: '0 10px 28px rgba(2, 6, 23, 0.24)'
 } as const;
 
 export const PALETTE_VARIANTS: readonly PaletteVariant[] = [
