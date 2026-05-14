@@ -146,6 +146,7 @@ export function MainLayout() {
               sx: {
                 width: 'min(88vw, 18rem)',
                 bgcolor: 'background.paper',
+                borderRadius: 0,
               }
             }
           }}

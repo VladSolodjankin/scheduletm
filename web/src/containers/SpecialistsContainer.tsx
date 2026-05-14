@@ -203,15 +203,9 @@ export function SpecialistsContainer() {
               <AppLoadingState lines={2} />
             ) : (
               <SpecialistsTable
-                editLabel={t('settings.specialists.edit')}
                 deleteLabel={t('settings.specialists.delete')}
                 emptyText={t('settings.specialists.empty')}
-                columns={{
-                  name: t('settings.specialists.columns.name'),
-                  timezone: t('settings.specialists.columns.timezone'),
-                  active: t('settings.specialists.columns.active'),
-                  actions: t('settings.specialists.columns.actions'),
-                }}
+                timezoneLabel={t('settings.specialists.columns.timezone')}
                 specialists={specialists}
                 onEdit={openEditSpecialistDialog}
                 onDelete={(item) => void deleteSpecialist(item)}

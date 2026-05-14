@@ -11,6 +11,7 @@ import {
   useMediaQuery,
   useTheme
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import type { Locale } from '../../shared/i18n/dictionaries';
 import type { PaletteVariantId } from '../../shared/theme/constants';
 import { PALETTE_VARIANTS, rem } from '../../shared/theme/constants';
@@ -63,9 +64,12 @@ export function Header({
       sx={{
         borderBottom: 1,
         borderColor: 'divider',
+        borderRadius: 0,
         bgcolor: 'rgba(255,255,255,0.72)',
         backdropFilter: `blur(${rem(14)})`,
-        ...(theme.palette.mode === 'dark' ? { bgcolor: 'rgba(15, 23, 42, 0.72)' } : {})
+        ...(theme.palette.mode === 'dark'
+          ? { bgcolor: alpha(theme.palette.background.paper, 0.78) }
+          : {})
       }}
     >
       <Toolbar sx={{ gap: { xs: 1, sm: 2 }, minHeight: { xs: rem(56), sm: rem(64) }, px: { xs: 2, sm: 3 } }}>

@@ -224,17 +224,14 @@ export function UsersContainer() {
             ) : (
               <UsersTable
                 emptyText={t('users.empty')}
-                editLabel={t('users.edit')}
                 deactivateLabel={t('users.deactivate')}
                 deleteLabel={t('users.delete')}
                 resendInviteLabel={t('users.resendInvite')}
-                emailColumnLabel={t('users.columns.email')}
-                firstNameColumnLabel={t('users.columns.firstName')}
-                lastNameColumnLabel={t('users.columns.lastName')}
-                roleColumnLabel={t('users.columns.role')}
-                verifiedColumnLabel={t('users.columns.verified')}
-                activeColumnLabel={t('users.columns.active')}
-                actionsColumnLabel={t('users.columns.actions')}
+                roleLabels={{
+                  admin: t('appointments.roleAdmin'),
+                  specialist: t('appointments.roleSpecialist'),
+                  client: t('appointments.roleClient')
+                }}
                 users={users}
                 onEdit={(item) => {
                   setEditingUser(item);

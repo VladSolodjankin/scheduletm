@@ -14,6 +14,7 @@ export function LegalFooter() {
         borderTop: `${rem(1)} solid`,
         borderColor: 'divider',
         bgcolor: 'background.paper',
+        borderRadius: 0,
         px: { xs: 2, sm: 3 },
         py: 1.5
       }}
