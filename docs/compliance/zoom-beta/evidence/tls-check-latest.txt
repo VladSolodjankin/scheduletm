@@ -59,35 +59,35 @@ No ALPN negotiated
 SSL-Session:
     Protocol  : TLSv1.2
     Cipher    : ECDHE-ECDSA-CHACHA20-POLY1305
-    Session-ID: C3A95386522E3AE90A4BABC2A717C9CB65FDB129EC0D43335C510C7B13C1E0B5
+    Session-ID: CEDD652CAA8DC7B616A9AC3D9827057FEEB94F45D481BA0955E62C200865A20A
     Session-ID-ctx: 
-    Master-Key: BA28F8CB56510B618BFE9FE1F08050E770BB683AF32F06AFBD32714650C8FB14AF5B8E706220B6E442416E7552889A35
+    Master-Key: D8F43E92C4754ADD623F0352B7BF0416989B204A4A47E6EDEFB6244FA30DECEF961A37FC4A5BC1088CC1D7B67BD11B80
     PSK identity: None
     PSK identity hint: None
     SRP username: None
     TLS session ticket lifetime hint: 64800 (seconds)
     TLS session ticket:
-    0000 - c9 6c aa f0 0f 21 48 9f-15 15 ba b2 c2 a5 c7 d5   .l...!H.........
-    0010 - 8f 4c 1f 29 e2 b9 0e eb-c1 48 35 be 36 1e 08 b6   .L.).....H5.6...
-    0020 - 2e 25 b8 78 99 51 5d 8d-37 ad b0 a2 01 91 a1 0d   .%.x.Q].7.......
-    0030 - a5 26 cd 1f 6c 27 63 c9-a8 aa 87 8f ad 6a d4 52   .&..l'c......j.R
-    0040 - 90 9c eb d7 86 0c 51 ee-1b 97 82 03 96 51 02 f3   ......Q......Q..
-    0050 - b9 18 a5 0c 7f 08 6a 7f-cc ce b0 d4 2a 83 ab a5   ......j.....*...
-    0060 - 21 e5 f4 3c 6c b5 86 3b-2c 49 44 05 24 0d e5 c5   !..<l..;,ID.$...
-    0070 - c7 6f 4e a6 1b 11 39 8a-ae eb b7 ba ca 94 81 c1   .oN...9.........
-    0080 - 74 a6 ae 93 d8 ec f4 09-e7 25 5b b4 fd 6e 92 9a   t........%[..n..
-    0090 - 6a 35 05 21 92 86 bb 0d-82 7e 8a bd e4 81 9f 28   j5.!.....~.....(
-    00a0 - 34 f0 5a e4 94 d3 e9 35-d5 29 0d c4 13 2a 18 2b   4.Z....5.)...*.+
-    00b0 - b1 f5 a2 71 ae 1f 73 b6-0e dc 50 a1 43 ae ef 47   ...q..s...P.C..G
+    0000 - 3c a5 f3 a0 d5 fe 6d 54-e2 dc a6 37 8a fd 22 dd   <.....mT...7..".
+    0010 - 54 b9 3d b8 35 10 9c 4b-cc 01 bf ff cd d3 51 ce   T.=.5..K......Q.
+    0020 - 8c 51 30 82 00 b8 b2 56-b2 92 d4 7f 2b 3d 7b ae   .Q0....V....+={.
+    0030 - 91 b2 71 1e 04 b2 15 f6-d9 ed 7f bb 01 38 46 27   ..q..........8F'
+    0040 - 99 bb bf 6e 11 0c ef fc-4d c6 1d 31 2b c7 4a 1a   ...n....M..1+.J.
+    0050 - 93 a9 d4 82 67 44 5a 20-ab 29 df 5f c1 38 32 ca   ....gDZ .)._.82.
+    0060 - ff d6 79 98 70 96 5d e9-1e 92 06 0d ee 05 7b 03   ..y.p.].......{.
+    0070 - b6 a1 c8 9b 52 bd 63 b8-20 f9 0f 4c d3 02 6b cb   ....R.c. ..L..k.
+    0080 - da f3 5f 1e 7d f5 5d 1d-de ba da 56 e3 8d 7a 3c   .._.}.]....V..z<
+    0090 - 44 4e 54 6e c7 7b 3d fc-99 8b 31 53 8e 34 4e 87   DNTn.{=...1S.4N.
+    00a0 - 55 7b a6 79 7a 25 f7 a2-b3 73 56 e5 43 02 d5 39   U{.yz%...sV.C..9
+    00b0 - cf f6 44 72 99 43 d6 f9-96 99 f5 2d 92 bd 79 de   ..Dr.C.....-..y.
 
-    Start Time: 1779097991
+    Start Time: 1779703024
     Timeout   : 7200 (sec)
     Verify return code: 0 (ok)
     Extended master secret: yes
 ---
 DONE
 === www.meetli.cc TLS1.1 ===
-40775799D07F0000:error:0A0000BF:SSL routines:tls_setup_handshake:no protocols available:../ssl/statem/statem_lib.c:104:
+4037AAAAA17F0000:error:0A0000BF:SSL routines:tls_setup_handshake:no protocols available:../ssl/statem/statem_lib.c:104:
 CONNECTED(00000003)
 ---
 no peer certificate available
@@ -155,7 +155,7 @@ Peer signing digest: SHA256
 Peer signature type: ECDSA
 Server Temp Key: X25519, 253 bits
 ---
-SSL handshake has read 2494 bytes and written 295 bytes
+SSL handshake has read 2492 bytes and written 295 bytes
 Verification: OK
 ---
 New, TLSv1.2, Cipher is ECDHE-ECDSA-CHACHA20-POLY1305
@@ -167,35 +167,35 @@ No ALPN negotiated
 SSL-Session:
     Protocol  : TLSv1.2
     Cipher    : ECDHE-ECDSA-CHACHA20-POLY1305
-    Session-ID: C256E7056D7ADDF81504C32229E11FAF573F31D310DF1125370D8E66700E2FE5
+    Session-ID: DB20247F00BB5CE2EACFADCFF2724CDB2E0D384A53A6ED121CC7E7BFF395D3CC
     Session-ID-ctx: 
-    Master-Key: 2497DED67761ADCCFF14E9D7CE37C260D240313B1FE1286051C75A27E5DA29D35A54DF962027E624909D660063418A26
+    Master-Key: 44B34126811B39840465E8EB8801DF4B0298CB288CE245E542DF9A66CF1E1A1F24830A72E6D7E596F7D44BE05BAA6364
     PSK identity: None
     PSK identity hint: None
     SRP username: None
     TLS session ticket lifetime hint: 64800 (seconds)
     TLS session ticket:
-    0000 - c9 6c aa f0 0f 21 48 9f-15 15 ba b2 c2 a5 c7 d5   .l...!H.........
-    0010 - e8 ef b7 c5 6d 85 4d 35-79 18 b7 e2 dc e6 32 c2   ....m.M5y.....2.
-    0020 - 64 7c 0b 54 ea 29 7e 7b-d2 71 4b b1 6c dc ca e7   d|.T.)~{.qK.l...
-    0030 - cb a0 09 88 6f 03 f8 82-8d c2 ae d8 4b 1d fe ed   ....o.......K...
-    0040 - 7f 1f 1c 16 6c e6 2a d5-07 36 f2 f2 96 14 4e dc   ....l.*..6....N.
-    0050 - 84 33 2c 98 77 0c cf 2f-b1 04 ad 49 fe 79 25 9d   .3,.w../...I.y%.
-    0060 - 6b 4b 84 bc fc cd 0e 13-ea fc 21 2c b5 82 26 ee   kK........!,..&.
-    0070 - 79 6a 5f 10 7a a6 e1 35-99 2c 0e c2 ff 4a 55 1f   yj_.z..5.,...JU.
-    0080 - d2 38 1c 81 ac 44 ed c9-c8 08 3f b7 8c ee 01 65   .8...D....?....e
-    0090 - 3a 21 66 8a e0 a2 7b 7e-f6 65 4e 74 f7 27 8e 4a   :!f...{~.eNt.'.J
-    00a0 - 64 d7 f2 c0 22 c2 5f a7-f7 29 bb 8b f6 c1 62 f3   d..."._..)....b.
-    00b0 - 34 8a 6c b6 d6 db 49 24-6e 6a e3 18 b5 58 a2 5f   4.l...I$nj...X._
+    0000 - 3c a5 f3 a0 d5 fe 6d 54-e2 dc a6 37 8a fd 22 dd   <.....mT...7..".
+    0010 - ae 43 63 23 81 e8 8d 7b-cd 26 26 5e f8 45 19 55   .Cc#...{.&&^.E.U
+    0020 - 02 6a 14 d7 fc b0 65 5a-68 fa a2 cf b2 bb 74 92   .j....eZh.....t.
+    0030 - 9b 75 31 5a 29 6b af 8d-52 a5 06 ea 79 44 af 5a   .u1Z)k..R...yD.Z
+    0040 - 4f 88 51 36 d9 ab dd ff-b3 63 29 13 20 82 f2 63   O.Q6.....c). ..c
+    0050 - 7c 68 a4 e0 4e 39 63 e7-d7 e7 31 85 8e be c7 f2   |h..N9c...1.....
+    0060 - d8 51 cf 97 7a 19 cf b1-fd c3 96 e3 b6 42 88 45   .Q..z........B.E
+    0070 - 65 60 7a 5c 66 ce a3 70-4f 06 fa cc 47 08 2c 66   e`z\f..pO...G.,f
+    0080 - f2 c9 bc a9 18 6b dc 64-82 0e ab bd 01 0d 1d e4   .....k.d........
+    0090 - e2 e0 ce 8a 99 5d 2f be-ba 1e ba d8 e5 a8 f7 a3   .....]/.........
+    00a0 - bf e8 ae 32 fc 74 9c ad-16 da d0 02 9c 42 61 c3   ...2.t.......Ba.
+    00b0 - b1 15 71 2c a1 df ce 3f-ff 05 ce 43 36 71 d3 86   ..q,...?...C6q..
 
-    Start Time: 1779097992
+    Start Time: 1779703024
     Timeout   : 7200 (sec)
     Verify return code: 0 (ok)
     Extended master secret: yes
 ---
 DONE
 === dev.meetli.cc TLS1.1 ===
-4057F6F8BE7F0000:error:0A0000BF:SSL routines:tls_setup_handshake:no protocols available:../ssl/statem/statem_lib.c:104:
+40174A719C7F0000:error:0A0000BF:SSL routines:tls_setup_handshake:no protocols available:../ssl/statem/statem_lib.c:104:
 CONNECTED(00000003)
 ---
 no peer certificate available

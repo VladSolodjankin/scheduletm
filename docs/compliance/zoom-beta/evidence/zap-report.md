@@ -28,7 +28,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type text/plain | 16 % |
 | Info | Informational | https://dev.meetli.cc | Percentage of endpoints with method GET | 100 % |
 | Info | Informational | https://dev.meetli.cc | Count of total endpoints | 6    |
-| Info | Informational | https://dev.meetli.cc | Percentage of slow responses | 100 % |
+| Info | Informational | https://dev.meetli.cc | Percentage of slow responses | 87 % |
 
 
 
@@ -301,35 +301,36 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Attack: ``
   * Evidence: `/assets/logo_one_latter-DesWG7-J`
   * Other Info: `��,z�?��(����V�������`
+* URL: https://dev.meetli.cc
+  * Node Name: `https://dev.meetli.cc`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `2FSPAynz4eYz10QqSbA5DL87a83QeyOg2X`
+  * Other Info: `�T�)���3�D*I�9�;k��{#��`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `XsTG3JNZ4dkHUL8Qp9tW3PXO8fjX4ZM0BwvICsXi`
-  * Other Info: `^��ܓY��P���V�������4�
-��`
+  * Evidence: `2F3Wnn6zvM3N52rAahgKBkZMz1tYgGRk0ndKIO4AmzucvQq8bdrYHPgx2sTmg93dDqGGorpckQmMeaIpb9pAeJsDyVPuNjVTNDnUl5ZBFBUqknYcr56rUEKrBFDX0tB`
+  * Other Info: `�]֞~�����j�j
+FL�[X�dd�wJ � �;��
+�m���1���������\�	�y�)o�@x��S�65S49ԗ�A*�v���PB�P���`
 * URL: https://dev.meetli.cc/assets/index-Bvwh5umr.js
   * Node Name: `https://dev.meetli.cc/assets/index-Bvwh5umr.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FSXSxTStvc20DnyazvXwnkqC603lEjlVBvcOhE7ublvNfBQpFJS8Kfldxemuh`
-  * Other Info: `�T�KҶ�6�9�k;��y*�7�H�T�:;��o5�P�RR��w��`
+  * Evidence: `2BlvDaZZUKsZSn2dF0YztzM0XdAhrvZVIQHES1j`
+  * Other Info: `�o�YP�J}�F3�34]�!��U!�KX`
 * URL: https://dev.meetli.cc/assets/index-DAZXwIcS.css
   * Node Name: `https://dev.meetli.cc/assets/index-DAZXwIcS.css`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FC4il9JG431nrJS2vHIW5urTDDIw4hZAcZwqOewbJ2VKKb86DZQe7KckyvwF0LitoSJetq0D9wtR4`
-  * Other Info: `�P��_I����R���[��L0�ÈY�p��l��(���6P{���+�Bⶄ�zڴ�-G`
-* URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
-  * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: `2BJubJrqbllNbsqxqmDmMHGUc7lcdTMQLO`
-  * Other Info: `�nl��nYMnʱ�`�0q�s�\u3,`
+  * Evidence: `UAVpwQL0oOO7Cbkm5k55cFxIZiP8dEBVDo5NWWPi94WlklHKZKGP`
+  * Other Info: `Pi����	�&�Nyp\Hf#�t@U�MYc�����Q�d��`
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -342,8 +343,8 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `/assets/logo_one_latter-DesWG7-J`
-  * Other Info: `��,z�?��(����V�������`
+  * Evidence: `2FtJJQFBUqgVpcgQw3x3a1fTlY4HaXy6VxkT`
+  * Other Info: `�[I%AR����|wkWӕ�i|�W`
 
 
 Instances: 7
@@ -733,13 +734,13 @@ The response contents are storable by caching components such as proxy servers, 
   * Attack: ``
   * Evidence: ``
   * Other Info: `In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234.`
-* URL: https://dev.meetli.cc/assets/index-DAZXwIcS.css
-  * Node Name: `https://dev.meetli.cc/assets/index-DAZXwIcS.css`
+* URL: https://dev.meetli.cc/
+  * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `max-age=14400`
-  * Other Info: ``
+  * Evidence: ``
+  * Other Info: `In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234.`
 * URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
   * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
   * Method: `GET`
