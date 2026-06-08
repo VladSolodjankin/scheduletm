@@ -42,7 +42,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Strict-Transport-Security Header Not Set | Low | 1 |
 | Timestamp Disclosure - Unix | Low | 2 |
 | X-Content-Type-Options Header Missing | Low | 1 |
-| Base64 Disclosure | Informational | 8 |
+| Base64 Disclosure | Informational | 7 |
 | Information Disclosure - Suspicious Comments | Informational | 1 |
 | Modern Web Application | Informational | 3 |
 | Re-examine Cache-control Directives | Informational | 3 |
@@ -299,43 +299,37 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2BIyIywfzs6cWjij8OUAAE20ul4NM0QmsB71NRiBVoJQaXkm`
-  * Other Info: `�2#,�ΜZ8���  M��^3D&��5�V�Piy&`
+  * Evidence: `2Bl2YwpGWZ0sEkD7pyojtQNwnr1u6bO6WJzlT2F0HVjQI4MjjgB8O6jszACwqA4FPcwpBB0txQcTOTN`
+  * Other Info: `�vc
+FY�,@��*#�p��n鳺X��OatX�#�#� |;��� ��=�)-�93`
 * URL: https://dev.meetli.cc
   * Node Name: `https://dev.meetli.cc`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FToYbZ21sx8IFFP3sww07JRphOETpLfnf2z7dxf35G`
-  * Other Info: `�T�a�v��| QO��0ӲQ��N�ߝ����_ߑ`
+  * Evidence: `XP5dt1AffRs2HgaPAQU9X3KdmBcWExShPqrVpV3Nbw1`
+  * Other Info: `\�]�P}6�=_r���>�ե]�o`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `ny8GkXuUEpBnZPxVWjfGrOFwax80ibOw`
-  * Other Info: `�/�{��gd�UZ7Ƭ�pk4���`
+  * Evidence: `43e27WwNS3IzsTZHmm6ivxwVNLgpUN6V38ib1XUnqQ36IRMBPwBuJnr7GWt`
+  * Other Info: `�w��lKr3�6G�n��4�)Pޕ�ț�u'��!? n&z�k`
 * URL: https://dev.meetli.cc/assets/index-Bvwh5umr.js
   * Node Name: `https://dev.meetli.cc/assets/index-Bvwh5umr.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FSPz7TjAfictpnMWvCf3Do4OIgSjyuPiM4tNvpWkePCen`
-  * Other Info: `�T�ϴ������Z��:88��+���-6�V���z`
-* URL: https://dev.meetli.cc/assets/index-DAZXwIcS.css
-  * Node Name: `https://dev.meetli.cc/assets/index-DAZXwIcS.css`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: `2FC4Hiry11sYP9Hoh2mkunSgTM9Q77vuMTcmq7d8KVB0Uvq2ii3nWY5`
-  * Other Info: `�P�*��[?��i��t�L�P��17&��|)PtR���-�Y�`
+  * Evidence: `HKzYT1dVHlr37xAxIPX8tIrWiItnFDpzZkEZmVMA`
+  * Other Info: `��OWUZ��1 ����ֈ�g:sfA�S `
 * URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
   * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2F1KKjdmFOxjQmRMjzzu3DlZuLe8nalZRi7FcuAF30A7oFwfFKZtS3Kq5LUYzDdZXEn7nIbwm6DngGC4q9z9AjN`
-  * Other Info: `�]J*7f�cBdL�<��9Y�����YF.�r��@;�\�mKr���7Y\I�����`����3`
+  * Evidence: `oo2ZCft9bMtQYCpSrkPqe3ZMGiaEMMeRSdSaXgxij6bzzbBo5IV0tnmB1ISFs2LaTywJjqYOlCGw622iiibDXvi0kQWZOcIDq9lLINTLckB1oRxbLyFfQi4`
+  * Other Info: `���	�}l�P`*R�C�{vL&�0ǑIԚ^b���Ͱh�t�y�Ԅ��b�O,	���!��m��&�^����9���K ��r@u�[/!_B.`
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -348,11 +342,11 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FR0mb4k0kR7TiE9TH6V1uW8yfkrIhYPpmuxdiBzQJgO7y99E8KiUeyFncRa`
-  * Other Info: `�Tt��$�D{N!=L~�����+"�k�v s@��/}¢Q셝�Z`
+  * Evidence: `2FTk32syIB3i7XP7yigh2CGmimnMSzEiyC1Jr7zJd2UqOHE2HoMCKg66K5`
+  * Other Info: `�T��k2 ��s��(!�!��i�K1"�-I���we*8q6�*�+`
 
 
-Instances: 8
+Instances: 7
 
 ### Solution
 
