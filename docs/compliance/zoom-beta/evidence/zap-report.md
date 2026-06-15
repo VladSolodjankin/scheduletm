@@ -15,22 +15,6 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 
 
-## Insights
-
-| Level | Reason | Site | Description | Statistic |
-| --- | --- | --- | --- | --- |
-| Low | Warning |  | ZAP warnings logged - see the zap.log file for details | 1    |
-| Info | Informational | https://dev.meetli.cc | Percentage of responses with status code 2xx | 100 % |
-| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type application/javascript | 16 % |
-| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type image/svg+xml | 16 % |
-| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type text/css | 16 % |
-| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type text/html | 33 % |
-| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type text/plain | 16 % |
-| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with method GET | 100 % |
-| Info | Informational | https://dev.meetli.cc | Count of total endpoints | 6    |
-| Info | Informational | https://dev.meetli.cc | Percentage of slow responses | 100 % |
-
-
 
 
 ## Alerts
@@ -42,14 +26,14 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Strict-Transport-Security Header Not Set | Low | 1 |
 | Timestamp Disclosure - Unix | Low | 2 |
 | X-Content-Type-Options Header Missing | Low | 1 |
-| Base64 Disclosure | Informational | 7 |
+| Base64 Disclosure | Informational | 8 |
 | Information Disclosure - Suspicious Comments | Informational | 1 |
 | Modern Web Application | Informational | 3 |
-| Re-examine Cache-control Directives | Informational | 3 |
-| Sec-Fetch-Dest Header is Missing | Informational | 3 |
-| Sec-Fetch-Mode Header is Missing | Informational | 3 |
-| Sec-Fetch-Site Header is Missing | Informational | 3 |
-| Sec-Fetch-User Header is Missing | Informational | 3 |
+| Re-examine Cache-control Directives | Informational | 2 |
+| Sec-Fetch-Dest Header is Missing | Informational | 2 |
+| Sec-Fetch-Mode Header is Missing | Informational | 2 |
+| Sec-Fetch-Site Header is Missing | Informational | 2 |
+| Sec-Fetch-User Header is Missing | Informational | 2 |
 | Storable and Cacheable Content | Informational | Systemic |
 
 
@@ -299,37 +283,43 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2Bl2YwpGWZ0sEkD7pyojtQNwnr1u6bO6WJzlT2F0HVjQI4MjjgB8O6jszACwqA4FPcwpBB0txQcTOTN`
-  * Other Info: `�vc
-FY�,@��*#�p��n鳺X��OatX�#�#� |;��� ��=�)-�93`
+  * Evidence: `2F49zBtYszjdQfkiD32VMO2UuRmvrNbzn6PVbf7WJzZAiGYXRRxE4cGYgfbKxfmVbAjoOYEymWN6rmY0Y47W9pUjAFMVSR6mzaT`
+  * Other Info: `�^=�X�8�A�"}�0픹�����m��'6@�fED���������l�9�2�cz�f4c����# SI�ͤ`
 * URL: https://dev.meetli.cc
   * Node Name: `https://dev.meetli.cc`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `XP5dt1AffRs2HgaPAQU9X3KdmBcWExShPqrVpV3Nbw1`
-  * Other Info: `\�]�P}6�=_r���>�ե]�o`
+  * Evidence: `cki0zQse4795dgaLrIOMGZ2PS2G6iqo8DBQ1S3Hcgh`
+  * Other Info: `rH���yv������Ka���<5Kq܂`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `43e27WwNS3IzsTZHmm6ivxwVNLgpUN6V38ib1XUnqQ36IRMBPwBuJnr7GWt`
-  * Other Info: `�w��lKr3�6G�n��4�)Pޕ�ț�u'��!? n&z�k`
+  * Evidence: `2B2n1c5xF1xpHo2fEnd1ApuumRwmdSdUYtlDsPlya0kyy9y8xfDj2Gw2ZxTZDstb6io4ZSyZJs9Yl8FlWcUBpIHewIk4nMknGpZ4hgBXLi`
+  * Other Info: `����q\i��wu���&u'Tb�C��rkI2�ܼ����l6g��[�*8e,�&�X��eY������8��'�x� W.`
 * URL: https://dev.meetli.cc/assets/index-Bvwh5umr.js
   * Node Name: `https://dev.meetli.cc/assets/index-Bvwh5umr.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `HKzYT1dVHlr37xAxIPX8tIrWiItnFDpzZkEZmVMA`
-  * Other Info: `��OWUZ��1 ����ֈ�g:sfA�S `
+  * Evidence: `0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1`
+  * Other Info: `���hv��o���U���a�Wa��a�s�`
+* URL: https://dev.meetli.cc/assets/index-DAZXwIcS.css
+  * Node Name: `https://dev.meetli.cc/assets/index-DAZXwIcS.css`
+  * Method: `GET`
+  * Parameter: ``
+  * Attack: ``
+  * Evidence: `2FxrLpm8Gts5UFVu0lrVOqfgUq1Im1vZN3toafN6hjUAvMGH9YtT5G5Ji8BdBSsSkDp18JhIdllCG0k9`
+  * Other Info: `�\k.���9PUn�Z�:��R�H�[�7{hi�z�5 �����S�nI��]+�:u�HvYBI=`
 * URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
   * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `oo2ZCft9bMtQYCpSrkPqe3ZMGiaEMMeRSdSaXgxij6bzzbBo5IV0tnmB1ISFs2LaTywJjqYOlCGw622iiibDXvi0kQWZOcIDq9lLINTLckB1oRxbLyFfQi4`
-  * Other Info: `���	�}l�P`*R�C�{vL&�0ǑIԚ^b���Ͱh�t�y�Ԅ��b�O,	���!��m��&�^����9���K ��r@u�[/!_B.`
+  * Evidence: `2FHSOZxwm2okSfoxzFBBjtToBiGPbRHr0MpP0lzsiY1N7AUM9Riib8xpCVUioEkBSk`
+  * Other Info: `�Q�9�p�j$I�1�PA���!�m���O�\쉍M���o�i	U"�IJ`
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -342,11 +332,11 @@ FY�,@��*#�p��n鳺X��OatX�#�#� |;��� ��=�)
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FTk32syIB3i7XP7yigh2CGmimnMSzEiyC1Jr7zJd2UqOHE2HoMCKg66K5`
-  * Other Info: `�T��k2 ��s��(!�!��i�K1"�-I���we*8q6�*�+`
+  * Evidence: `2F5OCBtR3a2OjfDTyuPzUbewwwwG6zqjKxvpABPcn5D80VtLaMCZ9ijZ`
+  * Other Info: `�^NQݭ�������Q����:�+� ܟ���[Kh���(�`
 
 
-Instances: 7
+Instances: 8
 
 ### Solution
 
@@ -457,13 +447,6 @@ This is an informational alert and so no changes are required.
 
 The cache-control header has not been set properly or is missing, allowing the browser and proxies to cache content. For static assets like css, js, or image files this might be intended, however, the resources should be reviewed to ensure that no sensitive content will be cached.
 
-* URL: https://dev.meetli.cc
-  * Node Name: `https://dev.meetli.cc`
-  * Method: `GET`
-  * Parameter: `cache-control`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
@@ -471,8 +454,8 @@ The cache-control header has not been set properly or is missing, allowing the b
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
-* URL: https://dev.meetli.cc/robots.txt
-  * Node Name: `https://dev.meetli.cc/robots.txt`
+* URL: https://dev.meetli.cc/sitemap.xml
+  * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
   * Parameter: `cache-control`
   * Attack: ``
@@ -480,7 +463,7 @@ The cache-control header has not been set properly or is missing, allowing the b
   * Other Info: ``
 
 
-Instances: 3
+Instances: 2
 
 ### Solution
 
@@ -518,13 +501,6 @@ Specifies how and where the data would be used. For instance, if the value is au
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
-* URL: https://dev.meetli.cc/robots.txt
-  * Node Name: `https://dev.meetli.cc/robots.txt`
-  * Method: `GET`
-  * Parameter: `Sec-Fetch-Dest`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
@@ -534,7 +510,7 @@ Specifies how and where the data would be used. For instance, if the value is au
   * Other Info: ``
 
 
-Instances: 3
+Instances: 2
 
 ### Solution
 
@@ -570,13 +546,6 @@ Allows to differentiate between requests for navigating between HTML pages and r
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
-* URL: https://dev.meetli.cc/robots.txt
-  * Node Name: `https://dev.meetli.cc/robots.txt`
-  * Method: `GET`
-  * Parameter: `Sec-Fetch-Mode`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
@@ -586,7 +555,7 @@ Allows to differentiate between requests for navigating between HTML pages and r
   * Other Info: ``
 
 
-Instances: 3
+Instances: 2
 
 ### Solution
 
@@ -622,13 +591,6 @@ Specifies the relationship between request initiator's origin and target's origi
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
-* URL: https://dev.meetli.cc/robots.txt
-  * Node Name: `https://dev.meetli.cc/robots.txt`
-  * Method: `GET`
-  * Parameter: `Sec-Fetch-Site`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
@@ -638,7 +600,7 @@ Specifies the relationship between request initiator's origin and target's origi
   * Other Info: ``
 
 
-Instances: 3
+Instances: 2
 
 ### Solution
 
@@ -674,13 +636,6 @@ Specifies if a navigation request was initiated by a user.
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
-* URL: https://dev.meetli.cc/robots.txt
-  * Node Name: `https://dev.meetli.cc/robots.txt`
-  * Method: `GET`
-  * Parameter: `Sec-Fetch-User`
-  * Attack: ``
-  * Evidence: ``
-  * Other Info: ``
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
@@ -690,7 +645,7 @@ Specifies if a navigation request was initiated by a user.
   * Other Info: ``
 
 
-Instances: 3
+Instances: 2
 
 ### Solution
 
