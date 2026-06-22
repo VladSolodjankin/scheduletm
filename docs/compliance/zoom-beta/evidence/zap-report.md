@@ -29,11 +29,11 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Base64 Disclosure | Informational | 8 |
 | Information Disclosure - Suspicious Comments | Informational | 1 |
 | Modern Web Application | Informational | 3 |
-| Re-examine Cache-control Directives | Informational | 2 |
-| Sec-Fetch-Dest Header is Missing | Informational | 2 |
-| Sec-Fetch-Mode Header is Missing | Informational | 2 |
-| Sec-Fetch-Site Header is Missing | Informational | 2 |
-| Sec-Fetch-User Header is Missing | Informational | 2 |
+| Re-examine Cache-control Directives | Informational | 4 |
+| Sec-Fetch-Dest Header is Missing | Informational | 3 |
+| Sec-Fetch-Mode Header is Missing | Informational | 3 |
+| Sec-Fetch-Site Header is Missing | Informational | 3 |
+| Sec-Fetch-User Header is Missing | Informational | 3 |
 | Storable and Cacheable Content | Informational | Systemic |
 
 
@@ -283,43 +283,46 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2F49zBtYszjdQfkiD32VMO2UuRmvrNbzn6PVbf7WJzZAiGYXRRxE4cGYgfbKxfmVbAjoOYEymWN6rmY0Y47W9pUjAFMVSR6mzaT`
-  * Other Info: `�^=�X�8�A�"}�0픹�����m��'6@�fED���������l�9�2�cz�f4c����# SI�ͤ`
+  * Evidence: `2BFg6iGrR8uiv4ub8JQ6qeqBt8GGVjwyWA8uKAbQ311mqtwFTC4KiKSNmP9bAHhzwC65WAclzF8h`
+  * Other Info: `�`�!�Gˢ����:�ꁷ��V<2X.(��]f��L.
+�����[ xs�.�X%�_!`
 * URL: https://dev.meetli.cc
   * Node Name: `https://dev.meetli.cc`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `cki0zQse4795dgaLrIOMGZ2PS2G6iqo8DBQ1S3Hcgh`
-  * Other Info: `rH���yv������Ka���<5Kq܂`
+  * Evidence: `2FAvftFMyKgD2PG9hzP8cRfaYWRhOIvs2jK0fRq`
+  * Other Info: `�P/~�LȨ��3�q�ada8���2�}`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2B2n1c5xF1xpHo2fEnd1ApuumRwmdSdUYtlDsPlya0kyy9y8xfDj2Gw2ZxTZDstb6io4ZSyZJs9Yl8FlWcUBpIHewIk4nMknGpZ4hgBXLi`
-  * Other Info: `����q\i��wu���&u'Tb�C��rkI2�ܼ����l6g��[�*8e,�&�X��eY������8��'�x� W.`
+  * Evidence: `/assets/logo_one_latter-DesWG7-J`
+  * Other Info: `��,z�?��(����V�������`
 * URL: https://dev.meetli.cc/assets/index-Bvwh5umr.js
   * Node Name: `https://dev.meetli.cc/assets/index-Bvwh5umr.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1`
-  * Other Info: `���hv��o���U���a�Wa��a�s�`
+  * Evidence: `2FKGkYYzM9fTX0l96nTuR6vLNTDG59`
+  * Other Info: `�R���33��_I}�t�G��50��`
 * URL: https://dev.meetli.cc/assets/index-DAZXwIcS.css
   * Node Name: `https://dev.meetli.cc/assets/index-DAZXwIcS.css`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FxrLpm8Gts5UFVu0lrVOqfgUq1Im1vZN3toafN6hjUAvMGH9YtT5G5Ji8BdBSsSkDp18JhIdllCG0k9`
-  * Other Info: `�\k.���9PUn�Z�:��R�H�[�7{hi�z�5 �����S�nI��]+�:u�HvYBI=`
+  * Evidence: `2BJ5mlmXoQAygwdipbRiqww9Xgq6IrSeqyNPjuPWdG8PxTZbW0Va5svslEa3apR0Gn7rIGUG7vgzolu3zXFDPgBEVeTTSbYuFHoBY5PPbwkfEdatSLDlhCTp`
+  * Other Info: `�y�Y�� 2�b��b�=^
+�"���#O���to�6[[EZ���F�j�t~� e��3�[��qC> DU��I�.zc��o	֭H��$�`
 * URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
   * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FHSOZxwm2okSfoxzFBBjtToBiGPbRHr0MpP0lzsiY1N7AUM9Riib8xpCVUioEkBSk`
-  * Other Info: `�Q�9�p�j$I�1�PA���!�m���O�\쉍M���o�i	U"�IJ`
+  * Evidence: `2Bh3GcBv8pcIUHdleNqznU9WHgsLYb93yjWrdjiSRj6eowrBTp8AkUrbKjH`
+  * Other Info: `�w�o�Pwexڳ�OVa�w�5�v8�F>��
+�N� �J�*1`
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -332,8 +335,8 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2F5OCBtR3a2OjfDTyuPzUbewwwwG6zqjKxvpABPcn5D80VtLaMCZ9ijZ`
-  * Other Info: `�^NQݭ�������Q����:�+� ܟ���[Kh���(�`
+  * Evidence: `2BqcqWiwEOMAZYVJ5EdKZevRY2n31cw`
+  * Other Info: `���h�� e�I�GJe��ci���`
 
 
 Instances: 8
@@ -447,8 +450,22 @@ This is an informational alert and so no changes are required.
 
 The cache-control header has not been set properly or is missing, allowing the browser and proxies to cache content. For static assets like css, js, or image files this might be intended, however, the resources should be reviewed to ensure that no sensitive content will be cached.
 
+* URL: https://dev.meetli.cc
+  * Node Name: `https://dev.meetli.cc`
+  * Method: `GET`
+  * Parameter: `cache-control`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
+  * Method: `GET`
+  * Parameter: `cache-control`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
+* URL: https://dev.meetli.cc/robots.txt
+  * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
   * Parameter: `cache-control`
   * Attack: ``
@@ -463,7 +480,7 @@ The cache-control header has not been set properly or is missing, allowing the b
   * Other Info: ``
 
 
-Instances: 2
+Instances: 4
 
 ### Solution
 
@@ -501,6 +518,13 @@ Specifies how and where the data would be used. For instance, if the value is au
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/robots.txt
+  * Node Name: `https://dev.meetli.cc/robots.txt`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-Dest`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
@@ -510,7 +534,7 @@ Specifies how and where the data would be used. For instance, if the value is au
   * Other Info: ``
 
 
-Instances: 2
+Instances: 3
 
 ### Solution
 
@@ -546,6 +570,13 @@ Allows to differentiate between requests for navigating between HTML pages and r
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/robots.txt
+  * Node Name: `https://dev.meetli.cc/robots.txt`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-Mode`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
@@ -555,7 +586,7 @@ Allows to differentiate between requests for navigating between HTML pages and r
   * Other Info: ``
 
 
-Instances: 2
+Instances: 3
 
 ### Solution
 
@@ -591,6 +622,13 @@ Specifies the relationship between request initiator's origin and target's origi
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/robots.txt
+  * Node Name: `https://dev.meetli.cc/robots.txt`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-Site`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
@@ -600,7 +638,7 @@ Specifies the relationship between request initiator's origin and target's origi
   * Other Info: ``
 
 
-Instances: 2
+Instances: 3
 
 ### Solution
 
@@ -636,6 +674,13 @@ Specifies if a navigation request was initiated by a user.
   * Attack: ``
   * Evidence: ``
   * Other Info: ``
+* URL: https://dev.meetli.cc/robots.txt
+  * Node Name: `https://dev.meetli.cc/robots.txt`
+  * Method: `GET`
+  * Parameter: `Sec-Fetch-User`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 * URL: https://dev.meetli.cc/sitemap.xml
   * Node Name: `https://dev.meetli.cc/sitemap.xml`
   * Method: `GET`
@@ -645,7 +690,7 @@ Specifies if a navigation request was initiated by a user.
   * Other Info: ``
 
 
-Instances: 2
+Instances: 3
 
 ### Solution
 
@@ -681,13 +726,13 @@ The response contents are storable by caching components such as proxy servers, 
   * Attack: ``
   * Evidence: ``
   * Other Info: `In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234.`
-* URL: https://dev.meetli.cc/assets/index-DAZXwIcS.css
-  * Node Name: `https://dev.meetli.cc/assets/index-DAZXwIcS.css`
+* URL: https://dev.meetli.cc/
+  * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `max-age=14400`
-  * Other Info: ``
+  * Evidence: ``
+  * Other Info: `In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234.`
 * URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
   * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
   * Method: `GET`
