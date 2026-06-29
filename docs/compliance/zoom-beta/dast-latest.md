@@ -1,9 +1,9 @@
 # DAST Latest Evidence
 
-Last run: 2026-06-22 11:46:02 UTC
+Last run: 2026-06-29 10:48:57 UTC
 
 GitHub Actions run:
-https://github.com/VladSolodjankin/scheduletm/actions/runs/27950194116
+https://github.com/VladSolodjankin/scheduletm/actions/runs/28366534999
 
 Tool:
 - OWASP ZAP Baseline Scan

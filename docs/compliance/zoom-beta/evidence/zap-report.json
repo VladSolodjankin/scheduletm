@@ -1,8 +1,8 @@
 {
 	"@programName": "ZAP",
 	"@version": "2.17.0",
-	"@generated": "Mon, 22 Jun 2026 11:45:45",
-	"created": "2026-06-22T11:45:45.948989084Z",
+	"@generated": "Mon, 29 Jun 2026 10:48:42",
+	"created": "2026-06-29T10:48:42.610721394Z",
 	"site":[ 
 		{
 			"@name": "https://dev.meetli.cc",
@@ -21,7 +21,7 @@
 					"desc": "<p>Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks. Including (but not limited to) Cross Site Scripting (XSS), and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.</p>",
 					"instances":[ 
 						{
-							"id": "5",
+							"id": "1",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -31,7 +31,7 @@
 							"otherinfo": "style-src includes unsafe-inline."
 						},
 						{
-							"id": "32",
+							"id": "22",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
@@ -41,7 +41,7 @@
 							"otherinfo": "style-src includes unsafe-inline."
 						},
 						{
-							"id": "4",
+							"id": "11",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -58,7 +58,7 @@
 					"reference": "<p>https://www.w3.org/TR/CSP/</p><p>https://caniuse.com/#search=content+security+policy</p><p>https://content-security-policy.com/</p><p>https://github.com/HtmlUnit/htmlunit-csp</p><p>https://web.dev/articles/csp#resource-options</p>",
 					"cweid": "693",
 					"wascid": "15",
-					"sourceid": "12"
+					"sourceid": "1"
 				},
 				{
 					"pluginid": "90004",
@@ -71,7 +71,7 @@
 					"desc": "<p>Cross-Origin-Resource-Policy header is an opt-in header designed to counter side-channels attacks like Spectre. Resource should be specifically set as shareable amongst different origins.</p>",
 					"instances":[ 
 						{
-							"id": "30",
+							"id": "32",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -88,7 +88,7 @@
 					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cross-Origin-Embedder-Policy</p>",
 					"cweid": "693",
 					"wascid": "14",
-					"sourceid": "10"
+					"sourceid": "6"
 				},
 				{
 					"pluginid": "10035",
@@ -101,7 +101,7 @@
 					"desc": "<p>HTTP Strict Transport Security (HSTS) is a web security policy mechanism whereby a web server declares that complying user agents (such as a web browser) are to interact with it using only secure HTTPS connections (i.e. HTTP layered over TLS/SSL). HSTS is an IETF standards track protocol and is specified in RFC 6797.</p>",
 					"instances":[ 
 						{
-							"id": "10",
+							"id": "12",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -118,7 +118,7 @@
 					"reference": "<p>https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html</p><p>https://owasp.org/www-community/Security_Headers</p><p>https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security</p><p>https://caniuse.com/stricttransportsecurity</p><p>https://datatracker.ietf.org/doc/html/rfc6797</p>",
 					"cweid": "319",
 					"wascid": "15",
-					"sourceid": "10"
+					"sourceid": "6"
 				},
 				{
 					"pluginid": "10096",
@@ -131,7 +131,7 @@
 					"desc": "<p>A timestamp was disclosed by the application/web server. - Unix</p>",
 					"instances":[ 
 						{
-							"id": "43",
+							"id": "47",
 							"uri": "https://dev.meetli.cc/assets/index-Bvwh5umr.js",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-Bvwh5umr.js",
 							"method": "GET",
@@ -141,7 +141,7 @@
 							"otherinfo": "1540483477, which evaluates to: 2018-10-25 16:04:37."
 						},
 						{
-							"id": "58",
+							"id": "62",
 							"uri": "https://dev.meetli.cc/assets/index-Bvwh5umr.js",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-Bvwh5umr.js",
 							"method": "GET",
@@ -171,7 +171,7 @@
 					"desc": "<p>The Anti-MIME-Sniffing header X-Content-Type-Options was not set to 'nosniff'. This allows older versions of Internet Explorer and Chrome to perform MIME-sniffing on the response body, potentially causing the response body to be interpreted and displayed as a content type other than the declared content type. Current (early 2014) and legacy versions of Firefox will use the declared content type (if one is set), rather than performing MIME-sniffing.</p>",
 					"instances":[ 
 						{
-							"id": "11",
+							"id": "14",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -188,7 +188,7 @@
 					"reference": "<p>https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/compatibility/gg622941(v=vs.85)</p><p>https://owasp.org/www-community/Security_Headers</p>",
 					"cweid": "693",
 					"wascid": "15",
-					"sourceid": "10"
+					"sourceid": "6"
 				},
 				{
 					"pluginid": "10094",
@@ -201,64 +201,64 @@
 					"desc": "<p>Base64 encoded data was disclosed by the application/web server. Note: in the interests of performance not all base64 strings in the response were analyzed individually, the entire response should be looked at by the analyst/security team/developer(s).</p>",
 					"instances":[ 
 						{
-							"id": "34",
+							"id": "3",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2BFg6iGrR8uiv4ub8JQ6qeqBt8GGVjwyWA8uKAbQ311mqtwFTC4KiKSNmP9bAHhzwC65WAclzF8h",
-							"otherinfo": "\uFFFD\\x0011`\uFFFD!\uFFFDG\u02E2\uFFFD\uFFFD\uFFFD\uFFFD:\uFFFD\uA077\uFFFD\uFFFDV<2X\\x000f.(\\x0006\uFFFD\uFFFD]f\uFFFD\uFFFD\\x0005L.\n\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD[\\x0000xs\uFFFD.\uFFFDX\\x0007%\uFFFD_!"
+							"evidence": "2BFipaZslY1kmUEI70ZwkzlTCnSE6PPg",
+							"otherinfo": "\uFFFD\\x0011b\uFFFD\uFFFDl\uFFFD\uFFFDd\uFFFDA\\x0008\uFFFDFp\uFFFD9S\nt\uFFFD\uFFFD\uFFFD\uFFFD"
 						},
 						{
-							"id": "12",
+							"id": "27",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2FAvftFMyKgD2PG9hzP8cRfaYWRhOIvs2jK0fRq",
-							"otherinfo": "\uFFFDP/~\uFFFDL\u0228\\x0003\uFFFD\uFFFD3\uFFFDq\\x0017\uFFFDada8\uFFFD\uFFFD\uFFFD2\uFFFD}\\x001a"
+							"evidence": "2FcLqOEjKkFd4if9YbhhVICv8PJ7vY3m3n",
+							"otherinfo": "\uFFFDW\\x000b\uFFFD\uFFFD#*A]\uFFFD'\uFFFDa\uFFFDaT\uFFFD\uFFFD\uFFFD\uFFFD{\uFFFD\uFFFD\uFFFD\uFFFD"
 						},
 						{
-							"id": "38",
+							"id": "37",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "/assets/logo_one_latter-DesWG7-J",
-							"otherinfo": "\uFFFD\uFFFD,z\uFFFD?\uFFFD\uFFFD(\uFFFD\uFFFD\uFFFD\uFFFDV\uFFFD\uFFFD\uFFFD\uFFFD\r\uFFFD\\x0016\\x001b\uFFFD\uFFFD"
+							"evidence": "YcBJ6HqqSsBwrP0qv4ZZBvDcFB8OwxIviHGCzNPvUL4AQzbjRw3xAfFRRnoQm6OIyRI2WDylKzEUEfsTv1Rx2hfR88",
+							"otherinfo": "a\uFFFDI\uFFFDz\uFFFDJ\uFFFDp\uFFFD\uFFFD*\uFFFD\uFFFDY\\x0006\uFFFD\uFFFD\\x0014\\x001f\\x000e\uFFFD\\x0012/\uFFFDq\uFFFD\uFFFD\uFFFD\uFFFDP\uFFFD\\x0000C6\uFFFDG\r\uFFFD\\x0001\uFFFDQFz\\x0010\uFFFD\uFFFD\uFFFD\uFFFD\\x00126X<\uFFFD+1\\x0014\\x0011\uFFFD\\x0013\uFFFDTq\uFFFD\\x0017\uFFFD\uFFFD"
 						},
 						{
-							"id": "59",
+							"id": "63",
 							"uri": "https://dev.meetli.cc/assets/index-Bvwh5umr.js",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-Bvwh5umr.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2FKGkYYzM9fTX0l96nTuR6vLNTDG59",
-							"otherinfo": "\uFFFDR\uFFFD\uFFFD\uFFFD33\uFFFD\uFFFD_I}\uFFFDt\uFFFDG\uFFFD\uFFFD50\uFFFD\uFFFD"
+							"evidence": "TEBghWpn2wz3iq0MOnKZemTPxHIeT2KbwTS4BJ4px28uKVYwlekXz8bvDlhDKqoQ6OK3J77t2J2NppjyrOAjnJb",
+							"otherinfo": "L@`\uFFFDjg\uFFFD\\x000c\uFFFD\uFFFD\uFFFD\\x000c:r\uFFFDzd\uFFFD\uFFFDr\\x001eOb\uFFFD\uFFFD4\uFFFD\\x0004\uFFFD)\uFFFDo.)V0\uFFFD\uFFFD\\x0017\uFFFD\uFFFD\uFFFD\\x000eXC*\uFFFD\\x0010\uFFFD\uFFFD'\uFFFD\uFFFD\u061D\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD#\uFFFD\uFFFD"
 						},
 						{
-							"id": "40",
+							"id": "44",
 							"uri": "https://dev.meetli.cc/assets/index-DAZXwIcS.css",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-DAZXwIcS.css",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2BJ5mlmXoQAygwdipbRiqww9Xgq6IrSeqyNPjuPWdG8PxTZbW0Va5svslEa3apR0Gn7rIGUG7vgzolu3zXFDPgBEVeTTSbYuFHoBY5PPbwkfEdatSLDlhCTp",
-							"otherinfo": "\uFFFD\\x0012y\uFFFDY\uFFFD\uFFFD\\x00002\uFFFD\\x0007b\uFFFD\uFFFDb\uFFFD\\x000c=^\n\uFFFD\"\uFFFD\uFFFD\uFFFD#O\uFFFD\uFFFD\uFFFDto\\x000f\uFFFD6[[EZ\uFFFD\uFFFD\uFFFDF\uFFFDj\uFFFDt\\x001a~\uFFFD e\\x0006\uFFFD\uFFFD3\uFFFD[\uFFFD\uFFFDqC>\\x0000DU\uFFFD\uFFFDI\uFFFD.\\x0014z\\x0001c\uFFFD\uFFFDo\t\\x001f\\x0011\u05ADH\uFFFD\uFFFD$\uFFFD"
+							"evidence": "53Phj9Ex00lbi2f7C8qfSUa8drjSJkn9n8YHQCyChoes2eG",
+							"otherinfo": "\uFFFDs\uFFFD\uFFFD1\uFFFDI[\uFFFDg\uFFFD\\x000b\u029FIF\uFFFDv\uFFFD\uFFFD&I\uFFFD\uFFFD\uFFFD\\x0007@,\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD"
 						},
 						{
-							"id": "36",
+							"id": "42",
 							"uri": "https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/logo_one_latter-DesWG7-J.svg",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2Bh3GcBv8pcIUHdleNqznU9WHgsLYb93yjWrdjiSRj6eowrBTp8AkUrbKjH",
-							"otherinfo": "\uFFFD\\x0018w\\x0019\uFFFDo\uFFFD\\x0008Pwex\u06B3\uFFFDOV\\x001e\\x000b\\x000ba\uFFFDw\uFFFD5\uFFFDv8\uFFFDF>\uFFFD\uFFFD\n\uFFFDN\uFFFD\\x0000\uFFFDJ\uFFFD*1"
+							"evidence": "2FmIuGkcUmrGSjIZn7zusUwHrv36b9HPWJ0QbDHqdBlI2Ng",
+							"otherinfo": "\uFFFDY\uFFFD\uFFFDi\\x001cRj\uFFFDJ2\\x0019\uFFFD\uFFFD\uFFFDL\\x0007\uFFFD\uFFFD\uFFFDo\uFFFD\uFFFDX\uFFFD\\x0010l1\uFFFDt\\x0019H\uFFFD\uFFFD"
 						},
 						{
 							"id": "15",
@@ -271,20 +271,20 @@
 							"otherinfo": "\uFFFD\uFFFD,z\uFFFD?\uFFFD\uFFFD(\uFFFD\uFFFD\uFFFD\uFFFDV\uFFFD\uFFFD\uFFFD\uFFFD\r\uFFFD\\x0016\\x001b\uFFFD\uFFFD"
 						},
 						{
-							"id": "13",
+							"id": "25",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2BqcqWiwEOMAZYVJ5EdKZevRY2n31cw",
-							"otherinfo": "\uFFFD\\x001a\uFFFD\uFFFDh\uFFFD\\x0010\uFFFD\\x0000e\uFFFDI\uFFFDGJe\uFFFD\uFFFDci\uFFFD\uFFFD\uFFFD"
+							"evidence": "2FY0fxI0iHjsf2PAu8rHRTlcOsXRFNlG0sImlVmPj5c",
+							"otherinfo": "\uFFFDV4\\x00124\uFFFDx\uFFFDc\uFFFD\uFFFD\uFFFD\uFFFDE9\\:\uFFFD\uFFFD\\x0014\uFFFDF\uFFFD\uFFFD&\uFFFDY\uFFFD\uFFFD\uFFFD"
 						}
 					],
 					"count": "8",
 					"systemic": false,
 					"solution": "<p>Manually confirm that the Base64 data does not leak sensitive information, and that the data cannot be aggregated/used to exploit other vulnerabilities.</p>",
-					"otherinfo": "<p>\uFFFD\\x0011`\uFFFD!\uFFFDG\u02E2\uFFFD\uFFFD\uFFFD\uFFFD:\uFFFD\uA077\uFFFD\uFFFDV<2X\\x000f.(\\x0006\uFFFD\uFFFD]f\uFFFD\uFFFD\\x0005L.</p><p>\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD[\\x0000xs\uFFFD.\uFFFDX\\x0007%\uFFFD_!</p>",
+					"otherinfo": "<p>\uFFFD\\x0011b\uFFFD\uFFFDl\uFFFD\uFFFDd\uFFFDA\\x0008\uFFFDFp\uFFFD9S</p><p>t\uFFFD\uFFFD\uFFFD\uFFFD</p>",
 					"reference": "<p>https://projects.webappsec.org/w/page/13246936/Information%20Leakage</p>",
 					"cweid": "319",
 					"wascid": "13",
@@ -301,7 +301,7 @@
 					"desc": "<p>The response appears to contain suspicious comments which may help an attacker.</p>",
 					"instances":[ 
 						{
-							"id": "42",
+							"id": "46",
 							"uri": "https://dev.meetli.cc/assets/index-Bvwh5umr.js",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-Bvwh5umr.js",
 							"method": "GET",
@@ -331,7 +331,7 @@
 					"desc": "<p>The application appears to be a modern web application. If you need to explore it automatically then the Ajax Spider may well be more effective than the standard one.</p>",
 					"instances":[ 
 						{
-							"id": "9",
+							"id": "2",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -341,7 +341,7 @@
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						},
 						{
-							"id": "33",
+							"id": "26",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
@@ -351,7 +351,7 @@
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						},
 						{
-							"id": "8",
+							"id": "17",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -381,7 +381,7 @@
 					"desc": "<p>The cache-control header has not been set properly or is missing, allowing the browser and proxies to cache content. For static assets like css, js, or image files this might be intended, however, the resources should be reviewed to ensure that no sensitive content will be cached.</p>",
 					"instances":[ 
 						{
-							"id": "2",
+							"id": "0",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -391,7 +391,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "31",
+							"id": "16",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
@@ -401,7 +401,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "0",
+							"id": "9",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -411,7 +411,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "1",
+							"id": "10",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -428,7 +428,7 @@
 					"reference": "<p>https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#web-content-caching</p><p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control</p><p>https://grayduck.mn/2021/09/13/cache-control-recommendations/</p>",
 					"cweid": "525",
 					"wascid": "13",
-					"sourceid": "12"
+					"sourceid": "1"
 				},
 				{
 					"pluginid": "90005",
@@ -441,7 +441,7 @@
 					"desc": "<p>Specifies how and where the data would be used. For instance, if the value is audio, then the requested resource must be audio data and not any other type of resource.</p>",
 					"instances":[ 
 						{
-							"id": "23",
+							"id": "6",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -461,7 +461,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "20",
+							"id": "35",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -478,7 +478,7 @@
 					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Sec-Fetch-Dest</p>",
 					"cweid": "352",
 					"wascid": "9",
-					"sourceid": "12"
+					"sourceid": "1"
 				},
 				{
 					"pluginid": "90005",
@@ -491,7 +491,7 @@
 					"desc": "<p>Allows to differentiate between requests for navigating between HTML pages and requests for loading resources like images, audio etc.</p>",
 					"instances":[ 
 						{
-							"id": "22",
+							"id": "5",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -501,7 +501,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "19",
+							"id": "20",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -511,7 +511,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "17",
+							"id": "31",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -528,7 +528,7 @@
 					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Sec-Fetch-Mode</p>",
 					"cweid": "352",
 					"wascid": "9",
-					"sourceid": "12"
+					"sourceid": "1"
 				},
 				{
 					"pluginid": "90005",
@@ -541,7 +541,7 @@
 					"desc": "<p>Specifies the relationship between request initiator's origin and target's origin.</p>",
 					"instances":[ 
 						{
-							"id": "16",
+							"id": "4",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -561,7 +561,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "14",
+							"id": "30",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -578,7 +578,7 @@
 					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Sec-Fetch-Site</p>",
 					"cweid": "352",
 					"wascid": "9",
-					"sourceid": "12"
+					"sourceid": "1"
 				},
 				{
 					"pluginid": "90005",
@@ -591,7 +591,7 @@
 					"desc": "<p>Specifies if a navigation request was initiated by a user.</p>",
 					"instances":[ 
 						{
-							"id": "24",
+							"id": "7",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -601,7 +601,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "27",
+							"id": "24",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -611,7 +611,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "26",
+							"id": "38",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -628,7 +628,7 @@
 					"reference": "<p>https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Sec-Fetch-User</p>",
 					"cweid": "352",
 					"wascid": "9",
-					"sourceid": "12"
+					"sourceid": "1"
 				},
 				{
 					"pluginid": "10049",
@@ -641,7 +641,7 @@
 					"desc": "<p>The response contents are storable by caching components such as proxy servers, and may be retrieved directly from the cache, rather than from the origin server by the caching servers, in response to similar requests from other users. If the response data is sensitive, personal or user-specific, this may result in sensitive information being leaked. In some cases, this may even result in a user gaining complete control of the session of another user, depending on the configuration of the caching components in use in their environment. This is primarily an issue where \"shared\" caching servers such as \"proxy\" caches are configured on the local network. This configuration is typically found in corporate or educational environments, for instance.</p>",
 					"instances":[ 
 						{
-							"id": "25",
+							"id": "8",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -651,7 +651,7 @@
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						},
 						{
-							"id": "39",
+							"id": "41",
 							"uri": "https://dev.meetli.cc/",
 							"nodeName": "https:\/\/dev.meetli.cc\/",
 							"method": "GET",
@@ -661,7 +661,7 @@
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						},
 						{
-							"id": "37",
+							"id": "43",
 							"uri": "https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/logo_one_latter-DesWG7-J.svg",
 							"method": "GET",
@@ -671,7 +671,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "29",
+							"id": "28",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -681,7 +681,7 @@
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						},
 						{
-							"id": "28",
+							"id": "40",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -698,7 +698,7 @@
 					"reference": "<p>https://datatracker.ietf.org/doc/html/rfc7234</p><p>https://datatracker.ietf.org/doc/html/rfc7231</p><p>https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html</p>",
 					"cweid": "524",
 					"wascid": "13",
-					"sourceid": "12"
+					"sourceid": "1"
 				}
 			]
 		}
