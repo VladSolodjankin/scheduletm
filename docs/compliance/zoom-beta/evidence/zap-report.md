@@ -15,6 +15,25 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 
 
 
+## Insights
+
+| Level | Reason | Site | Description | Statistic |
+| --- | --- | --- | --- | --- |
+| Low | Warning |  | ZAP warnings logged - see the zap.log file for details | 1    |
+| Info | Informational | https://dev.meetli.cc | Percentage of responses with status code 2xx | 100 % |
+| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type application/javascript | 16 % |
+| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type image/svg+xml | 16 % |
+| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type text/css | 16 % |
+| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type text/html | 33 % |
+| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with content type text/plain | 16 % |
+| Info | Informational | https://dev.meetli.cc | Percentage of endpoints with method GET | 100 % |
+| Info | Informational | https://dev.meetli.cc | Count of total endpoints | 6    |
+| Info | Informational | https://dev.meetli.cc | Percentage of slow responses | 100 % |
+
+
+
+
+
 
 
 ## Alerts
@@ -29,7 +48,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Base64 Disclosure | Informational | 8 |
 | Information Disclosure - Suspicious Comments | Informational | 1 |
 | Modern Web Application | Informational | 3 |
-| Re-examine Cache-control Directives | Informational | 2 |
+| Re-examine Cache-control Directives | Informational | 4 |
 | Sec-Fetch-Dest Header is Missing | Informational | 3 |
 | Sec-Fetch-Mode Header is Missing | Informational | 3 |
 | Sec-Fetch-Site Header is Missing | Informational | 3 |
@@ -283,44 +302,44 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2BrVeQve5w73qMsetNc7Et7uj5Ifz14kwtcJ37shwhLPU8OF5RvMGbshZvwtUWQGRolehG`
-  * Other Info: `��y�������;��^$��	߻!��SÅ���!f�-QdF�^�`
+  * Evidence: `/assets/logo_one_latter-DesWG7-J`
+  * Other Info: `��,z�?��(����V�������`
 * URL: https://dev.meetli.cc
   * Node Name: `https://dev.meetli.cc`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FuoOgmqwzEYT102iACENm1CucuTgaUN0xTkBCLAGIiwfTcy`
-  * Other Info: `�[�:	��1O]6� �6mB�˓����"���}72`
+  * Evidence: `2BjPqZV4D7kjDkLdY5AFHhDxskBvbMZ9xQCV`
+  * Other Info: `�ϩ�x�#B�c��@ol�}� �`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `/assets/logo_one_latter-DesWG7-J`
-  * Other Info: `��,z�?��(����V�������`
+  * Evidence: `oZSIAaHJL7ayNFkqhnMaqY1m27zGSx9PkH4AiOCG0A8WAO4EStQf1IOwXNUWxENvlC80e3P0qxzmUGF1be`
+  * Other Info: `�����/��4Y*�s��fۼ�KO�~ ���� �J�ԃ�\��Co�/4{s���Paum`
 * URL: https://dev.meetli.cc/assets/index-Bvwh5umr.js
   * Node Name: `https://dev.meetli.cc/assets/index-Bvwh5umr.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2BhBcwUbec4ET9uC0AGgRBRvGlkZ3q0GJmwv8ODqwvETAyF6G8kIqWaTgYma28XAmpnFGILZDasnSNNfAhjH4IUsCkZPsxACnDT3MEuZUxcad0Z5bQEMI2Me8oLSSP6Y`
-  * Other Info: `�Asy�Oۂ��DoYޭ&l/�����!z��f�������������'H�_���,
-FO��4�0K�SwFym#c��H��`
+  * Evidence: `2FGwV8TRHNSgBP60SJKt4hmFfbAAv5xa1ExFnnlBNOEGXtirsSeXtTU49Wa0nb`
+  * Other Info: `�Q�W��Ԡ��H����}� ��Z�LE�yA4�^ث�'��58�f��`
 * URL: https://dev.meetli.cc/assets/index-DAZXwIcS.css
   * Node Name: `https://dev.meetli.cc/assets/index-DAZXwIcS.css`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2BQp5dZBGtxfdVz1YY4phVl9W176iKOUzHC4BT7Vjo41d0EAuH2fIsVcPayU95swctgg5CkqObPClfHcDNflYaECKWgOcIwVy8W8hYe6pc`
-  * Other Info: `�)��A�_u\�a�)�Y}[^�����p�>Վ�5wA �}�"�\=����0r� �)*9�����a�)hp��ż����`
+  * Evidence: `2FktltilalAQcqlAb1Zn0SWJRDSHEnsKB9pgzuXNUGLDp2bTKNHLPeXlDhYxPeqZiK2sXZ6K6ZE8`
+  * Other Info: `�Y-�إjPr�@oVg�%�D4�{
+�`���Pbçf�(��=��1=Ꙉ��]���<`
 * URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
   * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `We7NIDwEHO6qMmpoeoJyOtfXwORf75CP`
-  * Other Info: `Y�� <�2jhz�r:����_`
+  * Evidence: `I5QkoDcFeiSzUX5szaEhJNwacam59kOZ3qX7914SQQhMZoH`
+  * Other Info: `#�$�7z$�Q~l͡!$�q���C�ޥ��^ALf�`
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -333,8 +352,8 @@ FO��4�0K�SwFym#c��H��`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FHEKlC4989SSbfMRnujgr9tUngWZUey2O2l9eDz9Eu6c7f`
-  * Other Info: `�Q�*P���RI��F{���mRxeG�������K�s�`
+  * Evidence: `aURuEM1eBXblo4dRDgc3Oar9coREJ9IVl4TK9ht5pRnReblTxD`
+  * Other Info: `iDn�^v壇Q79��r�D'�����y��y�S�`
 
 
 Instances: 8
@@ -400,7 +419,7 @@ Remove all comments that return information that may help an attacker and fix an
 
 ### Description
 
-The application appears to be a modern web application. If you need to explore it automatically then the Ajax Spider may well be more effective than the standard one.
+The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.
 
 * URL: https://dev.meetli.cc
   * Node Name: `https://dev.meetli.cc`
@@ -448,8 +467,22 @@ This is an informational alert and so no changes are required.
 
 The cache-control header has not been set properly or is missing, allowing the browser and proxies to cache content. For static assets like css, js, or image files this might be intended, however, the resources should be reviewed to ensure that no sensitive content will be cached.
 
+* URL: https://dev.meetli.cc
+  * Node Name: `https://dev.meetli.cc`
+  * Method: `GET`
+  * Parameter: `cache-control`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
+  * Method: `GET`
+  * Parameter: `cache-control`
+  * Attack: ``
+  * Evidence: ``
+  * Other Info: ``
+* URL: https://dev.meetli.cc/robots.txt
+  * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
   * Parameter: `cache-control`
   * Attack: ``
@@ -464,7 +497,7 @@ The cache-control header has not been set properly or is missing, allowing the b
   * Other Info: ``
 
 
-Instances: 2
+Instances: 4
 
 ### Solution
 

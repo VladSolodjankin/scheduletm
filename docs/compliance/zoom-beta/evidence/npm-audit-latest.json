@@ -37,22 +37,6 @@
       "isDirect": true,
       "via": [
         {
-          "source": 1119667,
-          "name": "axios",
-          "dependency": "axios",
-          "title": "axios's shouldBypassProxy does not recognize IPv4-mapped IPv6 addresses, allowing NO_PROXY bypass (incomplete fix for CVE-2025-62718)",
-          "url": "https://github.com/advisories/GHSA-pjwm-pj3p-43mv",
-          "severity": "high",
-          "cwe": [
-            "CWE-918"
-          ],
-          "cvss": {
-            "score": 8.6,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N"
-          },
-          "range": ">=1.0.0 <1.16.0"
-        },
-        {
           "source": 1120547,
           "name": "axios",
           "dependency": "axios",
@@ -166,6 +150,23 @@
             "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N"
           },
           "range": "=1.15.2"
+        },
+        {
+          "source": 1122844,
+          "name": "axios",
+          "dependency": "axios",
+          "title": "axios's shouldBypassProxy does not recognize IPv4-mapped IPv6 addresses, allowing NO_PROXY bypass (incomplete fix for CVE-2025-62718)",
+          "url": "https://github.com/advisories/GHSA-pjwm-pj3p-43mv",
+          "severity": "high",
+          "cwe": [
+            "CWE-289",
+            "CWE-918"
+          ],
+          "cvss": {
+            "score": 8.6,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N"
+          },
+          "range": ">=1.15.0 <1.16.0"
         }
       ],
       "effects": [],
@@ -336,6 +337,35 @@
       ],
       "fixAvailable": true
     },
+    "morgan": {
+      "name": "morgan",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        {
+          "source": 1122902,
+          "name": "morgan",
+          "dependency": "morgan",
+          "title": "morgan vulnerable to Log Forging via unneutralized control characters in :remote-user",
+          "url": "https://github.com/advisories/GHSA-4vj7-5mj6-jm8m",
+          "severity": "moderate",
+          "cwe": [
+            "CWE-117"
+          ],
+          "cvss": {
+            "score": 5.3,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N"
+          },
+          "range": ">=1.2.0 <=1.10.1"
+        }
+      ],
+      "effects": [],
+      "range": "1.2.0 - 1.10.1",
+      "nodes": [
+        "node_modules/morgan"
+      ],
+      "fixAvailable": true
+    },
     "qs": {
       "name": "qs",
       "severity": "moderate",
@@ -478,10 +508,10 @@
     "vulnerabilities": {
       "info": 0,
       "low": 2,
-      "moderate": 3,
+      "moderate": 4,
       "high": 6,
       "critical": 0,
-      "total": 11
+      "total": 12
     },
     "dependencies": {
       "prod": 364,

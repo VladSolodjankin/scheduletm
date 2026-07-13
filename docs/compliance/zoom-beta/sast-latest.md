@@ -1,9 +1,9 @@
 # SAST Latest Evidence
 
-Last run: 2026-07-06 10:09:40 UTC
+Last run: 2026-07-13 09:00:37 UTC
 
 GitHub Actions run:
-https://github.com/VladSolodjankin/scheduletm/actions/runs/28783900289
+https://github.com/VladSolodjankin/scheduletm/actions/runs/29237351496
 
 Tools:
 - npm audit
