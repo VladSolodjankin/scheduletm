@@ -7,7 +7,7 @@
       "isDirect": false,
       "via": [
         {
-          "source": 1120793,
+          "source": 1123528,
           "name": "@babel/core",
           "dependency": "@babel/core",
           "title": "@babel/core: Arbitrary File Read via sourceMappingURL Comment",
@@ -152,7 +152,7 @@
           "range": "=1.15.2"
         },
         {
-          "source": 1122844,
+          "source": 1123672,
           "name": "axios",
           "dependency": "axios",
           "title": "axios's shouldBypassProxy does not recognize IPv4-mapped IPv6 addresses, allowing NO_PROXY bypass (incomplete fix for CVE-2025-62718)",
@@ -479,7 +479,7 @@
           "range": ">=8.0.0 <=8.0.15"
         },
         {
-          "source": 1120791,
+          "source": 1123527,
           "name": "vite",
           "dependency": "vite",
           "title": "vite: `server.fs.deny` bypass on Windows alternate paths",
@@ -490,8 +490,8 @@
             "CWE-200"
           ],
           "cvss": {
-            "score": 0,
-            "vectorString": null
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
           },
           "range": ">=8.0.0 <=8.0.15"
         }

@@ -45,7 +45,7 @@ ZAP by [Checkmarx](https://checkmarx.com/).
 | Strict-Transport-Security Header Not Set | Low | 1 |
 | Timestamp Disclosure - Unix | Low | 2 |
 | X-Content-Type-Options Header Missing | Low | 1 |
-| Base64 Disclosure | Informational | 8 |
+| Base64 Disclosure | Informational | 7 |
 | Information Disclosure - Suspicious Comments | Informational | 1 |
 | Modern Web Application | Informational | 3 |
 | Re-examine Cache-control Directives | Informational | 4 |
@@ -302,44 +302,39 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `/assets/logo_one_latter-DesWG7-J`
-  * Other Info: `��,z�?��(����V�������`
-* URL: https://dev.meetli.cc
-  * Node Name: `https://dev.meetli.cc`
-  * Method: `GET`
-  * Parameter: ``
-  * Attack: ``
-  * Evidence: `2BjPqZV4D7kjDkLdY5AFHhDxskBvbMZ9xQCV`
-  * Other Info: `�ϩ�x�#B�c��@ol�}� �`
+  * Evidence: `l6FSkNwlerDQjHEx9HsP4omzEasbhgLk0bAfyQqp5U6Dz8VRjxAbE1GFvI86oP9U0Fsp12bUMecWbCtm4lHk9YBOVuqKYNdSD6JOcPUogZu8yYT3CZ3oG3lGNrO`
+  * Other Info: `��R��%z�Ќq1�{≳���Ѱ�
+��N���Q�Q���:��T�[)�f�1�l+f�Q���NV�`�R�Np�(���Ʉ�	��yF6�`
 * URL: https://dev.meetli.cc/
   * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `oZSIAaHJL7ayNFkqhnMaqY1m27zGSx9PkH4AiOCG0A8WAO4EStQf1IOwXNUWxENvlC80e3P0qxzmUGF1be`
-  * Other Info: `�����/��4Y*�s��fۼ�KO�~ ���� �J�ԃ�\��Co�/4{s���Paum`
+  * Evidence: `gAoaonkHkOae1RMm8I32OA9kyQtyP8TnOFDmJRaVllNFfuokGQigPk20nkYSyJKZcvANvT3BCbJM29eg7nnFdpkUU7i4befXMUJWOncFrNU6YeP3tRaA4uOfaoApqXze`
+  * Other Info: `�
+�y���&���8d�r?��8P�%��SE~�$�>M��FȒ�r��=�	�L�נ�y�v�S��m��1BV:w��:a������j�)�|�`
 * URL: https://dev.meetli.cc/assets/index-Bvwh5umr.js
   * Node Name: `https://dev.meetli.cc/assets/index-Bvwh5umr.js`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FGwV8TRHNSgBP60SJKt4hmFfbAAv5xa1ExFnnlBNOEGXtirsSeXtTU49Wa0nb`
-  * Other Info: `�Q�W��Ԡ��H����}� ��Z�LE�yA4�^ث�'��58�f��`
+  * Evidence: `2FICnE6UPFnKMF6JDLiC2CjQSBIR6xd5r54UrlC6YSYKKsnDSTPaUDwyZqPK3DTgnjpM`
+  * Other Info: `�R�N�<Y�0^����(�H�y���P�a&
+*��I3�P<2f���4��:L`
 * URL: https://dev.meetli.cc/assets/index-DAZXwIcS.css
   * Node Name: `https://dev.meetli.cc/assets/index-DAZXwIcS.css`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `2FktltilalAQcqlAb1Zn0SWJRDSHEnsKB9pgzuXNUGLDp2bTKNHLPeXlDhYxPeqZiK2sXZ6K6ZE8`
-  * Other Info: `�Y-�إjPr�@oVg�%�D4�{
-�`���Pbçf�(��=��1=Ꙉ��]���<`
+  * Evidence: `pH76QBIHJH9CdJaDawZc06smi62kHWeIzLxCZ0b1zsCV2Z909XFAf6dfF3Z0PXtAxFuShJW4F5mIrX6uzhtY6JctBkHw`
+  * Other Info: `�~�@$Bt��k\ӫ&���g�̼BgF����ٟt�q@�_vt={@�[�������~��X�-A�`
 * URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
   * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `I5QkoDcFeiSzUX5szaEhJNwacam59kOZ3qX7914SQQhMZoH`
-  * Other Info: `#�$�7z$�Q~l͡!$�q���C�ޥ��^ALf�`
+  * Evidence: `2F9rKLwXiE3ZifRt3nBOZvghvTU8UzAzWnA`
+  * Other Info: `�_k(��Mى�m�pNf�!�5<S03Zp`
 * URL: https://dev.meetli.cc/robots.txt
   * Node Name: `https://dev.meetli.cc/robots.txt`
   * Method: `GET`
@@ -352,11 +347,11 @@ Base64 encoded data was disclosed by the application/web server. Note: in the in
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `aURuEM1eBXblo4dRDgc3Oar9coREJ9IVl4TK9ht5pRnReblTxD`
-  * Other Info: `iDn�^v壇Q79��r�D'�����y��y�S�`
+  * Evidence: `2BEFyzDMIxHou3yBDCXR0TOg8J6MCSg`
+  * Other Info: `��0�#�|�%��3��	(`
 
 
-Instances: 8
+Instances: 7
 
 ### Solution
 
@@ -743,15 +738,15 @@ The response contents are storable by caching components such as proxy servers, 
   * Attack: ``
   * Evidence: ``
   * Other Info: `In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234.`
-* URL: https://dev.meetli.cc/assets/index-DAZXwIcS.css
-  * Node Name: `https://dev.meetli.cc/assets/index-DAZXwIcS.css`
+* URL: https://dev.meetli.cc/
+  * Node Name: `https://dev.meetli.cc/`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
-  * Evidence: `max-age=14400`
-  * Other Info: ``
-* URL: https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg
-  * Node Name: `https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg`
+  * Evidence: ``
+  * Other Info: `In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234.`
+* URL: https://dev.meetli.cc/assets/index-DAZXwIcS.css
+  * Node Name: `https://dev.meetli.cc/assets/index-DAZXwIcS.css`
   * Method: `GET`
   * Parameter: ``
   * Attack: ``
