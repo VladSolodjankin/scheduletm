@@ -91,7 +91,7 @@ Meetli does not sell personal data.
 
 Meetli applies technical and organizational measures that include:
 
-- Role-based access control for `owner`, `admin`, `specialist`, and `client` roles.
+- Role-based access control for `product_owner`, `owner`, `admin`, `specialist`, and `client` roles.
 - Session management with short-lived access tokens and refresh-token rotation.
 - CSRF protections on refresh and logout endpoints.
 - TLS in supported production environments.

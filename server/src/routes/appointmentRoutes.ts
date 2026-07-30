@@ -17,6 +17,7 @@ import {
 } from '../services/appointmentService.js';
 import { formatZodError } from '../utils/validation.js';
 import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
+import { AppointmentRepositoryError } from '../repositories/appointmentRepository.js';
 
 export const appointmentRoutes = Router();
 const notifyRateLimit = createRequestRateLimit({ keyPrefix: 'appointment-notify', maxRequests: 20, windowMs: 60_000 });
@@ -47,6 +48,9 @@ appointmentRoutes.get('/', async (req, res) => {
     const eventActorWebUserIdRaw = typeof req.query.eventActorWebUserId === 'string'
       ? Number(req.query.eventActorWebUserId)
       : undefined;
+    const eventLimitRaw = typeof req.query.eventLimit === 'string'
+      ? Number(req.query.eventLimit)
+      : undefined;
     const eventActions = parseEventActions();
 
     const data = await getAppointments(actor, {
@@ -59,6 +63,9 @@ appointmentRoutes.get('/', async (req, res) => {
         : undefined,
       eventFrom: typeof req.query.eventFrom === 'string' ? req.query.eventFrom : undefined,
       eventTo: typeof req.query.eventTo === 'string' ? req.query.eventTo : undefined,
+      eventLimit: Number.isInteger(eventLimitRaw) && Number(eventLimitRaw) > 0
+        ? Math.min(Number(eventLimitRaw), 500)
+        : undefined,
     });
 
     return res.json(data);
@@ -84,6 +91,9 @@ appointmentRoutes.post('/', async (req, res) => {
     const created = await createAppointmentForActor(actor, parsed.data);
     return res.status(201).json(created);
   } catch (error) {
+    if (error instanceof AppointmentRepositoryError && error.code === 'SLOT_CONFLICT') {
+      return res.status(409).json({ code: 'slot_conflict' });
+    }
     const message = error instanceof Error ? error.message : 'UNKNOWN';
 
     if (message === 'FORBIDDEN_SPECIALIST') {

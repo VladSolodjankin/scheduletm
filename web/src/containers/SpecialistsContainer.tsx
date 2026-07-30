@@ -26,7 +26,7 @@ export function SpecialistsContainer() {
   const [editingSpecialist, setEditingSpecialist] = useState<SpecialistManagementItem | null>(null);
   const [isSavingSpecialist, setIsSavingSpecialist] = useState(false);
 
-  const canManageSpecialists = user?.role === 'owner' || user?.role === 'admin';
+  const canManageSpecialists = user?.role === 'product_owner' || user?.role === 'owner' || user?.role === 'admin';
   const canManageSpecialistSettings = canManageSpecialists || user?.role === 'specialist';
 
   useEffect(() => {
@@ -107,6 +107,7 @@ export function SpecialistsContainer() {
     slotDurationMin: number;
     slotStepMin: number;
     defaultSessionContinuationMin: number;
+    defaultMeetingLink: string;
   }) => {
     if (!accessToken) {
       return;
@@ -126,6 +127,7 @@ export function SpecialistsContainer() {
           slotDurationMin: payload.slotDurationMin,
           slotStepMin: payload.slotStepMin,
           defaultSessionContinuationMin: payload.defaultSessionContinuationMin,
+          defaultMeetingLink: payload.defaultMeetingLink,
         }, {
           headers: authHeaders(accessToken),
         });
@@ -232,6 +234,8 @@ export function SpecialistsContainer() {
         slotDurationMinLabel={t('settings.specialistSettings.slotDurationMin')}
         slotStepMinLabel={t('settings.specialistSettings.slotStepMin')}
         defaultSessionContinuationMinLabel={t('settings.specialistSettings.defaultSessionContinuationMin')}
+        defaultMeetingLinkLabel={t('settings.specialistSettings.defaultMeetingLink')}
+        defaultMeetingLinkInvalidText={t('settings.specialistSettings.defaultMeetingLinkInvalid')}
         availableWebUsers={availableWebUsers}
         onClose={closeSpecialistDialog}
         onSubmit={saveSpecialist}

@@ -1,36 +1,24 @@
-# PROJECT_MAP: `web/`
+# PROJECT_MAP: web
 
-## Назначение
+React 19 SPA на React Router, MUI, shared API/auth/i18n/theme и локальных MobX stores.
 
-`web/` — React SPA для управления расписанием, пользователями, специалистами и настройками.
+- `src/app/` — bootstrap и routing.
+- `src/pages/` — auth, appointments, settings, logs и public flows.
+- `src/containers/` — data loading и orchestration.
+- `src/components/` — UI и layouts.
+- `src/features/public-page-builder/` — Public Page domain/model/repository.
+- `src/shared/` — API client, auth, i18n, theme, types и UI kit.
+- `tests/unit/` — runtime unit tests.
+- `tests/e2e/*.test.mjs` — быстрые source-contract checks.
+- `tests/e2e/ui/` — browser E2E.
 
-## Структура
+Основные flows:
 
-- `src/app/` — bootstrap приложения, роутинг, провайдеры.
-- `src/pages/` — страницы (`/login`, `/register`, `/appointments`, `/specialists`, `/users`, `/settings`).
-- `src/containers/` — контейнеры с загрузкой данных и orchestration UI.
-- `src/components/` — презентационные компоненты и layout.
-- `src/shared/` — api-client, i18n, theme, ui-kit (включая единый `FormContainer` для диалоговых форм), типы, utils.
-- `tests/` — smoke/e2e проверки.
+1. Auth/register/invite.
+2. Role-aware cabinet для `product_owner`, `owner`, `admin`, `specialist`, `client`.
+3. Appointments и create-only recurrence.
+4. Settings, integrations, client notifications и specialist default meeting link.
+5. Public Page management и public `/:slug`.
+6. Public booking `/:slug/booking` и status `/:slug/appointment-status`.
 
-## Ключевые потоки
-
-1. **Auth flow**: login/register -> auth-state -> защищенные страницы.
-2. **Appointments flow**: list/create/edit/reschedule/cancel/mark-paid/notify.
-3. **Settings flow**: user/system settings + integrations status.
-4. **Role-aware UI**: owner/admin/specialist видят разный набор действий.
-
-## Зависимости от backend
-
-Основной API-контракт обслуживает `server/`:
-
-- `/api/auth/*`
-- `/api/settings/*`
-- `/api/specialists/*`
-- `/api/users/*`
-- `/api/appointments/*`
-- `/api/integrations/google/oauth/*`
-
-## Документация модуля
-
-- [`README.md`](./README.md)
+Backend contracts находятся под `/api/*`; Public Pages используют `/api/public-pages/*`.

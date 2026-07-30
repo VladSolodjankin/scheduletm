@@ -107,7 +107,7 @@ async function resolveSpecialistScope(actor: User): Promise<number | null> {
 }
 
 function resolveAccountScope(actor: User, requestedAccountId?: number): number | null {
-  if (actor.role === WebUserRole.Owner) {
+  if (actor.role === WebUserRole.ProductOwner) {
     return requestedAccountId ?? null;
   }
 
@@ -141,11 +141,11 @@ export async function resendFailedNotificationForActor(actor: User, notification
     throw new Error('FORBIDDEN_NOTIFICATION_SCOPE');
   }
 
-  if (actor.role === WebUserRole.Owner) {
+  if (actor.role === WebUserRole.ProductOwner) {
     return resetNotificationForResend({ notificationId });
   }
 
-  if (actor.role === WebUserRole.Admin) {
+  if (actor.role === WebUserRole.Owner || actor.role === WebUserRole.Admin) {
     if (log.account_id !== actor.accountId) {
       throw new Error('FORBIDDEN_NOTIFICATION_SCOPE');
     }

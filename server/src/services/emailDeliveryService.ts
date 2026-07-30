@@ -12,7 +12,7 @@ type SendEmailPayload = {
 
 async function sendEmail(payload: SendEmailPayload): Promise<boolean> {
   if (!env.BREVO_API_KEY) {
-    console.info('[email:stub] provider-not-configured', payload);
+    console.info('[email:stub] provider-not-configured');
     return false;
   }
 
@@ -40,7 +40,14 @@ async function sendEmail(payload: SendEmailPayload): Promise<boolean> {
 
     return true;
   } catch (error) {
-    console.error('[email] delivery-failed', error);
+    if (axios.isAxiosError(error)) {
+      console.error('[email] delivery-failed', {
+        status: error.response?.status,
+        code: error.code,
+      });
+    } else {
+      console.error('[email] delivery-failed');
+    }
     return false;
   }
 }
@@ -90,6 +97,33 @@ export async function sendEmailVerificationEmail(input: SendEmailVerificationInp
   return sendEmail({
     to: input.to,
     subject: 'Meetli — подтверждение email',
+    ...template,
+  });
+}
+
+export type SendPasswordResetEmailInput = {
+  to: string;
+  firstName?: string;
+  locale?: string;
+  resetCode: string;
+};
+
+export async function sendPasswordResetEmail(input: SendPasswordResetEmailInput): Promise<boolean> {
+  const isEnglish = input.locale?.toLowerCase().startsWith('en');
+  const greetingName = input.firstName?.trim() || (isEnglish ? 'there' : 'пользователь');
+  const template = renderEmailTemplate(isEnglish ? {
+    title: 'Password reset',
+    body: `Hello, ${greetingName}! Your password reset code is ${input.resetCode}.`,
+    footer: 'The code is valid for 10 minutes. If you did not request a reset, ignore this email.',
+  } : {
+    title: 'Восстановление пароля',
+    body: `Здравствуйте, ${greetingName}! Код для восстановления пароля: ${input.resetCode}.`,
+    footer: 'Код действует 10 минут. Если вы не запрашивали восстановление, проигнорируйте письмо.',
+  });
+
+  return sendEmail({
+    to: input.to,
+    subject: isEnglish ? 'Meetli — password reset' : 'Meetli — восстановление пароля',
     ...template,
   });
 }

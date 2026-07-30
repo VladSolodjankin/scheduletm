@@ -2,6 +2,7 @@ import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from 'vites
 import type { AddressInfo } from 'node:net';
 import { createApp } from '../src/app.js';
 import { WebUserRole } from '../src/types/webUserRole.js';
+import { AppointmentRepositoryError } from '../src/repositories/appointmentRepository.js';
 
 const resolveUserByAccessTokenMock = vi.hoisted(() => vi.fn());
 const getAppointmentsMock = vi.hoisted(() => vi.fn());
@@ -146,6 +147,74 @@ describe('appointments API route-smoke scenarios (mocked service layer)', () => 
 
     expect(response.status).toBe(201);
     expect(await response.json()).toMatchObject(created);
+    expect(createAppointmentForActorMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.not.objectContaining({ recurrence: expect.anything() }),
+    );
+  });
+
+  it('create recurrence: forwards recurrence and returns group metadata', async () => {
+    createAppointmentForActorMock.mockResolvedValue({
+      id: 41,
+      specialistId: 8,
+      scheduledAt: '2026-04-23T10:30:00.000Z',
+      durationMin: 30,
+      status: 'new',
+      recurrence: { groupId: 5, appointmentIds: [41, 42, 43] },
+    });
+
+    const response = await fetch(`${baseUrl}/api/appointments`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer smoke-token',
+      },
+      body: JSON.stringify({
+        specialistId: 8,
+        appointmentAt: '2026-04-23T10:30:00.000Z',
+        appointmentEndAt: '2026-04-23T11:00:00.000Z',
+        firstName: 'Smoke',
+        lastName: 'Client',
+        username: 'smoke_client',
+        recurrence: { frequency: 'weekly', occurrences: 3 },
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      id: 41,
+      recurrence: { groupId: 5, appointmentIds: [41, 42, 43] },
+    });
+    expect(createAppointmentForActorMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        recurrence: { frequency: 'weekly', occurrences: 3 },
+      }),
+    );
+  });
+
+  it('create recurrence: maps an atomic slot conflict to 409', async () => {
+    createAppointmentForActorMock.mockRejectedValue(new AppointmentRepositoryError('SLOT_CONFLICT'));
+
+    const response = await fetch(`${baseUrl}/api/appointments`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer smoke-token',
+      },
+      body: JSON.stringify({
+        specialistId: 8,
+        appointmentAt: '2026-04-23T10:30:00.000Z',
+        appointmentEndAt: '2026-04-23T11:00:00.000Z',
+        firstName: 'Smoke',
+        lastName: 'Client',
+        username: 'smoke_client',
+        recurrence: { frequency: 'daily', occurrences: 3 },
+      }),
+    });
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ code: 'slot_conflict' });
   });
 
   it('reschedule: POST /api/appointments/:id/reschedule returns 200', async () => {

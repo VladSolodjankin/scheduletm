@@ -14,6 +14,7 @@ export type AppointmentRecord = {
   is_paid: boolean;
   user_id: number;
   service_id: number;
+  group_id?: number | null;
   created_at: Date;
   updated_at: Date;
   client_first_name?: string | null;
@@ -43,6 +44,7 @@ type AppointmentEventsFilters = {
   actorWebUserId?: number;
   from?: Date;
   to?: Date;
+  limit?: number;
 };
 
 type AppointmentListFilters = {
@@ -63,6 +65,16 @@ type CreateAppointmentInput = {
   serviceId: number;
   durationMin: number;
 };
+
+export class AppointmentRepositoryError extends Error {
+  constructor(public readonly code: 'SLOT_CONFLICT') {
+    super(code);
+  }
+}
+
+function isSlotConflict(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === '23P01';
+}
 
 type UpdateAppointmentInput = {
   accountId: number;
@@ -159,24 +171,68 @@ export async function listAppointmentsAllAccounts(filters: Omit<AppointmentListF
 }
 
 export async function createAppointment(input: CreateAppointmentInput): Promise<AppointmentRecord> {
-  const [row] = await db('appointments')
-    .insert({
-      account_id: input.accountId,
-      specialist_id: input.specialistId,
-      appointment_at: input.scheduledAt,
-      status: input.status,
-      comment: input.notes,
-      user_id: input.userId,
-      service_id: input.serviceId,
-      duration_min: input.durationMin,
-      is_first_time: false,
-      price: 0,
-      currency: 'RUB',
-      is_paid: false,
-    })
-    .returning<AppointmentRecord[]>('*');
+  try {
+    const [row] = await db('appointments')
+      .insert({
+        account_id: input.accountId,
+        specialist_id: input.specialistId,
+        appointment_at: input.scheduledAt,
+        status: input.status,
+        comment: input.notes,
+        user_id: input.userId,
+        service_id: input.serviceId,
+        duration_min: input.durationMin,
+        is_first_time: false,
+        price: 0,
+        currency: 'RUB',
+        is_paid: false,
+      })
+      .returning<AppointmentRecord[]>('*');
 
-  return row;
+    return row;
+  } catch (error) {
+    if (isSlotConflict(error)) throw new AppointmentRepositoryError('SLOT_CONFLICT');
+    throw error;
+  }
+}
+
+export async function createAppointmentSeries(input: CreateAppointmentInput & {
+  scheduledDates: Date[];
+}): Promise<{ groupId: number; appointments: AppointmentRecord[] }> {
+  try {
+    return await db.transaction(async (trx) => {
+      const [group] = await trx('appointment_groups').insert({
+        account_id: input.accountId,
+        user_id: input.userId,
+        service_id: input.serviceId,
+        specialist_id: input.specialistId,
+        total_sessions: input.scheduledDates.length,
+      }).returning<{ id: number }[]>('id');
+
+      const appointments = await trx('appointments').insert(
+        input.scheduledDates.map((scheduledAt) => ({
+          account_id: input.accountId,
+          specialist_id: input.specialistId,
+          appointment_at: scheduledAt,
+          status: input.status,
+          comment: input.notes,
+          user_id: input.userId,
+          service_id: input.serviceId,
+          group_id: group.id,
+          duration_min: input.durationMin,
+          is_first_time: false,
+          price: 0,
+          currency: 'RUB',
+          is_paid: false,
+        })),
+      ).returning<AppointmentRecord[]>('*');
+
+      return { groupId: group.id, appointments };
+    });
+  } catch (error) {
+    if (isSlotConflict(error)) throw new AppointmentRepositoryError('SLOT_CONFLICT');
+    throw error;
+  }
 }
 
 export async function updateAppointment(input: UpdateAppointmentInput): Promise<AppointmentRecord | null> {
@@ -281,6 +337,8 @@ export async function listAppointmentEventsByAppointmentIds(
     query.andWhere('ae.created_at', '<=', filters.to);
   }
 
+  query.limit(Math.min(Math.max(filters?.limit ?? 500, 1), 500));
+
   return query.select<AppointmentAuditEventRecord[]>(
     'ae.id',
     'ae.account_id',
@@ -353,6 +411,12 @@ export async function countAppointmentsBySpecialistId(accountId: number, special
     .first();
 
   return Number(row?.count ?? 0);
+}
+
+export async function purgeAppointmentEventsCreatedBefore(cutoff: Date): Promise<number> {
+  return db('appointment_events')
+    .where('created_at', '<', cutoff)
+    .delete();
 }
 
 export async function countAppointmentsByClientId(accountId: number, clientId: number): Promise<number> {

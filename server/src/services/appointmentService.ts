@@ -4,6 +4,7 @@ import {
   type AppointmentAuditAction,
   type AppointmentStatus,
   createAppointment,
+  createAppointmentSeries,
   ensureFallbackServiceForAccount,
   findAppointmentById,
   findAppointmentByIdAnyAccount,
@@ -62,6 +63,10 @@ type AppointmentDto = {
   events: AppointmentEventDto[];
 };
 
+type AppointmentCreateResult = AppointmentDto & {
+  recurrence?: { groupId: number; appointmentIds: number[] };
+};
+
 type AppointmentEventDto = {
   action: AppointmentAuditAction;
   createdAt: string;
@@ -99,7 +104,25 @@ type CreateAppointmentPayload = {
   locationAddress?: string;
   saveClientMeetingPreference?: boolean;
   notes?: string;
+  recurrence?: {
+    frequency: 'daily' | 'weekly';
+    occurrences: number;
+  };
 } & AppointmentClientPayload;
+
+export function expandRecurrenceStartDates(
+  startAt: string,
+  recurrence: NonNullable<CreateAppointmentPayload['recurrence']>,
+): Date[] {
+  const start = new Date(startAt);
+  const offsetMs = recurrence.frequency === 'daily'
+    ? 24 * 60 * 60 * 1000
+    : 7 * 24 * 60 * 60 * 1000;
+  return Array.from(
+    { length: recurrence.occurrences },
+    (_, index) => new Date(start.getTime() + index * offsetMs),
+  );
+}
 
 type UpdateAppointmentPayload = {
   appointmentAt?: string;
@@ -376,6 +399,7 @@ export async function getAppointments(
     eventActorWebUserId?: number;
     eventFrom?: string;
     eventTo?: string;
+    eventLimit?: number;
   },
 ): Promise<AppointmentListResult> {
   const accountId = await resolveAccountId(actor);
@@ -390,14 +414,14 @@ export async function getAppointments(
     from: filters.from ? new Date(filters.from) : undefined,
     to: filters.to ? new Date(filters.to) : undefined,
   };
-  const items = actor.role === WebUserRole.Owner
+  const items = actor.role === WebUserRole.ProductOwner
     ? await listAppointmentsAllAccounts(listFilters)
     : await listAppointments({
       accountId,
       ...listFilters,
     });
 
-  const allSpecialists = actor.role === WebUserRole.Owner
+  const allSpecialists = actor.role === WebUserRole.ProductOwner
     ? await listSpecialistsAllAccounts()
     : await listSpecialistsByAccount(accountId);
 
@@ -435,6 +459,7 @@ export async function getAppointments(
         actorWebUserId: filters.eventActorWebUserId,
         from: filters.eventFrom ? new Date(filters.eventFrom) : undefined,
         to: filters.eventTo ? new Date(filters.eventTo) : undefined,
+        limit: filters.eventLimit,
       },
     ),
   );
@@ -457,7 +482,7 @@ export async function getAppointments(
 export async function createAppointmentForActor(
   actor: User,
   payload: CreateAppointmentPayload,
-): Promise<AppointmentDto> {
+): Promise<AppointmentCreateResult> {
   if (!canCreateAppointments(actor.role)) {
     throw new Error('FORBIDDEN_CLIENT');
   }
@@ -471,7 +496,7 @@ export async function createAppointmentForActor(
     }
   }
 
-  const specialist = actor.role === WebUserRole.Owner
+  const specialist = actor.role === WebUserRole.ProductOwner
     ? await findSpecialistByIdAnyAccount(payload.specialistId)
     : await findSpecialistById(accountId, payload.specialistId);
   if (!specialist) {
@@ -536,15 +561,41 @@ export async function createAppointmentForActor(
     break;
   }
 
-  const created = await createAppointment({
+  const defaultMeetingLink = specialist.default_meeting_link?.trim() ?? '';
+  if (
+    !meetingLink
+    && payload.meetingProvider !== 'offline'
+    && defaultMeetingLink
+    && allowedProviders.includes('manual')
+  ) {
+    meetingLink = defaultMeetingLink;
+    meetingProvider = 'manual';
+  }
+
+  const appointmentInput = {
     accountId,
     specialistId: payload.specialistId,
-    scheduledAt: new Date(payload.appointmentAt),
     status: payload.status ?? 'new',
     notes: composeNotes(meetingLink, payload.locationAddress, payload.notes, meetingProvider),
     userId,
     serviceId,
     durationMin: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
+  };
+  const series = payload.recurrence
+    ? await createAppointmentSeries({
+      ...appointmentInput,
+      scheduledAt: new Date(payload.appointmentAt),
+      scheduledDates: expandRecurrenceStartDates(payload.appointmentAt, payload.recurrence),
+    })
+    : null;
+  const orderedSeriesAppointments = series
+    ? [...series.appointments].sort(
+      (left, right) => left.appointment_at.getTime() - right.appointment_at.getTime(),
+    )
+    : [];
+  const created = orderedSeriesAppointments[0] ?? await createAppointment({
+    ...appointmentInput,
+    scheduledAt: new Date(payload.appointmentAt),
   });
 
   if (payload.saveClientMeetingPreference || !preferred) {
@@ -560,12 +611,20 @@ export async function createAppointmentForActor(
     notificationType: 'appointment_created',
   }).catch(() => undefined);
 
-  return mapAppointment(hydrated);
+  return {
+    ...mapAppointment(hydrated),
+    ...(series ? {
+      recurrence: {
+        groupId: series.groupId,
+        appointmentIds: orderedSeriesAppointments.map((appointment) => appointment.id),
+      },
+    } : {}),
+  };
 }
 
 async function resolveManagedAppointment(actor: User, appointmentId: number) {
   const accountId = await resolveAccountId(actor);
-  const existing = actor.role === WebUserRole.Owner
+  const existing = actor.role === WebUserRole.ProductOwner
     ? await findAppointmentByIdAnyAccount(appointmentId)
     : await findAppointmentById(accountId, appointmentId);
 

@@ -2,6 +2,7 @@ import {
   createSpecialist,
   deactivateSpecialistById,
   findSpecialistById,
+  findSpecialistByIdAnyAccount,
   listSpecialistsAllAccounts,
   listSpecialistsByAccount,
   updateSpecialistById,
@@ -25,6 +26,7 @@ type SpecialistDto = {
   workEndHour: number;
   slotDurationMin: number;
   defaultSessionContinuationMin: number;
+  defaultMeetingLink: string;
 };
 
 type SpecialistCreatePayload = {
@@ -41,6 +43,7 @@ type SpecialistUpdatePayload = {
   slotDurationMin?: number;
   slotStepMin?: number;
   defaultSessionContinuationMin?: number;
+  defaultMeetingLink?: string;
 };
 
 export type SpecialistWebUserOptionDto = {
@@ -60,6 +63,7 @@ const mapSpecialist = (item: Awaited<ReturnType<typeof listSpecialistsByAccount>
   workEndHour: item.work_end_hour ?? 20,
   slotDurationMin: item.slot_duration_min ?? 90,
   defaultSessionContinuationMin: item.default_session_continuation_min ?? item.slot_duration_min ?? 90,
+  defaultMeetingLink: item.default_meeting_link ?? '',
 });
 
 const buildSpecialistCode = (name: string): string => {
@@ -77,10 +81,19 @@ async function resolveAccountId(actor: User): Promise<number> {
   return actor.accountId;
 }
 
+async function resolveSpecialistAccountId(actor: User, specialistId: number): Promise<number | null> {
+  if (actor.role !== WebUserRole.ProductOwner) {
+    return actor.accountId;
+  }
+
+  const specialist = await findSpecialistByIdAnyAccount(specialistId);
+  return specialist?.account_id ?? null;
+}
+
 export async function getSpecialistsForActor(actor: User): Promise<SpecialistDto[]> {
   const accountId = await resolveAccountId(actor);
 
-  if (actor.role === WebUserRole.Owner) {
+  if (actor.role === WebUserRole.ProductOwner) {
     return (await listSpecialistsAllAccounts()).map(mapSpecialist);
   }
 
@@ -142,7 +155,10 @@ export async function updateSpecialistForActor(
     throw new Error('FORBIDDEN');
   }
 
-  const accountId = await resolveAccountId(actor);
+  const accountId = await resolveSpecialistAccountId(actor, specialistId);
+  if (accountId === null) {
+    return null;
+  }
   const existing = await findSpecialistById(accountId, specialistId);
   if (!existing) {
     return null;
@@ -172,6 +188,7 @@ export async function updateSpecialistForActor(
     slotDurationMin: payload.slotDurationMin,
     slotStepMin: payload.slotStepMin,
     defaultSessionContinuationMin: payload.defaultSessionContinuationMin,
+    defaultMeetingLink: payload.defaultMeetingLink?.trim() || null,
   });
 
   const updated = await findSpecialistById(accountId, specialistId);
@@ -187,7 +204,10 @@ export async function deleteSpecialistForActor(actor: User, specialistId: number
     throw new Error('FORBIDDEN');
   }
 
-  const accountId = await resolveAccountId(actor);
+  const accountId = await resolveSpecialistAccountId(actor, specialistId);
+  if (accountId === null) {
+    return null;
+  }
   const existing = await findSpecialistById(accountId, specialistId);
   if (!existing) {
     return null;

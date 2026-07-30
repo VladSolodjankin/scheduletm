@@ -2,13 +2,13 @@ import crypto from 'node:crypto';
 import type { Response } from 'express';
 import { env } from '../config/env.js';
 import { clearLoginAttempt, findLoginAttemptByIp, upsertFailedLoginAttempt } from '../repositories/loginAttemptRepository.js';
-import { createAccount, findAccountById } from '../repositories/accountRepository.js';
+import { createAccount, findAccountById, isAccountActive } from '../repositories/accountRepository.js';
+import { confirmPasswordReset, createPasswordResetChallenge } from '../repositories/passwordResetRepository.js';
 import { createDefaultSpecialistForWebUserIfMissing, createSpecialistForWebUser } from '../repositories/specialistRepository.js';
 import {
   createWebUser,
   findWebUserByEmailAnyAccount,
   findWebUserById,
-  findWebUserByIdAnyAccount,
   touchWebUserLastLogin,
   updateWebUserAuthState,
   updateWebUserCredentials,
@@ -26,12 +26,13 @@ import { WebUserRole } from '../types/webUserRole.js';
 import { canManageSpecialists } from '../policies/rolePermissions.js';
 import { createOtpCode, createToken, hashPassword, sanitizeEmail, verifyPassword } from '../utils/crypto.js';
 import { csrfCookieName } from '../utils/cookies.js';
-import { sendEmailVerificationEmail, sendRegistrationSuccessEmail } from './emailDeliveryService.js';
+import { sendEmailVerificationEmail, sendPasswordResetEmail, sendRegistrationSuccessEmail } from './emailDeliveryService.js';
 
 const now = () => Date.now();
 const cookieExpiresMs = env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;
 const accessExpiresMs = env.ACCESS_TOKEN_TTL_SECONDS * 1000;
 const inviteTtlMs = 24 * 60 * 60 * 1000;
+const passwordResetTtlMs = 10 * 60 * 1000;
 const sessionCookieDomain = env.SESSION_COOKIE_DOMAIN.trim() || undefined;
 
 export const isLockedIp = async (ip: string) => {
@@ -49,6 +50,57 @@ export const registerFailedAttempt = async (ip: string) => {
 };
 
 export const clearAttempts = async (ip: string) => clearLoginAttempt(ip);
+
+const isPasswordResetEligible = (user: {
+  is_active: boolean;
+  is_deleted: boolean;
+  email_verified_at: Date | null;
+}) => user.is_active && !user.is_deleted && Boolean(user.email_verified_at);
+
+export const requestPasswordReset = async (emailRaw: string): Promise<void> => {
+  const email = sanitizeEmail(emailRaw);
+  const user = await findWebUserByEmailAnyAccount(email);
+  if (!user || !isPasswordResetEligible(user)) return;
+
+  const resetCode = createOtpCode();
+  const codeSalt = crypto.randomBytes(16).toString('hex');
+  const requestTime = new Date();
+  const created = await createPasswordResetChallenge({
+    accountId: user.account_id,
+    webUserId: user.id,
+    codeHash: hashPassword(resetCode, codeSalt),
+    codeSalt,
+    expiresAt: new Date(requestTime.getTime() + passwordResetTtlMs),
+    now: requestTime,
+  });
+  if (!created) return;
+
+  await sendPasswordResetEmail({
+    to: user.email,
+    firstName: user.first_name ?? undefined,
+    locale: user.locale,
+    resetCode,
+  });
+};
+
+export const resetPassword = async (
+  emailRaw: string,
+  codeRaw: string,
+  password: string,
+): Promise<boolean> => {
+  const user = await findWebUserByEmailAnyAccount(sanitizeEmail(emailRaw));
+  if (!user || !isPasswordResetEligible(user)) return false;
+
+  const passwordSalt = crypto.randomBytes(16).toString('hex');
+  return confirmPasswordReset({
+    accountId: user.account_id,
+    webUserId: user.id,
+    code: codeRaw.trim(),
+    passwordHash: hashPassword(password, passwordSalt),
+    passwordSalt,
+    now: new Date(),
+  });
+};
 
 export const issueSession = async (user: Pick<User, 'id' | 'accountId'>, res: Response) => {
   const numericUserId = Number(user.id);
@@ -160,7 +212,7 @@ export const registerUser = async (
     await sendEmailVerificationEmail({
       to: email,
       verificationCode,
-      firstName: existing.first_name ?? undefined,
+      firstName: firstName?.trim() || existing.first_name || undefined,
     });
 
     return mapWebUserToDomain(
@@ -189,7 +241,7 @@ export const registerUser = async (
   const webUser = await createWebUser({
     accountId,
     email,
-    role: WebUserRole.Admin,
+    role: WebUserRole.Owner,
     firstName: firstName?.trim() ?? '',
     lastName: lastName?.trim() ?? '',
     phone: phone?.trim() ?? '',
@@ -479,7 +531,7 @@ export const acceptInvite = async (emailRaw: string, tokenRaw: string, password:
 
   await sendRegistrationSuccessEmail({
     to: user.email,
-    firstName: user.first_name ?? undefined,
+    firstName: firstName.trim(),
   });
 
   return true;
@@ -488,6 +540,14 @@ export const acceptInvite = async (emailRaw: string, tokenRaw: string, password:
 export const refreshAccess = async (refreshToken: string) => {
   const current = await findActiveWebUserSessionByTokenAnyAccount(refreshToken, 'refresh');
   if (!current) {
+    return null;
+  }
+
+  const [user, accountActive] = await Promise.all([
+    findWebUserById(current.account_id, current.web_user_id),
+    isAccountActive(current.account_id),
+  ]);
+  if (!user || user.is_deleted || !user.is_active || !accountActive) {
     return null;
   }
 
@@ -504,8 +564,11 @@ export const resolveUserByAccessToken = async (token: string): Promise<User | nu
     return null;
   }
 
-  const user = await findWebUserByIdAnyAccount(session.web_user_id);
-  if (!user || user.is_deleted || !user.is_active) {
+  const [user, accountActive] = await Promise.all([
+    findWebUserById(session.account_id, session.web_user_id),
+    isAccountActive(session.account_id),
+  ]);
+  if (!user || user.is_deleted || !user.is_active || !accountActive) {
     return null;
   }
 

@@ -49,8 +49,6 @@ export type SystemSettings = {
 };
 
 export type AccountSettings = {
-  timezone: string;
-  locale: string;
   dailyDigestEnabled: boolean;
   defaultMeetingDuration: number;
   weekStartsOnMonday: boolean;
@@ -135,8 +133,6 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
 
   if (row) {
     return {
-      timezone: row.timezone,
-      locale: row.locale,
       dailyDigestEnabled: row.daily_digest_enabled,
       defaultMeetingDuration: row.slot_duration_min,
       weekStartsOnMonday: row.week_starts_on_monday,
@@ -150,8 +146,6 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
   const legacy = await findAppSettingsByAccountId(accountId);
   if (legacy) {
     return {
-      timezone: legacy.timezone,
-      locale: legacy.locale,
       dailyDigestEnabled: legacy.daily_digest_enabled,
       defaultMeetingDuration: legacy.slot_duration_min,
       weekStartsOnMonday: legacy.week_starts_on_monday,
@@ -163,8 +157,6 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
   }
 
   return {
-    timezone: 'UTC',
-    locale: 'ru-RU',
     dailyDigestEnabled: true,
     defaultMeetingDuration: 30,
     weekStartsOnMonday: true,
@@ -193,7 +185,7 @@ export async function undoAccountDeletion(actor: User, requestedAccountId?: numb
 export const getSystemSettings = async (): Promise<SystemSettings> => mapSystemSettings();
 
 async function resolveManagedAccountId(actor: User, requestedAccountId?: number): Promise<number | null> {
-  if (actor.role !== WebUserRole.Owner) {
+  if (actor.role !== WebUserRole.ProductOwner) {
     return actor.accountId;
   }
 
@@ -206,7 +198,7 @@ async function resolveManagedAccountId(actor: User, requestedAccountId?: number)
 }
 
 export async function getSettingsScopeOptions(actor: User): Promise<SettingsScopeOptions | null> {
-  if (actor.role !== WebUserRole.Owner) {
+  if (actor.role !== WebUserRole.ProductOwner) {
     return null;
   }
 
@@ -282,8 +274,6 @@ export const updateAccountSettings = async (actor: User, payload: unknown, reque
 
   await updateAccountSettingsByAccountId({
     accountId,
-    timezone: parsed.data.timezone,
-    locale: parsed.data.locale,
     slotDurationMin: parsed.data.defaultMeetingDuration,
     dailyDigestEnabled: parsed.data.dailyDigestEnabled,
     weekStartsOnMonday: parsed.data.weekStartsOnMonday,
@@ -294,8 +284,6 @@ export const updateAccountSettings = async (actor: User, payload: unknown, reque
 
   await updateAppSettingsByAccountId({
     accountId,
-    timezone: parsed.data.timezone,
-    locale: parsed.data.locale,
     slotDurationMin: parsed.data.defaultMeetingDuration,
     dailyDigestEnabled: parsed.data.dailyDigestEnabled,
     weekStartsOnMonday: parsed.data.weekStartsOnMonday,
@@ -459,7 +447,7 @@ export async function undoUserDeletion(actor: User): Promise<UserSettings | null
 }
 
 async function resolveSpecialistForPolicy(actor: User, specialistId?: number, requestedAccountId?: number): Promise<{ accountId: number; specialistId: number } | null> {
-  if (actor.role === WebUserRole.Owner) {
+  if (actor.role === WebUserRole.ProductOwner) {
     if (!specialistId || !Number.isInteger(specialistId)) {
       return null;
     }
@@ -471,7 +459,7 @@ async function resolveSpecialistForPolicy(actor: User, specialistId?: number, re
     return specialist ? { accountId: specialist.account_id, specialistId: specialist.id } : null;
   }
 
-  if (actor.role === WebUserRole.Admin) {
+  if (actor.role === WebUserRole.Owner || actor.role === WebUserRole.Admin) {
     if (!specialistId || !Number.isInteger(specialistId)) {
       return null;
     }
@@ -489,7 +477,10 @@ async function resolveSpecialistForPolicy(actor: User, specialistId?: number, re
 }
 
 export function canManageSpecialistBookingPolicies(role: User['role']): boolean {
-  return role === WebUserRole.Owner || role === WebUserRole.Admin || role === WebUserRole.Specialist;
+  return role === WebUserRole.ProductOwner
+    || role === WebUserRole.Owner
+    || role === WebUserRole.Admin
+    || role === WebUserRole.Specialist;
 }
 
 export async function getSpecialistBookingPolicy(
@@ -557,7 +548,11 @@ export async function putAccountNotificationDefaults(actor: User, payload: unkno
 }
 
 async function resolveSpecialistIdForNotifications(actor: User, specialistId?: number): Promise<number | null> {
-  if (actor.role === WebUserRole.Owner || actor.role === WebUserRole.Admin) {
+  if (
+    actor.role === WebUserRole.ProductOwner
+    || actor.role === WebUserRole.Owner
+    || actor.role === WebUserRole.Admin
+  ) {
     if (!specialistId || !Number.isInteger(specialistId)) {
       return null;
     }
@@ -575,7 +570,12 @@ async function resolveSpecialistIdForNotifications(actor: User, specialistId?: n
 }
 
 async function resolveClientIdForNotifications(actor: User, clientId?: number): Promise<number | null> {
-  if (actor.role === WebUserRole.Owner || actor.role === WebUserRole.Admin || actor.role === WebUserRole.Specialist) {
+  if (
+    actor.role === WebUserRole.ProductOwner
+    || actor.role === WebUserRole.Owner
+    || actor.role === WebUserRole.Admin
+    || actor.role === WebUserRole.Specialist
+  ) {
     if (!clientId || !Number.isInteger(clientId)) {
       return null;
     }

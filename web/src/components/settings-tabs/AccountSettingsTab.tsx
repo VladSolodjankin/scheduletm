@@ -8,8 +8,6 @@ import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
 import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
-import { LocaleSelect } from '../LocaleSelect';
-import { TimezoneSelect } from '../TimezoneSelect';
 import { BusinessLocationMap } from './BusinessLocationMap';
 
 type Props = {
@@ -55,34 +53,6 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
   return (
     <AppForm component="form" onSubmit={onSubmit}>
       <Typography variant="h5">{copy.accountTitle}</Typography>
-
-      <Controller
-        name="timezone"
-        control={control}
-        render={({ field }: any) => (
-          <TimezoneSelect
-            label={copy.timezone}
-            labelId="account-timezone-label"
-            value={field.value}
-            onChange={field.onChange}
-            margin="normal"
-          />
-        )}
-      />
-
-      <Controller
-        name="locale"
-        control={control}
-        render={({ field }: any) => (
-          <LocaleSelect
-            label={copy.locale}
-            labelId="account-locale-label"
-            value={field.value}
-            onChange={field.onChange}
-            margin="normal"
-          />
-        )}
-      />
 
       <Controller name="businessAddress" control={control} render={({ field }: any) => (
         <AppRhfTextField field={field} label={copy.businessAddress} />

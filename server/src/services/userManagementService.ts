@@ -6,6 +6,7 @@ import {
   createWebUser,
   findWebUserByEmail,
   findWebUserById,
+  findWebUserByIdAnyAccount,
   listWebUsersAllAccounts,
   listWebUsersByAccount,
   softDeleteWebUser,
@@ -79,6 +80,15 @@ async function resolveAccountId(actor: User): Promise<number> {
   return actor.accountId;
 }
 
+async function resolveManagedUserAccountId(actor: User, userId: number): Promise<number | null> {
+  if (actor.role !== WebUserRole.ProductOwner) {
+    return actor.accountId;
+  }
+
+  const user = await findWebUserByIdAnyAccount(userId);
+  return user?.account_id ?? null;
+}
+
 async function resolveDeleteImpact(accountId: number, userId: number): Promise<ManagedUserDeleteImpact | null> {
   const existing = await findWebUserById(accountId, userId);
   if (!existing || existing.is_deleted) {
@@ -108,7 +118,7 @@ export async function listManagedUsers(actor: User): Promise<UserManagementItem[
   }
 
   const accountId = await resolveAccountId(actor);
-  const users = actor.role === WebUserRole.Owner
+  const users = actor.role === WebUserRole.ProductOwner
     ? await listWebUsersAllAccounts()
     : await listWebUsersByAccount(accountId);
   const filtered = canManageFullUserDirectory(actor.role)
@@ -183,7 +193,10 @@ export async function updateManagedUser(actor: User, userId: number, payload: Us
     throw new Error('FORBIDDEN');
   }
 
-  const accountId = await resolveAccountId(actor);
+  const accountId = await resolveManagedUserAccountId(actor, userId);
+  if (accountId === null) {
+    return null;
+  }
   const existing = await findWebUserById(accountId, userId);
   if (!existing) {
     return null;
@@ -224,7 +237,10 @@ export async function deactivateManagedUser(actor: User, userId: number): Promis
     throw new Error('FORBIDDEN');
   }
 
-  const accountId = await resolveAccountId(actor);
+  const accountId = await resolveManagedUserAccountId(actor, userId);
+  if (accountId === null) {
+    return null;
+  }
   const existing = await findWebUserById(accountId, userId);
   if (!existing) {
     return null;
@@ -250,7 +266,10 @@ export async function getManagedUserDeleteImpact(actor: User, userId: number): P
     throw new Error('FORBIDDEN');
   }
 
-  const accountId = await resolveAccountId(actor);
+  const accountId = await resolveManagedUserAccountId(actor, userId);
+  if (accountId === null) {
+    return null;
+  }
   const existing = await findWebUserById(accountId, userId);
   if (!existing || existing.is_deleted) {
     return null;
@@ -270,7 +289,10 @@ export async function deleteManagedUser(actor: User, userId: number): Promise<Ma
     throw new Error('FORBIDDEN');
   }
 
-  const accountId = await resolveAccountId(actor);
+  const accountId = await resolveManagedUserAccountId(actor, userId);
+  if (accountId === null) {
+    return null;
+  }
   const existing = await findWebUserById(accountId, userId);
   if (!existing || existing.is_deleted) {
     return null;
@@ -295,7 +317,10 @@ export async function resendManagedUserInvite(actor: User, userId: number): Prom
     throw new Error('FORBIDDEN');
   }
 
-  const accountId = await resolveAccountId(actor);
+  const accountId = await resolveManagedUserAccountId(actor, userId);
+  if (accountId === null) {
+    throw new Error('NOT_FOUND');
+  }
   const existing = await findWebUserById(accountId, userId);
   if (!existing) {
     throw new Error('NOT_FOUND');

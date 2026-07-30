@@ -35,6 +35,10 @@ export type VerifyEmailResponse = {
   message: string;
 };
 
+export type PasswordResetResponse = {
+  message: string;
+};
+
 
 export type UserPasswordOtpRequestResponse = {
   message: string;
@@ -199,6 +203,7 @@ export type SpecialistManagementItem = {
   code: string;
   timezone: string;
   isActive: boolean;
+  defaultMeetingLink: string;
   slotStepMin: number;
   baseSessionPrice: number;
   baseHourPrice: number;
@@ -229,6 +234,39 @@ export type ManagedUserItem = {
   isVerified: boolean;
   deleteScheduledAt: string | null;
   createdAt: string;
+};
+
+export type ClientNotificationSetting = AccountNotificationDefault;
+
+export type PublicBookingOptions = {
+  specialists: Array<{ id: number; name: string }>;
+  services: Array<{
+    id: number;
+    name: string;
+    durationMin: number;
+    price: number;
+    currency: string;
+  }>;
+};
+
+export type PublicBookingResult = {
+  id: number;
+  status: AppointmentStatus;
+  scheduledAt: string;
+  duration: number;
+};
+
+export type PublicAppointmentMeetingStatus = {
+  status: AppointmentStatus;
+  scheduledAt: string;
+  duration: number;
+  service: string;
+  specialist: string;
+  meeting: {
+    provider: 'manual' | 'zoom' | 'offline';
+    meetingUrl?: string;
+    location?: string;
+  };
 };
 
 export type ManagedUserDeleteImpact = {

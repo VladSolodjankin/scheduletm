@@ -15,12 +15,12 @@
   - выпускать новую migration-fix;
   - rollback (`migrate:rollback`) использовать только по решению ответственного и только при подтверждённом impact/risk.
 
-## 2) Backup + test restore (Railway, manual mode)
+## 2) Backup + test restore procedure (Railway, manual mode)
 
 Текущий режим (на 2026-04-29):
 
-- backup/restore реализованы в Railway на стороне managed Postgres;
-- проверка restore выполняется **в ручном режиме** (manual test restore);
+- backup/restore capability предоставляется Railway managed Postgres;
+- ниже документирована ручная процедура, но в репозитории нет evidence успешного test restore;
 - требуется поддерживать целевые показатели:
   - **RPO** (допустимая потеря данных) — фиксируется командой в ops runbook;
   - **RTO** (время восстановления) — фиксируется по результатам тестового восстановления.
@@ -31,6 +31,8 @@
 2. Восстановить в отдельную БД (не production).
 3. Прогнать `migrate:latest` и smoke API.
 4. Зафиксировать фактическое время восстановления и gap по данным (RTO/RPO).
+
+До выполнения шага 4 backup/restore readiness остаётся неподтверждённой.
 
 ## 3) Hot-path query plans
 
@@ -70,7 +72,7 @@ ORDER BY updated_at DESC
 LIMIT 20;
 ```
 
-Критерии:
+Критерии (требуют отдельного production-like evidence):
 
 - отсутствие full table scan на больших таблицах в hot-path;
 - использование ожидаемых индексов;
@@ -78,7 +80,7 @@ LIMIT 20;
 
 ## 4) Strict dev/stage/prod separation
 
-Рекомендуемая схема в Railway:
+Целевая схема в Railway (её фактическое применение должно быть подтверждено deployment/runtime evidence):
 
 - отдельные окружения: `dev`, `stage`, `prod`;
 - отдельная БД/инстанс Postgres для каждого окружения;

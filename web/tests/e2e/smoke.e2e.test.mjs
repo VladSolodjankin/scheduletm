@@ -24,9 +24,24 @@ describe('web smoke (auth/settings/specialists/appointments/specialist booking p
     assert.match(authContainer, /navigate\('\/settings'\)/);
   });
 
+  it('password recovery stays on login and uses the request/confirm OTP contract', async () => {
+    const authContainer = await read('src/containers/AuthContainer.tsx');
+    const authCard = await read('src/components/AuthCard.tsx');
+
+    assert.match(authContainer, /type LoginStep = 'credentials' \| 'reset-email' \| 'reset-confirm'/);
+    assert.match(authContainer, /'\/api\/auth\/password-reset\/request'/);
+    assert.match(authContainer, /'\/api\/auth\/password-reset\/confirm'/);
+    assert.match(authContainer, /PASSWORD_RESET_RESEND_COOLDOWN_SECONDS = 60/);
+    assert.match(authContainer, /<AppOtpCodeField/);
+    assert.match(authContainer, /setLoginStep\('credentials'\)/);
+    assert.doesNotMatch(authContainer, /navigate\('\/password-reset'/);
+    assert.match(authCard, /forgotPasswordText/);
+  });
+
   it('settings/specialists/appointments screens call API endpoints', async () => {
     const settingsContainer = await read('src/containers/SettingsContainer.tsx');
     const specialistsContainer = await read('src/containers/SpecialistsContainer.tsx');
+    const specialistDialog = await read('src/components/specialists/SpecialistFormDialog.tsx');
     const appointmentsContainer = await read('src/containers/AppointmentsContainer.tsx');
     const appointmentDialog = await read('src/components/appointments/AppointmentFormDialog.tsx');
     const specialistsTable = await read('src/components/specialists/SpecialistsTable.tsx');
@@ -43,6 +58,10 @@ describe('web smoke (auth/settings/specialists/appointments/specialist booking p
     assert.match(specialistsContainer, /'\/api\/specialists'/);
     assert.match(specialistsContainer, /baseSessionPrice/);
     assert.match(specialistsContainer, /defaultSessionContinuationMin/);
+    assert.match(specialistsContainer, /defaultMeetingLink:\s*payload\.defaultMeetingLink/);
+    assert.match(specialistsContainer, /user\?\.role === 'product_owner'/);
+    assert.match(specialistDialog, /url\.protocol === "http:" \|\| url\.protocol === "https:"/);
+    assert.match(specialistDialog, /defaultMeetingLink:\s*defaultMeetingLink\.trim\(\)/);
     assert.match(appointmentsContainer, /'\/api\/appointments'/);
     assert.match(appointmentsContainer, /\/cancel/);
     assert.match(appointmentsContainer, /\/reschedule/);
@@ -58,7 +77,7 @@ describe('web smoke (auth/settings/specialists/appointments/specialist booking p
     assert.match(specialistPolicyTab, /copy\.refundOnLateCancel/);
     assert.match(specialistPolicyTab, /copy\.autoCancelUnpaidEnabled/);
     assert.match(specialistPolicyTab, /copy\.unpaidAutoCancelAfterHours/);
-    assert.match(specialistsTable, /AppIcons\.edit/);
+    assert.match(specialistsTable, /<ButtonBase[\s\S]*onClick=\{\(\) => onEdit\(item\)\}/);
     assert.match(specialistsTable, /AppIcons\.delete/);
   });
 });

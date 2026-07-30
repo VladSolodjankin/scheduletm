@@ -19,6 +19,7 @@ import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import SaveRounded from '@mui/icons-material/SaveRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import TuneRounded from '@mui/icons-material/TuneRounded';
+import WebRounded from '@mui/icons-material/WebRounded';
 
 export const AppIcons = {
   add: AddRounded,
@@ -36,6 +37,7 @@ export const AppIcons = {
   logout: LogoutRounded,
   menu: MenuRounded,
   notifications: NotificationsRounded,
+  publicPages: WebRounded,
   palette: PaletteRounded,
   filters: TuneRounded,
   register: PersonAddRounded,

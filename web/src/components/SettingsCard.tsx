@@ -29,6 +29,7 @@ type SettingsCardProps = {
   copy: SettingsCardCopy;
   canManageSystemSettings: boolean;
   canManageAccountSettings: boolean;
+  canManageClientNotifications: boolean;
   canManageSpecialistBookingPolicy: boolean;
   canSelfDeleteUser: boolean;
   isGoogleConnecting: boolean;
@@ -77,6 +78,7 @@ export function SettingsCard({
   copy,
   canManageSystemSettings,
   canManageAccountSettings,
+  canManageClientNotifications,
   canManageSpecialistBookingPolicy,
   canSelfDeleteUser,
   isGoogleConnecting,
@@ -119,11 +121,11 @@ export function SettingsCard({
     ...(canManageSystemSettings ? [{ key: 'system', label: copy.systemTab }] : []),
     ...(canManageAccountSettings ? [{ key: 'account', label: copy.accountTab }] : []),
     ...(canManageSpecialistBookingPolicy ? [{ key: 'specialistPolicy', label: copy.specialistPolicyTab }] : []),
-    ...(canManageAccountSettings ? [{ key: 'notifications', label: copy.notificationsTab }] : []),
+    ...(canManageAccountSettings || canManageClientNotifications ? [{ key: 'notifications', label: copy.notificationsTab }] : []),
     { key: 'user', label: copy.userTab },
     { key: 'integrations', label: copy.integrationsTab },
     { key: 'password', label: copy.passwordTab }
-  ] as const), [copy, canManageSystemSettings, canManageAccountSettings, canManageSpecialistBookingPolicy]);
+  ] as const), [copy, canManageSystemSettings, canManageAccountSettings, canManageClientNotifications, canManageSpecialistBookingPolicy]);
 
   const initialTab = tabs[0]?.key ?? 'user';
   const timingOptions = ['disabled', ...[1, 2, ...Array.from({ length: 12 }, (_, i) => 4 + i * 2)].map(h => `${h}h`)];

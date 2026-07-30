@@ -3,28 +3,31 @@ import { WebUserRole } from '../types/webUserRole.js';
 export const isClientRole = (role: WebUserRole): boolean => role === WebUserRole.Client;
 
 export const canManageSystemSettings = (role: WebUserRole): boolean =>
-  role === WebUserRole.Owner;
+  role === WebUserRole.ProductOwner;
 
 export const canManageAccountSettings = (role: WebUserRole): boolean =>
-  role === WebUserRole.Owner || role === WebUserRole.Admin;
+  role === WebUserRole.ProductOwner || role === WebUserRole.Owner || role === WebUserRole.Admin;
 
 export const canManageSpecialists = (role: WebUserRole): boolean =>
-  role === WebUserRole.Owner || role === WebUserRole.Admin;
+  role === WebUserRole.ProductOwner || role === WebUserRole.Owner || role === WebUserRole.Admin;
 
 export const canManageSpecialistSettings = (role: WebUserRole): boolean =>
-  role === WebUserRole.Owner || role === WebUserRole.Admin || role === WebUserRole.Specialist;
+  role === WebUserRole.ProductOwner
+  || role === WebUserRole.Owner
+  || role === WebUserRole.Admin
+  || role === WebUserRole.Specialist;
 
 export const canManageAllAppointments = (role: WebUserRole): boolean =>
-  role === WebUserRole.Owner || role === WebUserRole.Admin;
+  role === WebUserRole.ProductOwner || role === WebUserRole.Owner || role === WebUserRole.Admin;
 
 export const canManageFullUserDirectory = (role: WebUserRole): boolean =>
-  role === WebUserRole.Owner || role === WebUserRole.Admin;
+  role === WebUserRole.ProductOwner || role === WebUserRole.Owner || role === WebUserRole.Admin;
 
 export const canManageClients = (role: WebUserRole): boolean =>
   canManageFullUserDirectory(role) || role === WebUserRole.Specialist;
 
 export const canCreateUserRole = (actorRole: WebUserRole, targetRole: WebUserRole): boolean => {
-  if (targetRole === WebUserRole.Owner) {
+  if (targetRole === WebUserRole.ProductOwner || targetRole === WebUserRole.Owner) {
     return false;
   }
 

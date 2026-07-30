@@ -49,6 +49,18 @@ export const dictionaries = {
       requiredField: 'This field is required',
       phoneInvalid: 'Enter a valid phone number',
       passwordMinLength: 'Password must be at least 10 characters',
+      passwordStrong: 'Use at least 10 characters with uppercase, lowercase, and a number',
+      forgotPassword: 'Forgot password?',
+      passwordResetTitle: 'Reset password',
+      passwordResetEmailSubtitle: 'Enter your email and we will send you a 4-digit recovery code.',
+      passwordResetSendCode: 'Send recovery code',
+      passwordResetCodeSent: 'Recovery code sent to {email}.',
+      passwordResetConfirmTitle: 'Create a new password',
+      passwordResetConfirmSubtitle: 'Enter the recovery code sent to {email} and choose a new password.',
+      passwordResetNewPassword: 'New password',
+      passwordResetSubmit: 'Reset password',
+      passwordResetBackToLogin: 'Back to sign in',
+      passwordResetSuccess: 'Password changed successfully. You can now sign in.',
       verifyTitle: 'Verify email',
       verifySubtitle: 'Enter the 4-digit OTP code from email for {email}.',
       verifyCodeLabel: 'OTP code (4 digits)',
@@ -95,7 +107,9 @@ export const dictionaries = {
         loginFailed: 'Unable to sign in. Check your email and password.',
         registerFailed: 'Unable to register.',
         verifyFailed: 'Unable to verify email.',
-        verifyResendFailed: 'Unable to resend verification code.'
+        verifyResendFailed: 'Unable to resend verification code.',
+        passwordResetRequestFailed: 'Unable to send a recovery code. Please try again.',
+        passwordResetConfirmFailed: 'Unable to reset the password. Check the code and try again.'
       }
     },
     settings: {
@@ -203,7 +217,9 @@ export const dictionaries = {
         workEndHour: 'Work end hour',
         slotDurationMin: 'Slot duration (min)',
         slotStepMin: 'Slot step (min)',
-        defaultSessionContinuationMin: 'Default session continuation (min)'
+        defaultSessionContinuationMin: 'Default session continuation (min)',
+        defaultMeetingLink: 'Default meeting link',
+        defaultMeetingLinkInvalid: 'Enter a valid http:// or https:// URL.'
       },
       passwordChange: {
         openButton: 'Change password',
@@ -414,6 +430,8 @@ export const dictionaries = {
       meetingProviderManual: 'Manual link',
       meetingProviderZoom: 'Zoom',
       meetingProviderOffline: 'Offline',
+      recurrence: 'Repeat', recurrenceNone: 'Does not repeat', recurrenceDaily: 'Daily',
+      recurrenceWeekly: 'Weekly', recurrenceOccurrences: 'Occurrences',
       generateMeetingLink: 'Generate meeting link',
       errors: {
         load: 'Unable to load appointments.',
@@ -439,6 +457,48 @@ export const dictionaries = {
         clientEmail: 'Client email',
         clientTelegramUsername: 'Client Telegram username'
       }
+    },
+    publicBooking: {
+      title: 'Book an appointment', subtitle: 'Choose a specialist, service, date and time.',
+      loading: 'Loading booking options...', specialist: 'Specialist', service: 'Service',
+      dateTime: 'Date and time', firstName: 'First name', lastName: 'Last name',
+      email: 'Email', phone: 'Phone', contactHint: 'Provide at least an email or phone number.',
+      provider: 'Meeting format', providerAutomatic: 'Automatic', providerManual: 'Online link',
+      providerZoom: 'Zoom', providerOffline: 'In person', submit: 'Book', successTitle: 'Appointment booked',
+      successMessage: 'Your appointment number is {id}.',
+      errors: { load: 'Could not load booking options.', required: 'Complete required fields and provide a contact.', submit: 'Could not book the appointment.' }
+    },
+    publicStatus: {
+      title: 'Appointment status', appointmentId: 'Appointment number',
+      specialistLastName: 'Specialist last name', submit: 'Check status', minutes: 'min',
+      status: 'Status', openMeeting: 'Open meeting', errors: { load: 'Appointment was not found.' }
+    },
+    publicPageBuilder: {
+      pages: 'Public pages', create: 'Create page', empty: 'No public pages yet',
+      loading: 'Loading…', retry: 'Retry', edit: 'Edit', duplicate: 'Duplicate',
+      archive: 'Archive', draft: 'Draft', published: 'Published', archived: 'Archived',
+      save: 'Save', saving: 'Saving…', saved: 'Saved', saveError: 'Could not save',
+      publish: 'Publish', undo: 'Undo', redo: 'Redo', preview: 'Preview',
+      open: 'Open', copyLink: 'Copy link', linkCopied: 'Link copied',
+      sections: 'Sections', blocks: 'Blocks', addSection: 'Add section', addBlock: 'Add block',
+      inspector: 'Inspector', page: 'Page', section: 'Section', block: 'Block',
+      title: 'Title', description: 'Description', slug: 'Public address', visible: 'Visible',
+      remove: 'Delete', moveUp: 'Move up', moveDown: 'Move down', name: 'Name',
+      theme: 'Theme', background: 'Background', textColor: 'Text color',
+      deviceMobile: 'Mobile', deviceTablet: 'Tablet', deviceDesktop: 'Desktop',
+      noSelection: 'Select a section or block to edit it',
+      invalidSlug: 'Use 3–40 lowercase letters, numbers, or single hyphens',
+      validation: 'Fix the highlighted issue before publishing',
+      notFound: 'Page not found', unavailable: 'This page is not available',
+      template: 'Template',
+      revisionConflict: 'This page changed on the server. Reload before saving again.',
+      reloadLatest: 'Reload latest',
+      addItem: 'Add item',
+      deleteConfirm: 'Permanently delete this archived page?',
+      unknownBlockTitle: 'Unsupported block',
+      unknownBlockDescription: 'This block type is not available, but the rest of the page can still be displayed.',
+      blockErrorTitle: 'Block could not be displayed',
+      blockErrorDescription: 'An error occurred in this block. The rest of the page is still available.'
     }
   },
   ru: {
@@ -491,6 +551,18 @@ export const dictionaries = {
       requiredField: 'Поле обязательно',
       phoneInvalid: 'Введите корректный номер телефона',
       passwordMinLength: 'Пароль должен быть не короче 10 символов',
+      passwordStrong: 'Используйте не менее 10 символов, включая заглавную и строчную буквы и цифру',
+      forgotPassword: 'Забыли пароль?',
+      passwordResetTitle: 'Восстановление пароля',
+      passwordResetEmailSubtitle: 'Введите email, и мы отправим вам 4-значный код восстановления.',
+      passwordResetSendCode: 'Отправить код восстановления',
+      passwordResetCodeSent: 'Код восстановления отправлен на {email}.',
+      passwordResetConfirmTitle: 'Создайте новый пароль',
+      passwordResetConfirmSubtitle: 'Введите код, отправленный на {email}, и задайте новый пароль.',
+      passwordResetNewPassword: 'Новый пароль',
+      passwordResetSubmit: 'Изменить пароль',
+      passwordResetBackToLogin: 'Вернуться ко входу',
+      passwordResetSuccess: 'Пароль успешно изменён. Теперь можно войти.',
       verifyTitle: 'Подтверждение email',
       verifySubtitle: 'Введите 4-значный OTP-код из письма для {email}.',
       verifyCodeLabel: 'OTP-код (4 цифры)',
@@ -537,7 +609,9 @@ export const dictionaries = {
         loginFailed: 'Не удалось войти. Проверьте email и пароль.',
         registerFailed: 'Не удалось зарегистрироваться.',
         verifyFailed: 'Не удалось подтвердить email.',
-        verifyResendFailed: 'Не удалось отправить код повторно.'
+        verifyResendFailed: 'Не удалось отправить код повторно.',
+        passwordResetRequestFailed: 'Не удалось отправить код восстановления. Попробуйте снова.',
+        passwordResetConfirmFailed: 'Не удалось изменить пароль. Проверьте код и попробуйте снова.'
       }
     },
     settings: {
@@ -645,7 +719,9 @@ export const dictionaries = {
         workEndHour: 'Час окончания работы',
         slotDurationMin: 'Длительность слота (мин)',
         slotStepMin: 'Шаг слота (мин)',
-        defaultSessionContinuationMin: 'Продление сессии по умолчанию (мин)'
+        defaultSessionContinuationMin: 'Продление сессии по умолчанию (мин)',
+        defaultMeetingLink: 'Ссылка на встречу по умолчанию',
+        defaultMeetingLinkInvalid: 'Введите корректный URL с http:// или https://.'
       },
       passwordChange: {
         openButton: 'Сменить пароль',
@@ -856,6 +932,8 @@ export const dictionaries = {
       meetingProviderManual: 'Ручная ссылка',
       meetingProviderZoom: 'Zoom',
       meetingProviderOffline: 'Офлайн',
+      recurrence: 'Повтор', recurrenceNone: 'Не повторять', recurrenceDaily: 'Каждый день',
+      recurrenceWeekly: 'Каждую неделю', recurrenceOccurrences: 'Количество встреч',
       generateMeetingLink: 'Сгенерировать ссылку на встречу',
       errors: {
         load: 'Не удалось загрузить записи.',
@@ -881,13 +959,68 @@ export const dictionaries = {
         clientEmail: 'Email клиента',
         clientTelegramUsername: 'Telegram username клиента'
       }
+    },
+    publicBooking: {
+      title: 'Запись на встречу', subtitle: 'Выберите специалиста, услугу, дату и время.',
+      loading: 'Загружаем варианты записи...', specialist: 'Специалист', service: 'Услуга',
+      dateTime: 'Дата и время', firstName: 'Имя', lastName: 'Фамилия',
+      email: 'Email', phone: 'Телефон', contactHint: 'Укажите хотя бы email или телефон.',
+      provider: 'Формат встречи', providerAutomatic: 'Автоматически', providerManual: 'Онлайн-ссылка',
+      providerZoom: 'Zoom', providerOffline: 'Лично', submit: 'Записаться', successTitle: 'Встреча забронирована',
+      successMessage: 'Номер вашей встречи: {id}.',
+      errors: { load: 'Не удалось загрузить варианты записи.', required: 'Заполните обязательные поля и укажите контакт.', submit: 'Не удалось забронировать встречу.' }
+    },
+    publicStatus: {
+      title: 'Статус встречи', appointmentId: 'Номер встречи',
+      specialistLastName: 'Фамилия специалиста', submit: 'Проверить статус', minutes: 'мин',
+      status: 'Статус', openMeeting: 'Открыть встречу', errors: { load: 'Встреча не найдена.' }
+    },
+    publicPageBuilder: {
+      unknownBlockTitle: 'Неподдерживаемый блок',
+      unknownBlockDescription: 'Этот тип блока недоступен, но остальная страница продолжает отображаться.',
+      blockErrorTitle: 'Не удалось отобразить блок',
+      blockErrorDescription: 'В этом блоке произошла ошибка. Остальная страница по-прежнему доступна.',
+      pages: 'Публичные страницы', create: 'Создать страницу', empty: 'Публичных страниц пока нет',
+      loading: 'Загрузка…', retry: 'Повторить', edit: 'Редактировать', duplicate: 'Дублировать',
+      archive: 'В архив', draft: 'Черновик', published: 'Опубликована', archived: 'В архиве',
+      save: 'Сохранить', saving: 'Сохранение…', saved: 'Сохранено', saveError: 'Не удалось сохранить',
+      publish: 'Опубликовать', undo: 'Отменить', redo: 'Повторить', preview: 'Предпросмотр',
+      open: 'Открыть', copyLink: 'Копировать ссылку', linkCopied: 'Ссылка скопирована',
+      sections: 'Секции', blocks: 'Блоки', addSection: 'Добавить секцию', addBlock: 'Добавить блок',
+      inspector: 'Настройки', page: 'Страница', section: 'Секция', block: 'Блок',
+      title: 'Заголовок', description: 'Описание', slug: 'Публичный адрес', visible: 'Показывать',
+      remove: 'Удалить', moveUp: 'Вверх', moveDown: 'Вниз', name: 'Название',
+      theme: 'Тема', background: 'Фон', textColor: 'Цвет текста',
+      deviceMobile: 'Телефон', deviceTablet: 'Планшет', deviceDesktop: 'Компьютер',
+      noSelection: 'Выберите секцию или блок для редактирования',
+      invalidSlug: 'От 3 до 40 строчных букв, цифр или одиночных дефисов',
+      validation: 'Исправьте отмеченную ошибку перед публикацией',
+      notFound: 'Страница не найдена', unavailable: 'Эта страница недоступна',
+      template: 'Шаблон',
+      revisionConflict: 'Страница изменилась на сервере. Обновите её перед повторным сохранением.',
+      reloadLatest: 'Загрузить последнюю версию',
+      addItem: 'Добавить элемент',
+      deleteConfirm: 'Навсегда удалить эту архивную страницу?',
     }
   }
 } as const;
 
 export type Locale = keyof typeof dictionaries;
 
+type PublicPageBuilderTranslationKey = `publicPageBuilder.${keyof typeof dictionaries.en.publicPageBuilder}`;
+type PublicBookingTranslationKey = `publicBooking.${Exclude<keyof typeof dictionaries.en.publicBooking, 'errors'>}`
+  | `publicBooking.errors.${keyof typeof dictionaries.en.publicBooking.errors}`;
+type PublicStatusTranslationKey = `publicStatus.${Exclude<keyof typeof dictionaries.en.publicStatus, 'errors'>}`
+  | `publicStatus.errors.${keyof typeof dictionaries.en.publicStatus.errors}`;
+
 export type TranslationKey =
+  | PublicPageBuilderTranslationKey
+  | PublicBookingTranslationKey
+  | PublicStatusTranslationKey
+  | 'publicPageBuilder.unknownBlockTitle'
+  | 'publicPageBuilder.unknownBlockDescription'
+  | 'publicPageBuilder.blockErrorTitle'
+  | 'publicPageBuilder.blockErrorDescription'
   | 'common.appTitle'
   | 'common.email'
   | 'common.password'
@@ -932,6 +1065,18 @@ export type TranslationKey =
   | 'auth.requiredField'
   | 'auth.phoneInvalid'
   | 'auth.passwordMinLength'
+  | 'auth.passwordStrong'
+  | 'auth.forgotPassword'
+  | 'auth.passwordResetTitle'
+  | 'auth.passwordResetEmailSubtitle'
+  | 'auth.passwordResetSendCode'
+  | 'auth.passwordResetCodeSent'
+  | 'auth.passwordResetConfirmTitle'
+  | 'auth.passwordResetConfirmSubtitle'
+  | 'auth.passwordResetNewPassword'
+  | 'auth.passwordResetSubmit'
+  | 'auth.passwordResetBackToLogin'
+  | 'auth.passwordResetSuccess'
   | 'auth.verifyTitle'
   | 'auth.verifySubtitle'
   | 'auth.verifyCodeLabel'
@@ -979,6 +1124,8 @@ export type TranslationKey =
   | 'auth.errors.registerFailed'
   | 'auth.errors.verifyFailed'
   | 'auth.errors.verifyResendFailed'
+  | 'auth.errors.passwordResetRequestFailed'
+  | 'auth.errors.passwordResetConfirmFailed'
   | 'settings.pageTitle'
   | 'settings.pageSubtitle'
   | 'settings.tabs.system'
@@ -1083,6 +1230,8 @@ export type TranslationKey =
   | 'settings.specialistSettings.slotDurationMin'
   | 'settings.specialistSettings.slotStepMin'
   | 'settings.specialistSettings.defaultSessionContinuationMin'
+  | 'settings.specialistSettings.defaultMeetingLink'
+  | 'settings.specialistSettings.defaultMeetingLinkInvalid'
   | 'settings.errors.load'
   | 'settings.errors.save'
   | 'settings.errors.connectGoogle'
@@ -1205,6 +1354,11 @@ export type TranslationKey =
   | 'appointments.meetingProviderManual'
   | 'appointments.meetingProviderZoom'
   | 'appointments.meetingProviderOffline'
+  | 'appointments.recurrence'
+  | 'appointments.recurrenceNone'
+  | 'appointments.recurrenceDaily'
+  | 'appointments.recurrenceWeekly'
+  | 'appointments.recurrenceOccurrences'
   | 'appointments.generateMeetingLink'
   | 'appointments.errors.load'
   | 'appointments.errors.save'

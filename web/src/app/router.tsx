@@ -12,7 +12,17 @@ import { NotificationLogsPage } from '../pages/NotificationLogsPage';
 import { ErrorLogsPage } from '../pages/ErrorLogsPage';
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
 import { SecurityPolicyPage } from '../pages/SecurityPolicyPage';
+import { PublicPagesPage } from '../pages/PublicPagesPage';
+import { PublicPageEditorPage } from '../pages/PublicPageEditorPage';
+import { PublicPageViewPage } from '../pages/PublicPageViewPage';
+import { PublicPageBookingPage } from '../pages/PublicPageBookingPage';
+import { PublicAppointmentStatusPage } from '../pages/PublicAppointmentStatusPage';
 import { useAuth } from '../shared/auth/AuthContext';
+import { WebUserRole } from '../shared/types/roles';
+import { PublicPageLayout } from '../components/layout/PublicPageLayout';
+import { registerPublicPageBlocks } from '../features/public-page-builder/config/registerBlocks';
+
+registerPublicPageBlocks();
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuth();
@@ -22,6 +32,16 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
 function PublicOnlyRoute({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? <Navigate to="/appointments" replace /> : children;
+}
+
+function RoleRoute({ children }: { children: ReactElement }) {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return user?.role === WebUserRole.ProductOwner || user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin
+    ? children
+    : <Navigate to="/appointments" replace />;
 }
 
 export const router = createBrowserRouter([
@@ -119,6 +139,26 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         )
       },
+      {
+        path: '/public-pages',
+        element: <RoleRoute><PublicPagesPage /></RoleRoute>
+      },
+      {
+        path: '/public-pages/new',
+        element: <RoleRoute><PublicPageEditorPage /></RoleRoute>
+      },
+      {
+        path: '/public-pages/:profileId/edit',
+        element: <RoleRoute><PublicPageEditorPage /></RoleRoute>
+      },
+    ]
+  },
+  {
+    element: <PublicPageLayout />,
+    children: [
+      { path: '/:slug/booking', element: <PublicPageBookingPage /> },
+      { path: '/:slug/appointment-status', element: <PublicAppointmentStatusPage /> },
+      { path: '/:slug', element: <PublicPageViewPage /> },
     ]
   }
 ]);

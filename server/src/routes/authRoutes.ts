@@ -4,6 +4,8 @@ import {
   acceptInviteSchema,
   verifyInviteSchema,
   loginSchema,
+  passwordResetConfirmSchema,
+  passwordResetRequestSchema,
   registrationSchema,
   resendEmailVerificationCodeSchema,
   specialistUserCreationSchema,
@@ -20,6 +22,8 @@ import {
   issueSession,
   logoutSession,
   refreshAccess,
+  requestPasswordReset,
+  resetPassword,
   registerFailedAttempt,
   registerUser,
   resendUserEmailVerificationCode,
@@ -43,7 +47,11 @@ const hasValidCsrf = (req: Request, cookies: Map<string, string>) => {
 
 authRoutes.post('/specialists', requireAccessToken, async (req, res) => {
   const actor = (req as AuthedRequest).user;
-  if (actor.role !== WebUserRole.Owner && actor.role !== WebUserRole.Admin) {
+  if (
+    actor.role !== WebUserRole.ProductOwner
+    && actor.role !== WebUserRole.Owner
+    && actor.role !== WebUserRole.Admin
+  ) {
     return res.status(403).json({ message: t(req, 'forbiddenCreateSpecialist') });
   }
 
@@ -118,6 +126,30 @@ authRoutes.post('/register', async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: t(req, 'registerFailed') });
+  }
+});
+
+authRoutes.post('/password-reset/request', async (req, res) => {
+  const parsed = passwordResetRequestSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json(formatZodError(parsed.error));
+
+  void requestPasswordReset(parsed.data.email).catch(() => {
+    console.error('[password-reset] request-failed');
+  });
+  return res.json({ message: t(req, 'passwordResetRequestAccepted') });
+});
+
+authRoutes.post('/password-reset/confirm', async (req, res) => {
+  const parsed = passwordResetConfirmSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json(formatZodError(parsed.error));
+
+  try {
+    const reset = await resetPassword(parsed.data.email, parsed.data.code, parsed.data.password);
+    if (!reset) return res.status(400).json({ message: t(req, 'passwordResetInvalid') });
+    return res.json({ message: t(req, 'passwordResetSuccess') });
+  } catch (error) {
+    console.error('[password-reset] confirm-failed', error);
+    return res.status(400).json({ message: t(req, 'passwordResetInvalid') });
   }
 });
 

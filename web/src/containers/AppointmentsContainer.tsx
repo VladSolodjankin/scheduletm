@@ -354,6 +354,7 @@ export function AppointmentsContainer() {
     lastName: string;
     phone: string;
     email: string;
+    recurrence?: { frequency: 'daily' | 'weekly'; occurrences: number };
   }) => {
     if (!accessToken) {
       return;
@@ -382,6 +383,7 @@ export function AppointmentsContainer() {
           lastName: payload.lastName,
           phone: payload.phone,
           email: payload.email,
+          ...(payload.recurrence ? { recurrence: payload.recurrence } : {}),
         }, {
           headers: authHeaders(accessToken),
         });

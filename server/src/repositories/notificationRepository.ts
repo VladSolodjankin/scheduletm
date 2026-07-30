@@ -1,7 +1,9 @@
 import { db } from '../db/knex.js';
+import { createToken } from '../utils/crypto.js';
 
 const DEFAULT_MAX_ATTEMPTS = 3;
 const RETRY_BACKOFF_MINUTES = [5, 15, 30] as const;
+const PROCESSING_LEASE_MS = 15 * 60 * 1000;
 
 export type NotificationLogRecord = {
   id: number;
@@ -110,66 +112,119 @@ export async function upsertNotificationJob(input: {
 export async function claimNotificationForDelivery(input: {
   notificationId: number;
   now?: Date;
-}): Promise<boolean> {
+}): Promise<string | null> {
   const now = input.now ?? new Date();
-  const updated = await db('notifications')
+  const staleBefore = new Date(now.getTime() - PROCESSING_LEASE_MS);
+  const processingToken = createToken();
+  const [claimed] = await db('notifications')
     .where('id', input.notificationId)
-    .whereIn('status', ['pending', 'retry'])
     .where('attempts', '<', db.ref('max_attempts'))
     .andWhere((builder) => {
-      builder.whereNull('next_retry_at').orWhere('next_retry_at', '<=', now);
+      builder
+        .where((available) => {
+          available
+            .whereIn('status', ['pending', 'retry'])
+            .andWhere((due) => {
+              due.whereNull('next_retry_at').orWhere('next_retry_at', '<=', now);
+            });
+        })
+        .orWhere((stale) => {
+          stale
+            .where('status', 'processing')
+            .andWhere('updated_at', '<=', staleBefore);
+        });
     })
     .update({
       status: 'processing',
-      updated_at: db.fn.now(),
-    });
+      processing_token: processingToken,
+      updated_at: now,
+    })
+    .returning<{ processing_token: string }[]>('processing_token');
+
+  return claimed?.processing_token ?? null;
+}
+
+export async function heartbeatNotificationProcessing(input: {
+  notificationId: number;
+  processingToken: string;
+  now?: Date;
+}): Promise<boolean> {
+  const updated = await db('notifications')
+    .where({
+      id: input.notificationId,
+      status: 'processing',
+      processing_token: input.processingToken,
+    })
+    .update({ updated_at: input.now ?? db.fn.now() });
 
   return updated > 0;
 }
 
 export async function markNotificationSent(input: {
   notificationId: number;
+  processingToken: string;
   recipientEmail: string;
   sentAt?: Date;
-}): Promise<void> {
-  await db('notifications')
-    .where('id', input.notificationId)
+}): Promise<boolean> {
+  const updated = await db('notifications')
+    .where({
+      id: input.notificationId,
+      status: 'processing',
+      processing_token: input.processingToken,
+    })
     .update({
       status: 'sent',
+      processing_token: null,
       sent_at: input.sentAt ?? db.fn.now(),
       recipient_email: input.recipientEmail,
       last_error: null,
       next_retry_at: null,
       updated_at: db.fn.now(),
     });
+
+  return updated > 0;
 }
 
 export async function markNotificationDeliveryFailure(input: {
   notificationId: number;
+  processingToken: string;
   error: string;
   now?: Date;
-}): Promise<void> {
+}): Promise<boolean> {
   const now = input.now ?? new Date();
-  const current = await db('notifications')
-    .where('id', input.notificationId)
-    .first<{ attempts: number; max_attempts: number }>(['attempts', 'max_attempts']);
+  return db.transaction(async (trx) => {
+    const current = await trx('notifications')
+      .where({
+        id: input.notificationId,
+        status: 'processing',
+        processing_token: input.processingToken,
+      })
+      .forUpdate()
+      .first<{ attempts: number; max_attempts: number }>(['attempts', 'max_attempts']);
 
-  if (!current) {
-    return;
-  }
+    if (!current) {
+      return false;
+    }
 
-  const nextAttempts = current.attempts + 1;
-  const exhausted = nextAttempts >= current.max_attempts;
+    const nextAttempts = current.attempts + 1;
+    const exhausted = nextAttempts >= current.max_attempts;
+    const updated = await trx('notifications')
+      .where({
+        id: input.notificationId,
+        status: 'processing',
+        processing_token: input.processingToken,
+      })
+      .update({
+        attempts: nextAttempts,
+        status: exhausted ? 'failed' : 'retry',
+        processing_token: null,
+        last_error: input.error,
+        next_retry_at: exhausted ? null : computeNextRetryAt(now, nextAttempts),
+        updated_at: db.fn.now(),
+      });
 
-  await db('notifications')
-    .where('id', input.notificationId)
-    .update({
-      attempts: nextAttempts,
-      status: exhausted ? 'failed' : 'retry',
-      last_error: input.error,
-      next_retry_at: exhausted ? null : computeNextRetryAt(now, nextAttempts),
-      updated_at: db.fn.now(),
-    });
+    return updated > 0;
+  });
 }
 
 export async function insertSentNotification(input: {
@@ -211,6 +266,7 @@ export async function insertSentNotification(input: {
     .update({
       attempts: 1,
       status: 'sent',
+      processing_token: null,
       sent_at: db.fn.now(),
       recipient_email: input.recipientEmail,
       next_retry_at: null,
@@ -341,6 +397,7 @@ export async function resetNotificationForResend(input: {
 
   const updated = await query.update({
     status: 'pending',
+    processing_token: null,
     attempts: 0,
     last_error: null,
     next_retry_at: db.fn.now(),

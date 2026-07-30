@@ -41,8 +41,7 @@ async function loginViaApi(page, { email, password }) {
   });
 
   if (!response.ok()) {
-    const responseText = (await response.text()).slice(0, 300);
-    throw new Error(`E2E API login failed (${response.status()}) at ${endpoint}: ${responseText || 'empty response'}`);
+    throw new Error(`E2E API login failed (${response.status()}) at ${endpoint}`);
   }
 
   const payload = await response.json();

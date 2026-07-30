@@ -33,7 +33,7 @@ describe('web integration contracts: appointments lifecycle + users CRUD + RBAC'
 
     assert.match(usersContainer, /await apiClient\.post<ManagedUserItem>\('\/api\/users', payload/);
     assert.match(usersContainer, /await apiClient\.patch<ManagedUserItem>\(`\/api\/users\/\$\{editingUser\.id\}`, payload/);
-    assert.match(usersContainer, /await apiClient\.delete<ManagedUserItem>\(`\/api\/users\/\$\{item\.id\}`/);
+    assert.match(usersContainer, /await apiClient\.delete<ManagedUserDeleteImpact>\(`\/api\/users\/\$\{item\.id\}`/);
   });
 
   it('covers owner/admin/specialist/client RBAC gates in web UI containers', async () => {
@@ -53,7 +53,7 @@ describe('web integration contracts: appointments lifecycle + users CRUD + RBAC'
     assert.match(mainLayout, /user\?\.role === WebUserRole\.Owner[\s\S]*?\{ to: '\/error-logs'/);
 
     assert.match(usersContainer, /const canManageUsers = user\?\.role === 'owner' \|\| user\?\.role === 'admin' \|\| user\?\.role === 'specialist'/);
-    assert.match(specialistsContainer, /const canManageSpecialists = user\?\.role === 'owner' \|\| user\?\.role === 'admin'/);
+    assert.match(specialistsContainer, /const canManageSpecialists = user\?\.role === 'product_owner' \|\| user\?\.role === 'owner' \|\| user\?\.role === 'admin'/);
     assert.match(appointmentsContainer, /const canManageAll = user\?\.role === WebUserRole\.Owner \|\| user\?\.role === WebUserRole\.Admin/);
   });
 });

@@ -2,5 +2,6 @@ node_modules
 dist
 .idea
 .env
+web/.dev.env
 playwright-report
 test-results

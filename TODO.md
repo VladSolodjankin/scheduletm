@@ -1,69 +1,57 @@
-# TODO (global)
+# TODO
 
-Глобальный roadmap только для кросс-модульных задач.
+Актуальный backlog для `web` и `server`. `bot` и инфраструктура Railway не входят в текущий этап.
 
-## Приоритет P0
+## Реализовано
 
-- [ ] Настроить единый CI pipeline для monorepo: install, lint/typecheck, test, build.
-- [ ] Добавить интеграционные web↔server тесты (без API моков) в отдельный CI job.
-- [x] Добавить базовый integration-набор ключевой бизнес-логики в `server/tests/business.integration.test.ts` (DB-backed, без моков доменных сервисов).
-- [ ] Зафиксировать политику миграций и backup/restore для production БД.
+- [x] Tenant RBAC: `owner` управляет только своим пространством, `admin` является делегированным администратором аккаунта.
+- [x] Глобальная роль `product_owner` с доступом ко всем аккаунтам; роль нельзя назначить через обычный Users API/UI.
+- [x] Регистрация создаёт владельца пространства с ролью `owner`.
+- [x] Создание, редактирование, деактивация, удаление пользователей и повторная отправка invite.
+- [x] Корректное сохранение и предзаполнение `first_name`/`last_name` в registration/invite flow.
+- [x] Locale и timezone редактируются только в User settings.
+- [x] Client notification settings доступны самому клиенту без произвольного `clientId`.
+- [x] Public Page Builder использует server API, draft/publish snapshots, optimistic concurrency и глобально уникальный slug.
+- [x] Текущий slug опубликованной Public Page является каноническим публичным идентификатором; отдельный account slug не создаётся.
+- [x] Публичное бронирование по slug с выбором специалиста и услуги, query preselection и автоматическим выбором единственного варианта.
+- [x] Browser timezone передаётся автоматически; backend применяет timezone специалиста как fallback.
+- [x] Публичное бронирование проверяет рабочие дни/часы, шаг слота, прошедшее время, внешний календарь и DB overlap.
+- [x] Публичный статус встречи защищён фамилией специалиста, rate limit и одинаковым `404`; персональные данные клиента не возвращаются.
+- [x] Простая recurrence `daily`/`weekly`, 2–52 встречи, атомарное создание через `appointment_groups`.
+- [x] `defaultMeetingLink` специалиста и приоритет explicit link → Zoom → default link → offline address.
+- [x] Appointment audit поддерживает actor context, action/actor/date filters и bounded event limit.
+- [x] Appointment audit events хранятся 365 дней и автоматически очищаются раз в сутки.
+- [x] Notification retry/backoff, idempotency, token-fenced lease и heartbeat.
+- [x] `/health` liveness, `/ready` database readiness, graceful shutdown и безопасные JSON error responses.
+- [x] Простые server unit/smoke тесты и runtime unit-тесты Public Page normalize/migrate/undo-redo.
 
-### P0 — Next для автотестов web (UI e2e + интеграция с dev БД)
+## Перед выпуском текущих изменений
 
-- [ ] Подготовить выделенный e2e-account seed для dev БД (owner/admin/specialist/client) и reset-скрипт тестовых данных между прогонами.
-- [ ] Подключить запуск `web test:e2e:ui` в CI на nightly/scheduled pipeline c `E2E_BASE_URL` и роль-специфичными `E2E_*` credentials.
-- [ ] Добавить UI e2e: appointments lifecycle для owner/admin/specialist/client (create/edit/reschedule/cancel).
-- [ ] Добавить UI e2e: поздняя отмена appointment с проверкой grace period + refund/no-refund текстов подтверждения.
-- [ ] Добавить UI e2e: users management (create/edit/deactivate + resend invite).
-- [ ] Добавить UI e2e: role permissions matrix (Owner/Admin/Specialist/Client) по доступу к меню, страницам и критичным действиям.
+- [ ] Применить новые forward-only migrations на целевой PostgreSQL через `npm run -w @scheduletm/server migrate:latest`.
+- [ ] Проверить migrations и Public Page repository на чистой/тестовой PostgreSQL.
+- [ ] Выполнить локальный или staging runtime smoke: auth, RBAC, users, settings, appointments, public publish, booking и status.
+- [ ] Выполнить финальные `server`/`web` typecheck, tests и production builds.
+- [ ] Устранить или документировать оставшиеся production dependency advisories после совместимого обновления lock-файла.
 
-## Приоритет P1
+## Следующий этап
 
-- [x] Закрыть CSRF protection в refresh-cookie потоке (`server`).
-- [x] Добавить error tracking для `web` и `server`.
-- [ ] Довести audit/events для appointments (фильтрация, retention, actor context).
+- [ ] Complete the canonical browser E2E backlog in
+  [`web/tests/e2e/TODO.md`](./web/tests/e2e/TODO.md). Iteration 1 is additive
+  admin coverage; multi-role and negative coverage remain iteration 2.
+- [ ] Media upload/storage pipeline для Public Pages.
+- [ ] Дополнительные meeting/calendar providers — только после отдельного продуктового выбора.
+- [ ] Управление всей recurrence-серией, исключения и monthly rules.
 
-### P1 — Zoom Beta compliance (2026-05-02)
+## Отложенный product backlog
 
-- [~] Подготовить пакет доказательств для Zoom Beta review: SSDLC, SAST, DAST, Privacy Policy + любые 3 дополнительных security-policy документа. *(добавлены redacted docs/шаблоны, нужен фактический CI evidence)*
-- [x] Вынести compliance-артефакты в `docs/compliance/zoom-beta/` (redacted, без секретов) и добавить индекс evidence.
-- [ ] Опубликовать явные public legal/security contact channels: support/privacy/security email или page, и использовать их в `docs/compliance/*.md` вместо общих формулировок про `public website or support workflow`.
-- [ ] Довести public legal surface в продукте: добавить реальные ссылки на privacy/security pages в web UI и проверить, что legal footer/entrypoints не содержат пустых `Link`-элементов.
-- [ ] Финализировать policy wording после публикации legal channels: privacy requests, security disclosure channel, subprocessors notice, notice about policy updates.
-- [~] Добавить CI-прогоны/отчеты для SAST и DAST на staging, с датой и статусом high/critical findings. *(добавлен GitHub Actions workflow, нужен реальный запуск и артефакты)*
-- [~] Зафиксировать evidence поддержки TLS 1.2+ для всех публичных web/server endpoint'ов, связанных с Zoom OAuth/API. *(добавлен GitHub Actions TLS job, нужен успешный прогон и артефакты)*
+- [ ] Старые-slug redirects и временное резервирование slug.
+- [ ] Public Page analytics и conversions.
+- [ ] Custom domains.
+- [ ] Тарифная/конфигурируемая квота вместо фиксированного лимита страниц.
+- [ ] Scheduled publish, A/B testing, saved themes и безопасные add-ons.
 
-### P1 — Новые задачи продукта (из заметок Vladislav, 2026-04-27 — 2026-04-28)
+## Связанные документы
 
-- [ ] Интеграции встреч: добавить Google/Outlook/iCal календари, Zoom, Телемост и другие meeting providers.
-- [x] Регистрация: улучшить страницу регистрации и добавить дополнительные поля профиля.
-- [x] OTP flow: отправлять 4-значный код подтверждения; после полного ввода OTP автоматически запускать `confirm` и валидацию токена.
-- [x] RBAC/UI cleanup: для ролей без доступа полностью скрывать недоступные секции (не `disable`), в том числе `System settings` для `admin`; провести аудит остальных экранов.
-- [ ] Настройки локали/таймзоны: убрать дублирование между `Account settings` и `User settings`, оставить только в `User settings`.
-- [ ] Owner user management: дать owner возможность создавать пользователей в других `account_id`; добавить dropdown `account_id — account_name — company_name`.
-- [ ] Users list: починить удаление пользователя по иконке delete (запись должна исчезать из списка и в БД).
-- [ ] Verify email/create account: корректно подтягивать и предзаполнять `first_name`/`last_name`; не подставлять Telegram/email в неверные поля.
-- [ ] Client notifications: добавить отдельную страницу настроек уведомлений для клиента (вкл/выкл и каналы доставки).
-- [ ] Public appointment status: добавить страницу проверки статуса appointment для незарегистрированного пользователя по `appointment_id + specialist_last_name`.
-- [ ] Public booking by account slug: добавить страницу создания appointment без регистрации по ссылке вида `/[account_company_id]/login`.
-- [ ] Account slug management: добавить для admin/owner настройку `account_company_name` и уникального `account_company_id`; по умолчанию генерировать доступный slug.
-- [ ] Appointments recurrence: добавить `frequency` при создании appointment.
-- [ ] Account settings (admin): добавить поле имени компании.
-- [ ] Вынести настройку публичного URL/slug страницы в отдельный setup окружения.
-
-### P1 — Next для стабилизации тестов
-
-- [ ] Устранить flaky-risk в UI e2e: фиксировать timezone/locale, добавить deterministic test data naming и cleanup hooks.
-- [ ] Добавить smoke-набор для notification logs и error logs с role-aware проверками видимости страниц.
-- [ ] Добавить негативные UI e2e сценарии: 401/403, network-failure fallback, validation errors в ключевых формах.
-
-## Приоритет P2
-
-- [ ] Доработать meeting link strategy (`defaultMeetingLink` + per-appointment override).
-- [ ] Добавить retry/backoff policy для внешних API и идемпотентность уведомлений.
-
-## Модульные roadmap
-
-- Bot: [`bot/TODO.md`](./bot/TODO.md)
-- Web/Server детали: см. [`web/PROJECT_MAP.md`](./web/PROJECT_MAP.md) и [`server/PROJECT_MAP.md`](./server/PROJECT_MAP.md)
+- Public Page Builder: [`docs/public-page-builder/README.md`](./docs/public-page-builder/README.md)
+- Детальный Public Pages backlog: [`docs/public-page-builder/TODO.md`](./docs/public-page-builder/TODO.md)
+- Production checklist: [`PRODUCTION_READINESS_CHECKLIST.md`](./PRODUCTION_READINESS_CHECKLIST.md)

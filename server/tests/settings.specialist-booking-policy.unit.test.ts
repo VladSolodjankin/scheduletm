@@ -26,10 +26,21 @@ describe('specialist booking policy unit', () => {
     expect(parsed.success).toBe(false);
   });
 
-  it('grants specialist booking policy access only to owner/admin/specialist', () => {
+  it('grants specialist booking policy access to product owner and account managers', () => {
+    expect(canManageSpecialistBookingPolicies(WebUserRole.ProductOwner)).toBe(true);
     expect(canManageSpecialistBookingPolicies(WebUserRole.Owner)).toBe(true);
     expect(canManageSpecialistBookingPolicies(WebUserRole.Admin)).toBe(true);
     expect(canManageSpecialistBookingPolicies(WebUserRole.Specialist)).toBe(true);
     expect(canManageSpecialistBookingPolicies(WebUserRole.Client)).toBe(false);
+  });
+});
+
+describe('specialist default meeting link schema', () => {
+  it('accepts an HTTPS default link and allows clearing it', async () => {
+    const { specialistUpdateSchema } = await import('../src/config/schemas.js');
+    expect(specialistUpdateSchema.safeParse({
+      defaultMeetingLink: 'https://meet.example.com/room',
+    }).success).toBe(true);
+    expect(specialistUpdateSchema.safeParse({ defaultMeetingLink: '' }).success).toBe(true);
   });
 });

@@ -34,6 +34,14 @@ export async function findAccountById(id: number): Promise<{ id: number; name: s
   return account ?? null;
 }
 
+export async function isAccountActive(id: number): Promise<boolean> {
+  const account = await db('accounts')
+    .where({ id, is_active: true })
+    .first<{ id: number }>('id');
+
+  return Boolean(account);
+}
+
 export async function scheduleAccountDeletion(id: number, deleteScheduledAt: Date): Promise<void> {
   await db('accounts').where({ id }).update({ delete_scheduled_at: deleteScheduledAt });
 }

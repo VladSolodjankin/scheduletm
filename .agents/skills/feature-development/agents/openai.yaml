@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Development"
+  short_description: "Coordinate scoped feature delivery"
+  default_prompt: "Use $feature-development to implement this feature with the smallest relevant multi-agent pipeline."

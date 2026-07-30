@@ -1,0 +1,30 @@
+export const validPublicPageDocument = {
+  schemaVersion: 1 as const,
+  id: 'page-1',
+  slug: 'valid-page',
+  status: 'draft' as const,
+  profile: { displayName: 'Name', description: '', logoMediaId: null, avatarMediaId: null },
+  theme: {
+    id: 'minimal',
+    name: 'Minimal',
+    colors: { background: '#fff', surface: '#fff', text: '#111', primary: '#00f' },
+  },
+  sections: [{
+    id: 'section-1',
+    name: '',
+    visible: true,
+    layout: 'single' as const,
+    blocks: [{
+      id: 'block-1',
+      type: 'text',
+      name: '',
+      visible: true,
+      content: {},
+      design: { backgroundColor: null, textColor: null },
+    }],
+  }],
+  seo: { title: 'Title', description: 'Description', imageMediaId: null },
+  media: [],
+  createdAt: '2026-07-28T00:00:00.000Z',
+  updatedAt: '2026-07-28T00:00:00.000Z',
+};

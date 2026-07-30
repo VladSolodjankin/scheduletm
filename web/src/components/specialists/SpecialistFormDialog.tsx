@@ -30,6 +30,8 @@ type SpecialistFormDialogProps = {
   slotDurationMinLabel: string;
   slotStepMinLabel: string;
   defaultSessionContinuationMinLabel: string;
+  defaultMeetingLinkLabel: string;
+  defaultMeetingLinkInvalidText: string;
   availableWebUsers: Array<{ id: number; email: string }>;
   onClose: () => void;
   onSubmit: (payload: {
@@ -43,6 +45,7 @@ type SpecialistFormDialogProps = {
     slotDurationMin: number;
     slotStepMin: number;
     defaultSessionContinuationMin: number;
+    defaultMeetingLink: string;
   }) => Promise<void> | void;
 };
 
@@ -62,6 +65,8 @@ export function SpecialistFormDialog({
   slotDurationMinLabel,
   slotStepMinLabel,
   defaultSessionContinuationMinLabel,
+  defaultMeetingLinkLabel,
+  defaultMeetingLinkInvalidText,
   availableWebUsers,
   onClose,
   onSubmit,
@@ -77,6 +82,21 @@ export function SpecialistFormDialog({
   const [slotStepMin, setSlotStepMin] = useState(30);
   const [defaultSessionContinuationMin, setDefaultSessionContinuationMin] =
     useState(60);
+  const [defaultMeetingLink, setDefaultMeetingLink] = useState("");
+
+  const isDefaultMeetingLinkValid = (() => {
+    const value = defaultMeetingLink.trim();
+    if (!value) {
+      return true;
+    }
+
+    try {
+      const url = new URL(value);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  })();
 
   useEffect(() => {
     if (!open) {
@@ -96,13 +116,14 @@ export function SpecialistFormDialog({
       setDefaultSessionContinuationMin(
         editingSpecialist?.defaultSessionContinuationMin ?? 60,
       );
+      setDefaultMeetingLink(editingSpecialist?.defaultMeetingLink ?? "");
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
   }, [editingSpecialist, open]);
 
   const handleSubmit = async () => {
-    if (editingSpecialist && !name.trim()) {
+    if (editingSpecialist && (!name.trim() || !isDefaultMeetingLinkValid)) {
       return;
     }
 
@@ -122,6 +143,7 @@ export function SpecialistFormDialog({
             slotDurationMin,
             slotStepMin,
             defaultSessionContinuationMin,
+            defaultMeetingLink: defaultMeetingLink.trim(),
           }
         : {
             userId: selectedUserId,
@@ -133,6 +155,7 @@ export function SpecialistFormDialog({
             slotDurationMin,
             slotStepMin,
             defaultSessionContinuationMin,
+            defaultMeetingLink: "",
           },
     );
   };
@@ -151,7 +174,7 @@ export function SpecialistFormDialog({
           <AppButton
             onClick={() => void handleSubmit()}
             isLoading={isSaving}
-            disabled={editingSpecialist ? !name.trim() : !selectedUserId}
+            disabled={editingSpecialist ? !name.trim() || !isDefaultMeetingLinkValid : !selectedUserId}
           >
             {saveLabel}
           </AppButton>
@@ -259,6 +282,20 @@ export function SpecialistFormDialog({
               setDefaultSessionContinuationMin(Number(e.target.value))
             }
           />
+          {editingSpecialist ? (
+            <AppTextField
+              margin="none"
+              fullWidth
+              label={defaultMeetingLinkLabel}
+              type="url"
+              value={defaultMeetingLink}
+              error={!isDefaultMeetingLinkValid}
+              helperText={!isDefaultMeetingLinkValid ? defaultMeetingLinkInvalidText : undefined}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                setDefaultMeetingLink(event.target.value)
+              }
+            />
+          ) : null}
         </FormContainer>
     </AppDialog>
   );

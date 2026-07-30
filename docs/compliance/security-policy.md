@@ -27,10 +27,11 @@ Meetli is operated according to the following principles:
 
 ## 3. Access Control
 
-Meetli uses role-based access control with the roles `owner`, `admin`, `specialist`, and `client`.
+Meetli uses role-based access control with the roles `product_owner`, `owner`, `admin`, `specialist`, and `client`.
 
-- `owner` has the highest administrative scope, including system-level settings.
-- `admin` manages account-level operations.
+- `product_owner` has global administrative scope, including system-level settings.
+- `owner` owns and manages one customer account.
+- `admin` manages delegated operations within one customer account.
 - `specialist` has limited operational access to assigned workflows.
 - `client` access is restricted to the client's own profile and appointments.
 

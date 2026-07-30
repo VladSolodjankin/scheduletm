@@ -46,6 +46,16 @@ export const loginSchema = z.object({
   timezone: timezoneSchema.optional(),
 });
 
+export const passwordResetRequestSchema = z.object({
+  email: z.string().trim().email(v.emailInvalid).max(254, v.emailTooLong),
+});
+
+export const passwordResetConfirmSchema = z.object({
+  email: z.string().trim().email(v.emailInvalid).max(254, v.emailTooLong),
+  code: z.string().trim().regex(/^\d{4}$/, v.passwordResetCodeInvalid),
+  password: passwordSchema,
+});
+
 export const verifyEmailSchema = z.object({
   email: z
     .string()
@@ -109,8 +119,6 @@ export const systemSettingsSchema = z.object({
 }).partial();
 
 export const accountSettingsSchema = z.object({
-  timezone: timezoneSchema,
-  locale: z.string().min(2, v.localeRequired).max(16, v.localeTooLong),
   defaultMeetingDuration: z.coerce
     .number()
     .int(v.meetingDurationMustBeInteger)
@@ -214,6 +222,7 @@ export const specialistUpdateSchema = z.object({
   slotDurationMin: z.coerce.number().int().min(15).max(480).optional(),
   slotStepMin: z.coerce.number().int().min(5).max(240).optional(),
   defaultSessionContinuationMin: z.coerce.number().int().min(15).max(480).optional(),
+  defaultMeetingLink: z.string().trim().url(v.appointmentLinkInvalid).max(2048).optional().or(z.literal('')),
 }).refine((value) => Object.keys(value).length > 0, {
   message: v.atLeastOneFieldToUpdate,
 });
@@ -240,6 +249,10 @@ export const appointmentCreateSchema = z.object({
   meetingProvider: appointmentMeetingProviderSchema.optional(),
   saveClientMeetingPreference: z.boolean().optional(),
   notes: z.string().trim().max(2000, v.appointmentNotesTooLong).optional(),
+  recurrence: z.object({
+    frequency: z.enum(['daily', 'weekly']),
+    occurrences: z.coerce.number().int().min(2).max(52),
+  }).strict().optional(),
 }).merge(appointmentClientSchema).superRefine((value, ctx) => {
   if (!value.firstName) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['firstName'], message: v.appointmentFirstNameRequired });

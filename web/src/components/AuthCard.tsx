@@ -36,8 +36,10 @@ type AuthCardProps = {
   requiredMessage: string;
   phoneInvalidMessage: string;
   passwordMinLengthMessage: string;
+  forgotPasswordText?: string;
   onSubmit: (values: AuthFormValues) => Promise<void> | void;
   onSwitch: () => void;
+  onForgotPassword?: () => void;
 };
 
 export function AuthCard({
@@ -56,8 +58,10 @@ export function AuthCard({
   requiredMessage,
   phoneInvalidMessage,
   passwordMinLengthMessage,
+  forgotPasswordText,
   onSubmit,
-  onSwitch
+  onSwitch,
+  onForgotPassword
 }: AuthCardProps) {
   const { control, handleSubmit, setError, clearErrors } = useForm<AuthFormValues>({
     defaultValues: {
@@ -231,6 +235,17 @@ export function AuthCard({
             />
           )}
           />
+
+        {isLogin && forgotPasswordText && onForgotPassword && (
+          <AppButton
+            type="button"
+            variant="text"
+            onClick={onForgotPassword}
+            sx={{ alignSelf: 'flex-end', minHeight: 0, py: 0 }}
+          >
+            {forgotPasswordText}
+          </AppButton>
+        )}
 
         <AppButton type="submit" variant="contained" isLoading={isSubmitting} sx={{ minHeight: 46 }}>
           {submitText}

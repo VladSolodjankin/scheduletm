@@ -110,11 +110,12 @@ export function SettingsContainer() {
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const zoomOauthStatus = useMemo(() => searchParams.get('zoom_oauth'), [searchParams]);
-  const canManageSystemSettings = user?.role === 'owner';
+  const canManageSystemSettings = user?.role === 'product_owner';
   const canManageAccountSettings = user?.role === 'owner' || user?.role === 'admin';
   const canManageSpecialistBookingPolicy =
     user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
   const isOwner = user?.role === 'owner';
+  const isClient = user?.role === 'client';
   const canSelfDeleteUser = Boolean(user && !canManageAccountSettings);
 
   const filteredScopeSpecialists = useMemo(() => (
@@ -127,11 +128,11 @@ export function SettingsContainer() {
     ...(canManageSystemSettings ? ['system'] : []),
     ...(canManageAccountSettings ? ['account'] : []),
     ...(canManageSpecialistBookingPolicy ? ['specialistPolicy'] : []),
-    ...(canManageAccountSettings ? ['notifications'] : []),
+    ...(canManageAccountSettings || isClient ? ['notifications'] : []),
     'user',
     'integrations',
     'password'
-  ] as const), [canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings]);
+  ] as const), [canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, isClient]);
 
   const activeTab = useMemo(() => {
     if (!tab) {
@@ -238,6 +239,14 @@ export function SettingsContainer() {
           setAccountNotificationDefaults(notificationDefaultsResponse.data.items);
         }
 
+        if (isClient) {
+          const notificationResponse = await apiClient.get<{ items: AccountNotificationDefault[] }>(
+            '/api/settings/client-notification-settings',
+            { headers: authHeaders(accessToken) },
+          );
+          setAccountNotificationDefaults(notificationResponse.data.items);
+        }
+
         if (canManageSystemSettings) {
           const systemResponse = await apiClient.get<SystemSettings>('/api/settings/system', {
             headers: authHeaders(accessToken)
@@ -284,7 +293,7 @@ export function SettingsContainer() {
     };
 
     void load();
-  }, [accessToken, canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, isOwner, navigate, selectedAccountId, selectedSpecialistId, t, user?.role]);
+  }, [accessToken, canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, isClient, isOwner, navigate, selectedAccountId, selectedSpecialistId, t, user?.role]);
 
   const saveSystemSettings = async (nextSettings: SystemSettings) => {
     if (!accessToken || !canManageSystemSettings) {
@@ -312,16 +321,16 @@ export function SettingsContainer() {
   };
 
   const saveAccountNotificationDefaults = async (items: AccountNotificationDefault[]) => {
-    if (!accessToken || !canManageAccountSettings) {
+    if (!accessToken || (!canManageAccountSettings && !isClient)) {
       return;
     }
 
     setIsSavingNotificationDefaults(true);
     try {
       const response = await apiClient.put<{ items: AccountNotificationDefault[] }>(
-        '/api/settings/account-notification-defaults',
+        isClient ? '/api/settings/client-notification-settings' : '/api/settings/account-notification-defaults',
         { items },
-        { headers: authHeaders(accessToken), params: selectedAccountId ? { accountId: selectedAccountId } : undefined }
+        { headers: authHeaders(accessToken), params: !isClient && selectedAccountId ? { accountId: selectedAccountId } : undefined }
       );
       setAccountNotificationDefaults(response.data.items);
       setError('');
@@ -687,6 +696,7 @@ export function SettingsContainer() {
             accountNotificationDefaults={accountNotificationDefaults}
             canManageSystemSettings={canManageSystemSettings}
             canManageAccountSettings={canManageAccountSettings}
+            canManageClientNotifications={isClient}
             canManageSpecialistBookingPolicy={canManageSpecialistBookingPolicy}
             canSelfDeleteUser={canSelfDeleteUser}
             copy={{

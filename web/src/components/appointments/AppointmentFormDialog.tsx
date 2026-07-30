@@ -44,6 +44,8 @@ type AppointmentFormState = EditFormState & {
   lastName: string;
   phone: string;
   email: string;
+  recurrenceFrequency: 'none' | 'daily' | 'weekly';
+  recurrenceOccurrences: number;
 };
 
 type Props = {
@@ -80,6 +82,7 @@ type Props = {
     lastName: string;
     phone: string;
     email: string;
+    recurrence?: { frequency: 'daily' | 'weekly'; occurrences: number };
   }) => Promise<void>;
 };
 
@@ -99,6 +102,8 @@ const EMPTY_FORM: AppointmentFormState = {
   lastName: '',
   phone: '',
   email: '',
+  recurrenceFrequency: 'none',
+  recurrenceOccurrences: 2,
 };
 
 const createResponsiveFieldGridSx = (columns: number) => ({
@@ -159,6 +164,8 @@ export function AppointmentFormDialog({
         lastName: editingItem.client?.lastName ?? '',
         phone: editingItem.client?.phone ?? '',
         email: editingItem.client?.email ?? '',
+        recurrenceFrequency: 'none',
+        recurrenceOccurrences: 2,
       } satisfies AppointmentFormState;
     }
 
@@ -184,6 +191,8 @@ export function AppointmentFormDialog({
       lastName: '',
       phone: '',
       email: '',
+      recurrenceFrequency: 'none',
+      recurrenceOccurrences: 2,
     } satisfies AppointmentFormState;
   }, [editingItem, initialScheduledAtIso, selectedSlotStepMin, selectedSpecialistId, specialists]);
 
@@ -224,6 +233,7 @@ export function AppointmentFormDialog({
   const startTimeValue = useWatch({ control, name: 'startTime' });
   const endTimeValue = useWatch({ control, name: 'endTime' });
   const meetingProviderValue = useWatch({ control, name: 'meetingProvider' });
+  const recurrenceFrequency = useWatch({ control, name: 'recurrenceFrequency' });
 
   useEffect(() => {
     if (!open || editingItem || !startDateValue || !startTimeValue) {
@@ -259,6 +269,9 @@ export function AppointmentFormDialog({
       lastName: form.lastName,
       phone: form.phone,
       email: form.email,
+      ...(!editingItem && form.recurrenceFrequency !== 'none'
+        ? { recurrence: { frequency: form.recurrenceFrequency, occurrences: form.recurrenceOccurrences } }
+        : {}),
     });
   });
 
@@ -376,6 +389,39 @@ export function AppointmentFormDialog({
               )}
             />
           </Box>
+          {!editingItem && (
+            <Box sx={createResponsiveFieldGridSx(2)}>
+              <Controller
+                name="recurrenceFrequency"
+                control={control}
+                render={({ field }: any) => (
+                  <FormControl fullWidth>
+                    <InputLabel id="recurrence-frequency-label">{t('appointments.recurrence')}</InputLabel>
+                    <Select {...field} labelId="recurrence-frequency-label" label={t('appointments.recurrence')}>
+                      <MenuItem value="none">{t('appointments.recurrenceNone')}</MenuItem>
+                      <MenuItem value="daily">{t('appointments.recurrenceDaily')}</MenuItem>
+                      <MenuItem value="weekly">{t('appointments.recurrenceWeekly')}</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
+              />
+              {recurrenceFrequency !== 'none' && (
+                <Controller
+                  name="recurrenceOccurrences"
+                  control={control}
+                  rules={{ min: 2, max: 52 }}
+                  render={({ field }: any) => (
+                    <AppRhfTextField
+                      field={{ ...field, onChange: (event: React.ChangeEvent<HTMLInputElement>) => field.onChange(Number(event.target.value)) }}
+                      label={t('appointments.recurrenceOccurrences')}
+                      type="number"
+                      slotProps={{ htmlInput: { min: 2, max: 52 } }}
+                    />
+                  )}
+                />
+              )}
+            </Box>
+          )}
           <Box sx={createResponsiveFieldGridSx(2)}>
             <Controller name="startDate" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Start date" type="date" />} />
             <Box sx={createResponsiveFieldGridSx(2)}>

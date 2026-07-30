@@ -3,8 +3,10 @@ import { WebUserRole } from '../src/types/webUserRole.js';
 import { getAppointments } from '../src/services/appointmentService.js';
 
 const listAppointmentsAllAccountsMock = vi.hoisted(() => vi.fn());
+const listAppointmentsMock = vi.hoisted(() => vi.fn());
 const listAppointmentEventsByAppointmentIdsMock = vi.hoisted(() => vi.fn());
 const listSpecialistsAllAccountsMock = vi.hoisted(() => vi.fn());
+const listSpecialistsByAccountMock = vi.hoisted(() => vi.fn());
 const listClientsByAccountMock = vi.hoisted(() => vi.fn());
 const listExternalBusySlotsMock = vi.hoisted(() => vi.fn());
 
@@ -15,6 +17,7 @@ vi.mock('../src/repositories/appointmentRepository.js', async () => {
   return {
     ...actual,
     listAppointmentsAllAccounts: listAppointmentsAllAccountsMock,
+    listAppointments: listAppointmentsMock,
     listAppointmentEventsByAppointmentIds: listAppointmentEventsByAppointmentIdsMock,
   };
 });
@@ -26,6 +29,7 @@ vi.mock('../src/repositories/specialistRepository.js', async () => {
   return {
     ...actual,
     listSpecialistsAllAccounts: listSpecialistsAllAccountsMock,
+    listSpecialistsByAccount: listSpecialistsByAccountMock,
   };
 });
 
@@ -52,12 +56,14 @@ vi.mock('../src/services/calendarAvailabilityService.js', async () => {
 describe('appointment events service unit', () => {
   beforeEach(() => {
     listAppointmentsAllAccountsMock.mockReset();
+    listAppointmentsMock.mockReset();
     listAppointmentEventsByAppointmentIdsMock.mockReset();
     listSpecialistsAllAccountsMock.mockReset();
+    listSpecialistsByAccountMock.mockReset();
     listClientsByAccountMock.mockReset();
     listExternalBusySlotsMock.mockReset();
 
-    listAppointmentsAllAccountsMock.mockResolvedValue([
+    const appointments = [
       {
         id: 10,
         account_id: 1,
@@ -77,8 +83,12 @@ describe('appointment events service unit', () => {
         client_phone: '+1000000',
         client_email: 'ivan@example.com',
       },
-    ]);
-    listSpecialistsAllAccountsMock.mockResolvedValue([{ id: 5, name: 'Spec', timezone: 'UTC', slot_step_min: 30 }]);
+    ];
+    const specialists = [{ id: 5, name: 'Spec', timezone: 'UTC', slot_step_min: 30 }];
+    listAppointmentsAllAccountsMock.mockResolvedValue(appointments);
+    listAppointmentsMock.mockResolvedValue(appointments);
+    listSpecialistsAllAccountsMock.mockResolvedValue(specialists);
+    listSpecialistsByAccountMock.mockResolvedValue(specialists);
     listClientsByAccountMock.mockResolvedValue([{ id: 8, username: 'ivan', first_name: 'Ivan', last_name: 'Petrov', phone: '+1000000', email: 'ivan@example.com' }]);
     listExternalBusySlotsMock.mockResolvedValue([]);
   });
@@ -112,6 +122,7 @@ describe('appointment events service unit', () => {
         eventActorWebUserId: 101,
         eventFrom: '2026-04-01T00:00:00.000Z',
         eventTo: '2026-04-30T23:59:59.999Z',
+        eventLimit: 25,
       },
     );
 
@@ -121,6 +132,7 @@ describe('appointment events service unit', () => {
       expect.objectContaining({
         actions: ['notify'],
         actorWebUserId: 101,
+        limit: 25,
       }),
     );
     expect(data.appointments[0].events[0]).toMatchObject({
@@ -132,6 +144,8 @@ describe('appointment events service unit', () => {
         email: 'owner@example.com',
       },
     });
+    expect(listAppointmentsMock).toHaveBeenCalledWith(expect.objectContaining({ accountId: 1 }));
+    expect(listAppointmentsAllAccountsMock).not.toHaveBeenCalled();
   });
 
   it('uses actor email fallback for displayName when first/last names are missing (edge case)', async () => {
@@ -162,5 +176,24 @@ describe('appointment events service unit', () => {
     );
 
     expect(data.appointments[0].events[0].actor.displayName).toBe('admin@example.com');
+  });
+
+  it('uses all-account appointment repositories only for product owners', async () => {
+    listAppointmentEventsByAppointmentIdsMock.mockResolvedValue([]);
+
+    await getAppointments(
+      {
+        id: '100',
+        accountId: 1,
+        email: 'product-owner@example.com',
+        role: WebUserRole.ProductOwner,
+      } as any,
+      {},
+    );
+
+    expect(listAppointmentsAllAccountsMock).toHaveBeenCalledOnce();
+    expect(listSpecialistsAllAccountsMock).toHaveBeenCalledOnce();
+    expect(listAppointmentsMock).not.toHaveBeenCalled();
+    expect(listSpecialistsByAccountMock).not.toHaveBeenCalled();
   });
 });

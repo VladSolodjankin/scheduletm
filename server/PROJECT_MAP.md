@@ -1,36 +1,31 @@
-# PROJECT_MAP: `server/`
+# PROJECT_MAP: server
 
-## Назначение
+Express/PostgreSQL API для web и интеграций.
 
-`server/` — Node.js/Express API для web-приложения и интеграций.
+- `src/app.ts` — Express app, middleware и routes.
+- `src/index.ts` — startup, jobs и graceful shutdown.
+- `src/config/` — env и Zod contracts.
+- `src/routes/` → `src/services/` → `src/repositories/` → Knex/PostgreSQL.
+- `src/policies/` — RBAC.
+- `src/jobs/` — notifications, deletion, unpaid appointments и audit retention.
+- `src/db/migrations/` — forward-only schema changes.
+- `tests/` — unit, route smoke и DB-backed integration tests.
 
-## Структура
+Домены:
 
-- `src/index.ts` — запуск HTTP-сервера.
-- `src/app.ts` — сборка Express app, middleware, routes.
-- `src/config/` — env-конфиг и валидация.
-- `src/routes/` — HTTP endpoints.
-- `src/middlewares/` — auth, rate-limit, guards.
-- `src/services/` — доменная логика.
-- `src/repositories/` — доступ к БД.
-- `src/db/` — миграции/инициализация.
-- `src/i18n/` — локализованные сообщения API (`ru/en`).
-- `tests/` — smoke/integration tests.
+1. Auth и sessions.
+2. Users, specialists и tenant RBAC.
+3. Settings и integrations.
+4. Appointments, recurrence и audit events.
+5. Public Pages, public booking и public appointment status.
+6. Notifications, retry lease и logs.
+7. Error tracking, health/readiness и shutdown.
 
-## Основные доменные модули
+Правила:
 
-1. **Auth** — register/login/refresh/logout, web sessions.
-2. **Users & Specialists** — CRUD и role-based доступ.
-3. **Settings** — system/user настройки.
-4. **Appointments** — lifecycle операций записи.
-5. **Integrations** — Google OAuth + user integrations.
+- tenant data всегда ограничиваются `account_id`;
+- `product_owner` — единственная глобальная роль;
+- время хранится в UTC, пользовательские timezone — IANA;
+- access/refresh отклоняются для inactive/deleted user и inactive account.
 
-## Ключевые правила
-
-- Изоляция данных по `account_id`.
-- Хранение времени — UTC; timezone хранится в IANA.
-- Роли web: `owner`, `admin`, `specialist`.
-
-## Документация модуля
-
-- [`README.md`](./README.md)
+Подробности: [`README.md`](./README.md), [`docs/rbac.md`](./docs/rbac.md).

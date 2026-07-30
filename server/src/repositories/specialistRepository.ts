@@ -62,6 +62,7 @@ export type SpecialistRecord = {
   work_end_hour?: number;
   slot_duration_min?: number;
   default_session_continuation_min?: number;
+  default_meeting_link?: string | null;
 };
 
 type CreateSpecialistInput = {
@@ -157,6 +158,7 @@ export async function findSpecialistById(accountId: number, specialistId: number
       db.raw('COALESCE(ss.work_end_hour, s.work_end_hour, 20) as work_end_hour'),
       db.raw('COALESCE(ss.slot_duration_min, s.slot_duration_min, 90) as slot_duration_min'),
       db.raw('COALESCE(ss.default_session_continuation_min, s.slot_duration_min, 90) as default_session_continuation_min'),
+      'ss.default_meeting_link',
     )
     .first<SpecialistRecord>();
 
@@ -184,6 +186,7 @@ export async function findSpecialistByIdAnyAccount(specialistId: number): Promis
       db.raw('COALESCE(ss.work_end_hour, s.work_end_hour, 20) as work_end_hour'),
       db.raw('COALESCE(ss.slot_duration_min, s.slot_duration_min, 90) as slot_duration_min'),
       db.raw('COALESCE(ss.default_session_continuation_min, s.slot_duration_min, 90) as default_session_continuation_min'),
+      'ss.default_meeting_link',
     )
     .first<SpecialistRecord>();
 
@@ -214,6 +217,7 @@ export async function listSpecialistsByAccount(accountId: number): Promise<Speci
       db.raw('COALESCE(ss.work_end_hour, s.work_end_hour, 20) as work_end_hour'),
       db.raw('COALESCE(ss.slot_duration_min, s.slot_duration_min, 90) as slot_duration_min'),
       db.raw('COALESCE(ss.default_session_continuation_min, s.slot_duration_min, 90) as default_session_continuation_min'),
+      'ss.default_meeting_link',
       db.raw("COALESCE(wu.timezone, 'UTC') as timezone"),
     );
 }
@@ -241,6 +245,7 @@ export async function listSpecialistsAllAccounts(): Promise<SpecialistRecord[]> 
       db.raw('COALESCE(ss.work_end_hour, s.work_end_hour, 20) as work_end_hour'),
       db.raw('COALESCE(ss.slot_duration_min, s.slot_duration_min, 90) as slot_duration_min'),
       db.raw('COALESCE(ss.default_session_continuation_min, s.slot_duration_min, 90) as default_session_continuation_min'),
+      'ss.default_meeting_link',
       db.raw("COALESCE(wu.timezone, 'UTC') as timezone"),
     );
 }

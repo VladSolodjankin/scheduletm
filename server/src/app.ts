@@ -12,7 +12,22 @@ import { specialistRoutes } from './routes/specialistRoutes.js';
 import { userManagementRoutes } from './routes/userManagementRoutes.js';
 import { notificationRoutes } from './routes/notificationRoutes.js';
 import { errorLogRoutes } from './routes/errorLogRoutes.js';
+import { publicPageRoutes } from './routes/publicPageRoutes.js';
 import { trackServerError } from './services/errorTrackingService.js';
+
+const getBodyParserErrorStatus = (error: unknown): 400 | 413 | null => {
+  if (typeof error !== 'object' || error === null || !('type' in error)) {
+    return null;
+  }
+
+  if (error.type === 'entity.parse.failed') {
+    return 400;
+  }
+  if (error.type === 'entity.too.large') {
+    return 413;
+  }
+  return null;
+};
 
 export const createApp = () => {
   const app = express();
@@ -45,14 +60,13 @@ export const createApp = () => {
       }
     })
   );
-  app.use(express.json({ limit: '32kb' }));
 
   app.use((req, res, next) => {
     res.on('finish', () => {
       if (res.statusCode >= 500) {
         void trackServerError({
           method: req.method,
-          path: req.originalUrl,
+          path: new URL(req.originalUrl, 'http://localhost').pathname,
           error: new Error(`HTTP_${res.statusCode}`),
         });
       }
@@ -60,6 +74,20 @@ export const createApp = () => {
 
     next();
   });
+
+  app.use(
+    '/api/public-pages',
+    express.json({ limit: '256kb' }),
+    publicPageRoutes,
+    (error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const status = getBodyParserErrorStatus(error);
+      if (status) {
+        return res.status(status).json({ code: 'invalid_request' });
+      }
+      return next(error);
+    },
+  );
+  app.use(express.json({ limit: '32kb' }));
 
   app.use(healthRoutes);
   app.use('/api/auth', authRoutes);
@@ -72,7 +100,22 @@ export const createApp = () => {
   app.use('/api/error-logs', errorLogRoutes);
 
   app.use((_req, res) => {
-    res.status(404).json({ message: 'Not found' });
+    res.status(404).json({ code: 'not_found' });
+  });
+
+  app.use((
+    error: unknown,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    const status = getBodyParserErrorStatus(error);
+    if (status) {
+      return res.status(status).json({ code: 'invalid_request' });
+    }
+
+    console.error(error);
+    return res.status(500).json({ code: 'internal_error' });
   });
 
   return app;
