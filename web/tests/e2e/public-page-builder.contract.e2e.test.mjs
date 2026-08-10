@@ -134,6 +134,33 @@ describe('public page builder source contracts', () => {
     assert.match(validation, /path: `media\.\$\{index\}\.url`, detail: mediaError/);
   });
 
+  it('uploads media safely and renders page and block appearance settings', async () => {
+    const repository = await read('src/features/public-page-builder/repository/ApiPublicPageRepository.ts');
+    const upload = await read('src/components/public-page-builder/ImageUploadControl.tsx');
+    const pageRenderer = await read('src/components/public-page-blocks/PublicPageRenderer.tsx');
+    const blockRenderer = await read('src/components/public-page-blocks/BlockRenderer.tsx');
+    const presets = await read('src/features/public-page-builder/config/backgroundPresets.ts');
+
+    assert.match(repository, /post<MediaReference>\('\/api\/public-pages\/media', file/);
+    assert.match(repository, /media\/\$\{encodeURIComponent\(mediaId\)\}\/preview/);
+    assert.match(upload, /5 \* 1024 \* 1024/);
+    assert.match(upload, /image\/jpeg,image\/png,image\/webp/);
+    assert.match(pageRenderer, /document\.theme\.fontFamily/);
+    assert.match(blockRenderer, /backgroundOverlay/);
+    assert.ok([...presets.matchAll(/id: '([^']+)'/g)].length >= 10);
+  });
+
+  it('deletes detached media only after save and retries published-snapshot conflicts', async () => {
+    const page = await read('src/pages/PublicPageEditorPage.tsx');
+
+    assert.match(page, /pendingMediaDeletionIdsRef/);
+    assert.match(page, /if \(state\.dirty \|\| state\.saveStatus !== 'saved' \|\| editor\.isPublishing/);
+    assert.match(page, /await repository\.deleteMedia\(id\)/);
+    assert.match(page, /error\.code === 'media_in_use'/);
+    assert.match(page, /URL\.revokeObjectURL\(previewUrl\)/);
+    assert.match(page, /pendingMediaDeletionIdsRef\.current\.delete\(id\)/);
+  });
+
   it('does not expose archived-page editing', async () => {
     const pages = await read('src/pages/PublicPagesPage.tsx');
 

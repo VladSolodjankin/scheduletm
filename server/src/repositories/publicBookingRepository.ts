@@ -37,6 +37,12 @@ export type PublicAppointmentStatusRecord = {
 
 export async function listPublicBookingSpecialists(accountId: number): Promise<PublicBookingSpecialist[]> {
   return db('specialists as s')
+    .join('specialist_services as ssv', function joinAssignments() {
+      this.on('ssv.specialist_id', '=', 's.id').andOn('ssv.account_id', '=', 's.account_id');
+    })
+    .join('services as sv', function joinAssignedService() {
+      this.on('sv.id', '=', 'ssv.service_id').andOn('sv.account_id', '=', 'ssv.account_id');
+    })
     .leftJoin('web_users as wu', function joinUser() {
       this.on('wu.id', '=', 's.user_id').andOn('wu.account_id', '=', 's.account_id');
     })
@@ -44,7 +50,8 @@ export async function listPublicBookingSpecialists(accountId: number): Promise<P
       this.on('ss.specialist_id', '=', 's.id').andOn('ss.account_id', '=', 's.account_id');
     })
     .leftJoin('app_settings as aps', 'aps.account_id', 's.account_id')
-    .where({ 's.account_id': accountId, 's.is_active': true })
+    .where({ 's.account_id': accountId, 's.is_active': true, 'ssv.is_active': true, 'sv.is_active': true })
+    .distinct()
     .orderBy('s.name', 'asc')
     .select(
       's.id', 's.account_id', 's.name', 's.is_active',
@@ -57,10 +64,17 @@ export async function listPublicBookingSpecialists(accountId: number): Promise<P
 }
 
 export async function listPublicBookingServices(accountId: number): Promise<PublicBookingService[]> {
-  return db('services')
-    .where({ account_id: accountId, is_active: true })
-    .orderBy('name_en', 'asc')
-    .select('id', 'account_id', 'name_ru', 'name_en', 'duration_min', 'price', 'currency', 'is_active');
+  return db('services as sv')
+    .join('specialist_services as ss', function joinAssignments() {
+      this.on('ss.service_id', '=', 'sv.id').andOn('ss.account_id', '=', 'sv.account_id');
+    })
+    .join('specialists as sp', function joinSpecialist() {
+      this.on('sp.id', '=', 'ss.specialist_id').andOn('sp.account_id', '=', 'ss.account_id');
+    })
+    .where({ 'sv.account_id': accountId, 'sv.is_active': true, 'ss.is_active': true, 'sp.is_active': true })
+    .distinct()
+    .orderBy('sv.name_en', 'asc')
+    .select('sv.id', 'sv.account_id', 'sv.name_ru', 'sv.name_en', 'sv.duration_min', 'sv.price', 'sv.currency', 'sv.is_active');
 }
 
 export async function findPublicBookingSpecialist(
@@ -90,9 +104,25 @@ export async function findPublicBookingSpecialist(
 export async function findPublicBookingService(
   accountId: number,
   serviceId: number,
+  specialistId: number,
 ): Promise<PublicBookingService | null> {
-  return (await db('services')
-    .where({ account_id: accountId, id: serviceId, is_active: true })
+  return (await db('services as sv')
+    .join('specialist_services as ss', function joinAssignment() {
+      this.on('ss.service_id', '=', 'sv.id').andOn('ss.account_id', '=', 'sv.account_id');
+    })
+    .join('specialists as sp', function joinSpecialist() {
+      this.on('sp.id', '=', 'ss.specialist_id').andOn('sp.account_id', '=', 'ss.account_id');
+    })
+    .where({
+      'sv.account_id': accountId, 'sv.id': serviceId, 'sv.is_active': true,
+      'ss.specialist_id': specialistId, 'ss.is_active': true, 'sp.is_active': true,
+    })
+    .select(
+      'sv.id', 'sv.account_id', 'sv.name_ru', 'sv.name_en',
+      db.raw('COALESCE(ss.duration_override_minutes, sv.duration_min) as duration_min'),
+      db.raw('COALESCE(ss.price_override, sv.price) as price'),
+      'sv.currency', 'sv.is_active',
+    )
     .first<PublicBookingService>()) ?? null;
 }
 

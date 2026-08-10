@@ -61,4 +61,22 @@ describe('public page document model', () => {
     expect(undone.document.slug).toBe('initial');
     expect(redone.document.slug).toBe('changed slug');
   });
+
+  it('removes media only after its final document reference is detached', () => {
+    const initial = normalizeDocument({
+      id: 'page-1',
+      media: [{ id: 'shared-image', url: 'https://example.com/image.png', mimeType: 'image/png', alt: 'Portrait', width: 100, height: 100 }],
+      profile: { logoMediaId: 'shared-image', avatarMediaId: 'shared-image' },
+    });
+    const referenced = editorReducer(createEditorState(initial), { type: 'media/remove', mediaId: 'shared-image' });
+    expect(referenced.document.media).toHaveLength(1);
+
+    const withoutLogo = editorReducer(referenced, { type: 'profile/update', changes: { logoMediaId: null } });
+    const stillShared = editorReducer(withoutLogo, { type: 'media/remove', mediaId: 'shared-image' });
+    expect(stillShared.document.media).toHaveLength(1);
+
+    const withoutAvatar = editorReducer(stillShared, { type: 'profile/update', changes: { avatarMediaId: null } });
+    const removed = editorReducer(withoutAvatar, { type: 'media/remove', mediaId: 'shared-image' });
+    expect(removed.document.media).toHaveLength(0);
+  });
 });

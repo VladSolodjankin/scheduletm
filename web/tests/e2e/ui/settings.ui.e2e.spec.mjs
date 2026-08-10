@@ -23,14 +23,10 @@ test.describe('web ui e2e: settings', () => {
 
       await login(page, scenario.creds);
       const role = await loggedInRole(page);
-      if (role !== scenario.expectedRole) {
-        test.info().annotations.push({
-          type: 'skip',
-          description: `${scenario.label}: expected role "${scenario.expectedRole}", got "${role ?? 'unknown'}".`,
-        });
-        await context.close();
-        continue;
-      }
+      expect(
+        role,
+        `${scenario.label}: configured credentials must resolve to role "${scenario.expectedRole}"`,
+      ).toBe(scenario.expectedRole);
 
       await page.getByRole('link', { name: 'Settings' }).click();
       await expect(page).toHaveURL(/\/settings$/);

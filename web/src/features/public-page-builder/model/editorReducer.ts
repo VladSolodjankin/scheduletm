@@ -2,6 +2,7 @@ import type { EditorAction } from '../types/actions';
 import { EDITOR_HISTORY_LIMIT, type EditorState } from '../types/editor';
 import type { PageBlock, PageSection, PublicPageDocument } from '../types/publicPage';
 import { normalizeSlug } from './slug';
+import { documentReferencesMedia } from './media';
 
 function cloneDocument(document: PublicPageDocument): PublicPageDocument {
   return structuredClone(document);
@@ -85,6 +86,17 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return commit(state, { ...state.document, slug: normalizeSlug(action.slug) });
     case 'theme/update':
       return commit(state, { ...state.document, theme: structuredClone(action.theme) });
+    case 'media/add':
+      return commit(state, {
+        ...state.document,
+        media: [...state.document.media.filter((item) => item.id !== action.media.id), action.media],
+      });
+    case 'media/remove':
+      if (documentReferencesMedia(state.document, action.mediaId)) {return state;}
+      return commit(state, {
+        ...state.document,
+        media: state.document.media.filter((item) => item.id !== action.mediaId),
+      });
     case 'section/add':
       return commit(state, {
         ...state.document,

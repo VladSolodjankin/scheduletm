@@ -1,4 +1,4 @@
-import type { MediaReference } from '../types/publicPage';
+import type { MediaReference, PublicPageDocument } from '../types/publicPage';
 
 export const ALLOWED_MEDIA_MIME_TYPES = new Set<MediaReference['mimeType']>([
   'image/jpeg',
@@ -30,4 +30,18 @@ export function validateMediaReference(media: MediaReference): MediaValidationCo
   if (!ALLOWED_MEDIA_MIME_TYPES.has(media.mimeType)) {return 'unsupported_type';}
   if (media.width < 0 || media.height < 0) {return 'invalid_dimensions';}
   return isAbsoluteHttpsUrl(media.url) ? null : 'https_url_required';
+}
+
+function containsMediaId(value: unknown, mediaId: string): boolean {
+  if (Array.isArray(value)) {return value.some((item) => containsMediaId(item, mediaId));}
+  if (!value || typeof value !== 'object') {return false;}
+  return Object.entries(value).some(([key, item]) =>
+    (/mediaId$/i.test(key) && item === mediaId) || containsMediaId(item, mediaId));
+}
+
+export function documentReferencesMedia(document: PublicPageDocument, mediaId: string): boolean {
+  return containsMediaId(document.profile, mediaId)
+    || containsMediaId(document.theme, mediaId)
+    || containsMediaId(document.seo, mediaId)
+    || containsMediaId(document.sections, mediaId);
 }

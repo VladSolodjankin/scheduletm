@@ -7,7 +7,8 @@ export type PublicPageTemplate = {
   createDocument: (pageId: string, now?: string) => PublicPageDocument;
 };
 
-const design = () => ({ backgroundColor: null, textColor: null });
+const design = () => ({ backgroundColor: null, textColor: null, backgroundMediaId: null,
+  backgroundOverlay: 0, backgroundFit: 'cover' as const, backgroundPosition: '50% 50%' });
 const block = (id: string, type: string, name: string, content: Record<string, unknown>): PageBlock => ({
   id, type, name, visible: true, content, design: design(),
 });
@@ -46,9 +47,19 @@ export const PUBLIC_PAGE_TEMPLATES: PublicPageTemplate[] = [
     block(`${id}-services`, 'services', 'Services', { title: 'Services', services: [{ id: `${id}-service-1`, title: 'Signature treatment', description: 'Personalized care', price: '' }] }),
   ], now) },
   { id: 'specialist', name: 'Specialist', createDocument: (id, now) => documentFor(id, 'Specialist', 0, [
-    block(`${id}-hero`, 'hero', 'Profile', { title: 'Your name', subtitle: 'Professional specialist', imageUrl: '', imageAlt: '', ctaLabel: '' }),
-    block(`${id}-text`, 'text', 'About', { title: 'About me', body: 'Describe your experience and approach.' }),
-    block(`${id}-faq`, 'faq', 'FAQ', { title: 'Frequently asked questions', items: [{ id: `${id}-faq-1`, title: 'How does it work?', description: 'Book a convenient time and I will contact you.' }] }),
+    block(`${id}-hero`, 'hero', 'Profile', { title: 'Your name', subtitle: 'Professional specialist', imageUrl: '', imageAlt: '', ctaLabel: 'Book a consultation', action: { type: 'url', url: 'https://example.com' } }),
+    block(`${id}-text`, 'text', 'About', { title: 'About me', body: 'Describe your experience, approach, and who you help.' }),
+    block(`${id}-services`, 'services', 'Services and prices', { title: 'Services and prices', services: [
+      { id: `${id}-service-1`, title: 'Initial consultation', description: 'A focused session to understand your goals.', price: '$50' },
+      { id: `${id}-service-2`, title: 'Follow-up session', description: 'Continue the work with a practical next step.', price: '$40' },
+    ] }),
+    block(`${id}-contacts`, 'contacts', 'Contacts', { title: 'Contact me', contacts: [
+      { id: `${id}-phone`, label: 'Phone', url: 'tel:+10000000000' },
+      { id: `${id}-email`, label: 'Email', url: 'mailto:hello@example.com' },
+    ] }),
+    block(`${id}-socials`, 'socials', 'Social networks', { title: 'Follow me', links: [{ id: `${id}-social-1`, label: 'Instagram', url: 'https://instagram.com/' }] }),
+    block(`${id}-messengers`, 'messengers', 'Messengers', { title: 'Message me', links: [{ id: `${id}-messenger-1`, label: 'Telegram', url: 'https://t.me/' }] }),
+    block(`${id}-faq`, 'faq', 'FAQ', { title: 'Frequently asked questions', items: [{ id: `${id}-faq-1`, title: 'How does it work?', description: 'Choose a service and a convenient time. I will confirm the appointment.' }] }),
   ], now) },
   { id: 'small-business', name: 'Small business', createDocument: (id, now) => documentFor(id, 'Our business', 2, [
     block(`${id}-hero`, 'hero', 'Welcome', { title: 'Our business', subtitle: 'Reliable service near you', imageUrl: '', imageAlt: '', ctaLabel: 'Contact us', action: { type: 'phone', phone: '+10000000000' } }),

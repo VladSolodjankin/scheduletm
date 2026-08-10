@@ -91,3 +91,7 @@ export async function getSessionPayload(accountId: number, userId: number): Prom
 
   return session.payload_json as BookingPayload;
 }
+
+export async function deleteExpiredSessions(cutoff: Date): Promise<number> {
+  return db('telegram_user_sessions').where('updated_at', '<', cutoff).delete();
+}

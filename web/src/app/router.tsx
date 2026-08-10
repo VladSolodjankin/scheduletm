@@ -7,6 +7,7 @@ import { InviteAcceptPage } from '../pages/InviteAcceptPage';
 import { AppointmentsPage } from '../pages/AppointmentsPage';
 import { SettingsPage } from '../pages/SettingsPage';
 import { SpecialistsPage } from '../pages/SpecialistsPage';
+import { ServicesPage } from '../pages/ServicesPage';
 import { UsersPage } from '../pages/UsersPage';
 import { NotificationLogsPage } from '../pages/NotificationLogsPage';
 import { ErrorLogsPage } from '../pages/ErrorLogsPage';
@@ -40,6 +41,19 @@ function RoleRoute({ children }: { children: ReactElement }) {
     return <Navigate to="/login" replace />;
   }
   return user?.role === WebUserRole.ProductOwner || user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin
+    ? children
+    : <Navigate to="/appointments" replace />;
+}
+
+function ServicesRoleRoute({ children }: { children: ReactElement }) {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return user?.role === WebUserRole.ProductOwner
+    || user?.role === WebUserRole.Owner
+    || user?.role === WebUserRole.Admin
+    || user?.role === WebUserRole.Specialist
     ? children
     : <Navigate to="/appointments" replace />;
 }
@@ -113,6 +127,10 @@ export const router = createBrowserRouter([
             <SpecialistsPage />
           </ProtectedRoute>
         )
+      },
+      {
+        path: '/services',
+        element: <ServicesRoleRoute><ServicesPage /></ServicesRoleRoute>
       },
       {
         path: '/users',

@@ -109,6 +109,11 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
   for (const color of ['background', 'surface', 'text', 'primary']) {
     validateRequiredString(value.colors[color], `theme.colors.${color}`, errors);
   }
+  validateRequiredString(value.fontFamily, 'theme.fontFamily', errors);
+  if (!isNullableString(value.backgroundMediaId)) {addError(errors, 'invalid_type', 'theme.backgroundMediaId');}
+  if (!isNullableString(value.backgroundPreset)) {addError(errors, 'invalid_type', 'theme.backgroundPreset');}
+  if (value.backgroundFit !== 'cover' && value.backgroundFit !== 'contain') {addError(errors, 'invalid_value', 'theme.backgroundFit');}
+  validateRequiredString(value.backgroundPosition, 'theme.backgroundPosition', errors);
 }
 
 function validateSeo(value: unknown, errors: DocumentValidationError[]): void {
@@ -188,6 +193,12 @@ function validateBlocks(
       if (!isNullableString(block.design.textColor)) {
         addError(errors, 'invalid_type', `${blockPath}.design.textColor`);
       }
+      if (!isNullableString(block.design.backgroundMediaId)) {addError(errors, 'invalid_type', `${blockPath}.design.backgroundMediaId`);}
+      if (typeof block.design.backgroundOverlay !== 'number' || block.design.backgroundOverlay < 0 || block.design.backgroundOverlay > 1) {
+        addError(errors, 'invalid_value', `${blockPath}.design.backgroundOverlay`);
+      }
+      if (block.design.backgroundFit !== 'cover' && block.design.backgroundFit !== 'contain') {addError(errors, 'invalid_value', `${blockPath}.design.backgroundFit`);}
+      validateRequiredString(block.design.backgroundPosition, `${blockPath}.design.backgroundPosition`, errors);
     }
   });
 }

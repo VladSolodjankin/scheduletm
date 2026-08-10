@@ -1,5 +1,6 @@
 import type {
   BlockDesign,
+  MediaReference,
   PageBlock,
   PageProfile,
   PageSection,
@@ -15,6 +16,8 @@ export type EditorAction =
   | { type: 'seo/update'; changes: Partial<PageSeo> }
   | { type: 'slug/update'; slug: string }
   | { type: 'theme/update'; theme: PageTheme }
+  | { type: 'media/add'; media: MediaReference }
+  | { type: 'media/remove'; mediaId: string }
   | { type: 'section/add'; section: PageSection; index?: number }
   | { type: 'section/update'; sectionId: string; changes: Partial<Omit<PageSection, 'id' | 'blocks'>> }
   | { type: 'section/remove'; sectionId: string }

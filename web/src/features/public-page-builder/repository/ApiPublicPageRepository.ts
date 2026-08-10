@@ -2,7 +2,7 @@ import axios from 'axios';
 import { apiClient, authHeaders } from '../../../shared/api/client';
 import { migrateDocument, UnsupportedDocumentVersionError } from '../model/migrateDocument';
 import type { PublishValidationIssue } from '../model/publishValidation';
-import type { PublicPageDocument, PublicPageStatus } from '../types/publicPage';
+import type { MediaReference, PublicPageDocument, PublicPageStatus } from '../types/publicPage';
 import {
   PublicPageRepositoryError,
   type PublicPageRecord,
@@ -97,6 +97,7 @@ function mapError(error: unknown): never {
     slug_conflict: 'slug_conflict',
     quota_exceeded: 'quota_exceeded',
     page_not_archived: 'page_not_archived',
+    media_in_use: 'media_in_use',
   }[String(code)] as ConstructorParameters<typeof PublicPageRepositoryError>[0] | undefined;
   throw new PublicPageRepositoryError(mapped ?? 'storage_unavailable', undefined, { cause: error });
 }
@@ -179,5 +180,33 @@ export class ApiPublicPageRepository implements PublicPageRepository {
       const response = await apiClient.get<unknown>(`/api/public-pages/by-slug/${encodeURIComponent(slug)}`);
       return readDocument(response.data);
     } catch (error) { return mapError(error); }
+  }
+
+  public async uploadMedia(file: File, onProgress?: (percent: number) => void): Promise<MediaReference> {
+    try {
+      const response = await apiClient.post<MediaReference>('/api/public-pages/media', file, {
+        headers: { ...this.headers, 'Content-Type': file.type },
+        onUploadProgress: (event) => {
+          if (event.total) {onProgress?.(Math.round((event.loaded / event.total) * 100));}
+        },
+      });
+      return response.data;
+    } catch (error) { return mapError(error); }
+  }
+
+  public async getMediaPreview(mediaId: string): Promise<Blob> {
+    try {
+      const response = await apiClient.get<Blob>(
+        `/api/public-pages/media/${encodeURIComponent(mediaId)}/preview`,
+        { headers: this.headers, responseType: 'blob' },
+      );
+      return response.data;
+    } catch (error) { return mapError(error); }
+  }
+
+  public async deleteMedia(mediaId: string): Promise<void> {
+    try {
+      await apiClient.delete(`/api/public-pages/media/${encodeURIComponent(mediaId)}`, { headers: this.headers });
+    } catch (error) { mapError(error); }
   }
 }

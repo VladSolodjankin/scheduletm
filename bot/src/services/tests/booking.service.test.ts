@@ -4,13 +4,13 @@ import { UserSessionState } from '../../types/session';
 vi.mock('../../repositories/service.repository', () => {
   return {
     findActiveServices: vi.fn(),
+    findAssignedActiveSpecialists: vi.fn(),
     findServiceById: vi.fn(),
   };
 });
 
 vi.mock('../../repositories/specialist.repository', () => {
   return {
-    findActiveSpecialists: vi.fn(),
     findSingleDefaultActiveSpecialist: vi.fn(),
     findSpecialistById: vi.fn(),
   };
@@ -20,6 +20,7 @@ vi.mock('../../repositories/user-session.repository', () => {
   return {
     mergeSessionPayload: vi.fn(),
     updateSessionState: vi.fn(),
+    getSessionPayload: vi.fn(),
   };
 });
 
@@ -31,15 +32,16 @@ vi.mock('../date.service', () => {
 
 import {
   findActiveServices,
+  findAssignedActiveSpecialists,
   findServiceById,
 } from '../../repositories/service.repository';
 import {
-  findActiveSpecialists,
   findSingleDefaultActiveSpecialist,
   findSpecialistById,
 } from '../../repositories/specialist.repository';
 import {
   mergeSessionPayload,
+  getSessionPayload,
   updateSessionState,
 } from '../../repositories/user-session.repository';
 import { getNextAvailableDates } from '../date.service';
@@ -80,6 +82,7 @@ describe('booking.service', () => {
 
   it('selectService skips specialist step when there is a single default specialist', async () => {
     vi.mocked(findServiceById).mockResolvedValue({ id: 10, is_active: true } as any);
+    vi.mocked(findAssignedActiveSpecialists).mockResolvedValue([{ id: 77 }] as any);
     vi.mocked(findSingleDefaultActiveSpecialist).mockResolvedValue({ id: 77 } as any);
     vi.mocked(getNextAvailableDates).mockResolvedValue(['2026-04-20'] as any);
 
@@ -121,7 +124,7 @@ describe('booking.service', () => {
   it('selectService returns specialists list when default specialist does not exist', async () => {
     vi.mocked(findServiceById).mockResolvedValue({ id: 10, is_active: true } as any);
     vi.mocked(findSingleDefaultActiveSpecialist).mockResolvedValue(null as any);
-    vi.mocked(findActiveSpecialists).mockResolvedValue([{ id: 1 }, { id: 2 }] as any);
+    vi.mocked(findAssignedActiveSpecialists).mockResolvedValue([{ id: 1 }, { id: 2 }] as any);
 
     const out = await selectService(7, 1, 10);
 
@@ -134,6 +137,7 @@ describe('booking.service', () => {
 
   it('selectSpecialist returns specialist_not_found for missing/inactive specialist', async () => {
     vi.mocked(findSpecialistById).mockResolvedValue({ is_active: false } as any);
+    vi.mocked(getSessionPayload).mockResolvedValue({ serviceId: 10 } as any);
 
     const out = await selectSpecialist(7, 1, 123);
 
@@ -143,6 +147,8 @@ describe('booking.service', () => {
 
   it('selectSpecialist merges specialistId and returns dates', async () => {
     vi.mocked(findSpecialistById).mockResolvedValue({ id: 5, is_active: true } as any);
+    vi.mocked(getSessionPayload).mockResolvedValue({ serviceId: 10 } as any);
+    vi.mocked(findServiceById).mockResolvedValue({ id: 10, price: 250, duration_min: 45 } as any);
     vi.mocked(getNextAvailableDates).mockResolvedValue(['2026-04-20', '2026-04-21'] as any);
 
     const out = await selectSpecialist(7, 1, 5);
@@ -157,5 +163,6 @@ describe('booking.service', () => {
     expect(out.ok).toBe(true);
     if (!out.ok) return;
     expect(out.dates).toEqual(['2026-04-20', '2026-04-21']);
+    expect(findServiceById).toHaveBeenCalledWith(7, 10, 5);
   });
 });

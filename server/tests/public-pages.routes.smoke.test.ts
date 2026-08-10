@@ -20,6 +20,12 @@ const service = vi.hoisted(() => ({
   deletePublicPageForAccount: vi.fn(),
   getPublishedPublicPage: vi.fn(),
 }));
+const mediaService = vi.hoisted(() => ({
+  uploadPublicPageMedia: vi.fn(),
+  getPublishedPublicPageMedia: vi.fn(),
+  getAccountPublicPageMedia: vi.fn(),
+  deletePublicPageMedia: vi.fn(),
+}));
 
 vi.mock('../src/services/authService.js', () => ({
   resolveUserByAccessToken: resolveUserByAccessTokenMock,
@@ -41,6 +47,12 @@ vi.mock('../src/services/publicBookingService.js', async () => {
     '../src/services/publicBookingService.js',
   );
   return { ...actual, ...publicBooking };
+});
+vi.mock('../src/services/publicPageMediaService.js', async () => {
+  const actual = await vi.importActual<typeof import('../src/services/publicPageMediaService.js')>(
+    '../src/services/publicPageMediaService.js',
+  );
+  return { ...actual, ...mediaService };
 });
 
 import { createApp } from '../src/app.js';
@@ -76,6 +88,67 @@ describe('public pages routes', () => {
     trackServerErrorMock.mockReset().mockResolvedValue(undefined);
     Object.values(service).forEach((mock) => mock.mockReset());
     Object.values(publicBooking).forEach((mock) => mock.mockReset());
+    Object.values(mediaService).forEach((mock) => mock.mockReset());
+  });
+
+  it('uploads raw account-scoped media and returns a MediaReference', async () => {
+    mediaService.uploadPublicPageMedia.mockResolvedValue({
+      id: '1f2ec7e3-f737-48f7-af97-ed82f2791bc7', mime: 'image/png', width: 10, height: 20,
+    });
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    );
+    const response = await fetch(`${baseUrl}/api/public-pages/media`, {
+      method: 'POST', headers: { authorization: 'Bearer token', 'content-type': 'image/png' }, body: png,
+    });
+    expect(response.status).toBe(201);
+    expect(mediaService.uploadPublicPageMedia).toHaveBeenCalledWith(7, png, 'image/png');
+    expect(await response.json()).toMatchObject({
+      id: '1f2ec7e3-f737-48f7-af97-ed82f2791bc7', mimeType: 'image/png', alt: '', width: 10, height: 20,
+    });
+  });
+
+  it('rejects unsupported upload content types before storage', async () => {
+    const response = await fetch(`${baseUrl}/api/public-pages/media`, {
+      method: 'POST', headers: { authorization: 'Bearer token', 'content-type': 'image/gif' }, body: Buffer.from('GIF89a'),
+    });
+    expect(response.status).toBe(415);
+    expect(await response.json()).toEqual({ code: 'unsupported_media' });
+    expect(mediaService.uploadPublicPageMedia).not.toHaveBeenCalled();
+  });
+
+  it('streams only media resolved by the published-media service without authentication', async () => {
+    mediaService.getPublishedPublicPageMedia.mockResolvedValue({
+      record: { mime: 'image/png', bytes: 4 }, body: Uint8Array.from([1, 2, 3, 4]),
+    });
+    const response = await fetch(`${baseUrl}/api/public-pages/media/1f2ec7e3-f737-48f7-af97-ed82f2791bc7/content`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/png');
+    expect(resolveUserByAccessTokenMock).not.toHaveBeenCalled();
+  });
+
+  it('deletes media in the authenticated account scope', async () => {
+    const response = await fetch(`${baseUrl}/api/public-pages/media/1f2ec7e3-f737-48f7-af97-ed82f2791bc7`, {
+      method: 'DELETE', headers: { authorization: 'Bearer token' },
+    });
+    expect(response.status).toBe(204);
+    expect(mediaService.deletePublicPageMedia).toHaveBeenCalledWith(7, '1f2ec7e3-f737-48f7-af97-ed82f2791bc7');
+  });
+
+  it('previews draft media only through authenticated account scope', async () => {
+    mediaService.getAccountPublicPageMedia.mockResolvedValue({
+      record: { mime: 'image/webp', bytes: 3 }, body: Uint8Array.from([1, 2, 3]),
+    });
+    const response = await fetch(
+      `${baseUrl}/api/public-pages/media/1f2ec7e3-f737-48f7-af97-ed82f2791bc7/preview`,
+      { headers: { authorization: 'Bearer token' } },
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(mediaService.getAccountPublicPageMedia).toHaveBeenCalledWith(
+      7, '1f2ec7e3-f737-48f7-af97-ed82f2791bc7',
+    );
   });
 
   it('serves a published page without authentication', async () => {

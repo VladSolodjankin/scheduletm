@@ -10,6 +10,7 @@ export type PublicPageRepositoryErrorCode =
   | 'unsupported_version'
   | 'slug_conflict'
   | 'storage_unavailable'
+  | 'media_in_use'
   | 'quota_exceeded'
   | 'page_not_archived';
 

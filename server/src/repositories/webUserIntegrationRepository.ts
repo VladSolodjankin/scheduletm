@@ -1,4 +1,5 @@
 import { db } from '../db/knex.js';
+import { decryptIntegrationSecret, encryptIntegrationSecret } from './integrationSecretCrypto.js';
 
 export type WebUserIntegrationRecord = {
   id: number;
@@ -21,6 +22,14 @@ export type WebUserIntegrationRecord = {
   zoom_last_start_url: string | null;
   created_at: Date;
   updated_at: Date;
+};
+
+type WebUserIntegrationStorageRecord = WebUserIntegrationRecord & {
+  google_access_token_encrypted: string | null;
+  google_refresh_token_encrypted: string | null;
+  telegram_bot_token_encrypted: string | null;
+  zoom_access_token_encrypted: string | null;
+  zoom_refresh_token_encrypted: string | null;
 };
 
 type UpdateWebUserGoogleCredentialsInput = {
@@ -72,35 +81,82 @@ async function upsertPatch(
     });
 }
 
+function mapIntegrationRecord(row: WebUserIntegrationStorageRecord): WebUserIntegrationRecord {
+  const {
+    google_access_token_encrypted: googleAccessTokenEncrypted,
+    google_refresh_token_encrypted: googleRefreshTokenEncrypted,
+    telegram_bot_token_encrypted: telegramBotTokenEncrypted,
+    zoom_access_token_encrypted: zoomAccessTokenEncrypted,
+    zoom_refresh_token_encrypted: zoomRefreshTokenEncrypted,
+    ...record
+  } = row;
+
+  return {
+    ...record,
+    google_api_key: decryptIntegrationSecret(
+      googleAccessTokenEncrypted,
+      row.google_api_key,
+      'Google access token',
+    ),
+    google_refresh_token: decryptIntegrationSecret(
+      googleRefreshTokenEncrypted,
+      row.google_refresh_token,
+      'Google refresh token',
+    ),
+    telegram_bot_token: decryptIntegrationSecret(
+      telegramBotTokenEncrypted,
+      row.telegram_bot_token,
+      'Telegram bot token',
+    ),
+    zoom_access_token: decryptIntegrationSecret(
+      zoomAccessTokenEncrypted,
+      row.zoom_access_token,
+      'Zoom access token',
+    ),
+    zoom_refresh_token: decryptIntegrationSecret(
+      zoomRefreshTokenEncrypted,
+      row.zoom_refresh_token,
+      'Zoom refresh token',
+    ),
+  };
+}
+
 export async function findWebUserIntegrationByWebUserId(
   accountId: number,
   webUserId: number,
 ): Promise<WebUserIntegrationRecord | null> {
   const row = await db('web_user_integrations')
     .where({ account_id: accountId, web_user_id: webUserId })
-    .first<WebUserIntegrationRecord>();
+    .first<WebUserIntegrationStorageRecord>();
 
-  return row ?? null;
+  return row ? mapIntegrationRecord(row) : null;
 }
 
 export async function findTelegramIntegrationByAccountId(accountId: number): Promise<WebUserIntegrationRecord | null> {
   const row = await db('web_user_integrations')
     .where({ account_id: accountId })
-    .whereNotNull('telegram_bot_token')
+    .where(function findConfiguredTelegramToken() {
+      this.whereNotNull('telegram_bot_token_encrypted').orWhereNotNull('telegram_bot_token');
+    })
     .orderBy('updated_at', 'desc')
-    .first<WebUserIntegrationRecord>();
+    .first<WebUserIntegrationStorageRecord>();
 
-  return row ?? null;
+  return row ? mapIntegrationRecord(row) : null;
 }
 
 export async function updateWebUserGoogleCredentials(input: UpdateWebUserGoogleCredentialsInput): Promise<void> {
   const patch: Record<string, unknown> = {
-    google_api_key: input.googleApiKey,
+    google_access_token_encrypted: encryptIntegrationSecret(input.googleApiKey, 'Google access token'),
+    google_api_key: null,
     google_connected_at: db.fn.now(),
   };
 
   if (input.googleRefreshToken !== undefined) {
-    patch.google_refresh_token = input.googleRefreshToken;
+    patch.google_refresh_token_encrypted = encryptIntegrationSecret(
+      input.googleRefreshToken,
+      'Google refresh token',
+    );
+    patch.google_refresh_token = null;
   }
 
   if (input.googleTokenExpiresAt !== undefined) {
@@ -116,6 +172,8 @@ export async function updateWebUserGoogleCredentials(input: UpdateWebUserGoogleC
 
 export async function clearWebUserGoogleCredentials(accountId: number, webUserId: number): Promise<void> {
   await upsertPatch(accountId, webUserId, {
+    google_access_token_encrypted: null,
+    google_refresh_token_encrypted: null,
     google_api_key: null,
     google_refresh_token: null,
     google_token_expires_at: null,
@@ -128,7 +186,11 @@ export async function updateWebUserTelegramIntegration(input: UpdateWebUserTeleg
   const patch: Record<string, unknown> = {};
 
   if (input.telegramBotToken !== undefined) {
-    patch.telegram_bot_token = input.telegramBotToken;
+    patch.telegram_bot_token_encrypted = encryptIntegrationSecret(
+      input.telegramBotToken,
+      'Telegram bot token',
+    );
+    patch.telegram_bot_token = null;
   }
 
   if (input.telegramBotUsername !== undefined) {
@@ -149,6 +211,8 @@ export async function updateWebUserTelegramIntegration(input: UpdateWebUserTeleg
 
 export async function clearWebUserZoomCredentials(accountId: number, webUserId: number): Promise<void> {
   await upsertPatch(accountId, webUserId, {
+    zoom_access_token_encrypted: null,
+    zoom_refresh_token_encrypted: null,
     zoom_access_token: null,
     zoom_refresh_token: null,
     zoom_token_expires_at: null,
@@ -162,10 +226,18 @@ export async function updateWebUserZoomIntegration(input: UpdateWebUserZoomInteg
   const patch: Record<string, unknown> = {};
 
   if (input.zoomAccessToken !== undefined) {
-    patch.zoom_access_token = input.zoomAccessToken;
+    patch.zoom_access_token_encrypted = encryptIntegrationSecret(
+      input.zoomAccessToken,
+      'Zoom access token',
+    );
+    patch.zoom_access_token = null;
   }
   if (input.zoomRefreshToken !== undefined) {
-    patch.zoom_refresh_token = input.zoomRefreshToken;
+    patch.zoom_refresh_token_encrypted = encryptIntegrationSecret(
+      input.zoomRefreshToken,
+      'Zoom refresh token',
+    );
+    patch.zoom_refresh_token = null;
   }
   if (input.zoomTokenExpiresAt !== undefined) {
     patch.zoom_token_expires_at = input.zoomTokenExpiresAt;

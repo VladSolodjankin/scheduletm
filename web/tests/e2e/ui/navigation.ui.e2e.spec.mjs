@@ -57,14 +57,10 @@ test.describe('web ui e2e: navigation & role-aware menu', () => {
 
       await login(page, scenario.creds);
       const role = await loggedInRole(page);
-      if (role !== scenario.expectedRole) {
-        test.info().annotations.push({
-          type: 'skip',
-          description: `${scenario.label}: expected role "${scenario.expectedRole}", got "${role ?? 'unknown'}".`,
-        });
-        await context.close();
-        continue;
-      }
+      expect(
+        role,
+        `${scenario.label}: configured credentials must resolve to role "${scenario.expectedRole}"`,
+      ).toBe(scenario.expectedRole);
 
       for (const item of scenario.visible) {
         await expect(page.getByRole('link', { name: item })).toBeVisible();

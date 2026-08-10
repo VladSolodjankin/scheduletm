@@ -9,6 +9,11 @@ const updateUserByTelegramIdMock = vi.hoisted(() => vi.fn());
 const ensureClientWebUserInviteMock = vi.hoisted(() => vi.fn());
 const mergeSessionPayloadMock = vi.hoisted(() => vi.fn());
 const updateSessionStateMock = vi.hoisted(() => vi.fn());
+const beginProcessingUpdateMock = vi.hoisted(() => vi.fn());
+const acquireTelegramUserLeaseMock = vi.hoisted(() => vi.fn());
+const markProcessedUpdateMock = vi.hoisted(() => vi.fn());
+const releaseProcessingUpdateMock = vi.hoisted(() => vi.fn());
+const releaseTelegramUserLeaseMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../config/env', () => ({
   env: {
@@ -96,9 +101,12 @@ vi.mock('../../services/calendar-sync.service', () => ({
   syncAppointmentsToExternalCalendars: vi.fn(),
 }));
 vi.mock('../../repositories/processed-update.repository', () => ({
-  beginProcessingUpdate: vi.fn(),
-  markProcessedUpdate: vi.fn(),
-  releaseProcessingUpdate: vi.fn(),
+  acquireTelegramUserLease: acquireTelegramUserLeaseMock,
+  beginProcessingUpdate: beginProcessingUpdateMock,
+  cleanupProcessedUpdates: vi.fn(),
+  markProcessedUpdate: markProcessedUpdateMock,
+  releaseProcessingUpdate: releaseProcessingUpdateMock,
+  releaseTelegramUserLease: releaseTelegramUserLeaseMock,
 }));
 vi.mock('../../monitoring/alerts', () => ({ recordHttp5xx: vi.fn(), recordIncomingUpdate: vi.fn() }));
 vi.mock('../../utils/logger', () => ({ logError: vi.fn(), logInfo: vi.fn(), logWarn: vi.fn() }));
@@ -128,6 +136,14 @@ async function postUpdate(payload: unknown) {
 
 describe('telegramWebhook ENTERING_EMAIL flow', () => {
   beforeEach(() => {
+    beginProcessingUpdateMock.mockResolvedValue({
+      status: 'acquired',
+      processingToken: 'update-owner',
+    });
+    acquireTelegramUserLeaseMock.mockResolvedValue('user-owner');
+    markProcessedUpdateMock.mockResolvedValue(true);
+    releaseProcessingUpdateMock.mockResolvedValue(true);
+    releaseTelegramUserLeaseMock.mockResolvedValue(true);
     findOrCreateTelegramUserMock.mockResolvedValue({
       isNew: false,
       user: {
@@ -183,6 +199,7 @@ describe('telegramWebhook ENTERING_EMAIL flow', () => {
     findUserByPhoneOrEmailMock.mockResolvedValue({ id: 10 });
 
     const response = await postUpdate({
+      update_id: 123,
       message: {
         chat: { id: 101 },
         from: { id: 5001, first_name: 'Ivan', username: 'ivan' },
@@ -204,5 +221,110 @@ describe('telegramWebhook ENTERING_EMAIL flow', () => {
     expect(mergeSessionPayloadMock).toHaveBeenCalledWith(1, 10, UserSessionState.CONFIRMING, {
       enteredEmail: 'new@example.com',
     });
+    expect(markProcessedUpdateMock).toHaveBeenCalledWith(123, 'update-owner');
+    expect(releaseTelegramUserLeaseMock).toHaveBeenCalledWith(5001, 'user-owner');
+  });
+
+  it('releases the update lease for retry when the same Telegram user is already processing', async () => {
+    acquireTelegramUserLeaseMock.mockResolvedValueOnce(null);
+    let resolveRelease!: (value: boolean) => void;
+    releaseProcessingUpdateMock.mockImplementationOnce(
+      () => new Promise<boolean>((resolve) => {
+        resolveRelease = resolve;
+      }),
+    );
+
+    let responseSettled = false;
+    const responsePromise = postUpdate({
+      update_id: 124,
+      message: {
+        chat: { id: 101 },
+        from: { id: 5001, first_name: 'Ivan', username: 'ivan' },
+        text: 'new@example.com',
+      },
+    }).then((response) => {
+      responseSettled = true;
+      return response;
+    });
+
+    await vi.waitFor(() => {
+      expect(releaseProcessingUpdateMock).toHaveBeenCalledWith(124, 'update-owner');
+    });
+    expect(responseSettled).toBe(false);
+
+    resolveRelease(true);
+    const response = await responsePromise;
+
+    expect(response.status).toBe(503);
+    expect(markProcessedUpdateMock).not.toHaveBeenCalled();
+    expect(findOrCreateTelegramUserMock).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 for an actively processing update without treating it as processed', async () => {
+    beginProcessingUpdateMock.mockResolvedValueOnce({ status: 'active' });
+
+    const response = await postUpdate({
+      update_id: 125,
+      message: {
+        chat: { id: 101 },
+        from: { id: 5001, first_name: 'Ivan', username: 'ivan' },
+        text: 'new@example.com',
+      },
+    });
+
+    expect(response.status).toBe(503);
+    expect(acquireTelegramUserLeaseMock).not.toHaveBeenCalled();
+    expect(markProcessedUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it('returns 200 duplicate only for an update already marked processed', async () => {
+    beginProcessingUpdateMock.mockResolvedValueOnce({ status: 'processed' });
+
+    const response = await postUpdate({
+      update_id: 126,
+      message: {
+        chat: { id: 101 },
+        from: { id: 5001, first_name: 'Ivan', username: 'ivan' },
+        text: 'new@example.com',
+      },
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true, duplicate: true });
+    expect(acquireTelegramUserLeaseMock).not.toHaveBeenCalled();
+  });
+
+  it('releases owned update and user leases before sending a retryable 500', async () => {
+    findOrCreateTelegramUserMock.mockRejectedValueOnce(new Error('processing failed'));
+    let resolveUpdateRelease!: (value: boolean) => void;
+    releaseProcessingUpdateMock.mockImplementationOnce(
+      () => new Promise<boolean>((resolve) => {
+        resolveUpdateRelease = resolve;
+      }),
+    );
+
+    let responseSettled = false;
+    const responsePromise = postUpdate({
+      update_id: 127,
+      message: {
+        chat: { id: 101 },
+        from: { id: 5001, first_name: 'Ivan', username: 'ivan' },
+        text: 'new@example.com',
+      },
+    }).then((response) => {
+      responseSettled = true;
+      return response;
+    });
+
+    await vi.waitFor(() => {
+      expect(releaseProcessingUpdateMock).toHaveBeenCalledWith(127, 'update-owner');
+    });
+    expect(responseSettled).toBe(false);
+
+    resolveUpdateRelease(true);
+    const response = await responsePromise;
+
+    expect(response.status).toBe(500);
+    expect(releaseTelegramUserLeaseMock).toHaveBeenCalledWith(5001, 'user-owner');
   });
 });

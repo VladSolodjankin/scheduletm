@@ -41,6 +41,8 @@ export function usePublicPageEditor({
       case 'seo/update':
       case 'slug/update':
       case 'theme/update':
+      case 'media/add':
+      case 'media/remove':
       case 'section/add':
       case 'section/update':
       case 'section/remove':

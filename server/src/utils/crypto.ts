@@ -43,7 +43,7 @@ export function decryptText(value: string, secret: string): string | null {
       return null;
     }
     const key = buildEncryptionKey(secret);
-    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv, { authTagLength: 16 });
     decipher.setAuthTag(tag);
     return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
   } catch {

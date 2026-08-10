@@ -67,9 +67,12 @@ import {
   syncAppointmentsToExternalCalendars,
 } from '../services/calendar-sync.service';
 import {
+  acquireTelegramUserLease,
   beginProcessingUpdate,
+  cleanupProcessedUpdates,
   markProcessedUpdate,
   releaseProcessingUpdate,
+  releaseTelegramUserLease,
 } from '../repositories/processed-update.repository';
 import { recordHttp5xx, recordIncomingUpdate } from '../monitoring/alerts';
 import { logError, logInfo, logWarn } from '../utils/logger';
@@ -223,36 +226,87 @@ telegramWebhookRouter.post(
 
     const update = req.body as TelegramUpdate;
     const updateId = typeof update?.update_id === 'number' ? update.update_id : undefined;
-    let updateLockAcquired = false;
+    const telegramUserId = update.callback_query?.from.id ?? update.message?.from?.id;
+    let updateProcessingToken: string | null = null;
+    let userProcessingToken: string | null = null;
+
+    const releaseOwnedLeasesForRetry = async () => {
+      if (updateId !== undefined && updateProcessingToken) {
+        const token = updateProcessingToken;
+        updateProcessingToken = null;
+        try {
+          await releaseProcessingUpdate(updateId, token);
+        } catch (error) {
+          logError('webhook.update_lease_release_failed', {
+            request_id: requestId,
+            update_id: updateId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
+      if (telegramUserId !== undefined && userProcessingToken) {
+        const token = userProcessingToken;
+        userProcessingToken = null;
+        try {
+          await releaseTelegramUserLease(telegramUserId, token);
+        } catch (error) {
+          logError('webhook.user_lease_release_failed', {
+            request_id: requestId,
+            update_id: updateId,
+            telegram_user_id: telegramUserId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    };
 
     logInfo('webhook.request_received', {
       request_id: requestId,
       update_id: updateId,
     });
 
-    if (updateId !== undefined) {
-      recordIncomingUpdate(updateId);
-      updateLockAcquired = await beginProcessingUpdate(updateId);
+    try {
+      if (updateId !== undefined) {
+        recordIncomingUpdate(updateId);
+        const updateClaim = await beginProcessingUpdate(updateId);
 
-      if (!updateLockAcquired) {
-        logInfo('webhook.duplicate_update_skipped', {
-          request_id: requestId,
-          update_id: updateId,
-        });
-        return res.status(200).json({ ok: true, duplicate: true });
-      }
-
-      res.once('finish', () => {
-        if (res.statusCode >= 500) {
-          void releaseProcessingUpdate(updateId);
-          return;
+        if (updateClaim.status === 'processed') {
+          logInfo('webhook.duplicate_update_skipped', {
+            request_id: requestId,
+            update_id: updateId,
+          });
+          return res.status(200).json({ ok: true, duplicate: true });
         }
 
-        void markProcessedUpdate(updateId);
-      });
-    }
+        if (updateClaim.status === 'active') {
+          logInfo('webhook.active_update_retry', {
+            request_id: requestId,
+            update_id: updateId,
+          });
+          return res.status(503).json({ ok: false, retry: true });
+        }
 
-    try {
+        updateProcessingToken = updateClaim.processingToken;
+
+        if (updateId % 100 === 0) {
+          await cleanupProcessedUpdates();
+        }
+      }
+
+      if (telegramUserId !== undefined) {
+        userProcessingToken = await acquireTelegramUserLease(telegramUserId);
+        if (!userProcessingToken) {
+          logInfo('webhook.user_busy', {
+            request_id: requestId,
+            update_id: updateId,
+            telegram_user_id: telegramUserId,
+          });
+          await releaseOwnedLeasesForRetry();
+          return res.status(503).json({ ok: false, retry: true });
+        }
+      }
+
       if (update.callback_query) {
         const callback = update.callback_query;
         const data = callback.data;
@@ -1231,7 +1285,37 @@ telegramWebhookRouter.post(
         update_id: updateId,
         error: error instanceof Error ? error.message : String(error),
       });
+      await releaseOwnedLeasesForRetry();
       return res.status(500).json({ ok: false });
+    } finally {
+      if (updateId !== undefined && updateProcessingToken) {
+        try {
+          if (res.statusCode >= 500) {
+            await releaseProcessingUpdate(updateId, updateProcessingToken);
+          } else {
+            await markProcessedUpdate(updateId, updateProcessingToken);
+          }
+        } catch (error) {
+          logError('webhook.update_lease_finalize_failed', {
+            request_id: requestId,
+            update_id: updateId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
+      if (telegramUserId !== undefined && userProcessingToken) {
+        try {
+          await releaseTelegramUserLease(telegramUserId, userProcessingToken);
+        } catch (error) {
+          logError('webhook.user_lease_release_failed', {
+            request_id: requestId,
+            update_id: updateId,
+            telegram_user_id: telegramUserId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
     }
   },
 );

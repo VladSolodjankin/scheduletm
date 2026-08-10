@@ -33,5 +33,9 @@
 ## Навигация по документации
 
 - Глобальный обзор: [`README.md`](./README.md)
-- Глобальные задачи: [`TODO.md`](./TODO.md)
+- Production MVP и product backlog: [`TODO.md`](./TODO.md)
 - Глобальный readiness-чеклист: [`PRODUCTION_READINESS_CHECKLIST.md`](./PRODUCTION_READINESS_CHECKLIST.md)
+- Каталог услуг: [`docs/services-setup.md`](./docs/services-setup.md)
+- Meeting providers: [`docs/meeting-platforms-zoom-plan.md`](./docs/meeting-platforms-zoom-plan.md)
+- Public Page Builder: [`docs/public-page-builder/README.md`](./docs/public-page-builder/README.md)
+- Compliance: [`docs/compliance/README.md`](./docs/compliance/README.md)

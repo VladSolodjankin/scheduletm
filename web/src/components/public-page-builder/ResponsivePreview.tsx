@@ -8,9 +8,11 @@ const widths: Record<PreviewDevice, number> = { mobile: 390, tablet: 768, deskto
 export function ResponsivePreview({
   document,
   device,
+  mediaUrls,
 }: {
   document: PublicPageDocument;
   device: PreviewDevice;
+  mediaUrls?: ReadonlyMap<string, string>;
 }) {
   return (
     <Box sx={{ overflow: 'auto', p: { xs: 1, md: 3 }, height: '100%', bgcolor: 'grey.100' }}>
@@ -23,7 +25,7 @@ export function ResponsivePreview({
           transition: 'width 180ms ease',
         }}
       >
-        <PublicPageRenderer document={document} />
+        <PublicPageRenderer document={document} mediaUrls={mediaUrls} />
       </Paper>
     </Box>
   );

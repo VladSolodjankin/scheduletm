@@ -149,3 +149,20 @@ apiClient.interceptors.response.use((response) => {
 export const authHeaders = (accessToken: string) => ({
   Authorization: `Bearer ${accessToken}`
 });
+
+export const servicesApi = {
+  list: <T>(accessToken: string) => apiClient.get<T>('/api/services', {
+    headers: authHeaders(accessToken),
+  }),
+  create: <T, P>(accessToken: string, payload: P) => apiClient.post<T>('/api/services', payload, {
+    headers: authHeaders(accessToken),
+  }),
+  update: <T, P>(accessToken: string, serviceId: number, payload: P) => apiClient.patch<T>(`/api/services/${serviceId}`, payload, {
+    headers: authHeaders(accessToken),
+  }),
+  updateAssignment: <T, P>(accessToken: string, serviceId: number, specialistId: number, payload: P) => apiClient.patch<T>(
+    `/api/services/${serviceId}/specialists/${specialistId}`,
+    payload,
+    { headers: authHeaders(accessToken) },
+  ),
+};

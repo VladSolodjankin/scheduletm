@@ -1,4 +1,5 @@
 import { db } from '../db/knex.js';
+import { decryptIntegrationSecret } from './integrationSecretCrypto.js';
 
 export async function createDefaultSpecialistForWebUserIfMissing(
   accountId: number,
@@ -275,15 +276,34 @@ export async function findSpecialistsCalendarCredentials(
     })
     .where('s.account_id', accountId)
     .whereIn('s.id', specialistIds)
-    .whereNotNull('wui.google_api_key')
+    .where(function findConfiguredGoogleToken() {
+      this.whereNotNull('wui.google_access_token_encrypted').orWhereNotNull('wui.google_api_key');
+    })
     .select(
       's.id as specialistId',
       'wu.id as webUserId',
+      'wui.google_access_token_encrypted as googleAccessTokenEncrypted',
+      'wui.google_refresh_token_encrypted as googleRefreshTokenEncrypted',
       'wui.google_api_key as googleApiKey',
       'wui.google_refresh_token as googleRefreshToken',
       'wui.google_token_expires_at as googleTokenExpiresAt',
       'wui.google_calendar_id as googleCalendarId',
     );
 
-  return rows.filter((row) => Boolean(row.googleApiKey));
+  return rows.map((row) => ({
+    specialistId: row.specialistId,
+    webUserId: row.webUserId,
+    googleApiKey: decryptIntegrationSecret(
+      row.googleAccessTokenEncrypted,
+      row.googleApiKey,
+      'Google access token',
+    ) as string,
+    googleRefreshToken: decryptIntegrationSecret(
+      row.googleRefreshTokenEncrypted,
+      row.googleRefreshToken,
+      'Google refresh token',
+    ),
+    googleTokenExpiresAt: row.googleTokenExpiresAt,
+    googleCalendarId: row.googleCalendarId,
+  }));
 }

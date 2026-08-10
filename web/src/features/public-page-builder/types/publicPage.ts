@@ -18,6 +18,11 @@ export type PageTheme = {
     text: string;
     primary: string;
   };
+  fontFamily: string;
+  backgroundMediaId: string | null;
+  backgroundPreset: string | null;
+  backgroundFit: 'cover' | 'contain';
+  backgroundPosition: string;
 };
 
 export type PageSeo = {
@@ -69,6 +74,10 @@ export type BlockType = KnownBlockType | (string & {});
 export type BlockDesign = {
   backgroundColor: string | null;
   textColor: string | null;
+  backgroundMediaId: string | null;
+  backgroundOverlay: number;
+  backgroundFit: 'cover' | 'contain';
+  backgroundPosition: string;
 };
 
 export type BlockContent = Record<string, unknown>;

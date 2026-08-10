@@ -13,6 +13,7 @@ import { userManagementRoutes } from './routes/userManagementRoutes.js';
 import { notificationRoutes } from './routes/notificationRoutes.js';
 import { errorLogRoutes } from './routes/errorLogRoutes.js';
 import { publicPageRoutes } from './routes/publicPageRoutes.js';
+import { serviceRoutes } from './routes/serviceRoutes.js';
 import { trackServerError } from './services/errorTrackingService.js';
 
 const getBodyParserErrorStatus = (error: unknown): 400 | 413 | null => {
@@ -94,6 +95,7 @@ export const createApp = () => {
   app.use('/api/settings', settingsRoutes);
   app.use('/api/appointments', appointmentRoutes);
   app.use('/api/specialists', specialistRoutes);
+  app.use('/api/services', serviceRoutes);
   app.use('/api/users', userManagementRoutes);
   app.use('/api/integrations', integrationRoutes);
   app.use('/api/notifications', notificationRoutes);

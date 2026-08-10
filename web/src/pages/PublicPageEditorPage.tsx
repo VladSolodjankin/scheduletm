@@ -15,8 +15,8 @@ import { usePublicPageEditor } from '../features/public-page-builder/hooks/usePu
 import { createBlock } from '../features/public-page-builder/model/blockRegistry';
 import { selectCanRedo, selectCanUndo } from '../features/public-page-builder/model/selectors';
 import { ApiPublicPageRepository } from '../features/public-page-builder/repository/ApiPublicPageRepository';
-import type { PublicPageRecord } from '../features/public-page-builder/repository/PublicPageRepository';
-import type { PageBlock, PageSection } from '../features/public-page-builder/types/publicPage';
+import { PublicPageRepositoryError, type PublicPageRecord } from '../features/public-page-builder/repository/PublicPageRepository';
+import type { MediaReference, PageBlock, PageSection } from '../features/public-page-builder/types/publicPage';
 import { createStableId } from '../features/public-page-builder/utils/createStableId';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
@@ -41,6 +41,68 @@ function Editor({
   const { state, dispatch } = editor;
   const [device, setDevice] = useState<PreviewDevice>('mobile');
   const [copied, setCopied] = useState(false);
+  const [mediaUrls, setMediaUrls] = useState<Map<string, string>>(new Map());
+  const mediaUrlsRef = useRef(mediaUrls);
+  const knownMediaIdsRef = useRef(new Set(record.draft.media.map((media) => media.id)));
+  const pendingMediaDeletionIdsRef = useRef(new Set<string>());
+  const mediaDeletionRunningRef = useRef(false);
+  useEffect(() => { mediaUrlsRef.current = mediaUrls; }, [mediaUrls]);
+  useEffect(() => {
+    const currentIds = new Set(state.document.media.map((media) => media.id));
+    currentIds.forEach((id) => knownMediaIdsRef.current.add(id));
+    knownMediaIdsRef.current.forEach((id) => {
+      if (currentIds.has(id)) {return;}
+      pendingMediaDeletionIdsRef.current.add(id);
+      const previewUrl = mediaUrlsRef.current.get(id);
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setMediaUrls((current) => {
+          const next = new Map(current); next.delete(id); return next;
+        });
+      }
+    });
+  }, [state.document.media]);
+  useEffect(() => {
+    if (state.dirty || state.saveStatus !== 'saved' || editor.isPublishing || mediaDeletionRunningRef.current) {return;}
+    const pending = [...pendingMediaDeletionIdsRef.current];
+    if (!pending.length) {return;}
+    mediaDeletionRunningRef.current = true;
+    void (async () => {
+      for (const id of pending) {
+        try {
+          await repository.deleteMedia(id);
+          pendingMediaDeletionIdsRef.current.delete(id);
+          knownMediaIdsRef.current.delete(id);
+        } catch (error) {
+          if (!(error instanceof PublicPageRepositoryError && error.code === 'media_in_use')) {
+            // Retain transient failures for the next successful save/publish boundary.
+          }
+        }
+      }
+    })().finally(() => { mediaDeletionRunningRef.current = false; });
+  }, [editor.isPublishing, repository, state.dirty, state.saveStatus, state.document.status]);
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all(state.document.media.filter((media) => !mediaUrlsRef.current.has(media.id)).map(async (media) => {
+      try {
+        const blob = await repository.getMediaPreview(media.id);
+        if (!cancelled) {
+          const url = URL.createObjectURL(blob);
+          setMediaUrls((current) => new Map(current).set(media.id, url));
+        }
+      } catch { /* A new or unpublished preview may not be available yet. */ }
+    }));
+    return () => { cancelled = true; };
+  }, [repository, state.document.media]);
+  useEffect(() => () => {
+    mediaUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
+  const rememberMediaPreview = (media: MediaReference, url: string) => {
+    setMediaUrls((current) => {
+      const old = current.get(media.id); if (old && old !== url) {URL.revokeObjectURL(old);}
+      return new Map(current).set(media.id, url);
+    });
+  };
 
   const addSection = () => {
     const section: PageSection = {
@@ -157,8 +219,9 @@ function Editor({
           <BlockLibrary locale={locale} onAdd={addBlock} />
         </Stack>
       }
-      preview={<ResponsivePreview document={state.document} device={device} />}
-      inspector={<InspectorPanel state={state} locale={locale} dispatch={dispatch} />}
+      preview={<ResponsivePreview document={state.document} device={device} mediaUrls={mediaUrls} />}
+      inspector={<InspectorPanel state={state} locale={locale} dispatch={dispatch} repository={repository}
+        previewUrls={mediaUrls} onMediaPreview={rememberMediaPreview} />}
     />
     <Snackbar
       open={copied}

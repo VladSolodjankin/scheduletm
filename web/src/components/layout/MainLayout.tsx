@@ -74,6 +74,9 @@ export function MainLayout() {
         { to: '/public-pages', label: t('publicPageBuilder.pages'), icon: 'publicPages' as const },
       ]
       : []),
+    ...(user?.role === WebUserRole.ProductOwner || user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin || user?.role === WebUserRole.Specialist
+      ? [{ to: '/services', label: t('common.services'), icon: 'calendar' as const }]
+      : []),
     ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin || user?.role === WebUserRole.Specialist
       ? [{ to: '/users', label: t('common.users'), icon: 'users' as const }]
       : []),

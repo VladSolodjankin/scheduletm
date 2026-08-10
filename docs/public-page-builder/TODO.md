@@ -17,6 +17,18 @@
 - [x] Публичный appointment status без client PII.
 - [x] Server unit/smoke tests, source-contract tests и runtime model tests.
 
+## Приоритет: production-ready `/:slug`
+
+- [x] Добавить обязательные logo/specialist photo controls с загрузкой, заменой и удалением.
+- [x] Добавить custom background image для всей страницы и отдельного блока.
+- [ ] Подготовить не менее 10 встроенных фоновых изображений.
+- [x] Добавить настройку page font из ограниченного набора production-safe шрифтов.
+- [x] Добавить page-level цвета текста и фона, сохранив готовые темы и defaults.
+- [x] Сохранить block-level цвета текста и фона и добавить background image/overlay.
+- [ ] Довести UX блоков description, services/prices, contacts, socials и messengers.
+- [x] Подготовить стартовый шаблон для одного специалиста.
+- [ ] Проверить полный flow: create → design → upload → save → publish → public mobile/desktop view.
+
 ## Перед выпуском
 
 - [ ] Применить Public Pages и связанные migrations на целевой PostgreSQL.
@@ -33,10 +45,14 @@
 
 ## Следующий этап: media
 
-- [ ] Account-owned media records и object storage.
-- [ ] Upload API с MIME, размером и проверкой фактического формата.
-- [ ] Image processing, безопасные имена и lifecycle удаления.
-- [ ] Picker/drag-and-drop, preview, replace/remove.
+Для ближайшего коммерческого этапа обязательны logo/specialist photo, cover/hero,
+фон страницы и фон отдельного блока. Галерея и расширенное управление изображениями
+не блокируют первый production release.
+
+- [x] Account-owned media records и object storage.
+- [x] Upload API с MIME, размером и проверкой фактического формата.
+- [x] Image decoding/validation, безопасные UUID-ключи и lifecycle удаления.
+- [x] File picker, draft preview, replace/remove.
 - [ ] Logo/avatar/Hero/gallery/background media controls.
 - [ ] Cover/contain, focal point, overlay и aspect-ratio guidance.
 
@@ -50,6 +66,13 @@
 - [ ] Проверка доступности slug до сохранения и предупреждение о смене опубликованного slug.
 - [ ] Focus/scroll к конкретной publish validation error.
 - [ ] Runtime tests API repository/autosave concurrency.
+
+## Отзывы: отдельный последующий этап
+
+- [ ] Добавить account-scoped таблицу отзывов и административное управление записями.
+- [ ] Не добавлять клиентскую отправку отзывов на этом этапе; публичная страница только читает опубликованные отзывы.
+- [ ] Выбрать и реализовать renderer: секция со скриншотами и/или стилизованные chat bubbles.
+- [ ] Добавить управление порядком, видимостью и привязкой отзывов к публичной странице.
 
 ## Отложено
 

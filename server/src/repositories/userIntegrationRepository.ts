@@ -53,7 +53,9 @@ export async function updateUserTelegramIntegration(input: UpdateUserTelegramInt
   const patch: Record<string, unknown> = {};
 
   if (input.telegramBotToken !== undefined) {
-    patch.telegram_bot_token = input.telegramBotToken;
+    // Secrets are now stored only in encrypted web_user_integrations columns.
+    // Clear a legacy copy when this setting is explicitly changed.
+    patch.telegram_bot_token = null;
   }
 
   if (input.telegramBotUsername !== undefined) {

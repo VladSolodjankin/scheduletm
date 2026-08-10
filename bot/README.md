@@ -12,6 +12,8 @@ Telegram-бот для записи клиентов (webhook + PostgreSQL + Kne
 - В процессе записи email клиента обязателен: бот автоматически создаёт/связывает `web_user` (role=`client`) и отправляет invite-link для завершения регистрации.
 - Учет timezone через IANA (хранение времени в UTC).
 - Напоминания через `notifications` (Telegram/email/SMS, где email/SMS сейчас stub).
+- Webhook использует reclaimable DB lease по `update_id` и отдельный per-user lease:
+  дубли не повторяют side effects, а параллельный flow получает retryable response.
 
 ## Команды
 
@@ -32,6 +34,7 @@ npm run -w bot verify
 - `WEBHOOK_SECRET`
 - `APP_URL`
 - `DATABASE_URL` / `DATABASE_PUBLIC_URL`
+- `APP_ENCRYPTION_KEY` (тот же secret, что использует server для integration credentials)
 - `AUTO_SET_WEBHOOK`
 
 ## Документация
@@ -39,5 +42,5 @@ npm run -w bot verify
 - Карта модуля: [`./PROJECT_MAP.md`](./PROJECT_MAP.md)
 - Bot roadmap: [`./TODO.md`](./TODO.md)
 - Bot production checklist: [`./PRODUCTION_READINESS_CHECKLIST.md`](./PRODUCTION_READINESS_CHECKLIST.md)
-- MVP без оплаты: [`./MVP_NO_PAYMENT_PLAN.md`](./MVP_NO_PAYMENT_PLAN.md)
+- Общий Production MVP и product backlog: [`../TODO.md`](../TODO.md)
 - Глобальный обзор репозитория: [`../README.md`](../README.md)

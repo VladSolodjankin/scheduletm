@@ -31,7 +31,7 @@ unless explicitly invoked.
 - [ ] Users create/edit/deactivate/delete/resend invite/default meeting link.
 - [ ] Settings: system/account/user, locale/timezone, notifications, and
   integrations.
-- [ ] Appointment recurrence, atomic slot conflicts, payment, and notification.
+- [ ] Appointment recurrence, atomic slot conflicts, cancellation policy, and notification.
 - [ ] Public Page slug conflicts and concurrent editors.
 - [ ] Public booking selection/defaults and schedule/calendar/overlap conflicts.
 - [ ] Public status privacy, wrong verifier, missing appointment, rate limit,

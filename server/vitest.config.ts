@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => ({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     clearMocks: true,
+    testTimeout: 15_000,
     env: loadEnv(mode, process.cwd(), '')
   },
 }))

@@ -1,6 +1,8 @@
 import { db } from '../db/knex';
+import { decryptIntegrationSecret } from '../utils/integration-secrets';
 
 type SpecialistCalendarCredentialsRow = {
+  google_access_token_encrypted: string | null;
   google_api_key: string | null;
   google_calendar_id: string | null;
 };
@@ -49,11 +51,23 @@ export async function findSpecialistCalendarCredentials(accountId: number, speci
     })
     .where({ 'sp.account_id': accountId, 'sp.id': specialistId })
     .first<SpecialistCalendarCredentialsRow>(
+      'wui.google_access_token_encrypted as google_access_token_encrypted',
       'wui.google_api_key as google_api_key',
       'wui.google_calendar_id as google_calendar_id',
     );
 
-  return row ?? null;
+  if (!row) {
+    return null;
+  }
+
+  return {
+    google_api_key: decryptIntegrationSecret(
+      row.google_access_token_encrypted,
+      row.google_api_key,
+      'Google access token',
+    ),
+    google_calendar_id: row.google_calendar_id,
+  };
 }
 
 type SpecialistScheduleRow = {

@@ -116,7 +116,7 @@ export async function bookPublicAppointment(slug: string, input: {
   const accountId = await resolvePublishedAccount(slug);
   const [specialist, service] = await Promise.all([
     findPublicBookingSpecialist(accountId, input.specialistId),
-    findPublicBookingService(accountId, input.serviceId),
+    findPublicBookingService(accountId, input.serviceId, input.specialistId),
   ]);
   if (!specialist || !service) throw new PublicBookingServiceError('INVALID_SELECTION');
   const startAt = new Date(input.startAt);

@@ -1,14 +1,17 @@
 # Production readiness checklist (`bot`)
 
-Чеклист вывода Telegram-бота в production (без онлайн-оплаты).
+Чеклист вывода Telegram-бота в production. Встроенная онлайн-оплата не входит в
+текущий MVP; продуктовый scope определён в [`../TODO.md`](../TODO.md).
 
 ## Webhook и state machine
 
-- [x] Идемпотентность по `update_id` (без повторного бизнес-эффекта).
-  - [x] Dedup-хранилище `processed_updates` + skip дублей в webhook-роуте.
-  - [x] Повторная доставка update возвращает `duplicate: true` без повторного side-effect.
-- [x] Защита от гонок callback/query для одного пользователя.
-  - [x] Конкурентная обработка одного `update_id` блокируется до завершения запроса.
+- [x] Идемпотентность по `update_id` через persistent processing lease.
+  - [x] Lease можно reclaim после timeout; завершение fenced по `processing_token`.
+  - [x] Обработанный или активный update возвращает `duplicate: true` без повторного side-effect.
+  - [x] Завершённые `processed_updates` очищаются по retention.
+- [x] Межпроцессная защита от гонок callback/query для одного пользователя.
+  - [x] DB lease по `telegram_user_id` сериализует flow между несколькими bot instances.
+  - [x] При занятом lease webhook возвращает retryable `503`, чтобы Telegram повторил update.
   - [ ] Атомарные операции в БД на критичных шагах state machine.
 - [ ] Recovery состояния после рестартов (session restore + TTL).
 

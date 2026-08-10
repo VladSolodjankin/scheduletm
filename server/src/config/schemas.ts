@@ -227,6 +227,32 @@ export const specialistUpdateSchema = z.object({
   message: v.atLeastOneFieldToUpdate,
 });
 
+const nullableUrlSchema = z.string().trim().url().max(2048).nullable();
+const specialistIdsSchema = z.array(z.coerce.number().int().positive()).max(500);
+
+export const serviceCreateSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  description: z.string().trim().max(5000).nullable().optional(),
+  basePrice: z.coerce.number().int().min(0).max(10_000_000),
+  baseDurationMinutes: z.coerce.number().int().min(5).max(1440),
+  firstSessionFree: z.boolean().optional(),
+  imageUrl: nullableUrlSchema.optional(),
+  isActive: z.boolean().optional(),
+  specialistIds: specialistIdsSchema.optional(),
+}).strict();
+
+export const serviceUpdateSchema = serviceCreateSchema.partial().refine((value) => Object.keys(value).length > 0, {
+  message: v.atLeastOneFieldToUpdate,
+});
+
+export const serviceAssignmentUpdateSchema = z.object({
+  priceOverride: z.coerce.number().int().min(0).max(10_000_000).nullable().optional(),
+  durationOverrideMinutes: z.coerce.number().int().min(5).max(1440).nullable().optional(),
+  isActive: z.boolean().optional(),
+}).strict().refine((value) => Object.keys(value).length > 0, {
+  message: v.atLeastOneFieldToUpdate,
+});
+
 const appointmentStatusSchema = z.enum(['new', 'confirmed', 'cancelled']);
 const appointmentMeetingProviderSchema = z.enum(['manual', 'zoom', 'offline']);
 

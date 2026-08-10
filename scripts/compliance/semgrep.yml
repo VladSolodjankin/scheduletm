@@ -1,0 +1,38 @@
+rules:
+  - id: node-crypto-gcm-decipher-missing-auth-tag-length
+    message: AES-GCM decipher creation must declare authTagLength to prevent acceptance of truncated authentication tags.
+    severity: ERROR
+    languages:
+      - javascript
+      - typescript
+    metadata:
+      category: security
+      cwe: CWE-310
+    patterns:
+      - pattern-either:
+          - pattern: $CRYPTO.createDecipheriv($ALGORITHM, $KEY, $IV)
+          - pattern: createDecipheriv($ALGORITHM, $KEY, $IV)
+      - metavariable-regex:
+          metavariable: $ALGORITHM
+          regex: ^[\"'`]aes-[0-9]+-gcm[\"'`]$
+
+  - id: javascript-eval-with-variable
+    message: Do not execute variable content with eval.
+    severity: ERROR
+    languages:
+      - javascript
+      - typescript
+    patterns:
+      - pattern: eval($VALUE)
+      - pattern-not: eval("...")
+      - pattern-not: eval('...')
+
+  - id: node-child-process-shell-with-variable
+    message: Do not pass variable content to a shell command.
+    severity: ERROR
+    languages:
+      - javascript
+      - typescript
+    pattern-either:
+      - pattern: $CP.exec($COMMAND, ...)
+      - pattern: $CP.execSync($COMMAND, ...)

@@ -24,6 +24,14 @@ const keys = {
   reloadLatest: 'publicPageBuilder.reloadLatest',
   addItem: 'publicPageBuilder.addItem',
   deleteConfirm: 'publicPageBuilder.deleteConfirm',
+  uploadImage: 'publicPageBuilder.uploadImage', replaceImage: 'publicPageBuilder.replaceImage',
+  imageAlt: 'publicPageBuilder.imageAlt', invalidImageType: 'publicPageBuilder.invalidImageType',
+  imageTooLarge: 'publicPageBuilder.imageTooLarge', imageUploadError: 'publicPageBuilder.imageUploadError',
+  displayName: 'publicPageBuilder.displayName', profileDescription: 'publicPageBuilder.profileDescription',
+  logo: 'publicPageBuilder.logo', avatar: 'publicPageBuilder.avatar', blockBackground: 'publicPageBuilder.blockBackground',
+  pageBackground: 'publicPageBuilder.pageBackground', overlay: 'publicPageBuilder.overlay', imageFit: 'publicPageBuilder.imageFit',
+  focalPoint: 'publicPageBuilder.focalPoint', font: 'publicPageBuilder.font', pageColor: 'publicPageBuilder.pageColor',
+  backgroundPreset: 'publicPageBuilder.backgroundPreset',
 } as const satisfies Record<string, TranslationKey>;
 
 export type PublicPageUiKey = keyof typeof keys;

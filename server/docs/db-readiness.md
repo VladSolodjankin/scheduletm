@@ -34,6 +34,13 @@
 
 До выполнения шага 4 backup/restore readiness остаётся неподтверждённой.
 
+Для release evidence необходимо сохранить вне production-БД: дату snapshot,
+идентификатор восстановленной изолированной БД, ответственного, фактический data-gap
+(RPO), полную длительность восстановления до успешного smoke (RTO), результат
+`migrate:latest` и ссылку на smoke logs. Наличие managed backup без такого evidence
+не закрывает пункт канонического
+[`PRODUCTION_READINESS_CHECKLIST.md`](../../PRODUCTION_READINESS_CHECKLIST.md).
+
 ## 3) Hot-path query plans
 
 Для таблиц `appointments`, `notifications`, `web_user_sessions`, `telegram_user_sessions` обязательна периодическая проверка `EXPLAIN (ANALYZE, BUFFERS)` на ключевых запросах.

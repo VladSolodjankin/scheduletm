@@ -16,6 +16,7 @@ export const dictionaries = {
       workspace: 'Workspace',
       country: 'Country',
       specialists: 'Specialists',
+      services: 'Services',
       users: 'Users',
       notificationLogs: 'Notification logs',
       errorLogs: 'Error logs',
@@ -247,6 +248,36 @@ export const dictionaries = {
       pageTitle: 'Specialists',
       pageSubtitle: 'Create and manage specialist profiles for your team.',
       accessDenied: 'Only owner or admin can manage specialists.'
+    },
+    services: {
+      pageTitle: 'Services',
+      pageSubtitle: 'Manage bookable services, specialist assignments, prices, and duration.',
+      accessDenied: 'You do not have access to the service catalog.',
+      create: 'Add service',
+      createTitle: 'Add service',
+      editTitle: 'Edit service',
+      edit: 'Edit',
+      deactivate: 'Deactivate',
+      empty: 'No services yet.',
+      name: 'Name',
+      description: 'Description',
+      price: 'Base price',
+      duration: 'Base duration, minutes',
+      imageUrl: 'Image URL',
+      firstSessionFree: 'First session free',
+      active: 'Active',
+      inactive: 'Inactive',
+      minutes: 'min',
+      assignments: 'Specialist assignments',
+      noAssignments: 'No specialists assigned.',
+      priceOverride: 'Price override',
+      durationOverride: 'Duration override',
+      save: 'Save',
+      errors: {
+        load: 'Unable to load services.',
+        save: 'Unable to save service.',
+        saveAssignment: 'Unable to save specialist overrides.'
+      }
     },
 
     users: {
@@ -495,6 +526,12 @@ export const dictionaries = {
       reloadLatest: 'Reload latest',
       addItem: 'Add item',
       deleteConfirm: 'Permanently delete this archived page?',
+      uploadImage: 'Upload image', replaceImage: 'Replace image', imageAlt: 'Image description',
+      invalidImageType: 'Choose a JPEG, PNG, or WebP image.', imageTooLarge: 'Image must be 5 MB or smaller.',
+      imageUploadError: 'Could not upload the image.', displayName: 'Display name', profileDescription: 'Profile description',
+      logo: 'Logo', avatar: 'Profile photo', blockBackground: 'Block background', pageBackground: 'Page background',
+      overlay: 'Overlay (%)', imageFit: 'Image fit', focalPoint: 'Focal point', font: 'Font',
+      pageColor: 'Page color', backgroundPreset: 'Background style',
       unknownBlockTitle: 'Unsupported block',
       unknownBlockDescription: 'This block type is not available, but the rest of the page can still be displayed.',
       blockErrorTitle: 'Block could not be displayed',
@@ -516,6 +553,7 @@ export const dictionaries = {
       my_appointments: 'Мои Записи',
       workspace: 'Рабочая область',
       specialists: 'Специалисты',
+      services: 'Услуги',
       country: 'Страна',
       users: 'Пользователи',
       notificationLogs: 'Логи уведомлений',
@@ -749,6 +787,36 @@ export const dictionaries = {
       pageTitle: 'Специалисты',
       pageSubtitle: 'Добавляйте и управляйте профилями специалистов вашей команды.',
       accessDenied: 'Управлять специалистами может только владелец или администратор.'
+    },
+    services: {
+      pageTitle: 'Услуги',
+      pageSubtitle: 'Управляйте услугами, специалистами, ценами и длительностью.',
+      accessDenied: 'У вас нет доступа к каталогу услуг.',
+      create: 'Добавить услугу',
+      createTitle: 'Добавить услугу',
+      editTitle: 'Редактировать услугу',
+      edit: 'Редактировать',
+      deactivate: 'Деактивировать',
+      empty: 'Услуг пока нет.',
+      name: 'Название',
+      description: 'Описание',
+      price: 'Базовая цена',
+      duration: 'Базовая длительность, минуты',
+      imageUrl: 'URL изображения',
+      firstSessionFree: 'Первая сессия бесплатно',
+      active: 'Активна',
+      inactive: 'Неактивна',
+      minutes: 'мин',
+      assignments: 'Назначения специалистов',
+      noAssignments: 'Специалисты не назначены.',
+      priceOverride: 'Индивидуальная цена',
+      durationOverride: 'Индивидуальная длительность',
+      save: 'Сохранить',
+      errors: {
+        load: 'Не удалось загрузить услуги.',
+        save: 'Не удалось сохранить услугу.',
+        saveAssignment: 'Не удалось сохранить настройки специалиста.'
+      }
     },
 
     users: {
@@ -1001,6 +1069,12 @@ export const dictionaries = {
       reloadLatest: 'Загрузить последнюю версию',
       addItem: 'Добавить элемент',
       deleteConfirm: 'Навсегда удалить эту архивную страницу?',
+      uploadImage: 'Загрузить изображение', replaceImage: 'Заменить изображение', imageAlt: 'Описание изображения',
+      invalidImageType: 'Выберите изображение JPEG, PNG или WebP.', imageTooLarge: 'Размер изображения не должен превышать 5 МБ.',
+      imageUploadError: 'Не удалось загрузить изображение.', displayName: 'Отображаемое имя', profileDescription: 'Описание профиля',
+      logo: 'Логотип', avatar: 'Фото профиля', blockBackground: 'Фон блока', pageBackground: 'Фон страницы',
+      overlay: 'Затемнение (%)', imageFit: 'Вписывание изображения', focalPoint: 'Фокусная точка', font: 'Шрифт',
+      pageColor: 'Цвет страницы', backgroundPreset: 'Стиль фона',
     }
   }
 } as const;
@@ -1012,11 +1086,14 @@ type PublicBookingTranslationKey = `publicBooking.${Exclude<keyof typeof diction
   | `publicBooking.errors.${keyof typeof dictionaries.en.publicBooking.errors}`;
 type PublicStatusTranslationKey = `publicStatus.${Exclude<keyof typeof dictionaries.en.publicStatus, 'errors'>}`
   | `publicStatus.errors.${keyof typeof dictionaries.en.publicStatus.errors}`;
+type ServicesTranslationKey = `services.${Exclude<keyof typeof dictionaries.en.services, 'errors'>}`
+  | `services.errors.${keyof typeof dictionaries.en.services.errors}`;
 
 export type TranslationKey =
   | PublicPageBuilderTranslationKey
   | PublicBookingTranslationKey
   | PublicStatusTranslationKey
+  | ServicesTranslationKey
   | 'publicPageBuilder.unknownBlockTitle'
   | 'publicPageBuilder.unknownBlockDescription'
   | 'publicPageBuilder.blockErrorTitle'
@@ -1036,6 +1113,7 @@ export type TranslationKey =
   | 'common.my_appointments'
   | 'common.workspace'
   | 'common.specialists'
+  | 'common.services'
   | 'common.users'
   | 'common.notificationLogs'
   | 'common.errorLogs'

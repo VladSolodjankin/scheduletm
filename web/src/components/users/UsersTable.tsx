@@ -65,6 +65,7 @@ export function UsersTable({
         users.map((item, index) => (
           <Box
             key={item.id}
+            data-testid={`managed-user-${item.id}`}
             sx={{
               borderBottom: index === users.length - 1 ? 'none' : `${theme.spacing(0.125)} solid ${alpha(theme.palette.divider, 0.72)}`
             }}

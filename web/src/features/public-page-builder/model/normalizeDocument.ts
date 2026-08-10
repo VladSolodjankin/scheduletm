@@ -42,6 +42,10 @@ function nullableString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
+function fitValue(value: unknown): 'cover' | 'contain' {
+  return value === 'contain' ? 'contain' : 'cover';
+}
+
 function stableId(value: unknown): string {
   return typeof value === 'string' && value.length > 0 ? value : createStableId();
 }
@@ -70,6 +74,11 @@ function normalizeTheme(value: unknown): PageTheme {
       text: stringValue(colors.text, '#111827'),
       primary: stringValue(colors.primary, '#2563eb'),
     },
+    fontFamily: stringValue(theme.fontFamily, 'Inter, system-ui, sans-serif'),
+    backgroundMediaId: nullableString(theme.backgroundMediaId),
+    backgroundPreset: nullableString(theme.backgroundPreset),
+    backgroundFit: fitValue(theme.backgroundFit),
+    backgroundPosition: stringValue(theme.backgroundPosition, '50% 50%'),
   };
 }
 
@@ -89,6 +98,11 @@ function normalizeDesign(value: unknown): BlockDesign {
   return {
     backgroundColor: nullableString(design.backgroundColor),
     textColor: nullableString(design.textColor),
+    backgroundMediaId: nullableString(design.backgroundMediaId),
+    backgroundOverlay: typeof design.backgroundOverlay === 'number'
+      ? Math.max(0, Math.min(1, design.backgroundOverlay)) : 0,
+    backgroundFit: fitValue(design.backgroundFit),
+    backgroundPosition: stringValue(design.backgroundPosition, '50% 50%'),
   };
 }
 

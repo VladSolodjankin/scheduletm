@@ -1,10 +1,10 @@
-import { findActiveServices, findServiceById } from '../repositories/service.repository';
+import { findActiveServices, findAssignedActiveSpecialists, findServiceById } from '../repositories/service.repository';
 import {
-  findActiveSpecialists,
   findSingleDefaultActiveSpecialist,
   findSpecialistById,
 } from '../repositories/specialist.repository';
 import {
+  getSessionPayload,
   mergeSessionPayload,
   updateSessionState,
 } from '../repositories/user-session.repository';
@@ -30,12 +30,17 @@ export async function selectService(accountId: number, userId: number, serviceId
     datePageOffset: 0,
   });
 
+  const specialists = await findAssignedActiveSpecialists(accountId, service.id);
   const defaultSpecialist = await findSingleDefaultActiveSpecialist(accountId);
+  const assignedDefault = defaultSpecialist
+    ? specialists.find(({ id }) => id === defaultSpecialist.id)
+    : undefined;
 
-  if (defaultSpecialist) {
+  if (assignedDefault) {
+    const effectiveService = await findServiceById(accountId, service.id, assignedDefault.id);
     await mergeSessionPayload(accountId, userId, UserSessionState.CHOOSING_DATE, {
       serviceId: service.id,
-      specialistId: defaultSpecialist.id,
+      specialistId: assignedDefault.id,
       totalSessions: Math.max(1, Number(service.sessions_count ?? 1)),
       selectedSlots: [],
       currentSlotIndex: 0,
@@ -45,13 +50,11 @@ export async function selectService(accountId: number, userId: number, serviceId
     return {
       ok: true as const,
       skipSpecialist: true as const,
-      service,
-      specialist: defaultSpecialist,
+      service: effectiveService,
+      specialist: assignedDefault,
       dates: await getNextAvailableDates(accountId),
     };
   }
-
-  const specialists = await findActiveSpecialists(accountId);
 
   return {
     ok: true as const,
@@ -63,8 +66,12 @@ export async function selectService(accountId: number, userId: number, serviceId
 
 export async function selectSpecialist(accountId: number, userId: number, specialistId: number) {
   const specialist = await findSpecialistById(accountId, specialistId);
+  const session = await getSessionPayload(accountId, userId);
+  const service = session.serviceId
+    ? await findServiceById(accountId, session.serviceId, specialistId)
+    : null;
 
-  if (!specialist || !specialist.is_active) {
+  if (!specialist || !specialist.is_active || !service) {
     return { ok: false as const, reason: 'specialist_not_found' };
   }
 
@@ -75,6 +82,7 @@ export async function selectSpecialist(accountId: number, userId: number, specia
   return {
     ok: true as const,
     specialist,
+    service,
     dates: await getNextAvailableDates(accountId),
   };
 }

@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "0 6 * * 1"
 
+concurrency:
+  group: zoom-beta-compliance-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -15,14 +19,11 @@ jobs:
   tls-evidence:
     name: TLS 1.2+ Evidence
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     env:
       PROD_HOST: ${{ vars.ZOOM_EVIDENCE_PROD_HOST }}
       STAGE_HOST: ${{ vars.ZOOM_EVIDENCE_STAGE_HOST }}
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set default hosts
         run: |
@@ -30,35 +31,50 @@ jobs:
           echo "STAGE_HOST=${STAGE_HOST:-dev.meetli.cc}" >> "$GITHUB_ENV"
 
       - name: Run TLS checks
+        id: tls
+        continue-on-error: true
         run: bash scripts/compliance/tls_evidence.sh "$PROD_HOST" "$STAGE_HOST"
+
+      - name: Record TLS tool versions
+        if: always()
+        run: |
+          {
+            openssl version
+            timeout --version | head -n 1
+          } > docs/compliance/zoom-beta/evidence/tls-tool-versions.txt
 
       - name: Upload TLS evidence artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: tls-evidence
           path: |
             docs/compliance/zoom-beta/evidence/tls-check-latest.txt
             docs/compliance/zoom-beta/evidence/tls-summary-latest.md
+            docs/compliance/zoom-beta/evidence/tls-tool-versions.txt
+          if-no-files-found: error
           retention-days: 90
+
+      - name: Enforce TLS policy
+        if: always()
+        run: |
+          test "${{ steps.tls.outcome }}" = "success"
+          grep -q "Overall result: PASS" docs/compliance/zoom-beta/evidence/tls-summary-latest.md
 
   dast-evidence:
     name: DAST Baseline Evidence
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     env:
       DAST_TARGET: ${{ vars.ZOOM_EVIDENCE_DAST_TARGET }}
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set default DAST target
-        run: |
-          echo "DAST_TARGET=${DAST_TARGET:-https://dev.meetli.cc}" >> "$GITHUB_ENV"
+        run: echo "DAST_TARGET=${DAST_TARGET:-https://dev.meetli.cc}" >> "$GITHUB_ENV"
 
       - name: Run OWASP ZAP baseline scan
-        uses: zaproxy/action-baseline@v0.14.0
+        id: zap
+        uses: zaproxy/action-baseline@7c4deb10e6261301961c86d65d54a516394f9aed # v0.14.0
         continue-on-error: true
         with:
           target: ${{ env.DAST_TARGET }}
@@ -66,27 +82,45 @@ jobs:
           allow_issue_writing: false
           fail_action: false
 
+      - name: Record DAST tool versions
+        if: always()
+        run: |
+          ZAP_VERSION="$(jq -er '."@version" // .version' report_json.json)"
+          {
+            echo "OWASP ZAP ${ZAP_VERSION}"
+            echo "zaproxy/action-baseline 7c4deb10e6261301961c86d65d54a516394f9aed"
+          } > dast-tool-versions.txt
+
       - name: Upload DAST evidence artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dast-evidence
           path: |
             report_html.html
             report_md.md
             report_json.json
+            dast-tool-versions.txt
+          if-no-files-found: error
           retention-days: 90
+
+      - name: Enforce DAST policy
+        if: always()
+        run: |
+          test "${{ steps.zap.outcome }}" = "success"
+          jq -e . report_json.json >/dev/null
+          jq -e '
+            ([.site[]?.alerts[]? |
+              select((.riskcode | tonumber? // 0) >= 3)] | length) == 0
+          ' report_json.json >/dev/null
 
   sast-evidence:
     name: SAST Evidence - npm audit and Semgrep
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 20
           cache: npm
@@ -95,25 +129,55 @@ jobs:
         run: npm ci
 
       - name: Run npm audit
+        id: npm-audit
         continue-on-error: true
         run: npm audit --audit-level=high --json > npm-audit-latest.json
 
       - name: Install Semgrep
-        run: python -m pip install semgrep
+        run: python -m pip install semgrep==1.136.0
 
-      - name: Run Semgrep
+      - name: Run Semgrep declared policy
+        id: semgrep
         continue-on-error: true
-        run: semgrep scan --config auto --json > semgrep-latest.json
+        run: semgrep scan --config scripts/compliance/semgrep.yml --severity ERROR --error --json --output semgrep-latest.json .
+
+      - name: Record SAST tool versions
+        if: always()
+        run: |
+          {
+            echo "Node.js $(node --version)"
+            echo "npm $(npm --version)"
+            echo "Semgrep $(semgrep --version)"
+          } > sast-tool-versions.txt
 
       - name: Upload SAST evidence artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sast-evidence
           path: |
             npm-audit-latest.json
             semgrep-latest.json
+            sast-tool-versions.txt
+          if-no-files-found: error
           retention-days: 90
+
+      - name: Enforce SAST policy
+        if: always()
+        run: |
+          jq -e . npm-audit-latest.json >/dev/null
+          jq -e . semgrep-latest.json >/dev/null
+          jq -e '
+            (.error == null) and
+            ((.metadata.vulnerabilities.high // 0) == 0) and
+            ((.metadata.vulnerabilities.critical // 0) == 0)
+          ' npm-audit-latest.json >/dev/null
+          jq -e '
+            ((.errors // []) | length) == 0 and
+            ([.results[]? | select((.extra.severity // "") == "ERROR")] | length) == 0
+          ' semgrep-latest.json >/dev/null
+          test "${{ steps.npm-audit.outcome }}" = "success"
+          test "${{ steps.semgrep.outcome }}" = "success"
 
   commit-evidence:
     name: Commit Evidence Files
@@ -122,123 +186,119 @@ jobs:
       - tls-evidence
       - dast-evidence
       - sast-evidence
-    if: always()
     permissions:
       contents: write
     env:
       PROD_HOST: ${{ vars.ZOOM_EVIDENCE_PROD_HOST }}
       STAGE_HOST: ${{ vars.ZOOM_EVIDENCE_STAGE_HOST }}
       DAST_TARGET: ${{ vars.ZOOM_EVIDENCE_DAST_TARGET }}
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Download evidence artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: downloaded-artifacts
+
+      - name: Validate complete evidence artifacts
+        run: |
+          test -s downloaded-artifacts/tls-evidence/tls-check-latest.txt
+          test -s downloaded-artifacts/tls-evidence/tls-summary-latest.md
+          test -s downloaded-artifacts/tls-evidence/tls-tool-versions.txt
+          grep -q "Overall result: PASS" downloaded-artifacts/tls-evidence/tls-summary-latest.md
+          test -s downloaded-artifacts/dast-evidence/report_html.html
+          test -s downloaded-artifacts/dast-evidence/report_md.md
+          test -s downloaded-artifacts/dast-evidence/dast-tool-versions.txt
+          jq -e . downloaded-artifacts/dast-evidence/report_json.json >/dev/null
+          test -s downloaded-artifacts/sast-evidence/sast-tool-versions.txt
+          jq -e . downloaded-artifacts/sast-evidence/npm-audit-latest.json >/dev/null
+          jq -e . downloaded-artifacts/sast-evidence/semgrep-latest.json >/dev/null
 
       - name: Copy raw evidence into repository
         run: |
           mkdir -p docs/compliance/zoom-beta/evidence
-
-          if [ -d downloaded-artifacts/tls-evidence ]; then
-            cp downloaded-artifacts/tls-evidence/tls-check-latest.txt docs/compliance/zoom-beta/evidence/ || true
-            cp downloaded-artifacts/tls-evidence/tls-summary-latest.md docs/compliance/zoom-beta/evidence/ || true
-          fi
-
-          if [ -d downloaded-artifacts/dast-evidence ]; then
-            cp downloaded-artifacts/dast-evidence/report_html.html docs/compliance/zoom-beta/evidence/zap-report.html || true
-            cp downloaded-artifacts/dast-evidence/report_md.md docs/compliance/zoom-beta/evidence/zap-report.md || true
-            cp downloaded-artifacts/dast-evidence/report_json.json docs/compliance/zoom-beta/evidence/zap-report.json || true
-          fi
-
-          if [ -d downloaded-artifacts/sast-evidence ]; then
-            cp downloaded-artifacts/sast-evidence/npm-audit-latest.json docs/compliance/zoom-beta/evidence/ || true
-            cp downloaded-artifacts/sast-evidence/semgrep-latest.json docs/compliance/zoom-beta/evidence/ || true
-          fi
+          cp downloaded-artifacts/tls-evidence/tls-check-latest.txt docs/compliance/zoom-beta/evidence/
+          cp downloaded-artifacts/tls-evidence/tls-summary-latest.md docs/compliance/zoom-beta/evidence/
+          cp downloaded-artifacts/tls-evidence/tls-tool-versions.txt docs/compliance/zoom-beta/evidence/
+          cp downloaded-artifacts/dast-evidence/report_html.html docs/compliance/zoom-beta/evidence/zap-report.html
+          cp downloaded-artifacts/dast-evidence/report_md.md docs/compliance/zoom-beta/evidence/zap-report.md
+          cp downloaded-artifacts/dast-evidence/report_json.json docs/compliance/zoom-beta/evidence/zap-report.json
+          cp downloaded-artifacts/dast-evidence/dast-tool-versions.txt docs/compliance/zoom-beta/evidence/
+          cp downloaded-artifacts/sast-evidence/npm-audit-latest.json docs/compliance/zoom-beta/evidence/
+          cp downloaded-artifacts/sast-evidence/semgrep-latest.json docs/compliance/zoom-beta/evidence/
+          cp downloaded-artifacts/sast-evidence/sast-tool-versions.txt docs/compliance/zoom-beta/evidence/
 
       - name: Update evidence summaries
         run: |
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           DATE_UTC="$(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          NPM_HIGH="$(jq '.metadata.vulnerabilities.high // 0' docs/compliance/zoom-beta/evidence/npm-audit-latest.json)"
+          NPM_CRITICAL="$(jq '.metadata.vulnerabilities.critical // 0' docs/compliance/zoom-beta/evidence/npm-audit-latest.json)"
+          SEMGREP_ERROR="$(jq '[.results[]? | select((.extra.severity // "") == "ERROR")] | length' docs/compliance/zoom-beta/evidence/semgrep-latest.json)"
+          ZAP_HIGH="$(jq '[.site[]?.alerts[]? | select((.riskcode | tonumber? // 0) >= 3)] | length' docs/compliance/zoom-beta/evidence/zap-report.json)"
+          SAST_TOOLS="$(tr '\n' ';' < docs/compliance/zoom-beta/evidence/sast-tool-versions.txt | sed 's/;$//')"
+          DAST_TOOLS="$(tr '\n' ';' < docs/compliance/zoom-beta/evidence/dast-tool-versions.txt | sed 's/;$//')"
+          TLS_TOOLS="$(tr '\n' ';' < docs/compliance/zoom-beta/evidence/tls-tool-versions.txt | sed 's/;$//')"
 
           cat > docs/compliance/zoom-beta/sast-latest.md <<EOF
           # SAST Latest Evidence
 
-          Last run: ${DATE_UTC}
+          - Generated: ${DATE_UTC}
+          - Run: ${RUN_URL}
+          - Commit SHA: \`${{ github.sha }}\`
+          - Tools: \`${SAST_TOOLS}\`
+          - npm high findings: ${NPM_HIGH}
+          - npm critical findings: ${NPM_CRITICAL}
+          - Semgrep ERROR findings: ${SEMGREP_ERROR}
 
-          GitHub Actions run:
-          ${RUN_URL}
+          Evidence:
 
-          Tools:
-          - npm audit
-          - Semgrep
-
-          Evidence files:
-          - docs/compliance/zoom-beta/evidence/npm-audit-latest.json
-          - docs/compliance/zoom-beta/evidence/semgrep-latest.json
-
-          Status:
-          - SAST evidence is generated automatically by GitHub Actions.
-          - Critical/High findings must be remediated or documented with accepted risk.
+          - \`docs/compliance/zoom-beta/evidence/npm-audit-latest.json\`
+          - \`docs/compliance/zoom-beta/evidence/semgrep-latest.json\`
           EOF
 
           cat > docs/compliance/zoom-beta/dast-latest.md <<EOF
           # DAST Latest Evidence
 
-          Last run: ${DATE_UTC}
+          - Generated: ${DATE_UTC}
+          - Run: ${RUN_URL}
+          - Commit SHA: \`${{ github.sha }}\`
+          - Tools: \`${DAST_TOOLS}\`
+          - Target: \`${DAST_TARGET:-https://dev.meetli.cc}\`
+          - High or critical alerts: ${ZAP_HIGH}
 
-          GitHub Actions run:
-          ${RUN_URL}
+          Evidence:
 
-          Tool:
-          - OWASP ZAP Baseline Scan
-
-          Target:
-          - ${DAST_TARGET:-https://dev.meetli.cc}
-
-          Evidence files:
-          - docs/compliance/zoom-beta/evidence/zap-report.html
-          - docs/compliance/zoom-beta/evidence/zap-report.md
-          - docs/compliance/zoom-beta/evidence/zap-report.json
-
-          Status:
-          - DAST evidence is generated automatically by GitHub Actions.
-          - Review ZAP report for current alerts.
-          - Critical/High findings must be remediated before Zoom resubmission.
+          - \`docs/compliance/zoom-beta/evidence/zap-report.html\`
+          - \`docs/compliance/zoom-beta/evidence/zap-report.md\`
+          - \`docs/compliance/zoom-beta/evidence/zap-report.json\`
           EOF
 
           cat > docs/compliance/zoom-beta/tls-1.2-evidence.md <<EOF
           # TLS 1.2+ Evidence
 
-          Last run: ${DATE_UTC}
+          - Generated: ${DATE_UTC}
+          - Run: ${RUN_URL}
+          - Commit SHA: \`${{ github.sha }}\`
+          - Tools: \`${TLS_TOOLS}\`
+          - Production host: \`${PROD_HOST:-www.meetli.cc}\`
+          - Staging host: \`${STAGE_HOST:-dev.meetli.cc}\`
+          - Result: TLS 1.2 accepted and TLS 1.1 rejected for both hosts
 
-          GitHub Actions run:
-          ${RUN_URL}
+          Evidence:
 
-          Hosts checked:
-          - ${PROD_HOST:-www.meetli.cc}
-          - ${STAGE_HOST:-dev.meetli.cc}
-
-          Evidence files:
-          - docs/compliance/zoom-beta/evidence/tls-check-latest.txt
-          - docs/compliance/zoom-beta/evidence/tls-summary-latest.md
-
-          Status:
-          - TLS 1.2+ support is verified automatically by GitHub Actions.
+          - \`docs/compliance/zoom-beta/evidence/tls-check-latest.txt\`
+          - \`docs/compliance/zoom-beta/evidence/tls-summary-latest.md\`
           EOF
 
       - name: Commit evidence files
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           git add docs/compliance/zoom-beta/sast-latest.md
           git add docs/compliance/zoom-beta/dast-latest.md
           git add docs/compliance/zoom-beta/tls-1.2-evidence.md
           git add docs/compliance/zoom-beta/evidence/
-
           if git diff --cached --quiet; then
             echo "No evidence changes to commit."
           else

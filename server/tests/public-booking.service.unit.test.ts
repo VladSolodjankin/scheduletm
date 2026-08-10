@@ -154,6 +154,29 @@ describe('public booking service', () => {
     expect(bookingRepository.createPublicGuestAppointment).not.toHaveBeenCalled();
   });
 
+  it('validates the active service-specialist assignment and uses its effective values', async () => {
+    bookingRepository.findPublicBookingSpecialist.mockResolvedValue({
+      id: 2, account_id: 7, name: 'Jane Smith', is_active: true, timezone: 'UTC',
+      work_start_hour: 9, work_end_hour: 18, work_days: '1,2,3,4,5,6', slot_step_min: 30,
+    });
+    bookingRepository.findPublicBookingService.mockResolvedValue({
+      id: 3, account_id: 7, duration_min: 45, price: 250, currency: 'RUB',
+    });
+    bookingRepository.createPublicGuestAppointment.mockResolvedValue({
+      id: 10, status: 'new', appointment_at: new Date('2030-08-01T10:00:00.000Z'), duration_min: 45,
+    });
+
+    await bookPublicAppointment('valid-page', {
+      firstName: 'Guest', lastName: 'User', phone: '+10000000000',
+      specialistId: 2, serviceId: 3, startAt: '2030-08-01T10:00:00.000Z',
+    });
+
+    expect(bookingRepository.findPublicBookingService).toHaveBeenCalledWith(7, 3, 2);
+    expect(bookingRepository.createPublicGuestAppointment).toHaveBeenCalledWith(
+      expect.objectContaining({ specialistId: 2, serviceId: 3, durationMin: 45, price: 250 }),
+    );
+  });
+
   it('redacts status and treats a wrong specialist surname as not found', async () => {
     bookingRepository.findPublicAppointmentStatus.mockResolvedValue({
       id: 10,

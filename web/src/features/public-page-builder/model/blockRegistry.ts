@@ -50,6 +50,10 @@ export function createBlock(type: string): PageBlock | null {
     design: definition.createDesign?.() ?? {
       backgroundColor: null,
       textColor: null,
+      backgroundMediaId: null,
+      backgroundOverlay: 0,
+      backgroundFit: 'cover',
+      backgroundPosition: '50% 50%',
     },
   };
 }
