@@ -530,7 +530,7 @@ export const dictionaries = {
       invalidImageType: 'Choose a JPEG, PNG, or WebP image.', imageTooLarge: 'Image must be 5 MB or smaller.',
       imageUploadError: 'Could not upload the image.', displayName: 'Display name', profileDescription: 'Profile description',
       logo: 'Logo', avatar: 'Profile photo', blockBackground: 'Block background', pageBackground: 'Page background',
-      overlay: 'Overlay (%)', imageFit: 'Image fit', focalPoint: 'Focal point', font: 'Font',
+      overlay: 'Overlay (%)', imageFit: 'Image fit', imageFitCover: 'Cover', imageFitContain: 'Contain', focalPoint: 'Focal point', font: 'Font',
       pageColor: 'Page color', backgroundPreset: 'Background style',
       unknownBlockTitle: 'Unsupported block',
       unknownBlockDescription: 'This block type is not available, but the rest of the page can still be displayed.',
@@ -1073,7 +1073,7 @@ export const dictionaries = {
       invalidImageType: 'Выберите изображение JPEG, PNG или WebP.', imageTooLarge: 'Размер изображения не должен превышать 5 МБ.',
       imageUploadError: 'Не удалось загрузить изображение.', displayName: 'Отображаемое имя', profileDescription: 'Описание профиля',
       logo: 'Логотип', avatar: 'Фото профиля', blockBackground: 'Фон блока', pageBackground: 'Фон страницы',
-      overlay: 'Затемнение (%)', imageFit: 'Вписывание изображения', focalPoint: 'Фокусная точка', font: 'Шрифт',
+      overlay: 'Затемнение (%)', imageFit: 'Вписывание изображения', imageFitCover: 'Заполнить', imageFitContain: 'Вместить', focalPoint: 'Фокусная точка', font: 'Шрифт',
       pageColor: 'Цвет страницы', backgroundPreset: 'Стиль фона',
     }
   }

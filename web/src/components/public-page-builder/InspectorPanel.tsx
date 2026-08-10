@@ -80,7 +80,8 @@ export function InspectorPanel({
           onChange={(event) => dispatch({ type: 'block/design', sectionId: section.id, blockId: block.id, changes: { backgroundOverlay: Number(event.target.value) / 100 } })} />
         <TextField select size="small" label={publicPageText(locale, 'imageFit')} value={block.design.backgroundFit}
           onChange={(event) => dispatch({ type: 'block/design', sectionId: section.id, blockId: block.id, changes: { backgroundFit: event.target.value as 'cover' | 'contain' } })}>
-          <MenuItem value="cover">cover</MenuItem><MenuItem value="contain">contain</MenuItem>
+          <MenuItem value="cover">{publicPageText(locale, 'imageFitCover')}</MenuItem>
+          <MenuItem value="contain">{publicPageText(locale, 'imageFitContain')}</MenuItem>
         </TextField>
         <TextField size="small" label={publicPageText(locale, 'focalPoint')} value={block.design.backgroundPosition}
           onChange={(event) => dispatch({ type: 'block/design', sectionId: section.id, blockId: block.id, changes: { backgroundPosition: event.target.value } })} />

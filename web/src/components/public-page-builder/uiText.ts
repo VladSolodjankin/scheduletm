@@ -30,6 +30,7 @@ const keys = {
   displayName: 'publicPageBuilder.displayName', profileDescription: 'publicPageBuilder.profileDescription',
   logo: 'publicPageBuilder.logo', avatar: 'publicPageBuilder.avatar', blockBackground: 'publicPageBuilder.blockBackground',
   pageBackground: 'publicPageBuilder.pageBackground', overlay: 'publicPageBuilder.overlay', imageFit: 'publicPageBuilder.imageFit',
+  imageFitCover: 'publicPageBuilder.imageFitCover', imageFitContain: 'publicPageBuilder.imageFitContain',
   focalPoint: 'publicPageBuilder.focalPoint', font: 'publicPageBuilder.font', pageColor: 'publicPageBuilder.pageColor',
   backgroundPreset: 'publicPageBuilder.backgroundPreset',
 } as const satisfies Record<string, TranslationKey>;
