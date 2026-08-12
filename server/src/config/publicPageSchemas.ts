@@ -2,23 +2,188 @@ import { z } from 'zod';
 
 export const PUBLIC_PAGE_SCHEMA_VERSION = 1 as const;
 export const KNOWN_PUBLIC_PAGE_BLOCKS = new Set([
-  'hero', 'links', 'booking', 'text', 'image', 'gallery', 'services',
-  'contacts', 'socials', 'messengers', 'map', 'divider', 'faq',
+  'hero', 'avatar', 'button', 'links', 'booking', 'text', 'image', 'gallery', 'services',
+  'contacts', 'social-button', 'map', 'divider', 'faq',
 ]);
 export const RESERVED_PUBLIC_PAGE_SLUGS = new Set([
   'api', 'appointments', 'assets', 'booking', 'health', 'login', 'logout',
   'public-pages', 'register', 'settings', 'specialists', 'users',
 ]);
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const socialButtonPlatformValues = [
+  'facebook-messenger', 'vk', 'whatsapp', 'viber', 'telegram',
+  'facebook', 'threads', 'instagram', 'tiktok',
+] as const;
+const socialButtonPlatforms = new Set<string>(socialButtonPlatformValues);
+const socialButtonContentSchema = z.object({
+  platform: z.enum(socialButtonPlatformValues),
+  label: z.string().trim().min(1),
+  url: z.url().refine((url) => {
+    try {
+      return ['http:', 'https:'].includes(new URL(url).protocol);
+    } catch {
+      return false;
+    }
+  }),
+}).strict();
 
 const nullableString = z.string().nullable();
+const typographyStyleSchema = z.object({
+  fontFamily: z.string(),
+  fontSize: z.number().min(8).max(96),
+  fontWeight: z.number().int().min(100).max(900),
+  fontStyle: z.enum(['normal', 'italic']),
+  color: z.string(),
+}).passthrough();
+const typographyOverrideSchema = z.object({
+  fontFamily: nullableString.default(null),
+  fontSize: z.number().min(8).max(96).nullable().default(null),
+  fontWeight: z.number().int().min(100).max(900).nullable().default(null),
+  fontStyle: z.enum(['normal', 'italic']).nullable().default(null),
+  color: nullableString.default(null),
+}).passthrough();
+const emptyTypographyOverride = {
+  fontFamily: null,
+  fontSize: null,
+  fontWeight: null,
+  fontStyle: null,
+  color: null,
+};
+const linkStyleSchema = z.object({
+  titleStyle: typographyStyleSchema,
+  subtitleStyle: typographyStyleSchema,
+  backgroundColor: z.string(),
+  backgroundOpacity: z.number().min(0).max(1),
+  borderWidth: z.number().min(0).max(16),
+  borderColor: z.string(),
+  shadow: z.boolean(),
+}).passthrough();
+const linkStyleOverrideSchema = z.object({
+  titleStyle: typographyOverrideSchema.default(emptyTypographyOverride),
+  subtitleStyle: typographyOverrideSchema.default(emptyTypographyOverride),
+  backgroundColor: nullableString.default(null),
+  backgroundOpacity: z.number().min(0).max(1).nullable().default(null),
+  borderWidth: z.number().min(0).max(16).nullable().default(null),
+  borderColor: nullableString.default(null),
+  shadow: z.boolean().nullable().default(null),
+}).passthrough();
+const defaultThemeStyleDefaults = (fontFamily: string, textColor: string, surfaceColor: string) => ({
+  sectionBorderRadius: 0,
+  blockBorderRadius: 24,
+  headingStyle: {
+    fontFamily,
+    fontSize: 32,
+    fontWeight: 700,
+    fontStyle: 'normal' as const,
+    color: textColor,
+  },
+  textStyle: {
+    fontFamily,
+    fontSize: 16,
+    fontWeight: 400,
+    fontStyle: 'normal' as const,
+    color: textColor,
+  },
+  linkStyle: {
+    titleStyle: {
+      fontFamily,
+      fontSize: 16,
+      fontWeight: 600,
+      fontStyle: 'normal' as const,
+      color: textColor,
+    },
+    subtitleStyle: {
+      fontFamily,
+      fontSize: 14,
+      fontWeight: 400,
+      fontStyle: 'normal' as const,
+      color: textColor,
+    },
+    backgroundColor: surfaceColor,
+    backgroundOpacity: 1,
+    borderWidth: 0,
+    borderColor: 'transparent',
+    shadow: false,
+  },
+});
+const themeStyleDefaultsSchema = z.object({
+  sectionBorderRadius: z.number().min(0).max(100),
+  blockBorderRadius: z.number().min(0).max(100),
+  headingStyle: typographyStyleSchema,
+  textStyle: typographyStyleSchema,
+  linkStyle: linkStyleSchema,
+}).passthrough();
+const defaultSectionDesign = {
+  backgroundColor: null,
+  textColor: null,
+  backgroundMediaId: null,
+  backgroundOverlay: 0,
+  backgroundFit: 'cover' as const,
+  backgroundPosition: '50% 50%',
+  variant: 'custom' as const,
+  paddingTop: 0,
+  paddingBottom: 0,
+  horizontalMargin: false,
+  borderRadius: null,
+  borderWidth: 0,
+  borderColor: null,
+  shadow: false,
+  width: 'full' as const,
+  mobileVisible: true,
+  headingStyle: emptyTypographyOverride,
+  textStyle: emptyTypographyOverride,
+  linkStyle: {
+    titleStyle: emptyTypographyOverride,
+    subtitleStyle: emptyTypographyOverride,
+    backgroundColor: null,
+    backgroundOpacity: null,
+    borderWidth: null,
+    borderColor: null,
+    shadow: null,
+  },
+};
 const blockSchema = z.object({
   id: z.string().min(1),
   type: z.string().min(1),
   name: z.string(),
   visible: z.boolean(),
   content: z.record(z.string(), z.unknown()),
-  design: z.object({ backgroundColor: nullableString, textColor: nullableString }),
+  design: z.object({
+    backgroundColor: nullableString,
+    textColor: nullableString,
+    paddingTop: z.number().min(0).max(160).default(0),
+    paddingBottom: z.number().min(0).max(160).default(0),
+    borderRadius: z.number().min(0).max(100).nullable().default(null),
+  }).passthrough(),
+}).passthrough();
+const sectionDesignSchema = z.object({
+  backgroundColor: nullableString.default(null),
+  textColor: nullableString.default(null),
+  backgroundMediaId: nullableString.default(null),
+  backgroundOverlay: z.number().min(0).max(1).default(0),
+  backgroundFit: z.enum(['cover', 'contain']).default('cover'),
+  backgroundPosition: z.string().default('50% 50%'),
+  variant: z.enum(['off', 'custom', 'primary', 'secondary']).default('custom'),
+  paddingTop: z.number().min(0).max(160).default(0),
+  paddingBottom: z.number().min(0).max(160).default(0),
+  horizontalMargin: z.boolean().default(false),
+  borderRadius: z.number().min(0).max(100).nullable().default(null),
+  borderWidth: z.number().min(0).max(16).default(0),
+  borderColor: nullableString.default(null),
+  shadow: z.boolean().default(false),
+  width: z.enum(['full', 'contained']).default('full'),
+  mobileVisible: z.boolean().default(true),
+  headingStyle: typographyOverrideSchema.default(emptyTypographyOverride),
+  textStyle: typographyOverrideSchema.default(emptyTypographyOverride),
+  linkStyle: linkStyleOverrideSchema.default({
+    titleStyle: emptyTypographyOverride,
+    subtitleStyle: emptyTypographyOverride,
+    backgroundColor: null,
+    backgroundOpacity: null,
+    borderWidth: null,
+    borderColor: null,
+    shadow: null,
+  }),
 }).passthrough();
 const sectionSchema = z.object({
   id: z.string().min(1),
@@ -29,6 +194,7 @@ const sectionSchema = z.object({
     'three-equal', 'stack', 'hero-overlay',
   ]),
   blocks: z.array(blockSchema),
+  design: sectionDesignSchema.default(defaultSectionDesign),
 }).passthrough();
 const mediaSchema = z.object({
   id: z.string().min(1),
@@ -38,6 +204,34 @@ const mediaSchema = z.object({
   width: z.number().nonnegative(),
   height: z.number().nonnegative(),
 }).passthrough();
+const themeSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  colors: z.object({
+    background: z.string().min(1),
+    surface: z.string().min(1),
+    text: z.string().min(1),
+    primary: z.string().min(1),
+  }).passthrough(),
+  fontFamily: z.string().default('Inter, system-ui, sans-serif'),
+  roundingStyle: z.enum(['rounded', 'pill', 'leaf', 'square']).default('rounded'),
+  backgroundMediaId: nullableString.default(null),
+  backgroundPreset: nullableString.default(null),
+  backgroundFit: z.enum(['cover', 'contain']).default('cover'),
+  backgroundPosition: z.string().min(1).default('50% 50%'),
+  linkStylePreset: z.enum([
+    'primary-fill', 'primary-shadow', 'primary-strong', 'primary-outline',
+    'surface-fill', 'surface-outline', 'surface-shadow', 'surface-strong',
+  ]).default('primary-fill'),
+  styleDefaults: themeStyleDefaultsSchema.optional(),
+}).passthrough().transform((theme) => ({
+  ...theme,
+  styleDefaults: theme.styleDefaults ?? defaultThemeStyleDefaults(
+    theme.fontFamily,
+    theme.colors.text,
+    theme.colors.surface,
+  ),
+}));
 
 export const publicPageDocumentSchema = z.object({
   schemaVersion: z.literal(PUBLIC_PAGE_SCHEMA_VERSION),
@@ -50,16 +244,7 @@ export const publicPageDocumentSchema = z.object({
     logoMediaId: nullableString,
     avatarMediaId: nullableString,
   }).passthrough(),
-  theme: z.object({
-    id: z.string().min(1),
-    name: z.string().min(1),
-    colors: z.object({
-      background: z.string().min(1),
-      surface: z.string().min(1),
-      text: z.string().min(1),
-      primary: z.string().min(1),
-    }).passthrough(),
-  }).passthrough(),
+  theme: themeSchema,
   sections: z.array(sectionSchema),
   seo: z.object({
     title: z.string(),
@@ -76,6 +261,34 @@ export const publicPageDocumentSchema = z.object({
   if (new Set(ids).size !== ids.length) {
     ctx.addIssue({ code: 'custom', message: 'duplicate_id' });
   }
+  const socialPlatforms = new Set<string>();
+  document.sections.forEach((section, sectionIndex) => {
+    section.blocks.forEach((block, blockIndex) => {
+      const path = ['sections', sectionIndex, 'blocks', blockIndex] as const;
+      if (block.type === 'socials' || block.type === 'messengers') {
+        ctx.addIssue({ code: 'custom', path: [...path, 'type'], message: 'unsupported_block_type' });
+        return;
+      }
+      if (block.type !== 'social-button') return;
+      const parsed = socialButtonContentSchema.safeParse(block.content);
+      if (!parsed.success) {
+        parsed.error.issues.forEach((issue) => ctx.addIssue({
+          code: 'custom',
+          path: [...path, 'content', ...issue.path],
+          message: issue.message,
+        }));
+        return;
+      }
+      if (socialPlatforms.has(parsed.data.platform)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [...path, 'content', 'platform'],
+          message: 'duplicate_social_platform',
+        });
+      }
+      socialPlatforms.add(parsed.data.platform);
+    });
+  });
 });
 
 export type PublicPageDocument = z.infer<typeof publicPageDocumentSchema>;
@@ -181,15 +394,40 @@ function validateKnownBlock(block: PublicPageDocument['sections'][number]['block
   };
   switch (block.type) {
     case 'hero': return required('title');
+    case 'avatar': return [
+      ...required('heading'),
+      ...(!hasValue(content.imageMediaId) && !hasValue(content.imageUrl)
+        ? ['imageMediaId or imageUrl is required'] : []),
+    ];
+    case 'button': return required('label', 'action');
     case 'links': return items('links', ['label', 'action']);
     case 'booking': return ['booking is unavailable'];
     case 'text': return required('body');
-    case 'image': return required('url', 'alt');
-    case 'gallery': return items('images', ['url', 'alt']);
+    case 'image': return [
+      ...required('alt'),
+      ...(!hasValue(content.imageMediaId) && !hasValue(content.url)
+        ? ['imageMediaId is required'] : []),
+    ];
+    case 'gallery': {
+      const value = content.images;
+      if (!Array.isArray(value)) return [];
+      return value.flatMap((item, index) => {
+        if (!item || typeof item !== 'object') return [];
+        const record = item as Record<string, unknown>;
+        return [
+          ...(!hasValue(record.mediaId) && !hasValue(record.url) ? [`images.${index}.mediaId is required`] : []),
+          ...(!hasValue(record.alt) ? [`images.${index}.alt is required`] : []),
+        ];
+      });
+    }
     case 'services': return items('services', ['title']);
     case 'contacts': return [...items('contacts', ['label', 'url']), ...safeItemUrls('contacts', 'contact')];
-    case 'socials':
-    case 'messengers': return [...items('links', ['label', 'url']), ...safeItemUrls('links', 'web')];
+    case 'social-button': return [
+      ...required('platform', 'label', 'url'),
+      ...(typeof content.platform === 'string' && socialButtonPlatforms.has(content.platform)
+        ? [] : ['platform is unsupported']),
+      ...(isSafeHref(content.url, 'web') ? [] : ['url is unsafe']),
+    ];
     case 'map': return [...required('address', 'url'), ...(isSafeHref(content.url, 'web') ? [] : ['url is unsafe'])];
     case 'divider': return [];
     case 'faq': return items('items', ['title', 'description']);
@@ -204,6 +442,19 @@ export function validatePublicPageForPublish(document: PublicPageDocument): Publ
   if (!document.seo.description.trim()) issues.push({ code: 'missing_seo_description', path: 'seo.description' });
   const visible = document.sections.filter((section) => section.visible)
     .flatMap((section) => section.blocks.filter((block) => block.visible));
+  const socialPlatforms = new Set<string>();
+  document.sections.flatMap((section) => section.blocks).forEach((block) => {
+    if (block.type !== 'social-button' || typeof block.content.platform !== 'string') return;
+    if (socialPlatforms.has(block.content.platform)) {
+      issues.push({
+        code: 'invalid_block',
+        path: `blocks.${block.id}`,
+        detail: 'duplicate_social_platform',
+        blockId: block.id,
+      });
+    }
+    socialPlatforms.add(block.content.platform);
+  });
   if (visible.length === 0) issues.push({ code: 'missing_visible_block', path: 'sections' });
   for (const block of visible) {
     if (!KNOWN_PUBLIC_PAGE_BLOCKS.has(block.type)) {
@@ -272,6 +523,10 @@ export function validatePublicPageForPublish(document: PublicPageDocument): Publ
       visit(item, `${path}.${key}`);
     });
   };
+  visit(document.theme, 'theme');
+  document.sections.forEach((section, index) => {
+    visit(section.design, `sections.${index}.design`);
+  });
   visible.forEach((block) => visit(block.content, `blocks.${block.id}.content`));
   return issues;
 }

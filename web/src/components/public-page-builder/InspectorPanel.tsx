@@ -4,8 +4,6 @@ import type { EditorAction } from '../../features/public-page-builder/types/acti
 import type { EditorState } from '../../features/public-page-builder/types/editor';
 import type { MediaReference, SectionLayout } from '../../features/public-page-builder/types/publicPage';
 import type { ApiPublicPageRepository } from '../../features/public-page-builder/repository/ApiPublicPageRepository';
-import { PUBLIC_PAGE_BACKGROUND_PRESETS } from '../../features/public-page-builder/config/backgroundPresets';
-import { PUBLIC_PAGE_THEMES } from '../../features/public-page-builder/config/themes';
 import { selectSelectedBlock, selectSelectedSection } from '../../features/public-page-builder/model/selectors';
 import { getBlockDefinition } from '../../features/public-page-builder/model/blockRegistry';
 import { validateSlug } from '../../features/public-page-builder/model/slug';
@@ -142,34 +140,10 @@ export function InspectorPanel({
         helperText={slugError ? publicPageText(locale, 'invalidSlug') : `meetli.cc/${state.document.slug}`}
         onChange={(event) => dispatch({ type: 'slug/update', slug: event.target.value })}
       />
-      <TextField
-        select
-        label={publicPageText(locale, 'theme')}
-        value={state.document.theme.id}
-        onChange={(event) => {
-          const theme = PUBLIC_PAGE_THEMES.find((candidate) => candidate.id === event.target.value);
-          if (theme) {dispatch({ type: 'theme/update', theme });}
-        }}
-      >
-        {PUBLIC_PAGE_THEMES.map((theme) => <MenuItem key={theme.id} value={theme.id}>{theme.name}</MenuItem>)}
-      </TextField>
-      <TextField select label={publicPageText(locale, 'font')} value={state.document.theme.fontFamily}
-        onChange={(event) => dispatch({ type: 'theme/update', theme: { ...state.document.theme, fontFamily: event.target.value } })}>
-        {['Inter, system-ui, sans-serif', 'Arial, sans-serif', 'Georgia, serif', 'Verdana, sans-serif', 'Trebuchet MS, sans-serif', 'system-ui, sans-serif'].map((font) => <MenuItem key={font} value={font}>{font.split(',')[0]}</MenuItem>)}
-      </TextField>
       {(['background', 'surface', 'text', 'primary'] as const).map((color) => <ColorControl key={color}
         label={`${publicPageText(locale, 'pageColor')}: ${color}`} value={state.document.theme.colors[color]}
+        presetColors={Object.values(state.document.theme.colors)}
         onChange={(value) => value && dispatch({ type: 'theme/update', theme: { ...state.document.theme, colors: { ...state.document.theme.colors, [color]: value } } })} />)}
-      <TextField select label={publicPageText(locale, 'backgroundPreset')} value={state.document.theme.backgroundPreset ?? 'none'}
-        onChange={(event) => dispatch({ type: 'theme/update', theme: { ...state.document.theme, backgroundPreset: event.target.value === 'none' ? null : event.target.value } })}>
-        {PUBLIC_PAGE_BACKGROUND_PRESETS.map((preset) => <MenuItem key={preset.id} value={preset.id}>{preset.id}</MenuItem>)}
-      </TextField>
-      <ImageUploadControl label={publicPageText(locale, 'pageBackground')} media={mediaFor(state.document.theme.backgroundMediaId)}
-        previewUrl={state.document.theme.backgroundMediaId ? previewUrls.get(state.document.theme.backgroundMediaId) : undefined}
-        repository={repository} {...uploadLabels}
-        onAltChange={(media) => dispatch({ type: 'media/add', media })}
-        onUploaded={(media, url) => { const previous = state.document.theme.backgroundMediaId; addMedia(media, url); dispatch({ type: 'theme/update', theme: { ...state.document.theme, backgroundMediaId: media.id } }); cleanupPreviousMedia(previous); }}
-        onRemoved={() => { const previous = state.document.theme.backgroundMediaId; dispatch({ type: 'theme/update', theme: { ...state.document.theme, backgroundMediaId: null } }); cleanupPreviousMedia(previous); }} />
     </Stack>
   );
 }

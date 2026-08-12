@@ -45,3 +45,21 @@ export function documentReferencesMedia(document: PublicPageDocument, mediaId: s
     || containsMediaId(document.seo, mediaId)
     || containsMediaId(document.sections, mediaId);
 }
+
+export function canDeleteMediaFromDocuments(documents: readonly PublicPageDocument[], mediaId: string): boolean {
+  return documents.every((document) => !documentReferencesMedia(document, mediaId));
+}
+
+export function reconcilePendingMediaCleanup<T extends { media: { id: string } }>(
+  pending: readonly T[],
+  failedBefore: ReadonlySet<string>,
+  attemptedIds: ReadonlySet<string>,
+  failedAttemptIds: ReadonlySet<string>,
+): { pending: T[]; failedIds: Set<string> } {
+  const failedIds = new Set([...failedBefore].filter((id) => !attemptedIds.has(id)));
+  failedAttemptIds.forEach((id) => failedIds.add(id));
+  return {
+    pending: pending.filter((item) => !attemptedIds.has(item.media.id) || failedAttemptIds.has(item.media.id)),
+    failedIds,
+  };
+}

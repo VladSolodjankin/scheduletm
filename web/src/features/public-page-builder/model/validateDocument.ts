@@ -5,6 +5,7 @@ import {
   type PublicPageStatus,
   type SectionLayout,
 } from '../types/publicPage';
+import { SOCIAL_PLATFORMS, type SocialPlatform } from './socialPlatforms';
 
 export type DocumentValidationErrorCode =
   | 'invalid_type'
@@ -49,6 +50,31 @@ function isNonEmptyString(value: unknown): value is string {
 
 function isNullableString(value: unknown): boolean {
   return value === null || typeof value === 'string';
+}
+
+function isBoundedNumber(value: unknown, minimum: number, maximum: number, nullable = false): boolean {
+  return (nullable && value === null) || (typeof value === 'number' && Number.isFinite(value) && value >= minimum && value <= maximum);
+}
+
+function validateTypography(value: unknown, path: string, errors: DocumentValidationError[], nullable: boolean): void {
+  if (!isRecord(value)) { addError(errors, 'invalid_type', path); return; }
+  for (const field of ['fontFamily', 'color'] as const) {
+    if (!(nullable ? isNullableString(value[field]) : isNonEmptyString(value[field]))) {addError(errors, 'invalid_type', `${path}.${field}`);}
+  }
+  if (!isBoundedNumber(value.fontSize, 8, 96, nullable)) {addError(errors, 'invalid_value', `${path}.fontSize`);}
+  if (!isBoundedNumber(value.fontWeight, 100, 900, nullable) || (value.fontWeight !== null && !Number.isInteger(value.fontWeight))) {addError(errors, 'invalid_value', `${path}.fontWeight`);}
+  if (!(value.fontStyle === 'normal' || value.fontStyle === 'italic' || (nullable && value.fontStyle === null))) {addError(errors, 'invalid_value', `${path}.fontStyle`);}
+}
+
+function validateLinkStyle(value: unknown, path: string, errors: DocumentValidationError[], nullable: boolean): void {
+  if (!isRecord(value)) { addError(errors, 'invalid_type', path); return; }
+  validateTypography(value.titleStyle, `${path}.titleStyle`, errors, nullable); validateTypography(value.subtitleStyle, `${path}.subtitleStyle`, errors, nullable);
+  for (const field of ['backgroundColor', 'borderColor'] as const) {
+    if (!(nullable ? isNullableString(value[field]) : isNonEmptyString(value[field]))) {addError(errors, 'invalid_type', `${path}.${field}`);}
+  }
+  if (!isBoundedNumber(value.backgroundOpacity, 0, 1, nullable)) {addError(errors, 'invalid_value', `${path}.backgroundOpacity`);}
+  if (!isBoundedNumber(value.borderWidth, 0, 16, nullable)) {addError(errors, 'invalid_value', `${path}.borderWidth`);}
+  if (!(typeof value.shadow === 'boolean' || (nullable && value.shadow === null))) {addError(errors, 'invalid_type', `${path}.shadow`);}
 }
 
 function addError(
@@ -114,6 +140,16 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
   if (!isNullableString(value.backgroundPreset)) {addError(errors, 'invalid_type', 'theme.backgroundPreset');}
   if (value.backgroundFit !== 'cover' && value.backgroundFit !== 'contain') {addError(errors, 'invalid_value', 'theme.backgroundFit');}
   validateRequiredString(value.backgroundPosition, 'theme.backgroundPosition', errors);
+  if (!['rounded', 'pill', 'leaf', 'square'].includes(String(value.roundingStyle))) {addError(errors, 'invalid_value', 'theme.roundingStyle');}
+  if (!['primary-fill', 'primary-shadow', 'primary-strong', 'primary-outline', 'surface-fill', 'surface-outline', 'surface-shadow', 'surface-strong'].includes(String(value.linkStylePreset))) {addError(errors, 'invalid_value', 'theme.linkStylePreset');}
+  if (!isRecord(value.styleDefaults)) { addError(errors, 'invalid_type', 'theme.styleDefaults'); }
+  else {
+    if (!isBoundedNumber(value.styleDefaults.sectionBorderRadius, 0, 100)) {addError(errors, 'invalid_value', 'theme.styleDefaults.sectionBorderRadius');}
+    if (!isBoundedNumber(value.styleDefaults.blockBorderRadius, 0, 100)) {addError(errors, 'invalid_value', 'theme.styleDefaults.blockBorderRadius');}
+    validateTypography(value.styleDefaults.headingStyle, 'theme.styleDefaults.headingStyle', errors, false);
+    validateTypography(value.styleDefaults.textStyle, 'theme.styleDefaults.textStyle', errors, false);
+    validateLinkStyle(value.styleDefaults.linkStyle, 'theme.styleDefaults.linkStyle', errors, false);
+  }
 }
 
 function validateSeo(value: unknown, errors: DocumentValidationError[]): void {
@@ -151,6 +187,32 @@ function validateSections(value: unknown, errors: DocumentValidationError[], ids
     }
     if (!layouts.has(section.layout as SectionLayout)) {
       addError(errors, 'invalid_value', `${path}.layout`);
+    }
+    if (!isRecord(section.design)) {
+      addError(errors, 'invalid_type', `${path}.design`);
+    } else {
+      if (!['off', 'custom', 'primary', 'secondary'].includes(String(section.design.variant))) {addError(errors, 'invalid_value', `${path}.design.variant`);}
+      for (const color of ['backgroundColor', 'textColor', 'borderColor']) {
+        if (!isNullableString(section.design[color])) {addError(errors, 'invalid_type', `${path}.design.${color}`);}
+      }
+      if (!isNullableString(section.design.backgroundMediaId)) {addError(errors, 'invalid_type', `${path}.design.backgroundMediaId`);}
+      if (typeof section.design.backgroundOverlay !== 'number' || !Number.isFinite(section.design.backgroundOverlay)
+        || section.design.backgroundOverlay < 0 || section.design.backgroundOverlay > 1) {addError(errors, 'invalid_value', `${path}.design.backgroundOverlay`);}
+      if (!['cover', 'contain'].includes(String(section.design.backgroundFit))) {addError(errors, 'invalid_value', `${path}.design.backgroundFit`);}
+      if (typeof section.design.backgroundPosition !== 'string') {addError(errors, 'invalid_type', `${path}.design.backgroundPosition`);}
+      const maximums = { paddingTop: 160, paddingBottom: 160, borderWidth: 16 } as const;
+      for (const field of Object.keys(maximums) as Array<keyof typeof maximums>) {
+        const fieldValue = section.design[field];
+        if (typeof fieldValue !== 'number' || !Number.isFinite(fieldValue) || fieldValue < 0 || fieldValue > maximums[field]) {addError(errors, 'invalid_value', `${path}.design.${field}`);}
+      }
+      if (!isBoundedNumber(section.design.borderRadius, 0, 100, true)) {addError(errors, 'invalid_value', `${path}.design.borderRadius`);}
+      validateTypography(section.design.headingStyle, `${path}.design.headingStyle`, errors, true);
+      validateTypography(section.design.textStyle, `${path}.design.textStyle`, errors, true);
+      validateLinkStyle(section.design.linkStyle, `${path}.design.linkStyle`, errors, true);
+      if (typeof section.design.horizontalMargin !== 'boolean') {addError(errors, 'invalid_type', `${path}.design.horizontalMargin`);}
+      if (typeof section.design.shadow !== 'boolean') {addError(errors, 'invalid_type', `${path}.design.shadow`);}
+      if (!['full', 'contained'].includes(String(section.design.width))) {addError(errors, 'invalid_value', `${path}.design.width`);}
+      if (typeof section.design.mobileVisible !== 'boolean') {addError(errors, 'invalid_type', `${path}.design.mobileVisible`);}
     }
     validateBlocks(section.blocks, `${path}.blocks`, errors, ids);
   });
@@ -194,6 +256,11 @@ function validateBlocks(
         addError(errors, 'invalid_type', `${blockPath}.design.textColor`);
       }
       if (!isNullableString(block.design.backgroundMediaId)) {addError(errors, 'invalid_type', `${blockPath}.design.backgroundMediaId`);}
+      for (const field of ['paddingTop', 'paddingBottom'] as const) {
+        const fieldValue = block.design[field];
+        if (typeof fieldValue !== 'number' || !Number.isFinite(fieldValue) || fieldValue < 0 || fieldValue > 160) {addError(errors, 'invalid_value', `${blockPath}.design.${field}`);}
+      }
+      if (!isBoundedNumber(block.design.borderRadius, 0, 100, true)) {addError(errors, 'invalid_value', `${blockPath}.design.borderRadius`);}
       if (typeof block.design.backgroundOverlay !== 'number' || block.design.backgroundOverlay < 0 || block.design.backgroundOverlay > 1) {
         addError(errors, 'invalid_value', `${blockPath}.design.backgroundOverlay`);
       }
@@ -229,6 +296,33 @@ function validateMedia(value: unknown, errors: DocumentValidationError[], ids: S
         addError(errors, 'invalid_value', `${path}.${dimension}`);
       }
     }
+  });
+}
+
+function validateSocialButtons(value: unknown, errors: DocumentValidationError[]): void {
+  if (!Array.isArray(value)) {return;}
+  const seen = new Set<SocialPlatform>();
+  value.forEach((section, sectionIndex) => {
+    if (!isRecord(section) || !Array.isArray(section.blocks)) {return;}
+    section.blocks.forEach((block, blockIndex) => {
+      if (!isRecord(block) || block.type !== 'social-button') {return;}
+      const path = `sections.${sectionIndex}.blocks.${blockIndex}.content`;
+      if (!isRecord(block.content)) {return;}
+      const platform = block.content.platform;
+      if (typeof platform !== 'string' || !SOCIAL_PLATFORMS.includes(platform as SocialPlatform)) {
+        addError(errors, 'invalid_value', `${path}.platform`);
+      } else if (seen.has(platform as SocialPlatform)) {
+        addError(errors, 'invalid_value', `${path}.platform`);
+      } else {seen.add(platform as SocialPlatform);}
+      validateRequiredString(block.content.label, `${path}.label`, errors);
+      validateRequiredString(block.content.url, `${path}.url`, errors);
+      if (typeof block.content.url === 'string') {
+        try {
+          const url = new URL(block.content.url);
+          if (url.protocol !== 'http:' && url.protocol !== 'https:') {addError(errors, 'invalid_value', `${path}.url`);}
+        } catch {addError(errors, 'invalid_value', `${path}.url`);}
+      }
+    });
   });
 }
 
@@ -272,6 +366,7 @@ export function validateDocument(input: unknown): DocumentValidationResult {
   validateProfile(input.profile, errors);
   validateTheme(input.theme, errors);
   validateSections(input.sections, errors, ids);
+  validateSocialButtons(input.sections, errors);
   validateSeo(input.seo, errors);
   validateMedia(input.media, errors, ids);
   validateRequiredString(input.createdAt, 'createdAt', errors);

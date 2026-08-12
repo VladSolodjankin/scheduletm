@@ -1,23 +1,25 @@
 import {
   ContactsBlock,
+  AvatarBlock,
+  ButtonBlock,
   DividerBlock,
   FaqBlock,
   GalleryBlock,
-  GenericBlockEditor,
+  SpecializedBlockEditor,
   HeroBlock,
   ImageBlock,
   LinksBlock,
   MapBlock,
-  MessengersBlock,
   normalizeSafeHref,
   required,
   ServicesBlock,
-  SocialsBlock,
+  SocialButtonBlock,
   TextBlock,
   validItems,
 } from '../../../components/public-page-blocks/blocks';
 import { getBlockDefinition, registerBlock, type BlockDefinition } from '../model/blockRegistry';
 import type { BlockContent } from '../types/publicPage';
+import { validateSocialPlatforms } from '../model/socialPlatforms';
 
 function validateSafeItemUrls(content: BlockContent, key: string, kind: 'contact' | 'web'): string[] {
   const value = content[key];
@@ -38,18 +40,22 @@ function validateSafeUrl(content: BlockContent, key: string): string[] {
 }
 
 const definitions: BlockDefinition[] = [
-  { type: 'hero', name: 'Hero', createContent: () => ({ title: 'Your name', subtitle: 'A short introduction', imageUrl: '', imageAlt: '', ctaLabel: '' }), Renderer: HeroBlock, Editor: GenericBlockEditor, validate: ({ content }) => required(content, 'title') },
-  { type: 'links', name: 'Links', createContent: () => ({ links: [{ id: 'link-1', label: 'Learn more', action: { type: 'url', url: 'https://example.com' } }] }), Renderer: LinksBlock, Editor: GenericBlockEditor, validate: ({ content }) => validItems(content, 'links', ['label', 'action']) },
-  { type: 'text', name: 'Text', createContent: () => ({ title: 'About', body: 'Tell visitors about yourself.' }), Renderer: TextBlock, Editor: GenericBlockEditor, validate: ({ content }) => required(content, 'body') },
-  { type: 'image', name: 'Image', createContent: () => ({ url: '', alt: '' }), Renderer: ImageBlock, Editor: GenericBlockEditor, validate: ({ content }) => required(content, 'url', 'alt') },
-  { type: 'gallery', name: 'Gallery', createContent: () => ({ images: [] }), Renderer: GalleryBlock, Editor: GenericBlockEditor, validate: ({ content }) => validItems(content, 'images', ['url', 'alt']) },
-  { type: 'services', name: 'Services', createContent: () => ({ title: 'Services', services: [{ id: 'service-1', title: 'Consultation', description: 'Personal consultation', price: '' }] }), Renderer: ServicesBlock, Editor: GenericBlockEditor, validate: ({ content }) => validItems(content, 'services', ['title']) },
-  { type: 'contacts', name: 'Contacts', createContent: () => ({ title: 'Contacts', contacts: [{ id: 'contact-1', label: 'Email', url: 'mailto:hello@example.com' }] }), Renderer: ContactsBlock, Editor: GenericBlockEditor, validate: ({ content }) => [...validItems(content, 'contacts', ['label', 'url']), ...validateSafeItemUrls(content, 'contacts', 'contact')] },
-  { type: 'socials', name: 'Social networks', createContent: () => ({ title: 'Follow me', links: [] }), Renderer: SocialsBlock, Editor: GenericBlockEditor, validate: ({ content }) => [...validItems(content, 'links', ['label', 'url']), ...validateSafeItemUrls(content, 'links', 'web')] },
-  { type: 'messengers', name: 'Messaging apps', createContent: () => ({ title: 'Message me', links: [] }), Renderer: MessengersBlock, Editor: GenericBlockEditor, validate: ({ content }) => [...validItems(content, 'links', ['label', 'url']), ...validateSafeItemUrls(content, 'links', 'web')] },
-  { type: 'map', name: 'Map', createContent: () => ({ title: 'Find us', address: '', label: 'Open map', url: '' }), Renderer: MapBlock, Editor: GenericBlockEditor, validate: ({ content }) => [...required(content, 'address', 'url'), ...validateSafeUrl(content, 'url')] },
-  { type: 'divider', name: 'Divider', createContent: () => ({}), Renderer: DividerBlock, Editor: GenericBlockEditor, validate: () => [] },
-  { type: 'faq', name: 'FAQ', createContent: () => ({ title: 'Frequently asked questions', items: [{ id: 'faq-1', title: 'What should visitors know?', description: 'Share a concise answer to a common question.' }] }), Renderer: FaqBlock, Editor: GenericBlockEditor, validate: ({ content }) => validItems(content, 'items', ['title', 'description']) },
+  { type: 'hero', name: 'Hero', createContent: () => ({ title: 'Your name', subtitle: 'A short introduction', imageUrl: '', imageAlt: '', ctaLabel: '' }), Renderer: HeroBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'title') },
+  { type: 'avatar', name: 'Avatar', createContent: () => ({ heading: 'Your name', subtitle: 'A short introduction', imageMediaId: null, imageAlt: '', layout: 'centered' }), Renderer: AvatarBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => [
+    ...required(content, 'heading'),
+    ...(!content.imageMediaId ? ['imageMediaId is required'] : []),
+  ] },
+  { type: 'button', name: 'Button', createContent: () => ({ label: 'Learn more', icon: 'link', color: '', textColor: '', radius: 12, action: { type: 'url', url: 'https://example.com' } }), Renderer: ButtonBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'label') },
+  { type: 'links', name: 'Links', createContent: () => ({ links: [{ id: 'link-1', label: 'Learn more', action: { type: 'url', url: 'https://example.com' } }] }), Renderer: LinksBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'links', ['label', 'action']) },
+  { type: 'text', name: 'Text', createContent: () => ({ title: 'About', body: 'Tell visitors about yourself.' }), Renderer: TextBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'body') },
+  { type: 'image', name: 'Image', createContent: () => ({ imageMediaId: null, alt: '' }), Renderer: ImageBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'imageMediaId', 'alt') },
+  { type: 'gallery', name: 'Gallery', createContent: () => ({ images: [] }), Renderer: GalleryBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'images', ['mediaId', 'alt']) },
+  { type: 'services', name: 'Services', createContent: () => ({ title: 'Services', services: [{ id: 'service-1', title: 'Consultation', description: 'Personal consultation', price: '' }] }), Renderer: ServicesBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'services', ['title']) },
+  { type: 'contacts', name: 'Contacts', createContent: () => ({ title: 'Contacts', contacts: [{ id: 'contact-1', label: 'Email', url: 'mailto:hello@example.com' }] }), Renderer: ContactsBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => [...validItems(content, 'contacts', ['label', 'url']), ...validateSafeItemUrls(content, 'contacts', 'contact')] },
+  { type: 'social-button', name: 'Social button', createContent: () => ({ platform: 'telegram', label: 'Telegram', url: 'https://t.me/' }), Renderer: SocialButtonBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => [...required(content, 'label', 'url'), ...validateSafeUrl(content, 'url'), ...validateSocialPlatforms(content)] },
+  { type: 'map', name: 'Map', createContent: () => ({ title: 'Find us', address: '', label: 'Open map', url: '' }), Renderer: MapBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => [...required(content, 'address', 'url'), ...validateSafeUrl(content, 'url')] },
+  { type: 'divider', name: 'Divider', createContent: () => ({}), Renderer: DividerBlock, Editor: SpecializedBlockEditor, validate: () => [] },
+  { type: 'faq', name: 'FAQ', createContent: () => ({ title: 'Frequently asked questions', items: [{ id: 'faq-1', title: 'What should visitors know?', description: 'Share a concise answer to a common question.' }] }), Renderer: FaqBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'items', ['title', 'description']) },
 ];
 
 export function registerPublicPageBlocks(): void {

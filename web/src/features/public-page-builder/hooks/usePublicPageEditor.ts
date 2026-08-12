@@ -20,7 +20,7 @@ export function usePublicPageEditor({
   document,
   revision,
   repository,
-  autosaveMs = 600,
+  autosaveMs = 10_000,
 }: Options) {
   const [state, dispatch] = useReducer(editorReducer, createEditorState(document));
   const latestDocument = useRef(state.document);
@@ -47,11 +47,14 @@ export function usePublicPageEditor({
       case 'section/update':
       case 'section/remove':
       case 'section/reorder':
+      case 'layout/drop':
       case 'section/toggle':
       case 'block/add':
+      case 'block/create-with-section':
       case 'block/update':
       case 'block/design':
       case 'block/remove':
+      case 'block/move-or-detach':
       case 'block/reorder':
       case 'block/toggle':
       case 'history/undo':

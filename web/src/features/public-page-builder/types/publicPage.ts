@@ -19,10 +19,55 @@ export type PageTheme = {
     primary: string;
   };
   fontFamily: string;
+  roundingStyle: 'rounded' | 'pill' | 'leaf' | 'square';
+  linkStylePreset: 'primary-fill' | 'primary-shadow' | 'primary-strong' | 'primary-outline' | 'surface-fill' | 'surface-outline' | 'surface-shadow' | 'surface-strong';
   backgroundMediaId: string | null;
   backgroundPreset: string | null;
   backgroundFit: 'cover' | 'contain';
   backgroundPosition: string;
+  styleDefaults: ThemeStyleDefaults;
+};
+
+export type TypographyStyle = {
+  fontFamily: string | null;
+  fontSize: number | null;
+  fontWeight: number | null;
+  fontStyle: 'normal' | 'italic' | null;
+  color: string | null;
+};
+
+export type LinkStyle = {
+  titleStyle: TypographyStyle;
+  subtitleStyle: TypographyStyle;
+  backgroundColor: string | null;
+  backgroundOpacity: number | null;
+  borderWidth: number | null;
+  borderColor: string | null;
+  shadow: boolean | null;
+};
+
+export type ResolvedTypographyStyle = {
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: number;
+  fontStyle: 'normal' | 'italic';
+  color: string;
+};
+
+export type ThemeStyleDefaults = {
+  sectionBorderRadius: number;
+  blockBorderRadius: number;
+  headingStyle: ResolvedTypographyStyle;
+  textStyle: ResolvedTypographyStyle;
+  linkStyle: {
+    titleStyle: ResolvedTypographyStyle;
+    subtitleStyle: ResolvedTypographyStyle;
+    backgroundColor: string;
+    backgroundOpacity: number;
+    borderWidth: number;
+    borderColor: string;
+    shadow: boolean;
+  };
 };
 
 export type PageSeo = {
@@ -57,14 +102,15 @@ export type SectionLayout =
 
 export type KnownBlockType =
   | 'hero'
+  | 'avatar'
+  | 'button'
   | 'links'
   | 'text'
   | 'image'
   | 'gallery'
   | 'services'
   | 'contacts'
-  | 'socials'
-  | 'messengers'
+  | 'social-button'
   | 'map'
   | 'divider'
   | 'faq';
@@ -78,6 +124,9 @@ export type BlockDesign = {
   backgroundOverlay: number;
   backgroundFit: 'cover' | 'contain';
   backgroundPosition: string;
+  paddingTop: number;
+  paddingBottom: number;
+  borderRadius: number | null;
 };
 
 export type BlockContent = Record<string, unknown>;
@@ -96,7 +145,30 @@ export type PageSection = {
   name: string;
   visible: boolean;
   layout: SectionLayout;
+  design: SectionDesign;
   blocks: PageBlock[];
+};
+
+export type SectionDesign = {
+  variant: 'off' | 'custom' | 'primary' | 'secondary';
+  backgroundColor: string | null;
+  textColor: string | null;
+  backgroundMediaId: string | null;
+  backgroundOverlay: number;
+  backgroundFit: 'cover' | 'contain';
+  backgroundPosition: string;
+  paddingTop: number;
+  paddingBottom: number;
+  horizontalMargin: boolean;
+  borderRadius: number | null;
+  borderWidth: number;
+  borderColor: string | null;
+  shadow: boolean;
+  width: 'full' | 'contained';
+  mobileVisible: boolean;
+  headingStyle: TypographyStyle;
+  textStyle: TypographyStyle;
+  linkStyle: LinkStyle;
 };
 
 export type PublicPageDocument = {

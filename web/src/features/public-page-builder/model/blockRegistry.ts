@@ -4,6 +4,7 @@ import { createStableId } from '../utils/createStableId';
 
 export type BlockComponentProps = {
   block: PageBlock;
+  mediaUrlFor?: (mediaId: string) => string | undefined;
   onContentChange?: (content: BlockContent) => void;
 };
 
@@ -54,6 +55,9 @@ export function createBlock(type: string): PageBlock | null {
       backgroundOverlay: 0,
       backgroundFit: 'cover',
       backgroundPosition: '50% 50%',
+      paddingTop: 0,
+      paddingBottom: 0,
+      borderRadius: null,
     },
   };
 }

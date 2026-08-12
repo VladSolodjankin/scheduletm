@@ -13,6 +13,7 @@ import type { PublicPageRecord } from '../features/public-page-builder/repositor
 import { createStableId } from '../features/public-page-builder/utils/createStableId';
 import type { PublicPageDocument } from '../features/public-page-builder/types/publicPage';
 import { getPublicPageTemplate, PUBLIC_PAGE_TEMPLATES } from '../features/public-page-builder/templates';
+import { PublicPageRenderer } from '../components/public-page-blocks/PublicPageRenderer';
 
 function cloneDocument(document: PublicPageDocument): PublicPageDocument {
   const id = createStableId();
@@ -43,6 +44,10 @@ export function PublicPagesPage() {
   const [templateId, setTemplateId] = useState('blank');
   const [mutationError, setMutationError] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
+  const templatePreview = useMemo(
+    () => getPublicPageTemplate(templateId)?.createDocument('template-preview', '2026-01-01T00:00:00.000Z'),
+    [templateId],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -165,7 +170,7 @@ export function PublicPagesPage() {
           ))}
         </Grid>
       )}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)}>
+      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} fullWidth maxWidth="md">
         <DialogTitle>{publicPageText(locale, 'create')}</DialogTitle>
         <DialogContent>
           {mutationError ? (
@@ -175,6 +180,18 @@ export function PublicPagesPage() {
             onChange={(event) => setTemplateId(event.target.value)}>
             {PUBLIC_PAGE_TEMPLATES.map((template) => <MenuItem key={template.id} value={template.id}>{template.name}</MenuItem>)}
           </TextField>
+          {templatePreview ? (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>{publicPageText(locale, 'templatePreview')}</Typography>
+              <Box inert aria-label={publicPageText(locale, 'templatePreview')} sx={{
+                height: { xs: 360, sm: 440 }, overflow: 'auto', border: 1, borderColor: 'divider',
+                borderRadius: 2, bgcolor: 'background.default',
+                '& a, & button': { pointerEvents: 'none' },
+              }}>
+                <PublicPageRenderer document={templatePreview} />
+              </Box>
+            </Box>
+          ) : null}
         </DialogContent>
         <DialogActions>
           <Button disabled={isMutating} variant="contained" onClick={() => void create()}>{publicPageText(locale, 'create')}</Button>

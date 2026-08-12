@@ -3,6 +3,8 @@ import {
   type PublicPageDocument,
 } from '../../features/public-page-builder/types/publicPage';
 import { createStableId } from '../../features/public-page-builder/utils/createStableId';
+import { DEFAULT_PUBLIC_PAGE_THEME } from '../../features/public-page-builder/config/themes';
+import { createEmptyPageSection } from '../../features/public-page-builder/model/normalizeDocument';
 
 export function createBlankPublicPageDocument(): PublicPageDocument {
   const now = new Date().toISOString();
@@ -13,17 +15,8 @@ export function createBlankPublicPageDocument(): PublicPageDocument {
     slug: `page-${id.replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 8)}`,
     status: 'draft',
     profile: { displayName: '', description: '', logoMediaId: null, avatarMediaId: null },
-    theme: {
-      id: 'minimal-light',
-      name: 'Minimal Light',
-      colors: { background: '#f7f7f5', surface: '#ffffff', text: '#171717', primary: '#5b5bd6' },
-      fontFamily: 'Inter, system-ui, sans-serif',
-      backgroundMediaId: null,
-      backgroundPreset: null,
-      backgroundFit: 'cover',
-      backgroundPosition: '50% 50%',
-    },
-    sections: [],
+    theme: structuredClone(DEFAULT_PUBLIC_PAGE_THEME),
+    sections: [createEmptyPageSection()],
     seo: { title: '', description: '', imageMediaId: null },
     media: [],
     createdAt: now,
