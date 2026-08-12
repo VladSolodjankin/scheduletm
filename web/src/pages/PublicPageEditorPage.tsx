@@ -264,13 +264,13 @@ function Editor({
             const block = section.blocks[blockIndex];
             return <Tooltip title={publicPageText(locale, 'drag')}><IconButton {...(activator ?? {})} aria-label={`${publicPageText(locale, 'drag')}: ${block.name}`}
               className="public-page-block-drag-rail" data-public-page-block-drag-rail
-              sx={{ position: 'absolute', zIndex: 5, left: 'calc(-1 * var(--public-page-editor-drag-gutter, 64px) - 35px)', top: '50%', transform: 'translateY(-50%)', width: 36, height: '100%', borderRadius: '2px', bgcolor: 'grey.300', color: 'grey.700', boxShadow: 1, '&:hover, .public-page-dnd-dragging &': { bgcolor: 'grey.400' } }}>
+              sx={{ position: 'absolute', zIndex: 5, left: 'calc(-1 * var(--public-page-editor-drag-gutter) - 35px - var(--public-page-section-block-inset))', top: '50%', transform: 'translateY(-50%)', width: 36, height: '100%', borderRadius: '2px', bgcolor: 'grey.300', color: 'grey.700', boxShadow: 1, '&:hover, .public-page-dnd-dragging &': { bgcolor: 'grey.400' } }}>
               <DragIndicator fontSize="small" /></IconButton></Tooltip>;
           },
           renderStagedBlockDragHandle: (block, _blockIndex, activator) => <Tooltip title={publicPageText(locale, 'drag')}><IconButton
             {...(activator ?? {})} aria-label={`${publicPageText(locale, 'drag')}: ${block.name}`}
             className="public-page-block-drag-rail" data-public-page-block-drag-rail
-            sx={{ position: 'absolute', zIndex: 5, left: 'calc(-1 * var(--public-page-editor-drag-gutter, 64px) + 12px)', top: '50%', transform: 'translateY(-50%)', width: 36, height: 48, borderRadius: 1.5, bgcolor: 'grey.300', color: 'grey.700', boxShadow: 1, '&:hover, .public-page-dnd-dragging &': { bgcolor: 'grey.400' } }}>
+            sx={{ position: 'absolute', zIndex: 5, left: 'calc(-1 * var(--public-page-editor-drag-gutter) + 12px - var(--public-page-section-block-inset))', top: '50%', transform: 'translateY(-50%)', width: 36, height: 48, borderRadius: 1.5, bgcolor: 'grey.300', color: 'grey.700', boxShadow: 1, '&:hover, .public-page-dnd-dragging &': { bgcolor: 'grey.400' } }}>
             <DragIndicator fontSize="small" /></IconButton></Tooltip>,
           renderStagedBlockActions: (block) => <Stack className="public-page-block-actions" direction="row"
             sx={{ position: 'absolute', zIndex: 3, top: 6, right: 6, p: 0.25, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 3 }}>

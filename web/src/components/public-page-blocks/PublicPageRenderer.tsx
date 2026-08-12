@@ -1,5 +1,5 @@
 import { Box, Container, Typography } from '@mui/material';
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useMemo, useRef, type ReactNode, type RefObject } from 'react';
 import type {
   PageSection,
   PageBlock,
@@ -12,6 +12,7 @@ import {
   BLOCK_DRAG_HANDLE,
   PUBLIC_PAGE_DND_DRAG_CLASS,
   PUBLIC_PAGE_DND_GROUP,
+  PUBLIC_PAGE_DND_SECTION_INSET,
   SECTION_DRAG_HANDLE,
   SMOOTH_DND_WRAPPER_CLASS,
   isBuilderDragPayload,
@@ -47,7 +48,7 @@ export type PublicPageEditorRenderProps = {
 type MainRenderItem = { type: 'section'; id: string; section: PageSection }
   | { type: 'free-block'; id: string; section: PageSection; block: PageBlock; blockIndex: number };
 
-function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, editor }: { section: PageSection; sectionIndex: number; mediaUrlFor: (id: string) => string | undefined; theme: PublicPageDocument['theme']; editor?: PublicPageEditorRenderProps }) {
+function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, editor, ghostReferenceRef }: { section: PageSection; sectionIndex: number; mediaUrlFor: (id: string) => string | undefined; theme: PublicPageDocument['theme']; editor?: PublicPageEditorRenderProps; ghostReferenceRef: RefObject<HTMLElement | null> }) {
   const blockContainerRef = useRef<HTMLDivElement>(null);
   useSmoothDndContainer(blockContainerRef, {
     behaviour: 'move',
@@ -58,12 +59,12 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, editor }: 
     lockAxis: 'y',
     dragClass: PUBLIC_PAGE_DND_DRAG_CLASS,
     dropPlaceholder: { className: 'public-page-dnd-placeholder', animationDuration: 180, showOnTop: true },
+    ghostReferenceRef,
     getChildPayload: (index) => {
       const child = blockContainerRef.current!.children[index] as HTMLElement;
       return { type: 'block', blockId: child.dataset.blockId!, sourceSectionId: section.id };
     },
     shouldAcceptDrop: (_source, payload) => isBuilderDragPayload(payload) && payload.type !== 'section',
-    shouldAnimateDrop: () => false,
     onDrop: ({ addedIndex, payload }) => {
       if (addedIndex !== null && isBuilderDragPayload(payload)) {
         editor?.onDropItem(payload, { type: 'section', sectionId: section.id, index: addedIndex });
@@ -177,6 +178,7 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, editor }: 
           pb: isOff ? 0 : `${section.design.paddingBottom}px`,
           pl: isOff ? 0 : `calc(1rem + ${borderWidth}px)`,
           pr: isOff ? 0 : `calc(1rem + ${borderWidth}px)`,
+          [PUBLIC_PAGE_DND_SECTION_INSET]: `calc(${sectionInlineMargin} + 1rem + ${borderWidth * 2}px)`,
         }}>
         {section.blocks.map((block, blockIndex) => <Box key={block.id} className={SMOOTH_DND_WRAPPER_CLASS}
           data-public-page-sortable="block" data-block-id={block.id} style={{ overflow: 'visible' }}>
@@ -203,6 +205,7 @@ function PublicPageRendererContent({ document, mediaUrls, editor }: PublicPageRe
     dragHandleSelector: `${BLOCK_DRAG_HANDLE}, ${SECTION_DRAG_HANDLE}`,
     animationDuration: 180, lockAxis: 'y', dragClass: PUBLIC_PAGE_DND_DRAG_CLASS,
     dropPlaceholder: { className: 'public-page-dnd-placeholder', animationDuration: 180, showOnTop: true },
+    ghostReferenceRef: mainContainerRef,
     getChildPayload: (index) => {
       const child = mainContainerRef.current!.children[index] as HTMLElement;
       return child.dataset.publicPageSortable === 'section'
@@ -210,7 +213,6 @@ function PublicPageRendererContent({ document, mediaUrls, editor }: PublicPageRe
         : { type: 'block', blockId: child.dataset.blockId!, sourceSectionId: child.dataset.sourceSectionId! };
     },
     shouldAcceptDrop: (_source, payload) => isBuilderDragPayload(payload),
-    shouldAnimateDrop: () => false,
     onDrop: ({ addedIndex, payload }) => {
       if (addedIndex !== null && isBuilderDragPayload(payload)) {
         editor?.onDropItem(payload, { type: 'main', index: addedIndex });
@@ -220,9 +222,9 @@ function PublicPageRendererContent({ document, mediaUrls, editor }: PublicPageRe
   useSmoothDndContainer(stagedContainerRef, {
     behaviour: 'move', groupName: PUBLIC_PAGE_DND_GROUP, orientation: 'vertical',
     dragHandleSelector: BLOCK_DRAG_HANDLE, animationDuration: 180, lockAxis: 'y', dragClass: PUBLIC_PAGE_DND_DRAG_CLASS,
+    ghostReferenceRef: mainContainerRef,
     getChildPayload: (index) => ({ type: 'staged', block: editor!.stagedBlocks![index] }),
     shouldAcceptDrop: (_source, payload) => isBuilderDragPayload(payload) && payload.type === 'staged',
-    shouldAnimateDrop: () => false,
     onDrop: () => undefined,
   }, Boolean(editor?.stagedBlocks?.length));
   const { colors } = document.theme;
@@ -284,7 +286,7 @@ function PublicPageRendererContent({ document, mediaUrls, editor }: PublicPageRe
           </Box>
         ) : null}
         {editor ? <Box ref={mainContainerRef} data-public-page-main-container
-          sx={{ display: 'grid', gap: 'var(--theme-link-offset, 10px)', minHeight: 52, flex: '1 0 52px', alignContent: 'start' }}>
+          sx={{ display: 'grid', gap: 'var(--theme-link-offset, 10px)', minHeight: 52, flex: '1 0 52px', alignContent: 'start', [PUBLIC_PAGE_DND_SECTION_INSET]: '0px' }}>
             {mainItems.map((item) => {
               const sectionIndex = document.sections.findIndex((section) => section.id === item.section.id);
               return item.type === 'section'
@@ -295,7 +297,7 @@ function PublicPageRendererContent({ document, mediaUrls, editor }: PublicPageRe
                     <Box sx={{ position: 'relative', minWidth: 0,
                       '&:hover > .public-page-section-drag-rail, &:focus-within > .public-page-section-drag-rail, &:hover > [data-public-page-section-drag-target] > .public-page-section-resize-handle, &:focus-within > [data-public-page-section-drag-target] > .public-page-section-resize-handle': { opacity: 1, pointerEvents: 'auto' } }}>
                       {editor.renderSectionDragHandle?.(item.section, sectionIndex, {})}
-                      <SectionRenderer section={item.section} sectionIndex={sectionIndex} mediaUrlFor={mediaUrlFor} theme={document.theme} editor={editor} />
+                      <SectionRenderer section={item.section} sectionIndex={sectionIndex} mediaUrlFor={mediaUrlFor} theme={document.theme} editor={editor} ghostReferenceRef={mainContainerRef} />
                     </Box>
                   </Box>
                 : <Box key={item.id} className={SMOOTH_DND_WRAPPER_CLASS} data-public-page-sortable="block"
@@ -315,8 +317,9 @@ function PublicPageRendererContent({ document, mediaUrls, editor }: PublicPageRe
                     </Box>
                   </Box>;
             })}
-          </Box> : document.sections.map((section, sectionIndex) => <SectionRenderer key={section.id} section={section} sectionIndex={sectionIndex} mediaUrlFor={mediaUrlFor} theme={document.theme} />)}
-        {editor?.stagedBlocks?.length ? <Box ref={stagedContainerRef} data-public-page-block-staging sx={{ display: 'grid', gap: 1.25, mt: 2, minWidth: 0 }}>
+          </Box> : document.sections.map((section, sectionIndex) => <SectionRenderer key={section.id} section={section} sectionIndex={sectionIndex} mediaUrlFor={mediaUrlFor} theme={document.theme} ghostReferenceRef={mainContainerRef} />)}
+        {editor?.stagedBlocks?.length ? <Box ref={stagedContainerRef} data-public-page-block-staging
+          sx={{ display: 'grid', gap: 1.25, mt: 2, minWidth: 0, [PUBLIC_PAGE_DND_SECTION_INSET]: '0px' }}>
             {editor.stagedBlocks.map((block, blockIndex) => <Box key={block.id} className={SMOOTH_DND_WRAPPER_CLASS}
               data-public-page-sortable="staged-block" style={{ overflow: 'visible' }}>
               <Box sx={{ position: 'relative', minWidth: 0 }}>
