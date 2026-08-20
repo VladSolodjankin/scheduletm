@@ -9,15 +9,60 @@ export type PageProfile = {
   avatarMediaId: string | null;
 };
 
+export type ThemeSwatches = readonly [string, string, string, string];
+
+export type ThemeTypographyToken = {
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: number;
+  lineHeight: number;
+  letterSpacing: number;
+};
+
+export type PageThemeTokens = {
+  colors: {
+    contrast: string;
+    linkTitle: string;
+    linkSubtitle: string;
+    linkShadow: string;
+    linkBorder: string;
+    focus: string;
+    checkboxBackground: string;
+  };
+  typography: {
+    fontFamily: string;
+    fontWeight: number;
+    boldFontWeight: number;
+    headingColor: string;
+    avatarTitle: ThemeTypographyToken;
+    avatarBio: ThemeTypographyToken;
+    linkTitle: ThemeTypographyToken;
+    linkSubtitle: ThemeTypographyToken;
+    h1: ThemeTypographyToken;
+    h2: ThemeTypographyToken;
+    h3: ThemeTypographyToken;
+    textLarge: ThemeTypographyToken;
+    textMedium: ThemeTypographyToken;
+    textSmall: ThemeTypographyToken;
+  };
+  layout: {
+    blockRadius: number;
+    linkRadius: number;
+    linkGap: number;
+  };
+};
+
 export type PageTheme = {
   id: string;
   name: string;
+  swatches: ThemeSwatches;
   colors: {
     background: string;
     surface: string;
     text: string;
     primary: string;
   };
+  tokens: PageThemeTokens;
   fontFamily: string;
   roundingStyle: 'rounded' | 'pill' | 'leaf' | 'square';
   linkStylePreset: 'primary-fill' | 'primary-shadow' | 'primary-strong' | 'primary-outline' | 'surface-fill' | 'surface-outline' | 'surface-shadow' | 'surface-strong';
@@ -130,6 +175,28 @@ export type BlockDesign = {
 };
 
 export type BlockContent = Record<string, unknown>;
+
+export type RichTextSize = 'small' | 'medium' | 'large' | 'h1' | 'h2' | 'h3';
+export type RichTextAlignment = 'left' | 'center' | 'right' | 'justify';
+export type RichTextMarks = {
+  bold?: true;
+  italic?: true;
+  underline?: true;
+  strike?: true;
+  color?: string;
+};
+export type RichTextRun = { text: string; marks?: RichTextMarks };
+export type RichTextParagraph = {
+  size: RichTextSize;
+  fontFamily: string | null;
+  alignment: RichTextAlignment;
+  runs: RichTextRun[];
+};
+export type RichTextDocument = {
+  type: 'rich-text-v1';
+  paragraphs: RichTextParagraph[];
+};
+export type RichTextBlockContent = BlockContent & { document: RichTextDocument };
 
 export type PageBlock<TContent extends BlockContent = BlockContent> = {
   id: string;

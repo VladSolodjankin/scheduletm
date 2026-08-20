@@ -1,11 +1,15 @@
-import type { ComponentType } from 'react';
-import type { BlockContent, BlockDesign, PageBlock } from '../types/publicPage';
+import type { ComponentType, ReactNode } from 'react';
+import type { BlockContent, BlockDesign, PageBlock, PageSection, PageTheme } from '../types/publicPage';
 import { createStableId } from '../utils/createStableId';
 
 export type BlockComponentProps = {
   block: PageBlock;
   mediaUrlFor?: (mediaId: string) => string | undefined;
   onContentChange?: (content: BlockContent) => void;
+  avatarMediaControl?: ReactNode;
+  avatarCoverControl?: ReactNode;
+  pageTheme?: PageTheme;
+  pageSection?: PageSection;
 };
 
 export type BlockDefinition = {

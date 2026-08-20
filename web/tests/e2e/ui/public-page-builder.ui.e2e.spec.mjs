@@ -23,25 +23,39 @@ async function addBlock(page, type) {
   return page.getByRole('dialog', { name: 'Configure block' });
 }
 
-async function dragByHandle(page, sourceName, targetName, targetPosition, sourceIsStaged = false) {
-  const sourceRoot = sourceIsStaged
-    ? page.locator('[data-public-page-sortable="staged-block"]')
-    : page.locator('[data-public-page-sortable="block"]');
+async function dragByHandle(page, sourceName, targetName, targetPosition) {
+  const sourceRoot = page.locator('[data-public-page-sortable="block"]');
   const source = sourceRoot.getByRole('button', { name: `Drag: ${sourceName}`, exact: true });
+  const sourceWrapper = source.locator('xpath=ancestor::*[@data-public-page-sortable="block"][1]');
   const target = page.getByRole('group', { name: `Editable block: ${targetName}`, exact: true });
   const sourceBox = await source.boundingBox();
   const targetBox = await target.boundingBox();
+  const sourceThemeGap = await sourceWrapper.evaluate((element) => getComputedStyle(element).getPropertyValue('--theme-link-offset'));
+  expect(sourceThemeGap.trim()).not.toBe('');
   expect(sourceBox).not.toBeNull();
   expect(targetBox).not.toBeNull();
   await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2);
   await page.mouse.down();
   await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2 + 8, { steps: 4 });
-  const ghostHandle = page.locator('.smooth-dnd-ghost [data-public-page-block-drag-rail]');
-  await expect(ghostHandle).toBeVisible();
-  const ghostHandleBox = await ghostHandle.boundingBox();
-  expect(ghostHandleBox).not.toBeNull();
-  expect(Math.abs(ghostHandleBox.x - sourceBox.x)).toBeLessThan(2);
-  await expect(ghostHandle).toHaveCSS('background-color', 'rgb(189, 189, 189)');
+  const ghost = page.locator('.smooth-dnd-ghost[data-public-page-sortable="block"]');
+  await expect(ghost).toBeAttached();
+  await expect(ghost.locator('.public-page-block-actions, .public-page-section-actions, .public-page-block-drag-rail, .public-page-section-drag-rail')).toHaveCount(0);
+  expect(await ghost.getAttribute('data-public-page-dnd-context')).toMatch(/^(page|section)$/);
+  expect(await ghost.evaluate((element) => element.style.getPropertyValue('--page-background'))).toBe('');
+  expect((await ghost.boundingBox())?.width).toBeGreaterThan(0);
+  expect(await sourceWrapper.evaluate((element) => getComputedStyle(element).getPropertyValue('--theme-link-offset'))).toBe(sourceThemeGap);
+
+  const assertGhostLane = async (context, width) => {
+    const lane = page.locator(`[data-public-page-block-container][data-public-page-dnd-context="${context}"]`).first();
+    const laneBox = await lane.boundingBox();
+    expect(laneBox).not.toBeNull();
+    await page.mouse.move(laneBox.x + laneBox.width / 2, laneBox.y + laneBox.height / 2, { steps: 8 });
+    await expect(ghost).toHaveAttribute('data-public-page-dnd-context', context);
+    await expect.poll(async () => Math.round((await ghost.boundingBox())?.width ?? 0)).toBe(width);
+    expect(await sourceWrapper.evaluate((element) => getComputedStyle(element).getPropertyValue('--theme-link-offset'))).toBe(sourceThemeGap);
+  };
+  await assertGhostLane('section', 319);
+  await assertGhostLane('page', 347);
   const targetY = targetBox.y + targetBox.height * (targetPosition === 'before' ? 0.2 : 0.8);
   await page.mouse.move(targetBox.x + targetBox.width / 2, targetY, { steps: 12 });
   await page.mouse.up();
@@ -82,8 +96,10 @@ test.describe('public-page builder browser flow', () => {
       await expect(page).toHaveURL(new RegExp(`/public-pages/${pageId}/edit$`));
 
       const mainDropContainer = page.locator('[data-public-page-main-container]');
-      await expect(mainDropContainer).toHaveCSS('flex-grow', '1');
+      await expect(mainDropContainer).toHaveAttribute('data-public-page-dnd-context', 'page');
+      await expect(mainDropContainer).toHaveCSS('flex-grow', '0');
       await expect(mainDropContainer).toHaveCSS('align-content', 'start');
+      expect((await mainDropContainer.boundingBox())?.width).toBeCloseTo(347, 0);
       const paddedSection = page.locator('[data-public-page-section-drag-target]').filter({
         has: page.locator('[data-public-page-block-container]'),
       }).first();
@@ -121,9 +137,9 @@ test.describe('public-page builder browser flow', () => {
       await serviceDialog.getByLabel('Price').fill(servicePrice);
       await serviceDialog.getByRole('button', { name: 'Save', exact: true }).click();
 
-      await dragByHandle(page, 'FAQ', 'Welcome', 'after', true);
-      await dragByHandle(page, 'Instagram', 'FAQ', 'after', true);
-      await dragByHandle(page, 'Services', 'Welcome', 'after', true);
+      await dragByHandle(page, 'FAQ', 'Welcome', 'after');
+      await dragByHandle(page, 'Instagram', 'FAQ', 'after');
+      await dragByHandle(page, 'Services', 'Welcome', 'after');
       await expect.poll(async () => {
         const socialSectionId = await page.getByRole('group', { name: 'Editable block: Instagram' })
           .getAttribute('data-editor-section-id');

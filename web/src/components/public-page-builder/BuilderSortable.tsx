@@ -6,21 +6,24 @@ import {
   type ContainerOptions,
   type DropResult,
 } from 'smooth-dnd';
-import type { PageBlock, PageSection } from '../../features/public-page-builder/types/publicPage';
 
 export const SMOOTH_DND_WRAPPER_CLASS = constants.wrapperClass;
 export const BLOCK_DRAG_HANDLE = '.public-page-block-drag-rail';
 export const SECTION_DRAG_HANDLE = '.public-page-section-drag-rail';
 export const PUBLIC_PAGE_DND_GROUP = 'public-page-items';
 export const PUBLIC_PAGE_DND_DRAG_CLASS = 'public-page-dnd-dragging';
-export const PUBLIC_PAGE_DND_SECTION_INSET = '--public-page-section-block-inset';
-const PUBLIC_PAGE_DND_GUTTER = '--public-page-editor-drag-gutter';
-const PUBLIC_PAGE_DND_GHOST_ORIGIN_LEFT = 'publicPageDndGhostOriginLeft';
+const PUBLIC_PAGE_DND_CONTEXT_ATTRIBUTE = 'data-public-page-dnd-context';
+const PUBLIC_PAGE_DND_CHROME_SELECTOR = [
+  '.public-page-block-actions',
+  '.public-page-section-actions',
+  BLOCK_DRAG_HANDLE,
+  SECTION_DRAG_HANDLE,
+].join(',');
+const ghostOriginLeft = new WeakMap<HTMLElement, number>();
 
 export type BuilderDragPayload =
   | { type: 'section'; sectionId: string }
-  | { type: 'block'; blockId: string; sourceSectionId: string }
-  | { type: 'staged'; block: PageBlock };
+  | { type: 'block'; blockId: string; sourceSectionId: string };
 
 export type BuilderDropDestination =
   | { type: 'main'; index: number }
@@ -29,7 +32,6 @@ export type BuilderDropDestination =
 export type SortableActivator = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'color'>;
 
 type SmoothContainerOptions = Omit<ContainerOptions, 'getChildPayload' | 'onDrop'> & {
-  ghostReferenceRef: RefObject<HTMLElement | null>;
   getChildPayload: (index: number) => BuilderDragPayload;
   onDrop: (result: DropResult) => void;
 };
@@ -45,25 +47,18 @@ function contentBox(element: HTMLElement): { left: number; width: number } {
   };
 }
 
-function syncGhostWithTarget(target: HTMLElement, reference: HTMLElement): void {
+function syncGhostWithTarget(target: HTMLElement): void {
   const ghost = document.querySelector<HTMLElement>(`.${constants.ghostClass}[data-public-page-sortable]`);
   if (!ghost) {return;}
 
   const targetBox = contentBox(target);
-  const referenceBox = contentBox(reference);
-  const originLeftValue = ghost.dataset[PUBLIC_PAGE_DND_GHOST_ORIGIN_LEFT];
-  const originLeft = originLeftValue === undefined
-    ? ghost.getBoundingClientRect().left
-    : Number(originLeftValue);
-
-  ghost.dataset[PUBLIC_PAGE_DND_GHOST_ORIGIN_LEFT] = String(originLeft);
+  const originLeft = ghostOriginLeft.get(ghost) ?? ghost.getBoundingClientRect().left;
+  ghostOriginLeft.set(ghost, originLeft);
+  const context = target.getAttribute(PUBLIC_PAGE_DND_CONTEXT_ATTRIBUTE);
+  if (context) {ghost.setAttribute(PUBLIC_PAGE_DND_CONTEXT_ATTRIBUTE, context);}
+  ghost.querySelectorAll(PUBLIC_PAGE_DND_CHROME_SELECTOR).forEach((element) => element.remove());
   ghost.style.marginLeft = `${targetBox.left - originLeft}px`;
   ghost.style.width = `${targetBox.width}px`;
-  ghost.style.setProperty(PUBLIC_PAGE_DND_SECTION_INSET, `${targetBox.left - referenceBox.left}px`);
-  ghost.style.setProperty(
-    PUBLIC_PAGE_DND_GUTTER,
-    getComputedStyle(reference).getPropertyValue(PUBLIC_PAGE_DND_GUTTER),
-  );
 }
 
 /** Keeps the imperative smooth-dnd instance isolated from React rendering. */
@@ -87,7 +82,6 @@ export function useSmoothDndContainer(
     smoothDnD.wrapChild = false;
     let disposed = false;
     const containerOptions: Partial<SmoothContainerOptions> = { ...optionsRef.current };
-    delete containerOptions.ghostReferenceRef;
     const instance = smoothDnD(element, {
       ...containerOptions,
       getChildPayload: (index) => optionsRef.current.getChildPayload(index),
@@ -95,9 +89,16 @@ export function useSmoothDndContainer(
         if (!disposed) {optionsRef.current.onDrop(result);}
       },
       shouldAcceptDrop: (sourceOptions, payload) => optionsRef.current.shouldAcceptDrop?.(sourceOptions, payload) ?? true,
+      onDragStart: (params) => {
+        if (params.isSource) {
+          queueMicrotask(() => {
+            if (!disposed) {syncGhostWithTarget(element);}
+          });
+        }
+        optionsRef.current.onDragStart?.(params);
+      },
       onDragEnter: () => {
-        const reference = optionsRef.current.ghostReferenceRef.current;
-        if (reference) {syncGhostWithTarget(element, reference);}
+        syncGhostWithTarget(element);
         optionsRef.current.onDragEnter?.();
       },
       getGhostParent: () => document.body,
@@ -112,14 +113,5 @@ export function useSmoothDndContainer(
 export function isBuilderDragPayload(payload: unknown): payload is BuilderDragPayload {
   if (!payload || typeof payload !== 'object' || !('type' in payload)) {return false;}
   const type = (payload as { type?: unknown }).type;
-  return type === 'section' || type === 'block' || type === 'staged';
-}
-
-export function standaloneSectionFrom(source: PageSection): PageSection {
-  return {
-    ...structuredClone(source),
-    id: crypto.randomUUID(),
-    design: { ...structuredClone(source.design), variant: 'off' },
-    blocks: [],
-  };
+  return type === 'section' || type === 'block';
 }

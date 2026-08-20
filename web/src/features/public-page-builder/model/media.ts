@@ -46,6 +46,20 @@ export function documentReferencesMedia(document: PublicPageDocument, mediaId: s
     || containsMediaId(document.sections, mediaId);
 }
 
+export function collectReferencedMediaIds(value: unknown): string[] {
+  const ids = new Set<string>();
+  const visit = (candidate: unknown) => {
+    if (Array.isArray(candidate)) {candidate.forEach(visit); return;}
+    if (!candidate || typeof candidate !== 'object') {return;}
+    Object.entries(candidate).forEach(([key, item]) => {
+      if (/mediaId$/i.test(key) && typeof item === 'string' && item) {ids.add(item);}
+      visit(item);
+    });
+  };
+  visit(value);
+  return [...ids];
+}
+
 export function canDeleteMediaFromDocuments(documents: readonly PublicPageDocument[], mediaId: string): boolean {
   return documents.every((document) => !documentReferencesMedia(document, mediaId));
 }

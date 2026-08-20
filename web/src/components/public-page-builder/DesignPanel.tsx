@@ -1,6 +1,12 @@
 import { Box, Stack, Typography } from '@mui/material';
 import type { Dispatch } from 'react';
-import { PUBLIC_PAGE_THEMES } from '../../features/public-page-builder/config/themes';
+import {
+  applyPublicPageLinkStyle,
+  applyPublicPagePalette,
+  applyPublicPageThemeFont,
+  applyPublicPageThemeRounding,
+  PUBLIC_PAGE_THEMES,
+} from '../../features/public-page-builder/config/themes';
 import type { ApiPublicPageRepository } from '../../features/public-page-builder/repository/ApiPublicPageRepository';
 import type { EditorAction } from '../../features/public-page-builder/types/actions';
 import type { EditorState } from '../../features/public-page-builder/types/editor';
@@ -32,18 +38,7 @@ export function DesignPanel({ state, locale, dispatch, repository, previewUrls, 
 }) {
   const theme = state.document.theme;
   const update = (next: PageTheme) => dispatch({ type: 'theme/update', theme: next });
-  const selectPalette = (palette: PageTheme) => {
-    const surfaceLink = theme.linkStylePreset.startsWith('surface-');
-    update({ ...theme, id: palette.id, name: palette.name, colors: palette.colors,
-    styleDefaults: { ...theme.styleDefaults,
-      headingStyle: { ...theme.styleDefaults.headingStyle, color: palette.colors.text },
-      textStyle: { ...theme.styleDefaults.textStyle, color: palette.colors.text },
-      linkStyle: { ...theme.styleDefaults.linkStyle,
-        titleStyle: { ...theme.styleDefaults.linkStyle.titleStyle, color: surfaceLink ? palette.colors.text : palette.colors.background },
-        subtitleStyle: { ...theme.styleDefaults.linkStyle.subtitleStyle, color: surfaceLink ? palette.colors.text : palette.colors.background },
-        backgroundColor: surfaceLink ? palette.colors.surface : palette.colors.primary, borderColor: palette.colors.primary },
-    } });
-  };
+  const selectPalette = (palette: PageTheme) => update(applyPublicPagePalette(theme, palette));
   const cardSx = (active: boolean) => ({ minHeight: 72, p: 1.5, borderRadius: 2, border: '2px solid', borderColor: active ? 'primary.main' : 'divider',
     bgcolor: active ? 'action.selected' : 'background.paper', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' });
   const uploadLabels = { uploadLabel: publicPageText(locale, 'uploadImage'), replaceLabel: publicPageText(locale, 'replaceImage'), removeLabel: publicPageText(locale, 'remove'),
@@ -53,28 +48,25 @@ export function DesignPanel({ state, locale, dispatch, repository, previewUrls, 
     <Box><Typography variant="h6" sx={{ mb: 1.5 }}>{publicPageText(locale, 'colorPalettes')}</Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 1 }}>
         {PUBLIC_PAGE_THEMES.map((palette) => <Box component="button" type="button" key={palette.id} aria-label={palette.name} onClick={() => selectPalette(palette)} sx={cardSx(theme.id === palette.id)}>
-          <Stack direction="row" spacing={-0.5}>{Object.values(palette.colors).map((color) => <Box key={color} sx={{ width: 30, height: 30, borderRadius: '50%', bgcolor: color, border: '1px solid', borderColor: 'divider' }} />)}</Stack>
+          <Stack direction="row" spacing={-0.5}>{palette.swatches.map((color, index) => <Box key={`${color}-${index}`} sx={{ width: 30, height: 30, borderRadius: '50%', bgcolor: color, border: '1px solid', borderColor: 'divider' }} />)}</Stack>
         </Box>)}
       </Box>
     </Box>
     <Box><Typography variant="h6" sx={{ mb: 1.5 }}>{publicPageText(locale, 'fonts')}</Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1 }}>
-        {fonts.map(([label, value]) => <Box component="button" type="button" key={label} onClick={() => update({ ...theme, fontFamily: value, styleDefaults: { ...theme.styleDefaults,
-          headingStyle: { ...theme.styleDefaults.headingStyle, fontFamily: value }, textStyle: { ...theme.styleDefaults.textStyle, fontFamily: value },
-          linkStyle: { ...theme.styleDefaults.linkStyle, titleStyle: { ...theme.styleDefaults.linkStyle.titleStyle, fontFamily: value }, subtitleStyle: { ...theme.styleDefaults.linkStyle.subtitleStyle, fontFamily: value } } } })}
+        {fonts.map(([label, value]) => <Box component="button" type="button" key={label} onClick={() => update(applyPublicPageThemeFont(theme, value))}
           sx={{ ...cardSx(theme.fontFamily === value), fontFamily: value, flexDirection: 'column' }}><Typography sx={{ fontFamily: value, fontSize: 20 }}>{publicPageText(locale, 'fontPreview')}</Typography><Typography sx={{ fontFamily: value }}>{label}</Typography></Box>)}
       </Box>
     </Box>
     <Box><Typography variant="h6" sx={{ mb: 1.5 }}>{publicPageText(locale, 'rounding')}</Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>{roundings.map((item) => <Box component="button" type="button" aria-label={publicPageText(locale, item.id)} key={item.id} onClick={() => update({ ...theme, roundingStyle: item.id })} sx={cardSx(theme.roundingStyle === item.id)}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>{roundings.map((item) => <Box component="button" type="button" aria-label={publicPageText(locale, item.id)} key={item.id} onClick={() => update(applyPublicPageThemeRounding(theme, item.id))} sx={cardSx(theme.roundingStyle === item.id)}>
         <Box sx={{ width: 86, height: 36, bgcolor: 'text.secondary', borderRadius: item.radius }} /></Box>)}</Box>
     </Box>
     <Box><Typography variant="h6" sx={{ mb: 1.5 }}>{publicPageText(locale, 'linkStyles')}</Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>{linkStyles.map((item, index) => {
         const bg = item.surface ? theme.colors.surface : theme.colors.primary; const borderWidth = item.outline ? 1 : 0;
         const active = theme.linkStylePreset === item.id;
-        return <Box component="button" type="button" aria-label={`${publicPageText(locale, 'linkStyle')} ${index + 1}`} key={item.id} onClick={() => update({ ...theme, linkStylePreset: item.id, styleDefaults: { ...theme.styleDefaults, linkStyle: { ...theme.styleDefaults.linkStyle,
-          backgroundColor: bg, borderColor: theme.colors.primary, borderWidth, shadow: Boolean(item.shadow), titleStyle: { ...theme.styleDefaults.linkStyle.titleStyle, color: item.surface ? theme.colors.text : theme.colors.background }, subtitleStyle: { ...theme.styleDefaults.linkStyle.subtitleStyle, color: item.surface ? theme.colors.text : theme.colors.background } } } })} sx={cardSx(active)}>
+        return <Box component="button" type="button" aria-label={`${publicPageText(locale, 'linkStyle')} ${index + 1}`} key={item.id} onClick={() => update(applyPublicPageLinkStyle(theme, item.id))} sx={cardSx(active)}>
           <Box sx={{ width: '75%', height: 34, bgcolor: bg, border: `${borderWidth}px solid ${theme.colors.primary}`, borderRadius: 1, boxShadow: item.shadow === 'strong' ? `0 4px 0 ${theme.colors.text}` : item.shadow ? 2 : 0 }} /></Box>;
       })}</Box>
     </Box>

@@ -11,6 +11,7 @@ import type { Locale } from '../../shared/i18n/dictionaries';
 import { ColorControl } from './ColorControl';
 import { publicPageText } from './uiText';
 import { ImageUploadControl } from './ImageUploadControl';
+import { applyPublicPageThemeColors } from '../../features/public-page-builder/config/themes';
 
 const layouts: SectionLayout[] = [
   'single', 'two-equal', 'one-third-two-thirds', 'two-thirds-one-third',
@@ -142,8 +143,8 @@ export function InspectorPanel({
       />
       {(['background', 'surface', 'text', 'primary'] as const).map((color) => <ColorControl key={color}
         label={`${publicPageText(locale, 'pageColor')}: ${color}`} value={state.document.theme.colors[color]}
-        presetColors={Object.values(state.document.theme.colors)}
-        onChange={(value) => value && dispatch({ type: 'theme/update', theme: { ...state.document.theme, colors: { ...state.document.theme.colors, [color]: value } } })} />)}
+        presetColors={[...state.document.theme.swatches]}
+        onChange={(value) => value && dispatch({ type: 'theme/update', theme: applyPublicPageThemeColors(state.document.theme, { [color]: value }) })} />)}
     </Stack>
   );
 }

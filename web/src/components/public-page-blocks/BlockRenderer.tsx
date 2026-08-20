@@ -14,24 +14,28 @@ type BlockRendererProps = {
   roundingStyle?: PageTheme['roundingStyle'];
 };
 
-export function themeRadius(style: PageTheme['roundingStyle'], roundedRadius = 24): string {
+export function themeRadius(style: PageTheme['roundingStyle'], roundedRadius = 40): string {
   if (style === 'pill') {return '40px';}
   if (style === 'leaf') {return `${roundedRadius}px 4px ${roundedRadius}px 4px`;}
   if (style === 'square') {return '2px';}
   return `${roundedRadius}px`;
 }
 
-export function sectionThemeRadius(style: PageTheme['roundingStyle'], roundedRadius = 24): string {
+export function sectionThemeRadius(style: PageTheme['roundingStyle'], roundedRadius = 40): string {
   if (style === 'pill') {return '40px';}
   if (style === 'square') {return '2px';}
   return `${roundedRadius}px`;
 }
 
-export function blockSurfaceRadius(borderRadius: number | null, style: PageTheme['roundingStyle'], roundedRadius = 24): string {
+export function sectionSurfaceRadius(borderRadius: number | null, style: PageTheme['roundingStyle'], roundedRadius = 40): string {
   return borderRadius !== null ? `${borderRadius}px` : sectionThemeRadius(style, roundedRadius);
 }
 
-export function BlockRenderer({ block, mediaUrlFor, editor = false, themeBorderRadius = 24, roundingStyle = 'rounded' }: BlockRendererProps) {
+export function blockSurfaceRadius(borderRadius: number | null, style: PageTheme['roundingStyle'], roundedRadius = 40): string {
+  return borderRadius !== null ? `${borderRadius}px` : sectionThemeRadius(style, roundedRadius);
+}
+
+export function BlockRenderer({ block, mediaUrlFor, editor = false, themeBorderRadius = 40, roundingStyle = 'rounded' }: BlockRendererProps) {
   if (!block.visible && !editor) {
     return null;
   }

@@ -352,6 +352,20 @@ function hasValue(value: unknown): boolean {
   return typeof value === 'string' ? Boolean(value.trim()) : value !== null && value !== undefined;
 }
 
+function hasRichTextContent(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false;
+  const document = value as Record<string, unknown>;
+  if (document.type !== 'rich-text-v1') return false;
+  const paragraphs = document.paragraphs;
+  return Array.isArray(paragraphs) && paragraphs.some((paragraph) => {
+    if (!paragraph || typeof paragraph !== 'object') return false;
+    const runs = (paragraph as Record<string, unknown>).runs;
+    return Array.isArray(runs) && runs.some((run) => run && typeof run === 'object'
+      && typeof (run as Record<string, unknown>).text === 'string'
+      && Boolean(((run as Record<string, unknown>).text as string).trim()));
+  });
+}
+
 function isSafeHref(value: unknown, kind: 'contact' | 'web'): boolean {
   if (typeof value !== 'string' || !value.trim()) return false;
   const href = value.trim();
@@ -402,7 +416,7 @@ function validateKnownBlock(block: PublicPageDocument['sections'][number]['block
     case 'button': return required('label', 'action');
     case 'links': return items('links', ['label', 'action']);
     case 'booking': return ['booking is unavailable'];
-    case 'text': return required('body');
+    case 'text': return hasRichTextContent(content.document) ? [] : ['document is required'];
     case 'image': return [
       ...required('alt'),
       ...(!hasValue(content.imageMediaId) && !hasValue(content.url)

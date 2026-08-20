@@ -15,9 +15,22 @@ import {
   type TypographyStyle,
   type LinkStyle,
   type ResolvedTypographyStyle,
+  type PageThemeTokens,
+  type ThemeSwatches,
+  type ThemeTypographyToken,
+  type RichTextAlignment,
+  type RichTextDocument,
+  type RichTextMarks,
+  type RichTextParagraph,
+  type RichTextSize,
 } from '../types/publicPage';
 import { createStableId } from '../utils/createStableId';
-import { DEFAULT_PUBLIC_PAGE_THEME } from '../config/themes';
+import {
+  applyPublicPageThemeColors,
+  applyPublicPageThemeFont,
+  DEFAULT_PUBLIC_PAGE_THEME,
+  findPublicPageTheme,
+} from '../config/themes';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from './socialPlatforms';
 
 const statuses = new Set<PublicPageStatus>(['draft', 'published', 'archived']);
@@ -35,6 +48,10 @@ const imageMimeTypes = new Set<MediaReference['mimeType']>([
   'image/png',
   'image/webp',
 ]);
+const richTextSizes = new Set<RichTextSize>(['small', 'medium', 'large', 'h1', 'h2', 'h3']);
+const richTextAlignments = new Set<RichTextAlignment>(['left', 'center', 'right', 'justify']);
+const avatarLayouts = new Set(['centered', 'cover-centered', 'cover-left', 'image-cover']);
+const avatarSizes = [65, 95, 125, 150] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -69,19 +86,31 @@ function normalizeProfile(value: unknown): PageProfile {
 
 function normalizeTheme(value: unknown): PageTheme {
   const theme = isRecord(value) ? value : {};
+  const themeId = stringValue(theme.id, DEFAULT_PUBLIC_PAGE_THEME.id);
+  const palette = findPublicPageTheme(themeId);
   const colors = isRecord(theme.colors) ? theme.colors : {};
-  const fontFamily = stringValue(theme.fontFamily, DEFAULT_PUBLIC_PAGE_THEME.fontFamily);
+  const baseColors = palette?.colors ?? DEFAULT_PUBLIC_PAGE_THEME.colors;
   const normalizedColors = {
-    background: stringValue(colors.background, '#ffffff'), surface: stringValue(colors.surface, '#ffffff'),
-    text: stringValue(colors.text, '#111827'), primary: stringValue(colors.primary, '#2563eb'),
+    background: stringValue(colors.background, baseColors.background),
+    surface: stringValue(colors.surface, baseColors.surface),
+    text: stringValue(colors.text, baseColors.text),
+    primary: stringValue(colors.primary, baseColors.primary),
   };
+  const fontFamily = stringValue(theme.fontFamily, palette?.fontFamily ?? DEFAULT_PUBLIC_PAGE_THEME.fontFamily);
+  const compatibilityBase = applyPublicPageThemeFont(
+    palette ?? applyPublicPageThemeColors(DEFAULT_PUBLIC_PAGE_THEME, normalizedColors),
+    fontFamily,
+  );
+  const tokens = normalizeThemeTokens(theme.tokens, compatibilityBase.tokens);
   const styles = isRecord(theme.styleDefaults) ? theme.styleDefaults : {};
-  const fallback = DEFAULT_PUBLIC_PAGE_THEME.styleDefaults;
+  const fallback = compatibilityBase.styleDefaults;
 
   return {
-    id: stringValue(theme.id, 'minimal-light'),
-    name: stringValue(theme.name, 'Minimal Light'),
+    id: themeId,
+    name: stringValue(theme.name, palette?.name ?? 'Custom'),
+    swatches: normalizeSwatches(theme.swatches, palette?.swatches ?? [normalizedColors.background, normalizedColors.primary, normalizedColors.surface, normalizedColors.text]),
     colors: normalizedColors,
+    tokens,
     fontFamily,
     roundingStyle: theme.roundingStyle === 'pill' || theme.roundingStyle === 'leaf' || theme.roundingStyle === 'square' ? theme.roundingStyle : 'rounded',
     linkStylePreset: normalizeLinkStylePreset(theme.linkStylePreset, styles.linkStyle, normalizedColors),
@@ -90,11 +119,69 @@ function normalizeTheme(value: unknown): PageTheme {
     backgroundFit: fitValue(theme.backgroundFit),
     backgroundPosition: stringValue(theme.backgroundPosition, '50% 50%'),
     styleDefaults: {
-      sectionBorderRadius: boundedNumber(styles.sectionBorderRadius, 0, 100),
-      blockBorderRadius: boundedNumber(styles.blockBorderRadius, 24, 100),
+      sectionBorderRadius: boundedNumber(styles.sectionBorderRadius, tokens.layout.blockRadius, 100),
+      blockBorderRadius: boundedNumber(styles.blockBorderRadius, tokens.layout.blockRadius, 100),
       headingStyle: normalizeRequiredTypography(styles.headingStyle, { ...fallback.headingStyle, fontFamily, color: normalizedColors.text }),
       textStyle: normalizeRequiredTypography(styles.textStyle, { ...fallback.textStyle, fontFamily, color: normalizedColors.text }),
       linkStyle: normalizeRequiredLinkStyle(styles.linkStyle, fontFamily, normalizedColors, fallback.linkStyle),
+    },
+  };
+}
+
+function normalizeSwatches(value: unknown, fallback: ThemeSwatches): ThemeSwatches {
+  if (!Array.isArray(value) || value.length !== 4 || value.some((item) => typeof item !== 'string' || !item)) {
+    return fallback;
+  }
+  return [value[0], value[1], value[2], value[3]] as ThemeSwatches;
+}
+
+function normalizeThemeTypographyToken(value: unknown, fallback: ThemeTypographyToken): ThemeTypographyToken {
+  const token = isRecord(value) ? value : {};
+  return {
+    fontFamily: stringValue(token.fontFamily, fallback.fontFamily),
+    fontSize: boundedNumber(token.fontSize, fallback.fontSize, 96, 8),
+    fontWeight: boundedInteger(token.fontWeight, fallback.fontWeight, 100, 900),
+    lineHeight: boundedNumber(token.lineHeight, fallback.lineHeight, 3, 0.5),
+    letterSpacing: boundedNumber(token.letterSpacing, fallback.letterSpacing, 20, -10),
+  };
+}
+
+function normalizeThemeTokens(value: unknown, fallback: PageThemeTokens): PageThemeTokens {
+  const tokens = isRecord(value) ? value : {};
+  const colors = isRecord(tokens.colors) ? tokens.colors : {};
+  const typography = isRecord(tokens.typography) ? tokens.typography : {};
+  const layout = isRecord(tokens.layout) ? tokens.layout : {};
+  const color = (key: keyof PageThemeTokens['colors']) => stringValue(colors[key], fallback.colors[key]);
+  return {
+    colors: {
+      contrast: color('contrast'),
+      linkTitle: color('linkTitle'),
+      linkSubtitle: color('linkSubtitle'),
+      linkShadow: color('linkShadow'),
+      linkBorder: color('linkBorder'),
+      focus: color('focus'),
+      checkboxBackground: color('checkboxBackground'),
+    },
+    typography: {
+      fontFamily: stringValue(typography.fontFamily, fallback.typography.fontFamily),
+      fontWeight: boundedInteger(typography.fontWeight, fallback.typography.fontWeight, 100, 900),
+      boldFontWeight: boundedInteger(typography.boldFontWeight, fallback.typography.boldFontWeight, 100, 900),
+      headingColor: stringValue(typography.headingColor, fallback.typography.headingColor),
+      avatarTitle: normalizeThemeTypographyToken(typography.avatarTitle, fallback.typography.avatarTitle),
+      avatarBio: normalizeThemeTypographyToken(typography.avatarBio, fallback.typography.avatarBio),
+      linkTitle: normalizeThemeTypographyToken(typography.linkTitle, fallback.typography.linkTitle),
+      linkSubtitle: normalizeThemeTypographyToken(typography.linkSubtitle, fallback.typography.linkSubtitle),
+      h1: normalizeThemeTypographyToken(typography.h1, fallback.typography.h1),
+      h2: normalizeThemeTypographyToken(typography.h2, fallback.typography.h2),
+      h3: normalizeThemeTypographyToken(typography.h3, fallback.typography.h3),
+      textLarge: normalizeThemeTypographyToken(typography.textLarge, fallback.typography.textLarge),
+      textMedium: normalizeThemeTypographyToken(typography.textMedium, fallback.typography.textMedium),
+      textSmall: normalizeThemeTypographyToken(typography.textSmall, fallback.typography.textSmall),
+    },
+    layout: {
+      blockRadius: boundedNumber(layout.blockRadius, fallback.layout.blockRadius, 100),
+      linkRadius: boundedNumber(layout.linkRadius, fallback.layout.linkRadius, 100),
+      linkGap: boundedNumber(layout.linkGap, fallback.layout.linkGap, 100),
     },
   };
 }
@@ -217,12 +304,15 @@ function normalizeBlock(value: unknown): PageBlock | null {
     const content = isRecord(value.content) ? value.content : {};
     if (typeof content.platform !== 'string' || !SOCIAL_PLATFORMS.includes(content.platform as SocialPlatform)) {return null;}
   }
+  const rawContent = isRecord(value.content) ? value.content : {};
   return {
     id: stableId(value.id),
     type: value.type,
     name: stringValue(value.name),
     visible: typeof value.visible === 'boolean' ? value.visible : true,
-    content: isRecord(value.content) ? value.content as BlockContent : {},
+    content: value.type === 'text' ? normalizeTextContent(rawContent)
+      : value.type === 'avatar' ? normalizeAvatarContent(rawContent)
+        : rawContent as BlockContent,
     design: normalizeDesign(value.design),
   };
 }
@@ -247,6 +337,65 @@ function normalizeSection(value: unknown): PageSection | null {
     design: normalizeSectionDesign(value.design),
     blocks,
   };
+}
+
+function normalizeRichTextMarks(value: unknown): RichTextMarks | undefined {
+  const marks = isRecord(value) ? value : {};
+  const normalized: RichTextMarks = {};
+  if (marks.bold === true) {normalized.bold = true;}
+  if (marks.italic === true) {normalized.italic = true;}
+  if (marks.underline === true) {normalized.underline = true;}
+  if (marks.strike === true) {normalized.strike = true;}
+  if (typeof marks.color === 'string' && marks.color.trim()) {normalized.color = marks.color.trim();}
+  return Object.keys(normalized).length ? normalized : undefined;
+}
+
+function normalizeRichTextParagraph(value: unknown): RichTextParagraph | null {
+  if (!isRecord(value)) {return null;}
+  const runs = Array.isArray(value.runs) ? value.runs.flatMap((run) => {
+    if (!isRecord(run) || typeof run.text !== 'string') {return [];}
+    const marks = normalizeRichTextMarks(run.marks);
+    return [{ text: run.text, ...(marks ? { marks } : {}) }];
+  }) : [];
+  return {
+    size: richTextSizes.has(value.size as RichTextSize) ? value.size as RichTextSize : 'medium',
+    fontFamily: nullableString(value.fontFamily),
+    alignment: richTextAlignments.has(value.alignment as RichTextAlignment) ? value.alignment as RichTextAlignment : 'left',
+    runs: runs.length ? runs : [{ text: '' }],
+  };
+}
+
+export function normalizeRichTextDocument(value: unknown): RichTextDocument {
+  const document = isRecord(value) && value.type === 'rich-text-v1' ? value : {};
+  const paragraphs = Array.isArray(document.paragraphs)
+    ? document.paragraphs.map(normalizeRichTextParagraph).filter((item): item is RichTextParagraph => item !== null)
+    : [];
+  return { type: 'rich-text-v1', paragraphs: paragraphs.length ? paragraphs : [{ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: '' }] }] };
+}
+
+function normalizeTextContent(content: Record<string, unknown>): BlockContent {
+  if (isRecord(content.document) && content.document.type === 'rich-text-v1') {
+    return { document: normalizeRichTextDocument(content.document) };
+  }
+  const title = stringValue(content.title);
+  const body = stringValue(content.body);
+  const paragraphs: RichTextParagraph[] = [];
+  if (title) {paragraphs.push({ size: 'large', fontFamily: null, alignment: 'left', runs: [{ text: title, marks: { bold: true } }] });}
+  body.split(/\r?\n/).forEach((line) => {
+    if (line || body) {paragraphs.push({ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: line }] });}
+  });
+  return { document: { type: 'rich-text-v1', paragraphs: paragraphs.length ? paragraphs : [{ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: '' }] }] } };
+}
+
+function normalizeAvatarContent(content: Record<string, unknown>): BlockContent {
+  const legacyLayout = content.layout;
+  const layout = legacyLayout === 'compact' ? 'cover-centered'
+    : legacyLayout === 'image-left' ? 'cover-left'
+      : legacyLayout === 'image-right' ? 'image-cover'
+        : avatarLayouts.has(legacyLayout as string) ? legacyLayout as string : 'centered';
+  const legacySize = legacyLayout === 'compact' ? 65 : legacyLayout === 'image-left' ? 125 : content.avatarSize;
+  const avatarSize = avatarSizes.includes(legacySize as typeof avatarSizes[number]) ? legacySize : 150;
+  return { ...content, layout, avatarSize };
 }
 
 export function createEmptyPageSection(variant: SectionDesign['variant'] = 'off'): PageSection {

@@ -1,26 +1,27 @@
 import { ArrowDownward, ArrowUpward, Close, ContentCopy, ContentCopyOutlined, DeleteOutlined, DragIndicator, EditOutlined, OpenInNew, PaletteOutlined, Settings, Visibility, VisibilityOff } from '@mui/icons-material';
 import { Alert, Box, Button, CircularProgress, Dialog, DialogContent, DialogTitle, IconButton, Snackbar, Stack, Tooltip } from '@mui/material';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddBlockDialog } from '../components/public-page-builder/AddBlockDialog';
-import { BlockEditorDialog, type BlockEditorPreview } from '../components/public-page-builder/BlockEditorDialog';
+import { BlockEditorDialog, type BlockEditorPreview, type BlockEditorSave } from '../components/public-page-builder/BlockEditorDialog';
 import { BuilderShell } from '../components/public-page-builder/BuilderShell';
 import { BuilderToolbar } from '../components/public-page-builder/BuilderToolbar';
 import { DeviceSwitcher, type PreviewDevice } from '../components/public-page-builder/DeviceSwitcher';
 import { InspectorPanel } from '../components/public-page-builder/InspectorPanel';
 import { DesignPanel } from '../components/public-page-builder/DesignPanel';
 import { ResponsivePreview } from '../components/public-page-builder/ResponsivePreview';
-import { standaloneSectionFrom, type BuilderDragPayload, type BuilderDropDestination } from '../components/public-page-builder/BuilderSortable';
+import { type BuilderDragPayload, type BuilderDropDestination } from '../components/public-page-builder/BuilderSortable';
 import { publicPageText } from '../components/public-page-builder/uiText';
 import { createBlankPublicPageDocument } from '../components/public-page-builder/createBlankDocument';
 import { usePublicPageEditor } from '../features/public-page-builder/hooks/usePublicPageEditor';
 import { selectCanRedo, selectCanUndo } from '../features/public-page-builder/model/selectors';
-import { canDeleteMediaFromDocuments } from '../features/public-page-builder/model/media';
+import { canDeleteMediaFromDocuments, collectReferencedMediaIds } from '../features/public-page-builder/model/media';
 import { ApiPublicPageRepository } from '../features/public-page-builder/repository/ApiPublicPageRepository';
 import { PublicPageRepositoryError, type PublicPageRecord } from '../features/public-page-builder/repository/PublicPageRepository';
-import type { MediaReference, PageBlock } from '../features/public-page-builder/types/publicPage';
+import type { MediaReference, PageBlock, PageSection } from '../features/public-page-builder/types/publicPage';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from '../features/public-page-builder/model/socialPlatforms';
 import { createStableId } from '../features/public-page-builder/utils/createStableId';
+import { createEmptyPageSection } from '../features/public-page-builder/model/normalizeDocument';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 
@@ -49,13 +50,14 @@ function Editor({
   const [device, setDevice] = useState<PreviewDevice>('mobile');
   const [copied, setCopied] = useState(false);
   const [addBlockOpen, setAddBlockOpen] = useState(false);
-  const [stagedBlocks, setStagedBlocks] = useState<PageBlock[]>([]);
   const [blockEditorOpen, setBlockEditorOpen] = useState(false);
   const [blockPreview, setBlockPreview] = useState<BlockEditorPreview | null>(null);
   const [pageSettingsOpen, setPageSettingsOpen] = useState(false);
   const [designOpen, setDesignOpen] = useState(false);
   const [mediaUrls, setMediaUrls] = useState<Map<string, string>>(new Map());
   const mediaUrlsRef = useRef(mediaUrls);
+  const previewRootRef = useRef<HTMLDivElement>(null);
+  const pendingScrollBlockIdRef = useRef<string | null>(null);
   const previewDocument = useMemo(() => {
     let document = state.document;
     if (blockPreview && state.selection.sectionId) {
@@ -141,35 +143,66 @@ function Editor({
     });
   };
 
-  const addBlock = (block: PageBlock) => {
-    setStagedBlocks((current) => [...current, block]);
+  const addBlock = ({ block, addedMedia, updatedMedia, removedMediaIds }: BlockEditorSave) => {
+    const mediaChanges = { upsert: [...addedMedia.map(({ media }) => media), ...updatedMedia], removeIds: removedMediaIds };
+    const targetSection = state.document.sections[state.document.sections.length - 1];
+    pendingScrollBlockIdRef.current = block.id;
+    if (targetSection) {
+      dispatch({ type: 'block/add', sectionId: targetSection.id, block, index: targetSection.blocks.length, mediaChanges });
+      dispatch({ type: 'selection/set', sectionId: targetSection.id, blockId: block.id });
+    } else {
+      const section = createEmptyPageSection('off');
+      section.blocks = [block];
+      dispatch({ type: 'block/create-with-section', section, mediaChanges });
+    }
+    addedMedia.forEach(({ media, objectUrl }) => rememberMediaPreview(media, objectUrl));
   };
-  const usedSocialPlatforms = useMemo(() => new Set([...state.document.sections.flatMap((section) => section.blocks), ...stagedBlocks]
+  useLayoutEffect(() => {
+    const blockId = pendingScrollBlockIdRef.current;
+    if (!blockId) {return;}
+    const target = previewRootRef.current?.querySelector<HTMLElement>(`[data-editor-block-id="${CSS.escape(blockId)}"]`);
+    if (!target) {return;}
+    pendingScrollBlockIdRef.current = null;
+    const frame = window.requestAnimationFrame(() => target.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [state.document.sections]);
+  const removeDetachedMedia = (candidateIds: readonly string[], retainedValues: readonly unknown[]) => {
+    const retainedIds = new Set(collectReferencedMediaIds(retainedValues));
+    candidateIds.filter((mediaId) => !retainedIds.has(mediaId))
+      .forEach((mediaId) => dispatch({ type: 'media/remove', mediaId }));
+  };
+  const removeSection = (section: PageSection) => {
+    const mediaIds = collectReferencedMediaIds(section);
+    dispatch({ type: 'section/remove', sectionId: section.id });
+    removeDetachedMedia(mediaIds, [state.document.profile, state.document.theme, state.document.seo,
+      state.document.sections.filter((candidate) => candidate.id !== section.id)]);
+  };
+  const removeBlock = (section: PageSection, block: PageBlock) => {
+    dispatch({ type: 'block/remove', sectionId: section.id, blockId: block.id });
+    removeDetachedMedia(collectReferencedMediaIds(block), [state.document.profile, state.document.theme, state.document.seo,
+      state.document.sections.map((candidate) => candidate.id === section.id
+        ? { ...candidate, blocks: candidate.blocks.filter((item) => item.id !== block.id) }
+        : candidate)]);
+  };
+  const usedSocialPlatforms = useMemo(() => new Set(state.document.sections.flatMap((section) => section.blocks)
     .filter((block) => block.type === 'social-button' && SOCIAL_PLATFORMS.includes(block.content.platform as SocialPlatform))
-    .map((block) => block.content.platform as SocialPlatform)), [stagedBlocks, state.document.sections]);
+    .map((block) => block.content.platform as SocialPlatform)), [state.document.sections]);
   const copyLink = async () => {
     await navigator.clipboard.writeText(`https://meetli.cc/${state.document.slug}`);
     setCopied(true);
   };
   const onDropItem = (payload: BuilderDragPayload, destination: BuilderDropDestination) => {
-    if (payload.type === 'staged') {
-      const alreadyCommitted = state.document.sections.some((section) => section.blocks.some((block) => block.id === payload.block.id));
-      const targetMissing = destination.type === 'section'
-        && !state.document.sections.some((section) => section.id === destination.sectionId && section.design.variant !== 'off');
-      if (alreadyCommitted || targetMissing) {return;}
+    if (payload.type === 'section') {
+      if (destination.type !== 'main') {return;}
+      dispatch({ type: 'layout/drop', item: payload, to: destination });
+      return;
     }
-    const source = payload.type === 'block'
-      ? state.document.sections.find((section) => section.id === payload.sourceSectionId)
-      : state.document.sections.find((section) => section.design.variant === 'off') ?? state.document.sections[0];
+    if (destination.type !== 'section' || payload.type !== 'block') {return;}
     dispatch({
       type: 'layout/drop',
-      item: payload.type === 'block' ? { type: 'block', blockId: payload.blockId } : payload,
+      item: { type: 'block', blockId: payload.blockId },
       to: destination,
-      standaloneSection: payload.type === 'section' || !source ? undefined : standaloneSectionFrom(source),
     });
-    if (payload.type === 'staged') {
-      setStagedBlocks((current) => current.filter((block) => block.id !== payload.block.id));
-    }
   };
 
   return (
@@ -223,10 +256,9 @@ function Editor({
           ) : null}
         </Stack>
       }
-      preview={<Box sx={{ height: '100%', minHeight: 0, position: 'relative' }}>
+      preview={<Box ref={previewRootRef} sx={{ height: '100%', minHeight: 0, position: 'relative' }}>
         <ResponsivePreview document={previewDocument} device={device} mediaUrls={previewMediaUrls}
           ariaLabel={publicPageText(locale, 'preview')} editor={{
-          stagedBlocks,
           onDropItem,
           selectedBlockId: state.selection.blockId,
           blockAriaLabel: (name) => publicPageText(locale, 'blockEditorLabel').replace('{name}', name),
@@ -240,7 +272,7 @@ function Editor({
                 {action(publicPageText(locale, 'moveDown'), <ArrowDownward fontSize="small" />, () => dispatch({ type: 'section/reorder', sectionId: section.id, toIndex: sectionIndex + 1 }), sectionIndex === state.document.sections.length - 1)}
                 {action(publicPageText(locale, section.visible ? 'hide' : 'show'), section.visible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />, () => dispatch({ type: 'section/toggle', sectionId: section.id }))}
                 {action(publicPageText(locale, 'duplicate'), <ContentCopyOutlined fontSize="small" />, () => dispatch({ type: 'section/add', index: sectionIndex + 1, section: { ...structuredClone(section), id: createStableId(), blocks: section.blocks.map(cloneBlock) } }), !canDuplicateBlocks(section.blocks))}
-                {action(publicPageText(locale, 'remove'), <DeleteOutlined fontSize="small" />, () => { if (window.confirm(publicPageText(locale, 'deleteSectionConfirm'))) { dispatch({ type: 'section/remove', sectionId: section.id }); } })}
+                {action(publicPageText(locale, 'remove'), <DeleteOutlined fontSize="small" />, () => { if (window.confirm(publicPageText(locale, 'deleteSectionConfirm'))) { removeSection(section); } })}
               </>;
             })()}
           </Stack>,
@@ -253,42 +285,41 @@ function Editor({
               {action(publicPageText(locale, 'moveDown'), <ArrowDownward fontSize="small" />, () => dispatch({ type: 'block/reorder', sectionId: section.id, blockId: block.id, toIndex: blockIndex + 1 }), blockIndex === section.blocks.length - 1)}
               {action(publicPageText(locale, block.visible ? 'hide' : 'show'), block.visible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />, () => dispatch({ type: 'block/toggle', sectionId: section.id, blockId: block.id }))}
               {action(publicPageText(locale, 'duplicate'), <ContentCopyOutlined fontSize="small" />, () => dispatch({ type: 'block/add', sectionId: section.id, block: cloneBlock(block), index: blockIndex + 1 }), !canDuplicateBlocks([block]))}
-              {action(publicPageText(locale, 'remove'), <DeleteOutlined fontSize="small" />, () => { if (window.confirm(publicPageText(locale, 'deleteBlockConfirm'))) { dispatch({ type: 'block/remove', sectionId: section.id, blockId: block.id }); } })}
+              {action(publicPageText(locale, 'remove'), <DeleteOutlined fontSize="small" />, () => { if (window.confirm(publicPageText(locale, 'deleteBlockConfirm'))) { removeBlock(section, block); } })}
             </Stack>;
           },
-          renderSectionDragHandle: (section, _sectionIndex, activator) => <Tooltip title={publicPageText(locale, 'drag')}><IconButton {...(activator ?? {})} aria-label={`${publicPageText(locale, 'drag')}: ${section.name}`}
-            className="public-page-section-drag-rail" data-public-page-section-drag-rail
-            sx={{ position: 'absolute', zIndex: 5, top: 0, left: '50%', transform: 'translate(-50%, -50%)', width: 48, height: 24, borderRadius: 1, bgcolor: 'grey.300', color: 'grey.700', opacity: { xs: state.selection.sectionId === section.id ? 1 : 0, md: 0 }, pointerEvents: { xs: state.selection.sectionId === section.id ? 'auto' : 'none', md: 'none' }, transition: 'opacity 120ms', '&:hover': { bgcolor: 'grey.400' } }}>
-            <DragIndicator fontSize="small" sx={{ transform: 'rotate(90deg)' }} /></IconButton></Tooltip>,
+          renderSectionDragHandle: (section, _sectionIndex, activator) => {
+            if (section.design.variant === 'off') {return null;}
+            return <IconButton {...(activator ?? {})} title={publicPageText(locale, 'drag')} aria-label={`${publicPageText(locale, 'drag')}: ${section.name}`}
+              className={`public-page-section-drag-rail${state.selection.sectionId === section.id ? ' is-selected' : ''}`} data-public-page-section-drag-rail>
+              <DragIndicator fontSize="small" /></IconButton>;
+          },
           renderBlockDragHandle: (section, blockIndex, activator) => {
             const block = section.blocks[blockIndex];
-            return <Tooltip title={publicPageText(locale, 'drag')}><IconButton {...(activator ?? {})} aria-label={`${publicPageText(locale, 'drag')}: ${block.name}`}
+            return <IconButton {...(activator ?? {})} title={publicPageText(locale, 'drag')} aria-label={`${publicPageText(locale, 'drag')}: ${block.name}`}
               className="public-page-block-drag-rail" data-public-page-block-drag-rail
-              sx={{ position: 'absolute', zIndex: 5, left: 'calc(-1 * var(--public-page-editor-drag-gutter) - 35px - var(--public-page-section-block-inset))', top: '50%', transform: 'translateY(-50%)', width: 36, height: '100%', borderRadius: '2px', bgcolor: 'grey.300', color: 'grey.700', boxShadow: 1, '&:hover, .public-page-dnd-dragging &': { bgcolor: 'grey.400' } }}>
-              <DragIndicator fontSize="small" /></IconButton></Tooltip>;
+            >
+              <DragIndicator fontSize="small" /></IconButton>;
           },
-          renderStagedBlockDragHandle: (block, _blockIndex, activator) => <Tooltip title={publicPageText(locale, 'drag')}><IconButton
-            {...(activator ?? {})} aria-label={`${publicPageText(locale, 'drag')}: ${block.name}`}
-            className="public-page-block-drag-rail" data-public-page-block-drag-rail
-            sx={{ position: 'absolute', zIndex: 5, left: 'calc(-1 * var(--public-page-editor-drag-gutter) + 12px - var(--public-page-section-block-inset))', top: '50%', transform: 'translateY(-50%)', width: 36, height: 48, borderRadius: 1.5, bgcolor: 'grey.300', color: 'grey.700', boxShadow: 1, '&:hover, .public-page-dnd-dragging &': { bgcolor: 'grey.400' } }}>
-            <DragIndicator fontSize="small" /></IconButton></Tooltip>,
-          renderStagedBlockActions: (block) => <Stack className="public-page-block-actions" direction="row"
-            sx={{ position: 'absolute', zIndex: 3, top: 6, right: 6, p: 0.25, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 3 }}>
-            <Tooltip title={publicPageText(locale, 'remove')}><IconButton size="small" aria-label={publicPageText(locale, 'remove')}
-              onClick={() => setStagedBlocks((current) => current.filter((candidate) => candidate.id !== block.id))}>
-              <DeleteOutlined fontSize="small" />
-            </IconButton></Tooltip>
-          </Stack>,
         }} />
         <Button variant="contained" size="large" onClick={() => setAddBlockOpen(true)} sx={{ position: 'sticky', bottom: 20, left: 'calc(50% + 32px)', transform: 'translateX(-50%)', mt: -8, zIndex: 4, minWidth: 180, '&:hover': { transform: 'translateX(-50%) translateY(-1px)' } }}>{publicPageText(locale, 'addBlock')}</Button>
       </Box>}
     />
-    <AddBlockDialog open={addBlockOpen} locale={locale} usedPlatforms={usedSocialPlatforms} onClose={() => setAddBlockOpen(false)} onConfirm={addBlock} />
+    <AddBlockDialog open={addBlockOpen} locale={locale} usedPlatforms={usedSocialPlatforms} theme={state.document.theme}
+      repository={repository} media={state.document.media} previewUrls={mediaUrls}
+      onClose={() => setAddBlockOpen(false)} onConfirm={addBlock} />
     <BlockEditorDialog open={blockEditorOpen} locale={locale}
       block={state.document.sections.find((section) => section.id === state.selection.sectionId)?.blocks.find((block) => block.id === state.selection.blockId) ?? null}
       sections={state.document.sections} sectionId={state.selection.sectionId ?? undefined}
+      theme={state.document.theme}
       repository={repository} media={state.document.media} previewUrls={mediaUrls}
       onPreview={setBlockPreview}
+      onRemoveSection={(sectionId) => {
+        const section = state.document.sections.find((candidate) => candidate.id === sectionId);
+        if (section) {removeSection(section);}
+        setBlockPreview(null);
+        setBlockEditorOpen(false);
+      }}
       onClose={() => { setBlockPreview(null); setBlockEditorOpen(false); }} onSave={({ block, sectionId, section, addedMedia, updatedMedia, removedMediaIds }) => {
         const sourceSectionId = state.selection.sectionId;
         if (!sourceSectionId || !sectionId) {return;}

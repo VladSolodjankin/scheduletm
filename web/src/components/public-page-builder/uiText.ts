@@ -52,7 +52,7 @@ const keys = {
   blockTypeContacts: 'publicPageBuilder.blockTypeContacts', blockTypeMap: 'publicPageBuilder.blockTypeMap',
   blockTypeDivider: 'publicPageBuilder.blockTypeDivider', blockTypeFaq: 'publicPageBuilder.blockTypeFaq',
   items: 'publicPageBuilder.items', removeItem: 'publicPageBuilder.removeItem', addPlatform: 'publicPageBuilder.addPlatform',
-  fieldTitle: 'publicPageBuilder.fieldTitle', fieldSubtitle: 'publicPageBuilder.fieldSubtitle',
+  fieldTitle: 'publicPageBuilder.fieldTitle', fieldHeadline: 'publicPageBuilder.fieldHeadline', fieldSubtitle: 'publicPageBuilder.fieldSubtitle',
   fieldBody: 'publicPageBuilder.fieldBody', fieldDescription: 'publicPageBuilder.fieldDescription',
   fieldLabel: 'publicPageBuilder.fieldLabel', fieldUrl: 'publicPageBuilder.fieldUrl',
   fieldImageUrl: 'publicPageBuilder.fieldImageUrl', fieldCtaLabel: 'publicPageBuilder.fieldCtaLabel',
@@ -66,8 +66,10 @@ const keys = {
   platformInstagram: 'publicPageBuilder.platformInstagram', platformTelegram: 'publicPageBuilder.platformTelegram',
   platformWhatsapp: 'publicPageBuilder.platformWhatsapp', platformViber: 'publicPageBuilder.platformViber',
   platformFacebook: 'publicPageBuilder.platformFacebook', platformThreads: 'publicPageBuilder.platformThreads', platformTiktok: 'publicPageBuilder.platformTiktok',
-  tabContent: 'publicPageBuilder.tabContent', tabSettings: 'publicPageBuilder.tabSettings', tabSection: 'publicPageBuilder.tabSection',
+  tabContent: 'publicPageBuilder.tabContent', tabDesign: 'publicPageBuilder.tabDesign', tabSettings: 'publicPageBuilder.tabSettings', tabSection: 'publicPageBuilder.tabSection',
   fieldLayout: 'publicPageBuilder.fieldLayout', avatarLayoutCentered: 'publicPageBuilder.avatarLayoutCentered',
+  avatarLayoutCoverCentered: 'publicPageBuilder.avatarLayoutCoverCentered', avatarLayoutCoverLeft: 'publicPageBuilder.avatarLayoutCoverLeft',
+  avatarLayoutImageCover: 'publicPageBuilder.avatarLayoutImageCover', avatarSize: 'publicPageBuilder.avatarSize', cover: 'publicPageBuilder.cover',
   avatarLayoutImageLeft: 'publicPageBuilder.avatarLayoutImageLeft', avatarLayoutImageRight: 'publicPageBuilder.avatarLayoutImageRight',
   avatarLayoutCompact: 'publicPageBuilder.avatarLayoutCompact', paddingTop: 'publicPageBuilder.paddingTop',
   paddingBottom: 'publicPageBuilder.paddingBottom', horizontalMargin: 'publicPageBuilder.horizontalMargin',
@@ -86,6 +88,11 @@ const keys = {
   normal: 'publicPageBuilder.normal', italic: 'publicPageBuilder.italic', inherit: 'publicPageBuilder.inherit',
   titleStyle: 'publicPageBuilder.titleStyle', subtitleStyle: 'publicPageBuilder.subtitleStyle', backgroundOpacity: 'publicPageBuilder.backgroundOpacity',
   image: 'publicPageBuilder.image', addImage: 'publicPageBuilder.addImage',
+  general: 'publicPageBuilder.general', pixels: 'publicPageBuilder.pixels', removeSection: 'publicPageBuilder.removeSection', enterText: 'publicPageBuilder.enterText',
+  bold: 'publicPageBuilder.bold', underline: 'publicPageBuilder.underline', strike: 'publicPageBuilder.strike',
+  alignLeft: 'publicPageBuilder.alignLeft', alignCenter: 'publicPageBuilder.alignCenter', alignRight: 'publicPageBuilder.alignRight', alignJustify: 'publicPageBuilder.alignJustify',
+  textSizeSmall: 'publicPageBuilder.textSizeSmall', textSizeMedium: 'publicPageBuilder.textSizeMedium', textSizeLarge: 'publicPageBuilder.textSizeLarge',
+  textSizeH1: 'publicPageBuilder.textSizeH1', textSizeH2: 'publicPageBuilder.textSizeH2', textSizeH3: 'publicPageBuilder.textSizeH3',
 } as const satisfies Record<string, TranslationKey>;
 
 export type PublicPageUiKey = keyof typeof keys;

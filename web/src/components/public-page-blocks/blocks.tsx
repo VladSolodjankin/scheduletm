@@ -16,16 +16,39 @@ import {
   Add, ChatBubbleOutlined, Delete, EmailOutlined, Facebook, Instagram, Link as LinkIcon, PhoneOutlined, Telegram, WhatsApp,
 } from '@mui/icons-material';
 import { SvgIcon, type SvgIconProps } from '@mui/material';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import type {
   BlockContent,
   CtaAction,
   PageBlock,
+  PageSection,
+  PageTheme,
+  RichTextDocument,
+  RichTextMarks,
+  RichTextSize,
 } from '../../features/public-page-builder/types/publicPage';
+import { normalizeRichTextDocument } from '../../features/public-page-builder/model/normalizeDocument';
 import { ctaActionToHref } from '../../features/public-page-builder/model/cta';
 import { useI18n } from '../../shared/i18n/I18nContext';
 import { publicPageText } from '../public-page-builder/uiText';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from '../../features/public-page-builder/model/socialPlatforms';
+import {
+  AVATAR_LAYOUTS,
+  AVATAR_SIZES,
+  AVATAR_COVER_REFERENCE,
+  AVATAR_HERO_REFERENCE,
+  AVATAR_PREVIEW_REFERENCE,
+  normalizeAvatarLayout,
+  normalizeAvatarSize,
+  resolveAvatarCoverCenteredGeometry,
+  resolveAvatarCoverLeftGeometry,
+  resolveAvatarPresentation,
+  resolveAvatarSizeChange,
+  type AvatarLayout,
+} from './avatarPresentation';
+import { resolvePublicPageThemeVariables } from './publicPageThemeVariables';
+
+export { normalizeAvatarLayout, normalizeAvatarSize, resolveAvatarPresentation } from './avatarPresentation';
 
 export type Item = Record<string, unknown>;
 
@@ -93,6 +116,22 @@ function hrefFor(action: unknown): string | null {
   return null;
 }
 
+export const ordinaryPublicPageLinkSx = {
+  fontFamily: 'var(--theme-link-title-font-family)', fontSize: 'var(--theme-link-title-fontsize)',
+  fontWeight: 'var(--theme-link-title-font-weight)', fontStyle: 'var(--theme-link-title-font-style)',
+  color: 'var(--theme-link-title-color)',
+  backgroundColor: 'color-mix(in srgb, var(--theme-link-background) var(--theme-link-background-opacity), transparent)',
+  lineHeight: 'var(--theme-link-title-lineheight)', letterSpacing: 'var(--theme-link-title-letterspacing)',
+  borderWidth: 'var(--theme-link-border-width)', borderStyle: 'solid', borderColor: 'var(--theme-link-border-color)',
+  boxShadow: 'var(--theme-link-shadow-params)', borderRadius: 'var(--theme-link-border-radius)',
+  '& .MuiTypography-root, & small': {
+    fontFamily: 'var(--theme-link-subtitle-font-family)', fontSize: 'var(--theme-link-subtitle-fontsize)',
+    fontWeight: 'var(--theme-link-subtitle-font-weight)', fontStyle: 'var(--theme-link-subtitle-font-style)',
+    lineHeight: 'var(--theme-link-subtitle-lineheight)', letterSpacing: 'var(--theme-link-subtitle-letterspacing)',
+    color: 'var(--theme-link-subtitle-color)',
+  },
+} as const;
+
 export function CtaButton({ label, action }: { label: string; action: unknown }) {
   const href = hrefFor(action);
   if (!href) {
@@ -106,7 +145,7 @@ export function CtaButton({ label, action }: { label: string; action: unknown })
       target={external ? '_blank' : undefined}
       rel={external ? 'noopener noreferrer' : undefined}
       variant="contained"
-      sx={{ minHeight: 44, textTransform: 'none' }}
+      sx={{ ...ordinaryPublicPageLinkSx, minHeight: 44, textTransform: 'none' }}
     >
       {label}
     </Button>
@@ -138,7 +177,7 @@ export function SocialPlatformIcon({ platform, ...props }: { platform: SocialPla
 }
 
 const fieldKeys: Record<string, Parameters<typeof publicPageText>[1]> = {
-  title: 'fieldTitle', subtitle: 'fieldSubtitle', body: 'fieldBody', description: 'fieldDescription',
+  title: 'fieldTitle', heading: 'fieldHeadline', subtitle: 'fieldSubtitle', body: 'fieldBody', description: 'fieldDescription',
   label: 'fieldLabel', url: 'fieldUrl', alt: 'imageAlt', imageUrl: 'fieldImageUrl', imageAlt: 'imageAlt',
   ctaLabel: 'fieldCtaLabel', address: 'fieldAddress', price: 'fieldPrice', platform: 'fieldPlatform',
 };
@@ -175,9 +214,10 @@ function ActionEditor({
 
 const editorShape: Record<string, { fields?: string[]; list?: { key: string; fields: string[] } }> = {
   hero: { fields: ['title', 'subtitle', 'ctaLabel'] },
-  avatar: { fields: ['heading', 'subtitle'] },
+  avatar: {},
   button: { fields: ['label'] },
-  links: { list: { key: 'links', fields: ['label'] } }, text: { fields: ['title', 'body'] },
+  links: { list: { key: 'links', fields: ['label'] } },
+  text: {},
   image: {},
   services: { fields: ['title'], list: { key: 'services', fields: ['title', 'description', 'price'] } },
   contacts: { fields: ['title'], list: { key: 'contacts', fields: ['label', 'url'] } },
@@ -186,7 +226,9 @@ const editorShape: Record<string, { fields?: string[]; list?: { key: string; fie
   faq: { fields: ['title'], list: { key: 'items', fields: ['title', 'description'] } }, divider: {},
 };
 
-const avatarLayouts = ['centered', 'image-left', 'image-right', 'compact'] as const;
+export const avatarLayouts = AVATAR_LAYOUTS;
+const avatarSizes = AVATAR_SIZES;
+export const AVATAR_EDITOR_PLACEHOLDER_URL = '/public-page-placeholders/avatar-default.svg';
 
 function selectAvatarLayoutWithKeyboard(
   event: KeyboardEvent<HTMLElement>,
@@ -206,24 +248,68 @@ function selectAvatarLayoutWithKeyboard(
   radios?.[nextIndex]?.focus();
 }
 
-function AvatarLayoutPreview({ layout }: { layout: typeof avatarLayouts[number] }) {
-  const image = <Box sx={{ width: layout === 'compact' ? 18 : 24, height: layout === 'image-right' ? 42 : layout === 'compact' ? 18 : 24,
-    borderRadius: layout === 'centered' || layout === 'compact' ? '50%' : 1, bgcolor: 'primary.main', flex: '0 0 auto' }} />;
-  const copy = <Stack spacing={0.5} sx={{ flex: 1, alignItems: layout === 'centered' || layout === 'compact' ? 'center' : 'stretch' }}>
-    <Box sx={{ height: 5, width: layout === 'compact' ? '45%' : '70%', borderRadius: 1, bgcolor: 'text.primary' }} />
-    <Box sx={{ height: 4, width: '90%', borderRadius: 1, bgcolor: 'text.disabled' }} />
+function selectAvatarSizeWithKeyboard(
+  event: KeyboardEvent<HTMLElement>,
+  size: typeof avatarSizes[number],
+  select: (size: typeof avatarSizes[number]) => void,
+) {
+  const currentIndex = avatarSizes.indexOf(size);
+  const nextIndex = event.key === 'Home' ? 0
+    : event.key === 'End' ? avatarSizes.length - 1
+      : event.key === 'ArrowRight' || event.key === 'ArrowDown' ? (currentIndex + 1) % avatarSizes.length
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? (currentIndex - 1 + avatarSizes.length) % avatarSizes.length
+          : null;
+  if (nextIndex === null) {return;}
+  event.preventDefault();
+  select(avatarSizes[nextIndex]);
+  const radios = event.currentTarget.closest('[role="radiogroup"]')?.querySelectorAll<HTMLElement>('[role="radio"]');
+  radios?.[nextIndex]?.focus();
+}
+
+const avatarSizeLabel = (size: number) => `${size}\u00d7${size} px`;
+
+function AvatarLayoutPreview({ layout }: { layout: AvatarLayout }) {
+  const avatar = <Box component="img" src={AVATAR_EDITOR_PLACEHOLDER_URL} alt="" sx={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover', flex: '0 0 auto', border: '2px solid', borderColor: 'background.paper' }} />;
+  const copy = <Stack spacing={0.4} sx={{ alignItems: layout === 'cover-left' ? 'flex-start' : 'center', flex: 1 }}>
+    <Box sx={{ height: 4, width: layout === 'cover-left' ? '70%' : '48%', borderRadius: 1, bgcolor: 'text.secondary' }} />
+    <Box sx={{ height: 3, width: layout === 'cover-left' ? '88%' : '64%', borderRadius: 1, bgcolor: 'text.disabled' }} />
   </Stack>;
-  if (layout === 'image-left') {return <Stack direction="row" spacing={1} sx={{ alignItems: 'center', width: '100%' }}>{image}{copy}</Stack>;}
-  if (layout === 'image-right') {return <Box sx={{ position: 'relative', width: '100%', height: 42 }}>{image}<Box sx={{ position: 'absolute', inset: 'auto 4px 4px', bgcolor: 'rgba(255,255,255,.8)', p: 0.5 }}>{copy}</Box></Box>;}
-  return <Stack spacing={0.75} sx={{ alignItems: 'center', width: '100%' }}>{image}{copy}</Stack>;
+  if (layout === 'centered') {return <Stack spacing={0.5} sx={{ alignItems: 'center', width: '100%' }}>{avatar}{copy}</Stack>;}
+  if (layout === 'image-cover') {return <Box sx={{ width: '100%', height: 48, borderRadius: 1, bgcolor: 'action.hover', overflow: 'hidden' }}>
+    <Box component="img" src={AVATAR_EDITOR_PLACEHOLDER_URL} alt="" sx={{ display: 'block', width: '100%', height: 31, objectFit: 'cover' }} />
+    <Box sx={{ height: 17, px: 0.75, display: 'flex', alignItems: 'center' }}>{copy}</Box>
+  </Box>;}
+  return <Box sx={{ position: 'relative', width: '100%', height: 48, pt: 2.5, boxSizing: 'border-box' }}>
+    <Box sx={{ position: 'absolute', inset: '0 0 auto', height: 22, borderRadius: 0.75, bgcolor: 'action.hover' }} />
+    <Box sx={{ position: 'absolute', top: 10, left: layout === 'cover-left' ? 5 : '50%', transform: layout === 'cover-left' ? undefined : 'translateX(-50%)' }}>
+      {avatar}
+    </Box>
+    <Box sx={{ position: 'absolute', top: 36, left: layout === 'cover-left' ? 34 : 6, right: 6 }}>{copy}</Box>
+  </Box>;
+}
+
+function avatarLayoutLabelKey(layout: AvatarLayout): Parameters<typeof publicPageText>[1] {
+  const keys = { centered: 'avatarLayoutCentered', 'cover-centered': 'avatarLayoutCoverCentered',
+    'cover-left': 'avatarLayoutCoverLeft', 'image-cover': 'avatarLayoutImageCover' } as const;
+  return keys[layout];
 }
 
 export function SpecializedBlockEditor({
   block,
   onContentChange,
+  mediaUrlFor,
+  avatarMediaControl,
+  avatarCoverControl,
+  pageTheme,
+  pageSection,
 }: {
   block: PageBlock;
   onContentChange?: (content: BlockContent) => void;
+  mediaUrlFor?: (mediaId: string) => string | undefined;
+  avatarMediaControl?: ReactNode;
+  avatarCoverControl?: ReactNode;
+  pageTheme?: PageTheme;
+  pageSection?: PageSection;
 }) {
   const { locale } = useI18n();
   const update = onContentChange ?? (() => undefined);
@@ -251,12 +337,33 @@ export function SpecializedBlockEditor({
             <MenuItem value="">{publicPageText(locale, 'none')}</MenuItem>{(['link', 'phone', 'email', 'message'] as const).map((icon) => <MenuItem key={icon} value={icon}>{publicPageText(locale, `buttonIcon${icon[0].toUpperCase()}${icon.slice(1)}` as Parameters<typeof publicPageText>[1])}</MenuItem>)}</TextField>
           <TextField size="small" label={publicPageText(locale, 'buttonColor')} value={text(block.content.color)} onChange={(event) => update({ ...block.content, color: event.target.value })} />
           <TextField size="small" label={publicPageText(locale, 'buttonTextColor')} value={text(block.content.textColor)} onChange={(event) => update({ ...block.content, textColor: event.target.value })} /></> : null}
-      {block.type === 'avatar' ? <Stack spacing={1}>
+      {block.type === 'avatar' ? <Stack spacing={2}>
+        <Box data-avatar-preview-stage sx={{ position: 'relative', height: 300, overflow: 'hidden', display: 'grid', placeItems: 'start center', pt: 2,
+          ...(pageTheme ? resolvePublicPageThemeVariables(pageTheme, pageSection, {
+            avatarSize: normalizeAvatarSize(block.content.avatarSize),
+            coverColor: text(block.content.coverColor) || null,
+          }) : {}),
+          '&::after': { content: '""', position: 'absolute', zIndex: 2, inset: 'auto 0 0', height: 72, pointerEvents: 'none',
+            background: (theme) => `linear-gradient(to bottom, transparent, ${theme.palette.background.paper})` } }}>
+          <Box data-avatar-preview-device sx={{ width: AVATAR_PREVIEW_REFERENCE.deviceWidth, maxWidth: '100%',
+            bgcolor: '#fff', borderRadius: '33px 33px 0 0',
+            boxShadow: '0 7px 28px 7px rgba(0,0,0,.1)', overflow: 'hidden' }}>
+            <Box data-avatar-preview-screen sx={{ width: AVATAR_PREVIEW_REFERENCE.screenWidth,
+              maxWidth: `calc(100% - ${AVATAR_PREVIEW_REFERENCE.screenMargin * 2}px)`,
+              m: '10px 10px 0', borderRadius: '25px 25px 0 0',
+              overflow: 'hidden', bgcolor: 'var(--page-background)' }}>
+              <Box sx={{ p: `${AVATAR_PREVIEW_REFERENCE.sectionPadding}px`, boxSizing: 'border-box', bgcolor: 'var(--page-section-background)',
+                '--avatar-leading-section-radius': '25px' }}>
+                <AvatarBlock block={block} mediaUrlFor={mediaUrlFor} preview />
+              </Box>
+            </Box>
+          </Box>
+        </Box>
         <Typography variant="subtitle2" id={`avatar-layout-${block.id}`}>{publicPageText(locale, 'fieldLayout')}</Typography>
-        <Box role="radiogroup" aria-labelledby={`avatar-layout-${block.id}`} sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1 }}>
+        <Box role="radiogroup" aria-labelledby={`avatar-layout-${block.id}`} sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 1 }}>
           {avatarLayouts.map((layout) => {
-            const selected = text(block.content.layout, 'centered') === layout;
-            const label = publicPageText(locale, `avatarLayout${layout.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase()).replace(/^./, (letter) => letter.toUpperCase())}` as Parameters<typeof publicPageText>[1]);
+            const selected = normalizeAvatarLayout(block.content.layout) === layout;
+            const label = publicPageText(locale, avatarLayoutLabelKey(layout));
             return <ButtonBase key={layout} role="radio" aria-checked={selected} aria-label={label}
               tabIndex={selected ? 0 : -1}
               onClick={() => update({ ...block.content, layout })}
@@ -266,13 +373,37 @@ export function SpecializedBlockEditor({
               <Card variant="outlined" sx={{ height: '100%', borderColor: selected ? 'primary.main' : 'divider', borderWidth: selected ? 2 : 1,
                 bgcolor: selected ? 'action.selected' : 'background.paper' }}>
                 <CardContent sx={{ display: 'grid', gap: 1, p: 1.25, '&:last-child': { pb: 1.25 } }}>
-                  <Box sx={{ height: 52, display: 'flex', alignItems: 'center' }}><AvatarLayoutPreview layout={layout} /></Box>
+                  <Box sx={{ height: 48, display: 'flex', alignItems: 'center' }}><AvatarLayoutPreview layout={layout} /></Box>
                   <Typography variant="caption" sx={{ fontWeight: selected ? 700 : 500 }}>{label}</Typography>
                 </CardContent>
               </Card>
             </ButtonBase>;
           })}
         </Box>
+        {avatarMediaControl}
+        {(normalizeAvatarLayout(block.content.layout) === 'cover-centered' || normalizeAvatarLayout(block.content.layout) === 'cover-left') ? avatarCoverControl : null}
+        {normalizeAvatarLayout(block.content.layout) !== 'image-cover' ? <Stack spacing={0.75}>
+          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Typography variant="subtitle2" id={`avatar-size-${block.id}`}>{publicPageText(locale, 'avatarSize')}</Typography>
+            <Typography variant="body2" color="text.secondary">{avatarSizeLabel(normalizeAvatarSize(block.content.avatarSize))}</Typography>
+          </Stack>
+          <Box role="radiogroup" aria-labelledby={`avatar-size-${block.id}`} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.75 }}>
+            {avatarSizes.map((size) => {
+              const selected = normalizeAvatarSize(block.content.avatarSize) === size;
+              return <ButtonBase key={size} role="radio" aria-checked={selected} aria-label={avatarSizeLabel(size)} tabIndex={selected ? 0 : -1}
+                onClick={() => update({ ...block.content, ...resolveAvatarSizeChange(block.content.layout, size) })}
+                onKeyDown={(event) => selectAvatarSizeWithKeyboard(event, size, (nextSize) => update({
+                  ...block.content, ...resolveAvatarSizeChange(block.content.layout, nextSize),
+                }))}
+                sx={{ width: 42, height: 42, borderRadius: 1, outline: '2px solid transparent', bgcolor: selected ? 'background.paper' : 'action.hover',
+                  boxShadow: selected ? 2 : 0, '&:focus-visible': { outlineColor: 'primary.main', outlineOffset: 2 } }}>
+                <Box sx={{ width: Math.round(size / 6), height: Math.round(size / 6), borderRadius: '50%', bgcolor: 'text.disabled' }} />
+              </ButtonBase>;
+            })}
+          </Box>
+        </Stack> : null}
+        {['heading', 'subtitle'].map((field) => <Field key={field} field={field} value={block.content[field]}
+          onChange={(value) => update({ ...block.content, [field]: value })} />)}
       </Stack> : null}
       {list ? <Stack spacing={1}>
             <Typography variant="subtitle2">{publicPageText(locale, 'items')}</Typography>
@@ -320,31 +451,85 @@ export function HeroBlock({ block }: { block: PageBlock }) {
   );
 }
 
-export function AvatarBlock({ block, mediaUrlFor }: { block: PageBlock; mediaUrlFor?: (mediaId: string) => string | undefined }) {
-  const layout = text(block.content.layout, 'centered');
+export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: PageBlock; mediaUrlFor?: (mediaId: string) => string | undefined; preview?: boolean }) {
+  const presentation = resolveAvatarPresentation(block.content.layout, block.content.avatarSize);
+  const layout = presentation.renderLayout;
   const imageMediaId = text(block.content.imageMediaId);
-  const imageUrl = (imageMediaId ? mediaUrlFor?.(imageMediaId) : undefined) ?? text(block.content.imageUrl);
-  const copy = <Box sx={{ maxWidth: '100%', minWidth: 0 }}><Typography component="h1" variant={layout === 'compact' ? 'h5' : 'h4'} sx={wrappingTextSx}>{text(block.content.heading)}</Typography>
-    {text(block.content.subtitle) ? <Typography sx={wrappingTextSx}>{text(block.content.subtitle)}</Typography> : null}</Box>;
-  if (layout === 'image-right') {
-    return <Box sx={{ position: 'relative', minHeight: 360, display: 'flex', alignItems: 'flex-end', overflow: 'hidden', minWidth: 0, maxWidth: '100%' }}>
-      {imageUrl ? <Box component="img" src={imageUrl} alt={text(block.content.imageAlt)} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : null}
-      <Box sx={{ position: 'relative', width: '100%', p: 3, pt: 12, color: '#fff', background: 'linear-gradient(transparent, rgba(0,0,0,.72))' }}>{copy}</Box>
+  const imageUrl = ((imageMediaId ? mediaUrlFor?.(imageMediaId) : undefined) ?? text(block.content.imageUrl)) || (preview ? AVATAR_EDITOR_PLACEHOLDER_URL : '');
+  const coverMediaId = text(block.content.coverMediaId);
+  const coverUrl = (coverMediaId ? mediaUrlFor?.(coverMediaId) : undefined) ?? text(block.content.coverUrl);
+  const coverBackground = coverUrl ? `url("${coverUrl}")` : undefined;
+  const copy = <Box sx={{ maxWidth: '100%', minWidth: 0 }}><Typography component="h1" variant="h4" sx={{ ...wrappingTextSx,
+    fontFamily: 'var(--avatar-title-font-family)', fontSize: 'var(--avatar-title-size)', fontWeight: 'var(--avatar-title-weight)',
+    fontStyle: 'var(--avatar-title-style)', lineHeight: 'var(--avatar-title-line-height)', color: 'var(--avatar-title-color)' }}>{text(block.content.heading)}</Typography>
+    {text(block.content.subtitle) ? <Typography sx={{ ...wrappingTextSx, fontFamily: 'var(--avatar-bio-font-family)', fontSize: 'var(--avatar-bio-size)',
+      fontWeight: 'var(--avatar-bio-weight)', fontStyle: 'var(--avatar-bio-style)', lineHeight: 'var(--avatar-bio-line-height)', color: 'var(--avatar-bio-color)' }}>{text(block.content.subtitle)}</Typography> : null}</Box>;
+  if (layout === 'image-cover') {
+    const heroImageAlt = text(block.content.imageAlt).trim();
+    return <Box sx={{ position: 'relative', width: '100%', mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`,
+      minWidth: 0, maxWidth: '100%', bgcolor: 'transparent' }}>
+      <Box className="public-page-avatar-cover-bleed" role={imageUrl && heroImageAlt ? 'img' : undefined} aria-label={imageUrl && heroImageAlt ? heroImageAlt : undefined} sx={{
+        width: `calc(100% + ${AVATAR_PREVIEW_REFERENCE.sectionPadding * 2}px)`,
+        height: AVATAR_HERO_REFERENCE.imageHeight,
+        borderRadius: 'var(--avatar-leading-section-radius) var(--avatar-leading-section-radius) 0 0',
+        backgroundImage: imageUrl ? `url("${imageUrl}")` : undefined,
+        backgroundSize: 'cover', backgroundPosition: '50% 50%', backgroundRepeat: 'no-repeat',
+      }} />
+      <Box sx={{ width: '100%', mt: `${AVATAR_PREVIEW_REFERENCE.copyMarginTop}px`, textAlign: 'center' }}>{copy}</Box>
     </Box>;
   }
-  if (layout === 'image-left') {
-    return <Stack direction="row" spacing={2.5} sx={{ alignItems: 'center', textAlign: 'left', minWidth: 0, maxWidth: '100%' }}>
-      {imageUrl ? <Box component="img" src={imageUrl} alt={text(block.content.imageAlt)} sx={{ width: 128, height: 128, borderRadius: 2, objectFit: 'cover', flex: '0 0 auto' }} /> : null}{copy}
-    </Stack>;
-  }
+  const avatarSize = presentation.avatarSize ?? 150;
+  const avatarVariables = {
+    '--avatar-size': `${avatarSize}px`,
+    ...(text(block.content.coverColor) ? { '--avatar-cover-background': text(block.content.coverColor) } : {}),
+  } as CSSProperties;
   if (layout === 'centered') {
-    return <Box sx={{ textAlign: 'center', pt: imageUrl ? 7 : 2, mt: imageUrl ? 7 : 0, position: 'relative', minWidth: 0, maxWidth: '100%' }}>
-      {imageUrl ? <Box component="img" src={imageUrl} alt={text(block.content.imageAlt)} sx={{ width: 128, height: 128, borderRadius: '50%', objectFit: 'cover', position: 'absolute', top: -64, left: '50%', transform: 'translateX(-50%)', border: '4px solid white' }} /> : null}{copy}
+    return <Box style={avatarVariables} sx={{ width: '100%', minWidth: 0, maxWidth: '100%',
+      mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`, textAlign: 'center' }}>
+      <Box sx={{ width: '100%', height: avatarSize, display: 'grid', placeItems: 'center' }}>
+        {imageUrl ? <Box component="img" src={imageUrl} alt={text(block.content.imageAlt)} sx={{ width: avatarSize, height: avatarSize, borderRadius: '50%', objectFit: 'cover' }} /> : null}
+      </Box>
+      <Box sx={{ width: '100%', mt: `${AVATAR_PREVIEW_REFERENCE.copyMarginTop}px` }}>{copy}</Box>
     </Box>;
   }
-  return <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center', minWidth: 0, maxWidth: '100%' }}>
-    {imageUrl ? <Box component="img" src={imageUrl} alt={text(block.content.imageAlt)} sx={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover' }} /> : null}{copy}
-  </Stack>;
+  const coverSx = {
+    width: `calc(100% + ${AVATAR_PREVIEW_REFERENCE.sectionPadding * 2}px)`,
+    height: AVATAR_COVER_REFERENCE.height,
+    borderRadius: 'var(--avatar-leading-section-radius) var(--avatar-leading-section-radius) 0 0',
+    bgcolor: text(block.content.coverColor) || 'var(--avatar-cover-background)',
+    backgroundImage: coverBackground,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    position: 'relative',
+    overflow: 'visible',
+  } as const;
+  if (layout === 'cover-left') {
+    const geometry = resolveAvatarCoverLeftGeometry(avatarSize);
+    return <Box style={avatarVariables} sx={{ position: 'relative', width: '100%',
+      mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`, minWidth: 0, maxWidth: '100%', bgcolor: 'transparent' }}>
+      <Box className="public-page-avatar-cover-bleed" sx={coverSx}>
+        {imageUrl ? <Box component="img" src={imageUrl} alt={text(block.content.imageAlt)} sx={{ position: 'absolute', zIndex: 1,
+          top: geometry.avatarTop, left: 0, transform: `translate(${geometry.avatarTranslateX}px, ${geometry.avatarTranslateY}px)`,
+          width: avatarSize, height: avatarSize, borderRadius: '50%', objectFit: 'cover' }} /> : null}
+      </Box>
+      <Box sx={{ width: `calc(100% - ${geometry.copyMarginLeft}px)`, mt: `${AVATAR_PREVIEW_REFERENCE.copyMarginTop}px`, ml: `${geometry.copyMarginLeft}px`, textAlign: 'left' }}>{copy}</Box>
+    </Box>;
+  }
+  if (layout === 'cover-centered') {
+    const geometry = resolveAvatarCoverCenteredGeometry(avatarSize);
+    return <Box style={avatarVariables} sx={{ position: 'relative', width: '100%',
+      mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`, minWidth: 0, maxWidth: '100%', textAlign: 'center' }}>
+      <Box className="public-page-avatar-cover-bleed" sx={coverSx}>
+        {imageUrl ? <Box component="img" src={imageUrl} alt={text(block.content.imageAlt)} sx={{ position: 'absolute', zIndex: 1,
+          top: geometry.avatarTop, left: '50%',
+          transform: `translate(${geometry.avatarTranslateX}px, ${geometry.avatarTranslateY}px)`,
+          width: avatarSize, height: avatarSize, borderRadius: '50%', objectFit: 'cover' }} /> : null}
+      </Box>
+      <Box sx={{ width: '100%', mt: `${AVATAR_PREVIEW_REFERENCE.copyMarginTop}px`, pt: `${geometry.copyPaddingTop}px` }}>{copy}</Box>
+    </Box>;
+  }
+  return null;
 }
 
 export function ButtonBlock({ block }: { block: PageBlock }) {
@@ -353,10 +538,14 @@ export function ButtonBlock({ block }: { block: PageBlock }) {
   const external = /^https?:\/\//i.test(href);
   const icons = { link: <LinkIcon />, phone: <PhoneOutlined />, email: <EmailOutlined />, message: <ChatBubbleOutlined /> } as const;
   const icon = text(block.content.icon) as keyof typeof icons;
+  const backgroundColor = text(block.content.color);
+  const textColor = text(block.content.textColor);
   return <Button component="a" href={href} target={external ? '_blank' : undefined} startIcon={icons[icon]}
     rel={external ? 'noopener noreferrer' : undefined} variant="contained" fullWidth
-    sx={{ minHeight: 48, textTransform: 'none', bgcolor: text(block.content.color) || undefined, color: text(block.content.textColor) || undefined,
-      borderRadius: 'var(--theme-link-border-radius, 24px)' }}>{text(block.content.label)}</Button>;
+    sx={{ ...ordinaryPublicPageLinkSx, minHeight: 48, textTransform: 'none',
+      ...(backgroundColor ? { '--theme-link-background': backgroundColor, '--theme-link-background-opacity': '100%' } : {}),
+      ...(textColor ? { '--theme-link-title-color': textColor } : {}),
+    }}>{text(block.content.label)}</Button>;
 }
 
 export function LinksBlock({ block }: { block: PageBlock }) {
@@ -365,9 +554,49 @@ export function LinksBlock({ block }: { block: PageBlock }) {
   )}</Stack></Surface>;
 }
 
+const richTextSizeVariables: Record<RichTextSize, { fontFamily: string; fontSize: string; fontWeight: string; lineHeight: string; letterSpacing: string }> = {
+  small: { fontFamily: 'var(--theme-text-sm-font-family)', fontSize: 'var(--theme-text-sm-fontsize)', fontWeight: 'var(--theme-text-sm-font-weight)', lineHeight: 'var(--theme-text-sm-lineheight)', letterSpacing: 'var(--theme-text-sm-letterspacing)' },
+  medium: { fontFamily: 'var(--theme-text-md-font-family)', fontSize: 'var(--theme-text-md-fontsize)', fontWeight: 'var(--theme-text-md-font-weight)', lineHeight: 'var(--theme-text-md-lineheight)', letterSpacing: 'var(--theme-text-md-letterspacing)' },
+  large: { fontFamily: 'var(--theme-text-lg-font-family)', fontSize: 'var(--theme-text-lg-fontsize)', fontWeight: 'var(--theme-text-lg-font-weight)', lineHeight: 'var(--theme-text-lg-lineheight)', letterSpacing: 'var(--theme-text-lg-letterspacing)' },
+  h1: { fontFamily: 'var(--theme-h1-font-family)', fontSize: 'var(--theme-h1-fontsize)', fontWeight: 'var(--theme-h1-font-weight)', lineHeight: 'var(--theme-h1-lineheight)', letterSpacing: 'var(--theme-h1-letterspacing)' },
+  h2: { fontFamily: 'var(--theme-h2-font-family)', fontSize: 'var(--theme-h2-fontsize)', fontWeight: 'var(--theme-h2-font-weight)', lineHeight: 'var(--theme-h2-lineheight)', letterSpacing: 'var(--theme-h2-letterspacing)' },
+  h3: { fontFamily: 'var(--theme-h3-font-family)', fontSize: 'var(--theme-h3-fontsize)', fontWeight: 'var(--theme-h3-font-weight)', lineHeight: 'var(--theme-h3-lineheight)', letterSpacing: 'var(--theme-h3-letterspacing)' },
+};
+
+function RichTextRun({ value }: { value: { text: string; marks?: RichTextMarks } }) {
+  const textDecoration = [value.marks?.underline ? 'underline' : '', value.marks?.strike ? 'line-through' : '']
+    .filter(Boolean)
+    .join(' ') || 'none';
+  return <Box component="span" sx={{
+    fontWeight: value.marks?.bold ? 'var(--theme-font-weight-bold)' : 'inherit',
+    fontStyle: value.marks?.italic ? 'italic' : 'inherit',
+    textDecoration,
+    color: value.marks?.color ?? 'inherit',
+  }}>{value.text}</Box>;
+}
+
+export function RichTextContent({ document }: { document: RichTextDocument }) {
+  return <Stack spacing={0.75} sx={{ maxWidth: '100%', minWidth: 0 }}>
+    {document.paragraphs.map((paragraph, paragraphIndex) => {
+      const sizeStyle = richTextSizeVariables[paragraph.size];
+      return <Box key={paragraphIndex} component="p" sx={{
+      ...wrappingTextSx,
+      m: 0,
+      textAlign: paragraph.alignment,
+      fontFamily: paragraph.fontFamily ?? sizeStyle.fontFamily,
+      fontSize: sizeStyle.fontSize,
+      fontWeight: sizeStyle.fontWeight,
+      lineHeight: sizeStyle.lineHeight,
+      letterSpacing: sizeStyle.letterSpacing,
+    }}>
+      {paragraph.runs.map((run, runIndex) => <RichTextRun key={runIndex} value={run} />)}
+    </Box>;
+    })}
+  </Stack>;
+}
+
 export function TextBlock({ block }: { block: PageBlock }) {
-  return <Box sx={{ maxWidth: '100%', minWidth: 0 }}><Typography component="h2" variant="h5" gutterBottom sx={wrappingTextSx}>{text(block.content.title)}</Typography>
-    <Typography sx={wrappingTextSx}>{text(block.content.body)}</Typography></Box>;
+  return <RichTextContent document={normalizeRichTextDocument(block.content.document)} />;
 }
 
 export function ImageBlock({ block, mediaUrlFor }: { block: PageBlock; mediaUrlFor?: (mediaId: string) => string | undefined }) {
@@ -409,7 +638,7 @@ function LinkList({ block, field, kind }: { block: PageBlock; field: string; kin
       }
       const external = /^https?:\/\//i.test(href);
       return <Link key={text(item.id, String(index))} href={href} target={external ? '_blank' : undefined}
-        rel={external ? 'noopener noreferrer' : undefined} sx={{ minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>
+        rel={external ? 'noopener noreferrer' : undefined} sx={{ ...ordinaryPublicPageLinkSx, minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>
         {text(item.label)}
       </Link>;
     })}
@@ -424,11 +653,11 @@ export function SocialButtonBlock({ block }: { block: PageBlock }) {
   if (!href || !SOCIAL_PLATFORMS.includes(platform)) {return null;}
   const style = socialPlatformStyles[platform];
   return <Button component="a" href={href} target="_blank" rel="noopener noreferrer" fullWidth data-social-button={platform}
-    sx={{ position: 'relative', minHeight: 52, px: 6, width: '100%', borderRadius: 'var(--theme-link-border-radius, 40px)',
-      textTransform: 'var(--theme-link-title-transform, none)', fontFamily: 'var(--theme-link-title-font-family, Inter, sans-serif)',
-      fontSize: 'var(--theme-link-title-fontsize, 16px)', lineHeight: 'var(--theme-link-title-lineheight, 1.2)',
-      letterSpacing: 'var(--theme-link-title-letterspacing, 0px)', fontWeight: 'var(--theme-link-title-font-weight, 500)',
-      borderWidth: 'var(--theme-link-border-width, 0px)', boxShadow: 'var(--theme-link-shadow-params, none)',
+    sx={{ position: 'relative', minHeight: 52, px: 6, width: '100%', borderRadius: 'var(--theme-link-border-radius)',
+      textTransform: 'var(--theme-link-title-transform)', fontFamily: 'var(--theme-link-title-font-family)',
+      fontSize: 'var(--theme-link-title-fontsize)', lineHeight: 'var(--theme-link-title-lineheight)',
+      letterSpacing: 'var(--theme-link-title-letterspacing)', fontWeight: 'var(--theme-link-title-font-weight)',
+      borderWidth: 'var(--theme-link-border-width)', boxShadow: 'var(--theme-link-shadow-params)',
       background: style.background, color: style.color, '&:hover': { background: style.background, filter: 'brightness(.94)' } }}>
     <SocialPlatformIcon className="social-button__icon" platform={platform} aria-hidden="true"
       sx={{ position: 'absolute', left: 18, width: 24, height: 24, color: style.iconColor }} />
@@ -440,7 +669,7 @@ export function MapBlock({ block }: { block: PageBlock }) {
   const url = normalizeSafeHref(block.content.url, 'web');
   return <Surface block={block}><Typography component="h2" variant="h5">{text(block.content.title)}</Typography>
     <Typography>{text(block.content.address)}</Typography>{url && <Link href={url} target="_blank" rel="noopener noreferrer"
-      sx={{ minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>{text(block.content.label, text(block.content.address))}</Link>}</Surface>;
+      sx={{ ...ordinaryPublicPageLinkSx, minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>{text(block.content.label, text(block.content.address))}</Link>}</Surface>;
 }
 
 export function DividerBlock({ block }: { block: PageBlock }) {

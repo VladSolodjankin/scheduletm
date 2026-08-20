@@ -3,7 +3,7 @@ import {
   UnsupportedDocumentVersionError,
   migrateDocument,
 } from '../../src/features/public-page-builder/model/migrateDocument';
-import { normalizeDocument } from '../../src/features/public-page-builder/model/normalizeDocument';
+import { createEmptyPageSection, normalizeDocument } from '../../src/features/public-page-builder/model/normalizeDocument';
 import { validateDocument } from '../../src/features/public-page-builder/model/validateDocument';
 import {
   createEditorState,
@@ -11,16 +11,15 @@ import {
 } from '../../src/features/public-page-builder/model/editorReducer';
 import { PUBLIC_PAGE_SCHEMA_VERSION } from '../../src/features/public-page-builder/types/publicPage';
 import { getPublicPageTemplate, PUBLIC_PAGE_TEMPLATES } from '../../src/features/public-page-builder/templates';
-import { canDeleteMediaFromDocuments, reconcilePendingMediaCleanup } from '../../src/features/public-page-builder/model/media';
+import { canDeleteMediaFromDocuments, collectReferencedMediaIds, reconcilePendingMediaCleanup } from '../../src/features/public-page-builder/model/media';
 import { validateSocialPlatforms } from '../../src/features/public-page-builder/model/socialPlatforms';
 import { PUBLIC_PAGE_THEMES } from '../../src/features/public-page-builder/config/themes';
 import { blockSurfaceRadius, sectionThemeRadius, themeRadius } from '../../src/components/public-page-blocks/BlockRenderer';
-import { createBlankPublicPageDocument } from '../../src/components/public-page-builder/createBlankDocument';
 
 describe('public page theme choices', () => {
   it('exposes the fixed palette set and normalizes legacy rounding', () => {
-    expect(PUBLIC_PAGE_THEMES).toHaveLength(11);
-    expect(new Set(PUBLIC_PAGE_THEMES.map((theme) => theme.id)).size).toBe(11);
+    expect(PUBLIC_PAGE_THEMES).toHaveLength(10);
+    expect(new Set(PUBLIC_PAGE_THEMES.map((theme) => theme.id)).size).toBe(10);
     const legacy = structuredClone(getPublicPageTemplate('beauty')!.createDocument('legacy-theme')) as unknown as Record<string, unknown>;
     delete (legacy.theme as Record<string, unknown>).roundingStyle;
     delete (legacy.theme as Record<string, unknown>).linkStylePreset;
@@ -55,15 +54,50 @@ describe('public page theme choices', () => {
 });
 
 describe('public page document model', () => {
-  it('accepts the first staged block on a blank page', () => {
-    const document = createBlankPublicPageDocument();
-    const block = structuredClone(getPublicPageTemplate('beauty')!.createDocument('first-block').sections[0].blocks[0]);
-    const dropped = editorReducer(createEditorState(document), {
-      type: 'layout/drop', item: { type: 'staged', block }, to: { type: 'main', index: 0 }, standaloneSection: document.sections[0],
-    });
+  it('adds a block and media atomically, then releases media after divergent undo', () => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('atomic-block-media');
+    const before = structuredClone(document);
+    const target = document.sections[document.sections.length - 1];
+    const block = { ...structuredClone(target.blocks[0]), id: 'atomic-media-block' };
+    const media = { id: 'atomic-upload', url: 'https://example.com/atomic.png', mimeType: 'image/png' as const, alt: 'Atomic', width: 20, height: 20 };
+    block.design.backgroundMediaId = media.id;
 
-    expect(dropped.document.sections).toHaveLength(1);
-    expect(dropped.document.sections[0]).toMatchObject({ design: { variant: 'off' }, blocks: [{ id: block.id }] });
+    const added = editorReducer(createEditorState(document), {
+      type: 'block/add', sectionId: target.id, block, index: target.blocks.length,
+      mediaChanges: { upsert: [media], removeIds: [] },
+    });
+    expect(added.past).toHaveLength(1);
+    expect(added.document.media).toContainEqual(media);
+    expect(added.document.sections.at(-1)?.blocks.at(-1)?.id).toBe(block.id);
+
+    const undone = editorReducer(added, { type: 'history/undo' });
+    expect(undone.document).toEqual(before);
+    expect(canDeleteMediaFromDocuments([undone.document, ...undone.past, ...undone.future], media.id)).toBe(false);
+
+    const diverged = editorReducer(undone, { type: 'slug/update', slug: 'atomic-diverged' });
+    expect(diverged.future).toHaveLength(0);
+    expect(canDeleteMediaFromDocuments([diverged.document, ...diverged.past, ...diverged.future], media.id)).toBe(true);
+  });
+
+  it('creates the first off section with its media in one history entry', () => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('atomic-empty-page');
+    document.sections = [];
+    const before = structuredClone(document);
+    const block = structuredClone(getPublicPageTemplate('beauty')!.createDocument('atomic-first-block').sections[0].blocks[0]);
+    const media = { id: 'atomic-first-upload', url: 'https://example.com/first.png', mimeType: 'image/png' as const, alt: 'First', width: 20, height: 20 };
+    block.id = 'atomic-first-block';
+    block.design.backgroundMediaId = media.id;
+    const section = createEmptyPageSection('off');
+    section.blocks = [block];
+
+    const added = editorReducer(createEditorState(document), {
+      type: 'block/create-with-section', section, mediaChanges: { upsert: [media], removeIds: [] },
+    });
+    expect(added.past).toHaveLength(1);
+    expect(added.document.sections).toHaveLength(1);
+    expect(added.document.sections[0]).toMatchObject({ design: { variant: 'off' }, blocks: [{ id: block.id }] });
+    expect(added.document.media).toContainEqual(media);
+    expect(editorReducer(added, { type: 'history/undo' }).document).toEqual(before);
   });
 
   it('keeps section ids unique when normalizing a legacy multi-block off group', () => {
@@ -81,69 +115,127 @@ describe('public page document model', () => {
       .toEqual([decorated.blocks[0].id, off.blocks[0].id, 'second-free-block']);
   });
 
-  it('adjusts the main index when extracting the last block prunes its source section', () => {
-    const document = getPublicPageTemplate('beauty')!.createDocument('pruned-source-index');
-    const [source, following] = document.sections;
-    source.design.variant = 'primary'; following.design.variant = 'secondary';
+  it('prunes an ordinary source section when its last block moves out', () => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('pruned-source');
+    const [source, destination] = document.sections;
+    source.design.variant = 'primary'; destination.design.variant = 'secondary';
     const block = source.blocks[0];
-    const standaloneSection = { ...structuredClone(source), id: 'detached-before-following', blocks: [], design: { ...source.design, variant: 'off' as const } };
     const moved = editorReducer(createEditorState(document), {
-      type: 'layout/drop', item: { type: 'block', blockId: block.id }, to: { type: 'main', index: 1 }, standaloneSection,
+      type: 'layout/drop', item: { type: 'block', blockId: block.id }, to: { type: 'section', sectionId: destination.id, index: 0 },
     });
 
-    expect(moved.document.sections[0]).toMatchObject({ id: standaloneSection.id, design: { variant: 'off' }, blocks: [{ id: block.id }] });
-    expect(moved.document.sections[1].id).toBe(following.id);
+    expect(moved.document.sections.some((section) => section.id === source.id)).toBe(false);
+    expect(moved.document.sections[0].blocks[0].id).toBe(block.id);
+    expect(moved.past).toHaveLength(1);
+    expect(editorReducer(moved, { type: 'history/undo' }).document).toEqual(document);
   });
 
-  it('moves blocks between the linear main stream and decorated sections in one undo step', () => {
-    const document = getPublicPageTemplate('beauty')!.createDocument('linear-layout');
+  it('moves a styled last-block section to the start of an off destination', () => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('styled-start');
+    const [source, destination] = document.sections;
+    source.design.variant = 'primary'; destination.design.variant = 'off';
+    destination.blocks.push({ ...structuredClone(destination.blocks[0]), id: 'start-free-sibling' });
+    document.sections = [destination, source];
+    const sourceSnapshot = structuredClone(source);
+    const destinationSnapshot = structuredClone(destination);
+    const moved = editorReducer(createEditorState(document), {
+      type: 'layout/drop', item: { type: 'block', blockId: source.blocks[0].id },
+      to: { type: 'section', sectionId: destination.id, index: 0 },
+    });
+
+    expect(moved.document.sections.map((section) => section.id)).toEqual([source.id, destination.id]);
+    expect(moved.document.sections[0]).toEqual(sourceSnapshot);
+    expect(moved.document.sections[1]).toEqual(destinationSnapshot);
+  });
+
+  it('moves a styled last-block section to the end of an off destination', () => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('styled-end');
+    const [source, destination] = document.sections;
+    source.design.variant = 'secondary'; destination.design.variant = 'off';
+    destination.blocks.push({ ...structuredClone(destination.blocks[0]), id: 'end-free-sibling' });
+    const sourceSnapshot = structuredClone(source);
+    const destinationSnapshot = structuredClone(destination);
+    const moved = editorReducer(createEditorState(document), {
+      type: 'layout/drop', item: { type: 'block', blockId: source.blocks[0].id },
+      to: { type: 'section', sectionId: destination.id, index: destination.blocks.length },
+    });
+
+    expect(moved.document.sections.map((section) => section.id)).toEqual([destination.id, source.id]);
+    expect(moved.document.sections[0]).toEqual(destinationSnapshot);
+    expect(moved.document.sections[1]).toEqual(sourceSnapshot);
+  });
+
+  it('splits an off destination around a styled last-block section and undoes atomically', () => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('styled-internal');
+    const [source, destination] = document.sections;
+    source.design.variant = 'custom'; destination.design.variant = 'off';
+    destination.blocks.push({ ...structuredClone(destination.blocks[0]), id: 'internal-free-sibling' });
+    const sourceSnapshot = structuredClone(source);
+    const [beforeBlock, afterBlock] = destination.blocks;
+    const moved = editorReducer(createEditorState(document), {
+      type: 'layout/drop', item: { type: 'block', blockId: source.blocks[0].id },
+      to: { type: 'section', sectionId: destination.id, index: 1 },
+    });
+
+    expect(moved.document.sections.map((section) => section.id)).toEqual([
+      destination.id,
+      source.id,
+      `${destination.id}:after:${source.id}`,
+    ]);
+    expect(moved.document.sections[0].blocks).toEqual([beforeBlock]);
+    expect(moved.document.sections[1]).toEqual(sourceSnapshot);
+    expect(moved.document.sections[2]).toMatchObject({
+      design: { variant: 'off' },
+      blocks: [{ id: afterBlock.id }],
+    });
+    expect(moved.past).toHaveLength(1);
+    expect(editorReducer(moved, { type: 'history/undo' }).document).toEqual(document);
+  });
+
+  it('moves blocks between transparent and decorated sections in one undo step', () => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('section-layout');
     const [source, destination] = document.sections;
     source.design.variant = 'off'; destination.design.variant = 'primary';
     const block = source.blocks[0];
-    const standaloneSection = { ...structuredClone(source), id: 'standalone-drop', blocks: [] };
+    const sibling = { ...structuredClone(block), id: 'transparent-sibling' };
+    source.blocks.push(sibling);
     const initial = createEditorState(document);
     const entered = editorReducer(initial, { type: 'layout/drop', item: { type: 'block', blockId: block.id },
-      to: { type: 'section', sectionId: destination.id, index: 0 }, standaloneSection });
-    expect(entered.document.sections.some((section) => section.id === source.id)).toBe(false);
+      to: { type: 'section', sectionId: destination.id, index: 0 } });
+    expect(entered.document.sections.find((section) => section.id === source.id)?.blocks).toEqual([sibling]);
     expect(entered.document.sections.find((section) => section.id === destination.id)?.blocks[0].id).toBe(block.id);
     expect(entered.past).toHaveLength(1);
     expect(editorReducer(entered, { type: 'history/undo' }).document).toEqual(document);
 
     const exited = editorReducer(entered, { type: 'layout/drop', item: { type: 'block', blockId: block.id },
-      to: { type: 'main', index: 0 }, standaloneSection });
-    expect(exited.document.sections[0]).toMatchObject({ id: standaloneSection.id, design: { variant: 'off' } });
+      to: { type: 'section', sectionId: source.id, index: 0 } });
+    expect(exited.document.sections[0]).toMatchObject({ id: source.id, design: { variant: 'off' } });
     expect(exited.document.sections[0].blocks[0]).toEqual(block);
     expect(exited.past).toHaveLength(2);
   });
 
-  it('commits section-to-section, same-section, staged, and section drops atomically', () => {
+  it('commits section-to-section, same-section, and section drops atomically', () => {
     const document = getPublicPageTemplate('beauty')!.createDocument('linear-cases');
     const [first, second] = document.sections;
     first.design.variant = 'primary'; second.design.variant = 'secondary';
     const movedBlock = first.blocks[0];
     const sibling = { ...structuredClone(movedBlock), id: 'linear-sibling' };
     first.blocks.push(sibling);
-    const standalone = { ...structuredClone(first), id: 'linear-off', design: { ...structuredClone(first.design), variant: 'off' as const }, blocks: [] };
     const cross = editorReducer(createEditorState(document), { type: 'layout/drop', item: { type: 'block', blockId: movedBlock.id },
-      to: { type: 'section', sectionId: second.id, index: 1 }, standaloneSection: standalone });
+      to: { type: 'section', sectionId: second.id, index: 1 } });
     expect(cross.document.sections.find((section) => section.id === first.id)?.blocks.map((block) => block.id)).toEqual([sibling.id]);
     expect(cross.document.sections.find((section) => section.id === second.id)?.blocks[1].id).toBe(movedBlock.id);
     expect(cross.past).toHaveLength(1);
     expect(editorReducer(cross, { type: 'history/undo' }).document).toEqual(document);
 
     const same = editorReducer(createEditorState(document), { type: 'layout/drop', item: { type: 'block', blockId: sibling.id },
-      to: { type: 'section', sectionId: first.id, index: 0 }, standaloneSection: standalone });
+      to: { type: 'section', sectionId: first.id, index: 0 } });
     expect(same.document.sections[0].blocks.map((block) => block.id)).toEqual([sibling.id, movedBlock.id]);
     const unchanged = editorReducer(createEditorState(document), { type: 'layout/drop', item: { type: 'block', blockId: movedBlock.id },
-      to: { type: 'section', sectionId: first.id, index: 0 }, standaloneSection: standalone });
+      to: { type: 'section', sectionId: first.id, index: 0 } });
     expect(unchanged.past).toHaveLength(0);
 
-    const staged = { ...structuredClone(movedBlock), id: 'staged-main' };
-    const stagedDrop = editorReducer(createEditorState(document), { type: 'layout/drop', item: { type: 'staged', block: staged },
-      to: { type: 'main', index: 1 }, standaloneSection: standalone });
-    expect(stagedDrop.document.sections[1].blocks[0].id).toBe(staged.id);
-
-    const sectionDrop = editorReducer(createEditorState(stagedDrop.document), {
+    const sectionDrop = editorReducer(createEditorState(document), {
       type: 'layout/drop', item: { type: 'section', sectionId: second.id }, to: { type: 'main', index: 0 },
     });
     expect(sectionDrop.document.sections[0].id).toBe(second.id);
@@ -231,12 +323,22 @@ describe('public page document model', () => {
     expect(document.sections[0].blocks).toHaveLength(1);
   });
 
+  it('collects unique media references before a section is removed', () => {
+    expect(collectReferencedMediaIds({
+      design: { backgroundMediaId: 'section-bg' },
+      blocks: [
+        { design: { backgroundMediaId: 'block-bg' }, content: { imageMediaId: 'avatar', coverMediaId: 'cover' } },
+        { content: { images: [{ mediaId: 'avatar' }, { mediaId: 'gallery' }] } },
+      ],
+    })).toEqual(['section-bg', 'block-bg', 'avatar', 'cover', 'gallery']);
+  });
+
   it('normalizes styling inheritance and preserves explicit zero overrides', () => {
     const document = normalizeDocument({ theme: { colors: { text: '#123456', primary: '#abcdef', surface: '#ffffff' } }, sections: [{
       blocks: [{ type: 'text', design: { borderRadius: 0 } }],
       design: { borderRadius: 0, headingStyle: { fontSize: 200, fontWeight: 350 }, linkStyle: { backgroundOpacity: 0, borderWidth: 20 } },
     }] });
-    expect(document.theme.styleDefaults).toMatchObject({ sectionBorderRadius: 0, blockBorderRadius: 24,
+    expect(document.theme.styleDefaults).toMatchObject({ sectionBorderRadius: 40, blockBorderRadius: 40,
       headingStyle: { color: '#123456' }, linkStyle: { titleStyle: { color: '#abcdef' } } });
     expect(document.sections[0].design).toMatchObject({ borderRadius: 0, headingStyle: { fontSize: 96, fontWeight: 350 },
       linkStyle: { backgroundOpacity: 0, borderWidth: 16 } });
@@ -351,7 +453,7 @@ describe('public page document model', () => {
     expect(created.past).toHaveLength(1);
   });
 
-  it('moves a block, appends it, and prunes its empty source in one undoable change', () => {
+  it('moves a block, appends it, and retains its empty source in one undoable change', () => {
     const document = getPublicPageTemplate('specialist')!.createDocument('move-block');
     const source = document.sections[0];
     const destination = document.sections[1];
@@ -360,7 +462,7 @@ describe('public page document model', () => {
     const moved = editorReducer(createEditorState(document), {
       type: 'block/move-or-detach', fromSectionId: source.id, toSectionId: destination.id, block,
     });
-    expect(moved.document.sections.some((section) => section.id === source.id)).toBe(false);
+    expect(moved.document.sections.find((section) => section.id === source.id)?.blocks).toEqual([]);
     expect(moved.document.sections.find((section) => section.id === destination.id)?.blocks.at(-1)?.id).toBe(block.id);
     expect(moved.past).toHaveLength(1);
 
@@ -373,7 +475,6 @@ describe('public page document model', () => {
   it('detaches a block into a new section immediately after its source', () => {
     const document = getPublicPageTemplate('specialist')!.createDocument('detach-block');
     const source = document.sections[0];
-    source.blocks.push(structuredClone(document.sections[1].blocks[0]));
     const block = source.blocks[0];
     const detachedSection = { ...structuredClone(source), id: 'detached', name: 'Section 7', blocks: [block] };
     const detached = editorReducer(createEditorState(document), {
@@ -381,21 +482,21 @@ describe('public page document model', () => {
     });
 
     expect(detached.document.sections[1].id).toBe('detached');
-    expect(detached.document.sections[0].blocks).toHaveLength(1);
+    expect(detached.document.sections[0].blocks).toHaveLength(0);
     expect(detached.selection).toEqual({ sectionId: 'detached', blockId: block.id });
     const undone = editorReducer(detached, { type: 'history/undo' });
     expect(undone.document).toEqual(document);
     expect(undone.selection).toEqual({ sectionId: source.id, blockId: block.id });
   });
 
-  it('removes a section when its last block is deleted', () => {
+  it('retains a section when its last block is deleted', () => {
     const document = getPublicPageTemplate('beauty')!.createDocument('delete-block');
     const source = document.sections[0];
     const removed = editorReducer(createEditorState(document), {
       type: 'block/remove', sectionId: source.id, blockId: source.blocks[0].id,
     });
 
-    expect(removed.document.sections.some((section) => section.id === source.id)).toBe(false);
+    expect(removed.document.sections.find((section) => section.id === source.id)?.blocks).toEqual([]);
     expect(removed.past).toHaveLength(1);
     expect(editorReducer(removed, { type: 'history/undo' }).document).toEqual(document);
   });

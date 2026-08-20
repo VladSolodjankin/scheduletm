@@ -18,6 +18,26 @@ function cloneDocument(document: PublicPageDocument): PublicPageDocument {
   return structuredClone(document);
 }
 
+function applyBlockMediaChanges(
+  document: PublicPageDocument,
+  changes: Extract<EditorAction, { type: 'block/add' }>['mediaChanges'],
+): PublicPageDocument {
+  if (!changes) {return document;}
+  const upsertIds = new Set(changes.upsert.map((media) => media.id));
+  const withUpserts = {
+    ...document,
+    media: [
+      ...document.media.filter((media) => !upsertIds.has(media.id)),
+      ...structuredClone(changes.upsert),
+    ],
+  };
+  const removeIds = new Set(changes.removeIds);
+  return {
+    ...withUpserts,
+    media: withUpserts.media.filter((media) => !removeIds.has(media.id) || documentReferencesMedia(withUpserts, media.id)),
+  };
+}
+
 function clampIndex(index: number, length: number): number {
   return Math.max(0, Math.min(index, length));
 }
@@ -96,6 +116,16 @@ function insertStandaloneAt(
   };
 }
 
+function removeBlockFromSource(
+  sections: PageSection[],
+  sectionId: string,
+  blockId: string,
+): PageSection[] {
+  return sections.map((section) => section.id === sectionId
+    ? { ...section, blocks: section.blocks.filter((block) => block.id !== blockId) }
+    : section);
+}
+
 function removeBlockAndPruneSource(
   sections: PageSection[],
   sectionId: string,
@@ -103,9 +133,18 @@ function removeBlockAndPruneSource(
 ): PageSection[] {
   return sections.flatMap((section) => {
     if (section.id !== sectionId) {return [section];}
-    const blocks = section.blocks.filter((block) => block.id !== blockId);
+    const blocks = section.blocks.filter((candidate) => candidate.id !== blockId);
     return blocks.length ? [{ ...section, blocks }] : [];
   });
+}
+
+function splitSectionId(sections: readonly PageSection[], destinationId: string, sourceId: string): string {
+  const base = `${destinationId}:after:${sourceId}`;
+  const ids = new Set(sections.map((section) => section.id));
+  if (!ids.has(base)) {return base;}
+  let suffix = 2;
+  while (ids.has(`${base}:${suffix}`)) {suffix += 1;}
+  return `${base}:${suffix}`;
 }
 
 function reconcileSelection(document: PublicPageDocument, selection: EditorState['selection']): EditorState['selection'] {
@@ -146,31 +185,13 @@ export function createEditorState(document: PublicPageDocument): EditorState {
   };
 }
 
-type LayoutDestination = Extract<EditorAction, { type: 'layout/drop' }>['to'];
-
-type MainLayoutItem =
-  | { type: 'section'; section: PageSection }
-  | { type: 'block'; block: PageBlock; section: PageSection };
-
-function mainLayoutItems(sections: readonly PageSection[]): MainLayoutItem[] {
-  return sections.flatMap<MainLayoutItem>((section) => section.design.variant === 'off'
-    ? section.blocks.map((block) => ({ type: 'block', block, section }))
-    : [{ type: 'section', section }]);
-}
-
-function sectionsFromMainItems(items: readonly MainLayoutItem[]): PageSection[] {
-  return items.map((item) => item.type === 'section'
-    ? item.section
-    : {
-      ...structuredClone(item.section),
-      id: item.section.blocks.length === 1 ? item.section.id : `${item.section.id}:${item.block.id}`,
-      blocks: [item.block],
-      design: { ...structuredClone(item.section.design), variant: 'off' },
-    });
-}
-
-function projectLayoutItem(document: PublicPageDocument, block: PageBlock, sourceId: string | null, to: LayoutDestination, standaloneSection: PageSection): PublicPageDocument | null {
-  if (to.type === 'section' && to.sectionId === sourceId) {
+function projectBlockDrop(
+  document: PublicPageDocument,
+  block: PageBlock,
+  sourceId: string | null,
+  to: { type: 'section'; sectionId: string; index: number },
+): PublicPageDocument | null {
+  if (to.sectionId === sourceId) {
     const source = document.sections.find((section) => section.id === sourceId);
     if (!source) {return null;}
     const blocks = reorderById(source.blocks, block.id, to.index);
@@ -181,25 +202,44 @@ function projectLayoutItem(document: PublicPageDocument, block: PageBlock, sourc
     };
   }
 
-  let sections = document.sections.flatMap((section) => {
-    if (section.id !== sourceId) {return [section];}
-    const blocks = section.blocks.filter((candidate) => candidate.id !== block.id);
-    return blocks.length ? [{ ...section, blocks }] : [];
-  });
-  if (to.type === 'section') {
-    const destination = sections.find((section) => section.id === to.sectionId && section.design.variant !== 'off');
-    if (!destination) {return null;}
-    sections = updateSection(sections, destination.id, (section) => ({ ...section, blocks: insertAt(section.blocks, block, to.index) }));
-  } else {
-    const items = mainLayoutItems(sections);
-    const freeBlockSection = { ...structuredClone(standaloneSection), blocks: [block], design: { ...structuredClone(standaloneSection.design), variant: 'off' as const } };
-    const sourceSection = sourceId ? document.sections.find((section) => section.id === sourceId) : null;
-    const sourceMainIndex = sourceSection && sourceSection.design.variant !== 'off' && sourceSection.blocks.length === 1
-      ? mainLayoutItems(document.sections).findIndex((item) => item.type === 'section' && item.section.id === sourceId)
-      : -1;
-    const targetIndex = sourceMainIndex >= 0 && sourceMainIndex < to.index ? to.index - 1 : to.index;
-    sections = sectionsFromMainItems(insertAt(items, { type: 'block', block, section: freeBlockSection }, targetIndex));
+  const destination = document.sections.find((section) => section.id === to.sectionId);
+  if (!destination) {return null;}
+  const source = sourceId ? document.sections.find((section) => section.id === sourceId) : null;
+  if (source
+    && source.blocks.length === 1
+    && source.design.variant !== 'off'
+    && destination.design.variant === 'off') {
+    const destinationBlockIndex = clampIndex(to.index, destination.blocks.length);
+    const sectionsWithoutSource = document.sections.filter((section) => section.id !== source.id);
+    const destinationSectionIndex = sectionsWithoutSource.findIndex((section) => section.id === destination.id);
+    const replacement = destinationBlockIndex === 0
+      ? [source, destination]
+      : destinationBlockIndex === destination.blocks.length
+        ? [destination, source]
+        : [
+          { ...destination, blocks: destination.blocks.slice(0, destinationBlockIndex) },
+          source,
+          {
+            ...destination,
+            id: splitSectionId(document.sections, destination.id, source.id),
+            blocks: destination.blocks.slice(destinationBlockIndex),
+          },
+        ];
+    const sections = [
+      ...sectionsWithoutSource.slice(0, destinationSectionIndex),
+      ...replacement,
+      ...sectionsWithoutSource.slice(destinationSectionIndex + 1),
+    ];
+    return JSON.stringify(sections.map((section) => [section.id, section.blocks.map((candidate) => candidate.id)]))
+      === JSON.stringify(document.sections.map((section) => [section.id, section.blocks.map((candidate) => candidate.id)]))
+      ? document : { ...document, sections };
   }
+
+  let sections = sourceId ? removeBlockAndPruneSource(document.sections, sourceId, block.id) : document.sections;
+  sections = updateSection(sections, destination.id, (section) => ({
+    ...section,
+    blocks: insertAt(section.blocks, structuredClone(block), to.index),
+  }));
   return JSON.stringify(sections.map((section) => [section.id, section.blocks.map((candidate) => candidate.id)]))
     === JSON.stringify(document.sections.map((section) => [section.id, section.blocks.map((candidate) => candidate.id)]))
     ? document : { ...document, sections };
@@ -266,13 +306,13 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       });
     case 'block/add':
       if (socialPlatform(action.block) && containsSocialPlatform(state.document, socialPlatform(action.block)!)) {return state;}
-      return commit(state, {
+      return commit(state, applyBlockMediaChanges({
         ...state.document,
         sections: updateSection(state.document.sections, action.sectionId, (section) => ({
           ...section,
           blocks: insertAt(section.blocks, structuredClone(action.block), action.index),
         })),
-      });
+      }, action.mediaChanges));
     case 'block/create-with-section': {
       const platforms = action.section.blocks.map(socialPlatform).filter((platform): platform is SocialPlatform => platform !== null);
       if (new Set(platforms).size !== platforms.length || platforms.some((platform) => containsSocialPlatform(state.document, platform))) {return state;}
@@ -281,10 +321,10 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         : -1;
       const index = selectedIndex >= 0 ? selectedIndex + 1 : state.document.sections.length;
       const inserted = insertStandaloneAt(state.document.sections, action.section, action.section.blocks, index);
-      const next = commit(state, {
+      const next = commit(state, applyBlockMediaChanges({
         ...state.document,
         sections: inserted.sections,
-      });
+      }, action.mediaChanges));
       return {
         ...next,
         selection: { sectionId: inserted.destinationId, blockId: action.section.blocks[0]?.id ?? null },
@@ -314,7 +354,7 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       });
     case 'block/remove':
       {
-        const sections = removeBlockAndPruneSource(state.document.sections, action.sectionId, action.blockId);
+        const sections = removeBlockFromSource(state.document.sections, action.sectionId, action.blockId);
         const sourceStillExists = sections.some((section) => section.id === action.sectionId);
         return {
           ...commit(state, { ...state.document, sections }),
@@ -339,12 +379,11 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       }
       if (!action.newSection && (!action.toSectionId
         || !state.document.sections.some((section) => section.id === action.toSectionId))) {return state;}
-      let sections = removeBlockAndPruneSource(state.document.sections, action.fromSectionId, action.block.id);
+      let sections = removeBlockFromSource(state.document.sections, action.fromSectionId, action.block.id);
       let destinationId: string;
       if (action.newSection) {
         const sourceIndex = state.document.sections.findIndex((section) => section.id === action.fromSectionId);
-        const sourceRemains = source.blocks.length > 1;
-        const inserted = insertStandaloneAt(sections, action.newSection, [action.block], sourceIndex + (sourceRemains ? 1 : 0));
+        const inserted = insertStandaloneAt(sections, action.newSection, [action.block], sourceIndex + 1);
         sections = inserted.sections;
         destinationId = inserted.destinationId;
       } else if (action.toSectionId) {
@@ -371,22 +410,16 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'layout/drop': {
       if (action.item.type === 'section') {
         if (action.to.type !== 'main') {return state;}
-        const sectionId = action.item.sectionId;
-        const items = mainLayoutItems(state.document.sections);
-        const sourceIndex = items.findIndex((item) => item.type === 'section' && item.section.id === sectionId);
-        if (sourceIndex < 0) {return state;}
-        const [source] = items.splice(sourceIndex, 1);
-        items.splice(clampIndex(action.to.index, items.length), 0, source);
-        return commit(state, { ...state.document, sections: sectionsFromMainItems(items) });
+        const sections = reorderById(state.document.sections, action.item.sectionId, action.to.index);
+        if (sections.every((section, index) => section.id === state.document.sections[index]?.id)) {return state;}
+        return commit(state, { ...state.document, sections });
       }
-      if (!action.standaloneSection) {return state;}
-      const blockId = action.item.type === 'block' ? action.item.blockId : action.item.block.id;
-      const source = action.item.type === 'block'
-        ? state.document.sections.find((section) => section.blocks.some((block) => block.id === blockId)) : null;
-      const block = action.item.type === 'block'
-        ? source?.blocks.find((candidate) => candidate.id === blockId) : action.item.block;
-      if (!block || (action.item.type === 'staged' && state.document.sections.some((section) => section.blocks.some((candidate) => candidate.id === block.id)))) {return state;}
-      const document = projectLayoutItem(state.document, block, source?.id ?? null, action.to, action.standaloneSection);
+      if (action.to.type !== 'section') {return state;}
+      const blockId = action.item.blockId;
+      const source = state.document.sections.find((section) => section.blocks.some((block) => block.id === blockId));
+      const block = source?.blocks.find((candidate) => candidate.id === blockId);
+      if (!block || !source) {return state;}
+      const document = projectBlockDrop(state.document, block, source.id, action.to);
       if (!document || document === state.document) {return state;}
       const next = commit(state, document);
       const destination = next.document.sections.find((section) => section.blocks.some((candidate) => candidate.id === block.id));

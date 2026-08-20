@@ -54,6 +54,24 @@ describe('public page schemas', () => {
     expect(validatePublicPageForPublish(parsed.data!).map((issue) => issue.code)).toContain('unknown_block');
   });
 
+  it('requires visible non-whitespace content in rich text blocks', () => {
+    const document = structuredClone(validPublicPageDocument);
+    const block = document.sections[0]!.blocks[0]!;
+    block.type = 'text';
+    block.content = { document: { type: 'rich-text-v1', paragraphs: [{ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: '  ' }] }] } };
+    expect(validatePublicPageForPublish(publicPageDocumentSchema.parse(document))).toContainEqual(expect.objectContaining({
+      code: 'invalid_block', detail: 'document is required', path: `blocks.${block.id}`,
+    }));
+    block.content = { document: { paragraphs: [{ runs: [{ text: 'Visible' }] }] } };
+    expect(validatePublicPageForPublish(publicPageDocumentSchema.parse(document))).toContainEqual(expect.objectContaining({
+      code: 'invalid_block', detail: 'document is required', path: `blocks.${block.id}`,
+    }));
+    block.content = { document: { type: 'rich-text-v1', paragraphs: [{ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: 'Visible' }] }] } };
+    expect(validatePublicPageForPublish(publicPageDocumentSchema.parse(document))).not.toContainEqual(expect.objectContaining({
+      code: 'invalid_block', path: `blocks.${block.id}`,
+    }));
+  });
+
   it.each([
     'facebook-messenger', 'vk', 'whatsapp', 'viber', 'telegram',
     'facebook', 'threads', 'instagram', 'tiktok',

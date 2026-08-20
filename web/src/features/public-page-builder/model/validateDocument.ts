@@ -127,6 +127,12 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
   validateRequiredString(value.id, 'theme.id', errors);
   validateRequiredString(value.name, 'theme.name', errors);
 
+  if (!Array.isArray(value.swatches) || value.swatches.length !== 4) {
+    addError(errors, 'invalid_type', 'theme.swatches');
+  } else {
+    value.swatches.forEach((swatch, index) => validateRequiredString(swatch, `theme.swatches.${index}`, errors));
+  }
+
   if (!isRecord(value.colors)) {
     addError(errors, 'invalid_type', 'theme.colors');
     return;
@@ -135,6 +141,7 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
   for (const color of ['background', 'surface', 'text', 'primary']) {
     validateRequiredString(value.colors[color], `theme.colors.${color}`, errors);
   }
+  validateThemeTokens(value.tokens, errors);
   validateRequiredString(value.fontFamily, 'theme.fontFamily', errors);
   if (!isNullableString(value.backgroundMediaId)) {addError(errors, 'invalid_type', 'theme.backgroundMediaId');}
   if (!isNullableString(value.backgroundPreset)) {addError(errors, 'invalid_type', 'theme.backgroundPreset');}
@@ -149,6 +156,44 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
     validateTypography(value.styleDefaults.headingStyle, 'theme.styleDefaults.headingStyle', errors, false);
     validateTypography(value.styleDefaults.textStyle, 'theme.styleDefaults.textStyle', errors, false);
     validateLinkStyle(value.styleDefaults.linkStyle, 'theme.styleDefaults.linkStyle', errors, false);
+  }
+}
+
+function validateThemeTypographyToken(value: unknown, path: string, errors: DocumentValidationError[]): void {
+  if (!isRecord(value)) {addError(errors, 'invalid_type', path); return;}
+  validateRequiredString(value.fontFamily, `${path}.fontFamily`, errors);
+  if (!isBoundedNumber(value.fontSize, 8, 96)) {addError(errors, 'invalid_value', `${path}.fontSize`);}
+  if (!isBoundedNumber(value.fontWeight, 100, 900) || !Number.isInteger(value.fontWeight)) {addError(errors, 'invalid_value', `${path}.fontWeight`);}
+  if (!isBoundedNumber(value.lineHeight, 0.5, 3)) {addError(errors, 'invalid_value', `${path}.lineHeight`);}
+  if (!isBoundedNumber(value.letterSpacing, -10, 20)) {addError(errors, 'invalid_value', `${path}.letterSpacing`);}
+}
+
+function validateThemeTokens(value: unknown, errors: DocumentValidationError[]): void {
+  if (!isRecord(value)) {addError(errors, 'invalid_type', 'theme.tokens'); return;}
+  if (!isRecord(value.colors)) {addError(errors, 'invalid_type', 'theme.tokens.colors');}
+  else {
+    for (const color of ['contrast', 'linkTitle', 'linkSubtitle', 'linkShadow', 'linkBorder', 'focus', 'checkboxBackground']) {
+      validateRequiredString(value.colors[color], `theme.tokens.colors.${color}`, errors);
+    }
+  }
+  if (!isRecord(value.typography)) {addError(errors, 'invalid_type', 'theme.tokens.typography');}
+  else {
+    validateRequiredString(value.typography.fontFamily, 'theme.tokens.typography.fontFamily', errors);
+    validateRequiredString(value.typography.headingColor, 'theme.tokens.typography.headingColor', errors);
+    for (const weight of ['fontWeight', 'boldFontWeight']) {
+      if (!isBoundedNumber(value.typography[weight], 100, 900) || !Number.isInteger(value.typography[weight])) {
+        addError(errors, 'invalid_value', `theme.tokens.typography.${weight}`);
+      }
+    }
+    for (const token of ['avatarTitle', 'avatarBio', 'linkTitle', 'linkSubtitle', 'h1', 'h2', 'h3', 'textLarge', 'textMedium', 'textSmall']) {
+      validateThemeTypographyToken(value.typography[token], `theme.tokens.typography.${token}`, errors);
+    }
+  }
+  if (!isRecord(value.layout)) {addError(errors, 'invalid_type', 'theme.tokens.layout');}
+  else {
+    for (const token of ['blockRadius', 'linkRadius', 'linkGap']) {
+      if (!isBoundedNumber(value.layout[token], 0, 100)) {addError(errors, 'invalid_value', `theme.tokens.layout.${token}`);}
+    }
   }
 }
 

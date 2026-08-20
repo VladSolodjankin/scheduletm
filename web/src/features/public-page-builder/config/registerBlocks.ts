@@ -20,6 +20,7 @@ import {
 import { getBlockDefinition, registerBlock, type BlockDefinition } from '../model/blockRegistry';
 import type { BlockContent } from '../types/publicPage';
 import { validateSocialPlatforms } from '../model/socialPlatforms';
+import { hasRichTextContent } from '../model/richText';
 
 function validateSafeItemUrls(content: BlockContent, key: string, kind: 'contact' | 'web'): string[] {
   const value = content[key];
@@ -41,13 +42,15 @@ function validateSafeUrl(content: BlockContent, key: string): string[] {
 
 const definitions: BlockDefinition[] = [
   { type: 'hero', name: 'Hero', createContent: () => ({ title: 'Your name', subtitle: 'A short introduction', imageUrl: '', imageAlt: '', ctaLabel: '' }), Renderer: HeroBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'title') },
-  { type: 'avatar', name: 'Avatar', createContent: () => ({ heading: 'Your name', subtitle: 'A short introduction', imageMediaId: null, imageAlt: '', layout: 'centered' }), Renderer: AvatarBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => [
+  { type: 'avatar', name: 'Avatar', createContent: () => ({ heading: 'Your name', subtitle: 'A short introduction', imageMediaId: null, imageAlt: '',
+    layout: 'centered', avatarSize: 150, coverColor: null, coverMediaId: null }), Renderer: AvatarBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => [
     ...required(content, 'heading'),
     ...(!content.imageMediaId ? ['imageMediaId is required'] : []),
   ] },
   { type: 'button', name: 'Button', createContent: () => ({ label: 'Learn more', icon: 'link', color: '', textColor: '', radius: 12, action: { type: 'url', url: 'https://example.com' } }), Renderer: ButtonBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'label') },
   { type: 'links', name: 'Links', createContent: () => ({ links: [{ id: 'link-1', label: 'Learn more', action: { type: 'url', url: 'https://example.com' } }] }), Renderer: LinksBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'links', ['label', 'action']) },
-  { type: 'text', name: 'Text', createContent: () => ({ title: 'About', body: 'Tell visitors about yourself.' }), Renderer: TextBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'body') },
+  { type: 'text', name: 'Text', createContent: () => ({ document: { type: 'rich-text-v1', paragraphs: [{ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: '' }] }] } }), Renderer: TextBlock, Editor: SpecializedBlockEditor,
+    validate: ({ content }) => hasRichTextContent(content.document) ? [] : ['document is required'] },
   { type: 'image', name: 'Image', createContent: () => ({ imageMediaId: null, alt: '' }), Renderer: ImageBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'imageMediaId', 'alt') },
   { type: 'gallery', name: 'Gallery', createContent: () => ({ images: [] }), Renderer: GalleryBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'images', ['mediaId', 'alt']) },
   { type: 'services', name: 'Services', createContent: () => ({ title: 'Services', services: [{ id: 'service-1', title: 'Consultation', description: 'Personal consultation', price: '' }] }), Renderer: ServicesBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'services', ['title']) },

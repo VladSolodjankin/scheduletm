@@ -1,0 +1,117 @@
+.public-page-editor-preview-surface {
+  --public-page-editor-drag-gutter: 64px;
+}
+
+.public-page-dnd-wrapper {
+  --public-page-editor-drag-gutter: 64px;
+  min-width: 0;
+  overflow: visible;
+}
+
+.smooth-dnd-container.vertical > .smooth-dnd-draggable-wrapper.public-page-dnd-wrapper {
+  overflow: visible;
+}
+
+.public-page-dnd-main-container {
+  display: grid;
+  flex: 0 0 auto;
+  align-content: start;
+  min-height: 52px;
+  gap: var(--theme-link-offset);
+}
+
+.public-page-dnd-section-shell,
+.public-page-dnd-block-shell {
+  position: relative;
+  min-width: 0;
+}
+
+.public-page-dnd-section-shell:hover > .public-page-section-drag-rail,
+.public-page-dnd-section-shell:focus-within > .public-page-section-drag-rail,
+.public-page-dnd-section-shell:hover > [data-public-page-section-drag-target] > .public-page-section-resize-handle,
+.public-page-dnd-section-shell:focus-within > [data-public-page-section-drag-target] > .public-page-section-resize-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.public-page-dnd-block-container {
+  display: grid;
+  grid-column: 1 / -1;
+  align-content: start;
+  box-sizing: border-box;
+  min-height: 52px;
+  gap: var(--theme-link-offset);
+}
+
+.MuiIconButton-root.public-page-block-drag-rail {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: calc(-1 * var(--public-page-editor-drag-gutter) - 35px);
+  width: 36px;
+  height: 100%;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  color: #616161;
+  background-color: #e0e0e0;
+  box-shadow: 0 2px 1px -1px rgb(0 0 0 / 20%), 0 1px 1px rgb(0 0 0 / 14%), 0 1px 3px rgb(0 0 0 / 12%);
+}
+
+.public-page-dnd-wrapper[data-public-page-dnd-context='section'] .MuiIconButton-root.public-page-block-drag-rail {
+  left: calc(-1 * var(--public-page-editor-drag-gutter) - 49px);
+}
+
+.public-page-avatar-cover-bleed {
+  margin: 0 -14px;
+}
+
+[data-public-page-leading-block='true'] .public-page-avatar-cover-bleed {
+  margin-top: -14px;
+}
+
+.MuiIconButton-root.public-page-block-drag-rail:hover,
+.public-page-dnd-dragging .MuiIconButton-root.public-page-block-drag-rail {
+  background-color: #bdbdbd;
+}
+
+.MuiIconButton-root.public-page-section-drag-rail {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 50%;
+  width: 48px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border-radius: 4px;
+  color: #616161;
+  background-color: #e0e0e0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms;
+}
+
+.MuiIconButton-root.public-page-section-drag-rail:hover {
+  background-color: #bdbdbd;
+}
+
+.public-page-section-drag-rail > svg {
+  transform: rotate(90deg);
+}
+
+.MuiIconButton-root.public-page-section-drag-rail.is-selected {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (min-width: 900px) {
+  .MuiIconButton-root.public-page-section-drag-rail.is-selected {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .public-page-dnd-section-shell:hover > .public-page-section-drag-rail,
+  .public-page-dnd-section-shell:focus-within > .public-page-section-drag-rail {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
