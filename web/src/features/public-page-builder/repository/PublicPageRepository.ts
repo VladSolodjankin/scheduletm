@@ -39,12 +39,19 @@ export type PublicPageRecord = {
   archivedAt: string | null;
 };
 
+export type PublicPageSlugAvailability = {
+  slug: string;
+  available: boolean;
+};
+
 export interface PublicPageRepository {
   list(): Promise<PublicPageRecord[]>;
+  checkSlugAvailability(slug: string, pageId?: string): Promise<PublicPageSlugAvailability>;
   get(pageId: string): Promise<PublicPageRecord>;
   create(document: PublicPageDocument): Promise<PublicPageRecord>;
   saveDraft(document: PublicPageDocument, expectedRevision: number): Promise<PublicPageRecord>;
   archive(pageId: string, expectedRevision: number): Promise<PublicPageRecord>;
+  restore(pageId: string, expectedRevision: number): Promise<PublicPageRecord>;
   delete(pageId: string, expectedRevision: number): Promise<void>;
   publish(pageId: string, expectedRevision: number): Promise<PublicPageRecord>;
   getBySlug(slug: string): Promise<PublicPageDocument>;

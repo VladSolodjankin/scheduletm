@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { BlockContent, BlockDesign, PageBlock, PageSection, PageTheme } from '../types/publicPage';
 import { createStableId } from '../utils/createStableId';
+import type { PublicBookingService } from '../../../shared/types/api';
 
 export type BlockComponentProps = {
   block: PageBlock;
@@ -10,6 +11,9 @@ export type BlockComponentProps = {
   avatarCoverControl?: ReactNode;
   pageTheme?: PageTheme;
   pageSection?: PageSection;
+  services?: readonly PublicBookingService[];
+  publicPageSlug?: string;
+  editor?: boolean;
 };
 
 export type BlockDefinition = {

@@ -2,6 +2,18 @@ import type { CtaAction } from '../types/publicPage';
 
 const SAFE_PROTOCOLS = new Set(['http:', 'https:']);
 
+export type ContactRow = {
+  id: string;
+  label: string;
+  action: CtaAction;
+};
+
+type ContactRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is ContactRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function parseSafeUrl(value: string): URL | null {
   try {
     const url = new URL(value.trim());
@@ -39,6 +51,21 @@ export function isSafeCtaAction(action: CtaAction): boolean {
   return normalizeCtaAction(action) !== null;
 }
 
+export function isCtaAction(value: unknown): value is CtaAction {
+  if (!isRecord(value)) {return false;}
+  switch (value.type) {
+    case 'url':
+    case 'messenger':
+      return typeof value.url === 'string';
+    case 'phone':
+      return typeof value.phone === 'string';
+    case 'email':
+      return typeof value.email === 'string';
+    default:
+      return false;
+  }
+}
+
 export function ctaActionToHref(action: CtaAction): string | null {
   const normalized = normalizeCtaAction(action);
   if (!normalized) {return null;}
@@ -51,4 +78,27 @@ export function ctaActionToHref(action: CtaAction): string | null {
     case 'email':
       return `mailto:${normalized.email}`;
   }
+}
+
+export function contactHref(value: unknown): string | null {
+  if (!isRecord(value)) {return null;}
+  return isCtaAction(value.action) ? ctaActionToHref(value.action) : null;
+}
+
+export function validateContacts(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    return ['contacts is required'];
+  }
+
+  return value.flatMap((item, index) => {
+    if (!isRecord(item)) {return [`contacts.${index} is invalid`];}
+    const issues: string[] = [];
+    if (typeof item.label !== 'string' || !item.label.trim()) {
+      issues.push(`contacts.${index}.label is required`);
+    }
+    if (!isCtaAction(item.action)) {
+      issues.push(`contacts.${index}.action is invalid`);
+    }
+    return issues;
+  });
 }

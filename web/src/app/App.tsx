@@ -1,34 +1,38 @@
-import { CssBaseline, ThemeProvider } from '@mui/material';
-import { useMemo, useState } from 'react';
+import { Box, CircularProgress, CssBaseline, ThemeProvider, Typography } from '@mui/material';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { AuthProvider } from '../shared/auth/AuthContext';
-import { I18nProvider } from '../shared/i18n/I18nContext';
+import { I18nProvider, useI18n } from '../shared/i18n/I18nContext';
 import { ThemeSettingsContext } from '../shared/theme/ThemeContext';
-import {
-  DEFAULT_PALETTE_VARIANT_ID,
-  type PaletteVariantId,
-  type ThemeMode
-} from '../shared/theme/constants';
+import { type ThemeMode } from '../shared/theme/constants';
 import { createAppTheme } from '../shared/theme/createAppTheme';
 import { router } from './router';
 import { AppErrorBoundary } from './AppErrorBoundary';
 import { WebErrorTracker } from './WebErrorTracker';
+
+function RouteLoadingFallback() {
+  const { t } = useI18n();
+
+  return (
+    <Box role="status" aria-live="polite" className="app-route-loading">
+      <CircularProgress size={32} aria-hidden />
+      <Typography color="text.secondary">{t('common.loading')}</Typography>
+    </Box>
+  );
+}
 
 function getInitialMode(): ThemeMode {
   const persisted = localStorage.getItem('ui-theme-mode');
   return persisted === 'dark' ? 'dark' : 'light';
 }
 
-function getInitialPalette(): PaletteVariantId {
-  const persisted = localStorage.getItem('ui-theme-palette') as PaletteVariantId | null;
-  return persisted ?? DEFAULT_PALETTE_VARIANT_ID;
-}
-
 export function App() {
   const [mode, setMode] = useState<ThemeMode>(() => getInitialMode());
-  const [paletteVariantId, setPaletteVariantIdState] = useState<PaletteVariantId>(() => getInitialPalette());
+  const theme = useMemo(() => createAppTheme(mode), [mode]);
 
-  const theme = useMemo(() => createAppTheme(mode, paletteVariantId), [mode, paletteVariantId]);
+  useEffect(() => {
+    localStorage.setItem('ui-theme-palette', 'default');
+  }, []);
 
   const toggleMode = () => {
     setMode((prev) => {
@@ -38,21 +42,20 @@ export function App() {
     });
   };
 
-  const setPaletteVariantId = (id: PaletteVariantId) => {
-    setPaletteVariantIdState(id);
-    localStorage.setItem('ui-theme-palette', id);
-  };
-
   return (
     <AppErrorBoundary>
-      <ThemeSettingsContext.Provider value={{ mode, paletteVariantId, toggleMode, setPaletteVariantId }}>
+      <ThemeSettingsContext.Provider value={{ mode, toggleMode }}>
         <ThemeProvider theme={theme}>
           <I18nProvider>
-            <AuthProvider>
-              <WebErrorTracker />
-              <CssBaseline />
-              <RouterProvider router={router} />
-            </AuthProvider>
+            <AppErrorBoundary>
+              <AuthProvider>
+                <WebErrorTracker />
+                <CssBaseline />
+                <Suspense fallback={<RouteLoadingFallback />}>
+                  <RouterProvider router={router} />
+                </Suspense>
+              </AuthProvider>
+            </AppErrorBoundary>
           </I18nProvider>
         </ThemeProvider>
       </ThemeSettingsContext.Provider>

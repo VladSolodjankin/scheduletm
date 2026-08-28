@@ -4,13 +4,15 @@ import {
   publicAppointmentStatusQuerySchema,
   publicBookingSchema,
   createPublicPageSchema,
+  isValidPublicPageSlug,
+  normalizePublicPageSlug,
   publicPageListStatusSchema,
   publicPageRevisionSchema,
   savePublicPageDraftSchema,
 } from '../config/publicPageSchemas.js';
 import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
-import { canManageAccountSettings } from '../policies/rolePermissions.js';
+import { canManageAccountSettings, canReadAccountMedia } from '../policies/rolePermissions.js';
 import { PublicPageRepositoryError } from '../repositories/publicPageRepository.js';
 import { PublicBookingRepositoryError } from '../repositories/publicBookingRepository.js';
 import {
@@ -24,11 +26,13 @@ import {
   createPublicPageForAccount,
   deletePublicPageForAccount,
   getPublicPage,
+  getPublicPageSlugAvailability,
   getPublicPages,
   getPublishedPublicPage,
   publishPublicPageForAccount,
   PublicPageServiceError,
   putPublicPageDraft,
+  restorePublicPageForAccount,
   toPublicPageDto,
 } from '../services/publicPageService.js';
 import { env } from '../config/env.js';
@@ -43,6 +47,10 @@ import {
 
 const pageIdSchema = z.string().min(1).max(128);
 const slugSchema = z.string().min(1).max(40);
+const slugAvailabilityQuerySchema = z.object({
+  slug: z.string().transform(normalizePublicPageSlug).refine(isValidPublicPageSlug),
+  pageId: pageIdSchema.optional(),
+}).strict();
 const appointmentIdSchema = z.coerce.number().int().positive();
 const mediaIdSchema = z.string().uuid();
 const publicStatusRateLimit = createRequestRateLimit({
@@ -98,6 +106,7 @@ function sendError(res: Response, error: unknown) {
   }
   if (error instanceof PublicPageServiceError) {
     if (error.code === 'UNSUPPORTED_VERSION') return res.status(400).json({ code: 'unsupported_version' });
+    if (error.code === 'INVALID_SLUG') return res.status(400).json({ code: 'invalid_request' });
     if (error.code === 'INVALID_DOCUMENT') return res.status(400).json({ code: 'invalid_document' });
     return res.status(422).json({ code: 'publish_validation_failed', issues: error.issues });
   }
@@ -149,6 +158,7 @@ publicPageRoutes.get('/media/:mediaId/content', async (req, res) => {
 });
 
 publicPageRoutes.get('/by-slug/:slug/booking-options', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   try {
     const slug = slugSchema.safeParse(req.params.slug);
     if (!slug.success) return res.status(404).json({ code: 'not_found' });
@@ -202,17 +212,15 @@ publicPageRoutes.get(
 );
 
 publicPageRoutes.use(requireAccessToken);
-publicPageRoutes.use((req, res, next) => {
-  const actor = (req as unknown as AuthedRequest).user;
-  return canManageAccountSettings(actor.role) ? next() : res.status(403).json({ code: 'forbidden' });
-});
 
 publicPageRoutes.get('/media/:mediaId/preview', async (req, res) => {
+  const actor = (req as unknown as AuthedRequest).user;
+  if (!canReadAccountMedia(actor.role)) return res.status(403).json({ code: 'forbidden' });
   const id = mediaIdSchema.safeParse(req.params.mediaId);
   if (!id.success) return res.status(404).json({ code: 'not_found' });
   try {
     const media = await getAccountPublicPageMedia(
-      (req as unknown as AuthedRequest).user.accountId,
+      actor.accountId,
       id.data,
     );
     if (!media) return res.status(404).json({ code: 'not_found' });
@@ -223,6 +231,11 @@ publicPageRoutes.get('/media/:mediaId/preview', async (req, res) => {
   } catch (error) {
     return mediaError(res, error);
   }
+});
+
+publicPageRoutes.use((req, res, next) => {
+  const actor = (req as unknown as AuthedRequest).user;
+  return canManageAccountSettings(actor.role) ? next() : res.status(403).json({ code: 'forbidden' });
 });
 
 publicPageRoutes.post('/media', parseRawMedia, async (req, res) => {
@@ -266,6 +279,21 @@ publicPageRoutes.get('/', async (req, res) => {
     const status = publicPageListStatusSchema.safeParse(req.query.status ?? 'active');
     if (!status.success) return res.status(400).json({ code: 'invalid_request' });
     return res.json(await getPublicPages((req as unknown as AuthedRequest).user.accountId, status.data));
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+publicPageRoutes.get('/slug-availability', async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-store');
+  const query = slugAvailabilityQuerySchema.safeParse(req.query);
+  if (!query.success) return res.status(400).json({ code: 'invalid_request' });
+  try {
+    return res.json(await getPublicPageSlugAvailability(
+      (req as unknown as AuthedRequest).user.accountId,
+      query.data.slug,
+      query.data.pageId,
+    ));
   } catch (error) {
     return sendError(res, error);
   }
@@ -329,6 +357,19 @@ publicPageRoutes.post('/:pageId/archive', async (req, res) => {
   if (!pageId.success || !input.success) return res.status(400).json({ code: 'invalid_request' });
   try {
     return res.json(await archivePublicPageForAccount(
+      (req as unknown as AuthedRequest).user.accountId, pageId.data, input.data.expectedRevision,
+    ));
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+publicPageRoutes.post('/:pageId/restore', async (req, res) => {
+  const pageId = pageIdSchema.safeParse(req.params.pageId);
+  const input = publicPageRevisionSchema.safeParse(req.body);
+  if (!pageId.success || !input.success) return res.status(400).json({ code: 'invalid_request' });
+  try {
+    return res.json(await restorePublicPageForAccount(
       (req as unknown as AuthedRequest).user.accountId, pageId.data, input.data.expectedRevision,
     ));
   } catch (error) {

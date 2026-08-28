@@ -25,6 +25,7 @@ import type { ApiPublicPageRepository } from '../../features/public-page-builder
 import type { Locale } from '../../shared/i18n/dictionaries';
 import { BlockEditorDialog, type BlockEditorSave } from './BlockEditorDialog';
 import { publicPageText } from './uiText';
+import type { ServicesResponse } from '../services/types';
 
 const blockLabelKeys = {
   avatar: 'blockTypeAvatar', button: 'blockTypeButton', links: 'blockTypeLinks', text: 'blockTypeText', image: 'blockTypeImage',
@@ -54,14 +55,19 @@ const platformKeys: Record<SocialPlatform, Parameters<typeof publicPageText>[1]>
   telegram: 'platformTelegram', facebook: 'platformFacebook', threads: 'platformThreads', instagram: 'platformInstagram', tiktok: 'platformTiktok',
 };
 
-export function AddBlockDialog({ open, locale, usedPlatforms, theme, repository, media, previewUrls, onClose, onConfirm }: {
+export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, theme, repository, media, previewUrls, serviceCatalog, servicesLoading = false, servicesError = false, onRefreshServices, onClose, onConfirm }: {
   open: boolean;
+  compact?: boolean;
   locale: Locale;
   usedPlatforms: ReadonlySet<SocialPlatform>;
   theme: PageTheme;
   repository: ApiPublicPageRepository;
   media: readonly MediaReference[];
   previewUrls: ReadonlyMap<string, string>;
+  serviceCatalog?: ServicesResponse | null;
+  servicesLoading?: boolean;
+  servicesError?: boolean;
+  onRefreshServices?: () => void;
   onClose: () => void;
   onConfirm: (result: BlockEditorSave) => void;
 }) {
@@ -79,7 +85,7 @@ export function AddBlockDialog({ open, locale, usedPlatforms, theme, repository,
     '&:hover, &:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' } } as const;
   const title = category ? publicPageText(locale, category) : publicPageText(locale, 'addBlock');
   return <>
-    <Dialog open={open && !draft} onClose={close} fullWidth maxWidth="md">
+    <Dialog open={open && !draft} onClose={close} fullScreen={compact} fullWidth maxWidth="md">
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {category ? <IconButton aria-label={publicPageText(locale, 'back')} onClick={() => { setCategory(null); setQuery(''); }}><ArrowBack /></IconButton> : null}
         <Typography component="span" variant="h6" sx={{ flex: 1 }}>{title}</Typography>
@@ -94,7 +100,7 @@ export function AddBlockDialog({ open, locale, usedPlatforms, theme, repository,
               <Typography sx={{ mt: 0.75, fontWeight: 700 }}>{publicPageText(locale, item)}</Typography>
             </Paper>;
           })}
-          {getBlockDefinitions().filter(({ type }) => type !== 'hero' && type !== 'social-button').map((definition) => {
+          {getBlockDefinitions().filter(({ type }) => type !== 'social-button').map((definition) => {
             const labelKey = blockLabelKeys[definition.type as keyof typeof blockLabelKeys];
             const Icon = blockIcons[definition.type as keyof typeof blockIcons];
             return <Paper key={definition.type} component="button" type="button" onClick={() => setDraft(createBlock(definition.type))} sx={tileSx}>
@@ -120,7 +126,9 @@ export function AddBlockDialog({ open, locale, usedPlatforms, theme, repository,
       <DialogActions>{category ? <Button startIcon={<ArrowBack />} onClick={() => { setCategory(null); setQuery(''); }}>{publicPageText(locale, 'back')}</Button> : null}</DialogActions>
     </Dialog>
     <BlockEditorDialog open={Boolean(draft)} block={draft} locale={locale} title={publicPageText(locale, 'configureBlock')}
+      compact={compact}
       theme={theme} repository={repository} media={media} previewUrls={previewUrls}
+      serviceCatalog={serviceCatalog} servicesLoading={servicesLoading} servicesError={servicesError} onRefreshServices={onRefreshServices}
       onClose={() => setDraft(null)} onSave={(result) => { onConfirm(result); close(); }} />
   </>;
 }

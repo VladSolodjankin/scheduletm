@@ -1,6 +1,5 @@
 import { Paper, Stack, type PaperProps, type SxProps, type Theme } from '@mui/material';
 import type { ReactNode } from 'react';
-import { APP_SHADOWS, APP_SPACING } from '../theme/constants';
 import { AppSectionHeader } from './AppSectionHeader';
 
 type AppSurfaceProps = PaperProps & {
@@ -19,29 +18,24 @@ export function AppSurface({
   children,
   sx,
   contentSx,
+  className,
   ...props
 }: AppSurfaceProps) {
   return (
     <Paper
       variant="outlined"
       elevation={0}
-      sx={{
-        p: APP_SPACING.surfacePadding,
-        borderColor: 'divider',
-        boxShadow: (theme) => theme.palette.mode === 'light' ? APP_SHADOWS.softLight : APP_SHADOWS.softDark,
-        bgcolor: 'background.paper',
-        overflow: 'hidden',
-        ...sx
-      }}
+      className={['app-surface', className].filter(Boolean).join(' ')}
+      sx={sx}
       {...props}
     >
       {(title || description || action) && (
-        <Stack sx={{ mb: 2.5 }}>
+        <Stack className="app-surface__header">
           <AppSectionHeader title={title} description={description} action={action} icon={icon} />
         </Stack>
       )}
 
-      <Stack spacing={2} sx={contentSx}>
+      <Stack className="app-surface__content" sx={contentSx}>
         {children}
       </Stack>
     </Paper>

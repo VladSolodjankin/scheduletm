@@ -1,7 +1,15 @@
 import { Router } from 'express';
 import { serviceAssignmentUpdateSchema, serviceCreateSchema, serviceUpdateSchema } from '../config/schemas.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
-import { createServiceForActor, getServicesForActor, ServiceCatalogError, updateAssignmentForActor, updateServiceForActor } from '../services/serviceService.js';
+import {
+  createServiceForActor,
+  deleteServiceForActor,
+  getServiceDeleteImpactForActor,
+  getServicesForActor,
+  ServiceCatalogError,
+  updateAssignmentForActor,
+  updateServiceForActor,
+} from '../services/serviceService.js';
 import { formatZodError } from '../utils/validation.js';
 
 export const serviceRoutes = Router();
@@ -12,9 +20,16 @@ const parseId = (value: string) => {
   return Number.isInteger(id) && id > 0 ? id : null;
 };
 const statusFor = (error: ServiceCatalogError) =>
-  error.code === 'FORBIDDEN' ? 403 : error.code === 'NOT_FOUND' ? 404 : error.code === 'CONFLICT' ? 409 : 400;
+  error.code === 'FORBIDDEN' ? 403
+    : error.code === 'NOT_FOUND' || error.code === 'MEDIA_NOT_FOUND' ? 404
+      : error.code === 'CONFLICT' || error.code === 'SERVICE_IN_USE' ? 409 : 400;
 const handleError = (error: unknown, res: Parameters<Parameters<typeof serviceRoutes.get>[1]>[1]) => {
-  if (error instanceof ServiceCatalogError) return res.status(statusFor(error)).json({ code: error.code.toLowerCase() });
+  if (error instanceof ServiceCatalogError) {
+    if (error.code === 'SERVICE_IN_USE') {
+      return res.status(409).json({ code: 'service_in_use', impact: error.impact });
+    }
+    return res.status(statusFor(error)).json({ code: error.code.toLowerCase() });
+  }
   console.error(error);
   return res.status(500).json({ code: 'internal_error' });
 };
@@ -30,6 +45,23 @@ serviceRoutes.post('/', async (req, res) => {
   if (!parsed.success) return res.status(400).json(formatZodError(parsed.error));
   try {
     return res.status(201).json(await createServiceForActor((req as AuthedRequest).user, parsed.data));
+  } catch (error) { return handleError(error, res); }
+});
+
+serviceRoutes.get('/:id/delete-impact', async (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ code: 'invalid_service_id' });
+  try {
+    return res.json(await getServiceDeleteImpactForActor((req as unknown as AuthedRequest).user, id));
+  } catch (error) { return handleError(error, res); }
+});
+
+serviceRoutes.delete('/:id', async (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(400).json({ code: 'invalid_service_id' });
+  try {
+    await deleteServiceForActor((req as unknown as AuthedRequest).user, id);
+    return res.status(204).send();
   } catch (error) { return handleError(error, res); }
 });
 

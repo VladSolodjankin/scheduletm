@@ -6,7 +6,7 @@ import { WebUserRole } from '../../shared/types/roles';
 import { useAuth } from '../../shared/auth/AuthContext';
 import { useI18n } from '../../shared/i18n/I18nContext';
 import { useThemeSettings } from '../../shared/theme/ThemeContext';
-import type { PaletteVariantId } from '../../shared/theme/constants';
+import { DEFAULT_PALETTE_VARIANT_ID } from '../../shared/theme/constants';
 import { Header } from './Header';
 import { LeftMenu } from './LeftMenu';
 import { LegalFooter } from '../legal/LegalFooter';
@@ -14,7 +14,7 @@ import { LegalFooter } from '../legal/LegalFooter';
 export function MainLayout() {
   const theme = useTheme();
   const isCompactNavigation = useMediaQuery(theme.breakpoints.down('md'));
-  const { mode, paletteVariantId, toggleMode, setPaletteVariantId } = useThemeSettings();
+  const { mode, toggleMode } = useThemeSettings();
   const { t, locale, setLocale } = useI18n();
   const { isAuthenticated, accessToken, user } = useAuth();
   const lastSyncedPreferencesRef = useRef('');
@@ -27,7 +27,7 @@ export function MainLayout() {
     }
 
     const settingsLocale = locale === 'ru' ? 'ru-RU' : 'en-US';
-    const signature = `${settingsLocale}|${mode}|${paletteVariantId}`;
+    const signature = `${settingsLocale}|${mode}|${DEFAULT_PALETTE_VARIANT_ID}`;
     if (signature === lastSyncedPreferencesRef.current) {
       return;
     }
@@ -37,7 +37,7 @@ export function MainLayout() {
         await apiClient.put('/api/settings/user', {
           locale: settingsLocale,
           uiThemeMode: mode,
-          uiPaletteVariantId: paletteVariantId
+          uiPaletteVariantId: DEFAULT_PALETTE_VARIANT_ID
         }, {
           headers: authHeaders(accessToken)
         });
@@ -48,7 +48,7 @@ export function MainLayout() {
     };
 
     void sync();
-  }, [accessToken, isAuthenticated, locale, mode, paletteVariantId]);
+  }, [accessToken, isAuthenticated, locale, mode]);
 
   const appointmentsMenuLabel = (() => {
     if (user?.role === WebUserRole.Owner) {
@@ -91,15 +91,8 @@ export function MainLayout() {
 
   if (!isAuthenticated) {
     return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          bgcolor: 'background.default',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        <Box sx={{ flexGrow: 1 }}>
+      <Box className="app-layout">
+        <Box className="app-layout__content">
           <Outlet />
         </Box>
         <LegalFooter />
@@ -108,21 +101,11 @@ export function MainLayout() {
   }
 
   return (
-    <Box
-      sx={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: 'background.default',
-        overflow: 'hidden'
-      }}
-    >
+    <Box className="app-layout app-layout--authenticated">
       {isCompactNavigation ? (
         <Header
           title={t('common.appTitle')}
           mode={mode}
-          paletteVariantId={paletteVariantId}
-          paletteSelectAriaLabel={t('common.appearancePaletteAria')}
           themeToggleAriaLabel={t('common.themeToggleAria')}
           languageSelectAriaLabel={t('common.languageAria')}
           localeLabel={t('common.language')}
@@ -130,30 +113,20 @@ export function MainLayout() {
           showMobileMenuButton
           onToggleMode={toggleMode}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          onChangePalette={(id: PaletteVariantId) => setPaletteVariantId(id)}
           onChangeLocale={setLocale}
         />
       ) : null}
 
-      <Box
-        sx={{
-          display: 'flex',
-          flexGrow: 1,
-          minHeight: 0
-        }}
-      >
+      <Box className="app-layout__main-row">
         <LeftMenu
           items={menuItems}
           headingLabel={t('common.workspace')}
           title={t('common.appTitle')}
           mode={mode}
-          paletteVariantId={paletteVariantId}
           locale={locale}
-          paletteSelectAriaLabel={t('common.appearancePaletteAria')}
           themeToggleAriaLabel={t('common.themeToggleAria')}
           languageSelectAriaLabel={t('common.languageAria')}
           onToggleMode={toggleMode}
-          onChangePalette={(id: PaletteVariantId) => setPaletteVariantId(id)}
           onChangeLocale={setLocale}
         />
         <Drawer
@@ -162,11 +135,7 @@ export function MainLayout() {
           onClose={() => setIsMobileMenuOpen(false)}
           slotProps={{
             paper: {
-              sx: {
-                width: 'min(88vw, 18rem)',
-                bgcolor: 'background.paper',
-                borderRadius: 0,
-              }
+              className: 'app-layout__drawer-paper'
             }
           }}
         >
@@ -175,28 +144,17 @@ export function MainLayout() {
             headingLabel={t('common.workspace')}
             title={t('common.appTitle')}
             mode={mode}
-            paletteVariantId={paletteVariantId}
             locale={locale}
-            paletteSelectAriaLabel={t('common.appearancePaletteAria')}
             themeToggleAriaLabel={t('common.themeToggleAria')}
             languageSelectAriaLabel={t('common.languageAria')}
             mobile
             onClose={() => setIsMobileMenuOpen(false)}
             onNavigate={() => setIsMobileMenuOpen(false)}
             onToggleMode={toggleMode}
-            onChangePalette={(id: PaletteVariantId) => setPaletteVariantId(id)}
             onChangeLocale={setLocale}
           />
         </Drawer>
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            minWidth: 0,
-            minHeight: 0,
-            overflowY: 'auto'
-          }}
-        >
+        <Box component="main" className="app-layout__main">
           <Outlet />
         </Box>
       </Box>

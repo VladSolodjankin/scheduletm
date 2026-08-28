@@ -3,6 +3,7 @@ import type { PublicPageDocument } from '../../features/public-page-builder/type
 import { PublicPageRenderer } from '../public-page-blocks/PublicPageRenderer';
 import type { PreviewDevice } from './DeviceSwitcher';
 import type { PublicPageEditorRenderProps } from '../public-page-blocks/PublicPageRenderer';
+import type { PublicBookingService } from '../../shared/types/api';
 
 export const PUBLIC_PAGE_PREVIEW_GEOMETRY = {
   widths: { mobile: 375, tablet: 768, desktop: 1280 },
@@ -39,39 +40,48 @@ export function ResponsivePreview({
   document,
   device,
   mediaUrls,
+  services,
   editor,
   framed = false,
   interactive = true,
+  compactEditor = false,
   ariaLabel,
 }: {
   document: PublicPageDocument;
   device: PreviewDevice;
   mediaUrls?: ReadonlyMap<string, string>;
+  services?: readonly PublicBookingService[];
   editor?: PublicPageEditorRenderProps;
   framed?: boolean;
   interactive?: boolean;
+  compactEditor?: boolean;
   ariaLabel?: string;
 }) {
   const showPhoneFrame = Boolean(editor) || framed;
   return (
-    <PreviewScroller role={ariaLabel ? 'region' : undefined} tabIndex={ariaLabel ? 0 : undefined} aria-label={ariaLabel}
+    <PreviewScroller data-public-page-preview-scroller role={ariaLabel ? 'region' : undefined} tabIndex={ariaLabel ? 0 : undefined} aria-label={ariaLabel}
       sx={{ py: editor ? { xs: 5, md: 6 } : { xs: 1, md: 3 }, px: editor ? 1 : framed ? 1 : { xs: 1, md: 3 }, bgcolor: 'grey.100' }}>
       <PreviewFrame
         {...(!interactive ? { inert: true, 'aria-hidden': true } : {})}
         sx={{
-          width: editor
+          width: compactEditor
+            ? `min(100%, ${PUBLIC_PAGE_PREVIEW_GEOMETRY.framedMobileOuterWidth}px)`
+            : editor
             ? `${PUBLIC_PAGE_PREVIEW_GEOMETRY.widths[device] + PUBLIC_PAGE_PREVIEW_GEOMETRY.editorDragGutter + PUBLIC_PAGE_PREVIEW_GEOMETRY.frameBorder * 2}px`
             : framed
               ? `min(100%, ${PUBLIC_PAGE_PREVIEW_GEOMETRY.framedMobileOuterWidth}px)`
               : `min(100%, ${PUBLIC_PAGE_PREVIEW_GEOMETRY.widths[device]}px)`,
-          pl: editor ? `${PUBLIC_PAGE_PREVIEW_GEOMETRY.editorDragGutter}px` : 0,
+          pl: compactEditor ? 0 : editor ? `${PUBLIC_PAGE_PREVIEW_GEOMETRY.editorDragGutter}px` : 0,
           ...(!interactive ? { '& a, & button, & [role="button"]': { pointerEvents: 'none' } } : {}),
         }}
       >
       <PhoneSurface
-        className={editor ? 'public-page-editor-preview-surface' : undefined}
+        className={editor ? `public-page-editor-preview-surface${compactEditor ? ' public-page-editor-preview-surface--compact' : ''}` : undefined}
         sx={{
-          width: showPhoneFrame ? `${PUBLIC_PAGE_PREVIEW_GEOMETRY.widths[editor ? device : 'mobile']}px` : '100%',
+          width: compactEditor
+            ? `calc(100% - ${PUBLIC_PAGE_PREVIEW_GEOMETRY.frameBorder * 2}px)`
+            : showPhoneFrame ? `${PUBLIC_PAGE_PREVIEW_GEOMETRY.widths[editor ? device : 'mobile']}px` : '100%',
+          maxWidth: compactEditor ? `${PUBLIC_PAGE_PREVIEW_GEOMETRY.widths.mobile}px` : undefined,
           border: showPhoneFrame ? undefined : 0,
           boxSizing: showPhoneFrame ? 'content-box' : 'border-box',
           borderRadius: showPhoneFrame ? undefined : 0,
@@ -83,7 +93,7 @@ export function ResponsivePreview({
           } : undefined,
         }}
       >
-        <PublicPageRenderer document={document} mediaUrls={mediaUrls} editor={editor} />
+        <PublicPageRenderer document={document} mediaUrls={mediaUrls} services={services} editor={editor} />
       </PhoneSurface>
       </PreviewFrame>
     </PreviewScroller>

@@ -8,6 +8,7 @@ import { normalizeDocument } from '../../src/features/public-page-builder/model/
 import { sectionSurfaceRadius } from '../../src/components/public-page-blocks/BlockRenderer';
 import { resolvePublicPageThemeVariables } from '../../src/components/public-page-blocks/publicPageThemeVariables';
 import { PUBLIC_PAGE_PREVIEW_GEOMETRY } from '../../src/components/public-page-builder/ResponsivePreview';
+import { PUBLIC_PAGE_BACKGROUND_PRESETS } from '../../src/features/public-page-builder/config/backgroundPresets';
 import type { PageSection, SectionDesign } from '../../src/features/public-page-builder/types/publicPage';
 
 const expectedSwatches = {
@@ -231,7 +232,7 @@ describe('public page theme parity', () => {
     expect(custom.styleDefaults.linkStyle.backgroundColor).toBe('#123456');
   });
 
-  it('normalizes old theme documents additively and keeps approved mobile geometry', () => {
+  it('defaults incomplete theme documents and keeps approved mobile geometry', () => {
     const normalized = normalizeDocument({ theme: { colors: { background: '#abcabc' } } });
     expect(normalized.theme.colors.background).toBe('#abcabc');
     expect(normalized.theme.tokens.layout.blockRadius).toBe(40);
@@ -239,5 +240,11 @@ describe('public page theme parity', () => {
       widths: { mobile: 375 }, frameBorder: 10, framedMobileOuterWidth: 395,
       shadow: 'rgba(0,0,0,.1) 0 7px 28px 7px',
     });
+  });
+
+  it('preserves unknown background presets until the editor explicitly replaces them', () => {
+    const normalized = normalizeDocument({ theme: { backgroundPreset: 'unknown-custom-background' } });
+    expect(normalized.theme.backgroundPreset).toBe('unknown-custom-background');
+    expect(PUBLIC_PAGE_BACKGROUND_PRESETS[0]).toEqual({ id: 'none', css: 'none' });
   });
 });

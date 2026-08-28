@@ -6,6 +6,7 @@ export const RESERVED_PUBLIC_PAGE_SLUGS = new Set([
   'api',
   'appointments',
   'assets',
+  'booking',
   'health',
   'login',
   'logout',
@@ -17,6 +18,8 @@ export const RESERVED_PUBLIC_PAGE_SLUGS = new Set([
 ]);
 
 export type SlugValidationCode = 'required' | 'too_short' | 'too_long' | 'invalid_format' | 'reserved';
+export type SlugAvailabilityStatus = 'idle' | 'checking' | 'available' | 'unavailable' | 'error';
+export type SlugAvailabilityState = { slug: string | null; status: SlugAvailabilityStatus };
 
 export function normalizeSlug(value: string): string {
   return value.trim().toLowerCase();

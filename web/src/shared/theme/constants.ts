@@ -1,41 +1,153 @@
 export type ThemeMode = 'light' | 'dark';
 
-export type PaletteVariantId =
-  | 'ocean'
-  | 'sage'
-  | 'sunset'
-  | 'lavender'
-  | 'graphite';
+export type PaletteVariantId = 'default';
 
-export type PaletteVariant = {
-  id: PaletteVariantId;
-  label: string;
-  light: {
-    primary: string;
-    secondary: string;
-    backgroundDefault: string;
-    backgroundPaper: string;
-  };
-  dark: {
-    primary: string;
-    secondary: string;
-    backgroundDefault: string;
-    backgroundPaper: string;
-  };
+export type AppColorTokens = {
+  primary: string;
+  primaryHover: string;
+  primaryActive: string;
+  primarySoft: string;
+  accent: string;
+  onPrimary: string;
+  canvas: string;
+  surface: string;
+  surfaceMuted: string;
+  text: string;
+  textMuted: string;
+  disabled: string;
+  border: string;
+  borderStrong: string;
+  success: string;
+  successSoft: string;
+  warning: string;
+  warningSoft: string;
+  danger: string;
+  dangerSoft: string;
+  info: string;
+  infoSoft: string;
+  actionHover: string;
+  actionSelected: string;
+  focusRing: string;
+  overlay: string;
 };
 
-export const rem = (px: number) => `${px / 16}rem`;
+export const APP_TOKENS = {
+  space: { xs: '0.25rem', s: '0.5rem', m: '1rem', l: '1.5rem', xl: '2rem' },
+  fontSize: { xs: '0.75rem', s: '0.875rem', m: '1rem', l: '1.25rem', xl: '1.75rem' },
+  radius: {
+    xs: '0.25rem',
+    s: '0.5rem',
+    m: '1rem',
+    l: '1.5rem',
+    xl: '2rem',
+    pill: '999rem',
+    circle: '50%',
+  },
+  fontWeight: { regular: 400, medium: 500, semibold: 600, bold: 700 },
+  lineHeight: { compact: 1.25, default: 1.5, relaxed: 1.65 },
+  controlHeight: { s: '2rem', m: '2.625rem', l: '3rem' },
+  motion: {
+    fast: '120ms',
+    default: '160ms',
+    slow: '240ms',
+    easing: 'cubic-bezier(0.2, 0, 0, 1)',
+  },
+  layout: {
+    sidebar: '20rem',
+    pageMax: '100rem',
+    pageNarrow: '56rem',
+    dialogS: '30rem',
+    dialogM: '40rem',
+    dialogL: '56rem',
+    header: '4rem',
+  },
+  border: { width: '0.0625rem' },
+  legacy: {
+    // Preserve established numeric MUI sx semantics until each legacy screen is migrated to CSS variables.
+    muiRadiusMultiplier: 14,
+  },
+  shadow: {
+    softLight: '0 0.625rem 1.875rem rgba(15, 23, 42, 0.05)',
+    surfaceLight: '0 1.5rem 3.75rem rgba(15, 23, 42, 0.08)',
+    softDark: '0 0.625rem 1.75rem rgba(2, 6, 23, 0.24)',
+    surfaceDark: '0 1.5rem 3.75rem rgba(2, 6, 23, 0.32)',
+  },
+  zIndex: { header: 1100, drawer: 1200, modal: 1300, tooltip: 1500 },
+  colors: {
+    light: {
+      primary: '#2563eb',
+      primaryHover: '#1d4ed8',
+      primaryActive: '#1e40af',
+      primarySoft: '#eff6ff',
+      accent: '#0891b2',
+      onPrimary: '#ffffff',
+      canvas: '#f6f8fc',
+      surface: '#ffffff',
+      surfaceMuted: '#f1f5f9',
+      text: '#0f172a',
+      textMuted: '#475569',
+      disabled: '#94a3b8',
+      border: '#e2e8f0',
+      borderStrong: '#cbd5e1',
+      success: '#15803d',
+      successSoft: '#f0fdf4',
+      warning: '#b45309',
+      warningSoft: '#fffbeb',
+      danger: '#dc2626',
+      dangerSoft: '#fef2f2',
+      info: '#0369a1',
+      infoSoft: '#f0f9ff',
+      actionHover: 'rgba(15, 23, 42, 0.05)',
+      actionSelected: 'rgba(37, 99, 235, 0.1)',
+      focusRing: 'rgba(37, 99, 235, 0.24)',
+      overlay: 'rgba(15, 23, 42, 0.48)',
+    },
+    dark: {
+      primary: '#60a5fa',
+      primaryHover: '#93c5fd',
+      primaryActive: '#3b82f6',
+      primarySoft: '#172554',
+      accent: '#22d3ee',
+      onPrimary: '#0b1220',
+      canvas: '#0b1220',
+      surface: '#111827',
+      surfaceMuted: '#172033',
+      text: '#f8fafc',
+      textMuted: '#94a3b8',
+      disabled: '#64748b',
+      border: '#263244',
+      borderStrong: '#3b475a',
+      success: '#4ade80',
+      successSoft: '#052e16',
+      warning: '#fbbf24',
+      warningSoft: '#422006',
+      danger: '#f87171',
+      dangerSoft: '#450a0a',
+      info: '#38bdf8',
+      infoSoft: '#082f49',
+      actionHover: 'rgba(248, 250, 252, 0.08)',
+      actionSelected: 'rgba(96, 165, 250, 0.14)',
+      focusRing: 'rgba(96, 165, 250, 0.3)',
+      overlay: 'rgba(2, 6, 23, 0.72)',
+    },
+  } satisfies Record<ThemeMode, AppColorTokens>,
+} as const;
+
+export const DEFAULT_PALETTE_VARIANT_ID: PaletteVariantId = 'default';
+
+// Compatibility aliases for established consumers. New UI uses APP_TOKENS or CSS variables.
+export const rem = (value: number | string) => typeof value === 'string' ? value : `${value / 16}rem`;
 
 export const APP_SIZING = {
-  radiusXs: 8,
-  radiusSm: 10,
-  radiusMd: 14,
-  radiusLg: 18,
-  radiusXl: 24,
-  surfaceRadius: 16,
+  radiusXs: APP_TOKENS.radius.xs,
+  radiusSm: APP_TOKENS.radius.s,
+  radiusMd: APP_TOKENS.radius.m,
+  radiusLg: APP_TOKENS.radius.l,
+  radiusXl: APP_TOKENS.radius.xl,
+  surfaceRadius: APP_TOKENS.radius.m,
   headerHeight: 64,
   leftMenuWidth: 320,
-  contentMaxWidth: 1600
+  contentMaxWidth: 1600,
 } as const;
 
 export const APP_SPACING = {
@@ -45,97 +157,19 @@ export const APP_SPACING = {
   formGap: 2,
   surfacePadding: 2,
   cardPadding: { xs: 2, sm: 2.5, lg: 3 },
-  pageHeaderGap: 0.75
+  pageHeaderGap: 0.75,
 } as const;
 
 export const APP_SHADOWS = {
-  surfaceLight: `0 ${rem(24)} ${rem(60)} rgba(15, 23, 42, 0.08)`,
-  surfaceDark: `0 ${rem(24)} ${rem(60)} rgba(2, 6, 23, 0.32)`,
-  softLight: `0 ${rem(10)} ${rem(30)} rgba(15, 23, 42, 0.05)`,
-  softDark: `0 ${rem(10)} ${rem(28)} rgba(2, 6, 23, 0.24)`
+  surfaceLight: APP_TOKENS.shadow.surfaceLight,
+  surfaceDark: APP_TOKENS.shadow.surfaceDark,
+  softLight: APP_TOKENS.shadow.softLight,
+  softDark: APP_TOKENS.shadow.softDark,
 } as const;
 
-export const PALETTE_VARIANTS: readonly PaletteVariant[] = [
-  {
-    id: 'ocean',
-    label: 'Ocean Blue',
-    light: {
-      primary: 'hsl(210, 100%, 38%)',
-      secondary: 'hsl(195, 72%, 46%)',
-      backgroundDefault: 'hsl(210, 35%, 97%)',
-      backgroundPaper: 'hsl(0, 0%, 100%)'
-    },
-    dark: {
-      primary: 'hsl(210, 100%, 62%)',
-      secondary: 'hsl(195, 75%, 58%)',
-      backgroundDefault: 'hsl(218, 33%, 12%)',
-      backgroundPaper: 'hsl(218, 29%, 16%)'
-    }
-  },
-  {
-    id: 'sage',
-    label: 'Sage Mint',
-    light: {
-      primary: 'hsl(163, 43%, 40%)',
-      secondary: 'hsl(186, 53%, 42%)',
-      backgroundDefault: 'hsl(160, 22%, 96%)',
-      backgroundPaper: 'hsl(0, 0%, 100%)'
-    },
-    dark: {
-      primary: 'hsl(163, 48%, 58%)',
-      secondary: 'hsl(186, 57%, 62%)',
-      backgroundDefault: 'hsl(173, 18%, 12%)',
-      backgroundPaper: 'hsl(173, 17%, 16%)'
-    }
-  },
-  {
-    id: 'sunset',
-    label: 'Sunset Coral',
-    light: {
-      primary: 'hsl(18, 74%, 52%)',
-      secondary: 'hsl(37, 80%, 52%)',
-      backgroundDefault: 'hsl(28, 42%, 96%)',
-      backgroundPaper: 'hsl(0, 0%, 100%)'
-    },
-    dark: {
-      primary: 'hsl(18, 83%, 63%)',
-      secondary: 'hsl(37, 89%, 63%)',
-      backgroundDefault: 'hsl(18, 18%, 11%)',
-      backgroundPaper: 'hsl(18, 16%, 15%)'
-    }
-  },
-  {
-    id: 'lavender',
-    label: 'Lavender',
-    light: {
-      primary: 'hsl(262, 56%, 52%)',
-      secondary: 'hsl(281, 59%, 58%)',
-      backgroundDefault: 'hsl(255, 40%, 97%)',
-      backgroundPaper: 'hsl(0, 0%, 100%)'
-    },
-    dark: {
-      primary: 'hsl(262, 76%, 68%)',
-      secondary: 'hsl(281, 72%, 69%)',
-      backgroundDefault: 'hsl(251, 24%, 12%)',
-      backgroundPaper: 'hsl(251, 22%, 16%)'
-    }
-  },
-  {
-    id: 'graphite',
-    label: 'Graphite Teal',
-    light: {
-      primary: 'hsl(210, 30%, 34%)',
-      secondary: 'hsl(192, 54%, 40%)',
-      backgroundDefault: 'hsl(210, 22%, 95%)',
-      backgroundPaper: 'hsl(0, 0%, 100%)'
-    },
-    dark: {
-      primary: 'hsl(210, 18%, 72%)',
-      secondary: 'hsl(192, 72%, 64%)',
-      backgroundDefault: 'hsl(210, 18%, 10%)',
-      backgroundPaper: 'hsl(210, 15%, 14%)'
-    }
-  }
-] as const;
-
-export const DEFAULT_PALETTE_VARIANT_ID: PaletteVariantId = 'ocean';
+export const PALETTE_VARIANTS = [{
+  id: DEFAULT_PALETTE_VARIANT_ID,
+  label: 'Meetli',
+  light: APP_TOKENS.colors.light,
+  dark: APP_TOKENS.colors.dark,
+}] as const;

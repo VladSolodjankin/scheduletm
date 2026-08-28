@@ -39,6 +39,10 @@ const imageMimeTypes = new Set<MediaReference['mimeType']>([
   'image/png',
   'image/webp',
 ]);
+const knownBlockTypes = new Set([
+  'avatar', 'button', 'links', 'text', 'image', 'gallery', 'services',
+  'contacts', 'social-button', 'map', 'divider', 'faq',
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -58,6 +62,7 @@ function isBoundedNumber(value: unknown, minimum: number, maximum: number, nulla
 
 function validateTypography(value: unknown, path: string, errors: DocumentValidationError[], nullable: boolean): void {
   if (!isRecord(value)) { addError(errors, 'invalid_type', path); return; }
+  validateExactKeys(value, ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'color'], path, errors);
   for (const field of ['fontFamily', 'color'] as const) {
     if (!(nullable ? isNullableString(value[field]) : isNonEmptyString(value[field]))) {addError(errors, 'invalid_type', `${path}.${field}`);}
   }
@@ -68,6 +73,7 @@ function validateTypography(value: unknown, path: string, errors: DocumentValida
 
 function validateLinkStyle(value: unknown, path: string, errors: DocumentValidationError[], nullable: boolean): void {
   if (!isRecord(value)) { addError(errors, 'invalid_type', path); return; }
+  validateExactKeys(value, ['titleStyle', 'subtitleStyle', 'backgroundColor', 'backgroundOpacity', 'borderWidth', 'borderColor', 'shadow'], path, errors);
   validateTypography(value.titleStyle, `${path}.titleStyle`, errors, nullable); validateTypography(value.subtitleStyle, `${path}.subtitleStyle`, errors, nullable);
   for (const field of ['backgroundColor', 'borderColor'] as const) {
     if (!(nullable ? isNullableString(value[field]) : isNonEmptyString(value[field]))) {addError(errors, 'invalid_type', `${path}.${field}`);}
@@ -116,6 +122,7 @@ function validateProfile(value: unknown, errors: DocumentValidationError[]): voi
   if (!isNullableString(value.avatarMediaId)) {
     addError(errors, 'invalid_type', 'profile.avatarMediaId');
   }
+  validateExactKeys(value, ['displayName', 'description', 'logoMediaId', 'avatarMediaId'], 'profile', errors);
 }
 
 function validateTheme(value: unknown, errors: DocumentValidationError[]): void {
@@ -132,7 +139,7 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
   } else {
     value.swatches.forEach((swatch, index) => validateRequiredString(swatch, `theme.swatches.${index}`, errors));
   }
-
+  validateExactKeys(value, ['id', 'name', 'swatches', 'colors', 'tokens', 'fontFamily', 'roundingStyle', 'linkStylePreset', 'backgroundMediaId', 'backgroundPreset', 'backgroundFit', 'backgroundPosition', 'styleDefaults'], 'theme', errors);
   if (!isRecord(value.colors)) {
     addError(errors, 'invalid_type', 'theme.colors');
     return;
@@ -141,6 +148,7 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
   for (const color of ['background', 'surface', 'text', 'primary']) {
     validateRequiredString(value.colors[color], `theme.colors.${color}`, errors);
   }
+  validateExactKeys(value.colors, ['background', 'surface', 'text', 'primary'], 'theme.colors', errors);
   validateThemeTokens(value.tokens, errors);
   validateRequiredString(value.fontFamily, 'theme.fontFamily', errors);
   if (!isNullableString(value.backgroundMediaId)) {addError(errors, 'invalid_type', 'theme.backgroundMediaId');}
@@ -151,6 +159,7 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
   if (!['primary-fill', 'primary-shadow', 'primary-strong', 'primary-outline', 'surface-fill', 'surface-outline', 'surface-shadow', 'surface-strong'].includes(String(value.linkStylePreset))) {addError(errors, 'invalid_value', 'theme.linkStylePreset');}
   if (!isRecord(value.styleDefaults)) { addError(errors, 'invalid_type', 'theme.styleDefaults'); }
   else {
+    validateExactKeys(value.styleDefaults, ['sectionBorderRadius', 'blockBorderRadius', 'headingStyle', 'textStyle', 'linkStyle'], 'theme.styleDefaults', errors);
     if (!isBoundedNumber(value.styleDefaults.sectionBorderRadius, 0, 100)) {addError(errors, 'invalid_value', 'theme.styleDefaults.sectionBorderRadius');}
     if (!isBoundedNumber(value.styleDefaults.blockBorderRadius, 0, 100)) {addError(errors, 'invalid_value', 'theme.styleDefaults.blockBorderRadius');}
     validateTypography(value.styleDefaults.headingStyle, 'theme.styleDefaults.headingStyle', errors, false);
@@ -159,8 +168,191 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
   }
 }
 
+function validateExactKeys(
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+  path: string,
+  errors: DocumentValidationError[],
+): void {
+  const allowedKeys = new Set(allowed);
+  Object.keys(value).forEach((key) => {
+    if (!allowedKeys.has(key)) {addError(errors, 'invalid_value', path ? `${path}.${key}` : key);}
+  });
+}
+
+function validateNullableString(value: unknown, path: string, errors: DocumentValidationError[]): void {
+  if (!isNullableString(value)) {addError(errors, 'invalid_type', path);}
+}
+
+function validateCtaAction(value: unknown, path: string, errors: DocumentValidationError[]): void {
+  if (!isRecord(value)) {addError(errors, 'invalid_type', path); return;}
+  switch (value.type) {
+    case 'url':
+    case 'messenger':
+      validateExactKeys(value, ['type', 'url'], path, errors);
+      validateString(value.url, `${path}.url`, errors);
+      break;
+    case 'phone':
+      validateExactKeys(value, ['type', 'phone'], path, errors);
+      validateString(value.phone, `${path}.phone`, errors);
+      break;
+    case 'email':
+      validateExactKeys(value, ['type', 'email'], path, errors);
+      validateString(value.email, `${path}.email`, errors);
+      break;
+    default:
+      addError(errors, 'invalid_value', `${path}.type`);
+  }
+}
+
+function validateRichTextDocument(value: unknown, path: string, errors: DocumentValidationError[]): void {
+  if (!isRecord(value)) {addError(errors, 'invalid_type', path); return;}
+  validateExactKeys(value, ['type', 'paragraphs'], path, errors);
+  if (value.type !== 'rich-text-v1') {addError(errors, 'invalid_value', `${path}.type`);}
+  if (!Array.isArray(value.paragraphs) || value.paragraphs.length === 0) {
+    addError(errors, 'invalid_value', `${path}.paragraphs`);
+    return;
+  }
+  value.paragraphs.forEach((paragraph, paragraphIndex) => {
+    const paragraphPath = `${path}.paragraphs.${paragraphIndex}`;
+    if (!isRecord(paragraph)) {addError(errors, 'invalid_type', paragraphPath); return;}
+    validateExactKeys(paragraph, ['size', 'fontFamily', 'alignment', 'runs'], paragraphPath, errors);
+    if (!['small', 'medium', 'large', 'h1', 'h2', 'h3'].includes(String(paragraph.size))) {addError(errors, 'invalid_value', `${paragraphPath}.size`);}
+    validateNullableString(paragraph.fontFamily, `${paragraphPath}.fontFamily`, errors);
+    if (!['left', 'center', 'right', 'justify'].includes(String(paragraph.alignment))) {addError(errors, 'invalid_value', `${paragraphPath}.alignment`);}
+    if (!Array.isArray(paragraph.runs) || paragraph.runs.length === 0) {
+      addError(errors, 'invalid_value', `${paragraphPath}.runs`);
+      return;
+    }
+    paragraph.runs.forEach((run, runIndex) => {
+      const runPath = `${paragraphPath}.runs.${runIndex}`;
+      if (!isRecord(run)) {addError(errors, 'invalid_type', runPath); return;}
+      validateExactKeys(run, ['text', 'marks'], runPath, errors);
+      validateString(run.text, `${runPath}.text`, errors);
+      if (run.marks === undefined) {return;}
+      if (!isRecord(run.marks)) {addError(errors, 'invalid_type', `${runPath}.marks`); return;}
+      validateExactKeys(run.marks, ['bold', 'italic', 'underline', 'strike', 'color'], `${runPath}.marks`, errors);
+      for (const mark of ['bold', 'italic', 'underline', 'strike']) {
+        if (run.marks[mark] !== undefined && run.marks[mark] !== true) {addError(errors, 'invalid_value', `${runPath}.marks.${mark}`);}
+      }
+      if (run.marks.color !== undefined && !isNonEmptyString(run.marks.color)) {addError(errors, 'invalid_value', `${runPath}.marks.color`);}
+    });
+  });
+}
+
+function validateBlockContent(type: unknown, value: unknown, path: string, errors: DocumentValidationError[]): void {
+  if (!isRecord(value)) {addError(errors, 'invalid_type', path); return;}
+  const stringFields = (fields: readonly string[]) => fields.forEach((field) => validateString(value[field], `${path}.${field}`, errors));
+  const rows = (field: string, validateRow: (row: Record<string, unknown>, rowPath: string) => void) => {
+    if (!Array.isArray(value[field])) {addError(errors, 'invalid_type', `${path}.${field}`); return;}
+    value[field].forEach((row, index) => {
+      const rowPath = `${path}.${field}.${index}`;
+      if (!isRecord(row)) {addError(errors, 'invalid_type', rowPath); return;}
+      validateRow(row, rowPath);
+    });
+  };
+
+  switch (type) {
+    case 'avatar':
+      validateExactKeys(value, ['heading', 'subtitle', 'imageMediaId', 'imageAlt', 'layout', 'avatarSize', 'coverColor', 'coverMediaId'], path, errors);
+      stringFields(['heading', 'subtitle', 'imageAlt']);
+      validateNullableString(value.imageMediaId, `${path}.imageMediaId`, errors);
+      validateNullableString(value.coverColor, `${path}.coverColor`, errors);
+      validateNullableString(value.coverMediaId, `${path}.coverMediaId`, errors);
+      if (!['centered', 'cover-centered', 'cover-left', 'image-cover'].includes(String(value.layout))) {addError(errors, 'invalid_value', `${path}.layout`);}
+      if (![65, 95, 125, 150].includes(Number(value.avatarSize))) {addError(errors, 'invalid_value', `${path}.avatarSize`);}
+      return;
+    case 'button':
+      validateExactKeys(value, ['label', 'icon', 'color', 'textColor', 'radius', 'action'], path, errors);
+      stringFields(['label', 'color', 'textColor']);
+      if (!['link', 'phone', 'email', 'message'].includes(String(value.icon))) {addError(errors, 'invalid_value', `${path}.icon`);}
+      if (!isBoundedNumber(value.radius, 0, 100)) {addError(errors, 'invalid_value', `${path}.radius`);}
+      validateCtaAction(value.action, `${path}.action`, errors);
+      return;
+    case 'links':
+      validateExactKeys(value, ['links'], path, errors);
+      rows('links', (row, rowPath) => {
+        validateExactKeys(row, ['id', 'label', 'action'], rowPath, errors);
+        validateRequiredString(row.id, `${rowPath}.id`, errors);
+        validateString(row.label, `${rowPath}.label`, errors);
+        validateCtaAction(row.action, `${rowPath}.action`, errors);
+      });
+      return;
+    case 'text':
+      validateExactKeys(value, ['document'], path, errors);
+      validateRichTextDocument(value.document, `${path}.document`, errors);
+      return;
+    case 'image':
+      validateExactKeys(value, ['imageMediaId', 'alt'], path, errors);
+      validateNullableString(value.imageMediaId, `${path}.imageMediaId`, errors);
+      validateString(value.alt, `${path}.alt`, errors);
+      return;
+    case 'gallery':
+      validateExactKeys(value, ['images'], path, errors);
+      rows('images', (row, rowPath) => {
+        validateExactKeys(row, ['mediaId', 'alt'], rowPath, errors);
+        validateRequiredString(row.mediaId, `${rowPath}.mediaId`, errors);
+        validateString(row.alt, `${rowPath}.alt`, errors);
+      });
+      return;
+    case 'services': {
+      validateExactKeys(value, ['title', 'serviceIds', 'autoplayIntervalSeconds', 'showBookingButton'], path, errors);
+      validateString(value.title, `${path}.title`, errors);
+      if (!Array.isArray(value.serviceIds) || value.serviceIds.length > 12) {addError(errors, 'invalid_value', `${path}.serviceIds`);}
+      else if (value.serviceIds.some((id) => !Number.isInteger(id) || Number(id) <= 0)
+        || new Set(value.serviceIds).size !== value.serviceIds.length) {addError(errors, 'invalid_value', `${path}.serviceIds`);}
+      if (!(value.autoplayIntervalSeconds === null || (Number.isInteger(value.autoplayIntervalSeconds)
+        && Number(value.autoplayIntervalSeconds) >= 3 && Number(value.autoplayIntervalSeconds) <= 30))) {
+        addError(errors, 'invalid_value', `${path}.autoplayIntervalSeconds`);
+      }
+      if (typeof value.showBookingButton !== 'boolean') {addError(errors, 'invalid_type', `${path}.showBookingButton`);}
+      return;
+    }
+    case 'contacts':
+      validateExactKeys(value, ['title', 'contacts'], path, errors);
+      validateString(value.title, `${path}.title`, errors);
+      rows('contacts', (row, rowPath) => {
+        validateExactKeys(row, ['id', 'label', 'action'], rowPath, errors);
+        validateRequiredString(row.id, `${rowPath}.id`, errors);
+        validateString(row.label, `${rowPath}.label`, errors);
+        validateCtaAction(row.action, `${rowPath}.action`, errors);
+      });
+      return;
+    case 'social-button':
+      validateExactKeys(value, ['platform', 'label', 'url'], path, errors);
+      if (!SOCIAL_PLATFORMS.includes(value.platform as SocialPlatform)) {addError(errors, 'invalid_value', `${path}.platform`);}
+      validateRequiredString(value.label, `${path}.label`, errors);
+      validateRequiredString(value.url, `${path}.url`, errors);
+      if (typeof value.url === 'string') {
+        try { if (!['http:', 'https:'].includes(new URL(value.url).protocol)) {addError(errors, 'invalid_value', `${path}.url`);} }
+        catch {addError(errors, 'invalid_value', `${path}.url`);}
+      }
+      return;
+    case 'map':
+      validateExactKeys(value, ['title', 'address', 'label', 'url'], path, errors);
+      stringFields(['title', 'address', 'label', 'url']);
+      return;
+    case 'divider':
+      validateExactKeys(value, [], path, errors);
+      return;
+    case 'faq':
+      validateExactKeys(value, ['title', 'items'], path, errors);
+      validateString(value.title, `${path}.title`, errors);
+      rows('items', (row, rowPath) => {
+        validateExactKeys(row, ['id', 'title', 'description'], rowPath, errors);
+        validateRequiredString(row.id, `${rowPath}.id`, errors);
+        validateString(row.title, `${rowPath}.title`, errors);
+        validateString(row.description, `${rowPath}.description`, errors);
+      });
+      return;
+    default:
+      addError(errors, 'invalid_value', path.replace(/\.content$/, '.type'));
+  }
+}
+
 function validateThemeTypographyToken(value: unknown, path: string, errors: DocumentValidationError[]): void {
   if (!isRecord(value)) {addError(errors, 'invalid_type', path); return;}
+  validateExactKeys(value, ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing'], path, errors);
   validateRequiredString(value.fontFamily, `${path}.fontFamily`, errors);
   if (!isBoundedNumber(value.fontSize, 8, 96)) {addError(errors, 'invalid_value', `${path}.fontSize`);}
   if (!isBoundedNumber(value.fontWeight, 100, 900) || !Number.isInteger(value.fontWeight)) {addError(errors, 'invalid_value', `${path}.fontWeight`);}
@@ -170,14 +362,17 @@ function validateThemeTypographyToken(value: unknown, path: string, errors: Docu
 
 function validateThemeTokens(value: unknown, errors: DocumentValidationError[]): void {
   if (!isRecord(value)) {addError(errors, 'invalid_type', 'theme.tokens'); return;}
+  validateExactKeys(value, ['colors', 'typography', 'layout'], 'theme.tokens', errors);
   if (!isRecord(value.colors)) {addError(errors, 'invalid_type', 'theme.tokens.colors');}
   else {
+    validateExactKeys(value.colors, ['contrast', 'linkTitle', 'linkSubtitle', 'linkShadow', 'linkBorder', 'focus', 'checkboxBackground'], 'theme.tokens.colors', errors);
     for (const color of ['contrast', 'linkTitle', 'linkSubtitle', 'linkShadow', 'linkBorder', 'focus', 'checkboxBackground']) {
       validateRequiredString(value.colors[color], `theme.tokens.colors.${color}`, errors);
     }
   }
   if (!isRecord(value.typography)) {addError(errors, 'invalid_type', 'theme.tokens.typography');}
   else {
+    validateExactKeys(value.typography, ['fontFamily', 'fontWeight', 'boldFontWeight', 'headingColor', 'avatarTitle', 'avatarBio', 'linkTitle', 'linkSubtitle', 'h1', 'h2', 'h3', 'textLarge', 'textMedium', 'textSmall'], 'theme.tokens.typography', errors);
     validateRequiredString(value.typography.fontFamily, 'theme.tokens.typography.fontFamily', errors);
     validateRequiredString(value.typography.headingColor, 'theme.tokens.typography.headingColor', errors);
     for (const weight of ['fontWeight', 'boldFontWeight']) {
@@ -191,6 +386,7 @@ function validateThemeTokens(value: unknown, errors: DocumentValidationError[]):
   }
   if (!isRecord(value.layout)) {addError(errors, 'invalid_type', 'theme.tokens.layout');}
   else {
+    validateExactKeys(value.layout, ['blockRadius', 'linkRadius', 'linkGap'], 'theme.tokens.layout', errors);
     for (const token of ['blockRadius', 'linkRadius', 'linkGap']) {
       if (!isBoundedNumber(value.layout[token], 0, 100)) {addError(errors, 'invalid_value', `theme.tokens.layout.${token}`);}
     }
@@ -202,6 +398,7 @@ function validateSeo(value: unknown, errors: DocumentValidationError[]): void {
     addError(errors, 'invalid_type', 'seo');
     return;
   }
+  validateExactKeys(value, ['title', 'description', 'imageMediaId'], 'seo', errors);
 
   validateString(value.title, 'seo.title', errors);
   validateString(value.description, 'seo.description', errors);
@@ -233,9 +430,11 @@ function validateSections(value: unknown, errors: DocumentValidationError[], ids
     if (!layouts.has(section.layout as SectionLayout)) {
       addError(errors, 'invalid_value', `${path}.layout`);
     }
+    validateExactKeys(section, ['id', 'name', 'visible', 'layout', 'design', 'blocks'], path, errors);
     if (!isRecord(section.design)) {
       addError(errors, 'invalid_type', `${path}.design`);
     } else {
+      validateExactKeys(section.design, ['variant', 'backgroundColor', 'textColor', 'backgroundMediaId', 'backgroundOverlay', 'backgroundFit', 'backgroundPosition', 'paddingTop', 'paddingBottom', 'horizontalMargin', 'borderRadius', 'borderWidth', 'borderColor', 'shadow', 'width', 'mobileVisible', 'headingStyle', 'textStyle', 'linkStyle'], `${path}.design`, errors);
       if (!['off', 'custom', 'primary', 'secondary'].includes(String(section.design.variant))) {addError(errors, 'invalid_value', `${path}.design.variant`);}
       for (const color of ['backgroundColor', 'textColor', 'borderColor']) {
         if (!isNullableString(section.design[color])) {addError(errors, 'invalid_type', `${path}.design.${color}`);}
@@ -280,6 +479,7 @@ function validateBlocks(
       addError(errors, 'invalid_type', blockPath);
       return;
     }
+    validateExactKeys(block, ['id', 'type', 'name', 'visible', 'content', 'design'], blockPath, errors);
 
     validateEntityId(block.id, `${blockPath}.id`, errors, ids);
     validateRequiredString(block.type, `${blockPath}.type`, errors);
@@ -288,12 +488,12 @@ function validateBlocks(
     if (typeof block.visible !== 'boolean') {
       addError(errors, 'invalid_type', `${blockPath}.visible`);
     }
-    if (!isRecord(block.content)) {
-      addError(errors, 'invalid_type', `${blockPath}.content`);
-    }
+    if (!knownBlockTypes.has(String(block.type))) {addError(errors, 'invalid_value', `${blockPath}.type`);}
+    else {validateBlockContent(block.type, block.content, `${blockPath}.content`, errors);}
     if (!isRecord(block.design)) {
       addError(errors, 'invalid_type', `${blockPath}.design`);
     } else {
+      validateExactKeys(block.design, ['backgroundColor', 'textColor', 'backgroundMediaId', 'backgroundOverlay', 'backgroundFit', 'backgroundPosition', 'paddingTop', 'paddingBottom', 'borderRadius'], `${blockPath}.design`, errors);
       if (!isNullableString(block.design.backgroundColor)) {
         addError(errors, 'invalid_type', `${blockPath}.design.backgroundColor`);
       }
@@ -327,6 +527,7 @@ function validateMedia(value: unknown, errors: DocumentValidationError[], ids: S
       addError(errors, 'invalid_type', path);
       return;
     }
+    validateExactKeys(media, ['id', 'url', 'mimeType', 'alt', 'width', 'height'], path, errors);
 
     validateEntityId(media.id, `${path}.id`, errors, ids);
     validateRequiredString(media.url, `${path}.url`, errors);
@@ -395,6 +596,7 @@ export function validateDocument(input: unknown): DocumentValidationResult {
   if (!isRecord(input)) {
     return { valid: false, errors: [{ code: 'invalid_type', path: '' }] };
   }
+  validateExactKeys(input, ['schemaVersion', 'id', 'slug', 'status', 'profile', 'theme', 'sections', 'seo', 'media', 'createdAt', 'updatedAt'], '', errors);
 
   if (input.schemaVersion !== PUBLIC_PAGE_SCHEMA_VERSION) {
     addError(errors, 'unsupported_schema_version', 'schemaVersion');

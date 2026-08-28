@@ -13,10 +13,11 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  Add, ChatBubbleOutlined, Delete, EmailOutlined, Facebook, Instagram, Link as LinkIcon, PhoneOutlined, Telegram, WhatsApp,
+  Add, ChatBubbleOutlined, Delete, EmailOutlined, Facebook, Instagram, Link as LinkIcon, Pause, PhoneOutlined, PlayArrow, Telegram, WhatsApp,
 } from '@mui/icons-material';
 import { SvgIcon, type SvgIconProps } from '@mui/material';
-import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
 import type {
   BlockContent,
   CtaAction,
@@ -28,7 +29,10 @@ import type {
   RichTextSize,
 } from '../../features/public-page-builder/types/publicPage';
 import { normalizeRichTextDocument } from '../../features/public-page-builder/model/normalizeDocument';
-import { ctaActionToHref } from '../../features/public-page-builder/model/cta';
+import {
+  contactHref,
+  ctaActionToHref,
+} from '../../features/public-page-builder/model/cta';
 import { useI18n } from '../../shared/i18n/I18nContext';
 import { publicPageText } from '../public-page-builder/uiText';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from '../../features/public-page-builder/model/socialPlatforms';
@@ -47,6 +51,7 @@ import {
   type AvatarLayout,
 } from './avatarPresentation';
 import { resolvePublicPageThemeVariables } from './publicPageThemeVariables';
+import type { PublicBookingService } from '../../shared/types/api';
 
 export { normalizeAvatarLayout, normalizeAvatarSize, resolveAvatarPresentation } from './avatarPresentation';
 
@@ -66,9 +71,7 @@ export const validItems = (content: BlockContent, key: string, fields: string[])
     fields.filter((field) => !hasValue(item[field])).map((field) => `${key}.${index}.${field} is required`),
   );
 
-export type SafeLinkKind = 'contact' | 'web';
-
-export function normalizeSafeHref(value: unknown, kind: SafeLinkKind): string | null {
+export function normalizeSafeHref(value: unknown): string | null {
   const href = text(value).trim();
   if (!href) {
     return null;
@@ -80,12 +83,6 @@ export function normalizeSafeHref(value: unknown, kind: SafeLinkKind): string | 
     } catch {
       return null;
     }
-  }
-  if (kind === 'contact' && /^mailto:/i.test(href)) {
-    return ctaActionToHref({ type: 'email', email: href.slice(7) });
-  }
-  if (kind === 'contact' && /^tel:/i.test(href)) {
-    return ctaActionToHref({ type: 'phone', phone: href.slice(4) });
   }
   return null;
 }
@@ -178,8 +175,8 @@ export function SocialPlatformIcon({ platform, ...props }: { platform: SocialPla
 
 const fieldKeys: Record<string, Parameters<typeof publicPageText>[1]> = {
   title: 'fieldTitle', heading: 'fieldHeadline', subtitle: 'fieldSubtitle', body: 'fieldBody', description: 'fieldDescription',
-  label: 'fieldLabel', url: 'fieldUrl', alt: 'imageAlt', imageUrl: 'fieldImageUrl', imageAlt: 'imageAlt',
-  ctaLabel: 'fieldCtaLabel', address: 'fieldAddress', price: 'fieldPrice', platform: 'fieldPlatform',
+  label: 'fieldLabel', url: 'fieldUrl', alt: 'imageAlt', imageAlt: 'imageAlt',
+  address: 'fieldAddress', price: 'fieldPrice', platform: 'fieldPlatform',
 };
 
 function Field({ field, value, onChange }: { field: string; value: unknown; onChange: (value: string) => void }) {
@@ -213,14 +210,13 @@ function ActionEditor({
 }
 
 const editorShape: Record<string, { fields?: string[]; list?: { key: string; fields: string[] } }> = {
-  hero: { fields: ['title', 'subtitle', 'ctaLabel'] },
   avatar: {},
   button: { fields: ['label'] },
   links: { list: { key: 'links', fields: ['label'] } },
   text: {},
   image: {},
-  services: { fields: ['title'], list: { key: 'services', fields: ['title', 'description', 'price'] } },
-  contacts: { fields: ['title'], list: { key: 'contacts', fields: ['label', 'url'] } },
+  services: { fields: ['title'] },
+  contacts: { fields: ['title'], list: { key: 'contacts', fields: ['label'] } },
   'social-button': { fields: ['label', 'url'] },
   map: { fields: ['title', 'address', 'label', 'url'] },
   faq: { fields: ['title'], list: { key: 'items', fields: ['title', 'description'] } }, divider: {},
@@ -322,6 +318,7 @@ export function SpecializedBlockEditor({
     update({ ...block.content, [list!.key]: [...rows, {
       id: crypto.randomUUID(), ...row,
       ...(list!.key === 'links' && block.type === 'links' ? { action: { type: 'url', url: '' } } : {}),
+      ...(list!.key === 'contacts' && block.type === 'contacts' ? { action: { type: 'url', url: '' } } : {}),
       ...(preset ? { platform: preset, label: publicPageText(locale, `platform${preset[0].toUpperCase()}${preset.slice(1)}` as Parameters<typeof publicPageText>[1]), url: 'https://' } : {}),
     }] });
   };
@@ -329,8 +326,6 @@ export function SpecializedBlockEditor({
     <Stack spacing={1.5}>
       {shape.fields?.map((field) => <Field key={field} field={field} value={block.content[field]}
         onChange={(value) => update({ ...block.content, [field]: value })} />)}
-      {block.type === 'hero' && block.content.action && typeof block.content.action === 'object' && !Array.isArray(block.content.action)
-        ? <ActionEditor value={block.content.action as Record<string, unknown>} onChange={(action) => update({ ...block.content, action })} /> : null}
       {block.type === 'button' && block.content.action && typeof block.content.action === 'object' && !Array.isArray(block.content.action)
         ? <><ActionEditor value={block.content.action as Record<string, unknown>} onChange={(action) => update({ ...block.content, action })} />
           <TextField select size="small" label={publicPageText(locale, 'buttonIcon')} value={text(block.content.icon)} onChange={(event) => update({ ...block.content, icon: event.target.value })}>
@@ -420,7 +415,9 @@ export function SpecializedBlockEditor({
                 {row.action && typeof row.action === 'object' && !Array.isArray(row.action) ? (
                   <ActionEditor value={row.action as Record<string, unknown>} onChange={(action) => update({
                     ...block.content,
-                    [list.key]: rows.map((candidate, rowIndex) => rowIndex === index ? { ...candidate, action } : candidate),
+                    [list.key]: rows.map((candidate, rowIndex) => rowIndex === index
+                      ? { ...candidate, action }
+                      : candidate),
                   })} />
                 ) : null}
                 <IconButton size="small" aria-label={publicPageText(locale, 'removeItem')}
@@ -435,40 +432,25 @@ export function SpecializedBlockEditor({
   );
 }
 
-export function HeroBlock({ block }: { block: PageBlock }) {
-  return (
-    <Surface block={block}>
-      <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
-        {text(block.content.imageUrl) && (
-          <Box component="img" src={text(block.content.imageUrl)} alt={text(block.content.imageAlt)}
-            sx={{ width: '100%', maxHeight: 420, objectFit: 'cover', borderRadius: 2 }} />
-        )}
-        <Typography component="h1" variant="h3">{text(block.content.title)}</Typography>
-        {text(block.content.subtitle) && <Typography variant="h6">{text(block.content.subtitle)}</Typography>}
-        <CtaButton label={text(block.content.ctaLabel)} action={block.content.action} />
-      </Stack>
-    </Surface>
-  );
-}
-
 export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: PageBlock; mediaUrlFor?: (mediaId: string) => string | undefined; preview?: boolean }) {
   const presentation = resolveAvatarPresentation(block.content.layout, block.content.avatarSize);
   const layout = presentation.renderLayout;
   const imageMediaId = text(block.content.imageMediaId);
-  const imageUrl = ((imageMediaId ? mediaUrlFor?.(imageMediaId) : undefined) ?? text(block.content.imageUrl)) || (preview ? AVATAR_EDITOR_PLACEHOLDER_URL : '');
+  const imageUrl = (imageMediaId ? mediaUrlFor?.(imageMediaId) : undefined) || (preview ? AVATAR_EDITOR_PLACEHOLDER_URL : '');
   const coverMediaId = text(block.content.coverMediaId);
-  const coverUrl = (coverMediaId ? mediaUrlFor?.(coverMediaId) : undefined) ?? text(block.content.coverUrl);
+  const coverUrl = coverMediaId ? mediaUrlFor?.(coverMediaId) : undefined;
   const coverBackground = coverUrl ? `url("${coverUrl}")` : undefined;
   const copy = <Box sx={{ maxWidth: '100%', minWidth: 0 }}><Typography component="h1" variant="h4" sx={{ ...wrappingTextSx,
-    fontFamily: 'var(--avatar-title-font-family)', fontSize: 'var(--avatar-title-size)', fontWeight: 'var(--avatar-title-weight)',
-    fontStyle: 'var(--avatar-title-style)', lineHeight: 'var(--avatar-title-line-height)', color: 'var(--avatar-title-color)' }}>{text(block.content.heading)}</Typography>
-    {text(block.content.subtitle) ? <Typography sx={{ ...wrappingTextSx, fontFamily: 'var(--avatar-bio-font-family)', fontSize: 'var(--avatar-bio-size)',
-      fontWeight: 'var(--avatar-bio-weight)', fontStyle: 'var(--avatar-bio-style)', lineHeight: 'var(--avatar-bio-line-height)', color: 'var(--avatar-bio-color)' }}>{text(block.content.subtitle)}</Typography> : null}</Box>;
+    '&&': { fontFamily: 'var(--avatar-title-font-family)', fontSize: 'var(--avatar-title-size)', fontWeight: 'var(--avatar-title-weight)',
+      fontStyle: 'var(--avatar-title-style)', lineHeight: 'var(--avatar-title-line-height)', color: 'var(--avatar-title-color)' } }}>{text(block.content.heading)}</Typography>
+    {text(block.content.subtitle) ? <Typography sx={{ ...wrappingTextSx,
+      '&&': { fontFamily: 'var(--avatar-bio-font-family)', fontSize: 'var(--avatar-bio-size)', fontWeight: 'var(--avatar-bio-weight)',
+        fontStyle: 'var(--avatar-bio-style)', lineHeight: 'var(--avatar-bio-line-height)', color: 'var(--avatar-bio-color)' } }}>{text(block.content.subtitle)}</Typography> : null}</Box>;
   if (layout === 'image-cover') {
-    const heroImageAlt = text(block.content.imageAlt).trim();
+    const imageAlt = text(block.content.imageAlt).trim();
     return <Box sx={{ position: 'relative', width: '100%', mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`,
       minWidth: 0, maxWidth: '100%', bgcolor: 'transparent' }}>
-      <Box className="public-page-avatar-cover-bleed" role={imageUrl && heroImageAlt ? 'img' : undefined} aria-label={imageUrl && heroImageAlt ? heroImageAlt : undefined} sx={{
+      <Box className="public-page-avatar-cover-bleed" role={imageUrl && imageAlt ? 'img' : undefined} aria-label={imageUrl && imageAlt ? imageAlt : undefined} sx={{
         width: `calc(100% + ${AVATAR_PREVIEW_REFERENCE.sectionPadding * 2}px)`,
         height: AVATAR_HERO_REFERENCE.imageHeight,
         borderRadius: 'var(--avatar-leading-section-radius) var(--avatar-leading-section-radius) 0 0',
@@ -601,16 +583,19 @@ export function TextBlock({ block }: { block: PageBlock }) {
 
 export function ImageBlock({ block, mediaUrlFor }: { block: PageBlock; mediaUrlFor?: (mediaId: string) => string | undefined }) {
   const mediaId = text(block.content.imageMediaId);
-  const url = (mediaId ? mediaUrlFor?.(mediaId) : undefined) ?? text(block.content.url);
+  const url = mediaId ? mediaUrlFor?.(mediaId) : undefined;
   return <Surface block={block}>{url && <Box component="img" src={url} alt={text(block.content.alt)}
     sx={{ display: 'block', width: '100%', height: 'auto', maxHeight: 560, objectFit: 'cover', borderRadius: 2 }} />}</Surface>;
 }
 
 export function GalleryBlock({ block, mediaUrlFor }: { block: PageBlock; mediaUrlFor?: (mediaId: string) => string | undefined }) {
   return <Surface block={block}><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,minmax(0,1fr))' }, gap: 1.5 }}>
-    {items(block.content.images).map((item, index) => <Box key={text(item.id, String(index))} component="img"
-      src={(text(item.mediaId) ? mediaUrlFor?.(text(item.mediaId)) : undefined) ?? text(item.url)} alt={text(item.alt)} loading="lazy"
-      sx={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 2 }} />)}
+    {items(block.content.images).flatMap((item, index) => {
+      const mediaId = text(item.mediaId);
+      const url = mediaId ? mediaUrlFor?.(mediaId) : undefined;
+      return url ? [<Box key={mediaId || String(index)} component="img" src={url} alt={text(item.alt)} loading="lazy"
+        sx={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 2 }} />] : [];
+    })}
   </Box></Surface>;
 }
 
@@ -625,31 +610,183 @@ function CardList({ block, field }: { block: PageBlock; field: string }) {
   </Stack></Surface>;
 }
 
-export const ServicesBlock = ({ block }: { block: PageBlock }) => <CardList block={block} field="services" />;
+function safeServiceImageUrl(value: string | null): string | null {
+  if (!value) {return null;}
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function formatServicePrice(service: PublicBookingService, locale: string): string {
+  try {
+    return new Intl.NumberFormat(locale, { style: 'currency', currency: service.currency }).format(service.price);
+  } catch {
+    return `${service.price} ${service.currency}`;
+  }
+}
+
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(() => typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(media.matches);
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  return reduced;
+}
+
+export function ServicesBlock({ block, services = [], publicPageSlug = '', editor = false }: {
+  block: PageBlock;
+  services?: readonly PublicBookingService[];
+  publicPageSlug?: string;
+  editor?: boolean;
+}) {
+  const { locale } = useI18n();
+  const serviceIds = Array.isArray(block.content.serviceIds)
+    ? block.content.serviceIds.filter((id): id is number => Number.isInteger(id) && Number(id) > 0)
+    : [];
+  const byId = new Map(services.map((service) => [service.id, service]));
+  const selectedServices = serviceIds.flatMap((id) => byId.get(id) ?? []);
+  const reducedMotion = useReducedMotion();
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: 'start',
+    loop: selectedServices.length > 1,
+    duration: reducedMotion ? 0 : 25,
+  });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [autoplayPaused, setAutoplayPaused] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focusWithin, setFocusWithin] = useState(false);
+  const [pageHidden, setPageHidden] = useState(() => typeof document !== 'undefined' && document.hidden);
+  const [manualNavigation, setManualNavigation] = useState(0);
+  const interval = Number.isInteger(block.content.autoplayIntervalSeconds)
+    ? Number(block.content.autoplayIntervalSeconds) : null;
+  const autoplayConfigured = interval !== null && interval >= 3 && interval <= 30 && selectedServices.length > 1;
+  const onSelect = useCallback(() => setSelectedIndex(emblaApi?.selectedScrollSnap() ?? 0), [emblaApi]);
+  useEffect(() => {
+    if (!emblaApi) {return;}
+    emblaApi.on('select', onSelect);
+    emblaApi.on('reInit', onSelect);
+    return () => {emblaApi.off('select', onSelect); emblaApi.off('reInit', onSelect);};
+  }, [emblaApi, onSelect]);
+  useEffect(() => {
+    const onVisibilityChange = () => setPageHidden(document.hidden);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, []);
+  useEffect(() => {
+    if (!emblaApi || !autoplayConfigured || editor || reducedMotion || autoplayPaused || hovered || focusWithin || pageHidden) {return;}
+    const timer = window.setTimeout(() => emblaApi.scrollNext(), interval! * 1000);
+    return () => window.clearTimeout(timer);
+  }, [autoplayConfigured, autoplayPaused, editor, emblaApi, focusWithin, hovered, interval, manualNavigation, pageHidden, reducedMotion, selectedIndex]);
+  const navigate = (index: number) => {
+    emblaApi?.scrollTo(index);
+    setManualNavigation((value) => value + 1);
+  };
+  const onNavigationKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? selectedServices.length - 1
+      : event.key === 'ArrowRight' ? (index + 1) % selectedServices.length
+        : event.key === 'ArrowLeft' ? (index - 1 + selectedServices.length) % selectedServices.length : null;
+    if (nextIndex === null) {return;}
+    event.preventDefault();
+    navigate(nextIndex);
+    event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('button[data-service-dot]')[nextIndex]?.focus();
+  };
+  const onBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) {setFocusWithin(false);}
+  };
+  const title = text(block.content.title) || publicPageText(locale, 'blockTypeServices');
+  if (selectedServices.length === 0) {
+    return editor ? <Surface block={block}><Typography component="h2" variant="h5">{title}</Typography>
+      <Typography color="text.secondary">{publicPageText(locale, 'servicesNoneSelected')}</Typography></Surface> : null;
+  }
+  const slides = selectedServices.map((service, index) => {
+    const imageUrl = safeServiceImageUrl(service.imageUrl);
+    const inactive = selectedServices.length > 1 && selectedIndex !== index;
+    return <Box key={service.id} role="group" aria-roledescription={publicPageText(locale, 'carouselSlide')}
+      inert={inactive ? true : undefined} aria-hidden={inactive ? true : undefined}
+      aria-label={publicPageText(locale, 'serviceSlidePosition').replace('{current}', String(index + 1)).replace('{total}', String(selectedServices.length))}
+      sx={{
+        flex: selectedServices.length === 1 ? '0 0 100%' : { xs: '0 0 88%', sm: '0 0 72%' },
+        minWidth: 0,
+        display: 'flex',
+        pr: selectedServices.length === 1 ? 0 : 1.5,
+      }}>
+      <Card variant="outlined" sx={{ width: '100%', minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        bgcolor: 'var(--avatar-surface-background)', color: 'var(--page-text)', borderColor: 'color-mix(in srgb, var(--page-text) 14%, transparent)',
+        borderRadius: 'var(--block-border-radius)' }}>
+        {imageUrl ? <Box component="img" src={imageUrl} alt="" loading="lazy" sx={{ width: '100%', height: 180, objectFit: 'cover' }} /> : null}
+        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+          <Typography component="h3" variant="h6">{service.name}</Typography>
+          {service.description ? <Typography>{service.description}</Typography> : null}
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline', flexWrap: 'wrap', mt: 'auto' }}>
+            <Typography sx={{ fontWeight: 700 }}>{formatServicePrice(service, locale)}</Typography>
+            <Typography variant="body2">{service.durationMin} {publicPageText(locale, 'serviceMinutes')}</Typography>
+          </Stack>
+          {service.firstSessionFree ? <Typography variant="body2" sx={{ color: 'var(--theme-link-title-color)', fontWeight: 700 }}>
+            {publicPageText(locale, 'serviceFirstSessionFree')}
+          </Typography> : null}
+          {block.content.showBookingButton !== false && publicPageSlug ? <Button component="a"
+            href={`/${encodeURIComponent(publicPageSlug)}/booking?service=${service.id}`} variant="contained"
+            sx={{ ...ordinaryPublicPageLinkSx, mt: 0.5, minHeight: 44, textTransform: 'none' }}>
+            {publicPageText(locale, 'serviceBook')}
+          </Button> : null}
+        </CardContent>
+      </Card>
+    </Box>;
+  });
+  return <Surface block={block}><Stack spacing={1.5} role="region" aria-label={title}
+    onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+    onFocusCapture={() => setFocusWithin(true)} onBlurCapture={onBlur}>
+    <Typography component="h2" variant="h5">{title}</Typography>
+    {selectedServices.length === 1 ? slides[0] : <>
+      <Box ref={emblaRef} sx={{ overflow: 'hidden', minWidth: 0, maxWidth: '100%', touchAction: 'pan-y pinch-zoom' }}>
+        <Box sx={{ display: 'flex', alignItems: 'stretch', minWidth: 0 }}>{slides}</Box>
+      </Box>
+      <Stack direction="row" spacing={1} sx={{ justifyContent: 'center', alignItems: 'center' }}>
+        <Stack direction="row" spacing={0.75} role="group" aria-label={publicPageText(locale, 'carouselNavigation')}>
+          {selectedServices.map((service, index) => <ButtonBase key={service.id} data-service-dot
+            aria-label={publicPageText(locale, 'goToServiceSlide').replace('{number}', String(index + 1))}
+            aria-current={selectedIndex === index ? 'true' : undefined} onClick={() => navigate(index)}
+            onKeyDown={(event) => onNavigationKeyDown(event, index)}
+            sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: selectedIndex === index ? 'var(--theme-link-background)' : 'transparent',
+              border: '2px solid', borderColor: 'var(--theme-link-background)', '&:focus-visible': { outline: '2px solid var(--theme-link-border-color)', outlineOffset: 2 } }} />)}
+        </Stack>
+        {autoplayConfigured && !editor && !reducedMotion ? <IconButton size="small" aria-label={publicPageText(locale, autoplayPaused ? 'carouselPlay' : 'carouselPause')}
+          onClick={() => setAutoplayPaused((value) => !value)}>{autoplayPaused ? <PlayArrow /> : <Pause />}</IconButton> : null}
+      </Stack>
+    </>}
+  </Stack></Surface>;
+}
+
 export const FaqBlock = ({ block }: { block: PageBlock }) => <CardList block={block} field="items" />;
 
-function LinkList({ block, field, kind }: { block: PageBlock; field: string; kind: SafeLinkKind }) {
+export function ContactsBlock({ block }: { block: PageBlock }) {
+  const contacts = items(block.content.contacts).flatMap((item, index) => {
+    const label = text(item.label).trim();
+    const href = contactHref(item);
+    return label && href ? [{ item, index, label, href }] : [];
+  });
+  if (contacts.length === 0) {return null;}
   return <Surface block={block}><Stack spacing={1}>{text(block.content.title) &&
     <Typography component="h2" variant="h5">{text(block.content.title)}</Typography>}
-    {items(block.content[field]).map((item, index) => {
-      const href = normalizeSafeHref(item.url, kind);
-      if (!href) {
-        return null;
-      }
+    {contacts.map(({ item, index, label, href }) => {
       const external = /^https?:\/\//i.test(href);
       return <Link key={text(item.id, String(index))} href={href} target={external ? '_blank' : undefined}
         rel={external ? 'noopener noreferrer' : undefined} sx={{ ...ordinaryPublicPageLinkSx, minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>
-        {text(item.label)}
+        {label}
       </Link>;
     })}
   </Stack></Surface>;
 }
-
-export const ContactsBlock = ({ block }: { block: PageBlock }) =>
-  <LinkList block={block} field="contacts" kind="contact" />;
 export function SocialButtonBlock({ block }: { block: PageBlock }) {
   const platform = block.content.platform as SocialPlatform;
-  const href = normalizeSafeHref(block.content.url, 'web');
+  const href = normalizeSafeHref(block.content.url);
   if (!href || !SOCIAL_PLATFORMS.includes(platform)) {return null;}
   const style = socialPlatformStyles[platform];
   return <Button component="a" href={href} target="_blank" rel="noopener noreferrer" fullWidth data-social-button={platform}
@@ -666,7 +803,7 @@ export function SocialButtonBlock({ block }: { block: PageBlock }) {
 }
 
 export function MapBlock({ block }: { block: PageBlock }) {
-  const url = normalizeSafeHref(block.content.url, 'web');
+  const url = normalizeSafeHref(block.content.url);
   return <Surface block={block}><Typography component="h2" variant="h5">{text(block.content.title)}</Typography>
     <Typography>{text(block.content.address)}</Typography>{url && <Link href={url} target="_blank" rel="noopener noreferrer"
       sx={{ ...ordinaryPublicPageLinkSx, minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>{text(block.content.label, text(block.content.address))}</Link>}</Surface>;

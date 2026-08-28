@@ -17,9 +17,12 @@ export type PublicBookingService = {
   account_id: number;
   name_ru: string;
   name_en: string;
+  description: string | null;
   duration_min: number;
   price: number;
   currency: string;
+  is_first_free: boolean;
+  image_media_id: string | null;
   is_active: boolean;
 };
 
@@ -74,7 +77,10 @@ export async function listPublicBookingServices(accountId: number): Promise<Publ
     .where({ 'sv.account_id': accountId, 'sv.is_active': true, 'ss.is_active': true, 'sp.is_active': true })
     .distinct()
     .orderBy('sv.name_en', 'asc')
-    .select('sv.id', 'sv.account_id', 'sv.name_ru', 'sv.name_en', 'sv.duration_min', 'sv.price', 'sv.currency', 'sv.is_active');
+    .select(
+      'sv.id', 'sv.account_id', 'sv.name_ru', 'sv.name_en', 'sv.description',
+      'sv.duration_min', 'sv.price', 'sv.currency', 'sv.is_first_free', 'sv.image_media_id', 'sv.is_active',
+    );
 }
 
 export async function findPublicBookingSpecialist(
@@ -119,9 +125,10 @@ export async function findPublicBookingService(
     })
     .select(
       'sv.id', 'sv.account_id', 'sv.name_ru', 'sv.name_en',
+      'sv.description',
       db.raw('COALESCE(ss.duration_override_minutes, sv.duration_min) as duration_min'),
       db.raw('COALESCE(ss.price_override, sv.price) as price'),
-      'sv.currency', 'sv.is_active',
+      'sv.currency', 'sv.is_first_free', 'sv.image_media_id', 'sv.is_active',
     )
     .first<PublicBookingService>()) ?? null;
 }

@@ -49,12 +49,32 @@ describe('public booking service', () => {
       { id: 2, account_id: 7, name: 'Jane Smith', is_active: true, timezone: 'UTC' },
     ]);
     bookingRepository.listPublicBookingServices.mockResolvedValue([
-      { id: 3, account_id: 7, name_en: 'Consultation', name_ru: 'Консультация', duration_min: 60, price: 100, currency: 'RUB' },
+      {
+        id: 3,
+        account_id: 7,
+        name_en: 'Consultation',
+        name_ru: 'Консультация',
+        description: 'Individual consultation',
+        duration_min: 60,
+        price: 100,
+        currency: 'RUB',
+        is_first_free: true,
+        image_media_id: '07a860c5-e230-4e76-b0f1-3db60fa445e8',
+      },
     ]);
 
     await expect(getPublicBookingOptions('valid-page')).resolves.toEqual({
       specialists: [{ id: 2, name: 'Jane Smith' }],
-      services: [{ id: 3, name: 'Consultation', durationMin: 60, price: 100, currency: 'RUB' }],
+      services: [{
+        id: 3,
+        name: 'Consultation',
+        durationMin: 60,
+        price: 100,
+        currency: 'RUB',
+        description: 'Individual consultation',
+        firstSessionFree: true,
+        imageUrl: expect.stringContaining('/api/public-pages/media/07a860c5-e230-4e76-b0f1-3db60fa445e8/content'),
+      }],
     });
     expect(bookingRepository.listPublicBookingSpecialists).toHaveBeenCalledWith(7);
     expect(bookingRepository.listPublicBookingServices).toHaveBeenCalledWith(7);

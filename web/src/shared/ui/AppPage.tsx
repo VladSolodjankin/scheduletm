@@ -1,6 +1,6 @@
-import { Box, Stack, Typography, type BoxProps } from '@mui/material';
-import type { ReactNode } from 'react';
-import { APP_SPACING, APP_SIZING } from '../theme/constants';
+import { Box, Typography, type BoxProps } from '@mui/material';
+import type { CSSProperties, ReactNode } from 'react';
+import { rem } from '../theme/constants';
 
 type AppPageProps = BoxProps & {
   title: string;
@@ -9,33 +9,36 @@ type AppPageProps = BoxProps & {
   action?: ReactNode;
 };
 
-export function AppPage({ title, subtitle, children, maxWidth, action, ...rest }: AppPageProps) {
+type AppPageStyle = CSSProperties & { '--app-page-custom-max'?: string };
+
+export function AppPage({
+  title,
+  subtitle,
+  children,
+  maxWidth,
+  action,
+  className,
+  style,
+  ...rest
+}: AppPageProps) {
+  const pageStyle: AppPageStyle = {
+    ...style,
+    ...(maxWidth ? { '--app-page-custom-max': rem(maxWidth) } : {}),
+  };
+
   return (
-    <Box
-      sx={{
-        maxWidth: maxWidth || APP_SIZING.contentMaxWidth,
-        mx: 'auto',
-        px: APP_SPACING.pageX,
-        py: APP_SPACING.pageY,
-        width: '100%'
-      }}
-      {...rest}
-    >
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        spacing={2}
-        sx={{ mb: 3.5, justifyContent: 'space-between', alignItems: { md: 'flex-start' } }}
-      >
-        <Stack spacing={APP_SPACING.pageHeaderGap} sx={{ minWidth: 0 }}>
-          <Typography variant="h4">{title}</Typography>
+    <Box className={['app-page', className].filter(Boolean).join(' ')} style={pageStyle} {...rest}>
+      <Box className="app-page__header">
+        <Box className="app-page__heading">
+          <Typography variant="h4" className="app-page__title">{title}</Typography>
           {subtitle && (
-            <Typography color="text.secondary" variant="body1">
+            <Typography variant="body1" className="app-page__subtitle">
               {subtitle}
             </Typography>
           )}
-        </Stack>
-        {action ? <Box sx={{ flexShrink: 0 }}>{action}</Box> : null}
-      </Stack>
+        </Box>
+        {action ? <Box className="app-page__action">{action}</Box> : null}
+      </Box>
       {children}
     </Box>
   );

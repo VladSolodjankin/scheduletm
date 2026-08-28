@@ -24,6 +24,7 @@ import { resolvePublicPageThemeVariables } from './publicPageThemeVariables';
 import { resolveLeadingAvatarSectionMarginTop } from './avatarPresentation';
 import { ordinaryPublicPageLinkSx } from './blocks';
 import '../public-page-builder/publicPageDnd.css';
+import type { PublicBookingService } from '../../shared/types/api';
 
 const columnsByLayout: Record<SectionLayout, string> = {
   single: 'minmax(0, 1fr)',
@@ -44,9 +45,10 @@ export type PublicPageEditorRenderProps = {
   blockAriaLabel: (blockName: string) => string;
   renderBlockDragHandle?: (section: PageSection, blockIndex: number, activator: SortableActivator) => ReactNode;
   renderSectionDragHandle?: (section: PageSection, sectionIndex: number, activator: SortableActivator) => ReactNode;
+  renderSectionResizeHandle?: (section: PageSection, sectionIndex: number) => ReactNode;
   onDropItem: (payload: BuilderDragPayload, destination: BuilderDropDestination) => void;
 };
-function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, editor }: { section: PageSection; sectionIndex: number; mediaUrlFor: (id: string) => string | undefined; theme: PublicPageDocument['theme']; editor?: PublicPageEditorRenderProps }) {
+function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, publicPageSlug, editor }: { section: PageSection; sectionIndex: number; mediaUrlFor: (id: string) => string | undefined; theme: PublicPageDocument['theme']; services: readonly PublicBookingService[]; publicPageSlug: string; editor?: PublicPageEditorRenderProps }) {
   const blockContainerRef = useRef<HTMLDivElement>(null);
   useSmoothDndContainer(blockContainerRef, {
     behaviour: 'move',
@@ -68,7 +70,14 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, editor }: 
       }
     },
   }, Boolean(editor));
-  if (!editor && (!section.visible || section.blocks.length === 0)) {
+  const serviceIds = new Set(services.map(({ id }) => id));
+  const isRenderableBlock = (block: PageBlock) => {
+    if (!block.visible) {return false;}
+    if (block.type !== 'services') {return true;}
+    return Array.isArray(block.content.serviceIds) && block.content.serviceIds.some((id) => typeof id === 'number' && serviceIds.has(id));
+  };
+  const hasRenderableBlocks = section.blocks.some(isRenderableBlock);
+  if (!editor && (!section.visible || !hasRenderableBlocks)) {
     return null;
   }
 
@@ -115,7 +124,8 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, editor }: 
       '&:hover .public-page-block-actions, &:focus-within .public-page-block-actions': { opacity: 1, pointerEvents: 'auto' },
     }}
   >
-    <BlockRenderer block={block} mediaUrlFor={mediaUrlFor} editor={Boolean(editor)} themeBorderRadius={theme.styleDefaults.blockBorderRadius} roundingStyle={theme.roundingStyle} />
+    <BlockRenderer block={block} mediaUrlFor={mediaUrlFor} editor={Boolean(editor)} themeBorderRadius={theme.styleDefaults.blockBorderRadius}
+      roundingStyle={theme.roundingStyle} services={services} publicPageSlug={publicPageSlug} />
     {editor ? editor.renderBlockActions(section, blockIndex) : null}
   </Box>;
   return (
@@ -191,14 +201,16 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, editor }: 
             {renderBlock(block, blockIndex)}
           </Box>
         </Box>)}
-      </Box> : section.blocks.map(renderBlock)}
+      </Box> : section.blocks.map((block, blockIndex) => ({ block, blockIndex })).filter(({ block }) => isRenderableBlock(block))
+        .map(({ block, blockIndex }) => renderBlock(block, blockIndex))}
+      {editor && !isOff && section.blocks.length > 0 ? editor.renderSectionResizeHandle?.(section, sectionIndex) : null}
     </Box>
   );
 }
 
-type PublicPageRendererProps = { document: PublicPageDocument; mediaUrls?: ReadonlyMap<string, string>; editor?: PublicPageEditorRenderProps };
+type PublicPageRendererProps = { document: PublicPageDocument; mediaUrls?: ReadonlyMap<string, string>; services?: readonly PublicBookingService[]; editor?: PublicPageEditorRenderProps };
 
-function PublicPageRendererContent({ document, mediaUrls, editor }: PublicPageRendererProps) {
+function PublicPageRendererContent({ document, mediaUrls, services = [], editor }: PublicPageRendererProps) {
   const mainContainerRef = useRef<HTMLDivElement>(null);
   useSmoothDndContainer(mainContainerRef, {
     behaviour: 'move', groupName: PUBLIC_PAGE_DND_GROUP, orientation: 'vertical',
@@ -237,6 +249,7 @@ function PublicPageRendererContent({ document, mediaUrls, editor }: PublicPageRe
         backgroundImage: pageBackground ? `url("${pageBackground}")` : backgroundPresetCss(document.theme.backgroundPreset),
         backgroundSize: document.theme.backgroundFit,
         backgroundPosition: document.theme.backgroundPosition,
+        backgroundRepeat: pageBackground ? 'no-repeat' : undefined,
         backgroundAttachment: 'fixed',
         color: 'var(--page-text)',
         fontFamily: document.theme.fontFamily,
@@ -284,11 +297,13 @@ function PublicPageRendererContent({ document, mediaUrls, editor }: PublicPageRe
                 data-public-page-sortable="section" data-section-id={section.id} data-public-page-dnd-context="page">
                 <Box className="public-page-dnd-section-shell">
                   {editor.renderSectionDragHandle?.(section, sectionIndex, {})}
-                  <SectionRenderer section={section} sectionIndex={sectionIndex} mediaUrlFor={mediaUrlFor} theme={document.theme} editor={editor} />
+                  <SectionRenderer section={section} sectionIndex={sectionIndex} mediaUrlFor={mediaUrlFor} theme={document.theme}
+                    services={services} publicPageSlug={document.slug} editor={editor} />
                 </Box>
               </Box>
             ))}
-          </Box> : document.sections.map((section, sectionIndex) => <SectionRenderer key={section.id} section={section} sectionIndex={sectionIndex} mediaUrlFor={mediaUrlFor} theme={document.theme} />)}
+          </Box> : document.sections.map((section, sectionIndex) => <SectionRenderer key={section.id} section={section} sectionIndex={sectionIndex}
+            mediaUrlFor={mediaUrlFor} theme={document.theme} services={services} publicPageSlug={document.slug} />)}
       </Container>
     </Box>
   );

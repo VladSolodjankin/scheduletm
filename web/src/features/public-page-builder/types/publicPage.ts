@@ -1,4 +1,4 @@
-export const PUBLIC_PAGE_SCHEMA_VERSION = 1 as const;
+export const PUBLIC_PAGE_SCHEMA_VERSION = 2 as const;
 
 export type PublicPageStatus = 'draft' | 'published' | 'archived';
 
@@ -146,7 +146,6 @@ export type SectionLayout =
   | 'hero-overlay';
 
 export type KnownBlockType =
-  | 'hero'
   | 'avatar'
   | 'button'
   | 'links'
@@ -175,6 +174,13 @@ export type BlockDesign = {
 };
 
 export type BlockContent = Record<string, unknown>;
+
+export type ServicesBlockContent = BlockContent & {
+  title: string;
+  serviceIds: number[];
+  autoplayIntervalSeconds: number | null;
+  showBookingButton: boolean;
+};
 
 export type RichTextSize = 'small' | 'medium' | 'large' | 'h1' | 'h2' | 'h3';
 export type RichTextAlignment = 'left' | 'center' | 'right' | 'justify';

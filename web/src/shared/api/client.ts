@@ -160,9 +160,38 @@ export const servicesApi = {
   update: <T, P>(accessToken: string, serviceId: number, payload: P) => apiClient.patch<T>(`/api/services/${serviceId}`, payload, {
     headers: authHeaders(accessToken),
   }),
+  getDeleteImpact: <T>(accessToken: string, serviceId: number) => apiClient.get<T>(`/api/services/${serviceId}/delete-impact`, {
+    headers: authHeaders(accessToken),
+  }),
+  delete: (accessToken: string, serviceId: number) => apiClient.delete(`/api/services/${serviceId}`, {
+    headers: authHeaders(accessToken),
+  }),
   updateAssignment: <T, P>(accessToken: string, serviceId: number, specialistId: number, payload: P) => apiClient.patch<T>(
     `/api/services/${serviceId}/specialists/${specialistId}`,
     payload,
+    { headers: authHeaders(accessToken) },
+  ),
+};
+
+export const imageMediaApi = {
+  upload: <T>(accessToken: string, file: File, onProgress?: (percent: number) => void) => apiClient.post<T>(
+    '/api/public-pages/media',
+    file,
+    {
+      headers: { ...authHeaders(accessToken), 'Content-Type': file.type },
+      onUploadProgress: (event) => {
+        if (event.total) {
+          onProgress?.(Math.round((event.loaded / event.total) * 100));
+        }
+      },
+    },
+  ),
+  getPreview: (accessToken: string, mediaId: string) => apiClient.get<Blob>(
+    `/api/public-pages/media/${encodeURIComponent(mediaId)}/preview`,
+    { headers: authHeaders(accessToken), responseType: 'blob' },
+  ),
+  delete: (accessToken: string, mediaId: string) => apiClient.delete(
+    `/api/public-pages/media/${encodeURIComponent(mediaId)}`,
     { headers: authHeaders(accessToken) },
   ),
 };

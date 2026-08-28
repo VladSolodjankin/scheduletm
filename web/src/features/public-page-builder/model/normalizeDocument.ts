@@ -31,7 +31,8 @@ import {
   DEFAULT_PUBLIC_PAGE_THEME,
   findPublicPageTheme,
 } from '../config/themes';
-import { SOCIAL_PLATFORMS, type SocialPlatform } from './socialPlatforms';
+import { normalizeServicesContent } from './services';
+import { isCtaAction } from './cta';
 
 const statuses = new Set<PublicPageStatus>(['draft', 'published', 'archived']);
 const layouts = new Set<SectionLayout>([
@@ -97,13 +98,13 @@ function normalizeTheme(value: unknown): PageTheme {
     primary: stringValue(colors.primary, baseColors.primary),
   };
   const fontFamily = stringValue(theme.fontFamily, palette?.fontFamily ?? DEFAULT_PUBLIC_PAGE_THEME.fontFamily);
-  const compatibilityBase = applyPublicPageThemeFont(
+  const themeBase = applyPublicPageThemeFont(
     palette ?? applyPublicPageThemeColors(DEFAULT_PUBLIC_PAGE_THEME, normalizedColors),
     fontFamily,
   );
-  const tokens = normalizeThemeTokens(theme.tokens, compatibilityBase.tokens);
+  const tokens = normalizeThemeTokens(theme.tokens, themeBase.tokens);
   const styles = isRecord(theme.styleDefaults) ? theme.styleDefaults : {};
-  const fallback = compatibilityBase.styleDefaults;
+  const fallback = themeBase.styleDefaults;
 
   return {
     id: themeId,
@@ -299,11 +300,6 @@ function normalizeBlock(value: unknown): PageBlock | null {
     return null;
   }
 
-  if (value.type === 'socials' || value.type === 'messengers') {return null;}
-  if (value.type === 'social-button') {
-    const content = isRecord(value.content) ? value.content : {};
-    if (typeof content.platform !== 'string' || !SOCIAL_PLATFORMS.includes(content.platform as SocialPlatform)) {return null;}
-  }
   const rawContent = isRecord(value.content) ? value.content : {};
   return {
     id: stableId(value.id),
@@ -312,7 +308,9 @@ function normalizeBlock(value: unknown): PageBlock | null {
     visible: typeof value.visible === 'boolean' ? value.visible : true,
     content: value.type === 'text' ? normalizeTextContent(rawContent)
       : value.type === 'avatar' ? normalizeAvatarContent(rawContent)
-        : rawContent as BlockContent,
+        : value.type === 'services' ? normalizeServicesContent(rawContent)
+          : value.type === 'contacts' ? normalizeContactsContent(rawContent)
+          : rawContent as BlockContent,
     design: normalizeDesign(value.design),
   };
 }
@@ -374,28 +372,30 @@ export function normalizeRichTextDocument(value: unknown): RichTextDocument {
 }
 
 function normalizeTextContent(content: Record<string, unknown>): BlockContent {
-  if (isRecord(content.document) && content.document.type === 'rich-text-v1') {
-    return { document: normalizeRichTextDocument(content.document) };
-  }
-  const title = stringValue(content.title);
-  const body = stringValue(content.body);
-  const paragraphs: RichTextParagraph[] = [];
-  if (title) {paragraphs.push({ size: 'large', fontFamily: null, alignment: 'left', runs: [{ text: title, marks: { bold: true } }] });}
-  body.split(/\r?\n/).forEach((line) => {
-    if (line || body) {paragraphs.push({ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: line }] });}
-  });
-  return { document: { type: 'rich-text-v1', paragraphs: paragraphs.length ? paragraphs : [{ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: '' }] }] } };
+  return { document: normalizeRichTextDocument(content.document) };
 }
 
 function normalizeAvatarContent(content: Record<string, unknown>): BlockContent {
-  const legacyLayout = content.layout;
-  const layout = legacyLayout === 'compact' ? 'cover-centered'
-    : legacyLayout === 'image-left' ? 'cover-left'
-      : legacyLayout === 'image-right' ? 'image-cover'
-        : avatarLayouts.has(legacyLayout as string) ? legacyLayout as string : 'centered';
-  const legacySize = legacyLayout === 'compact' ? 65 : legacyLayout === 'image-left' ? 125 : content.avatarSize;
-  const avatarSize = avatarSizes.includes(legacySize as typeof avatarSizes[number]) ? legacySize : 150;
-  return { ...content, layout, avatarSize };
+  const layout = avatarLayouts.has(content.layout as string) ? content.layout as string : 'centered';
+  const avatarSize = avatarSizes.includes(content.avatarSize as typeof avatarSizes[number]) ? content.avatarSize : 150;
+  return {
+    heading: stringValue(content.heading),
+    subtitle: stringValue(content.subtitle),
+    imageMediaId: nullableString(content.imageMediaId),
+    imageAlt: stringValue(content.imageAlt),
+    layout,
+    avatarSize,
+    coverColor: nullableString(content.coverColor),
+    coverMediaId: nullableString(content.coverMediaId),
+  };
+}
+
+function normalizeContactsContent(content: Record<string, unknown>): BlockContent {
+  const contacts = Array.isArray(content.contacts) ? content.contacts.flatMap((item) => {
+    if (!isRecord(item) || !isCtaAction(item.action)) {return [];}
+    return [{ id: stableId(item.id), label: stringValue(item.label), action: structuredClone(item.action) }];
+  }) : [];
+  return { title: stringValue(content.title), contacts };
 }
 
 export function createEmptyPageSection(variant: SectionDesign['variant'] = 'off'): PageSection {
@@ -427,20 +427,9 @@ export function normalizeDocument(input: unknown): PublicPageDocument {
   const status = statuses.has(document.status as PublicPageStatus)
     ? document.status as PublicPageStatus
     : 'draft';
-  const normalizedSections = Array.isArray(document.sections)
+  const sections = Array.isArray(document.sections)
     ? document.sections.map(normalizeSection).filter((section): section is PageSection => section !== null)
     : [];
-  const seenSocialPlatforms = new Set<SocialPlatform>();
-  const sections = normalizedSections.map((section) => ({
-    ...section,
-    blocks: section.blocks.filter((block) => {
-      if (block.type !== 'social-button') {return true;}
-      const platform = block.content.platform as SocialPlatform;
-      if (seenSocialPlatforms.has(platform)) {return false;}
-      seenSocialPlatforms.add(platform);
-      return true;
-    }),
-  }));
   const media = Array.isArray(document.media)
     ? document.media.map(normalizeMedia).filter((item): item is MediaReference => item !== null)
     : [];

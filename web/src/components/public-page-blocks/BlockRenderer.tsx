@@ -5,6 +5,7 @@ import { getBlockDefinition } from '../../features/public-page-builder/model/blo
 import { BlockErrorBoundary } from './BlockErrorBoundary';
 import { BlockRenderErrorFallback } from './BlockRenderErrorFallback';
 import { UnknownBlockFallback } from './UnknownBlockFallback';
+import type { PublicBookingService } from '../../shared/types/api';
 
 type BlockRendererProps = {
   block: PageBlock;
@@ -12,6 +13,8 @@ type BlockRendererProps = {
   editor?: boolean;
   themeBorderRadius?: number;
   roundingStyle?: PageTheme['roundingStyle'];
+  services?: readonly PublicBookingService[];
+  publicPageSlug?: string;
 };
 
 export function themeRadius(style: PageTheme['roundingStyle'], roundedRadius = 40): string {
@@ -35,7 +38,7 @@ export function blockSurfaceRadius(borderRadius: number | null, style: PageTheme
   return borderRadius !== null ? `${borderRadius}px` : sectionThemeRadius(style, roundedRadius);
 }
 
-export function BlockRenderer({ block, mediaUrlFor, editor = false, themeBorderRadius = 40, roundingStyle = 'rounded' }: BlockRendererProps) {
+export function BlockRenderer({ block, mediaUrlFor, editor = false, themeBorderRadius = 40, roundingStyle = 'rounded', services, publicPageSlug }: BlockRendererProps) {
   if (!block.visible && !editor) {
     return null;
   }
@@ -50,17 +53,25 @@ export function BlockRenderer({ block, mediaUrlFor, editor = false, themeBorderR
   const backgroundUrl = block.design.backgroundMediaId ? mediaUrlFor?.(block.design.backgroundMediaId) : undefined;
   const hasSurface = Boolean(block.design.backgroundColor || block.design.backgroundMediaId);
   const surfaceRadius = blockSurfaceRadius(block.design.borderRadius, roundingStyle, themeBorderRadius);
+  const customTextVariables = block.design.textColor ? {
+    '--page-section-text': block.design.textColor,
+    '--theme-heading-color': block.design.textColor,
+    '--theme-text-color': block.design.textColor,
+    '--avatar-title-color': block.design.textColor,
+    '--avatar-bio-color': block.design.textColor,
+  } : {};
   return <Box sx={{ position: 'relative', opacity: block.visible ? 1 : 0.45,
     pt: `${block.design.paddingTop ?? 0}px`, pb: `${block.design.paddingBottom ?? 0}px`,
     bgcolor: hasSurface ? block.design.backgroundColor ?? 'transparent' : undefined,
     color: block.design.textColor ?? 'inherit',
+    ...customTextVariables,
     borderRadius: hasSurface ? surfaceRadius : undefined,
     overflow: hasSurface ? 'hidden' : undefined,
     ...(backgroundUrl ? { backgroundImage: `linear-gradient(rgba(0,0,0,${block.design.backgroundOverlay}), rgba(0,0,0,${block.design.backgroundOverlay})), url("${backgroundUrl}")`,
       backgroundSize: block.design.backgroundFit, backgroundPosition: block.design.backgroundPosition, backgroundRepeat: 'no-repeat' } : {}),
   }}>
     <BlockErrorBoundary blockId={block.id} fallback={<BlockRenderErrorFallback />}>
-      <Renderer block={block} mediaUrlFor={mediaUrlFor} />
+      <Renderer block={block} mediaUrlFor={mediaUrlFor} editor={editor} services={services} publicPageSlug={publicPageSlug} />
     </BlockErrorBoundary>
   </Box>;
 }

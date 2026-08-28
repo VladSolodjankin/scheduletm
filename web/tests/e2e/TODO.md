@@ -11,6 +11,16 @@ and role mismatches fail the run. Use a dedicated test account and database.
 - [x] Real UI login, persisted session, protected-route redirect, and logout.
 - [ ] Public Pages create/save/publish/view/archive/delete with cleanup is
   implemented; live verification remains.
+- [x] Update `public-page-builder.ui.e2e.spec.mjs` from inline Services
+  title/description/price inputs to the catalog-backed service picker with a
+  seeded account service; verify the rendered catalog card and booking CTA.
+- [ ] Add a repeatable fixture with at least two selectable services and verify
+  carousel dots, keyboard navigation, swipe, reduced-motion behavior, and
+  optional autoplay in a live browser run.
+- [ ] Extend the Public Pages lifecycle browser flow with restore, compact
+  mobile editor navigation, contrast guidance states, and mobile/desktop
+  public rendering before treating the current source coverage as a release
+  smoke.
 - [ ] Specialist schedule update and restore is implemented; live verification
   remains.
 - [ ] Appointments create/edit/reschedule/cancel. The calendar cells and

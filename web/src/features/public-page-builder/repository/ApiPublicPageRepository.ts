@@ -1,12 +1,14 @@
 import axios from 'axios';
 import { apiClient, authHeaders } from '../../../shared/api/client';
-import { migrateDocument, UnsupportedDocumentVersionError } from '../model/migrateDocument';
+import { isPublicPageDocument, validateDocument } from '../model/validateDocument';
+import { PUBLIC_PAGE_SCHEMA_VERSION } from '../types/publicPage';
 import type { PublishValidationIssue } from '../model/publishValidation';
 import type { MediaReference, PublicPageDocument, PublicPageStatus } from '../types/publicPage';
 import {
   PublicPageRepositoryError,
   type PublicPageRecord,
   type PublicPageRepository,
+  type PublicPageSlugAvailability,
 } from './PublicPageRepository';
 
 type ApiRecord = {
@@ -23,13 +25,18 @@ type ApiRecord = {
 
 function readDocument(value: unknown): PublicPageDocument {
   try {
-    return migrateDocument(value);
+    if (isPublicPageDocument(value)) {return value;}
+    const validation = validateDocument(value);
+    const schemaVersion = value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>).schemaVersion : undefined;
+    const code = typeof schemaVersion === 'number' && schemaVersion !== PUBLIC_PAGE_SCHEMA_VERSION
+      ? 'unsupported_version' : 'invalid_document';
+    throw new PublicPageRepositoryError(code, undefined, {
+      cause: new Error(validation.errors.map(({ code: errorCode, path }) => `${path}:${errorCode}`).join(', ')),
+    });
   } catch (error) {
-    throw new PublicPageRepositoryError(
-      error instanceof UnsupportedDocumentVersionError ? 'unsupported_version' : 'invalid_document',
-      undefined,
-      { cause: error },
-    );
+    if (error instanceof PublicPageRepositoryError) {throw error;}
+    throw new PublicPageRepositoryError('invalid_document', undefined, { cause: error });
   }
 }
 
@@ -45,6 +52,17 @@ function readRecord(value: ApiRecord): PublicPageRecord {
     publishedAt: value.publishedAt,
     archivedAt: value.archivedAt,
   };
+}
+
+function readSlugAvailability(value: unknown): PublicPageSlugAvailability {
+  if (!value || typeof value !== 'object') {
+    throw new PublicPageRepositoryError('storage_unavailable', 'invalid_slug_availability_response');
+  }
+  const response = value as Record<string, unknown>;
+  if (typeof response.slug !== 'string' || typeof response.available !== 'boolean') {
+    throw new PublicPageRepositoryError('storage_unavailable', 'invalid_slug_availability_response');
+  }
+  return { slug: response.slug, available: response.available };
 }
 
 function mapError(error: unknown): never {
@@ -119,6 +137,17 @@ export class ApiPublicPageRepository implements PublicPageRepository {
     } catch (error) { return mapError(error); }
   }
 
+  public async checkSlugAvailability(slug: string, pageId?: string): Promise<PublicPageSlugAvailability> {
+    const query = new URLSearchParams({ slug });
+    if (pageId) {query.set('pageId', pageId);}
+    try {
+      const response = await apiClient.get<unknown>(`/api/public-pages/slug-availability?${query.toString()}`, {
+        headers: this.headers,
+      });
+      return readSlugAvailability(response.data);
+    } catch (error) { return mapError(error); }
+  }
+
   public async get(pageId: string): Promise<PublicPageRecord> {
     try {
       const response = await apiClient.get<ApiRecord>(`/api/public-pages/${encodeURIComponent(pageId)}`, { headers: this.headers });
@@ -159,6 +188,17 @@ export class ApiPublicPageRepository implements PublicPageRepository {
     try {
       const response = await apiClient.post<ApiRecord>(
         `/api/public-pages/${encodeURIComponent(pageId)}/archive`,
+        { expectedRevision },
+        { headers: this.headers },
+      );
+      return readRecord(response.data);
+    } catch (error) { return mapError(error); }
+  }
+
+  public async restore(pageId: string, expectedRevision: number): Promise<PublicPageRecord> {
+    try {
+      const response = await apiClient.post<ApiRecord>(
+        `/api/public-pages/${encodeURIComponent(pageId)}/restore`,
         { expectedRevision },
         { headers: this.headers },
       );

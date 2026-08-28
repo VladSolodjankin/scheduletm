@@ -3,16 +3,12 @@ import { hasRichTextContent, splitRichTextParagraph, updateRichTextSelection } f
 import { normalizeDocument, normalizeRichTextDocument } from '../../src/features/public-page-builder/model/normalizeDocument';
 
 describe('public page rich text', () => {
-  it('normalizes legacy text content into a structured document', () => {
+  it('does not reinterpret deprecated title/body fields as rich text', () => {
     const page = normalizeDocument({ sections: [{ blocks: [{ type: 'text', content: { title: 'Title', body: 'First\nSecond' } }] }] });
     const content = page.sections[0].blocks[0].content;
     expect(content).toEqual({ document: {
       type: 'rich-text-v1',
-      paragraphs: [
-        { size: 'large', fontFamily: null, alignment: 'left', runs: [{ text: 'Title', marks: { bold: true } }] },
-        { size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: 'First' }] },
-        { size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: 'Second' }] },
-      ],
+      paragraphs: [{ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: '' }] }],
     } });
   });
 

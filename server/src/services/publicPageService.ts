@@ -13,13 +13,18 @@ import {
   deletePublicPage,
   findPublicPage,
   findPublishedPublicPageBySlug,
+  isPublicPageSlugAvailable,
   listPublicPages,
   publishPublicPage,
+  restorePublicPage,
   type PublicPageRecord,
   type PublicPageStatus,
   PublicPageRepositoryError,
   savePublicPageDraft,
 } from '../repositories/publicPageRepository.js';
+import { listServices } from '../repositories/serviceRepository.js';
+
+const PUBLIC_PAGE_ACCOUNT_QUOTA = 10;
 
 export type PublicPageDto = {
   id: string;
@@ -35,7 +40,7 @@ export type PublicPageDto = {
 
 export class PublicPageServiceError extends Error {
   constructor(
-    public readonly code: 'INVALID_DOCUMENT' | 'UNSUPPORTED_VERSION' | 'PUBLISH_VALIDATION_FAILED',
+    public readonly code: 'INVALID_DOCUMENT' | 'INVALID_SLUG' | 'UNSUPPORTED_VERSION' | 'PUBLISH_VALIDATION_FAILED',
     public readonly issues?: PublishIssue[],
   ) {
     super(code);
@@ -82,6 +87,33 @@ function serverDocument(
   return { ...document, status, createdAt, updatedAt };
 }
 
+async function validateOwnedServiceReferences(
+  accountId: number,
+  document: PublicPageDocument,
+): Promise<PublishIssue[]> {
+  const blocks = document.sections.flatMap((section) => section.blocks)
+    .filter((block) => block.type === 'services');
+  const requestedIds = [...new Set(blocks.flatMap((block) => block.content.serviceIds))];
+  if (requestedIds.length === 0) return [];
+  const ownedIds = new Set((await listServices(accountId)).map(({ id }) => id));
+  return missingServiceReferenceIssues(document, new Set(requestedIds.filter((id) => !ownedIds.has(id))));
+}
+
+function missingServiceReferenceIssues(
+  document: PublicPageDocument,
+  missingServiceIds: ReadonlySet<number>,
+): PublishIssue[] {
+  return document.sections.flatMap((section) => section.blocks)
+    .filter((block) => block.type === 'services')
+    .flatMap((block) => block.content.serviceIds.some((id) => missingServiceIds.has(id))
+    ? [{
+      code: 'missing_service',
+      path: `blocks.${block.id}.content.serviceIds`,
+      blockId: block.id,
+    } satisfies PublishIssue]
+    : []);
+}
+
 export async function getPublicPages(
   accountId: number,
   status: 'active' | PublicPageStatus | 'all' = 'active',
@@ -94,11 +126,35 @@ export async function getPublicPage(accountId: number, pageId: string): Promise<
   return page ? toPublicPageDto(page) : null;
 }
 
+export async function getPublicPageSlugAvailability(
+  accountId: number,
+  slugInput: string,
+  pageId?: string,
+): Promise<{ slug: string; available: boolean }> {
+  const slug = normalizePublicPageSlug(slugInput);
+  if (!isValidPublicPageSlug(slug)) throw new PublicPageServiceError('INVALID_SLUG');
+  if (pageId) {
+    const page = await findPublicPage(accountId, pageId);
+    if (!page || page.status === 'archived') throw new PublicPageRepositoryError('NOT_FOUND');
+  }
+  return { slug, available: await isPublicPageSlugAvailable(slug, pageId) };
+}
+
 export async function createPublicPageForAccount(accountId: number, input: unknown): Promise<PublicPageDto> {
   const parsed = parseDraftDocument(input);
+  if ((await validateOwnedServiceReferences(accountId, parsed)).length > 0) {
+    throw new PublicPageServiceError('INVALID_DOCUMENT');
+  }
   const now = new Date().toISOString();
   const document = serverDocument(parsed, 'draft', now, now);
-  return toPublicPageDto(await createPublicPage({ accountId, document, quota: 10 }));
+  try {
+    return toPublicPageDto(await createPublicPage({ accountId, document, quota: PUBLIC_PAGE_ACCOUNT_QUOTA }));
+  } catch (error) {
+    if (error instanceof PublicPageRepositoryError && error.code === 'MISSING_SERVICES') {
+      throw new PublicPageServiceError('INVALID_DOCUMENT');
+    }
+    throw error;
+  }
 }
 
 export async function putPublicPageDraft(input: {
@@ -108,11 +164,21 @@ export async function putPublicPageDraft(input: {
   expectedRevision: number;
 }): Promise<PublicPageDto> {
   const parsed = parseDraftDocument(input.document, input.pageId);
+  if ((await validateOwnedServiceReferences(input.accountId, parsed)).length > 0) {
+    throw new PublicPageServiceError('INVALID_DOCUMENT');
+  }
   const current = await findPublicPage(input.accountId, input.pageId);
   if (!current || current.status === 'archived') throw new PublicPageRepositoryError('NOT_FOUND');
   if (current.revision !== input.expectedRevision) throw new PublicPageRepositoryError('REVISION_CONFLICT', current);
   const document = serverDocument(parsed, 'draft', iso(current.created_at), new Date().toISOString());
-  return toPublicPageDto(await savePublicPageDraft({ ...input, document }));
+  try {
+    return toPublicPageDto(await savePublicPageDraft({ ...input, document }));
+  } catch (error) {
+    if (error instanceof PublicPageRepositoryError && error.code === 'MISSING_SERVICES') {
+      throw new PublicPageServiceError('INVALID_DOCUMENT');
+    }
+    throw error;
+  }
 }
 
 export async function publishPublicPageForAccount(
@@ -126,9 +192,23 @@ export async function publishPublicPageForAccount(
   const parsed = parseDocument(page.draft_document, pageId);
   const now = new Date().toISOString();
   const published = serverDocument(parsed, 'published', iso(page.created_at), now);
-  const issues = validatePublicPageForPublish(published);
+  const issues = [
+    ...validatePublicPageForPublish(published),
+    ...await validateOwnedServiceReferences(accountId, published),
+  ];
   if (issues.length > 0) throw new PublicPageServiceError('PUBLISH_VALIDATION_FAILED', issues);
-  return toPublicPageDto(await publishPublicPage(accountId, pageId, expectedRevision, published));
+  try {
+    return toPublicPageDto(await publishPublicPage(accountId, pageId, expectedRevision, published));
+  } catch (error) {
+    if (error instanceof PublicPageRepositoryError && error.code === 'MISSING_SERVICES') {
+      const missingIds = new Set(error.missingServiceIds ?? []);
+      throw new PublicPageServiceError(
+        'PUBLISH_VALIDATION_FAILED',
+        missingServiceReferenceIssues(published, missingIds),
+      );
+    }
+    throw error;
+  }
 }
 
 export async function archivePublicPageForAccount(
@@ -137,6 +217,19 @@ export async function archivePublicPageForAccount(
   expectedRevision: number,
 ): Promise<PublicPageDto> {
   return toPublicPageDto(await archivePublicPage(accountId, pageId, expectedRevision));
+}
+
+export async function restorePublicPageForAccount(
+  accountId: number,
+  pageId: string,
+  expectedRevision: number,
+): Promise<PublicPageDto> {
+  return toPublicPageDto(await restorePublicPage(
+    accountId,
+    pageId,
+    expectedRevision,
+    PUBLIC_PAGE_ACCOUNT_QUOTA,
+  ));
 }
 
 export async function deletePublicPageForAccount(

@@ -30,13 +30,20 @@ export async function findPublishedMedia(id: string): Promise<PublicPageMediaRec
     .join('accounts', 'accounts.id', 'media.account_id')
     .where('media.id', id)
     .where('accounts.is_active', true)
-    .whereExists(function () {
-      this.select(db.raw('1')).from('public_pages as pages')
-        .whereRaw('pages.account_id = media.account_id')
-        .where('pages.status', 'published')
-        .whereNull('pages.archived_at')
-        .whereNotNull('pages.published_document')
-        .whereRaw("exists (select 1 from jsonb_array_elements(coalesce(pages.published_document->'media', '[]'::jsonb)) item where item->>'id' = media.id::text)");
+    .where(function referencedPublicly() {
+      this.whereExists(function publishedPageReference() {
+        this.select(db.raw('1')).from('public_pages as pages')
+          .whereRaw('pages.account_id = media.account_id')
+          .where('pages.status', 'published')
+          .whereNull('pages.archived_at')
+          .whereNotNull('pages.published_document')
+          .whereRaw("exists (select 1 from jsonb_array_elements(coalesce(pages.published_document->'media', '[]'::jsonb)) item where item->>'id' = media.id::text)");
+      }).orWhereExists(function activeServiceReference() {
+        this.select(db.raw('1')).from('services')
+          .whereRaw('services.account_id = media.account_id')
+          .whereRaw('services.image_media_id = media.id')
+          .where('services.is_active', true);
+      });
     })
     .select('media.*').first()) ?? null;
 }
@@ -46,7 +53,10 @@ export async function isMediaReferenced(accountId: number, id: string): Promise<
     this.whereRaw("exists (select 1 from jsonb_array_elements(coalesce(draft_document->'media', '[]'::jsonb)) item where item->>'id' = ?)", [id])
       .orWhereRaw("exists (select 1 from jsonb_array_elements(coalesce(published_document->'media', '[]'::jsonb)) item where item->>'id' = ?)", [id]);
   }).first('id');
-  return Boolean(row);
+  if (row) return true;
+
+  const service = await db('services').where({ account_id: accountId, image_media_id: id }).first('id');
+  return Boolean(service);
 }
 
 export async function deleteAccountMedia(accountId: number, id: string): Promise<void> {

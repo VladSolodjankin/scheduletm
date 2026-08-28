@@ -23,8 +23,10 @@ export class PublicPageRepositoryError extends Error {
       | 'REVISION_CONFLICT'
       | 'SLUG_CONFLICT'
       | 'QUOTA_EXCEEDED'
-      | 'PAGE_NOT_ARCHIVED',
+      | 'PAGE_NOT_ARCHIVED'
+      | 'MISSING_SERVICES',
     public readonly current?: PublicPageRecord,
+    public readonly missingServiceIds?: number[],
   ) {
     super(code);
   }
@@ -81,6 +83,29 @@ function scopedPage(trx: Knex | Knex.Transaction, accountId: number, pageId: str
   return trx<PublicPageRecord>('public_pages').where({ account_id: accountId, id: pageId });
 }
 
+async function lockAccount(trx: Knex.Transaction, accountId: number): Promise<void> {
+  await trx('accounts').where({ id: accountId }).forUpdate().first('id');
+}
+
+async function revalidateServiceReferences(
+  trx: Knex.Transaction,
+  accountId: number,
+  document: PublicPageDocument,
+): Promise<void> {
+  const serviceIds = [...new Set(document.sections.flatMap((section) => section.blocks)
+    .filter((block) => block.type === 'services')
+    .flatMap((block) => block.content.serviceIds))];
+  if (serviceIds.length === 0) return;
+
+  const rows = await trx('services').where({ account_id: accountId }).whereIn('id', serviceIds)
+    .select<{ id: number }[]>('id');
+  const ownedIds = new Set(rows.map(({ id }) => id));
+  const missingServiceIds = serviceIds.filter((id) => !ownedIds.has(id));
+  if (missingServiceIds.length > 0) {
+    throw new PublicPageRepositoryError('MISSING_SERVICES', undefined, missingServiceIds);
+  }
+}
+
 export async function listPublicPages(
   accountId: number,
   status: 'active' | PublicPageStatus | 'all' = 'active',
@@ -93,6 +118,17 @@ export async function listPublicPages(
 
 export async function findPublicPage(accountId: number, pageId: string): Promise<PublicPageRecord | null> {
   return (await scopedPage(db, accountId, pageId).first()) ?? null;
+}
+
+export async function isPublicPageSlugAvailable(slug: string, pageId?: string): Promise<boolean> {
+  const claim = await db('public_page_slug_claims').where({ slug }).first<{
+    draft_page_id: string | null;
+    published_page_id: string | null;
+  }>();
+  if (!claim) return true;
+  if (!pageId) return false;
+  return [claim.draft_page_id, claim.published_page_id]
+    .every((claimedPageId) => claimedPageId === null || claimedPageId === pageId);
 }
 
 export async function findPublishedPublicPageBySlug(slug: string): Promise<PublicPageRecord | null> {
@@ -114,12 +150,13 @@ export async function createPublicPage(input: {
   quota: number;
 }): Promise<PublicPageRecord> {
   return db.transaction(async (trx) => {
-    await trx('accounts').where({ id: input.accountId }).forUpdate().first('id');
+    await lockAccount(trx, input.accountId);
     const existing = await trx<PublicPageRecord>('public_pages').where({ id: input.document.id }).first();
     if (existing) throw new PublicPageRepositoryError('SLUG_CONFLICT');
     const count = await trx('public_pages').where({ account_id: input.accountId })
       .whereNot({ status: 'archived' }).count<{ count: string }[]>('* as count').first();
     if (Number(count?.count ?? 0) >= input.quota) throw new PublicPageRepositoryError('QUOTA_EXCEEDED');
+    await revalidateServiceReferences(trx, input.accountId, input.document);
     await trx('public_pages').insert({
       id: input.document.id,
       account_id: input.accountId,
@@ -141,9 +178,11 @@ export async function savePublicPageDraft(input: {
   expectedRevision: number;
 }): Promise<PublicPageRecord> {
   return db.transaction(async (trx) => {
+    await lockAccount(trx, input.accountId);
     const page = await scopedPage(trx, input.accountId, input.pageId).forUpdate().first();
     if (!page || page.status === 'archived') throw new PublicPageRepositoryError('NOT_FOUND');
     if (page.revision !== input.expectedRevision) throw new PublicPageRepositoryError('REVISION_CONFLICT', page);
+    await revalidateServiceReferences(trx, input.accountId, input.document);
     await claimSlug(trx, input.pageId, input.document.slug, 'draft_page_id');
     await releaseOtherSlugClaims(trx, input.pageId, input.document.slug, 'draft_page_id');
     await scopedPage(trx, input.accountId, input.pageId).update({
@@ -162,9 +201,11 @@ export async function publishPublicPage(
   publishedDocument: PublicPageDocument,
 ): Promise<PublicPageRecord> {
   return db.transaction(async (trx) => {
+    await lockAccount(trx, accountId);
     const page = await scopedPage(trx, accountId, pageId).forUpdate().first();
     if (!page || page.status === 'archived') throw new PublicPageRepositoryError('NOT_FOUND');
     if (page.revision !== expectedRevision) throw new PublicPageRepositoryError('REVISION_CONFLICT', page);
+    await revalidateServiceReferences(trx, accountId, publishedDocument);
     await claimSlug(trx, pageId, publishedDocument.slug, 'published_page_id');
     await releaseOtherSlugClaims(trx, pageId, publishedDocument.slug, 'published_page_id');
     await scopedPage(trx, accountId, pageId).update({
@@ -201,6 +242,39 @@ export async function archivePublicPage(
       draft_document: archivedDocument,
       published_document: null,
       archived_at: trx.fn.now(),
+      revision: page.revision + 1,
+      updated_at: trx.fn.now(),
+    });
+    return (await scopedPage(trx, accountId, pageId).first())!;
+  });
+}
+
+export async function restorePublicPage(
+  accountId: number,
+  pageId: string,
+  expectedRevision: number,
+  quota: number,
+): Promise<PublicPageRecord> {
+  return db.transaction(async (trx) => {
+    await lockAccount(trx, accountId);
+    const page = await scopedPage(trx, accountId, pageId).forUpdate().first();
+    if (!page) throw new PublicPageRepositoryError('NOT_FOUND');
+    if (page.revision !== expectedRevision) throw new PublicPageRepositoryError('REVISION_CONFLICT', page);
+    if (page.status !== 'archived') throw new PublicPageRepositoryError('PAGE_NOT_ARCHIVED');
+    const count = await trx('public_pages').where({ account_id: accountId })
+      .whereNot({ status: 'archived' }).count<{ count: string }[]>('* as count').first();
+    if (Number(count?.count ?? 0) >= quota) throw new PublicPageRepositoryError('QUOTA_EXCEEDED');
+    const restoredDocument = {
+      ...page.draft_document,
+      status: 'draft' as const,
+      updatedAt: new Date().toISOString(),
+    };
+    await claimSlug(trx, pageId, restoredDocument.slug, 'draft_page_id');
+    await scopedPage(trx, accountId, pageId).update({
+      status: 'draft',
+      draft_document: restoredDocument,
+      published_document: null,
+      archived_at: null,
       revision: page.revision + 1,
       updated_at: trx.fn.now(),
     });

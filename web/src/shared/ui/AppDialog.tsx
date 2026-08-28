@@ -8,21 +8,21 @@ type AppDialogProps = DialogProps & {
   actions?: ReactNode;
 };
 
-export function AppDialog({ title, description, children, actions, ...props }: AppDialogProps) {
+export function AppDialog({ title, description, children, actions, className, ...props }: AppDialogProps) {
   return (
-    <Dialog fullWidth {...props}>
+    <Dialog fullWidth className={['app-dialog', className].filter(Boolean).join(' ')} {...props}>
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent dividers>
-        <Stack spacing={2} sx={{ pt: 0.5 }}>
+      <DialogContent dividers className="app-dialog__content">
+        <Stack className="app-dialog__body">
           {description ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" className="app-dialog__description">
               {description}
             </Typography>
           ) : null}
           {children}
         </Stack>
       </DialogContent>
-      {actions ? <DialogActions sx={{ px: 3, py: 2 }}>{actions}</DialogActions> : null}
+      {actions ? <DialogActions className="app-dialog__actions">{actions}</DialogActions> : null}
     </Dialog>
   );
 }

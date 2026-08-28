@@ -14,6 +14,9 @@ export const canManageSpecialists = (role: WebUserRole): boolean =>
 export const canManageServices = (role: WebUserRole): boolean =>
   role === WebUserRole.ProductOwner || role === WebUserRole.Owner || role === WebUserRole.Admin;
 
+export const canReadAccountMedia = (role: WebUserRole): boolean =>
+  canManageAccountSettings(role) || role === WebUserRole.Specialist;
+
 export const canManageSpecialistSettings = (role: WebUserRole): boolean =>
   role === WebUserRole.ProductOwner
   || role === WebUserRole.Owner

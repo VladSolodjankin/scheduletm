@@ -39,6 +39,13 @@ const defaultStyleDefaults = () => ({
   },
 });
 
+function setPath(target: Record<string, any>, path: string, value: unknown): void {
+  const parts = path.split('.');
+  const key = parts.pop()!;
+  const parent = parts.reduce<Record<string, any>>((current, part) => current[part], target);
+  parent[key] = value;
+}
+
 describe('public page schemas', () => {
   it('matches slug formatting and reserved rules', () => {
     expect(isValidPublicPageSlug('my-page')).toBe(true);
@@ -46,12 +53,10 @@ describe('public page schemas', () => {
     expect(isValidPublicPageSlug('-bad')).toBe(false);
   });
 
-  it('allows unknown blocks structurally but rejects them for publish', () => {
+  it('rejects unknown blocks at the document boundary', () => {
     const document = structuredClone(validPublicPageDocument);
     document.sections[0]!.blocks[0]!.type = 'future-block';
-    const parsed = publicPageDocumentSchema.safeParse(document);
-    expect(parsed.success).toBe(true);
-    expect(validatePublicPageForPublish(parsed.data!).map((issue) => issue.code)).toContain('unknown_block');
+    expect(publicPageDocumentSchema.safeParse(document).success).toBe(false);
   });
 
   it('requires visible non-whitespace content in rich text blocks', () => {
@@ -63,12 +68,160 @@ describe('public page schemas', () => {
       code: 'invalid_block', detail: 'document is required', path: `blocks.${block.id}`,
     }));
     block.content = { document: { paragraphs: [{ runs: [{ text: 'Visible' }] }] } };
-    expect(validatePublicPageForPublish(publicPageDocumentSchema.parse(document))).toContainEqual(expect.objectContaining({
-      code: 'invalid_block', detail: 'document is required', path: `blocks.${block.id}`,
-    }));
+    expect(publicPageDocumentSchema.safeParse(document).success).toBe(false);
     block.content = { document: { type: 'rich-text-v1', paragraphs: [{ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: 'Visible' }] }] } };
     expect(validatePublicPageForPublish(publicPageDocumentSchema.parse(document))).not.toContainEqual(expect.objectContaining({
       code: 'invalid_block', path: `blocks.${block.id}`,
+    }));
+  });
+
+  it('accepts an empty ID-based services selection in a draft but rejects it on publish', () => {
+    const parsed = publicPageDocumentSchema.safeParse({
+      ...validPublicPageDocument,
+      sections: [{
+        ...validPublicPageDocument.sections[0],
+        blocks: [{
+          ...validPublicPageDocument.sections[0]!.blocks[0],
+          type: 'services',
+          content: {
+            title: 'Services',
+            serviceIds: [],
+            autoplayIntervalSeconds: null,
+            showBookingButton: true,
+          },
+        }],
+      }],
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(validatePublicPageForPublish(parsed.data!)).toContainEqual(expect.objectContaining({
+      code: 'invalid_block',
+      detail: 'serviceIds must contain at least one service',
+    }));
+  });
+
+  it('accepts valid ID-based services content on publish', () => {
+    const document = publicPageDocumentSchema.parse({
+      ...validPublicPageDocument,
+      sections: [{
+        ...validPublicPageDocument.sections[0],
+        blocks: [{
+          ...validPublicPageDocument.sections[0]!.blocks[0],
+          type: 'services',
+          content: {
+            title: 'Services',
+            serviceIds: [3, 9],
+            autoplayIntervalSeconds: 5,
+            showBookingButton: false,
+          },
+        }],
+      }],
+    });
+
+    expect(validatePublicPageForPublish(document)).toEqual([]);
+  });
+
+  it.each([
+    ['duplicate service IDs', [3, 3], null, true],
+    ['non-positive service IDs', [0], null, true],
+    ['more than 12 service IDs', Array.from({ length: 13 }, (_, index) => index + 1), null, true],
+    ['autoplay below 3 seconds', [3], 2, true],
+    ['autoplay above 30 seconds', [3], 31, true],
+    ['non-integer autoplay', [3], 3.5, true],
+    ['non-boolean booking flag', [3], null, 'true'],
+  ])('rejects ID-based services content with %s at the schema boundary', (
+    _name,
+    serviceIds,
+    autoplayIntervalSeconds,
+    showBookingButton,
+  ) => {
+    expect(publicPageDocumentSchema.safeParse({
+      ...validPublicPageDocument,
+      sections: [{
+        ...validPublicPageDocument.sections[0],
+        blocks: [{
+          ...validPublicPageDocument.sections[0]!.blocks[0],
+          type: 'services',
+          content: { serviceIds, autoplayIntervalSeconds, showBookingButton },
+        }],
+      }],
+    }).success).toBe(false);
+  });
+
+  it('rejects legacy inline services content without runtime conversion', () => {
+    const content = {
+      title: 'Services',
+      services: [{ id: 'service-1', title: 'Consultation', description: '', price: '100 RUB' }],
+    };
+    expect(publicPageDocumentSchema.safeParse({
+      ...validPublicPageDocument,
+      sections: [{
+        ...validPublicPageDocument.sections[0],
+        blocks: [{
+          ...validPublicPageDocument.sections[0]!.blocks[0], type: 'services', content,
+        }],
+      }],
+    }).success).toBe(false);
+  });
+
+  const contactsDocument = (contacts: unknown[]) => publicPageDocumentSchema.parse({
+    ...validPublicPageDocument,
+    sections: [{
+      ...validPublicPageDocument.sections[0],
+      blocks: [{
+        ...validPublicPageDocument.sections[0]!.blocks[0],
+        type: 'contacts',
+        content: { title: 'Contacts', contacts },
+      }],
+    }],
+  });
+
+  it.each([
+    ['website', { type: 'url', url: 'https://example.com/contact' }],
+    ['phone', { type: 'phone', phone: '+15551234567' }],
+    ['email', { type: 'email', email: 'hello@example.com' }],
+    ['messenger', { type: 'messenger', url: 'https://t.me/example' }],
+  ])('allows canonical %s contact actions on publish', (_name, action) => {
+    expect(validatePublicPageForPublish(contactsDocument([
+      { id: 'contact-1', label: 'Contact us', action },
+    ]))).toEqual([]);
+  });
+
+  it.each([
+    'https://example.com/contact',
+    'http://example.com/contact',
+    'tel:+15551234567',
+    'mailto:hello@example.com',
+  ])('rejects legacy contact URL %s at the schema boundary', (url) => {
+    expect(() => contactsDocument([
+      { id: 'contact-1', label: 'Contact us', url },
+    ])).toThrow();
+  });
+
+  it('rejects mixed canonical and legacy contact fields', () => {
+    expect(() => contactsDocument([{
+      id: 'contact-1',
+      label: 'Contact us',
+      action: { type: 'url', url: 'https://example.com/contact' },
+      url: 'https://example.com/contact',
+    }])).toThrow();
+  });
+
+  it.each([
+    ['missing action', [{ id: 'contact-1', label: 'Contact us' }]],
+    ['legacy URL', [{ id: 'contact-1', label: 'Contact us', url: 'javascript:alert(1)' }]],
+  ])('rejects contacts with %s at the schema boundary', (_name, contacts) => {
+    expect(() => contactsDocument(contacts)).toThrow();
+  });
+
+  it.each([
+    ['empty contacts list', [], 'contacts must contain at least one contact'],
+    ['blank contact label', [{
+      id: 'contact-1', label: '  ', action: { type: 'email', email: 'hello@example.com' },
+    }], 'contacts.0.label is required'],
+  ])('rejects canonical contacts with %s on publish', (_name, contacts, detail) => {
+    expect(validatePublicPageForPublish(contactsDocument(contacts))).toContainEqual(expect.objectContaining({
+      code: 'invalid_block', detail,
     }));
   });
 
@@ -217,100 +370,61 @@ describe('public page schemas', () => {
     }).success).toBe(false);
   });
 
-  it('defaults additive section design for legacy documents', () => {
-    const parsed = publicPageDocumentSchema.parse(validPublicPageDocument);
-    expect(parsed.sections[0]!.design).toEqual({
-      backgroundColor: null,
-      textColor: null,
-      backgroundMediaId: null,
-      backgroundOverlay: 0,
-      backgroundFit: 'cover',
-      backgroundPosition: '50% 50%',
-      variant: 'custom',
-      paddingTop: 0,
-      paddingBottom: 0,
-      horizontalMargin: false,
-      borderRadius: null,
-      borderWidth: 0,
-      borderColor: null,
-      shadow: false,
-      width: 'full',
-      mobileVisible: true,
-      headingStyle: emptyTypographyOverride(),
-      textStyle: emptyTypographyOverride(),
-      linkStyle: {
-        titleStyle: emptyTypographyOverride(),
-        subtitleStyle: emptyTypographyOverride(),
-        backgroundColor: null,
-        backgroundOpacity: null,
-        borderWidth: null,
-        borderColor: null,
-        shadow: null,
-      },
-    });
-    expect(parsed.sections[0]!.blocks[0]!.design).toEqual({
-      backgroundColor: null,
-      textColor: null,
-      paddingTop: 0,
-      paddingBottom: 0,
-      borderRadius: null,
-    });
-    expect(parsed.theme.styleDefaults).toEqual({
-      sectionBorderRadius: 0,
-      blockBorderRadius: 24,
-      headingStyle: {
-        fontFamily: 'Inter, system-ui, sans-serif', fontSize: 32, fontWeight: 700,
-        fontStyle: 'normal', color: '#111',
-      },
-      textStyle: {
-        fontFamily: 'Inter, system-ui, sans-serif', fontSize: 16, fontWeight: 400,
-        fontStyle: 'normal', color: '#111',
-      },
-      linkStyle: {
-        titleStyle: {
-          fontFamily: 'Inter, system-ui, sans-serif', fontSize: 16, fontWeight: 600,
-          fontStyle: 'normal', color: '#111',
-        },
-        subtitleStyle: {
-          fontFamily: 'Inter, system-ui, sans-serif', fontSize: 14, fontWeight: 400,
-          fontStyle: 'normal', color: '#111',
-        },
-        backgroundColor: '#fff', backgroundOpacity: 1, borderWidth: 0,
-        borderColor: 'transparent', shadow: false,
-      },
-    });
+  it.each([
+    ['section.design', (document: any) => { delete document.sections[0].design; }],
+    ['block.design.backgroundMediaId', (document: any) => { delete document.sections[0].blocks[0].design.backgroundMediaId; }],
+    ['section.design.headingStyle.color', (document: any) => { delete document.sections[0].design.headingStyle.color; }],
+    ['section.design.linkStyle.shadow', (document: any) => { delete document.sections[0].design.linkStyle.shadow; }],
+    ['theme.swatches', (document: any) => { delete document.theme.swatches; }],
+    ['theme.tokens', (document: any) => { delete document.theme.tokens; }],
+    ['theme.fontFamily', (document: any) => { delete document.theme.fontFamily; }],
+    ['theme.roundingStyle', (document: any) => { delete document.theme.roundingStyle; }],
+    ['theme.backgroundMediaId', (document: any) => { delete document.theme.backgroundMediaId; }],
+    ['theme.backgroundPreset', (document: any) => { delete document.theme.backgroundPreset; }],
+    ['theme.backgroundFit', (document: any) => { delete document.theme.backgroundFit; }],
+    ['theme.backgroundPosition', (document: any) => { delete document.theme.backgroundPosition; }],
+    ['theme.linkStylePreset', (document: any) => { delete document.theme.linkStylePreset; }],
+    ['theme.styleDefaults', (document: any) => { delete document.theme.styleDefaults; }],
+  ])('rejects v2 documents missing persisted field %s', (_path, remove) => {
+    const document = structuredClone(validPublicPageDocument);
+    remove(document);
+    expect(publicPageDocumentSchema.safeParse(document).success).toBe(false);
   });
 
-  it('derives omitted legacy theme style defaults from that theme', () => {
-    const parsed = publicPageDocumentSchema.parse({
-      ...validPublicPageDocument,
-      theme: {
-        ...validPublicPageDocument.theme,
-        fontFamily: 'Merriweather, serif',
-        colors: {
-          ...validPublicPageDocument.theme.colors,
-          text: '#243142',
-          surface: '#f3ead8',
-        },
-      },
-    });
-    expect(parsed.theme.styleDefaults.headingStyle).toMatchObject({
-      fontFamily: 'Merriweather, serif',
-      color: '#243142',
-    });
-    expect(parsed.theme.styleDefaults.textStyle).toMatchObject({
-      fontFamily: 'Merriweather, serif',
-      color: '#243142',
-    });
-    expect(parsed.theme.styleDefaults.linkStyle).toMatchObject({
-      titleStyle: { fontFamily: 'Merriweather, serif', color: '#243142' },
-      subtitleStyle: { fontFamily: 'Merriweather, serif', color: '#243142' },
-      backgroundColor: '#f3ead8',
-    });
+  it.each([
+    'theme.swatches.0',
+    'theme.colors.background',
+    'theme.colors.surface',
+    'theme.colors.text',
+    'theme.colors.primary',
+    'theme.fontFamily',
+    'theme.tokens.colors.contrast',
+    'theme.tokens.colors.linkTitle',
+    'theme.tokens.colors.linkSubtitle',
+    'theme.tokens.colors.linkShadow',
+    'theme.tokens.colors.linkBorder',
+    'theme.tokens.colors.focus',
+    'theme.tokens.colors.checkboxBackground',
+    'theme.tokens.typography.fontFamily',
+    'theme.tokens.typography.headingColor',
+    'theme.tokens.typography.avatarTitle.fontFamily',
+    'theme.styleDefaults.headingStyle.fontFamily',
+    'theme.styleDefaults.headingStyle.color',
+    'theme.styleDefaults.textStyle.fontFamily',
+    'theme.styleDefaults.textStyle.color',
+    'theme.styleDefaults.linkStyle.titleStyle.fontFamily',
+    'theme.styleDefaults.linkStyle.titleStyle.color',
+    'theme.styleDefaults.linkStyle.subtitleStyle.fontFamily',
+    'theme.styleDefaults.linkStyle.subtitleStyle.color',
+    'theme.styleDefaults.linkStyle.backgroundColor',
+    'theme.styleDefaults.linkStyle.borderColor',
+  ])('rejects a blank required v2 theme string at %s', (path) => {
+    const document = structuredClone(validPublicPageDocument) as Record<string, any>;
+    setPath(document, path, '');
+    expect(publicPageDocumentSchema.safeParse(document).success).toBe(false);
   });
 
-  it('defaults legacy theme rounding and validates explicit rounding styles', () => {
-    expect(publicPageDocumentSchema.parse(validPublicPageDocument).theme.roundingStyle).toBe('rounded');
+  it('validates explicit canonical theme rounding styles', () => {
 
     for (const roundingStyle of ['rounded', 'pill', 'leaf', 'square'] as const) {
       const parsed = publicPageDocumentSchema.safeParse({
@@ -327,10 +441,7 @@ describe('public page schemas', () => {
     }).success).toBe(false);
   });
 
-  it('defaults legacy link style preset and validates explicit presets', () => {
-    expect(publicPageDocumentSchema.parse(validPublicPageDocument).theme.linkStylePreset)
-      .toBe('primary-fill');
-
+  it('validates explicit canonical link style presets', () => {
     const presets = [
       'primary-fill', 'primary-shadow', 'primary-strong', 'primary-outline',
       'surface-fill', 'surface-outline', 'surface-shadow', 'surface-strong',
@@ -350,15 +461,7 @@ describe('public page schemas', () => {
     }).success).toBe(false);
   });
 
-  it('defaults legacy theme background settings and validates background fit', () => {
-    const parsed = publicPageDocumentSchema.parse(validPublicPageDocument);
-    expect(parsed.theme).toMatchObject({
-      backgroundMediaId: null,
-      backgroundPreset: null,
-      backgroundFit: 'cover',
-      backgroundPosition: '50% 50%',
-    });
-
+  it('validates explicit canonical theme background settings', () => {
     expect(publicPageDocumentSchema.safeParse({
       ...validPublicPageDocument,
       theme: { ...validPublicPageDocument.theme, backgroundFit: 'contain' },
@@ -373,7 +476,7 @@ describe('public page schemas', () => {
     }).success).toBe(false);
   });
 
-  it('preserves explicit zero styling values and defaults partial overrides to null', () => {
+  it('preserves explicit zero styling values in complete canonical overrides', () => {
     const parsed = publicPageDocumentSchema.parse({
       ...validPublicPageDocument,
       theme: {
@@ -390,9 +493,21 @@ describe('public page schemas', () => {
       sections: [{
         ...validPublicPageDocument.sections[0],
         design: {
+          ...validPublicPageDocument.sections[0]!.design,
           borderRadius: 0,
-          headingStyle: { fontSize: 8, fontWeight: 100 },
-          linkStyle: { backgroundOpacity: 0, borderWidth: 0, titleStyle: { fontSize: 8 } },
+          headingStyle: {
+            ...validPublicPageDocument.sections[0]!.design.headingStyle,
+            fontSize: 8, fontWeight: 100,
+          },
+          linkStyle: {
+            ...validPublicPageDocument.sections[0]!.design.linkStyle,
+            backgroundOpacity: 0,
+            borderWidth: 0,
+            titleStyle: {
+              ...validPublicPageDocument.sections[0]!.design.linkStyle.titleStyle,
+              fontSize: 8,
+            },
+          },
         },
         blocks: [{ ...validPublicPageDocument.sections[0]!.blocks[0], design: {
           ...validPublicPageDocument.sections[0]!.blocks[0]!.design, borderRadius: 0,
@@ -423,16 +538,34 @@ describe('public page schemas', () => {
     ['border above maximum', { linkStyle: { borderWidth: 17 } }],
     ['radius above maximum', { borderRadius: 101 }],
   ])('rejects %s', (_name, design) => {
+    const base = validPublicPageDocument.sections[0]!.design;
+    const headingStyle = 'headingStyle' in design
+      ? { ...base.headingStyle, ...design.headingStyle } : base.headingStyle;
+    const textStyle = 'textStyle' in design
+      ? { ...base.textStyle, ...design.textStyle } : base.textStyle;
+    const partialLink = 'linkStyle' in design ? design.linkStyle : undefined;
+    const linkStyle = partialLink ? {
+      ...base.linkStyle,
+      ...partialLink,
+      titleStyle: { ...base.linkStyle.titleStyle, ...partialLink.titleStyle },
+      subtitleStyle: { ...base.linkStyle.subtitleStyle, ...partialLink.subtitleStyle },
+    } : base.linkStyle;
     expect(publicPageDocumentSchema.safeParse({
       ...validPublicPageDocument,
-      sections: [{ ...validPublicPageDocument.sections[0], design }],
+      sections: [{
+        ...validPublicPageDocument.sections[0],
+        design: { ...base, ...design, headingStyle, textStyle, linkStyle },
+      }],
     }).success).toBe(false);
   });
 
   it('accepts bounded section design values and rejects values outside the bounds', () => {
     const withDesign = (design: Record<string, unknown>) => ({
       ...validPublicPageDocument,
-      sections: [{ ...validPublicPageDocument.sections[0], design }],
+      sections: [{
+        ...validPublicPageDocument.sections[0],
+        design: { ...validPublicPageDocument.sections[0]!.design, ...design },
+      }],
     });
     expect(publicPageDocumentSchema.safeParse(withDesign({
       paddingTop: 160,
@@ -463,7 +596,10 @@ describe('public page schemas', () => {
     (variant) => {
       expect(publicPageDocumentSchema.safeParse({
         ...validPublicPageDocument,
-        sections: [{ ...validPublicPageDocument.sections[0], design: { variant } }],
+        sections: [{
+          ...validPublicPageDocument.sections[0],
+          design: { ...validPublicPageDocument.sections[0]!.design, variant },
+        }],
       }).success).toBe(true);
     },
   );
@@ -473,7 +609,10 @@ describe('public page schemas', () => {
       ...validPublicPageDocument,
       sections: [{
         ...validPublicPageDocument.sections[0],
-        blocks: [{ ...validPublicPageDocument.sections[0]!.blocks[0], design }],
+        blocks: [{
+          ...validPublicPageDocument.sections[0]!.blocks[0],
+          design: { ...validPublicPageDocument.sections[0]!.blocks[0]!.design, ...design },
+        }],
       }],
     });
     expect(publicPageDocumentSchema.safeParse(withBlockDesign({
@@ -481,7 +620,6 @@ describe('public page schemas', () => {
       textColor: null,
       paddingTop: 160,
       paddingBottom: 160,
-      futureDesignField: true,
     })).success).toBe(true);
     expect(publicPageDocumentSchema.safeParse(withBlockDesign({
       backgroundColor: null, textColor: null, paddingTop: -1,
@@ -491,12 +629,90 @@ describe('public page schemas', () => {
     })).success).toBe(false);
   });
 
+  it('validates explicit block background design fields', () => {
+    const withBlockDesign = (design: Record<string, unknown>) => ({
+      ...validPublicPageDocument,
+      sections: [{
+        ...validPublicPageDocument.sections[0],
+        blocks: [{
+          ...validPublicPageDocument.sections[0]!.blocks[0],
+          design: { ...validPublicPageDocument.sections[0]!.blocks[0]!.design, ...design },
+        }],
+      }],
+    });
+    const parsed = publicPageDocumentSchema.parse(withBlockDesign({
+      backgroundColor: null,
+      textColor: null,
+      backgroundMediaId: 'media-1',
+      backgroundOverlay: 1,
+      backgroundFit: 'contain',
+      backgroundPosition: 'left top',
+    }));
+    expect(parsed.sections[0]!.blocks[0]!.design).toMatchObject({
+      backgroundMediaId: 'media-1',
+      backgroundOverlay: 1,
+      backgroundFit: 'contain',
+      backgroundPosition: 'left top',
+    });
+
+    expect(publicPageDocumentSchema.safeParse(withBlockDesign({
+      backgroundColor: null, textColor: null, backgroundOverlay: -0.01,
+    })).success).toBe(false);
+    expect(publicPageDocumentSchema.safeParse(withBlockDesign({
+      backgroundColor: null, textColor: null, backgroundOverlay: 1.01,
+    })).success).toBe(false);
+    expect(publicPageDocumentSchema.safeParse(withBlockDesign({
+      backgroundColor: null, textColor: null, backgroundFit: 'stretch',
+    })).success).toBe(false);
+    expect(publicPageDocumentSchema.safeParse(withBlockDesign({
+      backgroundColor: null, textColor: null, backgroundPosition: '',
+    })).success).toBe(false);
+  });
+
+  it('rejects unknown block design fields', () => {
+    expect(publicPageDocumentSchema.safeParse({
+      ...validPublicPageDocument,
+      sections: [{
+        ...validPublicPageDocument.sections[0],
+        blocks: [{
+          ...validPublicPageDocument.sections[0]!.blocks[0],
+          design: {
+            ...validPublicPageDocument.sections[0]!.blocks[0]!.design,
+            futureDesignField: { mode: 'experimental' },
+          },
+        }],
+      }],
+    }).success).toBe(false);
+  });
+
+  it.each([
+    ['profile.logoMediaId', {
+      ...validPublicPageDocument,
+      profile: { ...validPublicPageDocument.profile, logoMediaId: 'missing-media' },
+    }],
+    ['profile.avatarMediaId', {
+      ...validPublicPageDocument,
+      profile: { ...validPublicPageDocument.profile, avatarMediaId: 'missing-media' },
+    }],
+    ['seo.imageMediaId', {
+      ...validPublicPageDocument,
+      seo: { ...validPublicPageDocument.seo, imageMediaId: 'missing-media' },
+    }],
+  ])('keeps dangling %s draft-saveable but rejects it on publish', (path, input) => {
+    const parsed = publicPageDocumentSchema.safeParse(input);
+    expect(parsed.success).toBe(true);
+    expect(validatePublicPageForPublish(parsed.data!)).toContainEqual({
+      code: 'missing_media',
+      path,
+    });
+  });
+
   it('rejects a missing section background media reference on publish', () => {
     const document = publicPageDocumentSchema.parse({
       ...validPublicPageDocument,
       sections: [{
         ...validPublicPageDocument.sections[0],
-        design: { backgroundMediaId: 'missing-media' },
+        design: { ...validPublicPageDocument.sections[0]!.design, backgroundMediaId: 'missing-media' },
       }],
     });
     expect(validatePublicPageForPublish(document)).toContainEqual({
@@ -575,57 +791,45 @@ describe('public page schemas', () => {
   });
 
   it.each([
-    ['empty hero title', 'hero', { title: '', action: { type: 'booking' } }, 'invalid_block'],
-    ['image without media and alt', 'image', { imageMediaId: null, alt: '' }, 'invalid_block'],
-    ['unsafe map url', 'map', { address: 'Office', url: 'javascript:alert(1)' }, 'invalid_block'],
-    ['unsafe link action', 'links', {
-      links: [{ id: 'link-1', label: 'Open', action: { type: 'url', url: 'javascript:alert(1)' } }],
-    }, 'invalid_cta'],
-    ['malformed link action', 'links', {
-      links: [{ id: 'link-1', label: 'Open', action: { type: 'url' } }],
-    }, 'invalid_cta'],
-    ['unavailable booking block', 'booking', { label: 'Book now' }, 'invalid_block'],
-    ['unavailable booking action', 'links', {
-      links: [{ id: 'link-1', label: 'Book now', action: { type: 'booking' } }],
-    }, 'invalid_cta'],
-    ['missing action label', 'links', {
-      links: [{ id: 'link-1', label: '', action: { type: 'booking' } }],
-    }, 'invalid_block'],
-  ])('rejects %s on publish', (_name, type, content, expectedCode) => {
-    const parsed = publicPageDocumentSchema.parse({
+    ['hero', { title: 'Welcome' }],
+    ['booking', { label: 'Book now' }],
+    ['socials', { links: [] }],
+    ['messengers', { links: [] }],
+    ['future-block', {}],
+  ])('rejects removed or unknown block type %s at the schema boundary', (type, content) => {
+    expect(publicPageDocumentSchema.safeParse({
       ...validPublicPageDocument,
       sections: [{
         ...validPublicPageDocument.sections[0],
         blocks: [{ ...validPublicPageDocument.sections[0]!.blocks[0], type, content }],
       }],
-    });
-    expect(validatePublicPageForPublish(parsed).map((issue) => issue.code)).toContain(expectedCode);
+    }).success).toBe(false);
   });
 
-  it.each([
-    ['avatar with a media reference', 'avatar', { heading: 'Profile', imageMediaId: 'media-1' }],
-    ['avatar with image content', 'avatar', { heading: 'Profile', imageMediaId: null, imageUrl: '/placeholder.svg' }],
-    ['button with an existing CTA action', 'button', {
-      label: 'Visit', action: { type: 'url', url: 'https://example.com' },
-    }],
-    ['legacy hero', 'hero', { title: 'Welcome' }],
-  ])('allows %s on publish', (_name, type, content) => {
-    const media = type === 'avatar' && 'imageMediaId' in content && content.imageMediaId
-      ? [{
-        id: 'media-1',
-        url: 'https://cdn.example.com/avatar.webp',
-        mimeType: 'image/webp' as const,
-        alt: 'Profile',
-        width: 320,
-        height: 320,
-      }] : [];
+  it('allows canonical avatar and button blocks on publish', () => {
     const parsed = publicPageDocumentSchema.parse({
       ...validPublicPageDocument,
       sections: [{
         ...validPublicPageDocument.sections[0],
-        blocks: [{ ...validPublicPageDocument.sections[0]!.blocks[0], type, content }],
+        blocks: [{
+          ...validPublicPageDocument.sections[0]!.blocks[0],
+          type: 'avatar',
+          content: {
+            heading: 'Profile', subtitle: '', imageMediaId: 'media-1', imageAlt: 'Profile',
+            layout: 'centered', avatarSize: 150, coverColor: null, coverMediaId: null,
+          },
+        }, {
+          ...validPublicPageDocument.sections[0]!.blocks[0], id: 'button-1', type: 'button',
+          content: {
+            label: 'Visit', icon: 'link', color: '', textColor: '', radius: 12,
+            action: { type: 'url', url: 'https://example.com' },
+          },
+        }],
       }],
-      media,
+      media: [{
+        id: 'media-1', url: 'https://cdn.example.com/avatar.webp', mimeType: 'image/webp' as const,
+        alt: 'Profile', width: 320, height: 320,
+      }],
     });
     expect(validatePublicPageForPublish(parsed)).toEqual([]);
   });
@@ -649,14 +853,21 @@ describe('public page schemas', () => {
   });
 
   it.each([
-    ['avatar without heading', 'avatar', { heading: '', imageUrl: '/placeholder.svg' }],
-    ['avatar without an image', 'avatar', { heading: 'Profile', imageMediaId: null, imageUrl: '' }],
-    ['button without a label', 'button', {
-      label: '', action: { type: 'url', url: 'https://example.com' },
+    ['avatar without heading', 'avatar', {
+      heading: '', subtitle: '', imageMediaId: 'media-1', imageAlt: 'Profile',
+      layout: 'centered', avatarSize: 150, coverColor: null, coverMediaId: null,
     }],
-    ['button without an action', 'button', { label: 'Visit' }],
+    ['avatar without an image', 'avatar', {
+      heading: 'Profile', subtitle: '', imageMediaId: null, imageAlt: 'Profile',
+      layout: 'centered', avatarSize: 150, coverColor: null, coverMediaId: null,
+    }],
+    ['button without a label', 'button', {
+      label: '', icon: 'link', color: '', textColor: '', radius: 12,
+      action: { type: 'url', url: 'https://example.com' },
+    }],
     ['button with an invalid action', 'button', {
-      label: 'Visit', action: { type: 'url', url: 'javascript:alert(1)' },
+      label: 'Visit', icon: 'link', color: '', textColor: '', radius: 12,
+      action: { type: 'url', url: 'javascript:alert(1)' },
     }],
   ])('rejects %s on publish', (_name, type, content) => {
     const parsed = publicPageDocumentSchema.parse({

@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-export const PUBLIC_PAGE_SCHEMA_VERSION = 1 as const;
+export const PUBLIC_PAGE_SCHEMA_VERSION = 2 as const;
 export const KNOWN_PUBLIC_PAGE_BLOCKS = new Set([
-  'hero', 'avatar', 'button', 'links', 'booking', 'text', 'image', 'gallery', 'services',
+  'avatar', 'button', 'links', 'text', 'image', 'gallery', 'services',
   'contacts', 'social-button', 'map', 'divider', 'faq',
 ]);
 export const RESERVED_PUBLIC_PAGE_SLUGS = new Set([
@@ -14,7 +14,12 @@ const socialButtonPlatformValues = [
   'facebook-messenger', 'vk', 'whatsapp', 'viber', 'telegram',
   'facebook', 'threads', 'instagram', 'tiktok',
 ] as const;
-const socialButtonPlatforms = new Set<string>(socialButtonPlatformValues);
+const ctaActionSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('url'), url: z.string() }).strict(),
+  z.object({ type: z.literal('phone'), phone: z.string() }).strict(),
+  z.object({ type: z.literal('email'), email: z.string() }).strict(),
+  z.object({ type: z.literal('messenger'), url: z.string() }).strict(),
+]);
 const socialButtonContentSchema = z.object({
   platform: z.enum(socialButtonPlatformValues),
   label: z.string().trim().min(1),
@@ -26,165 +31,181 @@ const socialButtonContentSchema = z.object({
     }
   }),
 }).strict();
+const servicesCatalogContentSchema = z.object({
+  title: z.string(),
+  serviceIds: z.array(z.number().int().positive()).max(12).refine(
+    (serviceIds) => new Set(serviceIds).size === serviceIds.length,
+    { message: 'duplicate_service_id' },
+  ),
+  autoplayIntervalSeconds: z.number().int().min(3).max(30).nullable(),
+  showBookingButton: z.boolean(),
+}).strict();
+
+const richTextMarksSchema = z.object({
+  bold: z.literal(true).optional(),
+  italic: z.literal(true).optional(),
+  underline: z.literal(true).optional(),
+  strike: z.literal(true).optional(),
+  color: z.string().min(1).optional(),
+}).strict();
+const richTextRunSchema = z.object({
+  text: z.string(),
+  marks: richTextMarksSchema.optional(),
+}).strict();
+const richTextParagraphSchema = z.object({
+  size: z.enum(['small', 'medium', 'large', 'h1', 'h2', 'h3']),
+  fontFamily: z.string().min(1).nullable(),
+  alignment: z.enum(['left', 'center', 'right', 'justify']),
+  runs: z.array(richTextRunSchema).min(1),
+}).strict();
+const richTextDocumentSchema = z.object({
+  type: z.literal('rich-text-v1'),
+  paragraphs: z.array(richTextParagraphSchema).min(1),
+}).strict();
 
 const nullableString = z.string().nullable();
 const typographyStyleSchema = z.object({
-  fontFamily: z.string(),
+  fontFamily: z.string().min(1),
   fontSize: z.number().min(8).max(96),
   fontWeight: z.number().int().min(100).max(900),
   fontStyle: z.enum(['normal', 'italic']),
-  color: z.string(),
-}).passthrough();
+  color: z.string().min(1),
+}).strict();
 const typographyOverrideSchema = z.object({
-  fontFamily: nullableString.default(null),
-  fontSize: z.number().min(8).max(96).nullable().default(null),
-  fontWeight: z.number().int().min(100).max(900).nullable().default(null),
-  fontStyle: z.enum(['normal', 'italic']).nullable().default(null),
-  color: nullableString.default(null),
-}).passthrough();
-const emptyTypographyOverride = {
-  fontFamily: null,
-  fontSize: null,
-  fontWeight: null,
-  fontStyle: null,
-  color: null,
-};
+  fontFamily: nullableString,
+  fontSize: z.number().min(8).max(96).nullable(),
+  fontWeight: z.number().int().min(100).max(900).nullable(),
+  fontStyle: z.enum(['normal', 'italic']).nullable(),
+  color: nullableString,
+}).strict();
 const linkStyleSchema = z.object({
   titleStyle: typographyStyleSchema,
   subtitleStyle: typographyStyleSchema,
-  backgroundColor: z.string(),
+  backgroundColor: z.string().min(1),
   backgroundOpacity: z.number().min(0).max(1),
   borderWidth: z.number().min(0).max(16),
-  borderColor: z.string(),
+  borderColor: z.string().min(1),
   shadow: z.boolean(),
-}).passthrough();
+}).strict();
 const linkStyleOverrideSchema = z.object({
-  titleStyle: typographyOverrideSchema.default(emptyTypographyOverride),
-  subtitleStyle: typographyOverrideSchema.default(emptyTypographyOverride),
-  backgroundColor: nullableString.default(null),
-  backgroundOpacity: z.number().min(0).max(1).nullable().default(null),
-  borderWidth: z.number().min(0).max(16).nullable().default(null),
-  borderColor: nullableString.default(null),
-  shadow: z.boolean().nullable().default(null),
-}).passthrough();
-const defaultThemeStyleDefaults = (fontFamily: string, textColor: string, surfaceColor: string) => ({
-  sectionBorderRadius: 0,
-  blockBorderRadius: 24,
-  headingStyle: {
-    fontFamily,
-    fontSize: 32,
-    fontWeight: 700,
-    fontStyle: 'normal' as const,
-    color: textColor,
-  },
-  textStyle: {
-    fontFamily,
-    fontSize: 16,
-    fontWeight: 400,
-    fontStyle: 'normal' as const,
-    color: textColor,
-  },
-  linkStyle: {
-    titleStyle: {
-      fontFamily,
-      fontSize: 16,
-      fontWeight: 600,
-      fontStyle: 'normal' as const,
-      color: textColor,
-    },
-    subtitleStyle: {
-      fontFamily,
-      fontSize: 14,
-      fontWeight: 400,
-      fontStyle: 'normal' as const,
-      color: textColor,
-    },
-    backgroundColor: surfaceColor,
-    backgroundOpacity: 1,
-    borderWidth: 0,
-    borderColor: 'transparent',
-    shadow: false,
-  },
-});
+  titleStyle: typographyOverrideSchema,
+  subtitleStyle: typographyOverrideSchema,
+  backgroundColor: nullableString,
+  backgroundOpacity: z.number().min(0).max(1).nullable(),
+  borderWidth: z.number().min(0).max(16).nullable(),
+  borderColor: nullableString,
+  shadow: z.boolean().nullable(),
+}).strict();
 const themeStyleDefaultsSchema = z.object({
   sectionBorderRadius: z.number().min(0).max(100),
   blockBorderRadius: z.number().min(0).max(100),
   headingStyle: typographyStyleSchema,
   textStyle: typographyStyleSchema,
   linkStyle: linkStyleSchema,
-}).passthrough();
-const defaultSectionDesign = {
-  backgroundColor: null,
-  textColor: null,
-  backgroundMediaId: null,
-  backgroundOverlay: 0,
-  backgroundFit: 'cover' as const,
-  backgroundPosition: '50% 50%',
-  variant: 'custom' as const,
-  paddingTop: 0,
-  paddingBottom: 0,
-  horizontalMargin: false,
-  borderRadius: null,
-  borderWidth: 0,
-  borderColor: null,
-  shadow: false,
-  width: 'full' as const,
-  mobileVisible: true,
-  headingStyle: emptyTypographyOverride,
-  textStyle: emptyTypographyOverride,
-  linkStyle: {
-    titleStyle: emptyTypographyOverride,
-    subtitleStyle: emptyTypographyOverride,
-    backgroundColor: null,
-    backgroundOpacity: null,
-    borderWidth: null,
-    borderColor: null,
-    shadow: null,
-  },
-};
-const blockSchema = z.object({
+}).strict();
+const blockDesignSchema = z.object({
+  backgroundColor: nullableString,
+  textColor: nullableString,
+  backgroundMediaId: nullableString,
+  backgroundOverlay: z.number().min(0).max(1),
+  backgroundFit: z.enum(['cover', 'contain']),
+  backgroundPosition: z.string().min(1),
+  paddingTop: z.number().min(0).max(160),
+  paddingBottom: z.number().min(0).max(160),
+  borderRadius: z.number().min(0).max(100).nullable(),
+}).strict();
+const blockFields = {
   id: z.string().min(1),
-  type: z.string().min(1),
   name: z.string(),
   visible: z.boolean(),
-  content: z.record(z.string(), z.unknown()),
-  design: z.object({
-    backgroundColor: nullableString,
-    textColor: nullableString,
-    paddingTop: z.number().min(0).max(160).default(0),
-    paddingBottom: z.number().min(0).max(160).default(0),
-    borderRadius: z.number().min(0).max(100).nullable().default(null),
-  }).passthrough(),
-}).passthrough();
+  design: blockDesignSchema,
+};
+const blockSchema = z.discriminatedUnion('type', [
+  z.object({ ...blockFields, type: z.literal('avatar'), content: z.object({
+    heading: z.string(),
+    subtitle: z.string(),
+    imageMediaId: nullableString,
+    imageAlt: z.string(),
+    layout: z.enum(['centered', 'cover-centered', 'cover-left', 'image-cover']),
+    avatarSize: z.union([z.literal(65), z.literal(95), z.literal(125), z.literal(150)]),
+    coverColor: nullableString,
+    coverMediaId: nullableString,
+  }).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('button'), content: z.object({
+    label: z.string(),
+    icon: z.enum(['link', 'phone', 'email', 'message']),
+    color: z.string(),
+    textColor: z.string(),
+    radius: z.number().min(0).max(100),
+    action: ctaActionSchema,
+  }).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('links'), content: z.object({
+    links: z.array(z.object({
+      id: z.string().min(1),
+      label: z.string(),
+      action: ctaActionSchema,
+    }).strict()),
+  }).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('text'), content: z.object({
+    document: richTextDocumentSchema,
+  }).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('image'), content: z.object({
+    imageMediaId: nullableString,
+    alt: z.string(),
+  }).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('gallery'), content: z.object({
+    images: z.array(z.object({
+      mediaId: z.string().min(1),
+      alt: z.string(),
+    }).strict()),
+  }).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('services'), content: servicesCatalogContentSchema }).strict(),
+  z.object({ ...blockFields, type: z.literal('contacts'), content: z.object({
+    title: z.string(),
+    contacts: z.array(z.object({
+      id: z.string().min(1),
+      label: z.string(),
+      action: ctaActionSchema,
+    }).strict()),
+  }).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('social-button'), content: socialButtonContentSchema }).strict(),
+  z.object({ ...blockFields, type: z.literal('map'), content: z.object({
+    title: z.string(),
+    address: z.string(),
+    label: z.string(),
+    url: z.string(),
+  }).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('divider'), content: z.object({}).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('faq'), content: z.object({
+    title: z.string(),
+    items: z.array(z.object({
+      id: z.string().min(1),
+      title: z.string(),
+      description: z.string(),
+    }).strict()),
+  }).strict() }).strict(),
+]);
 const sectionDesignSchema = z.object({
-  backgroundColor: nullableString.default(null),
-  textColor: nullableString.default(null),
-  backgroundMediaId: nullableString.default(null),
-  backgroundOverlay: z.number().min(0).max(1).default(0),
-  backgroundFit: z.enum(['cover', 'contain']).default('cover'),
-  backgroundPosition: z.string().default('50% 50%'),
-  variant: z.enum(['off', 'custom', 'primary', 'secondary']).default('custom'),
-  paddingTop: z.number().min(0).max(160).default(0),
-  paddingBottom: z.number().min(0).max(160).default(0),
-  horizontalMargin: z.boolean().default(false),
-  borderRadius: z.number().min(0).max(100).nullable().default(null),
-  borderWidth: z.number().min(0).max(16).default(0),
-  borderColor: nullableString.default(null),
-  shadow: z.boolean().default(false),
-  width: z.enum(['full', 'contained']).default('full'),
-  mobileVisible: z.boolean().default(true),
-  headingStyle: typographyOverrideSchema.default(emptyTypographyOverride),
-  textStyle: typographyOverrideSchema.default(emptyTypographyOverride),
-  linkStyle: linkStyleOverrideSchema.default({
-    titleStyle: emptyTypographyOverride,
-    subtitleStyle: emptyTypographyOverride,
-    backgroundColor: null,
-    backgroundOpacity: null,
-    borderWidth: null,
-    borderColor: null,
-    shadow: null,
-  }),
-}).passthrough();
+  backgroundColor: nullableString,
+  textColor: nullableString,
+  backgroundMediaId: nullableString,
+  backgroundOverlay: z.number().min(0).max(1),
+  backgroundFit: z.enum(['cover', 'contain']),
+  backgroundPosition: z.string().min(1),
+  variant: z.enum(['off', 'custom', 'primary', 'secondary']),
+  paddingTop: z.number().min(0).max(160),
+  paddingBottom: z.number().min(0).max(160),
+  horizontalMargin: z.boolean(),
+  borderRadius: z.number().min(0).max(100).nullable(),
+  borderWidth: z.number().min(0).max(16),
+  borderColor: nullableString,
+  shadow: z.boolean(),
+  width: z.enum(['full', 'contained']),
+  mobileVisible: z.boolean(),
+  headingStyle: typographyOverrideSchema,
+  textStyle: typographyOverrideSchema,
+  linkStyle: linkStyleOverrideSchema,
+}).strict();
 const sectionSchema = z.object({
   id: z.string().min(1),
   name: z.string(),
@@ -194,8 +215,8 @@ const sectionSchema = z.object({
     'three-equal', 'stack', 'hero-overlay',
   ]),
   blocks: z.array(blockSchema),
-  design: sectionDesignSchema.default(defaultSectionDesign),
-}).passthrough();
+  design: sectionDesignSchema,
+}).strict();
 const mediaSchema = z.object({
   id: z.string().min(1),
   url: z.string().min(1),
@@ -203,35 +224,71 @@ const mediaSchema = z.object({
   alt: z.string(),
   width: z.number().nonnegative(),
   height: z.number().nonnegative(),
-}).passthrough();
+}).strict();
+const themeTypographyTokenSchema = z.object({
+  fontFamily: z.string().min(1),
+  fontSize: z.number().min(8).max(96),
+  fontWeight: z.number().int().min(100).max(900),
+  lineHeight: z.number().min(0.5).max(3),
+  letterSpacing: z.number().min(-10).max(20),
+}).strict();
+const themeTokensSchema = z.object({
+  colors: z.object({
+    contrast: z.string().min(1),
+    linkTitle: z.string().min(1),
+    linkSubtitle: z.string().min(1),
+    linkShadow: z.string().min(1),
+    linkBorder: z.string().min(1),
+    focus: z.string().min(1),
+    checkboxBackground: z.string().min(1),
+  }).strict(),
+  typography: z.object({
+    fontFamily: z.string().min(1),
+    fontWeight: z.number().int().min(100).max(900),
+    boldFontWeight: z.number().int().min(100).max(900),
+    headingColor: z.string().min(1),
+    avatarTitle: themeTypographyTokenSchema,
+    avatarBio: themeTypographyTokenSchema,
+    linkTitle: themeTypographyTokenSchema,
+    linkSubtitle: themeTypographyTokenSchema,
+    h1: themeTypographyTokenSchema,
+    h2: themeTypographyTokenSchema,
+    h3: themeTypographyTokenSchema,
+    textLarge: themeTypographyTokenSchema,
+    textMedium: themeTypographyTokenSchema,
+    textSmall: themeTypographyTokenSchema,
+  }).strict(),
+  layout: z.object({
+    blockRadius: z.number().min(0).max(100),
+    linkRadius: z.number().min(0).max(100),
+    linkGap: z.number().min(0).max(100),
+  }).strict(),
+}).strict();
 const themeSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  swatches: z.tuple([
+    z.string().min(1), z.string().min(1), z.string().min(1), z.string().min(1),
+  ]),
   colors: z.object({
     background: z.string().min(1),
     surface: z.string().min(1),
     text: z.string().min(1),
     primary: z.string().min(1),
-  }).passthrough(),
-  fontFamily: z.string().default('Inter, system-ui, sans-serif'),
-  roundingStyle: z.enum(['rounded', 'pill', 'leaf', 'square']).default('rounded'),
-  backgroundMediaId: nullableString.default(null),
-  backgroundPreset: nullableString.default(null),
-  backgroundFit: z.enum(['cover', 'contain']).default('cover'),
-  backgroundPosition: z.string().min(1).default('50% 50%'),
+  }).strict(),
+  tokens: themeTokensSchema,
+  fontFamily: z.string().min(1),
+  roundingStyle: z.enum(['rounded', 'pill', 'leaf', 'square']),
+  backgroundMediaId: nullableString,
+  backgroundPreset: nullableString,
+  backgroundFit: z.enum(['cover', 'contain']),
+  backgroundPosition: z.string().min(1),
   linkStylePreset: z.enum([
     'primary-fill', 'primary-shadow', 'primary-strong', 'primary-outline',
     'surface-fill', 'surface-outline', 'surface-shadow', 'surface-strong',
-  ]).default('primary-fill'),
-  styleDefaults: themeStyleDefaultsSchema.optional(),
-}).passthrough().transform((theme) => ({
-  ...theme,
-  styleDefaults: theme.styleDefaults ?? defaultThemeStyleDefaults(
-    theme.fontFamily,
-    theme.colors.text,
-    theme.colors.surface,
-  ),
-}));
+  ]),
+  styleDefaults: themeStyleDefaultsSchema,
+}).strict();
 
 export const publicPageDocumentSchema = z.object({
   schemaVersion: z.literal(PUBLIC_PAGE_SCHEMA_VERSION),
@@ -243,18 +300,18 @@ export const publicPageDocumentSchema = z.object({
     description: z.string(),
     logoMediaId: nullableString,
     avatarMediaId: nullableString,
-  }).passthrough(),
+  }).strict(),
   theme: themeSchema,
   sections: z.array(sectionSchema),
   seo: z.object({
     title: z.string(),
     description: z.string(),
     imageMediaId: nullableString,
-  }).passthrough(),
+  }).strict(),
   media: z.array(mediaSchema),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
-}).passthrough().superRefine((document, ctx) => {
+}).strict().superRefine((document, ctx) => {
   const ids = [document.id, ...document.sections.flatMap((section) => [
     section.id, ...section.blocks.map((block) => block.id),
   ]), ...document.media.map((media) => media.id)];
@@ -264,29 +321,15 @@ export const publicPageDocumentSchema = z.object({
   const socialPlatforms = new Set<string>();
   document.sections.forEach((section, sectionIndex) => {
     section.blocks.forEach((block, blockIndex) => {
-      const path = ['sections', sectionIndex, 'blocks', blockIndex] as const;
-      if (block.type === 'socials' || block.type === 'messengers') {
-        ctx.addIssue({ code: 'custom', path: [...path, 'type'], message: 'unsupported_block_type' });
-        return;
-      }
       if (block.type !== 'social-button') return;
-      const parsed = socialButtonContentSchema.safeParse(block.content);
-      if (!parsed.success) {
-        parsed.error.issues.forEach((issue) => ctx.addIssue({
-          code: 'custom',
-          path: [...path, 'content', ...issue.path],
-          message: issue.message,
-        }));
-        return;
-      }
-      if (socialPlatforms.has(parsed.data.platform)) {
+      if (socialPlatforms.has(block.content.platform)) {
         ctx.addIssue({
           code: 'custom',
-          path: [...path, 'content', 'platform'],
+          path: ['sections', sectionIndex, 'blocks', blockIndex, 'content', 'platform'],
           message: 'duplicate_social_platform',
         });
       }
-      socialPlatforms.add(parsed.data.platform);
+      socialPlatforms.add(block.content.platform);
     });
   });
 });
@@ -348,10 +391,6 @@ export function isValidPublicPageSlug(value: string): boolean {
 
 export type PublishIssue = { code: string; path: string; detail?: string; blockId?: string };
 
-function hasValue(value: unknown): boolean {
-  return typeof value === 'string' ? Boolean(value.trim()) : value !== null && value !== undefined;
-}
-
 function hasRichTextContent(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
   const document = value as Record<string, unknown>;
@@ -386,66 +425,45 @@ function isSafeHref(value: unknown, kind: 'contact' | 'web'): boolean {
 }
 
 function validateKnownBlock(block: PublicPageDocument['sections'][number]['blocks'][number]): string[] {
-  const content = block.content;
-  const required = (...keys: string[]) => keys
-    .filter((key) => !hasValue(content[key]))
-    .map((key) => `${key} is required`);
-  const items = (key: string, fields: string[]) => {
-    const value = content[key];
-    if (!Array.isArray(value)) return [];
-    return value.flatMap((item, index) => {
-      if (!item || typeof item !== 'object') return [];
-      return fields.filter((field) => !hasValue((item as Record<string, unknown>)[field]))
-        .map((field) => `${key}.${index}.${field} is required`);
-    });
-  };
-  const safeItemUrls = (key: string, kind: 'contact' | 'web') => {
-    const value = content[key];
-    if (!Array.isArray(value)) return [];
-    return value.flatMap((item, index) => item && typeof item === 'object'
-      && !isSafeHref((item as Record<string, unknown>).url, kind)
-      ? [`${key}.${index}.url is unsafe`] : []);
-  };
   switch (block.type) {
-    case 'hero': return required('title');
     case 'avatar': return [
-      ...required('heading'),
-      ...(!hasValue(content.imageMediaId) && !hasValue(content.imageUrl)
-        ? ['imageMediaId or imageUrl is required'] : []),
+      ...(!block.content.heading.trim() ? ['heading is required'] : []),
+      ...(!block.content.imageMediaId ? ['imageMediaId is required'] : []),
+      ...(!block.content.imageAlt.trim() ? ['imageAlt is required'] : []),
     ];
-    case 'button': return required('label', 'action');
-    case 'links': return items('links', ['label', 'action']);
-    case 'booking': return ['booking is unavailable'];
-    case 'text': return hasRichTextContent(content.document) ? [] : ['document is required'];
+    case 'button': return block.content.label.trim() ? [] : ['label is required'];
+    case 'links': return block.content.links.flatMap((item, index) => (
+      item.label.trim() ? [] : [`links.${index}.label is required`]
+    ));
+    case 'text': return hasRichTextContent(block.content.document) ? [] : ['document is required'];
     case 'image': return [
-      ...required('alt'),
-      ...(!hasValue(content.imageMediaId) && !hasValue(content.url)
-        ? ['imageMediaId is required'] : []),
+      ...(!block.content.imageMediaId ? ['imageMediaId is required'] : []),
+      ...(!block.content.alt.trim() ? ['alt is required'] : []),
     ];
-    case 'gallery': {
-      const value = content.images;
-      if (!Array.isArray(value)) return [];
-      return value.flatMap((item, index) => {
-        if (!item || typeof item !== 'object') return [];
-        const record = item as Record<string, unknown>;
-        return [
-          ...(!hasValue(record.mediaId) && !hasValue(record.url) ? [`images.${index}.mediaId is required`] : []),
-          ...(!hasValue(record.alt) ? [`images.${index}.alt is required`] : []),
-        ];
-      });
-    }
-    case 'services': return items('services', ['title']);
-    case 'contacts': return [...items('contacts', ['label', 'url']), ...safeItemUrls('contacts', 'contact')];
+    case 'gallery': return block.content.images.flatMap((item, index) => (
+      item.alt.trim() ? [] : [`images.${index}.alt is required`]
+    ));
+    case 'services': return block.content.serviceIds.length > 0
+      ? [] : ['serviceIds must contain at least one service'];
+    case 'contacts': return block.content.contacts.length > 0
+      ? block.content.contacts.flatMap((item, index) => (
+        item.label.trim() ? [] : [`contacts.${index}.label is required`]
+      ))
+      : ['contacts must contain at least one contact'];
     case 'social-button': return [
-      ...required('platform', 'label', 'url'),
-      ...(typeof content.platform === 'string' && socialButtonPlatforms.has(content.platform)
-        ? [] : ['platform is unsupported']),
-      ...(isSafeHref(content.url, 'web') ? [] : ['url is unsafe']),
+      ...(!block.content.label.trim() ? ['label is required'] : []),
+      ...(isSafeHref(block.content.url, 'web') ? [] : ['url is unsafe']),
     ];
-    case 'map': return [...required('address', 'url'), ...(isSafeHref(content.url, 'web') ? [] : ['url is unsafe'])];
+    case 'map': return [
+      ...(!block.content.address.trim() ? ['address is required'] : []),
+      ...(!block.content.url.trim() ? ['url is required'] : []),
+      ...(isSafeHref(block.content.url, 'web') ? [] : ['url is unsafe']),
+    ];
     case 'divider': return [];
-    case 'faq': return items('items', ['title', 'description']);
-    default: return [];
+    case 'faq': return block.content.items.flatMap((item, index) => [
+      ...(!item.title.trim() ? [`items.${index}.title is required`] : []),
+      ...(!item.description.trim() ? [`items.${index}.description is required`] : []),
+    ]);
   }
 }
 
@@ -471,10 +489,6 @@ export function validatePublicPageForPublish(document: PublicPageDocument): Publ
   });
   if (visible.length === 0) issues.push({ code: 'missing_visible_block', path: 'sections' });
   for (const block of visible) {
-    if (!KNOWN_PUBLIC_PAGE_BLOCKS.has(block.type)) {
-      issues.push({ code: 'unknown_block', path: 'sections', blockId: block.id });
-      continue;
-    }
     for (const detail of validateKnownBlock(block)) {
       issues.push({ code: 'invalid_block', path: `blocks.${block.id}`, detail });
     }
@@ -537,10 +551,15 @@ export function validatePublicPageForPublish(document: PublicPageDocument): Publ
       visit(item, `${path}.${key}`);
     });
   };
+  visit(document.profile, 'profile');
   visit(document.theme, 'theme');
+  visit(document.seo, 'seo');
   document.sections.forEach((section, index) => {
     visit(section.design, `sections.${index}.design`);
   });
-  visible.forEach((block) => visit(block.content, `blocks.${block.id}.content`));
+  visible.forEach((block) => {
+    visit(block.design, `blocks.${block.id}.design`);
+    visit(block.content, `blocks.${block.id}.content`);
+  });
   return issues;
 }

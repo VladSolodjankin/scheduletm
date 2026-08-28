@@ -4,15 +4,12 @@ import {
   Chip,
   Drawer,
   IconButton,
-  Stack,
   Typography,
-  alpha,
   useMediaQuery,
   useTheme,
   type BoxProps,
 } from '@mui/material';
 import { useState } from 'react';
-import { APP_SHADOWS, APP_SIZING, APP_SPACING, rem } from '../theme/constants';
 import { AppIcons } from './AppIcons';
 
 type AppFilterBarProps = BoxProps & {
@@ -24,6 +21,7 @@ type AppFilterBarProps = BoxProps & {
 export function AppFilterBar({
   children,
   sx,
+  className,
   mobileLabel,
   mobileTitle,
   activeFiltersCount,
@@ -34,146 +32,73 @@ export function AppFilterBar({
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const FilterIcon = AppIcons.filters;
   const CloseIcon = AppIcons.close;
-
-  const panelSx = {
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: rem(APP_SIZING.surfaceRadius),
-    border: `${rem(1)} solid ${theme.palette.divider}`,
-    backgroundColor: theme.palette.background.paper,
-    boxShadow: theme.palette.mode === 'light' ? APP_SHADOWS.softLight : APP_SHADOWS.softDark,
-  } as const;
-
-  const gridSx = {
-    position: 'relative',
-    zIndex: 1,
-    display: 'grid',
-    gap: 1.5,
-    gridTemplateColumns: isMobile
-      ? 'minmax(0, 1fr)'
-      : `repeat(auto-fit, minmax(${rem(180)}, 1fr))`,
-    p: APP_SPACING.surfacePadding,
-    alignItems: 'start',
-  } as const;
-
-  const mobilePanelSx = {
-    border: 'none',
-    boxShadow: 'none',
-    backgroundColor: 'transparent',
-  } as const;
+  const countVisible = typeof activeFiltersCount === 'number' && activeFiltersCount > 0;
 
   if (isMobile) {
     return (
       <>
         <ButtonBase
           onClick={() => setIsMobileOpen(true)}
-          sx={{
-            width: '100%',
-            textAlign: 'left',
-            ...panelSx,
-          }}
+          className="app-filter-bar app-filter-bar__trigger"
         >
-          <Stack
-            direction="row"
-            spacing={1.5}
-            sx={{
-              width: '100%',
-              position: 'relative',
-              zIndex: 1,
-              px: 2,
-              py: 1.75,
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', minWidth: 0 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: rem(40),
-                  borderRadius: APP_SIZING.radiusMd,
-                  display: 'grid',
-                  placeItems: 'center',
-                  color: 'primary.main',
-                  backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'light' ? 0.1 : 0.22),
-                  flexShrink: 0,
-                }}
-              >
+          <Box className="app-filter-bar__trigger-content">
+            <Box className="app-filter-bar__trigger-label">
+              <Box className="app-filter-bar__icon">
                 <FilterIcon fontSize="small" />
               </Box>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              <Box className="app-filter-bar__label-copy">
+                <Typography variant="subtitle2" className="app-filter-bar__label-title">
                   {mobileTitle ?? mobileLabel}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" noWrap>
+                <Typography variant="body2" noWrap className="app-filter-bar__label-subtitle">
                   {mobileLabel}
                 </Typography>
               </Box>
-            </Stack>
-
-            {typeof activeFiltersCount === 'number' && activeFiltersCount > 0 ? (
-              <Chip
-                size="small"
-                color="primary"
-                label={activeFiltersCount}
-                sx={{ fontWeight: 700, borderRadius: 999 }}
-              />
+            </Box>
+            {countVisible ? (
+              <Chip size="small" color="primary" label={activeFiltersCount} className="app-badge" />
             ) : null}
-          </Stack>
+          </Box>
         </ButtonBase>
 
         <Drawer
           anchor="left"
           open={isMobileOpen}
           onClose={() => setIsMobileOpen(false)}
-          slotProps={{
-            paper: {
-              sx: {
-                width: `min(92vw, ${rem(420)})`,
-                bgcolor: 'background.default',
-              }
-            }
-          }}
+          slotProps={{ paper: { className: 'app-filter-bar__drawer-paper' } }}
         >
-          <Stack spacing={2} sx={{ height: '100%', p: 2 }}>
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-              <Stack spacing={0.25}>
+          <Box className="app-filter-bar__drawer">
+            <Box className="app-filter-bar__drawer-header">
+              <Box className="app-filter-bar__drawer-title">
                 <Typography variant="h6">{mobileTitle ?? mobileLabel}</Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" className="app-filter-bar__label-subtitle">
                   {mobileLabel}
                 </Typography>
-              </Stack>
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              </Box>
+              <Box className="app-filter-bar__drawer-actions">
                 <Chip
                   size="small"
                   icon={<FilterIcon fontSize="small" />}
-                  label={typeof activeFiltersCount === 'number' && activeFiltersCount > 0 ? activeFiltersCount : mobileLabel}
-                  sx={{ borderRadius: 999 }}
+                  label={countVisible ? activeFiltersCount : mobileLabel}
+                  className="app-badge"
                 />
                 <IconButton onClick={() => setIsMobileOpen(false)} aria-label="Close filters">
                   <CloseIcon fontSize="small" />
                 </IconButton>
-              </Stack>
-            </Stack>
-
-            <Box sx={{ ...panelSx, ...mobilePanelSx, flexGrow: 1, minHeight: 0, ...sx }}>
-              <Box sx={gridSx}>{children}</Box>
+              </Box>
             </Box>
-          </Stack>
+            <Box className={['app-filter-bar', 'app-filter-bar--drawer', className].filter(Boolean).join(' ')} sx={sx}>
+              <Box className="app-filter-bar__grid">{children}</Box>
+            </Box>
+          </Box>
         </Drawer>
       </>
     );
   }
 
   return (
-    <Box
-      sx={{
-        ...panelSx,
-        ...sx,
-      }}
-      {...props}
-    >
-      <Box sx={gridSx}>{children}</Box>
+    <Box className={['app-filter-bar', className].filter(Boolean).join(' ')} sx={sx} {...props}>
+      <Box className="app-filter-bar__grid">{children}</Box>
     </Box>
   );
 }

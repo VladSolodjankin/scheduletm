@@ -2,6 +2,10 @@
   --public-page-editor-drag-gutter: 64px;
 }
 
+.public-page-editor-preview-surface--compact .public-page-block-drag-rail {
+  display: none;
+}
+
 .public-page-dnd-wrapper {
   --public-page-editor-drag-gutter: 64px;
   min-width: 0;
@@ -32,6 +36,20 @@
 .public-page-dnd-section-shell:focus-within > [data-public-page-section-drag-target] > .public-page-section-resize-handle {
   opacity: 1;
   pointer-events: auto;
+}
+
+.public-page-dnd-section-shell:has(> .public-page-section-drag-rail:hover) > [data-public-page-section-drag-target]::after,
+.public-page-dnd-section-shell:has(> .public-page-section-drag-rail:focus-visible) > [data-public-page-section-drag-target]::after,
+[data-public-page-section-drag-target]:has(> .public-page-section-resize-handle:hover)::after,
+[data-public-page-section-drag-target]:has(> .public-page-section-resize-handle:focus-visible)::after {
+  position: absolute;
+  z-index: 4;
+  inset: -4px;
+  border: 2px solid #1976d2;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px rgb(25 118 210 / 18%);
+  content: '';
+  pointer-events: none;
 }
 
 .public-page-dnd-block-container {
@@ -101,6 +119,29 @@
 .MuiIconButton-root.public-page-section-drag-rail.is-selected {
   opacity: 1;
   pointer-events: auto;
+}
+
+.MuiIconButton-root.public-page-section-resize-handle {
+  position: absolute;
+  z-index: 5;
+  bottom: 0;
+  left: 50%;
+  width: 48px;
+  height: 24px;
+  transform: translate(-50%, 50%);
+  border-radius: 4px;
+  color: #616161;
+  background-color: #e0e0e0;
+  opacity: 0;
+  pointer-events: none;
+  touch-action: none;
+  cursor: ns-resize;
+  transition: opacity 120ms, background-color 120ms;
+}
+
+.MuiIconButton-root.public-page-section-resize-handle:hover,
+.MuiIconButton-root.public-page-section-resize-handle:focus-visible {
+  background-color: #bdbdbd;
 }
 
 @media (min-width: 900px) {

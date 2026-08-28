@@ -4,6 +4,7 @@ import type { PageBlock, PageSection, PublicPageDocument } from '../types/public
 import { normalizeSlug } from './slug';
 import { documentReferencesMedia } from './media';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from './socialPlatforms';
+import { createEmptyPageSection } from './normalizeDocument';
 
 function socialPlatform(block: PageBlock): SocialPlatform | null {
   const platform = block.type === 'social-button' ? block.content.platform : null;
@@ -157,6 +158,77 @@ function reconcileSelection(document: PublicPageDocument, selection: EditorState
     : { sectionId: null, blockId: null };
 }
 
+function createUniqueOffSection(sections: readonly PageSection[], sourceSectionId: string, blocks: PageBlock[]): PageSection {
+  const section = createEmptyPageSection('off');
+  return { ...section, id: splitSectionId(sections, sourceSectionId, 'resize'), blocks };
+}
+
+export function resizeSectionMembership(
+  document: PublicPageDocument,
+  sectionId: string,
+  targetBlockCount: number,
+): PublicPageDocument {
+  if (!Number.isInteger(targetBlockCount) || targetBlockCount < 1) {return document;}
+  const sectionIndex = document.sections.findIndex((section) => section.id === sectionId);
+  const section = document.sections[sectionIndex];
+  if (!section || section.design.variant === 'off' || section.blocks.length < 1 || targetBlockCount === section.blocks.length) {
+    return document;
+  }
+
+  if (targetBlockCount < section.blocks.length) {
+    const retainedBlocks = section.blocks.slice(0, targetBlockCount);
+    const releasedBlocks = section.blocks.slice(targetBlockCount);
+    const nextSection = document.sections[sectionIndex + 1];
+    const destination = nextSection?.design.variant === 'off'
+      ? { ...nextSection, blocks: [...releasedBlocks, ...nextSection.blocks] }
+      : createUniqueOffSection(document.sections, section.id, releasedBlocks);
+    return {
+      ...document,
+      sections: [
+        ...document.sections.slice(0, sectionIndex),
+        { ...section, blocks: retainedBlocks },
+        destination,
+        ...document.sections.slice(sectionIndex + (nextSection?.design.variant === 'off' ? 2 : 1)),
+      ],
+    };
+  }
+
+  let availableBlockCount = section.blocks.length;
+  for (let index = sectionIndex + 1; index < document.sections.length; index += 1) {
+    const source = document.sections[index];
+    if (source.design.variant !== 'off') {break;}
+    availableBlockCount += source.blocks.length;
+  }
+  if (targetBlockCount > availableBlockCount) {return document;}
+
+  let remaining = targetBlockCount - section.blocks.length;
+  const capturedBlocks: PageBlock[] = [];
+  const trailingSections: PageSection[] = [];
+  for (let index = sectionIndex + 1; index < document.sections.length; index += 1) {
+    const source = document.sections[index];
+    if (remaining > 0 && source.design.variant === 'off') {
+      const take = Math.min(remaining, source.blocks.length);
+      capturedBlocks.push(...source.blocks.slice(0, take));
+      remaining -= take;
+      if (take < source.blocks.length) {
+        trailingSections.push({ ...source, blocks: source.blocks.slice(take) });
+      }
+      continue;
+    }
+    trailingSections.push(...document.sections.slice(index));
+    break;
+  }
+  if (remaining > 0) {return document;}
+  return {
+    ...document,
+    sections: [
+      ...document.sections.slice(0, sectionIndex),
+      { ...section, blocks: [...section.blocks, ...capturedBlocks] },
+      ...trailingSections,
+    ],
+  };
+}
+
 
 function commit(state: EditorState, document: PublicPageDocument): EditorState {
   if (document === state.document) {return state;}
@@ -296,6 +368,12 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         ...state.document,
         sections: reorderById(state.document.sections, action.sectionId, action.toIndex),
       });
+    case 'section/resize-membership': {
+      const document = resizeSectionMembership(state.document, action.sectionId, action.targetBlockCount);
+      if (document === state.document) {return state;}
+      const next = commit(state, document);
+      return { ...next, selection: reconcileSelection(document, state.selection) };
+    }
     case 'section/toggle':
       return commit(state, {
         ...state.document,

@@ -3,6 +3,7 @@ import {
   canCreateUserRole,
   canManageSpecialistSettings,
   canManageSystemSettings,
+  canReadAccountMedia,
 } from '../src/policies/rolePermissions.js';
 import { WebUserRole } from '../src/types/webUserRole.js';
 
@@ -19,6 +20,14 @@ describe('role permissions', () => {
     expect(canManageSystemSettings(WebUserRole.ProductOwner)).toBe(true);
     expect(canManageSystemSettings(WebUserRole.Owner)).toBe(false);
     expect(canManageSystemSettings(WebUserRole.Admin)).toBe(false);
+  });
+
+  it('allows account media reads only to managers and specialists', () => {
+    expect(canReadAccountMedia(WebUserRole.ProductOwner)).toBe(true);
+    expect(canReadAccountMedia(WebUserRole.Owner)).toBe(true);
+    expect(canReadAccountMedia(WebUserRole.Admin)).toBe(true);
+    expect(canReadAccountMedia(WebUserRole.Specialist)).toBe(true);
+    expect(canReadAccountMedia(WebUserRole.Client)).toBe(false);
   });
 
   it('does not allow protected roles through managed-user creation', () => {

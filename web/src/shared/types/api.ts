@@ -238,15 +238,20 @@ export type ManagedUserItem = {
 
 export type ClientNotificationSetting = AccountNotificationDefault;
 
+export type PublicBookingService = {
+  id: number;
+  name: string;
+  description: string | null;
+  durationMin: number;
+  price: number;
+  currency: string;
+  firstSessionFree: boolean;
+  imageUrl: string | null;
+};
+
 export type PublicBookingOptions = {
   specialists: Array<{ id: number; name: string }>;
-  services: Array<{
-    id: number;
-    name: string;
-    durationMin: number;
-    price: number;
-    currency: string;
-  }>;
+  services: PublicBookingService[];
 };
 
 export type PublicBookingResult = {

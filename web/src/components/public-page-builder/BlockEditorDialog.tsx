@@ -14,9 +14,34 @@ import { RichTextEditor } from './RichTextEditor';
 import { normalizeRichTextDocument } from '../../features/public-page-builder/model/normalizeDocument';
 import { resolvePublicPageThemeVariables } from '../public-page-blocks/publicPageThemeVariables';
 import { SectionDesignControls } from './SectionDesignControls';
+import { ServicesBlockEditor } from './ServicesBlockEditor';
+import type { ServicesResponse } from '../services/types';
+import { analyzeBlockContrast } from '../../features/public-page-builder/model/contrast';
+import { ContrastGuidance } from './ContrastGuidance';
 
 export type BlockEditorSave = { block: PageBlock; sectionId?: string; section?: PageSection; addedMedia: Array<{ media: MediaReference; objectUrl: string }>; updatedMedia: MediaReference[]; removedMediaIds: string[] };
 export type BlockEditorPreview = Pick<BlockEditorSave, 'block' | 'sectionId' | 'section' | 'addedMedia' | 'updatedMedia'>;
+export type BlockEditorFocusRequest = {
+  requestId: number;
+  tab: 'content' | 'design' | 'settings' | 'section';
+  marker: string;
+};
+
+const BLOCK_EDITOR_TAB_INDEX: Record<BlockEditorFocusRequest['tab'], number> = {
+  content: 0,
+  design: 1,
+  settings: 2,
+  section: 3,
+};
+
+function focusMarkedEditorControl(marker: string): boolean {
+  const marked = document.querySelector<HTMLElement>(`[data-public-page-focus="${CSS.escape(marker)}"]`);
+  if (!marked) {return false;}
+  const focusableSelector = 'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const target = marked.matches(focusableSelector) ? marked : marked.querySelector<HTMLElement>(focusableSelector) ?? marked;
+  target.focus();
+  return document.activeElement === target;
+}
 
 function selectAvatarCoverColorWithKeyboard(
   event: KeyboardEvent<HTMLElement>,
@@ -65,8 +90,9 @@ function AvatarCoverPalette({ locale, theme, value, onChange }: {
   </Stack>;
 }
 
-export function BlockEditorDialog({ open, block, locale, title, onClose, onSave, onPreview, onRemoveSection, repository, media, previewUrls, sections, sectionId, theme }: {
+export function BlockEditorDialog({ open, compact = false, block, locale, title, onClose, onSave, onPreview, onRemoveSection, repository, media, previewUrls, sections, sectionId, theme, serviceCatalog, servicesLoading = false, servicesError = false, onRefreshServices, focusRequest, onFocusTargetMissing }: {
   open: boolean;
+  compact?: boolean;
   block: PageBlock | null;
   locale: Locale;
   title?: string;
@@ -80,19 +106,33 @@ export function BlockEditorDialog({ open, block, locale, title, onClose, onSave,
   sections?: readonly PageSection[];
   sectionId?: string;
   theme: PageTheme;
+  serviceCatalog?: ServicesResponse | null;
+  servicesLoading?: boolean;
+  servicesError?: boolean;
+  onRefreshServices?: () => void;
+  focusRequest?: BlockEditorFocusRequest | null;
+  onFocusTargetMissing?: () => void;
 }) {
   if (!open || !block) {return null;}
-  return <BlockEditorDialogContent key={`${block.id}-${open ? 'open' : 'closed'}`} open={open} block={block} locale={locale} title={title} onClose={onClose} onSave={onSave} onPreview={onPreview} onRemoveSection={onRemoveSection} repository={repository} media={media} previewUrls={previewUrls} sections={sections} sectionId={sectionId} theme={theme} />;
+  return <BlockEditorDialogContent key={`${block.id}-${open ? 'open' : 'closed'}-${focusRequest?.requestId ?? 'manual'}`} open={open} compact={compact} block={block} locale={locale} title={title} onClose={onClose} onSave={onSave} onPreview={onPreview} onRemoveSection={onRemoveSection} repository={repository} media={media} previewUrls={previewUrls} sections={sections} sectionId={sectionId} theme={theme}
+    serviceCatalog={serviceCatalog} servicesLoading={servicesLoading} servicesError={servicesError} onRefreshServices={onRefreshServices}
+    focusRequest={focusRequest} onFocusTargetMissing={onFocusTargetMissing} />;
 }
 
-function BlockEditorDialogContent({ open, block, locale, title, onClose, onSave, onPreview, onRemoveSection, repository, media = [], previewUrls, sections, sectionId, theme }: {
-  open: boolean; block: PageBlock; locale: Locale; title?: string; onClose: () => void; onSave: (result: BlockEditorSave) => void;
+function BlockEditorDialogContent({ open, compact, block, locale, title, onClose, onSave, onPreview, onRemoveSection, repository, media = [], previewUrls, sections, sectionId, theme, serviceCatalog = null, servicesLoading = false, servicesError = false, onRefreshServices, focusRequest, onFocusTargetMissing }: {
+  open: boolean; compact: boolean; block: PageBlock; locale: Locale; title?: string; onClose: () => void; onSave: (result: BlockEditorSave) => void;
   repository?: ApiPublicPageRepository; media?: readonly MediaReference[]; previewUrls?: ReadonlyMap<string, string>; sections?: readonly PageSection[]; sectionId?: string;
   onPreview?: (preview: BlockEditorPreview) => void;
   onRemoveSection?: (sectionId: string) => void;
   theme: PageTheme;
+  serviceCatalog?: ServicesResponse | null;
+  servicesLoading?: boolean;
+  servicesError?: boolean;
+  onRefreshServices?: () => void;
+  focusRequest?: BlockEditorFocusRequest | null;
+  onFocusTargetMissing?: () => void;
 }) {
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState(() => BLOCK_EDITOR_TAB_INDEX[focusRequest?.tab ?? 'content']);
   const initialAvatarAlt = block.type === 'avatar'
     ? (typeof block.content.imageAlt === 'string' && block.content.imageAlt.trim())
       || (typeof block.content.heading === 'string' && block.content.heading.trim())
@@ -108,6 +148,7 @@ function BlockEditorDialogContent({ open, block, locale, title, onClose, onSave,
   const draftSectionId = sectionId ?? sections?.[0]?.id;
   const selectedSection = sections?.find((section) => section.id === draftSectionId);
   const [sectionDraft, setSectionDraft] = useState<PageSection | undefined>(() => selectedSection ? structuredClone(selectedSection) : undefined);
+  const contrastSection = sectionDraft ?? selectedSection;
   const [pending, setPending] = useState<Array<{ media: MediaReference; objectUrl: string }>>([]);
   const [updatedMedia, setUpdatedMedia] = useState<MediaReference[]>(() => {
     if (block.type !== 'avatar' || typeof block.content.imageMediaId !== 'string') {return [];}
@@ -149,22 +190,31 @@ function BlockEditorDialogContent({ open, block, locale, title, onClose, onSave,
   const cancel = () => { if (cleaning) {return;} void (async () => { if (await cleanupItems(pending)) {onClose();} })(); };
   const Editor = getBlockDefinition(draft.type)?.Editor;
   return (
-    <Dialog open={open} onClose={cancel} fullWidth maxWidth={draft.type === 'avatar' ? 'md' : 'sm'}
-      slotProps={{ paper: { style: resolvePublicPageThemeVariables(theme, sectionDraft ?? selectedSection) } }}>
+    <Dialog open={open} onClose={cancel} fullScreen={compact} fullWidth maxWidth={draft.type === 'avatar' || draft.type === 'services' ? 'md' : 'sm'}
+      slotProps={{
+        paper: { style: resolvePublicPageThemeVariables(theme, sectionDraft ?? selectedSection) },
+        transition: { onEntered: () => {
+          if (!focusRequest) {return;}
+          window.requestAnimationFrame(() => {
+            if (!focusMarkedEditorControl(focusRequest.marker)) {onFocusTargetMissing?.();}
+          });
+        } },
+      }}>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography component="span" variant="h6" sx={{ flex: 1 }}>{title ?? draft.name}</Typography>
         <IconButton aria-label={publicPageText(locale, 'close')} onClick={cancel}><Close /></IconButton>
       </DialogTitle>
       <DialogContent dividers>
-        <Tabs value={tab} onChange={(_, value: number) => setTab(value)} sx={{ mb: 2 }}>
-          <Tab label={publicPageText(locale, 'tabContent')} />
-          <Tab label={publicPageText(locale, 'tabDesign')} />
-          <Tab label={publicPageText(locale, 'tabSettings')} />
-          <Tab label={publicPageText(locale, 'tabSection')} disabled={!sections?.length} />
+        <Tabs value={tab} onChange={(_, value: number) => setTab(value)} variant={compact ? 'scrollable' : 'standard'} scrollButtons={compact ? 'auto' : false} allowScrollButtonsMobile={compact} sx={{ mb: 2 }}>
+          <Tab label={publicPageText(locale, 'tabContent')} data-public-page-editor-tab="content" />
+          <Tab label={publicPageText(locale, 'tabDesign')} data-public-page-editor-tab="design" />
+          <Tab label={publicPageText(locale, 'tabSettings')} data-public-page-editor-tab="settings" />
+          <Tab label={publicPageText(locale, 'tabSection')} data-public-page-editor-tab="section" disabled={!sections?.length} />
         </Tabs>
         <Stack spacing={2} sx={{ pt: 0.5 }}>
-          {tab === 0 ? <>
-          {draft.type === 'image' && repository ? <ImageUploadControl label={publicPageText(locale, 'image')}
+          {tab === 0 ? <Stack spacing={2} data-public-page-focus="block.content" tabIndex={-1}>
+          {draft.type === 'image' && repository ? <ImageUploadControl focusMarker="block.content.media"
+            altFocusMarker={imageMediaId ? `media:${imageMediaId}:alt` : undefined} label={publicPageText(locale, 'image')}
             media={mediaFor(imageMediaId)} previewUrl={imageMediaId ? pending.find((item) => item.media.id === imageMediaId)?.objectUrl ?? previewUrls?.get(imageMediaId) : undefined}
             repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
             removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
@@ -194,7 +244,8 @@ function BlockEditorDialogContent({ open, block, locale, title, onClose, onSave,
             {(Array.isArray(draft.content.images) ? draft.content.images : []).map((rawItem, index) => {
               const item = rawItem && typeof rawItem === 'object' ? rawItem as Record<string, unknown> : {};
               const mediaId = typeof item.mediaId === 'string' ? item.mediaId : null;
-              return <ImageUploadControl key={mediaId ?? `gallery-${index}`} label={`${publicPageText(locale, 'image')} ${index + 1}`}
+               return <ImageUploadControl key={mediaId ?? `gallery-${index}`} focusMarker="block.content.media"
+                 altFocusMarker={mediaId ? `media:${mediaId}:alt` : undefined} label={`${publicPageText(locale, 'image')} ${index + 1}`}
                 media={mediaFor(mediaId)} previewUrl={mediaId ? pending.find((candidate) => candidate.media.id === mediaId)?.objectUrl ?? previewUrls?.get(mediaId) : undefined}
                 repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
                 removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
@@ -213,16 +264,20 @@ function BlockEditorDialogContent({ open, block, locale, title, onClose, onSave,
                 onRemoved={() => { const oldPending = pending.find((candidate) => candidate.media.id === mediaId); void (async () => { if (oldPending && !(await cleanupItems([oldPending]))) {return;}
                   setDraft((current) => ({ ...current, content: { ...current.content, images: (Array.isArray(current.content.images) ? current.content.images : []).filter((_, candidateIndex) => candidateIndex !== index) } })); })(); }} />;
             })}
-            <ImageUploadControl label={publicPageText(locale, 'addImage')} media={null} repository={repository}
+            <ImageUploadControl focusMarker="block.content.media" label={publicPageText(locale, 'addImage')} media={null} repository={repository}
               uploadLabel={publicPageText(locale, 'addImage')} replaceLabel={publicPageText(locale, 'replaceImage')} removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
               invalidTypeText={publicPageText(locale, 'invalidImageType')} tooLargeText={publicPageText(locale, 'imageTooLarge')} uploadErrorText={publicPageText(locale, 'imageUploadError')}
               onAltChange={() => undefined} onUploaded={(uploaded, objectUrl) => { setPending((items) => [...items, { media: uploaded, objectUrl }]); setDraft((current) => ({ ...current, content: { ...current.content, images: [...(Array.isArray(current.content.images) ? current.content.images : []), { mediaId: uploaded.id, alt: uploaded.alt }] } })); }} onRemoved={() => undefined} />
           </Stack> : null}
-          {draft.type === 'text' ? <RichTextEditor locale={locale} value={normalizeRichTextDocument(draft.content.document)}
+          {draft.type === 'services' ? <ServicesBlockEditor block={draft} locale={locale} catalog={serviceCatalog}
+            loading={servicesLoading} error={servicesError} onRefresh={onRefreshServices ?? (() => undefined)}
+            onContentChange={(content) => setDraft((current) => ({ ...current, content }))} />
+          : draft.type === 'text' ? <RichTextEditor locale={locale} value={normalizeRichTextDocument(draft.content.document)}
             onChange={(document) => setDraft((current) => ({ ...current, content: { document } }))} />
           : Editor ? <Editor block={draft} mediaUrlFor={mediaUrlFor} onContentChange={(content) => setDraft({ ...draft, content })}
             pageTheme={theme} pageSection={sectionDraft ?? selectedSection}
-            avatarMediaControl={draft.type === 'avatar' && repository ? <ImageUploadControl compact label={publicPageText(locale, 'avatar')}
+            avatarMediaControl={draft.type === 'avatar' && repository ? <ImageUploadControl compact focusMarker="block.content.media"
+              altFocusMarker={avatarMediaId ? `media:${avatarMediaId}:alt` : undefined} label={publicPageText(locale, 'avatar')}
               defaultAlt={(typeof draft.content.heading === 'string' && draft.content.heading.trim()) || publicPageText(locale, 'avatar')}
               media={mediaFor(avatarMediaId)} previewUrl={avatarMediaId ? mediaUrlFor(avatarMediaId) : undefined}
               repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
@@ -251,13 +306,15 @@ function BlockEditorDialogContent({ open, block, locale, title, onClose, onSave,
               }} /> : undefined}
             avatarCoverControl={draft.type === 'avatar' && theme ? <AvatarCoverPalette locale={locale} theme={theme} value={draft.content.coverColor}
               onChange={(coverColor) => setDraft((current) => ({ ...current, content: applyAvatarCoverColor(current.content, coverColor) }))} /> : undefined} /> : null}
-          </> : null}
-          {tab === 1 ? <>
+          </Stack> : null}
+          {tab === 1 ? <Stack spacing={2} data-public-page-focus="block.design" tabIndex={-1}>
           {draft.type !== 'social-button' ? <><ColorControl label={publicPageText(locale, 'background')} value={draft.design.backgroundColor}
             onChange={(value) => setDraft({ ...draft, design: { ...draft.design, backgroundColor: value } })} />
           <ColorControl label={publicPageText(locale, 'textColor')} value={draft.design.textColor}
             onChange={(value) => setDraft({ ...draft, design: { ...draft.design, textColor: value } })} /></> : null}
-          {repository ? <ImageUploadControl label={publicPageText(locale, 'blockBackground')} media={mediaFor(draft.design.backgroundMediaId)}
+          {repository ? <ImageUploadControl focusMarker="block.design.backgroundMediaId"
+            altFocusMarker={draft.design.backgroundMediaId ? `media:${draft.design.backgroundMediaId}:alt` : undefined}
+            label={publicPageText(locale, 'blockBackground')} media={mediaFor(draft.design.backgroundMediaId)}
             previewUrl={draft.design.backgroundMediaId ? pending.find((item) => item.media.id === draft.design.backgroundMediaId)?.objectUrl ?? previewUrls?.get(draft.design.backgroundMediaId) : undefined}
             repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
             removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
@@ -294,14 +351,18 @@ function BlockEditorDialogContent({ open, block, locale, title, onClose, onSave,
           {(['paddingTop', 'paddingBottom'] as const).map((field) => <TextField key={field} type="number" label={publicPageText(locale, field)} value={draft.design[field]}
             slotProps={{ htmlInput: { min: 0, max: 160 } }} onChange={(event) => setDraft({ ...draft, design: { ...draft.design, [field]: Math.max(0, Math.min(160, Number(event.target.value))) } })} />)}
           {draft.type !== 'social-button' ? <Button onClick={() => setDraft({ ...draft, design: { ...draft.design, backgroundColor: null, textColor: null } })}>{publicPageText(locale, 'theme')}</Button> : null}
-          </> : null}
-          {tab === 2 ? <>
+          {(draft.design.backgroundColor || draft.design.backgroundMediaId || draft.design.textColor) && contrastSection
+            ? <ContrastGuidance locale={locale} checks={analyzeBlockContrast(theme, contrastSection, draft)} />
+            : null}
+          </Stack> : null}
+          {tab === 2 ? <Stack spacing={2} data-public-page-focus="block.settings" tabIndex={-1}>
             <TextField label={publicPageText(locale, 'name')} value={draft.name}
+              slotProps={{ htmlInput: { 'data-public-page-focus': 'block.name' } }}
               onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
-            <FormControlLabel label={publicPageText(locale, 'visible')} control={<Switch checked={draft.visible}
+            <FormControlLabel data-public-page-focus="block.visible" label={publicPageText(locale, 'visible')} control={<Switch checked={draft.visible}
               onChange={(_, checked) => setDraft({ ...draft, visible: checked })} />} />
-          </> : null}
-          {tab === 3 ? <>
+          </Stack> : null}
+          {tab === 3 ? <Stack spacing={2} data-public-page-focus="section.design" tabIndex={-1}>
             {sectionDraft ? <>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: { sm: 'center' } }}>
               <TextField fullWidth select label={publicPageText(locale, 'section')} value={sectionDraft.design.variant}
@@ -323,7 +384,9 @@ function BlockEditorDialogContent({ open, block, locale, title, onClose, onSave,
               })(); }}>{publicPageText(locale, 'removeSection')}</Button> : null}
             </Stack>
             <SectionDesignControls locale={locale} theme={theme} section={sectionDraft} onChange={setSectionDraft}
-              backgroundImageControl={repository ? <ImageUploadControl label={publicPageText(locale, 'sectionBackground')} media={mediaFor(sectionDraft.design.backgroundMediaId)}
+              backgroundImageControl={repository ? <ImageUploadControl focusMarker="section.design.backgroundMediaId"
+                altFocusMarker={sectionDraft.design.backgroundMediaId ? `media:${sectionDraft.design.backgroundMediaId}:alt` : undefined}
+                label={publicPageText(locale, 'sectionBackground')} media={mediaFor(sectionDraft.design.backgroundMediaId)}
                 previewUrl={sectionDraft.design.backgroundMediaId ? pending.find((item) => item.media.id === sectionDraft.design.backgroundMediaId)?.objectUrl ?? previewUrls?.get(sectionDraft.design.backgroundMediaId) : undefined}
                 repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
                 removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
@@ -346,7 +409,7 @@ function BlockEditorDialogContent({ open, block, locale, title, onClose, onSave,
                   })();
                 }} /> : undefined} />
             </> : null}
-          </> : null}
+          </Stack> : null}
         </Stack>
       </DialogContent>
       <DialogActions>

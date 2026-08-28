@@ -1,11 +1,9 @@
 import { createContext, useContext } from 'react';
-import type { PaletteVariantId, ThemeMode } from './constants';
+import type { ThemeMode } from './constants';
 
 type ThemeSettingsContextValue = {
   mode: ThemeMode;
-  paletteVariantId: PaletteVariantId;
   toggleMode: () => void;
-  setPaletteVariantId: (id: PaletteVariantId) => void;
 };
 
 export const ThemeSettingsContext = createContext<ThemeSettingsContextValue | null>(null);

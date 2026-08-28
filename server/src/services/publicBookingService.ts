@@ -9,6 +9,7 @@ import {
   listPublicBookingSpecialists,
 } from '../repositories/publicBookingRepository.js';
 import { listExternalBusySlots } from './calendarAvailabilityService.js';
+import { publicMediaUrl } from './serviceService.js';
 
 export class PublicBookingServiceError extends Error {
   constructor(public readonly code: 'NOT_FOUND' | 'INVALID_SELECTION' | 'SLOT_UNAVAILABLE') {
@@ -97,6 +98,9 @@ export async function getPublicBookingOptions(slug: string) {
       durationMin: item.duration_min,
       price: item.price,
       currency: item.currency,
+      description: item.description,
+      firstSessionFree: item.is_first_free,
+      imageUrl: item.image_media_id ? publicMediaUrl(item.image_media_id) : null,
     })),
   };
 }

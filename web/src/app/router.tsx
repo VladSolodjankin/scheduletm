@@ -1,29 +1,48 @@
 import { Navigate, createBrowserRouter } from 'react-router-dom';
-import type { ReactElement } from 'react';
+import { lazy, type ReactElement } from 'react';
 import { MainLayout } from '../components/layout/MainLayout';
-import { LoginPage } from '../pages/LoginPage';
-import { RegisterPage } from '../pages/RegisterPage';
-import { InviteAcceptPage } from '../pages/InviteAcceptPage';
-import { AppointmentsPage } from '../pages/AppointmentsPage';
-import { SettingsPage } from '../pages/SettingsPage';
-import { SpecialistsPage } from '../pages/SpecialistsPage';
-import { ServicesPage } from '../pages/ServicesPage';
-import { UsersPage } from '../pages/UsersPage';
-import { NotificationLogsPage } from '../pages/NotificationLogsPage';
-import { ErrorLogsPage } from '../pages/ErrorLogsPage';
-import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
-import { SecurityPolicyPage } from '../pages/SecurityPolicyPage';
-import { PublicPagesPage } from '../pages/PublicPagesPage';
-import { PublicPageEditorPage } from '../pages/PublicPageEditorPage';
-import { PublicPageViewPage } from '../pages/PublicPageViewPage';
-import { PublicPageBookingPage } from '../pages/PublicPageBookingPage';
-import { PublicAppointmentStatusPage } from '../pages/PublicAppointmentStatusPage';
 import { useAuth } from '../shared/auth/AuthContext';
 import { WebUserRole } from '../shared/types/roles';
 import { PublicPageLayout } from '../components/layout/PublicPageLayout';
-import { registerPublicPageBlocks } from '../features/public-page-builder/config/registerBlocks';
 
-registerPublicPageBlocks();
+const LoginPage = lazy(() => import('../pages/LoginPage').then((module) => ({ default: module.LoginPage })));
+const RegisterPage = lazy(() => import('../pages/RegisterPage').then((module) => ({ default: module.RegisterPage })));
+const InviteAcceptPage = lazy(() => import('../pages/InviteAcceptPage').then((module) => ({ default: module.InviteAcceptPage })));
+const AppointmentsPage = lazy(() => import('../pages/AppointmentsPage').then((module) => ({ default: module.AppointmentsPage })));
+const SettingsPage = lazy(() => import('../pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
+const SpecialistsPage = lazy(() => import('../pages/SpecialistsPage').then((module) => ({ default: module.SpecialistsPage })));
+const ServicesPage = lazy(() => import('../pages/ServicesPage').then((module) => ({ default: module.ServicesPage })));
+const UsersPage = lazy(() => import('../pages/UsersPage').then((module) => ({ default: module.UsersPage })));
+const NotificationLogsPage = lazy(() => import('../pages/NotificationLogsPage').then((module) => ({ default: module.NotificationLogsPage })));
+const ErrorLogsPage = lazy(() => import('../pages/ErrorLogsPage').then((module) => ({ default: module.ErrorLogsPage })));
+const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage').then((module) => ({ default: module.PrivacyPolicyPage })));
+const SecurityPolicyPage = lazy(() => import('../pages/SecurityPolicyPage').then((module) => ({ default: module.SecurityPolicyPage })));
+const PublicPagesPage = lazy(async () => {
+  const [pageModule, registryModule] = await Promise.all([
+    import('../pages/PublicPagesPage'),
+    import('../features/public-page-builder/config/registerBlocks')
+  ]);
+  registryModule.registerPublicPageBlocks();
+  return { default: pageModule.PublicPagesPage };
+});
+const PublicPageEditorPage = lazy(async () => {
+  const [pageModule, registryModule] = await Promise.all([
+    import('../pages/PublicPageEditorPage'),
+    import('../features/public-page-builder/config/registerBlocks')
+  ]);
+  registryModule.registerPublicPageBlocks();
+  return { default: pageModule.PublicPageEditorPage };
+});
+const PublicPageViewPage = lazy(async () => {
+  const [pageModule, registryModule] = await Promise.all([
+    import('../pages/PublicPageViewPage'),
+    import('../features/public-page-builder/config/registerBlocks')
+  ]);
+  registryModule.registerPublicPageBlocks();
+  return { default: pageModule.PublicPageViewPage };
+});
+const PublicPageBookingPage = lazy(() => import('../pages/PublicPageBookingPage').then((module) => ({ default: module.PublicPageBookingPage })));
+const PublicAppointmentStatusPage = lazy(() => import('../pages/PublicAppointmentStatusPage').then((module) => ({ default: module.PublicAppointmentStatusPage })));
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuth();

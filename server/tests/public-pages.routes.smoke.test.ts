@@ -13,10 +13,12 @@ const publicBooking = vi.hoisted(() => ({
 const service = vi.hoisted(() => ({
   getPublicPages: vi.fn(),
   getPublicPage: vi.fn(),
+  getPublicPageSlugAvailability: vi.fn(),
   createPublicPageForAccount: vi.fn(),
   putPublicPageDraft: vi.fn(),
   publishPublicPageForAccount: vi.fn(),
   archivePublicPageForAccount: vi.fn(),
+  restorePublicPageForAccount: vi.fn(),
   deletePublicPageForAccount: vi.fn(),
   getPublishedPublicPage: vi.fn(),
 }));
@@ -136,7 +138,7 @@ describe('public pages routes', () => {
     expect(mediaService.deletePublicPageMedia).toHaveBeenCalledWith(7, '1f2ec7e3-f737-48f7-af97-ed82f2791bc7');
   });
 
-  it('previews draft media only through authenticated account scope', async () => {
+  it('preserves manager access to authenticated account-scoped media previews', async () => {
     mediaService.getAccountPublicPageMedia.mockResolvedValue({
       record: { mime: 'image/webp', bytes: 3 }, body: Uint8Array.from([1, 2, 3]),
     });
@@ -151,6 +153,74 @@ describe('public pages routes', () => {
     );
   });
 
+  it('allows a specialist to preview media from the same account', async () => {
+    resolveUserByAccessTokenMock.mockResolvedValue({ ...owner, role: WebUserRole.Specialist });
+    mediaService.getAccountPublicPageMedia.mockResolvedValue({
+      record: { mime: 'image/webp', bytes: 3 }, body: Uint8Array.from([1, 2, 3]),
+    });
+
+    const response = await fetch(
+      `${baseUrl}/api/public-pages/media/1f2ec7e3-f737-48f7-af97-ed82f2791bc7/preview`,
+      { headers: { authorization: 'Bearer token' } },
+    );
+
+    expect(response.status).toBe(200);
+    expect(mediaService.getAccountPublicPageMedia).toHaveBeenCalledWith(
+      7, '1f2ec7e3-f737-48f7-af97-ed82f2791bc7',
+    );
+  });
+
+  it('does not expose another account media to a specialist', async () => {
+    resolveUserByAccessTokenMock.mockResolvedValue({
+      ...owner, accountId: 8, role: WebUserRole.Specialist,
+    });
+    mediaService.getAccountPublicPageMedia.mockResolvedValue(null);
+
+    const response = await fetch(
+      `${baseUrl}/api/public-pages/media/1f2ec7e3-f737-48f7-af97-ed82f2791bc7/preview`,
+      { headers: { authorization: 'Bearer token' } },
+    );
+
+    expect(response.status).toBe(404);
+    expect(mediaService.getAccountPublicPageMedia).toHaveBeenCalledWith(
+      8, '1f2ec7e3-f737-48f7-af97-ed82f2791bc7',
+    );
+  });
+
+  it('denies unauthenticated and client media previews', async () => {
+    const unauthenticated = await fetch(
+      `${baseUrl}/api/public-pages/media/1f2ec7e3-f737-48f7-af97-ed82f2791bc7/preview`,
+    );
+    expect(unauthenticated.status).toBe(401);
+    expect(mediaService.getAccountPublicPageMedia).not.toHaveBeenCalled();
+
+    resolveUserByAccessTokenMock.mockResolvedValue({ ...owner, role: WebUserRole.Client });
+    const client = await fetch(
+      `${baseUrl}/api/public-pages/media/1f2ec7e3-f737-48f7-af97-ed82f2791bc7/preview`,
+      { headers: { authorization: 'Bearer token' } },
+    );
+    expect(client.status).toBe(403);
+    expect(mediaService.getAccountPublicPageMedia).not.toHaveBeenCalled();
+  });
+
+  it('keeps media upload and delete restricted for specialists', async () => {
+    resolveUserByAccessTokenMock.mockResolvedValue({ ...owner, role: WebUserRole.Specialist });
+    const headers = { authorization: 'Bearer token', 'content-type': 'image/png' };
+
+    const upload = await fetch(`${baseUrl}/api/public-pages/media`, {
+      method: 'POST', headers, body: Buffer.from([1, 2, 3]),
+    });
+    const deleted = await fetch(
+      `${baseUrl}/api/public-pages/media/1f2ec7e3-f737-48f7-af97-ed82f2791bc7`,
+      { method: 'DELETE', headers: { authorization: 'Bearer token' } },
+    );
+
+    expect(upload.status).toBe(403);
+    expect(deleted.status).toBe(403);
+    expect(mediaService.uploadPublicPageMedia).not.toHaveBeenCalled();
+    expect(mediaService.deletePublicPageMedia).not.toHaveBeenCalled();
+  });
+
   it('serves a published page without authentication', async () => {
     service.getPublishedPublicPage.mockResolvedValue({ ...validPublicPageDocument, status: 'published' });
     const response = await fetch(`${baseUrl}/api/public-pages/by-slug/valid-page`);
@@ -161,7 +231,16 @@ describe('public pages routes', () => {
   it('serves booking options and creates a redacted guest appointment without authentication', async () => {
     publicBooking.getPublicBookingOptions.mockResolvedValue({
       specialists: [{ id: 2, name: 'Jane Smith' }],
-      services: [{ id: 3, name: 'Consultation', durationMin: 60, price: 100, currency: 'RUB' }],
+      services: [{
+        id: 3,
+        name: 'Consultation',
+        durationMin: 60,
+        price: 100,
+        currency: 'RUB',
+        description: null,
+        firstSessionFree: false,
+        imageUrl: null,
+      }],
     });
     publicBooking.bookPublicAppointment.mockResolvedValue({
       id: 10, status: 'new', scheduledAt: '2026-08-01T10:00:00.000Z', duration: 60,
@@ -182,6 +261,20 @@ describe('public pages routes', () => {
     });
 
     expect(options.status).toBe(200);
+    expect(options.headers.get('cache-control')).toBe('no-store');
+    expect(await options.json()).toEqual({
+      specialists: [{ id: 2, name: 'Jane Smith' }],
+      services: [{
+        id: 3,
+        name: 'Consultation',
+        durationMin: 60,
+        price: 100,
+        currency: 'RUB',
+        description: null,
+        firstSessionFree: false,
+        imageUrl: null,
+      }],
+    });
     expect(created.status).toBe(201);
     expect(await created.json()).toEqual({
       id: 10, status: 'new', scheduledAt: '2026-08-01T10:00:00.000Z', duration: 60,
@@ -266,6 +359,76 @@ describe('public pages routes', () => {
     }));
   });
 
+  it('requires authentication for slug availability', async () => {
+    const response = await fetch(`${baseUrl}/api/public-pages/slug-availability?slug=valid-page`);
+
+    expect(response.status).toBe(401);
+    expect(service.getPublicPageSlugAvailability).not.toHaveBeenCalled();
+  });
+
+  it('forbids specialists from checking slug availability', async () => {
+    resolveUserByAccessTokenMock.mockResolvedValue({ ...owner, role: WebUserRole.Specialist });
+    const response = await fetch(`${baseUrl}/api/public-pages/slug-availability?slug=valid-page`, {
+      headers: { authorization: 'Bearer token' },
+    });
+
+    expect(response.status).toBe(403);
+    expect(service.getPublicPageSlugAvailability).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['missing slug', ''],
+    ['an invalid slug', '?slug=-bad'],
+    ['a reserved slug', '?slug=public-pages'],
+    ['an array slug', '?slug=valid-page&slug=other-page'],
+    ['an invalid page id', '?slug=valid-page&pageId='],
+    ['an array page id', '?slug=valid-page&pageId=page-1&pageId=page-2'],
+  ])('rejects %s in the slug availability query', async (_label, query) => {
+    const response = await fetch(`${baseUrl}/api/public-pages/slug-availability${query}`, {
+      headers: { authorization: 'Bearer token' },
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ code: 'invalid_request' });
+    expect(service.getPublicPageSlugAvailability).not.toHaveBeenCalled();
+  });
+
+  it('returns canonical slug availability without caching and precedes the page-id route', async () => {
+    service.getPublicPageSlugAvailability.mockResolvedValue({ slug: 'valid-page', available: true });
+    const query = new URLSearchParams({ slug: ' Valid-Page ', pageId: 'page-1' });
+    const response = await fetch(`${baseUrl}/api/public-pages/slug-availability?${query}`, {
+      headers: { authorization: 'Bearer token' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(await response.json()).toEqual({ slug: 'valid-page', available: true });
+    expect(service.getPublicPageSlugAvailability).toHaveBeenCalledWith(7, 'valid-page', 'page-1');
+    expect(service.getPublicPage).not.toHaveBeenCalled();
+  });
+
+  it('maps an unavailable page exemption to not_found', async () => {
+    service.getPublicPageSlugAvailability.mockRejectedValue(new PublicPageRepositoryError('NOT_FOUND'));
+    const response = await fetch(
+      `${baseUrl}/api/public-pages/slug-availability?slug=valid-page&pageId=missing-page`,
+      { headers: { authorization: 'Bearer token' } },
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ code: 'not_found' });
+  });
+
+  it('maps slug availability failures through the shared server error response', async () => {
+    service.getPublicPageSlugAvailability.mockRejectedValue(new Error('database unavailable'));
+    const response = await fetch(`${baseUrl}/api/public-pages/slug-availability?slug=valid-page`, {
+      headers: { authorization: 'Bearer token' },
+    });
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(await response.json()).toEqual({ code: 'internal_error' });
+  });
+
   it('creates with account scope from authentication only', async () => {
     service.createPublicPageForAccount.mockResolvedValue({
       id: 'page-1', status: 'draft', draft: validPublicPageDocument, published: null, revision: 1,
@@ -286,9 +449,10 @@ describe('public pages routes', () => {
     expect(service.createPublicPageForAccount).toHaveBeenCalledWith(7, validPublicPageDocument);
   });
 
-  it('publishes and archives through distinct revision-checked actions', async () => {
+  it('publishes, archives, and restores through distinct revision-checked actions', async () => {
     service.publishPublicPageForAccount.mockResolvedValue({ id: 'page-1', status: 'published', revision: 2 });
     service.archivePublicPageForAccount.mockResolvedValue({ id: 'page-1', status: 'archived', revision: 3 });
+    service.restorePublicPageForAccount.mockResolvedValue({ id: 'page-1', status: 'draft', revision: 4 });
     const headers = { authorization: 'Bearer token', 'content-type': 'application/json' };
     const published = await fetch(`${baseUrl}/api/public-pages/page-1/publish`, {
       method: 'POST', headers, body: JSON.stringify({ expectedRevision: 1 }),
@@ -296,10 +460,43 @@ describe('public pages routes', () => {
     const archived = await fetch(`${baseUrl}/api/public-pages/page-1/archive`, {
       method: 'POST', headers, body: JSON.stringify({ expectedRevision: 2 }),
     });
+    const restored = await fetch(`${baseUrl}/api/public-pages/page-1/restore`, {
+      method: 'POST', headers, body: JSON.stringify({ expectedRevision: 3 }),
+    });
     expect(published.status).toBe(200);
     expect(archived.status).toBe(200);
+    expect(restored.status).toBe(200);
     expect(service.publishPublicPageForAccount).toHaveBeenCalledWith(7, 'page-1', 1);
     expect(service.archivePublicPageForAccount).toHaveBeenCalledWith(7, 'page-1', 2);
+    expect(service.restorePublicPageForAccount).toHaveBeenCalledWith(7, 'page-1', 3);
+  });
+
+  it.each([
+    ['PAGE_NOT_ARCHIVED', 'page_not_archived'],
+    ['QUOTA_EXCEEDED', 'quota_exceeded'],
+    ['SLUG_CONFLICT', 'slug_conflict'],
+  ] as const)('maps restore %s conflicts to the stable 409 response', async (errorCode, responseCode) => {
+    service.restorePublicPageForAccount.mockRejectedValue(new PublicPageRepositoryError(errorCode));
+    const response = await fetch(`${baseUrl}/api/public-pages/page-1/restore`, {
+      method: 'POST',
+      headers: { authorization: 'Bearer token', 'content-type': 'application/json' },
+      body: JSON.stringify({ expectedRevision: 3 }),
+    });
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ code: responseCode });
+  });
+
+  it('validates restore revisions before service access', async () => {
+    const response = await fetch(`${baseUrl}/api/public-pages/page-1/restore`, {
+      method: 'POST',
+      headers: { authorization: 'Bearer token', 'content-type': 'application/json' },
+      body: JSON.stringify({ expectedRevision: -1 }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ code: 'invalid_request' });
+    expect(service.restorePublicPageForAccount).not.toHaveBeenCalled();
   });
 
   it('returns the current record with revision conflicts', async () => {

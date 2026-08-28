@@ -1,4 +1,4 @@
-import { Add, Archive, ContentCopy, Delete, Edit, OpenInNew } from '@mui/icons-material';
+import { Add, Archive, ContentCopy, Delete, Edit, OpenInNew, RestoreFromTrash } from '@mui/icons-material';
 import {
   Alert, Box, Button, Card, CardActions, CardContent, Chip, CircularProgress,
   Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Stack, TextField, Typography,
@@ -9,11 +9,28 @@ import { publicPageText } from '../components/public-page-builder/uiText';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { ApiPublicPageRepository } from '../features/public-page-builder/repository/ApiPublicPageRepository';
-import type { PublicPageRecord } from '../features/public-page-builder/repository/PublicPageRepository';
+import {
+  PublicPageRepositoryError,
+  type PublicPageRecord,
+  type PublicPageRepositoryErrorCode,
+} from '../features/public-page-builder/repository/PublicPageRepository';
 import { createStableId } from '../features/public-page-builder/utils/createStableId';
 import type { PublicPageDocument } from '../features/public-page-builder/types/publicPage';
 import { getPublicPageTemplate, PUBLIC_PAGE_TEMPLATES } from '../features/public-page-builder/templates';
 import { PublicPageRenderer } from '../components/public-page-blocks/PublicPageRenderer';
+import { publicPageDisplayUrl, publicPageUrl } from '../features/public-page-builder/config/publicPageUrl';
+
+type MutationError = {
+  action: 'restore' | 'other';
+  code: PublicPageRepositoryErrorCode | 'unknown';
+};
+
+function mutationFailure(error: unknown, action: MutationError['action']): MutationError {
+  return {
+    action,
+    code: error instanceof PublicPageRepositoryError ? error.code : 'unknown',
+  };
+}
 
 function cloneDocument(document: PublicPageDocument): PublicPageDocument {
   const id = createStableId();
@@ -42,7 +59,7 @@ export function PublicPagesPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [createOpen, setCreateOpen] = useState(false);
   const [templateId, setTemplateId] = useState('blank');
-  const [mutationError, setMutationError] = useState(false);
+  const [mutationError, setMutationError] = useState<MutationError | null>(null);
   const [isMutating, setIsMutating] = useState(false);
   const templatePreview = useMemo(
     () => getPublicPageTemplate(templateId)?.createDocument('template-preview', '2026-01-01T00:00:00.000Z'),
@@ -65,37 +82,50 @@ export function PublicPagesPage() {
     const document = getPublicPageTemplate(templateId)?.createDocument(createStableId());
     if (!document) {return;}
     setIsMutating(true);
-    setMutationError(false);
+    setMutationError(null);
     try {
       const created = await repository.create(document);
       setCreateOpen(false);
       navigate(`/public-pages/${created.id}/edit`);
-    } catch {
-      setMutationError(true);
+    } catch (error) {
+      setMutationError(mutationFailure(error, 'other'));
     } finally {
       setIsMutating(false);
     }
   };
   const duplicate = async (record: PublicPageRecord) => {
     setIsMutating(true);
-    setMutationError(false);
+    setMutationError(null);
     try {
       await repository.create(cloneDocument(record.draft));
       await load();
-    } catch {
-      setMutationError(true);
+    } catch (error) {
+      setMutationError(mutationFailure(error, 'other'));
     } finally {
       setIsMutating(false);
     }
   };
   const archive = async (record: PublicPageRecord) => {
     setIsMutating(true);
-    setMutationError(false);
+    setMutationError(null);
     try {
       await repository.archive(record.id, record.revision);
       await load();
-    } catch {
-      setMutationError(true);
+    } catch (error) {
+      setMutationError(mutationFailure(error, 'other'));
+      await load();
+    } finally {
+      setIsMutating(false);
+    }
+  };
+  const restore = async (record: PublicPageRecord) => {
+    setIsMutating(true);
+    setMutationError(null);
+    try {
+      await repository.restore(record.id, record.revision);
+      await load();
+    } catch (error) {
+      setMutationError(mutationFailure(error, 'restore'));
       await load();
     } finally {
       setIsMutating(false);
@@ -104,12 +134,12 @@ export function PublicPagesPage() {
   const remove = async (record: PublicPageRecord) => {
     if (!window.confirm(publicPageText(locale, 'deleteConfirm'))) {return;}
     setIsMutating(true);
-    setMutationError(false);
+    setMutationError(null);
     try {
       await repository.delete(record.id, record.revision);
       await load();
-    } catch {
-      setMutationError(true);
+    } catch (error) {
+      setMutationError(mutationFailure(error, 'other'));
       await load();
     } finally {
       setIsMutating(false);
@@ -120,6 +150,17 @@ export function PublicPagesPage() {
     published: publicPageText(locale, 'published'),
     archived: publicPageText(locale, 'archived'),
   }), [locale]);
+  const mutationErrorText = mutationError?.action === 'restore'
+    ? publicPageText(locale, mutationError.code === 'slug_conflict'
+      ? 'restoreSlugConflict'
+      : mutationError.code === 'quota_exceeded'
+        ? 'restoreQuotaExceeded'
+        : mutationError.code === 'revision_conflict'
+          ? 'restoreRevisionConflict'
+          : mutationError.code === 'page_not_archived'
+            ? 'restorePageState'
+            : 'restoreError')
+    : publicPageText(locale, 'saveError');
 
   if (status === 'loading') {
     return <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress aria-label={publicPageText(locale, 'loading')} /></Box>;
@@ -134,8 +175,8 @@ export function PublicPagesPage() {
         <Button variant="contained" startIcon={<Add />} onClick={() => setCreateOpen(true)}>{publicPageText(locale, 'create')}</Button>
       </Stack>
       {mutationError ? (
-        <Alert severity="error" action={<Button onClick={() => { setMutationError(false); void load(); }}>{publicPageText(locale, 'retry')}</Button>}>
-          {publicPageText(locale, 'saveError')}
+        <Alert severity="error" action={<Button onClick={() => { setMutationError(null); void load(); }}>{publicPageText(locale, 'retry')}</Button>}>
+          {mutationErrorText}
         </Alert>
       ) : null}
       {records.length === 0 ? (
@@ -150,7 +191,7 @@ export function PublicPagesPage() {
                     <Typography variant="h6">{record.draft.seo.title || record.draft.slug}</Typography>
                     <Chip size="small" label={statusLabels[record.status]} />
                   </Stack>
-                  <Typography color="text.secondary">{['meetli', '.', 'cc', '/', record.draft.slug].join('')}</Typography>
+                  <Typography color="text.secondary">{publicPageDisplayUrl(record.draft.slug)}</Typography>
                 </CardContent>
                 <CardActions>
                   {record.status !== 'archived' ? (
@@ -161,9 +202,16 @@ export function PublicPagesPage() {
                     <Button disabled={isMutating} startIcon={<Archive />} onClick={() => void archive(record)}>{publicPageText(locale, 'archive')}</Button>
                   ) : null}
                   {record.status === 'archived' ? (
+                    <Button disabled={isMutating} startIcon={<RestoreFromTrash />} onClick={() => void restore(record)}>{publicPageText(locale, 'restore')}</Button>
+                  ) : null}
+                  {record.status === 'archived' ? (
                     <Button disabled={isMutating} color="error" startIcon={<Delete />} onClick={() => void remove(record)}>{publicPageText(locale, 'remove')}</Button>
                   ) : null}
-                  {record.published ? <Button startIcon={<OpenInNew />} href={`/${record.published.slug}`}>{publicPageText(locale, 'open')}</Button> : null}
+                  {record.published ? (
+                    <Button startIcon={<OpenInNew />} href={publicPageUrl(record.published.slug)} target="_blank" rel="noopener noreferrer">
+                      {publicPageText(locale, 'open')}
+                    </Button>
+                  ) : null}
                 </CardActions>
               </Card>
             </Grid>
@@ -174,7 +222,7 @@ export function PublicPagesPage() {
         <DialogTitle>{publicPageText(locale, 'create')}</DialogTitle>
         <DialogContent>
           {mutationError ? (
-            <Alert severity="error" sx={{ mt: 1 }}>{publicPageText(locale, 'saveError')}</Alert>
+            <Alert severity="error" sx={{ mt: 1 }}>{mutationErrorText}</Alert>
           ) : null}
           <TextField select fullWidth sx={{ mt: 1 }} label={publicPageText(locale, 'template')} value={templateId}
             onChange={(event) => setTemplateId(event.target.value)}>

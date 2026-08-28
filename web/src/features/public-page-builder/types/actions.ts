@@ -27,6 +27,7 @@ export type EditorAction =
   | { type: 'section/update'; sectionId: string; changes: Partial<Omit<PageSection, 'id' | 'blocks'>> }
   | { type: 'section/remove'; sectionId: string }
   | { type: 'section/reorder'; sectionId: string; toIndex: number }
+  | { type: 'section/resize-membership'; sectionId: string; targetBlockCount: number }
   | { type: 'section/toggle'; sectionId: string }
   | { type: 'block/add'; sectionId: string; block: PageBlock; index?: number; mediaChanges?: BlockMediaChanges }
   | { type: 'block/create-with-section'; section: PageSection; afterSectionId?: string | null; mediaChanges?: BlockMediaChanges }

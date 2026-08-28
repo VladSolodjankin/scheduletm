@@ -17,6 +17,8 @@ import type { Locale } from '../../shared/i18n/dictionaries';
 import { ColorControl } from './ColorControl';
 import { publicPageText } from './uiText';
 import { resolvePublicPageThemeVariables } from '../public-page-blocks/publicPageThemeVariables';
+import { analyzeSectionContrast } from '../../features/public-page-builder/model/contrast';
+import { ContrastGuidance } from './ContrastGuidance';
 
 const SECTION_SPACING_STEP_PX = 14;
 const SECTION_SPACING_MAX_STEP = 5;
@@ -232,6 +234,7 @@ export function SectionDesignControls({ locale, theme, section, backgroundImageC
           <MenuItem value="false">{publicPageText(locale, 'hide')}</MenuItem>
         </TextField>
       </Stack>
+      <ContrastGuidance locale={locale} checks={analyzeSectionContrast(theme, section)} />
     </Stack>
   </Box>;
 }

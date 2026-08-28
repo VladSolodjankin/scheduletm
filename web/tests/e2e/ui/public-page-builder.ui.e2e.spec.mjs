@@ -12,6 +12,18 @@ const TINY_PNG = Buffer.from(
   'base64',
 );
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function formattedRubPricePattern(price) {
+  const formattedPrices = ['en', 'ru'].map((locale) => new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'RUB',
+  }).format(price));
+  return new RegExp(`^(?:${formattedPrices.map((value) => escapeRegExp(value).replace(/[\s\u00a0\u202f]+/g, '\\s*')).join('|')})$`);
+}
+
 async function savePage(page) {
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('Saved', { exact: true })).toBeVisible();
@@ -72,9 +84,6 @@ test.describe('public-page builder browser flow', () => {
     const socialUrl = `https://instagram.com/${marker}`;
     const faqQuestion = `Question ${marker}`;
     const faqAnswer = `Answer ${marker}`;
-    const serviceTitle = `Service ${marker}`;
-    const serviceDescription = `Description ${marker}`;
-    const servicePrice = '125';
     const imageAlt = `Background ${marker}`;
     let pageId = '';
     let uploadedMediaId = '';
@@ -89,11 +98,28 @@ test.describe('public-page builder browser flow', () => {
       await page.getByRole('button', { name: 'Create', exact: true }).click();
       const createDialog = page.getByRole('dialog', { name: 'Create page' });
       await createDialog.getByLabel('Template').selectOption('beauty');
+      const servicesResponsePromise = page.waitForResponse((response) =>
+        response.request().method() === 'GET'
+        && new URL(response.url()).pathname === '/api/services',
+      );
       await createDialog.getByRole('button', { name: 'Create', exact: true }).click();
       const createResponse = await createResponsePromise;
       expect(createResponse.ok()).toBeTruthy();
       pageId = (await createResponse.json()).id;
       await expect(page).toHaveURL(new RegExp(`/public-pages/${pageId}/edit$`));
+      const servicesResponse = await servicesResponsePromise;
+      expect(servicesResponse.ok()).toBeTruthy();
+      const serviceCatalog = await servicesResponse.json();
+      const activeSpecialistIds = new Set(serviceCatalog.specialists
+        .filter((specialist) => specialist.isActive !== false)
+        .map((specialist) => specialist.id));
+      const catalogService = serviceCatalog.services.find((service) => service.isActive
+        && service.assignments.some((assignment) => assignment.isActive
+          && activeSpecialistIds.has(assignment.specialistId)));
+      if (!catalogService) {
+        throw new Error('Public Pages UI E2E requires a seeded active service assigned to an active specialist.');
+      }
+      const catalogServiceIndex = serviceCatalog.services.indexOf(catalogService);
 
       const mainDropContainer = page.locator('[data-public-page-main-container]');
       await expect(mainDropContainer).toHaveAttribute('data-public-page-dnd-context', 'page');
@@ -128,13 +154,20 @@ test.describe('public-page builder browser flow', () => {
       await faqDialog.getByLabel('Description').fill(faqAnswer);
       await faqDialog.getByRole('button', { name: 'Save', exact: true }).click();
 
+      const templateServicesBlock = page.getByRole('group', { name: 'Editable block: Services', exact: true });
+      await templateServicesBlock.hover();
+      page.once('dialog', (dialog) => dialog.accept());
+      await templateServicesBlock.getByRole('button', { name: 'Remove', exact: true }).click();
+      await expect(page.getByRole('group', { name: 'Editable block: Services', exact: true })).toHaveCount(0);
+
       const serviceDialog = await addBlock(page, 'Services');
-      await expect(serviceDialog.getByLabel('Title')).toHaveCount(2);
-      await expect(serviceDialog.getByLabel('Description')).toBeVisible();
-      await expect(serviceDialog.getByLabel('Price')).toBeVisible();
-      await serviceDialog.getByLabel('Title').nth(1).fill(serviceTitle);
-      await serviceDialog.getByLabel('Description').fill(serviceDescription);
-      await serviceDialog.getByLabel('Price').fill(servicePrice);
+      await serviceDialog.getByRole('button', { name: 'Choose services', exact: true }).click();
+      const selectionDialog = page.getByRole('dialog', { name: 'Choose services', exact: true });
+      const serviceOption = selectionDialog.getByRole('listitem').nth(catalogServiceIndex).getByRole('button');
+      await expect(serviceOption).toHaveAccessibleName(new RegExp(escapeRegExp(catalogService.name)));
+      await expect(serviceOption).toBeEnabled();
+      await serviceOption.click();
+      await selectionDialog.getByRole('button', { name: 'Confirm selection', exact: true }).click();
       await serviceDialog.getByRole('button', { name: 'Save', exact: true }).click();
 
       await dragByHandle(page, 'FAQ', 'Welcome', 'after');
@@ -166,9 +199,14 @@ test.describe('public-page builder browser flow', () => {
       await expect(page.getByRole('link', { name: /Instagram/ })).toHaveAttribute('href', socialUrl);
       await expect(page.getByText(faqQuestion, { exact: true })).toBeVisible();
       await expect(page.getByText(faqAnswer, { exact: true })).toBeVisible();
-      await expect(page.getByText(serviceTitle, { exact: true })).toBeVisible();
-      await expect(page.getByText(serviceDescription, { exact: true })).toBeVisible();
-      await expect(page.getByText(servicePrice, { exact: true })).toBeVisible();
+      const servicesBlock = page.getByRole('group', { name: 'Editable block: Services', exact: true });
+      await expect(servicesBlock.getByText(catalogService.name, { exact: true })).toBeVisible();
+      if (catalogService.description?.trim()) {
+        await expect(servicesBlock.getByText(catalogService.description.trim(), { exact: true })).toBeVisible();
+      }
+      await expect(servicesBlock.getByText(formattedRubPricePattern(catalogService.basePrice))).toBeVisible();
+      await expect(servicesBlock.getByRole('link', { name: 'Book', exact: true }))
+        .toHaveAttribute('href', new RegExp(`/booking\\?service=${catalogService.id}$`));
 
       await page.getByRole('group', { name: 'Editable block: Instagram' }).click();
       const editDialog = page.getByRole('dialog', { name: 'Instagram' });
