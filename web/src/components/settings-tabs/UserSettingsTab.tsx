@@ -1,10 +1,11 @@
-import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, Typography } from '@mui/material';
+import { Stack, Typography } from '@mui/material';
 import { Controller, Control, useController } from 'react-hook-form';
 import { useState } from 'react';
 
 import type { UserSettings } from '../../shared/types/api';
 import type { SettingsCardCopy } from '../SettingsCard.types';
 import { AppButton } from '../../shared/ui/AppButton';
+import { AppConfirmDialog } from '../../shared/ui/AppDialog';
 import { AppForm } from '../../shared/ui/AppForm';
 import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
@@ -126,25 +127,21 @@ export function UserSettingsTab({
         </Stack>
       )}
 
-      <Dialog open={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)}>
-        <DialogTitle>{copy.userDeleteConfirmTitle}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>{copy.userDeleteConfirmDescription}</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <AppButton type="button" onClick={() => setIsDeleteConfirmOpen(false)}>{copy.cancel}</AppButton>
-          <AppButton
-            type="button"
-            color="error"
-            onClick={() => {
-              void onRequestUserDeletion();
-              setIsDeleteConfirmOpen(false);
-            }}
-          >
-            {copy.userDeleteButton}
-          </AppButton>
-        </DialogActions>
-      </Dialog>
+      <AppConfirmDialog
+        open={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        maxWidth="xs"
+        title={copy.userDeleteConfirmTitle}
+        description={copy.userDeleteConfirmDescription}
+        cancelLabel={copy.cancel}
+        confirmLabel={copy.userDeleteButton}
+        confirmColor="error"
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={() => {
+          void onRequestUserDeletion();
+          setIsDeleteConfirmOpen(false);
+        }}
+      />
     </AppForm>
   );
 }

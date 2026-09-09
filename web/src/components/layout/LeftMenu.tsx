@@ -63,7 +63,7 @@ export function LeftMenu({
         </Box>
         {mobile ? (
           <IconButton onClick={onClose} aria-label="Close navigation menu" size="small" className="app-left-menu__close">
-            <CloseIcon fontSize="small" />
+            <CloseIcon fontSize="small" className="app-icon--s" />
           </IconButton>
         ) : null}
       </Box>
@@ -80,7 +80,7 @@ export function LeftMenu({
               className="app-left-menu__nav-item"
             >
               <ListItemIcon className="app-left-menu__nav-icon">
-                <Icon fontSize="small" />
+                <Icon fontSize="small" className="app-icon--m" />
               </ListItemIcon>
               <ListItemText
                 primary={<Typography className="app-left-menu__nav-text">{item.label}</Typography>}
@@ -96,7 +96,7 @@ export function LeftMenu({
         <Divider className="app-left-menu__divider" />
         <Box className="app-left-menu__control-row">
           <Box className="app-left-menu__control app-left-menu__language">
-            <AppIcons.settings fontSize="small" />
+            <AppIcons.settings fontSize="small" className="app-icon--s" />
             <Select
               size="small"
               variant="standard"
@@ -111,7 +111,7 @@ export function LeftMenu({
             </Select>
           </Box>
           <IconButton onClick={onToggleMode} aria-label={themeToggleAriaLabel} className="app-left-menu__theme">
-            <ThemeIcon fontSize="small" />
+            <ThemeIcon fontSize="small" className="app-icon--m" />
           </IconButton>
         </Box>
         <Box className="app-left-menu__user">

@@ -16,7 +16,7 @@ import {
   TextFieldsOutlined,
 } from '@mui/icons-material';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, TextField, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { SocialPlatformIcon, socialPlatformStyles } from '../public-page-blocks/blocks';
 import { createBlock, getBlockDefinitions } from '../../features/public-page-builder/model/blockRegistry';
 import type { SocialPlatform } from '../../features/public-page-builder/model/socialPlatforms';
@@ -71,6 +71,7 @@ export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, t
   onClose: () => void;
   onConfirm: (result: BlockEditorSave) => void;
 }) {
+  const titleId = useId();
   const [category, setCategory] = useState<Category | null>(null);
   const [query, setQuery] = useState('');
   const [draft, setDraft] = useState<PageBlock | null>(null);
@@ -81,17 +82,18 @@ export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, t
     const block = createBlock('social-button');
     if (block) {setDraft({ ...block, name: label, content: { platform, label, url: 'https://' } });}
   };
-  const tileSx = { p: 2.5, minHeight: 112, cursor: 'pointer', border: 0, textAlign: 'center', bgcolor: 'background.paper',
+  const tileSx = { p: 2.5, minHeight: 112, cursor: 'pointer', border: '1px solid', borderColor: 'divider', borderRadius: 2, textAlign: 'center', bgcolor: 'background.paper',
     '&:hover, &:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' } } as const;
   const title = category ? publicPageText(locale, category) : publicPageText(locale, 'addBlock');
   return <>
-    <Dialog open={open && !draft} onClose={close} fullScreen={compact} fullWidth maxWidth="md">
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Dialog open={open && !draft} aria-labelledby={titleId} onClose={close} fullScreen={compact} fullWidth maxWidth={false}
+      slotProps={{ paper: { sx: { maxWidth: compact ? '100%' : 820, borderRadius: compact ? 0 : 4 } } }}>
+      <DialogTitle id={`${titleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
         {category ? <IconButton aria-label={publicPageText(locale, 'back')} onClick={() => { setCategory(null); setQuery(''); }}><ArrowBack /></IconButton> : null}
-        <Typography component="span" variant="h6" sx={{ flex: 1 }}>{title}</Typography>
+        <Typography id={titleId} component="span" variant="h6" sx={{ flex: 1 }}>{title}</Typography>
         <IconButton aria-label={publicPageText(locale, 'close')} onClick={close}><Close /></IconButton>
       </DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ p: { xs: 2, sm: 3 } }}>
         {!category ? <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
           {(Object.keys(categories) as Category[]).map((item) => {
             const Icon = categoryIcons[item];

@@ -9,7 +9,6 @@ import { AppRhfPhoneField } from '../shared/ui/AppRhfPhoneField';
 import { isValidPhoneValue } from '../shared/ui/phoneUtils';
 import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
-import { APP_SHADOWS } from '../shared/theme/constants';
 
 type AuthFormValues = {
   firstName: string;
@@ -101,29 +100,21 @@ export function AuthCard({
   }, [fieldErrors, setError]);
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
+    <Box className="app-auth-shell__panel">
       <AppForm
         component="form"
         onSubmit={handleSubmit(onSubmit)}
-        sx={{
-          borderColor: 'divider',
-          px: { xs: 2.5, sm: 4 },
-          py: { xs: 3, sm: 4 },
-          boxShadow: (theme) =>
-            theme.palette.mode === 'light'
-              ? APP_SHADOWS.surfaceLight
-              : APP_SHADOWS.surfaceDark
-        }}
-        stackProps={{ spacing: 2.5 }}
+        className="app-auth-card"
+        stackProps={{ className: 'app-auth-card__body' }}
       >
-        <Stack spacing={2}>
+        <Stack className="app-auth-card__header">
           <Box
             component="img"
             src={logoText}
             alt="Meetli"
-            sx={{ height: { xs: 28, sm: 32 }, width: 'auto', alignSelf: 'flex-start' }}
+            className="app-auth-card__logo"
           />
-          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          <Typography variant="h4" className="app-auth-card__title">
             {title}
           </Typography>
         </Stack>
@@ -241,13 +232,13 @@ export function AuthCard({
             type="button"
             variant="text"
             onClick={onForgotPassword}
-            sx={{ alignSelf: 'flex-end', minHeight: 0, py: 0 }}
+            className="app-auth-card__forgot-password"
           >
             {forgotPasswordText}
           </AppButton>
         )}
 
-        <AppButton type="submit" variant="contained" isLoading={isSubmitting} sx={{ minHeight: 46 }}>
+        <AppButton type="submit" variant="contained" size="large" isLoading={isSubmitting}>
           {submitText}
         </AppButton>
 

@@ -42,36 +42,37 @@ export function DesignPanel({ state, locale, dispatch, repository, previewUrls, 
   const theme = state.document.theme;
   const update = (next: PageTheme) => dispatch({ type: 'theme/update', theme: next });
   const selectPalette = (palette: PageTheme) => update(applyPublicPagePalette(theme, palette));
-  const cardSx = (active: boolean) => ({ minHeight: 72, p: 1.5, borderRadius: 2, border: '2px solid', borderColor: active ? 'primary.main' : 'divider',
-    bgcolor: active ? 'action.selected' : 'background.paper', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' });
+  const cardSx = (active: boolean) => ({ minWidth: 0, minHeight: 82, p: { xs: 1, sm: 1.5 }, borderRadius: 2, border: '2px solid', borderColor: active ? 'primary.main' : 'divider',
+    bgcolor: active ? 'action.selected' : 'background.paper', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } });
   const uploadLabels = { uploadLabel: publicPageText(locale, 'uploadImage'), replaceLabel: publicPageText(locale, 'replaceImage'), removeLabel: publicPageText(locale, 'remove'),
     altLabel: publicPageText(locale, 'imageAlt'), invalidTypeText: publicPageText(locale, 'invalidImageType'), tooLargeText: publicPageText(locale, 'imageTooLarge'), uploadErrorText: publicPageText(locale, 'imageUploadError') };
   const backgroundMedia = state.document.media.find((media) => media.id === theme.backgroundMediaId) ?? null;
   const activeBackgroundPreset = theme.backgroundPreset ?? 'none';
   return <Stack spacing={3}>
     <Box><Typography variant="h6" sx={{ mb: 1.5 }}>{publicPageText(locale, 'colorPalettes')}</Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 1 }}>
-        {PUBLIC_PAGE_THEMES.map((palette) => <Box component="button" type="button" key={palette.id} aria-label={palette.name} onClick={() => selectPalette(palette)} sx={cardSx(theme.id === palette.id)}>
-          <Stack direction="row" spacing={-0.5}>{palette.swatches.map((color, index) => <Box key={`${color}-${index}`} sx={{ width: 30, height: 30, borderRadius: '50%', bgcolor: color, border: '1px solid', borderColor: 'divider' }} />)}</Stack>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(5, minmax(0, 1fr))' }, gap: 1.5 }}>
+        {PUBLIC_PAGE_THEMES.map((palette) => <Box component="button" type="button" key={palette.id} aria-label={palette.name} aria-pressed={theme.id === palette.id} onClick={() => selectPalette(palette)} sx={cardSx(theme.id === palette.id)}>
+          <Stack direction="row" spacing={-0.75}>{palette.swatches.map((color, index) => <Box key={`${color}-${index}`} sx={{ width: { xs: 24, xl: 30 }, height: { xs: 24, xl: 30 }, borderRadius: '50%', bgcolor: color, border: '1px solid', borderColor: 'divider' }} />)}</Stack>
         </Box>)}
       </Box>
     </Box>
     <ContrastGuidance locale={locale} checks={analyzePageContrast(theme)} />
     <Box><Typography variant="h6" sx={{ mb: 1.5 }}>{publicPageText(locale, 'fonts')}</Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 1 }}>
-        {fonts.map(([label, value]) => <Box component="button" type="button" key={label} onClick={() => update(applyPublicPageThemeFont(theme, value))}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(5, minmax(0, 1fr))' }, gap: 1.5 }}>
+        {fonts.map(([label, value]) => <Box component="button" type="button" key={label} aria-pressed={theme.fontFamily === value} onClick={() => update(applyPublicPageThemeFont(theme, value))}
           sx={{ ...cardSx(theme.fontFamily === value), fontFamily: value, flexDirection: 'column' }}><Typography sx={{ fontFamily: value, fontSize: 20 }}>{publicPageText(locale, 'fontPreview')}</Typography><Typography sx={{ fontFamily: value }}>{label}</Typography></Box>)}
       </Box>
     </Box>
     <Box><Typography variant="h6" sx={{ mb: 1.5 }}>{publicPageText(locale, 'rounding')}</Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>{roundings.map((item) => <Box component="button" type="button" aria-label={publicPageText(locale, item.id)} key={item.id} onClick={() => update(applyPublicPageThemeRounding(theme, item.id))} sx={cardSx(theme.roundingStyle === item.id)}>
-        <Box sx={{ width: 86, height: 36, bgcolor: 'text.secondary', borderRadius: item.radius }} /></Box>)}</Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>{roundings.map((item) => <Box component="button" type="button" aria-label={publicPageText(locale, item.id)} aria-pressed={theme.roundingStyle === item.id} key={item.id} onClick={() => update(applyPublicPageThemeRounding(theme, item.id))} sx={cardSx(theme.roundingStyle === item.id)}>
+        <Box sx={{ width: 86, maxWidth: '100%', height: 36, bgcolor: 'text.secondary', borderRadius: item.radius }} /></Box>)}</Box>
     </Box>
     <Box><Typography variant="h6" sx={{ mb: 1.5 }}>{publicPageText(locale, 'linkStyles')}</Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>{linkStyles.map((item, index) => {
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>{linkStyles.map((item, index) => {
         const bg = item.surface ? theme.colors.surface : theme.colors.primary; const borderWidth = item.outline ? 1 : 0;
         const active = theme.linkStylePreset === item.id;
-        return <Box component="button" type="button" aria-label={`${publicPageText(locale, 'linkStyle')} ${index + 1}`} key={item.id} onClick={() => update(applyPublicPageLinkStyle(theme, item.id))} sx={cardSx(active)}>
+        return <Box component="button" type="button" aria-label={`${publicPageText(locale, 'linkStyle')} ${index + 1}`} aria-pressed={active} key={item.id} onClick={() => update(applyPublicPageLinkStyle(theme, item.id))} sx={cardSx(active)}>
           <Box sx={{ width: '75%', height: 34, bgcolor: bg, border: `${borderWidth}px solid ${theme.colors.primary}`, borderRadius: 1, boxShadow: item.shadow === 'strong' ? `0 4px 0 ${theme.colors.text}` : item.shadow ? 2 : 0 }} /></Box>;
       })}</Box>
     </Box>

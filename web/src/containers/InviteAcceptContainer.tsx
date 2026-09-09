@@ -2,13 +2,12 @@ import {
   Alert,
   Box,
   CircularProgress,
-  Link,
   Stack,
   Typography,
 } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import logoText from '../static/images/logo_text.svg';
 import { apiClient } from '../shared/api/client';
 import { resolveApiError } from '../shared/api/error';
@@ -19,6 +18,7 @@ import { AppForm } from '../shared/ui/AppForm';
 import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 import { AppTextField } from '../shared/ui/AppTextField';
+import { AppLink } from '../shared/ui/AppLink';
 
 type InviteAcceptFormValues = {
   firstName: string;
@@ -198,19 +198,19 @@ export function InviteAcceptContainer() {
   }, [inviteState, inviterName, teamName, t]);
 
   return (
-    <Box sx={{ width: '100%', minHeight: '100dvh', display: 'flex', justifyContent: 'center', px: { xs: 2, sm: 3 }, py: { xs: 4, sm: 6 } }}>
-      <Box sx={{ width: '100%', maxWidth: 560, mx: 'auto' }}>
-        <AppForm component="form" onSubmit={onSubmit} stackProps={{ spacing: 2.5 }}>
-          <Stack spacing={1.25}>
-            <Box component="img" src={logoText} alt="Meetli" sx={{ height: 32, width: 'auto', alignSelf: 'flex-start' }} />
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>{t('auth.inviteVerifyTitle')}</Typography>
-            <Typography color="text.secondary" variant="body2">{inviterContext}</Typography>
+    <Box className="app-auth-shell app-auth-shell--invite">
+      <Box className="app-auth-shell__panel app-auth-shell__panel--wide">
+        <AppForm component="form" onSubmit={onSubmit} className="app-auth-card" stackProps={{ className: 'app-auth-card__body' }}>
+          <Stack className="app-auth-card__header">
+            <Box component="img" src={logoText} alt="Meetli" className="app-auth-card__logo" />
+            <Typography variant="h4" className="app-auth-card__title">{t('auth.inviteVerifyTitle')}</Typography>
+            <Typography variant="body2" className="app-auth-card__subtitle">{inviterContext}</Typography>
           </Stack>
 
           {inviteState.status === 'loading' && (
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-              <CircularProgress size={20} />
-              <Typography variant="body2" color="text.secondary">{t('auth.inviteLoading')}</Typography>
+            <Stack direction="row" className="app-auth-card__loading">
+              <CircularProgress size="var(--app-icon-m)" />
+              <Typography variant="body2" className="app-auth-card__subtitle">{t('auth.inviteLoading')}</Typography>
             </Stack>
           )}
 
@@ -218,7 +218,7 @@ export function InviteAcceptContainer() {
           {info && <Alert severity="success">{info}</Alert>}
 
           {inviteState.status === 'invalid' && (
-            <Stack spacing={1.5}>
+            <Stack className="app-auth-card__invalid">
               <Alert severity="warning">
                 <Typography variant="subtitle2">{t('auth.inviteInvalidTitle')}</Typography>
                 <Typography variant="body2">{t('auth.inviteInvalidText')}</Typography>
@@ -311,9 +311,9 @@ export function InviteAcceptContainer() {
                 {t('auth.inviteCreateAccountSubmit')}
               </AppButton>
 
-              <Link component={RouterLink} to="/login" underline="hover" sx={{ alignSelf: 'flex-start' }}>
+              <AppLink to="/login" underline="hover" className="app-auth-card__link">
                 {t('auth.switchToLogin')}
-              </Link>
+              </AppLink>
             </>
           )}
         </AppForm>

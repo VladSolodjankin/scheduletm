@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { Box, Divider, Stack, Typography, alpha, useTheme } from '@mui/material';
+import { Box, Divider, Stack, Typography } from '@mui/material';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
@@ -17,7 +17,6 @@ import { AppOtpCodeField } from '../shared/ui/AppOtpCodeField';
 import { AppRhfPasswordField } from '../shared/ui/AppRhfPasswordField';
 import { AppRhfTextField } from '../shared/ui/AppRhfTextField';
 import { AppStatusMessage } from '../shared/ui/AppStatus';
-import { APP_SHADOWS } from '../shared/theme/constants';
 
 type AuthMode = 'login' | 'register';
 
@@ -56,7 +55,6 @@ const RESEND_COOLDOWN_SECONDS = 30;
 const PASSWORD_RESET_RESEND_COOLDOWN_SECONDS = 60;
 
 export function AuthContainer({ mode }: AuthContainerProps) {
-  const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const { setAuthSession } = useAuth();
@@ -394,21 +392,11 @@ export function AuthContainer({ mode }: AuthContainerProps) {
   const authCardTitle = useMemo(() => (isLogin ? t('auth.formLoginTitle') : t('auth.formRegisterTitle')), [isLogin, t]);
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        minHeight: '100dvh',
-        display: 'flex',
-        justifyContent: 'center',
-        px: { xs: 2, sm: 3 },
-        py: { xs: 4, sm: 6 },
-        background: `radial-gradient(circle at top, ${alpha(theme.palette.primary.main, 0.08)} 0%, transparent 35%), ${theme.palette.background.default}`
-      }}
-    >
-      <Stack spacing={{ xs: 3, sm: 4 }} sx={{ width: '100%', maxWidth: 840, alignItems: 'center' }}>
-        <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
-          <Stack spacing={1.25}>
-            <Typography variant="h3" sx={{ fontWeight: 700 }}>
+    <Box className="app-auth-shell">
+      <Stack className="app-auth-shell__content">
+        <Box className="app-auth-shell__panel">
+          <Stack className="app-auth-shell__intro">
+            <Typography variant="h3" className="app-auth-shell__title">
               {isLogin ? t('auth.loginTitle') : t('auth.registerTitle')}
             </Typography>
             <Typography color="text.secondary" variant="body1">
@@ -418,34 +406,29 @@ export function AuthContainer({ mode }: AuthContainerProps) {
         </Box>
 
         {error && (
-          <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
+          <Box className="app-auth-shell__panel">
             <AppStatusMessage severity="error" message={error} />
           </Box>
         )}
 
         {info && (
-          <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
+          <Box className="app-auth-shell__panel">
             <AppStatusMessage severity="info" message={info} />
           </Box>
         )}
 
         {isLogin && loginStep === 'reset-email' ? (
-          <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
+          <Box className="app-auth-shell__panel">
             <AppForm
               component="form"
               onSubmit={handleResetEmailSubmit(requestPasswordReset)}
-              sx={{
-                borderColor: 'divider',
-                px: { xs: 2.5, sm: 4 },
-                py: { xs: 3, sm: 4 },
-                boxShadow: (theme) => theme.palette.mode === 'light' ? APP_SHADOWS.surfaceLight : APP_SHADOWS.surfaceDark
-              }}
-              stackProps={{ spacing: 2.5 }}
+              className="app-auth-card"
+              stackProps={{ className: 'app-auth-card__body' }}
             >
-              <Stack spacing={2}>
-                <Box component="img" src={logoText} alt="Meetli" sx={{ height: { xs: 28, sm: 32 }, width: 'auto', alignSelf: 'flex-start' }} />
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>{t('auth.passwordResetTitle')}</Typography>
-                <Typography variant="body2" color="text.secondary">{t('auth.passwordResetEmailSubtitle')}</Typography>
+              <Stack className="app-auth-card__header">
+                <Box component="img" src={logoText} alt="Meetli" className="app-auth-card__logo" />
+                <Typography variant="h4" className="app-auth-card__title">{t('auth.passwordResetTitle')}</Typography>
+                <Typography variant="body2" className="app-auth-card__subtitle">{t('auth.passwordResetEmailSubtitle')}</Typography>
               </Stack>
               <Controller
                 name="email"
@@ -471,22 +454,17 @@ export function AuthContainer({ mode }: AuthContainerProps) {
             </AppForm>
           </Box>
         ) : isLogin && loginStep === 'reset-confirm' ? (
-          <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
+          <Box className="app-auth-shell__panel">
             <AppForm
               component="form"
               onSubmit={handleResetConfirmSubmit(confirmPasswordReset)}
-              sx={{
-                borderColor: 'divider',
-                px: { xs: 2.5, sm: 4 },
-                py: { xs: 3, sm: 4 },
-                boxShadow: (theme) => theme.palette.mode === 'light' ? APP_SHADOWS.surfaceLight : APP_SHADOWS.surfaceDark
-              }}
-              stackProps={{ spacing: 2.5 }}
+              className="app-auth-card"
+              stackProps={{ className: 'app-auth-card__body' }}
             >
-              <Stack spacing={2}>
-                <Box component="img" src={logoText} alt="Meetli" sx={{ height: { xs: 28, sm: 32 }, width: 'auto', alignSelf: 'flex-start' }} />
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>{t('auth.passwordResetConfirmTitle')}</Typography>
-                <Typography variant="body2" color="text.secondary">{withEmail(t('auth.passwordResetConfirmSubtitle'), pendingEmail)}</Typography>
+              <Stack className="app-auth-card__header">
+                <Box component="img" src={logoText} alt="Meetli" className="app-auth-card__logo" />
+                <Typography variant="h4" className="app-auth-card__title">{t('auth.passwordResetConfirmTitle')}</Typography>
+                <Typography variant="body2" className="app-auth-card__subtitle">{withEmail(t('auth.passwordResetConfirmSubtitle'), pendingEmail)}</Typography>
               </Stack>
               <Controller
                 name="code"
@@ -555,32 +533,24 @@ export function AuthContainer({ mode }: AuthContainerProps) {
             </AppForm>
           </Box>
         ) : !isLogin && registerStep === 'otp' ? (
-          <Box sx={{ width: '100%', maxWidth: 520, mx: 'auto' }}>
+          <Box className="app-auth-shell__panel">
             <AppForm
               component="form"
               onSubmit={handleVerifyEmailSubmit(submitOtp)}
-              sx={{
-                borderColor: 'divider',
-                px: { xs: 2.5, sm: 4 },
-                py: { xs: 3, sm: 4 },
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'light'
-                    ? APP_SHADOWS.surfaceLight
-                    : APP_SHADOWS.surfaceDark
-              }}
-              stackProps={{ spacing: 2.5 }}
+              className="app-auth-card"
+              stackProps={{ className: 'app-auth-card__body' }}
             >
-              <Stack spacing={2}>
+              <Stack className="app-auth-card__header">
                 <Box
                   component="img"
                   src={logoText}
                   alt="Meetli"
-                  sx={{ height: { xs: 28, sm: 32 }, width: 'auto', alignSelf: 'flex-start' }}
+                  className="app-auth-card__logo"
                 />
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                <Typography variant="h4" className="app-auth-card__title">
                   {t('auth.verifyTitle')}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" className="app-auth-card__subtitle">
                   {withEmail(t('auth.verifySubtitle'), pendingEmail)}
                 </Typography>
               </Stack>
@@ -596,7 +566,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                   }
                 }}
                 render={({ fieldState }: any) => (
-                  <Stack spacing={1}>
+                  <Stack className="app-auth-card__field">
                     <AppOtpCodeField
                       value={verifyCodeValue}
                       label={t('auth.verifyCodeLabel')}
@@ -616,7 +586,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
                 )}
               />
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} className="app-auth-card__actions">
                 <AppButton type="button" variant="outlined" onClick={backToRegister} fullWidth>
                   {t('auth.verifyBack')}
                 </AppButton>

@@ -1,4 +1,4 @@
-import { Alert, Box, Skeleton, Stack, Typography } from '@mui/material';
+import { Alert, Box, Chip, Skeleton, Stack, Typography, type ChipProps } from '@mui/material';
 import type { ReactNode } from 'react';
 import { AppSurface } from './AppSurface';
 import { AppIcons } from './AppIcons';
@@ -18,6 +18,31 @@ type AppLoadingStateProps = {
   lines?: number;
   hasHeader?: boolean;
 };
+
+export type AppStatusTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info';
+
+type AppStatusBadgeProps = Omit<ChipProps, 'color' | 'label' | 'size'> & {
+  label: ReactNode;
+  tone?: AppStatusTone;
+  size?: 'small' | 'medium';
+};
+
+export function AppStatusBadge({
+  label,
+  tone = 'neutral',
+  size = 'small',
+  className,
+  ...props
+}: AppStatusBadgeProps) {
+  return (
+    <Chip
+      {...props}
+      size={size}
+      label={label}
+      className={['app-badge', `app-badge--${tone}`, className].filter(Boolean).join(' ')}
+    />
+  );
+}
 
 export function AppStatusMessage({ severity, message }: AppStatusMessageProps) {
   return <Alert severity={severity} variant="outlined">{message}</Alert>;

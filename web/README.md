@@ -31,6 +31,22 @@ npm run -w @scheduletm/web build
 npm run -w @scheduletm/web dev
 ```
 
+## Meetli Design System
+
+Исходный дизайн находится в Figma-файле [Meetli Design System](https://www.figma.com/design/YfupfQST5CyaNABdiX4tqG/Meetli-Design-System?node-id=0-1&p=f&t=znSeyf3S2G7aCJGg-0). Переменные, стили и компоненты в этом файле создаёт локальный Figma-плагин из соседнего проекта `..\meetli-figma-plugin`.
+
+Чтобы подключить плагин локально:
+
+1. Откройте `C:\Users\Vladislav\WebstormProjects\meetli-figma-plugin` и выполните `npm run build`.
+2. В Figma Desktop откройте `Plugins` -> `Development` -> `Import plugin from manifest...`.
+3. Выберите `C:\Users\Vladislav\WebstormProjects\meetli-figma-plugin\manifest.json`.
+4. Запустите плагин с именем `Meetli Design System` в указанном выше Figma-файле.
+5. Выполните команды плагина строго в порядке: `Build foundations` -> `Build core components` -> `Build composed components` -> `Build cards` -> `Build extended components` -> `Repair final layout` -> `Validate final layout`.
+
+Файл `..\meetli-figma-plugin\code.ts` является программным source of truth для токенов, текстовых стилей, состояний и структуры компонентов. Изменение контракта сначала вносится в плагин, затем система пересобирается и валидируется в Figma, после чего соответствующие токены и MUI-компоненты синхронизируются в `src/shared/theme` и `src/shared/ui`. Ручные правки сгенерированных Figma foundations и components при следующем запуске плагина могут быть заменены.
+
+Маршруты управления `/public-pages*`, редактор, его toolbar, frame, drag-and-drop controls и диалоги используют общий Meetli Design System. Отдельный фиксированный светлый профиль применяется только к фактическому содержимому Public Page внутри preview/template и к публичным маршрутам `/:slug*`; его цвета, радиусы и layout определяются документом Public Page.
+
 Iteration-1 admin browser E2E and the remaining iteration-2 backlog are tracked
 only in [`tests/e2e/TODO.md`](./tests/e2e/TODO.md).
 

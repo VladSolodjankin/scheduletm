@@ -49,8 +49,12 @@ export function Header({
       <Toolbar className="app-header__toolbar">
         <Box className="app-header__brand">
           {showMobileMenuButton ? (
-            <IconButton onClick={onOpenMobileMenu} aria-label="Open navigation menu">
-              <MenuIcon />
+            <IconButton
+              onClick={onOpenMobileMenu}
+              aria-label="Open navigation menu"
+              className="app-header__icon-action"
+            >
+              <MenuIcon className="app-icon--m" />
             </IconButton>
           ) : null}
           <Box component="img" src={logoText} alt={title} className="app-header__logo" />
@@ -61,7 +65,7 @@ export function Header({
         <Box className="app-header__controls">
           <Tooltip title={localeLabel}>
             <Box className="app-header__control">
-              {!isMobile && <AppIcons.settings color="action" fontSize="small" />}
+              {!isMobile && <AppIcons.settings color="action" fontSize="small" className="app-icon--s" />}
               <Select
                 size="small"
                 variant="standard"
@@ -77,8 +81,13 @@ export function Header({
             </Box>
           </Tooltip>
           <Tooltip title={themeToggleAriaLabel}>
-            <IconButton onClick={onToggleMode} color="primary" aria-label={themeToggleAriaLabel}>
-              <ThemeIcon />
+            <IconButton
+              onClick={onToggleMode}
+              color="primary"
+              aria-label={themeToggleAriaLabel}
+              className="app-header__icon-action"
+            >
+              <ThemeIcon className="app-icon--m" />
             </IconButton>
           </Tooltip>
           <UserMenu />

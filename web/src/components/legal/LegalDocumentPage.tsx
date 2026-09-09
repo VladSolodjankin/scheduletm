@@ -4,8 +4,8 @@ import { AppPage } from '../../shared/ui/AppPage';
 import type { LegalDocument } from '../../content/legalDocuments';
 import { useAuth } from '../../shared/auth/AuthContext';
 import { useI18n } from '../../shared/i18n/I18nContext';
-import { rem } from '../../shared/theme/constants';
 import { AppButton } from '../../shared/ui/AppButton';
+import { AppSurface } from '../../shared/ui/AppSurface';
 
 type LegalDocumentPageProps = {
   document: LegalDocument;
@@ -27,24 +27,15 @@ export function LegalDocumentPage({ document }: LegalDocumentPageProps) {
 
   return (
     <AppPage title={document.title} subtitle={`Effective date: ${document.effectiveDate}`} maxWidth={960}>
-      <Box
-        sx={{
-          border: `${rem(1)} solid`,
-          borderColor: 'divider',
-          borderRadius: 3,
-          bgcolor: 'background.paper',
-          px: { xs: 2.5, sm: 4 },
-          py: { xs: 3, sm: 4 }
-        }}
-      >
-        <Stack spacing={3}>
+      <AppSurface className="app-legal-document">
+        <Stack className="app-legal-document__content">
           <Box>
             <AppButton variant="outlined" type="button" onClick={handleBack}>
               {t('common.back')}
             </AppButton>
           </Box>
 
-          <Stack spacing={1.5}>
+          <Stack className="app-legal-document__intro">
             {document.intro.map((paragraph) => (
               <Typography key={paragraph} variant="body1" color="text.secondary">
                 {paragraph}
@@ -53,7 +44,7 @@ export function LegalDocumentPage({ document }: LegalDocumentPageProps) {
           </Stack>
 
           {document.sections.map((section) => (
-            <Stack key={section.title} spacing={1.5}>
+            <Stack key={section.title} className="app-legal-document__section">
               <Typography variant="h6">{section.title}</Typography>
               {section.paragraphs?.map((paragraph) => (
                 <Typography key={paragraph} variant="body1">
@@ -61,9 +52,9 @@ export function LegalDocumentPage({ document }: LegalDocumentPageProps) {
                 </Typography>
               ))}
               {section.bullets && (
-                <Box component="ul" sx={{ m: 0, pl: 3 }}>
+                <Box component="ul" className="app-legal-document__list">
                   {section.bullets.map((bullet) => (
-                    <Box key={bullet} component="li" sx={{ mb: 1 }}>
+                    <Box key={bullet} component="li" className="app-legal-document__list-item">
                       <Typography variant="body1">{bullet}</Typography>
                     </Box>
                   ))}
@@ -72,7 +63,7 @@ export function LegalDocumentPage({ document }: LegalDocumentPageProps) {
             </Stack>
           ))}
         </Stack>
-      </Box>
+      </AppSurface>
     </AppPage>
   );
 }

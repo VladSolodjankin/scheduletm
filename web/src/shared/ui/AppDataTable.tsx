@@ -1,6 +1,5 @@
 import {
   Box,
-  Chip,
   IconButton,
   Table,
   TableBody,
@@ -13,6 +12,7 @@ import {
 } from '@mui/material';
 import type { CSSProperties, ReactNode } from 'react';
 import { AppSurface } from './AppSurface';
+import { AppStatusBadge } from './AppStatus';
 
 export type AppTableColumn<T> = {
   key: string;
@@ -121,12 +121,9 @@ type AppBooleanBadgeProps = {
 
 export function AppBooleanBadge({ value, trueLabel, falseLabel }: AppBooleanBadgeProps) {
   return (
-    <Chip
-      size="small"
+    <AppStatusBadge
       label={value ? trueLabel : falseLabel}
-      color={value ? 'success' : 'default'}
-      variant={value ? 'filled' : 'outlined'}
-      className={`app-badge ${value ? 'app-badge--success' : 'app-badge--neutral'}`}
+      tone={value ? 'success' : 'neutral'}
     />
   );
 }

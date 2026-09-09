@@ -1,11 +1,6 @@
 import {
   Box,
-  Button,
   Collapse,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   FormControl,
   InputLabel,
   MenuItem,
@@ -17,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { AppointmentItem, AppointmentStatus, ClientItem, SpecialistItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
+import { AppDialog } from '../../shared/ui/AppDialog';
 import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
 import { isValidPhoneValue } from '../../shared/ui/phoneUtils';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
@@ -313,19 +309,47 @@ export function AppointmentFormDialog({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>{editingItem ? t('appointments.editTitle') : t('appointments.createTitle')}</DialogTitle>
-      <DialogContent>
+    <AppDialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="md"
+      title={editingItem ? t('appointments.editTitle') : t('appointments.createTitle')}
+      actions={(
+        <>
+          {editingItem && (
+            <AppButton color="error" onClick={onCancel} isLoading={isCancellingAppointment}>
+              {t('appointments.cancelAction')}
+            </AppButton>
+          )}
+          {editingItem && (
+            <AppButton onClick={onMarkPaid} isLoading={isMarkingPaid}>
+              {t('appointments.markPaidAction')}
+            </AppButton>
+          )}
+          {editingItem && (
+            <AppButton onClick={onNotifyClient} isLoading={isNotifyingClient}>
+              {t('appointments.notifyAction')}
+            </AppButton>
+          )}
+          <AppButton variant="text" onClick={handleClose} disabled={isSubmittingForm || isCancellingAppointment}>
+            {t('appointments.close')}
+          </AppButton>
+          <AppButton variant="contained" onClick={submitForm} isLoading={isSubmittingForm}>
+            {t('appointments.save')}
+          </AppButton>
+        </>
+      )}
+    >
         <Stack spacing={2} sx={{ mt: 1 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <Button
+            <AppButton
               variant="text"
               size="small"
               onClick={() => setShowTimezoneSelect((prev) => !prev)}
               sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
             >
               {showTimezoneSelect ? t('appointments.hideCustomTimezone') : t('appointments.useCustomTimezone')}
-            </Button>
+            </AppButton>
             <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
               {t('appointments.currentTimezone').replace('{timezone}', formTimeZone)}
             </Typography>
@@ -586,28 +610,6 @@ export function AppointmentFormDialog({
             </Stack>
           )}
         </Stack>
-      </DialogContent>
-      <DialogActions>
-        {editingItem && (
-          <AppButton color="error" onClick={onCancel} isLoading={isCancellingAppointment}>
-            {t('appointments.cancelAction')}
-          </AppButton>
-        )}
-        {editingItem && (
-          <AppButton onClick={onMarkPaid} isLoading={isMarkingPaid}>
-            {t('appointments.markPaidAction')}
-          </AppButton>
-        )}
-        {editingItem && (
-          <AppButton onClick={onNotifyClient} isLoading={isNotifyingClient}>
-            {t('appointments.notifyAction')}
-          </AppButton>
-        )}
-        <Button onClick={handleClose} disabled={isSubmittingForm || isCancellingAppointment}>{t('appointments.close')}</Button>
-        <AppButton variant="contained" onClick={submitForm} isLoading={isSubmittingForm}>
-          {t('appointments.save')}
-        </AppButton>
-      </DialogActions>
-    </Dialog>
+    </AppDialog>
   );
 }

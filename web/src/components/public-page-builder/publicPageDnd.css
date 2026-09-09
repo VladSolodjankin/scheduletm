@@ -1,22 +1,22 @@
-.public-page-editor-preview-surface {
+.meetli-design-system .public-page-editor-preview-surface {
   --public-page-editor-drag-gutter: 64px;
 }
 
-.public-page-editor-preview-surface--compact .public-page-block-drag-rail {
+.meetli-design-system .public-page-editor-preview-surface--compact .public-page-block-drag-rail {
   display: none;
 }
 
-.public-page-dnd-wrapper {
+.meetli-design-system .public-page-dnd-wrapper {
   --public-page-editor-drag-gutter: 64px;
   min-width: 0;
   overflow: visible;
 }
 
-.smooth-dnd-container.vertical > .smooth-dnd-draggable-wrapper.public-page-dnd-wrapper {
+.meetli-design-system .smooth-dnd-container.vertical > .smooth-dnd-draggable-wrapper.public-page-dnd-wrapper {
   overflow: visible;
 }
 
-.public-page-dnd-main-container {
+.meetli-design-system .public-page-dnd-main-container {
   display: grid;
   flex: 0 0 auto;
   align-content: start;
@@ -24,35 +24,35 @@
   gap: var(--theme-link-offset);
 }
 
-.public-page-dnd-section-shell,
-.public-page-dnd-block-shell {
+.meetli-design-system .public-page-dnd-section-shell,
+.meetli-design-system .public-page-dnd-block-shell {
   position: relative;
   min-width: 0;
 }
 
-.public-page-dnd-section-shell:hover > .public-page-section-drag-rail,
-.public-page-dnd-section-shell:focus-within > .public-page-section-drag-rail,
-.public-page-dnd-section-shell:hover > [data-public-page-section-drag-target] > .public-page-section-resize-handle,
-.public-page-dnd-section-shell:focus-within > [data-public-page-section-drag-target] > .public-page-section-resize-handle {
+.meetli-design-system .public-page-dnd-section-shell:hover > .public-page-section-drag-rail,
+.meetli-design-system .public-page-dnd-section-shell:focus-within > .public-page-section-drag-rail,
+.meetli-design-system .public-page-dnd-section-shell:hover > [data-public-page-section-drag-target] > .public-page-section-resize-handle,
+.meetli-design-system .public-page-dnd-section-shell:focus-within > [data-public-page-section-drag-target] > .public-page-section-resize-handle {
   opacity: 1;
   pointer-events: auto;
 }
 
-.public-page-dnd-section-shell:has(> .public-page-section-drag-rail:hover) > [data-public-page-section-drag-target]::after,
-.public-page-dnd-section-shell:has(> .public-page-section-drag-rail:focus-visible) > [data-public-page-section-drag-target]::after,
-[data-public-page-section-drag-target]:has(> .public-page-section-resize-handle:hover)::after,
-[data-public-page-section-drag-target]:has(> .public-page-section-resize-handle:focus-visible)::after {
+.meetli-design-system .public-page-dnd-section-shell:has(> .public-page-section-drag-rail:hover) > [data-public-page-section-drag-target]::after,
+.meetli-design-system .public-page-dnd-section-shell:has(> .public-page-section-drag-rail:focus-visible) > [data-public-page-section-drag-target]::after,
+.meetli-design-system [data-public-page-section-drag-target]:has(> .public-page-section-resize-handle:hover)::after,
+.meetli-design-system [data-public-page-section-drag-target]:has(> .public-page-section-resize-handle:focus-visible)::after {
   position: absolute;
   z-index: 4;
   inset: -4px;
-  border: 2px solid #1976d2;
+  border: calc(var(--app-border-width) * 2) solid var(--app-color-primary);
   border-radius: inherit;
-  box-shadow: 0 0 0 2px rgb(25 118 210 / 18%);
+  box-shadow: 0 0 0 calc(var(--app-border-width) * 2) var(--app-color-focus-ring);
   content: '';
   pointer-events: none;
 }
 
-.public-page-dnd-block-container {
+.meetli-design-system .public-page-dnd-block-container {
   display: grid;
   grid-column: 1 / -1;
   align-content: start;
@@ -61,7 +61,7 @@
   gap: var(--theme-link-offset);
 }
 
-.MuiIconButton-root.public-page-block-drag-rail {
+.meetli-design-system .MuiIconButton-root.public-page-block-drag-rail {
   position: absolute;
   z-index: 5;
   top: 50%;
@@ -69,13 +69,13 @@
   width: 36px;
   height: 100%;
   transform: translateY(-50%);
-  border-radius: 2px;
-  color: #616161;
-  background-color: #e0e0e0;
-  box-shadow: 0 2px 1px -1px rgb(0 0 0 / 20%), 0 1px 1px rgb(0 0 0 / 14%), 0 1px 3px rgb(0 0 0 / 12%);
+  border-radius: var(--app-radius-xs);
+  color: var(--app-color-text-muted);
+  background-color: var(--app-color-surface-muted);
+  box-shadow: var(--app-shadow-soft);
 }
 
-.public-page-dnd-wrapper[data-public-page-dnd-context='section'] .MuiIconButton-root.public-page-block-drag-rail {
+.meetli-design-system .public-page-dnd-wrapper[data-public-page-dnd-context='section'] .MuiIconButton-root.public-page-block-drag-rail {
   left: calc(-1 * var(--public-page-editor-drag-gutter) - 49px);
 }
 
@@ -87,12 +87,12 @@
   margin-top: -14px;
 }
 
-.MuiIconButton-root.public-page-block-drag-rail:hover,
-.public-page-dnd-dragging .MuiIconButton-root.public-page-block-drag-rail {
-  background-color: #bdbdbd;
+.meetli-design-system .MuiIconButton-root.public-page-block-drag-rail:hover,
+.meetli-design-system .public-page-dnd-dragging .MuiIconButton-root.public-page-block-drag-rail {
+  background-color: var(--app-color-border-strong);
 }
 
-.MuiIconButton-root.public-page-section-drag-rail {
+.meetli-design-system .MuiIconButton-root.public-page-section-drag-rail {
   position: absolute;
   z-index: 5;
   top: 0;
@@ -100,28 +100,28 @@
   width: 48px;
   height: 24px;
   transform: translate(-50%, -50%);
-  border-radius: 4px;
-  color: #616161;
-  background-color: #e0e0e0;
+  border-radius: var(--app-radius-xs);
+  color: var(--app-color-text-muted);
+  background-color: var(--app-color-surface-muted);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms;
+  transition: opacity var(--app-motion-fast) var(--app-easing), background-color var(--app-motion-fast) var(--app-easing);
 }
 
-.MuiIconButton-root.public-page-section-drag-rail:hover {
-  background-color: #bdbdbd;
+.meetli-design-system .MuiIconButton-root.public-page-section-drag-rail:hover {
+  background-color: var(--app-color-border-strong);
 }
 
-.public-page-section-drag-rail > svg {
+.meetli-design-system .public-page-section-drag-rail > svg {
   transform: rotate(90deg);
 }
 
-.MuiIconButton-root.public-page-section-drag-rail.is-selected {
+.meetli-design-system .MuiIconButton-root.public-page-section-drag-rail.is-selected {
   opacity: 1;
   pointer-events: auto;
 }
 
-.MuiIconButton-root.public-page-section-resize-handle {
+.meetli-design-system .MuiIconButton-root.public-page-section-resize-handle {
   position: absolute;
   z-index: 5;
   bottom: 0;
@@ -129,29 +129,29 @@
   width: 48px;
   height: 24px;
   transform: translate(-50%, 50%);
-  border-radius: 4px;
-  color: #616161;
-  background-color: #e0e0e0;
+  border-radius: var(--app-radius-xs);
+  color: var(--app-color-text-muted);
+  background-color: var(--app-color-surface-muted);
   opacity: 0;
   pointer-events: none;
   touch-action: none;
   cursor: ns-resize;
-  transition: opacity 120ms, background-color 120ms;
+  transition: opacity var(--app-motion-fast) var(--app-easing), background-color var(--app-motion-fast) var(--app-easing);
 }
 
-.MuiIconButton-root.public-page-section-resize-handle:hover,
-.MuiIconButton-root.public-page-section-resize-handle:focus-visible {
-  background-color: #bdbdbd;
+.meetli-design-system .MuiIconButton-root.public-page-section-resize-handle:hover,
+.meetli-design-system .MuiIconButton-root.public-page-section-resize-handle:focus-visible {
+  background-color: var(--app-color-border-strong);
 }
 
 @media (min-width: 900px) {
-  .MuiIconButton-root.public-page-section-drag-rail.is-selected {
+  .meetli-design-system .MuiIconButton-root.public-page-section-drag-rail.is-selected {
     opacity: 0;
     pointer-events: none;
   }
 
-  .public-page-dnd-section-shell:hover > .public-page-section-drag-rail,
-  .public-page-dnd-section-shell:focus-within > .public-page-section-drag-rail {
+  .meetli-design-system .public-page-dnd-section-shell:hover > .public-page-section-drag-rail,
+  .meetli-design-system .public-page-dnd-section-shell:focus-within > .public-page-section-drag-rail {
     opacity: 1;
     pointer-events: auto;
   }

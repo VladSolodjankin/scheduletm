@@ -6,7 +6,6 @@ import {
   Select,
   Snackbar,
   Stack,
-  TextField,
 } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { AppointmentFormDialog } from '../components/appointments/AppointmentFormDialog';
@@ -41,8 +40,10 @@ import type {
 } from '../shared/types/api';
 import { WebUserRole } from '../shared/types/roles';
 import { AppFilterBar } from '../shared/ui/AppFilterBar';
+import { AppConfirmDialog } from '../shared/ui/AppDialog';
 import { AppPage } from '../shared/ui/AppPage';
 import { AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
+import { AppTextField } from '../shared/ui/AppTextField';
 
 export function AppointmentsContainer() {
   const { t } = useI18n();
@@ -68,6 +69,7 @@ export function AppointmentsContainer() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
   const [isCancellingAppointment, setIsCancellingAppointment] = useState(false);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [isMarkingPaid, setIsMarkingPaid] = useState(false);
   const [isNotifyingClient, setIsNotifyingClient] = useState(false);
   const [pastSlotToastOpen, setPastSlotToastOpen] = useState(false);
@@ -339,6 +341,10 @@ export function AppointmentsContainer() {
     return isLateCancel && !policy.refundOnLateCancel ? 'no_refund' : 'refund';
   }, [bookingPolicies, editingItem]);
 
+  const cancelConfirmationMessage = cancelRefundOutcome === 'no_refund'
+    ? t('appointments.cancelConfirmNoRefund')
+    : t('appointments.cancelConfirmRefund');
+
   const submitForm = async (payload: {
     specialistId: number;
     appointmentAt: string;
@@ -425,13 +431,6 @@ export function AppointmentsContainer() {
       return;
     }
 
-    const confirmationMessage = cancelRefundOutcome === 'no_refund'
-      ? t('appointments.cancelConfirmNoRefund')
-      : t('appointments.cancelConfirmRefund');
-    if (!window.confirm(confirmationMessage)) {
-      return;
-    }
-
     setIsCancellingAppointment(true);
 
     try {
@@ -440,6 +439,7 @@ export function AppointmentsContainer() {
       });
 
       setIsCreateOpen(false);
+      setIsCancelConfirmOpen(false);
       await loadAppointments(selectedSpecialistId);
     } catch (err) {
       setError(resolveApiError(err, {
@@ -651,10 +651,9 @@ export function AppointmentsContainer() {
                 </FormControl>
               )}
 
-              <TextField
+              <AppTextField
                 type="text"
                 label={t('appointments.serviceFilter')}
-                size="small"
                 value={serviceQuery}
                 onChange={(event) => setServiceQuery(event.target.value)}
                 sx={{ minWidth: 0, gridColumn: { md: 'span 2' } }}
@@ -678,19 +677,17 @@ export function AppointmentsContainer() {
                 </Select>
               </FormControl>
 
-              <TextField
+              <AppTextField
                 type="date"
                 label={t('appointments.fromDateFilter')}
-                size="small"
                 value={fromDateFilter}
                 onChange={(event) => setFromDateFilter(event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
                 sx={{ minWidth: 0 }}
               />
-              <TextField
+              <AppTextField
                 type="date"
                 label={t('appointments.toDateFilter')}
-                size="small"
                 value={toDateFilter}
                 onChange={(event) => setToDateFilter(event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
@@ -755,9 +752,10 @@ export function AppointmentsContainer() {
         isNotifyingClient={isNotifyingClient}
         onClose={() => {
           setIsCreateOpen(false);
+          setIsCancelConfirmOpen(false);
           setCreateInitialScheduledAtIso(null);
         }}
-        onCancel={cancelAppointment}
+        onCancel={async () => setIsCancelConfirmOpen(true)}
         cancelPolicyText={editingItem
           ? (cancelRefundOutcome === 'no_refund'
             ? t('appointments.cancelPolicyNoRefund')
@@ -781,6 +779,20 @@ export function AppointmentsContainer() {
           phone: payload.phone,
           email: payload.email,
         })}
+      />
+
+      <AppConfirmDialog
+        open={isCancelConfirmOpen && Boolean(editingItem)}
+        onClose={() => !isCancellingAppointment && setIsCancelConfirmOpen(false)}
+        maxWidth="xs"
+        title={t('appointments.cancelAction')}
+        description={cancelConfirmationMessage}
+        cancelLabel={t('common.cancel')}
+        confirmLabel={t('appointments.cancelAction')}
+        confirmColor="error"
+        isLoading={isCancellingAppointment}
+        onCancel={() => setIsCancelConfirmOpen(false)}
+        onConfirm={() => void cancelAppointment()}
       />
     </AppPage>
   );

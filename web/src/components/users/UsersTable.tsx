@@ -1,4 +1,4 @@
-import { Box, ButtonBase, Chip, Stack, Typography, alpha, useTheme } from '@mui/material';
+import { Box, ButtonBase, Stack, Typography, alpha, useTheme } from '@mui/material';
 import type { ManagedUserItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppSurface } from '../../shared/ui/AppSurface';
@@ -8,6 +8,7 @@ import {
   AppTableIconAction
 } from '../../shared/ui/AppDataTable';
 import { AppIcons } from '../../shared/ui/AppIcons';
+import { AppStatusBadge } from '../../shared/ui/AppStatus';
 
 type UsersTableProps = {
   emptyText: string;
@@ -135,13 +136,10 @@ export function UsersTable({
                     spacing={0.75}
                     sx={{ flexWrap: 'wrap', justifyContent: { xs: 'flex-start', sm: 'flex-end' } }}
                   >
-                    <Chip
-                      size="small"
+                    <AppStatusBadge
                       label={getRoleLabel(item)}
+                      tone="info"
                       sx={{
-                        height: 28,
-                        fontWeight: 700,
-                        borderRadius: 999,
                         backgroundColor: alpha(theme.palette.secondary.main, 0.12),
                         color: 'text.primary'
                       }}

@@ -32,8 +32,19 @@ export type AppColorTokens = {
 };
 
 export const APP_TOKENS = {
+  fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
   space: { xs: '0.25rem', s: '0.5rem', m: '1rem', l: '1.5rem', xl: '2rem' },
   fontSize: { xs: '0.75rem', s: '0.875rem', m: '1rem', l: '1.25rem', xl: '1.75rem' },
+  typography: {
+    headingXl: { fontSize: '1.75rem', lineHeight: '2.1875rem', letterSpacing: '-0.01875rem', fontWeight: 700 },
+    headingL: { fontSize: '1.25rem', lineHeight: '1.625rem', letterSpacing: '-0.00625rem', fontWeight: 700 },
+    headingM: { fontSize: '1rem', lineHeight: '1.5rem', letterSpacing: 0, fontWeight: 600 },
+    bodyM: { fontSize: '1rem', lineHeight: '1.5rem', letterSpacing: 0, fontWeight: 400 },
+    bodyS: { fontSize: '0.875rem', lineHeight: '1.25rem', letterSpacing: 0, fontWeight: 400 },
+    labelS: { fontSize: '0.875rem', lineHeight: '1.25rem', letterSpacing: 0, fontWeight: 600 },
+    captionXs: { fontSize: '0.75rem', lineHeight: '1.125rem', letterSpacing: 0, fontWeight: 400 },
+    buttonS: { fontSize: '0.875rem', lineHeight: '1.25rem', letterSpacing: 0, fontWeight: 600 },
+  },
   radius: {
     xs: '0.25rem',
     s: '0.5rem',
@@ -45,7 +56,9 @@ export const APP_TOKENS = {
   },
   fontWeight: { regular: 400, medium: 500, semibold: 600, bold: 700 },
   lineHeight: { compact: 1.25, default: 1.5, relaxed: 1.65 },
-  controlHeight: { s: '2rem', m: '2.625rem', l: '3rem' },
+  controlHeight: { s: '2rem', m: '2.5rem', l: '3rem' },
+  iconSize: { xs: '0.75rem', s: '1rem', m: '1.25rem', l: '1.5rem', xl: '2rem' },
+  avatarSize: { xs: '1.5rem', s: '2rem', m: '2.5rem', l: '3rem', xl: '4rem' },
   motion: {
     fast: '120ms',
     default: '160ms',
@@ -62,9 +75,10 @@ export const APP_TOKENS = {
     header: '4rem',
   },
   border: { width: '0.0625rem' },
-  legacy: {
-    // Preserve established numeric MUI sx semantics until each legacy screen is migrated to CSS variables.
+  publicPageBase: {
+    // Fixed base metrics for rendered Public Page content, independent of the cabinet profile.
     muiRadiusMultiplier: 14,
+    controlHeightM: '2.625rem',
   },
   shadow: {
     softLight: '0 0.625rem 1.875rem rgba(15, 23, 42, 0.05)',

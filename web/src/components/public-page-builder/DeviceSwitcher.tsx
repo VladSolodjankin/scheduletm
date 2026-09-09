@@ -25,6 +25,7 @@ export function DeviceSwitcher({
       size="small"
       value={value}
       onChange={(_, next: PreviewDevice | null) => next && onChange(next)}
+      sx={{ bgcolor: 'background.paper', '& .MuiToggleButton-root': { width: 40, height: 40 } }}
     >
       {items.map(([device, label, icon]) => (
         <ToggleButton key={device} value={device} aria-label={label}>

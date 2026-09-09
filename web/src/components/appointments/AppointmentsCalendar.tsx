@@ -3,7 +3,6 @@ import {
   Box,
   Card,
   CardContent,
-  Chip,
   Stack,
   ToggleButton,
   ToggleButtonGroup,
@@ -19,6 +18,7 @@ import { APP_SIZING, APP_SPACING, rem } from '../../shared/theme/constants';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppSurface } from '../../shared/ui/AppSurface';
+import { AppStatusBadge } from '../../shared/ui/AppStatus';
 import {
   CalendarViewMode,
   formatLocalDate,
@@ -198,7 +198,7 @@ export function AppointmentsCalendar({
                       >
                         {formatLocalDate(day, { weekday: 'short', day: '2-digit', month: 'short' })}
                       </Typography>
-                      {isToday ? <Chip size="small" color="primary" label={t('appointments.today')} sx={{ height: 20 }} /> : null}
+                      {isToday ? <AppStatusBadge label={t('appointments.today')} tone="info" /> : null}
                     </Stack>
 
                     <Stack spacing={0.75}>
@@ -286,7 +286,7 @@ export function AppointmentsCalendar({
                     <Typography variant="body2" sx={{ fontWeight: 700 }} color={isPast ? 'text.disabled' : 'text.primary'}>
                       {formatLocalDate(day, { weekday: 'short' })}
                     </Typography>
-                    {isToday ? <Chip size="small" color="primary" label={t('appointments.today')} sx={{ height: 20 }} /> : null}
+                    {isToday ? <AppStatusBadge label={t('appointments.today')} tone="info" /> : null}
                   </Stack>
                   <Typography variant="caption" color="text.secondary">
                     {formatLocalDate(day)}
@@ -411,7 +411,7 @@ export function AppointmentsCalendar({
                               arrow
                               disableHoverListener={!getGoogleSlotTooltip(slot)}
                             >
-                              <Chip size="small" label={getGoogleSlotTitle(slot)} color="warning" variant="outlined" />
+                              <AppStatusBadge label={getGoogleSlotTitle(slot)} tone="warning" variant="outlined" />
                             </Tooltip>
                           ))}
 

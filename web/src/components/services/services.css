@@ -1,0 +1,202 @@
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-m);
+}
+
+.services-cleanup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-s);
+}
+
+.services-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.service-card {
+  border-color: var(--app-color-border);
+  border-radius: var(--app-radius-m);
+  overflow: hidden;
+}
+
+.service-card .service-card__content {
+  padding: var(--app-space-l);
+}
+
+.service-card .service-card__content:last-child {
+  padding-bottom: var(--app-space-l);
+}
+
+.service-card__summary {
+  align-items: start;
+  display: grid;
+  gap: var(--app-space-m);
+  grid-template-columns: minmax(10rem, 3fr) minmax(0, 5fr);
+}
+
+.service-card__image,
+.service-card__image-placeholder {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--app-radius-s);
+  width: 100%;
+}
+
+.service-card__image {
+  border: var(--app-border-width) solid var(--app-color-border);
+  object-fit: cover;
+}
+
+.service-card__image-placeholder {
+  background: var(--app-color-surface-muted);
+  color: var(--app-color-text-muted);
+  display: grid;
+  place-items: center;
+}
+
+.service-card__copy,
+.service-card__assignments,
+.service-card__assignment {
+  display: flex;
+  flex-direction: column;
+}
+
+.service-card__assignment-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-m);
+}
+
+.service-card__copy {
+  gap: var(--app-space-m);
+  min-width: 0;
+}
+
+.service-card__heading,
+.service-card__price-line,
+.service-card__assignment-header,
+.service-card__assignment-actions,
+.service-card .service-card__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-s);
+}
+
+.service-card__title {
+  font-size: var(--app-font-l);
+  font-weight: var(--app-weight-bold);
+  line-height: var(--app-line-compact);
+}
+
+.service-card__description,
+.service-card__muted {
+  color: var(--app-color-text-muted);
+}
+
+.service-card__price {
+  font-weight: var(--app-weight-bold);
+}
+
+.service-card__divider {
+  border-color: var(--app-color-border);
+  margin-block: var(--app-space-l);
+}
+
+.service-card__assignments {
+  gap: var(--app-space-m);
+}
+
+.service-card__assignments-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-s);
+}
+
+.service-card__assignment {
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-s);
+  gap: var(--app-space-m);
+  padding: var(--app-space-m);
+}
+
+.service-card__assignment-header {
+  justify-content: space-between;
+}
+
+.service-card__specialist-name,
+.service-card__section-title {
+  font-weight: var(--app-weight-bold);
+}
+
+.service-card__assignment-fields,
+.service-form__main,
+.service-form__specialists-grid {
+  display: grid;
+  gap: var(--app-space-m);
+}
+
+.service-card__assignment-fields,
+.service-form__specialists-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.service-card__assignment-actions {
+  justify-content: flex-end;
+}
+
+.service-card .service-card__actions {
+  padding: 0 var(--app-space-l) var(--app-space-l);
+}
+
+.service-form__main {
+  align-items: start;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 3fr);
+}
+
+.service-form__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-m);
+  min-width: 0;
+}
+
+.service-form__selector-actions {
+  display: flex;
+  gap: var(--app-space-s);
+}
+
+.services-delete-impact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--app-space-s);
+}
+
+@media (max-width: 56.249rem) {
+  .service-form__main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 37.499rem) {
+  .service-card__summary,
+  .service-card__assignment-fields,
+  .service-form__specialists-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .service-card__assignment-header,
+  .service-card__assignment-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .service-card .service-card__content {
+    padding: var(--app-space-m);
+  }
+
+  .service-card .service-card__actions {
+    padding: 0 var(--app-space-m) var(--app-space-m);
+  }
+}

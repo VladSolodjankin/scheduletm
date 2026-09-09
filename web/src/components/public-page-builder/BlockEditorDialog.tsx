@@ -1,6 +1,6 @@
 import { Close, DeleteOutlined } from '@mui/icons-material';
 import { Alert, Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, IconButton, MenuItem, Stack, Switch, Tab, Tabs, TextField, Typography } from '@mui/material';
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import type { MediaReference, PageBlock, PageSection, PageTheme } from '../../features/public-page-builder/types/publicPage';
 import type { ApiPublicPageRepository } from '../../features/public-page-builder/repository/ApiPublicPageRepository';
 import { getBlockDefinition } from '../../features/public-page-builder/model/blockRegistry';
@@ -132,6 +132,7 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
   focusRequest?: BlockEditorFocusRequest | null;
   onFocusTargetMissing?: () => void;
 }) {
+  const titleId = useId();
   const [tab, setTab] = useState(() => BLOCK_EDITOR_TAB_INDEX[focusRequest?.tab ?? 'content']);
   const initialAvatarAlt = block.type === 'avatar'
     ? (typeof block.content.imageAlt === 'string' && block.content.imageAlt.trim())
@@ -190,9 +191,9 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
   const cancel = () => { if (cleaning) {return;} void (async () => { if (await cleanupItems(pending)) {onClose();} })(); };
   const Editor = getBlockDefinition(draft.type)?.Editor;
   return (
-    <Dialog open={open} onClose={cancel} fullScreen={compact} fullWidth maxWidth={draft.type === 'avatar' || draft.type === 'services' ? 'md' : 'sm'}
+    <Dialog open={open} aria-labelledby={titleId} onClose={cancel} fullScreen={compact} fullWidth maxWidth={false}
       slotProps={{
-        paper: { style: resolvePublicPageThemeVariables(theme, sectionDraft ?? selectedSection) },
+        paper: { style: resolvePublicPageThemeVariables(theme, sectionDraft ?? selectedSection), sx: { maxWidth: compact ? '100%' : 820, borderRadius: compact ? 0 : 4 } },
         transition: { onEntered: () => {
           if (!focusRequest) {return;}
           window.requestAnimationFrame(() => {
@@ -200,18 +201,18 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
           });
         } },
       }}>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Typography component="span" variant="h6" sx={{ flex: 1 }}>{title ?? draft.name}</Typography>
+      <DialogTitle id={`${titleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
+        <Typography id={titleId} component="span" variant="h6" sx={{ flex: 1 }}>{title ?? draft.name}</Typography>
         <IconButton aria-label={publicPageText(locale, 'close')} onClick={cancel}><Close /></IconButton>
       </DialogTitle>
-      <DialogContent dividers>
-        <Tabs value={tab} onChange={(_, value: number) => setTab(value)} variant={compact ? 'scrollable' : 'standard'} scrollButtons={compact ? 'auto' : false} allowScrollButtonsMobile={compact} sx={{ mb: 2 }}>
+      <DialogContent dividers sx={{ px: { xs: 2, sm: 3 }, pt: 0, pb: 3 }}>
+        <Tabs value={tab} onChange={(_, value: number) => setTab(value)} variant={compact ? 'scrollable' : 'standard'} scrollButtons={compact ? 'auto' : false} allowScrollButtonsMobile={compact} sx={{ mb: 2.5, minHeight: 48, borderBottom: 1, borderColor: 'divider' }}>
           <Tab label={publicPageText(locale, 'tabContent')} data-public-page-editor-tab="content" />
           <Tab label={publicPageText(locale, 'tabDesign')} data-public-page-editor-tab="design" />
           <Tab label={publicPageText(locale, 'tabSettings')} data-public-page-editor-tab="settings" />
           <Tab label={publicPageText(locale, 'tabSection')} data-public-page-editor-tab="section" disabled={!sections?.length} />
         </Tabs>
-        <Stack spacing={2} sx={{ pt: 0.5 }}>
+        <Stack spacing={2} sx={{ p: { xs: 1.5, sm: 2.5 }, border: 1, borderColor: 'divider', borderRadius: 2 }}>
           {tab === 0 ? <Stack spacing={2} data-public-page-focus="block.content" tabIndex={-1}>
           {draft.type === 'image' && repository ? <ImageUploadControl focusMarker="block.content.media"
             altFocusMarker={imageMediaId ? `media:${imageMediaId}:alt` : undefined} label={publicPageText(locale, 'image')}
@@ -412,7 +413,7 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
           </Stack> : null}
         </Stack>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
         <Button disabled={cleaning} onClick={cancel}>{publicPageText(locale, 'cancel')}</Button>
         <Button disabled={cleaning || cleanupError} variant="contained" onClick={() => onSave({ block: draft, sectionId: draftSectionId, section: sectionDraft, addedMedia: pending, updatedMedia, removedMediaIds: [
           ...(originalMediaId && originalMediaId !== draft.design.backgroundMediaId ? [originalMediaId] : []),

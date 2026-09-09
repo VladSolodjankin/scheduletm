@@ -712,28 +712,35 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
       inert={inactive ? true : undefined} aria-hidden={inactive ? true : undefined}
       aria-label={publicPageText(locale, 'serviceSlidePosition').replace('{current}', String(index + 1)).replace('{total}', String(selectedServices.length))}
       sx={{
-        flex: selectedServices.length === 1 ? '0 0 100%' : { xs: '0 0 88%', sm: '0 0 72%' },
+        flex: selectedServices.length === 1 ? '0 0 100%' : '0 0 88%',
         minWidth: 0,
         display: 'flex',
         pr: selectedServices.length === 1 ? 0 : 1.5,
+        '@container public-services (min-width: 600px)': { flex: '0 0 100%' },
       }}>
       <Card variant="outlined" sx={{ width: '100%', minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
         bgcolor: 'var(--avatar-surface-background)', color: 'var(--page-text)', borderColor: 'color-mix(in srgb, var(--page-text) 14%, transparent)',
-        borderRadius: 'var(--block-border-radius)' }}>
-        {imageUrl ? <Box component="img" src={imageUrl} alt="" loading="lazy" sx={{ width: '100%', height: 180, objectFit: 'cover' }} /> : null}
-        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-          <Typography component="h3" variant="h6">{service.name}</Typography>
-          {service.description ? <Typography>{service.description}</Typography> : null}
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline', flexWrap: 'wrap', mt: 'auto' }}>
-            <Typography sx={{ fontWeight: 700 }}>{formatServicePrice(service, locale)}</Typography>
-            <Typography variant="body2">{service.durationMin} {publicPageText(locale, 'serviceMinutes')}</Typography>
+        borderRadius: 'var(--block-border-radius)',
+        '@container public-services (min-width: 600px)': { flexDirection: 'row' } }}>
+        {imageUrl ? <Box component="img" src={imageUrl} alt="" loading="lazy" sx={{ width: '100%', height: 180, objectFit: 'cover',
+          '@container public-services (min-width: 600px)': { width: 144, height: 'auto', maxHeight: 240, alignSelf: 'stretch' } }} /> : null}
+        <CardContent sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1.25, p: 2.5, '&:last-child': { pb: 2.5 },
+          '@container public-services (min-width: 600px)': { flexDirection: 'row', alignItems: 'center', gap: 2.5 } }}>
+          <Stack spacing={1.25} sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
+            <Typography component="h3" variant="h6">{service.name}</Typography>
+            {service.description ? <Typography>{service.description}</Typography> : null}
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline', flexWrap: 'wrap', mt: 'auto' }}>
+              <Typography sx={{ fontWeight: 700 }}>{formatServicePrice(service, locale)}</Typography>
+              <Typography variant="body2">{service.durationMin} {publicPageText(locale, 'serviceMinutes')}</Typography>
+            </Stack>
+            {service.firstSessionFree ? <Typography variant="body2" sx={{ color: 'var(--theme-link-title-color)', fontWeight: 700 }}>
+              {publicPageText(locale, 'serviceFirstSessionFree')}
+            </Typography> : null}
           </Stack>
-          {service.firstSessionFree ? <Typography variant="body2" sx={{ color: 'var(--theme-link-title-color)', fontWeight: 700 }}>
-            {publicPageText(locale, 'serviceFirstSessionFree')}
-          </Typography> : null}
           {block.content.showBookingButton !== false && publicPageSlug ? <Button component="a"
             href={`/${encodeURIComponent(publicPageSlug)}/booking?service=${service.id}`} variant="contained"
-            sx={{ ...ordinaryPublicPageLinkSx, mt: 0.5, minHeight: 44, textTransform: 'none' }}>
+            sx={{ ...ordinaryPublicPageLinkSx, mt: 0.5, minHeight: 44, textTransform: 'none',
+              '@container public-services (min-width: 600px)': { mt: 0, flexShrink: 0, maxWidth: '40%' } }}>
             {publicPageText(locale, 'serviceBook')}
           </Button> : null}
         </CardContent>
@@ -741,6 +748,7 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
     </Box>;
   });
   return <Surface block={block}><Stack spacing={1.5} role="region" aria-label={title}
+    sx={{ containerType: 'inline-size', containerName: 'public-services', minWidth: 0 }}
     onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
     onFocusCapture={() => setFocusWithin(true)} onBlurCapture={onBlur}>
     <Typography component="h2" variant="h5">{title}</Typography>

@@ -1,6 +1,6 @@
 import { Add, ArrowDownward, ArrowUpward, Close, ContentCopy, ContentCopyOutlined, DeleteOutlined, DragIndicator, EditOutlined, Height, OpenInNew, PaletteOutlined, Settings, Visibility, VisibilityOff } from '@mui/icons-material';
-import { Alert, BottomNavigation, BottomNavigationAction, Box, Button, CircularProgress, Dialog, DialogContent, DialogTitle, IconButton, Snackbar, Stack, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Box, Button, CircularProgress, Dialog, DialogContent, DialogTitle, IconButton, Snackbar, Stack, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddBlockDialog } from '../components/public-page-builder/AddBlockDialog';
 import { BlockEditorDialog, type BlockEditorFocusRequest, type BlockEditorPreview, type BlockEditorSave } from '../components/public-page-builder/BlockEditorDialog';
@@ -133,6 +133,8 @@ function Editor({
   const { locale } = useI18n();
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down('md'));
+  const pageSettingsTitleId = useId();
+  const designTitleId = useId();
   const editor = usePublicPageEditor({
     document: record.draft,
     revision: record.revision,
@@ -525,10 +527,10 @@ function Editor({
     <BuilderShell
       toolbar={
         <Stack spacing={1}>
-          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <BuilderToolbar
               locale={locale}
               compact={isCompact}
+              title={state.document.profile.displayName || state.document.seo.title || publicPageText(locale, 'page')}
               saveStatus={state.saveStatus}
               isPublishing={editor.isPublishing}
               canUndo={selectCanUndo(state)}
@@ -539,19 +541,17 @@ function Editor({
               onUndo={() => dispatch({ type: 'history/undo' })}
               onRedo={() => dispatch({ type: 'history/redo' })}
               onPublish={() => void handlePublish()}
-            />
-            {!isCompact ? <Stack direction="row" spacing={1}>
-              <DeviceSwitcher locale={locale} value={device} onChange={setDevice} />
-              <Button startIcon={<Settings />} onClick={() => { dispatch({ type: 'selection/clear' }); setPageSettingsFocusMarker(null); setPageSettingsOpen(true); }}>{publicPageText(locale, 'pageSettings')}</Button>
-              <Button startIcon={<PaletteOutlined />} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }}>{publicPageText(locale, 'design')}</Button>
+              pageActions={<Stack component="nav" aria-label={publicPageText(locale, 'mobileNavigation')} direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1, ml: { md: 'auto' } }}>
+              <Button variant="outlined" startIcon={<Settings />} onClick={() => { dispatch({ type: 'selection/clear' }); setPageSettingsFocusMarker(null); setPageSettingsOpen(true); }}>{publicPageText(locale, 'pageSettings')}</Button>
+              <Button variant="outlined" startIcon={<PaletteOutlined />} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }}>{publicPageText(locale, 'design')}</Button>
               {editor.publishedSlug ? (
                 <>
-                  <Button startIcon={<ContentCopy />} onClick={() => void copyLink()}>{publicPageText(locale, 'copyLink')}</Button>
-                  <Button startIcon={<OpenInNew />} href={publicPageUrl(editor.publishedSlug)} target="_blank" rel="noopener noreferrer">{publicPageText(locale, 'open')}</Button>
+                  <Tooltip title={publicPageText(locale, 'copyLink')}><IconButton aria-label={publicPageText(locale, 'copyLink')} onClick={() => void copyLink()}><ContentCopy /></IconButton></Tooltip>
+                  <Tooltip title={publicPageText(locale, 'open')}><IconButton aria-label={publicPageText(locale, 'open')} href={publicPageUrl(editor.publishedSlug)} target="_blank" rel="noopener noreferrer"><OpenInNew /></IconButton></Tooltip>
                 </>
               ) : null}
-            </Stack> : null}
-          </Stack>
+            </Stack>}
+            />
           {editor.hasConflict ? (
             <Alert severity="error" action={<Button onClick={() => void editor.reloadLatest()}>{publicPageText(locale, 'reloadLatest')}</Button>}>
               {publicPageText(locale, 'revisionConflict')}
@@ -702,21 +702,11 @@ function Editor({
             >
               <DragIndicator fontSize="small" /></IconButton>;
           },
-        }} />
-        {!isCompact ? <Button ref={addBlockButtonRef} variant="contained" size="large" onClick={() => setAddBlockOpen(true)} sx={{ position: 'sticky', bottom: 20, left: 'calc(50% + 32px)', transform: 'translateX(-50%)', mt: -8, zIndex: 4, minWidth: 180, '&:hover': { transform: 'translateX(-50%) translateY(-1px)' } }}>{publicPageText(locale, 'addBlock')}</Button> : null}
+        }}
+          controls={!isCompact ? <DeviceSwitcher locale={locale} value={device} onChange={setDevice} /> : undefined}
+          footer={<Button ref={addBlockButtonRef} variant="contained" size="large" startIcon={<Add />} onClick={() => setAddBlockOpen(true)} sx={{ minWidth: 180, minHeight: 48 }}>{publicPageText(locale, 'addBlock')}</Button>}
+        />
       </Box>}
-      bottomNavigation={isCompact ? (
-        <BottomNavigation component="nav" aria-label={publicPageText(locale, 'mobileNavigation')} showLabels value={false}
-          sx={{ width: '100%', maxWidth: '100%', overflowX: 'hidden', '& .MuiBottomNavigationAction-root': { minWidth: 0, px: 0.25 },
-            '& .MuiBottomNavigationAction-label, & .MuiBottomNavigationAction-label.Mui-selected': { fontSize: '0.625rem', lineHeight: 1.1, whiteSpace: 'normal' },
-            '& .MuiSvgIcon-root': { fontSize: 20 } }}>
-          <BottomNavigationAction label={publicPageText(locale, 'pageSettings')} icon={<Settings />} onClick={() => { dispatch({ type: 'selection/clear' }); setPageSettingsFocusMarker(null); setPageSettingsOpen(true); }} />
-          <BottomNavigationAction ref={addBlockButtonRef} label={publicPageText(locale, 'addBlock')} icon={<Add />} onClick={() => setAddBlockOpen(true)} />
-          <BottomNavigationAction label={publicPageText(locale, 'design')} icon={<PaletteOutlined />} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }} />
-          {editor.publishedSlug ? <BottomNavigationAction label={publicPageText(locale, 'copyLink')} icon={<ContentCopy />} onClick={() => void copyLink()} /> : null}
-          {editor.publishedSlug ? <BottomNavigationAction component="a" label={publicPageText(locale, 'open')} icon={<OpenInNew />} href={publicPageUrl(editor.publishedSlug)} target="_blank" rel="noopener noreferrer" /> : null}
-        </BottomNavigation>
-      ) : undefined}
     />
     <Box role="status" aria-live="polite" aria-atomic="true" sx={{ position: 'absolute', width: 1, height: 1, p: 0, m: -1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0 }}>
       <span key={reorderAnnouncement.nonce}>{reorderAnnouncement.message}</span>
@@ -757,8 +747,8 @@ function Editor({
         removedMediaIds.forEach((mediaId) => dispatch({ type: 'media/remove', mediaId }));
         setBlockPreview(null); setBlockEditorFocusRequest(null); setBlockEditorOpen(false);
       }} />
-    <Dialog open={pageSettingsOpen} onClose={() => { setPageSettingsFocusMarker(null); setPageSettingsOpen(false); }} fullScreen={isCompact} fullWidth maxWidth="sm"
-      slotProps={{ transition: { onEntered: () => {
+    <Dialog open={pageSettingsOpen} aria-labelledby={pageSettingsTitleId} onClose={() => { setPageSettingsFocusMarker(null); setPageSettingsOpen(false); }} fullScreen={isCompact} fullWidth maxWidth="sm"
+      slotProps={{ paper: { sx: { borderRadius: isCompact ? 0 : 4 } }, transition: { onEntered: () => {
         if (!pageSettingsFocusMarker) {return;}
         window.requestAnimationFrame(() => {
           const content = pageSettingsContentRef.current;
@@ -768,15 +758,15 @@ function Editor({
           }
         });
       } } }}>
-      <DialogTitle sx={isCompact ? { display: 'flex', alignItems: 'center', gap: 1 } : undefined}>
-        {isCompact ? <><Typography component="span" variant="h6" sx={{ flex: 1 }}>{publicPageText(locale, 'pageSettings')}</Typography>
-          <IconButton aria-label={publicPageText(locale, 'close')} onClick={() => { setPageSettingsFocusMarker(null); setPageSettingsOpen(false); }}><Close /></IconButton></> : publicPageText(locale, 'pageSettings')}
+      <DialogTitle id={`${pageSettingsTitleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
+        <Typography id={pageSettingsTitleId} component="span" variant="h6" sx={{ flex: 1 }}>{publicPageText(locale, 'pageSettings')}</Typography>
+        <IconButton aria-label={publicPageText(locale, 'close')} onClick={() => { setPageSettingsFocusMarker(null); setPageSettingsOpen(false); }}><Close /></IconButton>
       </DialogTitle>
       <DialogContent ref={pageSettingsContentRef} dividers><InspectorPanel state={state} locale={locale} dispatch={dispatch} repository={repository}
         slugAvailability={editor.slugAvailability} previewUrls={mediaUrls} onMediaPreview={rememberMediaPreview} /></DialogContent>
     </Dialog>
-    <Dialog open={designOpen} onClose={() => { setDesignPanelFocusMarker(null); setDesignOpen(false); }} fullScreen={isCompact} fullWidth maxWidth="lg"
-      slotProps={{ transition: { onEntered: () => {
+    <Dialog open={designOpen} aria-labelledby={designTitleId} onClose={() => { setDesignPanelFocusMarker(null); setDesignOpen(false); }} fullScreen={isCompact} fullWidth maxWidth={false}
+      slotProps={{ paper: { sx: { maxWidth: 1664, borderRadius: isCompact ? 0 : 4 } }, transition: { onEntered: () => {
         if (!designPanelFocusMarker) {return;}
         window.requestAnimationFrame(() => {
           const content = designContentRef.current;
@@ -786,19 +776,19 @@ function Editor({
           }
         });
       } } }}>
-      <DialogTitle sx={isCompact ? { display: 'flex', alignItems: 'center', gap: 1 } : undefined}>
-        {isCompact ? <><Typography component="span" variant="h6" sx={{ flex: 1 }}>{publicPageText(locale, 'design')}</Typography>
-          <IconButton aria-label={publicPageText(locale, 'close')} onClick={() => { setDesignPanelFocusMarker(null); setDesignOpen(false); }}><Close /></IconButton></> : publicPageText(locale, 'design')}
+      <DialogTitle id={`${designTitleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
+        <Typography id={designTitleId} component="span" variant="h6" sx={{ flex: 1 }}>{publicPageText(locale, 'design')}</Typography>
+        <IconButton aria-label={publicPageText(locale, 'close')} onClick={() => { setDesignPanelFocusMarker(null); setDesignOpen(false); }}><Close /></IconButton>
       </DialogTitle>
       <DialogContent ref={designContentRef} dividers sx={{ p: 0, overflow: { xs: 'auto', lg: 'hidden' } }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 430px) minmax(0, 1fr)' },
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(360px, 1fr) minmax(0, 2fr)' },
           height: { lg: 'min(760px, calc(100vh - 160px))' }, minHeight: 0 }}>
           <Box sx={{ height: { xs: 480, lg: '100%' }, minWidth: 0, minHeight: 0, borderBottom: { xs: 1, lg: 0 },
             borderRight: { lg: 1 }, borderColor: 'divider' }}>
             <ResponsivePreview document={state.document} device="mobile" mediaUrls={mediaUrls} services={previewServices} framed interactive={false}
               ariaLabel={publicPageText(locale, 'preview')} />
           </Box>
-          <Box sx={{ minWidth: 0, minHeight: 0, overflow: { xs: 'visible', lg: 'auto' }, p: { xs: 2, sm: 3 } }}>
+          <Box sx={{ minWidth: 0, minHeight: 0, overflow: { xs: 'visible', lg: 'auto' }, p: { xs: 2, sm: 3, lg: 4 } }}>
             <DesignPanel state={state} locale={locale} dispatch={dispatch} repository={repository}
               previewUrls={mediaUrls} onMediaPreview={rememberMediaPreview} />
           </Box>

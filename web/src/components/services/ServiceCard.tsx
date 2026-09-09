@@ -4,7 +4,6 @@ import {
   Card,
   CardActions,
   CardContent,
-  Chip,
   Divider,
   FormControlLabel,
   Stack,
@@ -14,6 +13,7 @@ import {
 import { useState } from 'react';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppIcons } from '../../shared/ui/AppIcons';
+import { AppStatusBadge } from '../../shared/ui/AppStatus';
 import { AppTextField } from '../../shared/ui/AppTextField';
 import type { AssignmentPayload, ServiceAssignment, ServiceCatalogItem } from './types';
 import './services.css';
@@ -193,14 +193,12 @@ export function ServiceCard({
           <Stack className="service-card__copy">
             <Stack className="service-card__heading">
               <Typography variant="h6" className="service-card__title">{service.name}</Typography>
-              <Chip
-                size="small"
-                color={service.isActive ? 'success' : 'default'}
+              <AppStatusBadge
                 label={service.isActive ? labels.active : labels.archived}
-                className={`app-badge ${service.isActive ? 'app-badge--success' : 'app-badge--neutral'}`}
+                tone={service.isActive ? 'success' : 'neutral'}
               />
               {service.firstSessionFree ? (
-                <Chip size="small" color="primary" label={labels.firstSessionFree} className="app-badge" />
+                <AppStatusBadge label={labels.firstSessionFree} tone="info" />
               ) : null}
             </Stack>
             {service.description ? <Typography className="service-card__description">{service.description}</Typography> : null}

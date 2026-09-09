@@ -25,6 +25,7 @@ import { resolveLeadingAvatarSectionMarginTop } from './avatarPresentation';
 import { ordinaryPublicPageLinkSx } from './blocks';
 import '../public-page-builder/publicPageDnd.css';
 import type { PublicBookingService } from '../../shared/types/api';
+import { PublicPageStyleBoundary } from './PublicPageStyleBoundary';
 
 const columnsByLayout: Record<SectionLayout, string> = {
   single: 'minmax(0, 1fr)',
@@ -124,8 +125,10 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
       '&:hover .public-page-block-actions, &:focus-within .public-page-block-actions': { opacity: 1, pointerEvents: 'auto' },
     }}
   >
-    <BlockRenderer block={block} mediaUrlFor={mediaUrlFor} editor={Boolean(editor)} themeBorderRadius={theme.styleDefaults.blockBorderRadius}
-      roundingStyle={theme.roundingStyle} services={services} publicPageSlug={publicPageSlug} />
+    <PublicPageStyleBoundary>
+      <BlockRenderer block={block} mediaUrlFor={mediaUrlFor} editor={Boolean(editor)} themeBorderRadius={theme.styleDefaults.blockBorderRadius}
+        roundingStyle={theme.roundingStyle} services={services} publicPageSlug={publicPageSlug} />
+    </PublicPageStyleBoundary>
     {editor ? editor.renderBlockActions(section, blockIndex) : null}
   </Box>;
   return (
@@ -279,16 +282,18 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], editor 
         }}
       >
         {(document.profile.logoMediaId || document.profile.avatarMediaId || document.profile.displayName || document.profile.description) ? (
-          <Box component="header" sx={{ textAlign: 'center', display: 'grid', justifyItems: 'center', gap: 1.5, minWidth: 0, width: '100%', maxWidth: 320, mx: 'auto' }}>
-            {document.profile.logoMediaId ? <Box component="img" src={mediaUrlFor(document.profile.logoMediaId)}
-              alt={mediaFor(document.profile.logoMediaId)?.alt ?? ''}
-              sx={{ maxWidth: 180, maxHeight: 64, objectFit: 'contain' }} /> : null}
-            {document.profile.avatarMediaId ? <Box component="img" src={mediaUrlFor(document.profile.avatarMediaId)}
-              alt={mediaFor(document.profile.avatarMediaId)?.alt || document.profile.displayName}
-              sx={{ width: 112, height: 112, borderRadius: '50%', objectFit: 'cover' }} /> : null}
-            {document.profile.displayName ? <Typography component="h1" variant="h4" sx={{ maxWidth: '100%', minWidth: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{document.profile.displayName}</Typography> : null}
-            {document.profile.description ? <Typography sx={{ maxWidth: '100%', minWidth: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{document.profile.description}</Typography> : null}
-          </Box>
+          <PublicPageStyleBoundary>
+            <Box component="header" sx={{ textAlign: 'center', display: 'grid', justifyItems: 'center', gap: 1.5, minWidth: 0, width: '100%', maxWidth: 320, mx: 'auto' }}>
+              {document.profile.logoMediaId ? <Box component="img" src={mediaUrlFor(document.profile.logoMediaId)}
+                alt={mediaFor(document.profile.logoMediaId)?.alt ?? ''}
+                sx={{ maxWidth: 180, maxHeight: 64, objectFit: 'contain' }} /> : null}
+              {document.profile.avatarMediaId ? <Box component="img" src={mediaUrlFor(document.profile.avatarMediaId)}
+                alt={mediaFor(document.profile.avatarMediaId)?.alt || document.profile.displayName}
+                sx={{ width: 112, height: 112, borderRadius: '50%', objectFit: 'cover' }} /> : null}
+              {document.profile.displayName ? <Typography component="h1" variant="h4" sx={{ maxWidth: '100%', minWidth: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{document.profile.displayName}</Typography> : null}
+              {document.profile.description ? <Typography sx={{ maxWidth: '100%', minWidth: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{document.profile.description}</Typography> : null}
+            </Box>
+          </PublicPageStyleBoundary>
         ) : null}
         {editor ? <Box ref={mainContainerRef} className="public-page-dnd-main-container" data-public-page-main-container data-public-page-dnd-context="page">
             {document.sections.map((section, sectionIndex) => (

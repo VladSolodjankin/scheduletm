@@ -1,5 +1,5 @@
 import { alpha } from '@mui/material/styles';
-import { Box, Card, CardContent, Chip, IconButton, Popover, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, IconButton, Popover, Stack, Typography } from '@mui/material';
 import { MouseEvent, useState } from 'react';
 import { Control, Controller } from 'react-hook-form';
 
@@ -10,6 +10,7 @@ import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
 import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppRhfSecretKeyField } from '../../shared/ui/AppRhfSecretKeyField';
+import { AppStatusBadge } from '../../shared/ui/AppStatus';
 
 type Props = {
   copy: SettingsCardCopy;
@@ -30,6 +31,7 @@ type IntegrationPanelProps = {
   accentColor: string;
   icon: React.ReactNode;
   statusLabel: string;
+  isConnected: boolean;
   title: string;
   description: string;
   actions: React.ReactNode;
@@ -46,7 +48,7 @@ function TelegramIcon() {
   );
 }
 
-function IntegrationPanel({ accentColor, icon, statusLabel, title, description, actions }: IntegrationPanelProps) {
+function IntegrationPanel({ accentColor, icon, statusLabel, isConnected, title, description, actions }: IntegrationPanelProps) {
   return (
     <Card
       variant="outlined"
@@ -90,9 +92,9 @@ function IntegrationPanel({ accentColor, icon, statusLabel, title, description, 
                 </Typography>
               </Stack>
 
-              <Chip
+              <AppStatusBadge
                 label={statusLabel}
-                size="small"
+                tone={isConnected ? 'success' : 'neutral'}
                 variant="outlined"
                 sx={{
                   color: accentColor,
@@ -202,6 +204,7 @@ export function IntegrationsSettingsTab({
           accentColor="#229ED9"
           icon={<TelegramIcon />}
           statusLabel={userSettings.telegramBotConnected ? 'Bot connected' : 'Setup needed'}
+          isConnected={userSettings.telegramBotConnected}
           title={copy.channels.telegram}
           description={
             userSettings.telegramBotConnected
@@ -274,6 +277,7 @@ export function IntegrationsSettingsTab({
           accentColor="#2D8CFF"
           icon={<ZoomIcon />}
           statusLabel={userSettings.zoomConnected ? 'Connected' : 'Available'}
+          isConnected={userSettings.zoomConnected}
           title={copy.connectZoomHelpTitle}
           description={copy.connectZoomHelpDescription}
           actions={(
@@ -314,6 +318,7 @@ export function IntegrationsSettingsTab({
           accentColor="#DB4437"
           icon={<GoogleGIcon />}
           statusLabel={userSettings.googleConnected ? 'Connected' : 'Available'}
+          isConnected={userSettings.googleConnected}
           title={copy.connectGoogleHelpTitle}
           description={copy.connectGoogleHelpDescription}
           actions={(

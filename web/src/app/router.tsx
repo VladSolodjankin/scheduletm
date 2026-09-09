@@ -4,6 +4,7 @@ import { MainLayout } from '../components/layout/MainLayout';
 import { useAuth } from '../shared/auth/AuthContext';
 import { WebUserRole } from '../shared/types/roles';
 import { PublicPageLayout } from '../components/layout/PublicPageLayout';
+import { MeetliThemeBoundary } from '../shared/theme/MeetliThemeBoundary';
 
 const LoginPage = lazy(() => import('../pages/LoginPage').then((module) => ({ default: module.LoginPage })));
 const RegisterPage = lazy(() => import('../pages/RegisterPage').then((module) => ({ default: module.RegisterPage })));
@@ -79,114 +80,100 @@ function ServicesRoleRoute({ children }: { children: ReactElement }) {
 
 export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <MainLayout />,
+    element: <MeetliThemeBoundary />,
     children: [
-      { index: true, element: <Navigate to="/login" replace /> },
       {
-        path: '/login',
-        element: (
-          <PublicOnlyRoute>
-            <LoginPage />
-          </PublicOnlyRoute>
-        )
-      },
-      {
-        path: '/register',
-        element: (
-          <PublicOnlyRoute>
-            <RegisterPage />
-          </PublicOnlyRoute>
-        )
-      },
-      {
-        path: '/invite/accept',
-        element: (
-          <PublicOnlyRoute>
-            <InviteAcceptPage />
-          </PublicOnlyRoute>
-        )
-      },
-      {
-        path: '/verify-email',
-        element: (
-          <PublicOnlyRoute>
-            <InviteAcceptPage />
-          </PublicOnlyRoute>
-        )
-      },
-      {
-        path: '/privacy-policy',
-        element: <PrivacyPolicyPage />
-      },
-      {
-        path: '/security-policy',
-        element: <SecurityPolicyPage />
-      },
-      {
-        path: '/appointments',
-        element: (
-          <ProtectedRoute>
-            <AppointmentsPage />
-          </ProtectedRoute>
-        )
-      },
-      {
-        path: '/settings/:tab?',
-        element: (
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        )
-      },
-      {
-        path: '/specialists',
-        element: (
-          <ProtectedRoute>
-            <SpecialistsPage />
-          </ProtectedRoute>
-        )
-      },
-      {
-        path: '/services',
-        element: <ServicesRoleRoute><ServicesPage /></ServicesRoleRoute>
-      },
-      {
-        path: '/users',
-        element: (
-          <ProtectedRoute>
-            <UsersPage />
-          </ProtectedRoute>
-        )
-      },
-      {
-        path: '/notification-logs',
-        element: (
-          <ProtectedRoute>
-            <NotificationLogsPage />
-          </ProtectedRoute>
-        )
-      },
-
-      {
-        path: '/error-logs',
-        element: (
-          <ProtectedRoute>
-            <ErrorLogsPage />
-          </ProtectedRoute>
-        )
-      },
-      {
-        path: '/public-pages',
-        element: <RoleRoute><PublicPagesPage /></RoleRoute>
-      },
-      {
-        path: '/public-pages/new',
-        element: <RoleRoute><PublicPageEditorPage /></RoleRoute>
-      },
-      {
-        path: '/public-pages/:profileId/edit',
-        element: <RoleRoute><PublicPageEditorPage /></RoleRoute>
+        path: '/',
+        element: <MainLayout />,
+        children: [
+          { index: true, element: <Navigate to="/login" replace /> },
+          {
+            path: '/login',
+            element: (
+              <PublicOnlyRoute>
+                <LoginPage />
+              </PublicOnlyRoute>
+            )
+          },
+          {
+            path: '/register',
+            element: (
+              <PublicOnlyRoute>
+                <RegisterPage />
+              </PublicOnlyRoute>
+            )
+          },
+          {
+            path: '/invite/accept',
+            element: (
+              <PublicOnlyRoute>
+                <InviteAcceptPage />
+              </PublicOnlyRoute>
+            )
+          },
+          {
+            path: '/verify-email',
+            element: (
+              <PublicOnlyRoute>
+                <InviteAcceptPage />
+              </PublicOnlyRoute>
+            )
+          },
+          { path: '/privacy-policy', element: <PrivacyPolicyPage /> },
+          { path: '/security-policy', element: <SecurityPolicyPage /> },
+          {
+            path: '/appointments',
+            element: (
+              <ProtectedRoute>
+                <AppointmentsPage />
+              </ProtectedRoute>
+            )
+          },
+          {
+            path: '/settings/:tab?',
+            element: (
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            )
+          },
+          {
+            path: '/specialists',
+            element: (
+              <ProtectedRoute>
+                <SpecialistsPage />
+              </ProtectedRoute>
+            )
+          },
+          { path: '/services', element: <ServicesRoleRoute><ServicesPage /></ServicesRoleRoute> },
+          {
+            path: '/users',
+            element: (
+              <ProtectedRoute>
+                <UsersPage />
+              </ProtectedRoute>
+            )
+          },
+          {
+            path: '/notification-logs',
+            element: (
+              <ProtectedRoute>
+                <NotificationLogsPage />
+              </ProtectedRoute>
+            )
+          },
+          {
+            path: '/error-logs',
+            element: (
+              <ProtectedRoute>
+                <ErrorLogsPage />
+              </ProtectedRoute>
+            )
+          },
+          { path: '/public-pages', element: <RoleRoute><PublicPagesPage /></RoleRoute> },
+          { path: '/public-pages/new', element: <RoleRoute><PublicPageEditorPage /></RoleRoute> },
+          { path: '/public-pages/:profileId/edit', element: <RoleRoute><PublicPageEditorPage /></RoleRoute> },
+        ]
       },
     ]
   },

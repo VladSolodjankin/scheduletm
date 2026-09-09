@@ -551,7 +551,7 @@ describe('public page builder source contracts', () => {
     assert.doesNotMatch(avatarCoverControl, /ColorControl|ImageUploadControl|repository/);
     assert.match(dialog, /avatarMediaControl=\{draft\.type === 'avatar' && repository \? <ImageUploadControl/);
     assert.match(dialog, /defaultAlt=\{\(typeof draft\.content\.heading === 'string'/);
-    assert.match(dialog, /slotProps=\{\{[\s\S]{0,120}paper: \{ style: resolvePublicPageThemeVariables\(theme, sectionDraft \?\? selectedSection\) \}/);
+    assert.match(dialog, /slotProps=\{\{[\s\S]{0,120}paper: \{ style: resolvePublicPageThemeVariables\(theme, sectionDraft \?\? selectedSection\),/);
     assert.match(dialog, /pending\.find\(\(item\) => item\.media\.id === id\)\?\.objectUrl \?\? previewUrls\?\.get\(id\) \?\? media\.find/);
     assert.match(blocks, /preview \? AVATAR_EDITOR_PLACEHOLDER_URL : ''/);
     assert.match(blocks, /data-avatar-preview-stage[\s\S]{0,120}height: 300[\s\S]{0,120}overflow: 'hidden'/);
@@ -803,7 +803,7 @@ describe('public page builder source contracts', () => {
     assert.match(blockHandleCss, /width: 36px[\s\S]*height: 100%/);
     assert.match(sortableBuilder, /return type === 'section' \|\| type === 'block';/);
     assert.match(dndCss, /\.smooth-dnd-container\.vertical > \.smooth-dnd-draggable-wrapper\.public-page-dnd-wrapper \{[\s\S]{0,80}overflow: visible/);
-    assert.doesNotMatch(page, /data-public-page-block-drag-rail[\s\S]{0,500}minHeight/);
+    assert.doesNotMatch(page.slice(page.indexOf('className="public-page-block-drag-rail"'), page.indexOf('<DragIndicator fontSize="small" /></IconButton>;', page.indexOf('className="public-page-block-drag-rail"'))), /minHeight/);
     const sectionDragHandle = page.slice(page.indexOf('renderSectionDragHandle:'), page.indexOf('renderBlockDragHandle:'));
     assert.match(sectionDragHandle, /if \(section\.design\.variant === 'off'\) \{return null;\}/);
     assert.ok(sectionDragHandle.indexOf("section.design.variant === 'off'") < sectionDragHandle.indexOf('public-page-section-drag-rail'));
@@ -911,8 +911,8 @@ describe('public page builder source contracts', () => {
     const designStart = page.indexOf('<Dialog open={designOpen}');
     const designDialog = page.slice(designStart, page.indexOf('</Dialog>', designStart));
 
-    assert.match(designDialog, /maxWidth="lg"/);
-    assert.match(designDialog, /gridTemplateColumns: \{ xs: 'minmax\(0, 1fr\)', lg: 'minmax\(0, 430px\) minmax\(0, 1fr\)' \}/);
+    assert.match(designDialog, /maxWidth=\{false\}/);
+    assert.match(designDialog, /gridTemplateColumns: \{ xs: 'minmax\(0, 1fr\)', lg: 'minmax\(360px, 1fr\) minmax\(0, 2fr\)' \}/);
     assert.match(designDialog, /<ResponsivePreview document=\{state\.document\} device="mobile" mediaUrls=\{mediaUrls\} services=\{previewServices\} framed interactive=\{false\}/);
     assert.doesNotMatch(designDialog, /<ResponsivePreview[^>]*editor=/);
     assert.ok(designDialog.indexOf('<ResponsivePreview') < designDialog.indexOf('<DesignPanel'));
@@ -923,7 +923,7 @@ describe('public page builder source contracts', () => {
     assert.match(preview, /ariaLabel\?: string/);
     assert.match(preview, /const PreviewScroller = styled\(Box\)\(\{[\s\S]{0,100}overflow: 'auto'/);
     assert.match(preview, /<PreviewScroller data-public-page-preview-scroller role=\{ariaLabel \? 'region' : undefined\} tabIndex=\{ariaLabel \? 0 : undefined\} aria-label=\{ariaLabel\}/);
-    assert.match(preview, /px: editor \? 1 : framed \? 1 : \{ xs: 1, md: 3 \}/);
+    assert.match(preview, /px: editor \? \{ xs: 1\.25, md: 3 \} : framed \? 1 : \{ xs: 1, md: 3 \}/);
     assert.match(preview, /<PreviewFrame[\s\S]{0,120}inert: true, 'aria-hidden': true/);
     assert.match(preview, /!interactive \? \{ '& a, & button, & \[role="button"\]': \{ pointerEvents: 'none' \} \} : \{\}/);
     const scrollerStart = preview.indexOf('<PreviewScroller');
@@ -948,27 +948,20 @@ describe('public page builder source contracts', () => {
     assert.match(page, /const effectiveDevice: PreviewDevice = isCompact \? 'mobile' : device/);
     assert.match(page, /<ResponsivePreview document=\{previewDocument\} device=\{effectiveDevice\}/);
     assert.match(page, /services=\{previewServices\} compactEditor=\{isCompact\}/);
-    assert.match(page, /\{!isCompact \? <Stack[\s\S]{0,180}<DeviceSwitcher locale=\{locale\} value=\{device\} onChange=\{setDevice\} \/>/);
+    assert.match(page, /controls=\{!isCompact \? <DeviceSwitcher locale=\{locale\} value=\{device\} onChange=\{setDevice\} \/>/);
     assert.match(page, /<BuilderToolbar[\s\S]{0,100}compact=\{isCompact\}/);
-    assert.match(toolbar, /if \(!props\.compact\) \{[\s\S]{0,120}<Stack direction="row" spacing=\{1\}/);
-    for (const key of ['undo', 'redo', 'save', 'publish']) {
+    for (const key of ['undo', 'redo']) {
       assert.match(toolbar, new RegExp(`Tooltip title=\\{publicPageText\\(locale, '${key}'\\)\\}[\\s\\S]{0,180}aria-label=\\{publicPageText\\(locale, '${key}'\\)\\}`));
     }
-    assert.equal([...toolbar.matchAll(/disabled=\{saveStatus === 'saving' \|\| props\.isPublishing \|\| props\.isSlugUnavailable\}/g)].length, 4);
-    assert.match(toolbar, /<Tooltip title=\{statusLabel\}>[\s\S]{0,120}aria-label=\{statusLabel\}/);
+    assert.equal([...toolbar.matchAll(/disabled=\{saveStatus === 'saving' \|\| props\.isPublishing \|\| props\.isSlugUnavailable\}/g)].length, 2);
+    assert.match(toolbar, /aria-label=\{statusLabel\}/);
 
     assert.match(shell, /bottomNavigation\?: ReactNode/);
     assert.match(shell, /gridTemplateRows: bottomNavigation \? 'auto minmax\(0, 1fr\) auto' : 'auto minmax\(0, 1fr\)'/);
-    assert.match(page, /bottomNavigation=\{isCompact \? \([\s\S]{0,100}<BottomNavigation component="nav" aria-label=\{publicPageText\(locale, 'mobileNavigation'\)\}/);
-    assert.match(page, /'& \.MuiBottomNavigationAction-root': \{ minWidth: 0, px: 0\.25 \}/);
-    assert.match(page, /width: '100%', maxWidth: '100%', overflowX: 'hidden'/);
-    for (const key of ['pageSettings', 'addBlock', 'design']) {
-      assert.match(page, new RegExp(`<BottomNavigationAction[^>]{0,180}label=\\{publicPageText\\(locale, '${key}'\\)\\}`));
-    }
-    assert.match(page, /\{editor\.publishedSlug \? <BottomNavigationAction label=\{publicPageText\(locale, 'copyLink'\)/);
-    assert.match(page, /\{editor\.publishedSlug \? <BottomNavigationAction component="a" label=\{publicPageText\(locale, 'open'\)[\s\S]{0,180}rel="noopener noreferrer"/);
-    assert.match(page, /<BottomNavigationAction ref=\{addBlockButtonRef\}[\s\S]{0,160}onClick=\{\(\) => setAddBlockOpen\(true\)\}/);
-    assert.match(page, /\{!isCompact \? <Button ref=\{addBlockButtonRef\}[\s\S]{0,300}>\{publicPageText\(locale, 'addBlock'\)\}<\/Button> : null\}/);
+    assert.match(page, /pageActions=\{<Stack component="nav" aria-label=\{publicPageText\(locale, 'mobileNavigation'\)\}/);
+    assert.match(page, /aria-label=\{publicPageText\(locale, 'copyLink'\)\} onClick=\{\(\) => void copyLink\(\)\}/);
+    assert.match(page, /aria-label=\{publicPageText\(locale, 'open'\)\} href=\{publicPageUrl\(editor\.publishedSlug\)\} target="_blank" rel="noopener noreferrer"/);
+    assert.match(page, /footer=\{<Button ref=\{addBlockButtonRef\}[\s\S]{0,160}onClick=\{\(\) => setAddBlockOpen\(true\)\}/);
 
     assert.match(page, /<AddBlockDialog open=\{addBlockOpen\} compact=\{isCompact\}/);
     assert.match(page, /<BlockEditorDialog open=\{blockEditorOpen\} compact=\{isCompact\}/);
@@ -981,8 +974,8 @@ describe('public page builder source contracts', () => {
     assert.match(responsivePreview, /compactEditor = false/);
     assert.match(responsivePreview, /width: compactEditor[\s\S]{0,100}`min\(100%, \$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.framedMobileOuterWidth\}px\)`/);
     assert.match(responsivePreview, /pl: compactEditor \? 0 : editor \? `\$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.editorDragGutter\}px` : 0/);
-    assert.match(responsivePreview, /width: compactEditor[\s\S]{0,120}`calc\(100% - \$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.frameBorder \* 2\}px\)`/);
-    assert.match(responsivePreview, /maxWidth: compactEditor \? `\$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.widths\.mobile\}px` : undefined/);
+    assert.match(responsivePreview, /width: compactEditor \|\| framed[\s\S]{0,120}`calc\(100% - \$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.frameBorder \* 2\}px\)`/);
+    assert.match(responsivePreview, /maxWidth: compactEditor \|\| framed \? `\$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.widths\.mobile\}px` : undefined/);
     assert.match(responsivePreview, /public-page-editor-preview-surface--compact/);
     assert.match(dndCss, /\.public-page-editor-preview-surface--compact \.public-page-block-drag-rail \{\s*display: none;/);
     assert.match(uiText, /mobileNavigation: 'publicPageBuilder\.mobileNavigation'/);
@@ -1082,7 +1075,7 @@ describe('public page builder source contracts', () => {
     assert.match(registrations, /serviceIds: \[\], autoplayIntervalSeconds: null, showBookingButton: true/);
     assert.match(blocks, /from 'embla-carousel-react'/);
     assert.match(blocks, /align: 'start'/);
-    assert.match(blocks, /xs: '0 0 88%', sm: '0 0 72%'/);
+    assert.match(blocks, /containerType: 'inline-size', containerName: 'public-services'/);
     assert.match(blocks, /bgcolor: 'var\(--avatar-surface-background\)'/);
     assert.match(blocks, /borderRadius: 'var\(--block-border-radius\)'/);
     assert.doesNotMatch(blocks, /embla-carousel-autoplay/);

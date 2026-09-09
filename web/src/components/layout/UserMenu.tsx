@@ -93,32 +93,26 @@ export function UserMenu({ variant = 'icon' }: UserMenuProps) {
     <ButtonBase
       onClick={openMenu}
       aria-label={t('common.profileMenuAria')}
-      sx={{
-        width: '100%',
-        borderRadius: 3,
-        px: 1.25,
-        py: 1,
-        justifyContent: 'flex-start'
-      }}
+      className="app-user-menu__sidebar-trigger"
     >
-      <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', width: '100%' }}>
-        <Avatar src={user?.avatarUrl} alt={displayName} sx={{ width: 40, height: 40, fontSize: 14, fontWeight: 700 }}>
+      <Stack direction="row" className="app-user-menu__trigger-content">
+        <Avatar src={user?.avatarUrl} alt={displayName} className="app-user-menu__avatar app-avatar--m">
           {!user?.avatarUrl ? initials : null}
         </Avatar>
-        <Box sx={{ minWidth: 0, flexGrow: 1, textAlign: 'left' }}>
-          <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>
+        <Box className="app-user-menu__identity">
+          <Typography variant="body2" className="app-user-menu__name" noWrap>
             {displayName}
           </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
+          <Typography variant="caption" className="app-user-menu__email" noWrap>
             {user?.email}
           </Typography>
         </Box>
-        <AppIcons.settings fontSize="small" color="action" />
+        <AppIcons.settings fontSize="small" className="app-icon--s" color="action" />
       </Stack>
     </ButtonBase>
   ) : (
-    <IconButton onClick={openMenu} aria-label={t('common.profileMenuAria')} sx={{ p: 0.25 }}>
-      <Avatar src={user?.avatarUrl} alt={displayName} sx={{ width: 36, height: 36, fontSize: 14, fontWeight: 600 }}>
+    <IconButton onClick={openMenu} aria-label={t('common.profileMenuAria')} className="app-user-menu__icon-trigger">
+      <Avatar src={user?.avatarUrl} alt={displayName} className="app-user-menu__avatar app-avatar--s">
         {!user?.avatarUrl ? initials : null}
       </Avatar>
     </IconButton>
@@ -134,11 +128,12 @@ export function UserMenu({ variant = 'icon' }: UserMenuProps) {
         onClose={closeMenu}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slotProps={{ paper: { className: 'app-user-menu__paper' } }}
       >
-        <Box sx={{ px: 2, py: 1.25, minWidth: '13.75rem' }}>
-          <Stack spacing={0.25}>
+        <Box className="app-user-menu__summary">
+          <Stack className="app-user-menu__summary-copy">
             <Typography variant="subtitle2" noWrap>{displayName}</Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
+            <Typography variant="caption" className="app-user-menu__email" noWrap>
               {user?.email}
             </Typography>
           </Stack>
@@ -146,15 +141,15 @@ export function UserMenu({ variant = 'icon' }: UserMenuProps) {
         <Divider />
 
         <MenuItem onClick={goToSettings}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <AppIcons.settings fontSize="small" />
+          <Stack direction="row" className="app-user-menu__menu-item-content">
+            <AppIcons.settings fontSize="small" className="app-icon--s" />
             <Typography variant="body2">{t('common.settings')}</Typography>
           </Stack>
         </MenuItem>
 
         <MenuItem onClick={logout}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <AppIcons.logout fontSize="small" />
+          <Stack direction="row" className="app-user-menu__menu-item-content">
+            <AppIcons.logout fontSize="small" className="app-icon--s" />
             <Typography variant="body2">{t('common.logout')}</Typography>
           </Stack>
         </MenuItem>

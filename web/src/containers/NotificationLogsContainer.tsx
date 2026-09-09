@@ -1,19 +1,4 @@
-import {
-  Alert,
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Skeleton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Stack } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, authHeaders } from '../shared/api/client';
@@ -23,8 +8,11 @@ import { useI18n } from '../shared/i18n/I18nContext';
 import type { NotificationLogItem, NotificationLogsResponse, VerifyEmailResponse } from '../shared/types/api';
 import { WebUserRole } from '../shared/types/roles';
 import { AppButton } from '../shared/ui/AppButton';
+import { AppDataTable } from '../shared/ui/AppDataTable';
 import { AppFilterBar } from '../shared/ui/AppFilterBar';
 import { AppPage } from '../shared/ui/AppPage';
+import { AppLoadingState, AppStatusBadge, AppStatusMessage, type AppStatusTone } from '../shared/ui/AppStatus';
+import { AppTextField } from '../shared/ui/AppTextField';
 
 type Filters = {
   accountId: string;
@@ -33,6 +21,19 @@ type Filters = {
 };
 
 const FAILED_STATUSES = new Set(['failed', 'retry', 'cancelled']);
+
+function getStatusTone(status: string): AppStatusTone {
+  if (status === 'sent') {
+    return 'success';
+  }
+  if (status === 'retry') {
+    return 'warning';
+  }
+  if (FAILED_STATUSES.has(status)) {
+    return 'danger';
+  }
+  return 'neutral';
+}
 
 export function NotificationLogsContainer() {
   const { accessToken, user } = useAuth();
@@ -119,120 +120,90 @@ export function NotificationLogsContainer() {
 
   return (
     <AppPage title={t('notificationLogs.pageTitle')} subtitle={t('notificationLogs.pageSubtitle')}>
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+      <Stack spacing={2}>
+        {error ? <AppStatusMessage severity="error" message={error} /> : null}
+        {success ? <AppStatusMessage severity="success" message={success} /> : null}
 
-      {!canViewLogs ? (
-        <Alert severity="info">{t('notificationLogs.accessDenied')}</Alert>
-      ) : (
-        <Stack spacing={2}>
-          <AppFilterBar
-            mobileLabel={t('common.filters')}
-            mobileTitle={t('notificationLogs.pageTitle')}
-            activeFiltersCount={[filters.accountId, filters.specialistId, filters.userId].filter(Boolean).length}
-          >
-            {user?.role === WebUserRole.Owner && (
-              <TextField
-                label={t('notificationLogs.filters.accountId')}
-                value={filters.accountId}
-                onChange={(event) => setFilters((prev) => ({ ...prev, accountId: event.target.value.replace(/\D/g, '') }))}
-                size="small"
+        {!canViewLogs ? (
+          <AppStatusMessage severity="info" message={t('notificationLogs.accessDenied')} />
+        ) : (
+          <Stack spacing={2}>
+            <AppFilterBar
+              mobileLabel={t('common.filters')}
+              mobileTitle={t('notificationLogs.pageTitle')}
+              activeFiltersCount={[filters.accountId, filters.specialistId, filters.userId].filter(Boolean).length}
+            >
+              {user?.role === WebUserRole.Owner && (
+                <AppTextField
+                  label={t('notificationLogs.filters.accountId')}
+                  value={filters.accountId}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, accountId: event.target.value.replace(/\D/g, '') }))}
+                />
+              )}
+              <AppTextField
+                label={t('notificationLogs.filters.specialistId')}
+                value={filters.specialistId}
+                onChange={(event) => setFilters((prev) => ({ ...prev, specialistId: event.target.value.replace(/\D/g, '') }))}
+              />
+              <AppTextField
+                label={t('notificationLogs.filters.userId')}
+                value={filters.userId}
+                onChange={(event) => setFilters((prev) => ({ ...prev, userId: event.target.value.replace(/\D/g, '') }))}
+              />
+              <AppButton onClick={() => void loadLogs()}>
+                {t('notificationLogs.filters.apply')}
+              </AppButton>
+            </AppFilterBar>
+
+            {isLoading ? (
+              <AppLoadingState lines={3} />
+            ) : (
+              <AppDataTable
+              title=""
+              columns={[
+                { key: 'id', label: 'ID', width: 72, render: (item) => item.id },
+                { key: 'accountId', label: t('notificationLogs.columns.accountId'), width: 96, render: (item) => item.accountId },
+                { key: 'specialist', label: t('notificationLogs.columns.specialist'), width: 180, render: (item) => item.specialistName || `#${item.specialistId}` },
+                { key: 'client', label: t('notificationLogs.columns.client'), width: 180, render: (item) => item.clientName || `#${item.userId}` },
+                { key: 'message', label: t('notificationLogs.columns.message'), width: 260, render: (item) => item.message || '—' },
+                { key: 'telegram', label: t('notificationLogs.columns.telegram'), width: 180, render: (item) => item.recipientTelegram || '—' },
+                { key: 'email', label: t('notificationLogs.columns.email'), width: 220, render: (item) => item.recipientEmail || '—' },
+                { key: 'type', label: t('notificationLogs.columns.type'), width: 160, render: (item) => item.type },
+                { key: 'channel', label: t('notificationLogs.columns.channel'), width: 112, render: (item) => item.channel },
+                {
+                  key: 'status',
+                  label: t('notificationLogs.columns.status'),
+                  width: 120,
+                  render: (item) => <AppStatusBadge label={item.status} tone={getStatusTone(item.status)} />,
+                },
+                { key: 'attempts', label: t('notificationLogs.columns.attempts'), width: 104, render: (item) => `${item.attempts}/${item.maxAttempts}` },
+                { key: 'lastError', label: t('notificationLogs.columns.lastError'), width: 300, render: (item) => item.lastError || '—' },
+                { key: 'createdAt', label: t('notificationLogs.columns.createdAt'), width: 200, render: (item) => new Date(item.createdAt).toLocaleString() },
+                {
+                  key: 'actions',
+                  label: t('notificationLogs.columns.actions'),
+                  width: 136,
+                  render: (item) => (
+                    <AppButton
+                      variant="outlined"
+                      size="small"
+                      disabled={!FAILED_STATUSES.has(item.status) || isResendingId === item.id}
+                      isLoading={isResendingId === item.id}
+                      onClick={() => void resend(item)}
+                    >
+                      {t('notificationLogs.resend')}
+                    </AppButton>
+                  ),
+                },
+              ]}
+              rows={items}
+              getRowKey={(item) => item.id}
+              emptyTitle={t('notificationLogs.empty')}
               />
             )}
-            <TextField
-              label={t('notificationLogs.filters.specialistId')}
-              value={filters.specialistId}
-              onChange={(event) => setFilters((prev) => ({ ...prev, specialistId: event.target.value.replace(/\D/g, '') }))}
-              size="small"
-            />
-            <TextField
-              label={t('notificationLogs.filters.userId')}
-              value={filters.userId}
-              onChange={(event) => setFilters((prev) => ({ ...prev, userId: event.target.value.replace(/\D/g, '') }))}
-              size="small"
-            />
-            <AppButton
-              onClick={() => void loadLogs()}
-              sx={{
-                minHeight: 40,
-                alignSelf: 'stretch',
-                borderRadius: 999,
-                px: 2.5,
-                justifySelf: 'start',
-              }}
-            >
-              {t('notificationLogs.filters.apply')}
-            </AppButton>
-          </AppFilterBar>
-
-          <Card>
-            <CardContent>
-              {isLoading ? (
-                <Stack spacing={2}>
-                  <Skeleton variant="rounded" height={40} />
-                  <Skeleton variant="rounded" height={220} />
-                </Stack>
-              ) : items.length === 0 ? (
-                <Typography color="text.secondary">{t('notificationLogs.empty')}</Typography>
-              ) : (
-                <Box sx={{ overflowX: 'auto' }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>ID</TableCell>
-                        <TableCell>{t('notificationLogs.columns.accountId')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.specialist')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.client')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.message')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.telegram')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.email')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.type')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.channel')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.status')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.attempts')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.lastError')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.createdAt')}</TableCell>
-                        <TableCell>{t('notificationLogs.columns.actions')}</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {items.map((item) => (
-                        <TableRow key={item.id} hover>
-                          <TableCell>{item.id}</TableCell>
-                          <TableCell>{item.accountId}</TableCell>
-                          <TableCell>{item.specialistName || `#${item.specialistId}`}</TableCell>
-                          <TableCell>{item.clientName || `#${item.userId}`}</TableCell>
-                          <TableCell sx={{ maxWidth: 220 }}>{item.message || '—'}</TableCell>
-                          <TableCell>{item.recipientTelegram || '—'}</TableCell>
-                          <TableCell>{item.recipientEmail || '—'}</TableCell>
-                          <TableCell>{item.type}</TableCell>
-                          <TableCell>{item.channel}</TableCell>
-                          <TableCell>
-                            <Chip label={item.status} size="small" color={item.status === 'sent' ? 'success' : 'default'} />
-                          </TableCell>
-                          <TableCell>{item.attempts}/{item.maxAttempts}</TableCell>
-                          <TableCell sx={{ maxWidth: 280 }}>{item.lastError || '—'}</TableCell>
-                          <TableCell>{new Date(item.createdAt).toLocaleString()}</TableCell>
-                          <TableCell>
-                            <AppButton
-                              variant="outlined"
-                              size="small"
-                              disabled={!FAILED_STATUSES.has(item.status) || isResendingId === item.id}
-                              onClick={() => void resend(item)}
-                            >
-                              {t('notificationLogs.resend')}
-                            </AppButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Stack>
-      )}
+          </Stack>
+        )}
+      </Stack>
     </AppPage>
   );
 }
