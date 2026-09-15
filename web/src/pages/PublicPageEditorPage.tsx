@@ -1,15 +1,33 @@
-import { Add, ArrowDownward, ArrowUpward, Close, ContentCopy, ContentCopyOutlined, DeleteOutlined, DragIndicator, EditOutlined, Height, OpenInNew, PaletteOutlined, Settings, Visibility, VisibilityOff } from '@mui/icons-material';
+import Add from '@mui/icons-material/Add';
+import ArrowDownward from '@mui/icons-material/ArrowDownward';
+import ArrowUpward from '@mui/icons-material/ArrowUpward';
+import Close from '@mui/icons-material/Close';
+import ContentCopy from '@mui/icons-material/ContentCopy';
+import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
+import DragIndicator from '@mui/icons-material/DragIndicator';
+import EditOutlined from '@mui/icons-material/EditOutlined';
+import Height from '@mui/icons-material/Height';
+import OpenInNew from '@mui/icons-material/OpenInNew';
+import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
+import Settings from '@mui/icons-material/Settings';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Alert, Box, Button, CircularProgress, Dialog, DialogContent, DialogTitle, IconButton, Snackbar, Stack, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AddBlockDialog } from '../components/public-page-builder/AddBlockDialog';
+import ArchiveOutlined from '@mui/icons-material/ArchiveOutlined';
+import { BlockArchiveDialog } from '../components/public-page-builder/BlockArchiveDialog';
 import { BlockEditorDialog, type BlockEditorFocusRequest, type BlockEditorPreview, type BlockEditorSave } from '../components/public-page-builder/BlockEditorDialog';
 import { BuilderShell } from '../components/public-page-builder/BuilderShell';
 import { BuilderToolbar } from '../components/public-page-builder/BuilderToolbar';
+import { EditorNavigationGuard } from '../components/public-page-builder/EditorNavigationGuard';
+import { publishIssueText } from '../components/public-page-builder/publishIssueText';
 import { DeviceSwitcher, type PreviewDevice } from '../components/public-page-builder/DeviceSwitcher';
 import { InspectorPanel } from '../components/public-page-builder/InspectorPanel';
 import { DesignPanel } from '../components/public-page-builder/DesignPanel';
-import { ResponsivePreview } from '../components/public-page-builder/ResponsivePreview';
+import { PUBLIC_PAGE_PREVIEW_GEOMETRY, ResponsivePreview } from '../components/public-page-builder/ResponsivePreview';
 import { type BuilderDragPayload, type BuilderDropDestination } from '../components/public-page-builder/BuilderSortable';
 import { publicPageText } from '../components/public-page-builder/uiText';
 import { createBlankPublicPageDocument } from '../components/public-page-builder/createBlankDocument';
@@ -27,7 +45,7 @@ import { useI18n } from '../shared/i18n/I18nContext';
 import { servicesApi } from '../shared/api/client';
 import type { ServicesResponse } from '../components/services/types';
 import { catalogServicesForPreview } from '../features/public-page-builder/model/services';
-import { resizeSectionMembership } from '../features/public-page-builder/model/editorReducer';
+import { archiveRestoreConflict, resizeSectionMembership } from '../features/public-page-builder/model/editorReducer';
 import { normalizeSlug } from '../features/public-page-builder/model/slug';
 import { resolvePublishIssueFocusTarget, type PublishIssueFocusTarget } from '../features/public-page-builder/model/publishValidation';
 import type { EditorAction } from '../features/public-page-builder/types/actions';
@@ -147,15 +165,18 @@ function Editor({
     && editor.slugAvailability.slug === canonicalSlug;
   const publishedSlugChanged = editor.publishedSlug !== null
     && canonicalSlug !== editor.publishedSlug;
-  const [device, setDevice] = useState<PreviewDevice>('mobile');
+  const [device, setDevice] = useState<PreviewDevice>(() => isCompact ? 'mobile' : 'desktop');
   const effectiveDevice: PreviewDevice = isCompact ? 'mobile' : device;
   const [copied, setCopied] = useState(false);
   const [addBlockOpen, setAddBlockOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [blockEditorOpen, setBlockEditorOpen] = useState(false);
   const [blockPreview, setBlockPreview] = useState<BlockEditorPreview | null>(null);
   const [sectionResizePreview, setSectionResizePreview] = useState<SectionResizePreview | null>(null);
   const [pageSettingsOpen, setPageSettingsOpen] = useState(false);
+  const [pageSettingsBusy, setPageSettingsBusy] = useState(false);
   const [designOpen, setDesignOpen] = useState(false);
+  const [designBusy, setDesignBusy] = useState(false);
   const [pageSettingsFocusMarker, setPageSettingsFocusMarker] = useState<string | null>(null);
   const [designPanelFocusMarker, setDesignPanelFocusMarker] = useState<string | null>(null);
   const [blockEditorFocusRequest, setBlockEditorFocusRequest] = useState<BlockEditorFocusRequest | null>(null);
@@ -349,11 +370,13 @@ function Editor({
       return;
     }
     if (target.type === 'page-settings') {
+      dispatch({ type: 'selection/clear' });
       setPageSettingsFocusMarker(target.marker);
       window.requestAnimationFrame(() => setPageSettingsOpen(true));
       return;
     }
     if (target.type === 'design-panel') {
+      dispatch({ type: 'selection/clear' });
       setDesignPanelFocusMarker(target.marker);
       window.requestAnimationFrame(() => setDesignOpen(true));
       return;
@@ -412,7 +435,6 @@ function Editor({
       dispatch({ type: 'layout/drop', item: payload, to: destination });
       return;
     }
-    if (destination.type !== 'section' || payload.type !== 'block') {return;}
     dispatch({
       type: 'layout/drop',
       item: { type: 'block', blockId: payload.blockId },
@@ -524,14 +546,16 @@ function Editor({
 
   return (
     <>
+    <EditorNavigationGuard locale={locale} dirty={state.dirty} busy={state.saveStatus === 'saving' || editor.isPublishing} save={editor.save} />
     <BuilderShell
       toolbar={
         <Stack spacing={1}>
             <BuilderToolbar
               locale={locale}
               compact={isCompact}
-              title={state.document.profile.displayName || state.document.seo.title || publicPageText(locale, 'page')}
+              title={publicPageText(locale, 'editorWorkspaceTitle')}
               saveStatus={state.saveStatus}
+              dirty={state.dirty}
               isPublishing={editor.isPublishing}
               canUndo={selectCanUndo(state)}
               canRedo={selectCanRedo(state)}
@@ -541,16 +565,28 @@ function Editor({
               onUndo={() => dispatch({ type: 'history/undo' })}
               onRedo={() => dispatch({ type: 'history/redo' })}
               onPublish={() => void handlePublish()}
-              pageActions={<Stack component="nav" aria-label={publicPageText(locale, 'mobileNavigation')} direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1, ml: { md: 'auto' } }}>
-              <Button variant="outlined" startIcon={<Settings />} onClick={() => { dispatch({ type: 'selection/clear' }); setPageSettingsFocusMarker(null); setPageSettingsOpen(true); }}>{publicPageText(locale, 'pageSettings')}</Button>
-              <Button variant="outlined" startIcon={<PaletteOutlined />} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }}>{publicPageText(locale, 'design')}</Button>
-              {editor.publishedSlug ? (
-                <>
-                  <Tooltip title={publicPageText(locale, 'copyLink')}><IconButton aria-label={publicPageText(locale, 'copyLink')} onClick={() => void copyLink()}><ContentCopy /></IconButton></Tooltip>
-                  <Tooltip title={publicPageText(locale, 'open')}><IconButton aria-label={publicPageText(locale, 'open')} href={publicPageUrl(editor.publishedSlug)} target="_blank" rel="noopener noreferrer"><OpenInNew /></IconButton></Tooltip>
-                </>
-              ) : null}
-            </Stack>}
+              pageActions={<Stack component="nav" aria-label={publicPageText(locale, 'mobileNavigation')} direction="row" spacing={0} sx={{ alignItems: 'center', justifyContent: 'space-between', minWidth: 0 }}>
+                <Stack direction="row" spacing={isCompact ? 0 : 1} sx={{ alignItems: 'center', minWidth: 0 }}>
+                  {isCompact ? (
+                    <>
+                      <Tooltip title={publicPageText(locale, 'pageSettings')}><IconButton aria-label={publicPageText(locale, 'pageSettings')} onClick={() => { dispatch({ type: 'selection/clear' }); setPageSettingsFocusMarker(null); setPageSettingsOpen(true); }} sx={{ width: 40, height: 40 }}><Settings fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title={publicPageText(locale, 'design')}><IconButton aria-label={publicPageText(locale, 'design')} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }} sx={{ width: 40, height: 40 }}><PaletteOutlined fontSize="small" /></IconButton></Tooltip>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outlined" startIcon={<Settings />} onClick={() => { dispatch({ type: 'selection/clear' }); setPageSettingsFocusMarker(null); setPageSettingsOpen(true); }}>{publicPageText(locale, 'pageSettings')}</Button>
+                      <Button variant="outlined" startIcon={<PaletteOutlined />} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }}>{publicPageText(locale, 'design')}</Button>
+                    </>
+                  )}
+                  {editor.publishedSlug ? (
+                    <>
+                      <Tooltip title={publicPageText(locale, 'copyLink')}><IconButton aria-label={publicPageText(locale, 'copyLink')} onClick={() => void copyLink()} sx={isCompact ? { width: 40, height: 40 } : undefined}><ContentCopy fontSize={isCompact ? 'small' : 'medium'} /></IconButton></Tooltip>
+                      <Tooltip title={publicPageText(locale, 'open')}><IconButton aria-label={publicPageText(locale, 'open')} href={publicPageUrl(editor.publishedSlug)} target="_blank" rel="noopener noreferrer" sx={isCompact ? { width: 40, height: 40 } : undefined}><OpenInNew fontSize={isCompact ? 'small' : 'medium'} /></IconButton></Tooltip>
+                    </>
+                  ) : null}
+                </Stack>
+                <DeviceSwitcher compact={isCompact} locale={locale} value={effectiveDevice} onChange={setDevice} />
+              </Stack>}
             />
           {editor.hasConflict ? (
             <Alert severity="error" action={<Button onClick={() => void editor.reloadLatest()}>{publicPageText(locale, 'reloadLatest')}</Button>}>
@@ -576,7 +612,7 @@ function Editor({
               <Box component="ul" sx={{ m: 0, pl: 3 }}>
                 {editor.publishIssues.map((issue, index) => (
                   <li key={`${issue.path}-${issue.code}-${index}`}>
-                    {issue.path}{issue.detail ? `: ${issue.detail}` : ''}
+                    {publishIssueText(locale, issue)}
                   </li>
                 ))}
               </Box>
@@ -588,6 +624,7 @@ function Editor({
         <ResponsivePreview document={previewDocument} device={effectiveDevice} mediaUrls={previewMediaUrls} services={previewServices} compactEditor={isCompact}
           ariaLabel={publicPageText(locale, 'preview')} editor={{
           onDropItem,
+          scheduleStatusLabel: (visible) => publicPageText(locale, visible ? 'scheduleActive' : 'scheduleInactive'),
           selectedBlockId: state.selection.blockId,
           blockAriaLabel: (name) => publicPageText(locale, 'blockEditorLabel').replace('{name}', name),
           onSelectBlock: (sectionId, blockId) => {
@@ -621,6 +658,7 @@ function Editor({
               {action(publicPageText(locale, 'moveDown'), <ArrowDownward fontSize="small" />, () => reorderEditorItem({ type: 'block', sectionId: section.id, blockId: block.id }, 1), blockIndex === section.blocks.length - 1)}
               {action(publicPageText(locale, block.visible ? 'hide' : 'show'), block.visible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />, () => dispatch({ type: 'block/toggle', sectionId: section.id, blockId: block.id }))}
               {action(publicPageText(locale, 'duplicate'), <ContentCopyOutlined fontSize="small" />, () => dispatch({ type: 'block/add', sectionId: section.id, block: cloneBlock(block), index: blockIndex + 1 }), !canDuplicateBlocks([block]))}
+              {action(publicPageText(locale, 'archiveBlock'), <ArchiveOutlined fontSize="small" />, () => dispatch({ type: 'block/archive', sectionId: section.id, blockId: block.id }))}
               {action(publicPageText(locale, 'remove'), <DeleteOutlined fontSize="small" />, () => { if (window.confirm(publicPageText(locale, 'deleteBlockConfirm'))) { removeBlock(section, block); } })}
             </Stack>;
           },
@@ -703,22 +741,25 @@ function Editor({
               <DragIndicator fontSize="small" /></IconButton>;
           },
         }}
-          controls={!isCompact ? <DeviceSwitcher locale={locale} value={device} onChange={setDevice} /> : undefined}
-          footer={<Button ref={addBlockButtonRef} variant="contained" size="large" startIcon={<Add />} onClick={() => setAddBlockOpen(true)} sx={{ minWidth: 180, minHeight: 48 }}>{publicPageText(locale, 'addBlock')}</Button>}
         />
       </Box>}
+      bottomNavigation={<Box data-public-page-add-block-shell sx={{ display: 'flex', width: 'min(13.5rem, calc(100% - 16px))', height: 52, boxSizing: 'border-box', p: 0.5, borderRadius: 2,
+        bgcolor: 'grey.900', boxShadow: 6, transform: isCompact ? 'none' : `translateX(${PUBLIC_PAGE_PREVIEW_GEOMETRY.editorDragGutter / 2}px)` }}>
+        <Button ref={addBlockButtonRef} variant="contained" size="medium" startIcon={<Add />} onClick={() => setAddBlockOpen(true)} sx={{ width: '100%', minWidth: 0, minHeight: 44 }}>{publicPageText(locale, 'addBlock')}</Button>
+      </Box>}
     />
-    <Box role="status" aria-live="polite" aria-atomic="true" sx={{ position: 'absolute', width: 1, height: 1, p: 0, m: -1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0 }}>
+    <Box role="status" aria-live="polite" aria-atomic="true" sx={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, p: 0, m: -1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0 }}>
       <span key={reorderAnnouncement.nonce}>{reorderAnnouncement.message}</span>
     </Box>
     <AddBlockDialog open={addBlockOpen} compact={isCompact} locale={locale} usedPlatforms={usedSocialPlatforms} theme={state.document.theme}
+      timezone={state.document.timezone} onOpenArchive={() => setArchiveOpen(true)}
       repository={repository} media={state.document.media} previewUrls={mediaUrls}
       serviceCatalog={serviceCatalog} servicesLoading={servicesLoading} servicesError={servicesError} onRefreshServices={onRefreshServices}
       onClose={() => setAddBlockOpen(false)} onConfirm={addBlock} />
     <BlockEditorDialog open={blockEditorOpen} compact={isCompact} locale={locale}
       block={state.document.sections.find((section) => section.id === state.selection.sectionId)?.blocks.find((block) => block.id === state.selection.blockId) ?? null}
       sections={state.document.sections} sectionId={state.selection.sectionId ?? undefined}
-      theme={state.document.theme}
+      theme={state.document.theme} timezone={state.document.timezone}
       repository={repository} media={state.document.media} previewUrls={mediaUrls}
       serviceCatalog={serviceCatalog} servicesLoading={servicesLoading} servicesError={servicesError} onRefreshServices={onRefreshServices}
       focusRequest={blockEditorFocusRequest}
@@ -747,7 +788,7 @@ function Editor({
         removedMediaIds.forEach((mediaId) => dispatch({ type: 'media/remove', mediaId }));
         setBlockPreview(null); setBlockEditorFocusRequest(null); setBlockEditorOpen(false);
       }} />
-    <Dialog open={pageSettingsOpen} aria-labelledby={pageSettingsTitleId} onClose={() => { setPageSettingsFocusMarker(null); setPageSettingsOpen(false); }} fullScreen={isCompact} fullWidth maxWidth="sm"
+    <Dialog open={pageSettingsOpen} aria-labelledby={pageSettingsTitleId} onClose={() => { if (pageSettingsBusy) {return;} setPageSettingsFocusMarker(null); setPageSettingsOpen(false); }} fullScreen={isCompact} fullWidth maxWidth="sm"
       slotProps={{ paper: { sx: { borderRadius: isCompact ? 0 : 4 } }, transition: { onEntered: () => {
         if (!pageSettingsFocusMarker) {return;}
         window.requestAnimationFrame(() => {
@@ -760,12 +801,12 @@ function Editor({
       } } }}>
       <DialogTitle id={`${pageSettingsTitleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
         <Typography id={pageSettingsTitleId} component="span" variant="h6" sx={{ flex: 1 }}>{publicPageText(locale, 'pageSettings')}</Typography>
-        <IconButton aria-label={publicPageText(locale, 'close')} onClick={() => { setPageSettingsFocusMarker(null); setPageSettingsOpen(false); }}><Close /></IconButton>
+        <IconButton disabled={pageSettingsBusy} aria-label={publicPageText(locale, 'close')} onClick={() => { setPageSettingsFocusMarker(null); setPageSettingsOpen(false); }}><Close /></IconButton>
       </DialogTitle>
       <DialogContent ref={pageSettingsContentRef} dividers><InspectorPanel state={state} locale={locale} dispatch={dispatch} repository={repository}
-        slugAvailability={editor.slugAvailability} previewUrls={mediaUrls} onMediaPreview={rememberMediaPreview} /></DialogContent>
+        busy={pageSettingsBusy} onBusyChange={setPageSettingsBusy} slugAvailability={editor.slugAvailability} previewUrls={mediaUrls} onMediaPreview={rememberMediaPreview} /></DialogContent>
     </Dialog>
-    <Dialog open={designOpen} aria-labelledby={designTitleId} onClose={() => { setDesignPanelFocusMarker(null); setDesignOpen(false); }} fullScreen={isCompact} fullWidth maxWidth={false}
+    <Dialog open={designOpen} aria-labelledby={designTitleId} onClose={() => { if (designBusy) {return;} setDesignPanelFocusMarker(null); setDesignOpen(false); }} fullScreen={isCompact} fullWidth maxWidth={false}
       slotProps={{ paper: { sx: { maxWidth: 1664, borderRadius: isCompact ? 0 : 4 } }, transition: { onEntered: () => {
         if (!designPanelFocusMarker) {return;}
         window.requestAnimationFrame(() => {
@@ -778,23 +819,28 @@ function Editor({
       } } }}>
       <DialogTitle id={`${designTitleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
         <Typography id={designTitleId} component="span" variant="h6" sx={{ flex: 1 }}>{publicPageText(locale, 'design')}</Typography>
-        <IconButton aria-label={publicPageText(locale, 'close')} onClick={() => { setDesignPanelFocusMarker(null); setDesignOpen(false); }}><Close /></IconButton>
+        <IconButton disabled={designBusy} aria-label={publicPageText(locale, 'close')} onClick={() => { setDesignPanelFocusMarker(null); setDesignOpen(false); }}><Close /></IconButton>
       </DialogTitle>
       <DialogContent ref={designContentRef} dividers sx={{ p: 0, overflow: { xs: 'auto', lg: 'hidden' } }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(360px, 1fr) minmax(0, 2fr)' },
           height: { lg: 'min(760px, calc(100vh - 160px))' }, minHeight: 0 }}>
-          <Box sx={{ height: { xs: 480, lg: '100%' }, minWidth: 0, minHeight: 0, borderBottom: { xs: 1, lg: 0 },
+          <Box sx={{ order: { xs: 1, lg: 0 }, height: { xs: 360, lg: '100%' }, minWidth: 0, minHeight: 0, borderBottom: { xs: 1, lg: 0 },
             borderRight: { lg: 1 }, borderColor: 'divider' }}>
             <ResponsivePreview document={state.document} device="mobile" mediaUrls={mediaUrls} services={previewServices} framed interactive={false}
               ariaLabel={publicPageText(locale, 'preview')} />
           </Box>
-          <Box sx={{ minWidth: 0, minHeight: 0, overflow: { xs: 'visible', lg: 'auto' }, p: { xs: 2, sm: 3, lg: 4 } }}>
-            <DesignPanel state={state} locale={locale} dispatch={dispatch} repository={repository}
+          <Box sx={{ order: { xs: 0, lg: 1 }, minWidth: 0, minHeight: 0, overflow: { xs: 'visible', lg: 'auto' }, p: { xs: 2, sm: 3, lg: 4 } }}>
+            <DesignPanel key={designPanelFocusMarker ?? 'manual'} state={state} locale={locale} dispatch={dispatch} repository={repository}
+              busy={designBusy} onBusyChange={setDesignBusy} focusMarker={designPanelFocusMarker}
               previewUrls={mediaUrls} onMediaPreview={rememberMediaPreview} />
           </Box>
         </Box>
       </DialogContent>
     </Dialog>
+    <BlockArchiveDialog open={archiveOpen} compact={isCompact} document={state.document} locale={locale} onClose={() => setArchiveOpen(false)} onRestore={(blockId) => {
+      if (archiveRestoreConflict(state.document, blockId)) {return false;}
+      dispatch({ type: 'block/restore', blockId }); return true;
+    }} />
     <Snackbar
       open={copied}
       autoHideDuration={1800}

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "-w", "@scheduletm/server", "dev"],
+      "port": 3003
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "-w", "@scheduletm/web", "dev"],
+      "port": 5173
+    }
+  ]
+}

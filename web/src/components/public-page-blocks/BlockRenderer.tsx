@@ -17,16 +17,7 @@ type BlockRendererProps = {
   publicPageSlug?: string;
 };
 
-export function themeRadius(style: PageTheme['roundingStyle'], roundedRadius = 40): string {
-  if (style === 'pill') {return '40px';}
-  if (style === 'leaf') {return `${roundedRadius}px 4px ${roundedRadius}px 4px`;}
-  if (style === 'square') {return '2px';}
-  return `${roundedRadius}px`;
-}
-
-export function sectionThemeRadius(style: PageTheme['roundingStyle'], roundedRadius = 40): string {
-  if (style === 'pill') {return '40px';}
-  if (style === 'square') {return '2px';}
+export function sectionThemeRadius(_style: PageTheme['roundingStyle'], roundedRadius = 40): string {
   return `${roundedRadius}px`;
 }
 
@@ -60,11 +51,28 @@ export function BlockRenderer({ block, mediaUrlFor, editor = false, themeBorderR
     '--avatar-title-color': block.design.textColor,
     '--avatar-bio-color': block.design.textColor,
   } : {};
+  const link = block.design.linkStyle;
+  const linkVariables: Record<string, string | number> = {};
+  if (link) {
+    for (const [part, style] of [['title', link.titleStyle], ['subtitle', link.subtitleStyle]] as const) {
+      for (const [key, css] of [['fontFamily', 'font-family'], ['fontWeight', 'font-weight'], ['fontStyle', 'font-style'], ['color', 'color']] as const) {
+        if (style[key] !== null) {linkVariables[`--theme-link-${part}-${css}`] = style[key];}
+      }
+      if (style.fontSize !== null) {linkVariables[`--theme-link-${part}-fontsize`] = `${style.fontSize / 16}rem`;}
+    }
+    if (link.backgroundColor !== null) {linkVariables['--theme-link-background'] = link.backgroundColor;}
+    if (link.backgroundOpacity !== null) {linkVariables['--theme-link-background-opacity'] = `${link.backgroundOpacity * 100}%`;}
+    if (link.borderColor !== null) {linkVariables['--theme-link-border-color'] = link.borderColor;}
+    if (link.borderWidth !== null) {linkVariables['--theme-link-border-width'] = `${link.borderWidth}px`;}
+    if (link.shadow !== null) {linkVariables['--theme-link-shadow-params'] = link.shadow ? '0 5px 17px rgb(23 32 51 / 15%)' : 'none';}
+  }
+  if (block.design.borderRadius !== null) {linkVariables['--theme-link-border-radius'] = `${block.design.borderRadius}px`;}
   return <Box sx={{ position: 'relative', opacity: block.visible ? 1 : 0.45,
     pt: `${block.design.paddingTop ?? 0}px`, pb: `${block.design.paddingBottom ?? 0}px`,
     bgcolor: hasSurface ? block.design.backgroundColor ?? 'transparent' : undefined,
     color: block.design.textColor ?? 'inherit',
     ...customTextVariables,
+    ...linkVariables,
     borderRadius: hasSurface ? surfaceRadius : undefined,
     overflow: hasSurface ? 'hidden' : undefined,
     ...(backgroundUrl ? { backgroundImage: `linear-gradient(rgba(0,0,0,${block.design.backgroundOverlay}), rgba(0,0,0,${block.design.backgroundOverlay})), url("${backgroundUrl}")`,

@@ -2,7 +2,7 @@ import type { CtaAction, PageBlock, PublicPageDocument } from '../types/publicPa
 import { getBlockDefinition } from './blockRegistry';
 import { isSafeCtaAction } from './cta';
 import { validateDocument } from './validateDocument';
-import { validateMediaReference } from './media';
+import { collectReferencedMediaIds, validateMediaReference } from './media';
 import { validateSlug } from './slug';
 
 export type PublishValidationCode =
@@ -328,7 +328,10 @@ export function validateForPublish(document: PublicPageDocument): PublishValidat
     issues.push({ code: 'missing_visible_block', path: 'sections' });
   }
 
+  const archivedMedia = new Set(collectReferencedMediaIds(document.archivedBlocks));
+  const activeMedia = new Set(collectReferencedMediaIds({ profile: document.profile, theme: document.theme, seo: document.seo, sections: document.sections }));
   document.media.forEach((media, index) => {
+    if (archivedMedia.has(media.id) && !activeMedia.has(media.id)) {return;}
     const mediaError = validateMediaReference(media);
     if (mediaError) {
       issues.push({ code: 'invalid_media', path: `media.${index}.url`, detail: mediaError });

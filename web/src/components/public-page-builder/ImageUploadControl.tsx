@@ -5,20 +5,24 @@ import { AppImageUpload } from '../../shared/ui/AppImageUpload';
 export function ImageUploadControl({ label, media, previewUrl, repository, onUploaded, onAltChange, onRemoved,
   uploadLabel, replaceLabel, removeLabel, altLabel, invalidTypeText, tooLargeText, uploadErrorText, compact = false, defaultAlt = '',
   focusMarker,
-  altFocusMarker,
+  altFocusMarker, disabled, onBusyChange,
 }: {
   label: string; media: MediaReference | null; previewUrl?: string; repository: ApiPublicPageRepository;
-  onUploaded: (media: MediaReference, objectUrl: string) => void; onRemoved: () => void;
+  onUploaded: (media: MediaReference, objectUrl: string) => void | Promise<void>; onRemoved: () => void | Promise<void>;
   onAltChange: (media: MediaReference) => void;
   uploadLabel: string; replaceLabel: string; removeLabel: string; altLabel: string;
   invalidTypeText: string; tooLargeText: string; uploadErrorText: string;
   compact?: boolean; defaultAlt?: string;
   focusMarker?: string;
   altFocusMarker?: string;
+  disabled?: boolean;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   return (
     <AppImageUpload<MediaReference>
       key={media?.id ?? 'empty'}
+      disabled={disabled}
+      onBusyChange={onBusyChange}
       label={label}
       image={media}
       previewUrl={previewUrl}

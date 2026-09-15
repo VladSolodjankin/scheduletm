@@ -61,7 +61,7 @@ describe('users API route-smoke scenarios (mocked service layer)', () => {
   });
 
   it('list: GET /api/users returns users', async () => {
-    listManagedUsersMock.mockResolvedValue([{ id: 2, email: 'admin@example.com', role: 'admin', firstName: 'Ann', lastName: 'Lee', phone: '', telegramUsername: '', isActive: true, isVerified: true, createdAt: '2026-04-22T00:00:00.000Z' }]);
+    listManagedUsersMock.mockResolvedValue([{ id: 2, email: 'specialist@example.com', role: 'specialist', firstName: 'Ann', lastName: 'Lee', phone: '', telegramUsername: '', isActive: true, isVerified: true, createdAt: '2026-04-22T00:00:00.000Z' }]);
 
     const response = await fetch(`${baseUrl}/api/users`, {
       method: 'GET',
@@ -69,7 +69,7 @@ describe('users API route-smoke scenarios (mocked service layer)', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ users: [{ id: 2, email: 'admin@example.com' }] });
+    expect(await response.json()).toMatchObject({ users: [{ id: 2, email: 'specialist@example.com' }] });
   });
 
   it('create: POST /api/users returns 201', async () => {

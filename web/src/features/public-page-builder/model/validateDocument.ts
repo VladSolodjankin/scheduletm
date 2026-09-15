@@ -1,3 +1,4 @@
+import { isScheduleTimezone } from './schedule';
 import {
   PUBLIC_PAGE_SCHEMA_VERSION,
   type MediaReference,
@@ -6,6 +7,7 @@ import {
   type SectionLayout,
 } from '../types/publicPage';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from './socialPlatforms';
+import { parseAvatarPosition } from './avatarPosition';
 
 export type DocumentValidationErrorCode =
   | 'invalid_type'
@@ -122,7 +124,10 @@ function validateProfile(value: unknown, errors: DocumentValidationError[]): voi
   if (!isNullableString(value.avatarMediaId)) {
     addError(errors, 'invalid_type', 'profile.avatarMediaId');
   }
-  validateExactKeys(value, ['displayName', 'description', 'logoMediaId', 'avatarMediaId'], 'profile', errors);
+  if (!parseAvatarPosition(value.avatarPosition)) {
+    addError(errors, 'invalid_value', 'profile.avatarPosition');
+  }
+  validateExactKeys(value, ['displayName', 'description', 'logoMediaId', 'avatarMediaId', 'avatarPosition'], 'profile', errors);
 }
 
 function validateTheme(value: unknown, errors: DocumentValidationError[]): void {
@@ -263,10 +268,10 @@ function validateBlockContent(type: unknown, value: unknown, path: string, error
       if (![65, 95, 125, 150].includes(Number(value.avatarSize))) {addError(errors, 'invalid_value', `${path}.avatarSize`);}
       return;
     case 'button':
-      validateExactKeys(value, ['label', 'icon', 'color', 'textColor', 'radius', 'action'], path, errors);
-      stringFields(['label', 'color', 'textColor']);
+      validateExactKeys(value, ['label', 'subtitle', 'openInNewTab', 'icon', 'action'], path, errors);
+      stringFields(['label', 'subtitle']);
       if (!['link', 'phone', 'email', 'message'].includes(String(value.icon))) {addError(errors, 'invalid_value', `${path}.icon`);}
-      if (!isBoundedNumber(value.radius, 0, 100)) {addError(errors, 'invalid_value', `${path}.radius`);}
+      if (typeof value.openInNewTab !== 'boolean') {addError(errors, 'invalid_type', `${path}.openInNewTab`);}
       validateCtaAction(value.action, `${path}.action`, errors);
       return;
     case 'links':
@@ -479,8 +484,9 @@ function validateBlocks(
       addError(errors, 'invalid_type', blockPath);
       return;
     }
-    validateExactKeys(block, ['id', 'type', 'name', 'visible', 'content', 'design'], blockPath, errors);
+    validateExactKeys(block, ['id', 'type', 'name', 'visible', 'content', 'design', 'schedule'], blockPath, errors);
 
+    validateSchedule(block.schedule, `${blockPath}.schedule`, errors);
     validateEntityId(block.id, `${blockPath}.id`, errors, ids);
     validateRequiredString(block.type, `${blockPath}.type`, errors);
     validateString(block.name, `${blockPath}.name`, errors);
@@ -493,7 +499,9 @@ function validateBlocks(
     if (!isRecord(block.design)) {
       addError(errors, 'invalid_type', `${blockPath}.design`);
     } else {
-      validateExactKeys(block.design, ['backgroundColor', 'textColor', 'backgroundMediaId', 'backgroundOverlay', 'backgroundFit', 'backgroundPosition', 'paddingTop', 'paddingBottom', 'borderRadius'], `${blockPath}.design`, errors);
+      validateExactKeys(block.design, ['backgroundColor', 'textColor', 'backgroundMediaId', 'backgroundOverlay', 'backgroundFit', 'backgroundPosition', 'paddingTop', 'paddingBottom', 'borderRadius', 'linkStyle', 'animation'], `${blockPath}.design`, errors);
+      if (block.design.linkStyle !== null) {validateLinkStyle(block.design.linkStyle, `${blockPath}.design.linkStyle`, errors, true);}
+      if (!['none', 'pulse', 'lift'].includes(String(block.design.animation))) {addError(errors, 'invalid_value', `${blockPath}.design.animation`);}
       if (!isNullableString(block.design.backgroundColor)) {
         addError(errors, 'invalid_type', `${blockPath}.design.backgroundColor`);
       }
@@ -596,7 +604,7 @@ export function validateDocument(input: unknown): DocumentValidationResult {
   if (!isRecord(input)) {
     return { valid: false, errors: [{ code: 'invalid_type', path: '' }] };
   }
-  validateExactKeys(input, ['schemaVersion', 'id', 'slug', 'status', 'profile', 'theme', 'sections', 'seo', 'media', 'createdAt', 'updatedAt'], '', errors);
+  validateExactKeys(input, ['schemaVersion', 'id', 'slug', 'status', 'profile', 'theme', 'sections', 'seo', 'media', 'createdAt', 'updatedAt', 'timezone', 'archivedBlocks'], '', errors);
 
   if (input.schemaVersion !== PUBLIC_PAGE_SCHEMA_VERSION) {
     addError(errors, 'unsupported_schema_version', 'schemaVersion');
@@ -614,6 +622,15 @@ export function validateDocument(input: unknown): DocumentValidationResult {
   validateTheme(input.theme, errors);
   validateSections(input.sections, errors, ids);
   validateSocialButtons(input.sections, errors);
+  if (!isScheduleTimezone(input.timezone)) {addError(errors, 'invalid_value', 'timezone');}
+  if (!Array.isArray(input.archivedBlocks)) {addError(errors, 'invalid_type', 'archivedBlocks');}
+  else {input.archivedBlocks.forEach((entry, index) => {
+    const path = `archivedBlocks.${index}`;
+    if (!isRecord(entry)) {addError(errors, 'invalid_type', path); return;}
+    validateExactKeys(entry, ['block', 'sourceSectionId'], path, errors);
+    validateRequiredString(entry.sourceSectionId, `${path}.sourceSectionId`, errors);
+    validateBlocks([entry.block], `${path}.block`, errors, ids);
+  });}
   validateSeo(input.seo, errors);
   validateMedia(input.media, errors, ids);
   validateRequiredString(input.createdAt, 'createdAt', errors);
@@ -624,4 +641,18 @@ export function validateDocument(input: unknown): DocumentValidationResult {
 
 export function isPublicPageDocument(input: unknown): input is PublicPageDocument {
   return validateDocument(input).valid;
+}
+
+function validateSchedule(value: unknown, path: string, errors: DocumentValidationError[]): void {
+  if (!isRecord(value)) {addError(errors, 'invalid_type', path); return;}
+  validateExactKeys(value, ['period', 'weekdays'], path, errors);
+  if (value.period !== null) {
+    if (!isRecord(value.period)) {addError(errors, 'invalid_type', `${path}.period`);}
+    else {
+      validateExactKeys(value.period, ['startAt', 'endAt'], `${path}.period`, errors);
+      const validUtc = (date: unknown): date is string => typeof date === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(date) && Number.isFinite(Date.parse(date)) && new Date(date).toISOString().slice(0, 19) === date.slice(0, 19);
+      if (!validUtc(value.period.startAt) || !validUtc(value.period.endAt) || Date.parse(value.period.startAt) >= Date.parse(value.period.endAt)) {addError(errors, 'invalid_value', `${path}.period`);}
+    }
+  }
+  if (value.weekdays !== null && (!Array.isArray(value.weekdays) || !value.weekdays.length || value.weekdays.some((day) => !Number.isInteger(day) || day < 1 || day > 7) || new Set(value.weekdays).size !== value.weekdays.length)) {addError(errors, 'invalid_value', `${path}.weekdays`);}
 }

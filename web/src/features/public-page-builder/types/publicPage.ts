@@ -1,4 +1,6 @@
-export const PUBLIC_PAGE_SCHEMA_VERSION = 2 as const;
+export const PUBLIC_PAGE_SCHEMA_VERSION = 4 as const;
+
+export const DEFAULT_AVATAR_POSITION = '50% 50%' as const;
 
 export type PublicPageStatus = 'draft' | 'published' | 'archived';
 
@@ -7,6 +9,7 @@ export type PageProfile = {
   description: string;
   logoMediaId: string | null;
   avatarMediaId: string | null;
+  avatarPosition: string;
 };
 
 export type ThemeSwatches = readonly [string, string, string, string];
@@ -162,6 +165,8 @@ export type KnownBlockType =
 export type BlockType = KnownBlockType | (string & {});
 
 export type BlockDesign = {
+  linkStyle: LinkStyle | null;
+  animation: 'none' | 'pulse' | 'lift';
   backgroundColor: string | null;
   textColor: string | null;
   backgroundMediaId: string | null;
@@ -202,9 +207,9 @@ export type RichTextDocument = {
   type: 'rich-text-v1';
   paragraphs: RichTextParagraph[];
 };
-export type RichTextBlockContent = BlockContent & { document: RichTextDocument };
 
 export type PageBlock<TContent extends BlockContent = BlockContent> = {
+  schedule: BlockSchedule;
   id: string;
   type: BlockType;
   name: string;
@@ -221,6 +226,13 @@ export type PageSection = {
   design: SectionDesign;
   blocks: PageBlock[];
 };
+
+export type BlockSchedule = {
+  period: { startAt: string; endAt: string } | null;
+  weekdays: number[] | null;
+};
+
+export type ArchivedBlock = { block: PageBlock; sourceSectionId: string };
 
 export type SectionDesign = {
   variant: 'off' | 'custom' | 'primary' | 'secondary';
@@ -245,6 +257,8 @@ export type SectionDesign = {
 };
 
 export type PublicPageDocument = {
+  timezone: string;
+  archivedBlocks: ArchivedBlock[];
   schemaVersion: typeof PUBLIC_PAGE_SCHEMA_VERSION;
   id: string;
   slug: string;

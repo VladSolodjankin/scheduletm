@@ -103,9 +103,9 @@ describe('business integration: user management', () => {
     });
 
     await createManagedUser(owner, {
-      email: 'admin.hidden@example.com',
-      role: 'admin',
-      firstName: 'Admin',
+      email: 'specialist.hidden@example.com',
+      role: 'specialist',
+      firstName: 'Specialist',
       lastName: 'Hidden',
     });
 

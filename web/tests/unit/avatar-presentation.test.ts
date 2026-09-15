@@ -102,7 +102,7 @@ describe('avatar presentation compatibility', () => {
     expect(variables['--page-background']).toBe(DEFAULT_PUBLIC_PAGE_THEME.colors.background);
     expect(variables['--page-section-background']).toBe(DEFAULT_PUBLIC_PAGE_THEME.colors.primary);
     expect(variables['--avatar-cover-background']).toBe('#abcdef');
-    expect(variables['--avatar-title-size']).toBe('18px');
+    expect(variables['--avatar-title-size']).toBe('1.125rem');
     expect(variables['--avatar-title-color']).toBe('#123456');
     expect(variables['--avatar-bio-font-family']).toBe('Roboto');
     expect(variables['--avatar-bio-weight']).toBe(500);
@@ -126,7 +126,7 @@ describe('avatar presentation compatibility', () => {
 
     expect(variables['--avatar-cover-background']).toBe(DEFAULT_PUBLIC_PAGE_THEME.colors.primary);
     expect(variables['--avatar-title-font-family']).toBe(DEFAULT_PUBLIC_PAGE_THEME.tokens.typography.avatarTitle.fontFamily);
-    expect(variables['--avatar-bio-size']).toBe(`${DEFAULT_PUBLIC_PAGE_THEME.tokens.typography.avatarBio.fontSize}px`);
+    expect(variables['--avatar-bio-size']).toBe(`${DEFAULT_PUBLIC_PAGE_THEME.tokens.typography.avatarBio.fontSize / 16}rem`);
     expect(variables['--avatar-size']).toBe('150px');
   });
 });

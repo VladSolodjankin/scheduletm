@@ -30,7 +30,7 @@ export function UsersContainer() {
   const [isDeleteImpactLoading, setIsDeleteImpactLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUsersLoading, setIsUsersLoading] = useState(false);
-  const canManageUsers = user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
+  const canManageUsers = user?.role === 'owner' || user?.role === 'specialist';
   const isLoading = canManageUsers && isUsersLoading;
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export function UsersContainer() {
     void load();
   }, [accessToken, canManageUsers, navigate, t]);
 
-  const saveUser = async (payload: { email: string; role: 'admin' | 'specialist' | 'client'; firstName: string; lastName: string; phone?: string; telegramUsername?: string }) => {
+  const saveUser = async (payload: { email: string; role: 'specialist' | 'client'; firstName: string; lastName: string; phone?: string; telegramUsername?: string }) => {
     if (!accessToken) {
       return;
     }
@@ -228,7 +228,6 @@ export function UsersContainer() {
                 deleteLabel={t('users.delete')}
                 resendInviteLabel={t('users.resendInvite')}
                 roleLabels={{
-                  admin: t('appointments.roleAdmin'),
                   specialist: t('appointments.roleSpecialist'),
                   client: t('appointments.roleClient')
                 }}
@@ -260,10 +259,6 @@ export function UsersContainer() {
         telegramLabel={t('users.form.telegram')}
         closeLabel={t('users.close')}
         saveLabel={t('users.save')}
-        adminConfirmTitle={t('users.adminConfirm.title')}
-        adminConfirmDescription={t('users.adminConfirm.description')}
-        adminConfirmCancelLabel={t('users.adminConfirm.cancel')}
-        adminConfirmSubmitLabel={t('users.adminConfirm.confirm')}
         onClose={() => {
           if (!isSaving) {
             setIsDialogOpen(false);

@@ -7,7 +7,7 @@ staging и observability требуют отдельного operational evidenc
 
 ## Реализовано в репозитории
 
-- [x] Tenant RBAC и отдельный глобальный `product_owner`.
+- [x] Tenant RBAC и отдельный глобальный `product_admin`.
 - [x] Active/deleted user и inactive account session enforcement.
 - [x] CSRF для refresh/logout, production cookie policy и CORS validation.
 - [x] Request/login/public-status rate limits, безопасные JSON errors и payload limits.
@@ -44,7 +44,7 @@ staging и observability требуют отдельного operational evidenc
 - [ ] Выполнить staging smoke:
   - [ ] `/health` и `/ready`;
   - [ ] register/verify/login/refresh/logout;
-  - [ ] tenant RBAC и `product_owner`;
+  - [ ] tenant RBAC и `product_admin`;
   - [ ] users/specialists/settings и integration credential reconnect;
   - [ ] appointment create/edit/recurrence;
   - [ ] Public Page create/save/publish/view/archive/delete;

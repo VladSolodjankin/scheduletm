@@ -1,4 +1,5 @@
-import { Close, DeleteOutlined } from '@mui/icons-material';
+import Close from '@mui/icons-material/Close';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import { Alert, Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, IconButton, MenuItem, Stack, Switch, Tab, Tabs, TextField, Typography } from '@mui/material';
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import type { MediaReference, PageBlock, PageSection, PageTheme } from '../../features/public-page-builder/types/publicPage';
@@ -15,9 +16,9 @@ import { normalizeRichTextDocument } from '../../features/public-page-builder/mo
 import { resolvePublicPageThemeVariables } from '../public-page-blocks/publicPageThemeVariables';
 import { SectionDesignControls } from './SectionDesignControls';
 import { ServicesBlockEditor } from './ServicesBlockEditor';
+import { ButtonDesignControls } from './ButtonDesignControls';
+import { BlockScheduleControls } from './BlockScheduleControls';
 import type { ServicesResponse } from '../services/types';
-import { analyzeBlockContrast } from '../../features/public-page-builder/model/contrast';
-import { ContrastGuidance } from './ContrastGuidance';
 
 export type BlockEditorSave = { block: PageBlock; sectionId?: string; section?: PageSection; addedMedia: Array<{ media: MediaReference; objectUrl: string }>; updatedMedia: MediaReference[]; removedMediaIds: string[] };
 export type BlockEditorPreview = Pick<BlockEditorSave, 'block' | 'sectionId' | 'section' | 'addedMedia' | 'updatedMedia'>;
@@ -90,7 +91,7 @@ function AvatarCoverPalette({ locale, theme, value, onChange }: {
   </Stack>;
 }
 
-export function BlockEditorDialog({ open, compact = false, block, locale, title, onClose, onSave, onPreview, onRemoveSection, repository, media, previewUrls, sections, sectionId, theme, serviceCatalog, servicesLoading = false, servicesError = false, onRefreshServices, focusRequest, onFocusTargetMissing }: {
+export function BlockEditorDialog({ open, compact = false, block, locale, title, onClose, onSave, onPreview, onRemoveSection, repository, media, previewUrls, sections, sectionId, theme, timezone, serviceCatalog, servicesLoading = false, servicesError = false, onRefreshServices, focusRequest, onFocusTargetMissing }: {
   open: boolean;
   compact?: boolean;
   block: PageBlock | null;
@@ -106,6 +107,7 @@ export function BlockEditorDialog({ open, compact = false, block, locale, title,
   sections?: readonly PageSection[];
   sectionId?: string;
   theme: PageTheme;
+  timezone: string;
   serviceCatalog?: ServicesResponse | null;
   servicesLoading?: boolean;
   servicesError?: boolean;
@@ -115,16 +117,17 @@ export function BlockEditorDialog({ open, compact = false, block, locale, title,
 }) {
   if (!open || !block) {return null;}
   return <BlockEditorDialogContent key={`${block.id}-${open ? 'open' : 'closed'}-${focusRequest?.requestId ?? 'manual'}`} open={open} compact={compact} block={block} locale={locale} title={title} onClose={onClose} onSave={onSave} onPreview={onPreview} onRemoveSection={onRemoveSection} repository={repository} media={media} previewUrls={previewUrls} sections={sections} sectionId={sectionId} theme={theme}
-    serviceCatalog={serviceCatalog} servicesLoading={servicesLoading} servicesError={servicesError} onRefreshServices={onRefreshServices}
+    timezone={timezone} serviceCatalog={serviceCatalog} servicesLoading={servicesLoading} servicesError={servicesError} onRefreshServices={onRefreshServices}
     focusRequest={focusRequest} onFocusTargetMissing={onFocusTargetMissing} />;
 }
 
-function BlockEditorDialogContent({ open, compact, block, locale, title, onClose, onSave, onPreview, onRemoveSection, repository, media = [], previewUrls, sections, sectionId, theme, serviceCatalog = null, servicesLoading = false, servicesError = false, onRefreshServices, focusRequest, onFocusTargetMissing }: {
+function BlockEditorDialogContent({ open, compact, block, locale, title, onClose, onSave, onPreview, onRemoveSection, repository, media = [], previewUrls, sections, sectionId, theme, timezone, serviceCatalog = null, servicesLoading = false, servicesError = false, onRefreshServices, focusRequest, onFocusTargetMissing }: {
   open: boolean; compact: boolean; block: PageBlock; locale: Locale; title?: string; onClose: () => void; onSave: (result: BlockEditorSave) => void;
   repository?: ApiPublicPageRepository; media?: readonly MediaReference[]; previewUrls?: ReadonlyMap<string, string>; sections?: readonly PageSection[]; sectionId?: string;
   onPreview?: (preview: BlockEditorPreview) => void;
   onRemoveSection?: (sectionId: string) => void;
   theme: PageTheme;
+  timezone: string;
   serviceCatalog?: ServicesResponse | null;
   servicesLoading?: boolean;
   servicesError?: boolean;
@@ -133,6 +136,7 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
   onFocusTargetMissing?: () => void;
 }) {
   const titleId = useId();
+  const [scheduleValid, setScheduleValid] = useState(true);
   const [tab, setTab] = useState(() => BLOCK_EDITOR_TAB_INDEX[focusRequest?.tab ?? 'content']);
   const initialAvatarAlt = block.type === 'avatar'
     ? (typeof block.content.imageAlt === 'string' && block.content.imageAlt.trim())
@@ -149,7 +153,6 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
   const draftSectionId = sectionId ?? sections?.[0]?.id;
   const selectedSection = sections?.find((section) => section.id === draftSectionId);
   const [sectionDraft, setSectionDraft] = useState<PageSection | undefined>(() => selectedSection ? structuredClone(selectedSection) : undefined);
-  const contrastSection = sectionDraft ?? selectedSection;
   const [pending, setPending] = useState<Array<{ media: MediaReference; objectUrl: string }>>([]);
   const [updatedMedia, setUpdatedMedia] = useState<MediaReference[]>(() => {
     if (block.type !== 'avatar' || typeof block.content.imageMediaId !== 'string') {return [];}
@@ -189,7 +192,9 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
     return failed.size === 0;
   };
   const cancel = () => { if (cleaning) {return;} void (async () => { if (await cleanupItems(pending)) {onClose();} })(); };
-  const Editor = getBlockDefinition(draft.type)?.Editor;
+  const blockDefinition = getBlockDefinition(draft.type);
+  const Editor = blockDefinition?.Editor;
+  const blockValidationIssues = blockDefinition?.validate?.(draft) ?? [];
   return (
     <Dialog open={open} aria-labelledby={titleId} onClose={cancel} fullScreen={compact} fullWidth maxWidth={false}
       slotProps={{
@@ -309,7 +314,8 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
               onChange={(coverColor) => setDraft((current) => ({ ...current, content: applyAvatarCoverColor(current.content, coverColor) }))} /> : undefined} /> : null}
           </Stack> : null}
           {tab === 1 ? <Stack spacing={2} data-public-page-focus="block.design" tabIndex={-1}>
-          {draft.type !== 'social-button' ? <><ColorControl label={publicPageText(locale, 'background')} value={draft.design.backgroundColor}
+          {draft.type === 'button' ? <ButtonDesignControls block={draft} theme={theme} section={sectionDraft} locale={locale} onChange={setDraft} /> : null}
+          {draft.type !== 'social-button' && draft.type !== 'button' ? <><ColorControl label={publicPageText(locale, 'background')} value={draft.design.backgroundColor}
             onChange={(value) => setDraft({ ...draft, design: { ...draft.design, backgroundColor: value } })} />
           <ColorControl label={publicPageText(locale, 'textColor')} value={draft.design.textColor}
             onChange={(value) => setDraft({ ...draft, design: { ...draft.design, textColor: value } })} /></> : null}
@@ -352,17 +358,16 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
           {(['paddingTop', 'paddingBottom'] as const).map((field) => <TextField key={field} type="number" label={publicPageText(locale, field)} value={draft.design[field]}
             slotProps={{ htmlInput: { min: 0, max: 160 } }} onChange={(event) => setDraft({ ...draft, design: { ...draft.design, [field]: Math.max(0, Math.min(160, Number(event.target.value))) } })} />)}
           {draft.type !== 'social-button' ? <Button onClick={() => setDraft({ ...draft, design: { ...draft.design, backgroundColor: null, textColor: null } })}>{publicPageText(locale, 'theme')}</Button> : null}
-          {(draft.design.backgroundColor || draft.design.backgroundMediaId || draft.design.textColor) && contrastSection
-            ? <ContrastGuidance locale={locale} checks={analyzeBlockContrast(theme, contrastSection, draft)} />
-            : null}
           </Stack> : null}
-          {tab === 2 ? <Stack spacing={2} data-public-page-focus="block.settings" tabIndex={-1}>
+          <Stack spacing={2} data-public-page-focus="block.settings" tabIndex={-1} sx={{ display: tab === 2 ? undefined : 'none' }}>
             <TextField label={publicPageText(locale, 'name')} value={draft.name}
               slotProps={{ htmlInput: { 'data-public-page-focus': 'block.name' } }}
               onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
             <FormControlLabel data-public-page-focus="block.visible" label={publicPageText(locale, 'visible')} control={<Switch checked={draft.visible}
               onChange={(_, checked) => setDraft({ ...draft, visible: checked })} />} />
-          </Stack> : null}
+            {draft.type === 'button' ? <FormControlLabel label={publicPageText(locale, 'openInNewTab')} control={<Switch checked={draft.content.openInNewTab === true} onChange={(_, checked) => setDraft({ ...draft, content: { ...draft.content, openInNewTab: checked } })} />} /> : null}
+            <BlockScheduleControls value={draft.schedule} timezone={timezone} locale={locale} onChange={(schedule) => setDraft({ ...draft, schedule })} onValidityChange={setScheduleValid} />
+          </Stack>
           {tab === 3 ? <Stack spacing={2} data-public-page-focus="section.design" tabIndex={-1}>
             {sectionDraft ? <>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: { sm: 'center' } }}>
@@ -413,9 +418,10 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
           </Stack> : null}
         </Stack>
       </DialogContent>
+      {blockValidationIssues.length > 0 ? <Alert severity="error" sx={{ mx: 3, mb: 1 }}>{publicPageText(locale, 'publishInvalidBlock')}</Alert> : null}
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
         <Button disabled={cleaning} onClick={cancel}>{publicPageText(locale, 'cancel')}</Button>
-        <Button disabled={cleaning || cleanupError} variant="contained" onClick={() => onSave({ block: draft, sectionId: draftSectionId, section: sectionDraft, addedMedia: pending, updatedMedia, removedMediaIds: [
+        <Button disabled={cleaning || cleanupError || !scheduleValid || blockValidationIssues.length > 0} variant="contained" onClick={() => onSave({ block: draft, sectionId: draftSectionId, section: sectionDraft, addedMedia: pending, updatedMedia, removedMediaIds: [
           ...(originalMediaId && originalMediaId !== draft.design.backgroundMediaId ? [originalMediaId] : []),
           ...(originalAvatarMediaId && originalAvatarMediaId !== avatarMediaId ? [originalAvatarMediaId] : []),
           ...(originalAvatarCoverMediaId && originalAvatarCoverMediaId !== avatarCoverMediaId ? [originalAvatarCoverMediaId] : []),

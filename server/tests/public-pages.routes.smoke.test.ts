@@ -645,6 +645,26 @@ describe('public pages routes', () => {
     expect(await response.json()).toEqual({ code: 'internal_error' });
   });
 
+  it('limits repeated anonymous booking submissions before calling the service', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 120_000);
+    publicBooking.bookPublicAppointment.mockResolvedValue({ id: 10, status: 'new' });
+    const submit = () => fetch(`${baseUrl}/api/public-pages/by-slug/valid-page/appointments`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ firstName: 'Guest', lastName: 'User', email: 'guest@example.com',
+        specialistId: 2, serviceId: 3, startAt: '2030-08-01T10:00:00.000Z' }),
+    });
+    try {
+      for (let index = 0; index < 10; index += 1) expect((await submit()).status).toBe(201);
+      const limited = await submit();
+      expect(limited.status).toBe(429);
+      expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0);
+      expect(publicBooking.bookPublicAppointment).toHaveBeenCalledTimes(10);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
   it('returns JSON for public lookup and unmatched GET failures', async () => {
     service.getPublishedPublicPage.mockRejectedValue(new Error('database unavailable'));
     const failed = await fetch(`${baseUrl}/api/public-pages/by-slug/valid-page`);

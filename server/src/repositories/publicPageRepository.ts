@@ -1,6 +1,9 @@
 import type { Knex } from 'knex';
-import type { PublicPageDocument } from '../config/publicPageSchemas.js';
+import { z } from 'zod';
+import type { PublicPageDocument, PublishIssue } from '../config/publicPageSchemas.js';
 import { db } from '../db/knex.js';
+import { publicPageMediaUrl } from '../utils/publicPageMediaUrl.js';
+import { publicPageBlocks } from '../utils/publicPageReferences.js';
 
 export type PublicPageStatus = 'draft' | 'published' | 'archived';
 export type PublicPageRecord = {
@@ -24,9 +27,11 @@ export class PublicPageRepositoryError extends Error {
       | 'SLUG_CONFLICT'
       | 'QUOTA_EXCEEDED'
       | 'PAGE_NOT_ARCHIVED'
-      | 'MISSING_SERVICES',
+      | 'MISSING_SERVICES'
+      | 'INVALID_MEDIA',
     public readonly current?: PublicPageRecord,
     public readonly missingServiceIds?: number[],
+    public readonly issues?: PublishIssue[],
   ) {
     super(code);
   }
@@ -72,11 +77,13 @@ async function releaseOtherSlugClaims(
   keepSlug: string,
   column: 'draft_page_id' | 'published_page_id',
 ): Promise<void> {
+  const otherColumn = column === 'draft_page_id' ? 'published_page_id' : 'draft_page_id';
+  await trx('public_page_slug_claims').where(column, pageId).whereNot({ slug: keepSlug })
+    .whereNull(otherColumn).delete();
   await trx('public_page_slug_claims').where(column, pageId).whereNot({ slug: keepSlug }).update({
     [column]: null,
     updated_at: trx.fn.now(),
   });
-  await trx('public_page_slug_claims').whereNull('draft_page_id').whereNull('published_page_id').delete();
 }
 
 function scopedPage(trx: Knex | Knex.Transaction, accountId: number, pageId: string) {
@@ -92,7 +99,7 @@ async function revalidateServiceReferences(
   accountId: number,
   document: PublicPageDocument,
 ): Promise<void> {
-  const serviceIds = [...new Set(document.sections.flatMap((section) => section.blocks)
+  const serviceIds = [...new Set(publicPageBlocks(document)
     .filter((block) => block.type === 'services')
     .flatMap((block) => block.content.serviceIds))];
   if (serviceIds.length === 0) return;
@@ -104,6 +111,24 @@ async function revalidateServiceReferences(
   if (missingServiceIds.length > 0) {
     throw new PublicPageRepositoryError('MISSING_SERVICES', undefined, missingServiceIds);
   }
+}
+
+async function validateMediaReferences(
+  trx: Knex.Transaction,
+  accountId: number,
+  document: PublicPageDocument,
+): Promise<void> {
+  if (document.media.length === 0) return;
+  const validIds = document.media.map(({ id }) => id).filter((id) => z.string().uuid().safeParse(id).success);
+  const rows = await trx('public_page_media').where({ account_id: accountId })
+    .whereIn('id', validIds).select<{ id: string }[]>('id');
+  const ownedIds = new Set(rows.map(({ id }) => id));
+  const issues = document.media.flatMap((media, index): PublishIssue[] => {
+    if (!ownedIds.has(media.id)) return [{ code: 'missing_media', path: `media.${index}.id` }];
+    if (media.url !== publicPageMediaUrl(media.id)) return [{ code: 'invalid_media', path: `media.${index}.url` }];
+    return [];
+  });
+  if (issues.length > 0) throw new PublicPageRepositoryError('INVALID_MEDIA', undefined, undefined, issues);
 }
 
 export async function listPublicPages(
@@ -157,6 +182,7 @@ export async function createPublicPage(input: {
       .whereNot({ status: 'archived' }).count<{ count: string }[]>('* as count').first();
     if (Number(count?.count ?? 0) >= input.quota) throw new PublicPageRepositoryError('QUOTA_EXCEEDED');
     await revalidateServiceReferences(trx, input.accountId, input.document);
+    await validateMediaReferences(trx, input.accountId, input.document);
     await trx('public_pages').insert({
       id: input.document.id,
       account_id: input.accountId,
@@ -183,8 +209,9 @@ export async function savePublicPageDraft(input: {
     if (!page || page.status === 'archived') throw new PublicPageRepositoryError('NOT_FOUND');
     if (page.revision !== input.expectedRevision) throw new PublicPageRepositoryError('REVISION_CONFLICT', page);
     await revalidateServiceReferences(trx, input.accountId, input.document);
-    await claimSlug(trx, input.pageId, input.document.slug, 'draft_page_id');
+    await validateMediaReferences(trx, input.accountId, input.document);
     await releaseOtherSlugClaims(trx, input.pageId, input.document.slug, 'draft_page_id');
+    await claimSlug(trx, input.pageId, input.document.slug, 'draft_page_id');
     await scopedPage(trx, input.accountId, input.pageId).update({
       draft_document: input.document,
       revision: page.revision + 1,
@@ -205,9 +232,14 @@ export async function publishPublicPage(
     const page = await scopedPage(trx, accountId, pageId).forUpdate().first();
     if (!page || page.status === 'archived') throw new PublicPageRepositoryError('NOT_FOUND');
     if (page.revision !== expectedRevision) throw new PublicPageRepositoryError('REVISION_CONFLICT', page);
+    if (page.draft_document.archivedBlocks.length > 0) {
+      await revalidateServiceReferences(trx, accountId, page.draft_document);
+      await validateMediaReferences(trx, accountId, page.draft_document);
+    }
     await revalidateServiceReferences(trx, accountId, publishedDocument);
-    await claimSlug(trx, pageId, publishedDocument.slug, 'published_page_id');
+    await validateMediaReferences(trx, accountId, publishedDocument);
     await releaseOtherSlugClaims(trx, pageId, publishedDocument.slug, 'published_page_id');
+    await claimSlug(trx, pageId, publishedDocument.slug, 'published_page_id');
     await scopedPage(trx, accountId, pageId).update({
       status: 'published',
       published_document: publishedDocument,

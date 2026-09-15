@@ -1,13 +1,11 @@
-import {
-  FormatAlignCenter,
-  FormatAlignJustify,
-  FormatAlignLeft,
-  FormatAlignRight,
-  FormatBold,
-  FormatItalic,
-  FormatStrikethrough,
-  FormatUnderlined,
-} from '@mui/icons-material';
+import FormatAlignCenter from '@mui/icons-material/FormatAlignCenter';
+import FormatAlignJustify from '@mui/icons-material/FormatAlignJustify';
+import FormatAlignLeft from '@mui/icons-material/FormatAlignLeft';
+import FormatAlignRight from '@mui/icons-material/FormatAlignRight';
+import FormatBold from '@mui/icons-material/FormatBold';
+import FormatItalic from '@mui/icons-material/FormatItalic';
+import FormatStrikethrough from '@mui/icons-material/FormatStrikethrough';
+import FormatUnderlined from '@mui/icons-material/FormatUnderlined';
 import { Box, IconButton, MenuItem, Stack, TextField, Tooltip } from '@mui/material';
 import { useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from 'react';
 import type {

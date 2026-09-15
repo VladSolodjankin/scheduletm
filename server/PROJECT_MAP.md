@@ -24,7 +24,7 @@ Express/PostgreSQL API для web и интеграций.
 Правила:
 
 - tenant data всегда ограничиваются `account_id`;
-- `product_owner` — единственная глобальная роль;
+- `product_admin` — единственная глобальная роль;
 - время хранится в UTC, пользовательские timezone — IANA;
 - access/refresh отклоняются для inactive/deleted user и inactive account.
 

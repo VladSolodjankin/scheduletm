@@ -158,10 +158,10 @@ describe('appointment events service unit', () => {
         actor_web_user_id: 102,
         metadata_json: null,
         created_at: new Date('2026-04-19T09:00:00.000Z'),
-        actor_role: 'admin',
+        actor_role: 'owner',
         actor_first_name: null,
         actor_last_name: null,
-        actor_email: 'admin@example.com',
+        actor_email: 'owner@example.com',
       },
     ]);
 
@@ -175,18 +175,18 @@ describe('appointment events service unit', () => {
       {},
     );
 
-    expect(data.appointments[0].events[0].actor.displayName).toBe('admin@example.com');
+    expect(data.appointments[0].events[0].actor.displayName).toBe('owner@example.com');
   });
 
-  it('uses all-account appointment repositories only for product owners', async () => {
+  it('uses all-account appointment repositories only for product admins', async () => {
     listAppointmentEventsByAppointmentIdsMock.mockResolvedValue([]);
 
     await getAppointments(
       {
         id: '100',
         accountId: 1,
-        email: 'product-owner@example.com',
-        role: WebUserRole.ProductOwner,
+        email: 'product-admin@example.com',
+        role: WebUserRole.ProductAdmin,
       } as any,
       {},
     );

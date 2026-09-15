@@ -82,7 +82,7 @@ async function resolveAccountId(actor: User): Promise<number> {
 }
 
 async function resolveSpecialistAccountId(actor: User, specialistId: number): Promise<number | null> {
-  if (actor.role !== WebUserRole.ProductOwner) {
+  if (actor.role !== WebUserRole.ProductAdmin) {
     return actor.accountId;
   }
 
@@ -93,7 +93,7 @@ async function resolveSpecialistAccountId(actor: User, specialistId: number): Pr
 export async function getSpecialistsForActor(actor: User): Promise<SpecialistDto[]> {
   const accountId = await resolveAccountId(actor);
 
-  if (actor.role === WebUserRole.ProductOwner) {
+  if (actor.role === WebUserRole.ProductAdmin) {
     return (await listSpecialistsAllAccounts()).map(mapSpecialist);
   }
 

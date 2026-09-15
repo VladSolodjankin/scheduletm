@@ -15,11 +15,16 @@ const typographyToken = (fontSize: number, fontWeight: number) => ({
 });
 
 export const validPublicPageDocument = {
-  schemaVersion: 2 as const,
+  schemaVersion: 4 as const,
+  timezone: 'UTC',
+  archivedBlocks: [],
   id: 'page-1',
   slug: 'valid-page',
   status: 'draft' as const,
-  profile: { displayName: 'Name', description: '', logoMediaId: null, avatarMediaId: null },
+  profile: {
+    displayName: 'Name', description: '', logoMediaId: null, avatarMediaId: null,
+    avatarPosition: '50% 50%',
+  },
   theme: {
     id: 'minimal',
     name: 'Minimal',
@@ -90,6 +95,7 @@ export const validPublicPageDocument = {
       type: 'text',
       name: '',
       visible: true,
+      schedule: { period: null, weekdays: null },
       content: {
         document: {
           type: 'rich-text-v1' as const,
@@ -102,6 +108,7 @@ export const validPublicPageDocument = {
         },
       },
       design: {
+        linkStyle: null, animation: 'none' as const,
         backgroundColor: null, textColor: null, backgroundMediaId: null, backgroundOverlay: 0,
         backgroundFit: 'cover' as const, backgroundPosition: '50% 50%', paddingTop: 0,
         paddingBottom: 0, borderRadius: null,

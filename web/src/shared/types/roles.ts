@@ -1,7 +1,6 @@
 export enum WebUserRole {
-  ProductOwner = 'product_owner',
+  ProductAdmin = 'product_admin',
   Owner = 'owner',
-  Admin = 'admin',
   Specialist = 'specialist',
   Client = 'client',
 }

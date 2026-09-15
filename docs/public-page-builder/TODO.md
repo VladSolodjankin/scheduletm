@@ -11,6 +11,7 @@
 - [x] Единый env-backed origin для отображения, копирования и открытия публичных URL.
 - [x] Templates, themes, sections, blocks, preview и shared renderer.
 - [x] Autosave, manual save, bounded undo/redo и stale-request protection.
+- [x] Отдельный статус несохранённых изменений и диалог Stay / Discard / Save and leave при переходе из редактора.
 - [x] Publish validation, safe CTA/media URL rules и unknown-block fallback.
 - [x] Публичный booking route, options и appointment creation по текущему slug.
 - [x] Specialist/service query preselection и single-option auto-select.
@@ -23,6 +24,7 @@
 ## Приоритет: production-ready `/:slug`
 
 - [x] Добавить обязательные logo/specialist photo controls с загрузкой, заменой и удалением.
+- [x] Добавить настройку позиции кадра профильной фотографии с единым результатом в preview и public renderer.
 - [x] Добавить custom background image для всей страницы и отдельного блока.
 - [x] Подготовить не менее 10 встроенных фоновых изображений.
 - [x] Добавить настройку page font из ограниченного набора production-safe шрифтов.
@@ -68,13 +70,19 @@
 - [x] Keyboard reorder с доступными объявлениями позиции.
 - [x] Компактная mobile-навигация редактора и полноэкранные панели настроек.
 - [x] Preview карточек шаблонов.
-- [ ] Завершить advisory WCAG contrast guidance: базовые heading/body/link проверки готовы, но перед закрытием нужны Map, first-session-free на service cards и отображение пограничных ratio без округления вверх.
-- [ ] Проверить в браузере contrast на image/gradient backgrounds, rich-text цветах, nested cards, hover/focus состояниях и нетекстовых элементах.
-- [x] Page typography/rounding/link-style presets и section/block typography/spacing/radius/border controls.
+- [ ] Вручную проверить читаемость в браузере на фонах с изображениями и градиентами, в форматированном тексте и вложенных карточках, а также состояния наведения, фокуса и нетекстовые элементы.
+- [x] Page typography/rounding/link-style presets, section typography/spacing/radius/border controls и общие block background/color/padding controls.
+- [x] Перенести Roboto/rem, block subtitle/target/animation/styles из согласованных макетов в приложение.
+- [x] Реализовать архив и расписание видимости блоков с Undo/Redo и обновлением public/preview на границах времени.
+- [x] Применить schema v3 к согласованной тестовой PostgreSQL: batch 13, все 4 draft переведены на v3, опубликованных snapshot на момент миграции нет.
+- [x] Применить forward-only migration schema v4 с `profile.avatarPosition` на целевой PostgreSQL.
+- [ ] Проверить реальное сохранение/публикацию после миграции v3; mock UI и unit tests не заменяют эту проверку.
 - [ ] По browser comparison решить, нужны ли отдельные one-click combined design presets сверх текущих controls.
 - [x] Проверка доступности slug до сохранения и предупреждение о смене опубликованного slug.
 - [x] Focus/scroll к конкретной publish validation error.
 - [x] Runtime tests API repository/autosave concurrency.
+- [ ] Завершить безопасный доступ к статусу гостевой записи и account-scoped выбор Zoom-интеграции.
+- [ ] Закрыть гонку удаления media с записью страницы/услуги и повтор удаления после частичного сбоя S3/БД.
 
 ## Отзывы: отдельный последующий этап
 

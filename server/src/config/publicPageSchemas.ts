@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-export const PUBLIC_PAGE_SCHEMA_VERSION = 2 as const;
+export const PUBLIC_PAGE_SCHEMA_VERSION = 4 as const;
+export function isIanaTimezone(value: string): boolean {
+  try { new Intl.DateTimeFormat('en-US', { timeZone: value }); return true; }
+  catch { return false; }
+}
 export const KNOWN_PUBLIC_PAGE_BLOCKS = new Set([
   'avatar', 'button', 'links', 'text', 'image', 'gallery', 'services',
   'contacts', 'social-button', 'map', 'divider', 'faq',
@@ -64,6 +68,10 @@ const richTextDocumentSchema = z.object({
 }).strict();
 
 const nullableString = z.string().nullable();
+const percentagePositionSchema = z.string().regex(
+  /^(?:0|[1-9]\d?|100)% (?:0|[1-9]\d?|100)%$/,
+  'invalid_percentage_position',
+);
 const typographyStyleSchema = z.object({
   fontFamily: z.string().min(1),
   fontSize: z.number().min(8).max(96),
@@ -104,6 +112,8 @@ const themeStyleDefaultsSchema = z.object({
   linkStyle: linkStyleSchema,
 }).strict();
 const blockDesignSchema = z.object({
+  linkStyle: linkStyleOverrideSchema.nullable(),
+  animation: z.enum(['none', 'pulse', 'lift']),
   backgroundColor: nullableString,
   textColor: nullableString,
   backgroundMediaId: nullableString,
@@ -115,6 +125,13 @@ const blockDesignSchema = z.object({
   borderRadius: z.number().min(0).max(100).nullable(),
 }).strict();
 const blockFields = {
+  schedule: z.object({
+    period: z.object({
+      startAt: z.iso.datetime(), endAt: z.iso.datetime(),
+    }).strict().refine((period) => Date.parse(period.startAt) < Date.parse(period.endAt), 'invalid_schedule_period').nullable(),
+    weekdays: z.array(z.number().int().min(1).max(7)).min(1).max(7)
+      .refine((days) => new Set(days).size === days.length, 'duplicate_weekday').nullable(),
+  }).strict(),
   id: z.string().min(1),
   name: z.string(),
   visible: z.boolean(),
@@ -134,9 +151,8 @@ const blockSchema = z.discriminatedUnion('type', [
   z.object({ ...blockFields, type: z.literal('button'), content: z.object({
     label: z.string(),
     icon: z.enum(['link', 'phone', 'email', 'message']),
-    color: z.string(),
-    textColor: z.string(),
-    radius: z.number().min(0).max(100),
+    subtitle: z.string(),
+    openInNewTab: z.boolean(),
     action: ctaActionSchema,
   }).strict() }).strict(),
   z.object({ ...blockFields, type: z.literal('links'), content: z.object({
@@ -291,6 +307,8 @@ const themeSchema = z.object({
 }).strict();
 
 export const publicPageDocumentSchema = z.object({
+  timezone: z.string().min(1).max(64).refine(isIanaTimezone),
+  archivedBlocks: z.array(z.object({ block: blockSchema, sourceSectionId: z.string().min(1) }).strict()),
   schemaVersion: z.literal(PUBLIC_PAGE_SCHEMA_VERSION),
   id: z.string().min(1).max(128),
   slug: z.string(),
@@ -300,6 +318,7 @@ export const publicPageDocumentSchema = z.object({
     description: z.string(),
     logoMediaId: nullableString,
     avatarMediaId: nullableString,
+    avatarPosition: percentagePositionSchema,
   }).strict(),
   theme: themeSchema,
   sections: z.array(sectionSchema),
@@ -314,10 +333,21 @@ export const publicPageDocumentSchema = z.object({
 }).strict().superRefine((document, ctx) => {
   const ids = [document.id, ...document.sections.flatMap((section) => [
     section.id, ...section.blocks.map((block) => block.id),
-  ]), ...document.media.map((media) => media.id)];
+  ]), ...document.archivedBlocks.map(({ block }) => block.id), ...document.media.map((media) => media.id)];
   if (new Set(ids).size !== ids.length) {
     ctx.addIssue({ code: 'custom', message: 'duplicate_id' });
   }
+  const mediaIds = new Set(document.media.map(({ id }) => id));
+  const visitArchived = (value: unknown, path: PropertyKey[]) => {
+    if (Array.isArray(value)) value.forEach((item, index) => visitArchived(item, [...path, index]));
+    else if (typeof value === 'object' && value !== null) Object.entries(value).forEach(([key, item]) => {
+      if (/mediaId$/i.test(key) && item !== null && (typeof item !== 'string' || !mediaIds.has(item))) {
+        ctx.addIssue({ code: 'custom', path: [...path, key], message: 'missing_media' });
+      }
+      visitArchived(item, [...path, key]);
+    });
+  };
+  visitArchived(document.archivedBlocks, ['archivedBlocks']);
   const socialPlatforms = new Set<string>();
   document.sections.forEach((section, sectionIndex) => {
     section.blocks.forEach((block, blockIndex) => {
@@ -349,15 +379,6 @@ export const publicPageRevisionSchema = z.object({
 export const publicPageListStatusSchema = z.enum(['active', 'draft', 'published', 'archived', 'all']);
 
 const optionalContact = z.string().trim().max(320).optional();
-const isIanaTimezone = (value: string): boolean => {
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 export const publicBookingSchema = z.object({
   firstName: z.string().trim().min(1).max(100),
   lastName: z.string().trim().min(1).max(100),

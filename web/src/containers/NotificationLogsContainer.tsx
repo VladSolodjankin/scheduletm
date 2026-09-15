@@ -51,7 +51,7 @@ export function NotificationLogsContainer() {
     userId: '',
   });
 
-  const canViewLogs = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin || user?.role === WebUserRole.Specialist;
+  const canViewLogs = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Specialist;
 
   const loadLogs = useCallback(async () => {
     if (!accessToken || !canViewLogs) {

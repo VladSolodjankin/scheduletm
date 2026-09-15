@@ -1,5 +1,6 @@
-import { Box, Container, Typography } from '@mui/material';
-import { useRef, type ReactNode } from 'react';
+import { Box, Chip, Container } from '@mui/material';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { isBlockScheduledVisible, nextScheduleVisibilityChange } from '../../features/public-page-builder/model/schedule';
 import type {
   PageSection,
   PageBlock,
@@ -39,6 +40,7 @@ const columnsByLayout: Record<SectionLayout, string> = {
 const SECTION_HORIZONTAL_SPACING_PX = 14;
 
 export type PublicPageEditorRenderProps = {
+  scheduleStatusLabel?: (visible: boolean) => string;
   selectedBlockId: string | null;
   onSelectBlock: (sectionId: string, blockId: string) => void;
   renderBlockActions: (section: PageSection, blockIndex: number) => ReactNode;
@@ -49,7 +51,7 @@ export type PublicPageEditorRenderProps = {
   renderSectionResizeHandle?: (section: PageSection, sectionIndex: number) => ReactNode;
   onDropItem: (payload: BuilderDragPayload, destination: BuilderDropDestination) => void;
 };
-function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, publicPageSlug, editor }: { section: PageSection; sectionIndex: number; mediaUrlFor: (id: string) => string | undefined; theme: PublicPageDocument['theme']; services: readonly PublicBookingService[]; publicPageSlug: string; editor?: PublicPageEditorRenderProps }) {
+function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, publicPageSlug, timezone, now, editor }: { section: PageSection; sectionIndex: number; mediaUrlFor: (id: string) => string | undefined; theme: PublicPageDocument['theme']; services: readonly PublicBookingService[]; publicPageSlug: string; timezone: string; now: number; editor?: PublicPageEditorRenderProps }) {
   const blockContainerRef = useRef<HTMLDivElement>(null);
   useSmoothDndContainer(blockContainerRef, {
     behaviour: 'move',
@@ -74,6 +76,7 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
   const serviceIds = new Set(services.map(({ id }) => id));
   const isRenderableBlock = (block: PageBlock) => {
     if (!block.visible) {return false;}
+    if (!isBlockScheduledVisible(block.schedule, timezone, now)) {return false;}
     if (block.type !== 'services') {return true;}
     return Array.isArray(block.content.serviceIds) && block.content.serviceIds.some((id) => typeof id === 'number' && serviceIds.has(id));
   };
@@ -95,15 +98,16 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
   const variantBackground = section.design.variant === 'primary' ? themeColors.primary : section.design.variant === 'secondary' ? themeColors.surface : 'transparent';
   const heading = isOff ? theme.styleDefaults.headingStyle : { ...theme.styleDefaults.headingStyle, ...Object.fromEntries(Object.entries(section.design.headingStyle).filter(([, value]) => value !== null)) };
   const text = isOff ? theme.styleDefaults.textStyle : { ...theme.styleDefaults.textStyle, ...Object.fromEntries(Object.entries(section.design.textStyle).filter(([, value]) => value !== null)) };
+  const headingSize = !isOff && section.design.headingStyle.fontSize !== null ? `${section.design.headingStyle.fontSize / 16}rem` : null;
   const blockThemeSx = {
     ...resolvePublicPageThemeVariables(theme, section),
     color: 'var(--page-section-text)',
     fontFamily: theme.fontFamily,
     '& h1, & h2, & h3, & h4, & h5, & h6': { fontFamily: heading.fontFamily, fontWeight: heading.fontWeight, fontStyle: heading.fontStyle, color: 'var(--theme-heading-color)' },
-    '& h1': { fontSize: isOff ? 'var(--theme-h1-fontsize)' : section.design.headingStyle.fontSize ?? 'var(--theme-h1-fontsize)', lineHeight: 'var(--theme-h1-lineheight)', letterSpacing: 'var(--theme-h1-letterspacing)' },
-    '& h2, & h4, & h5, & h6': { fontSize: isOff ? 'var(--theme-h2-fontsize)' : section.design.headingStyle.fontSize ?? 'var(--theme-h2-fontsize)', lineHeight: 'var(--theme-h2-lineheight)', letterSpacing: 'var(--theme-h2-letterspacing)' },
-    '& h3': { fontSize: isOff ? 'var(--theme-h3-fontsize)' : section.design.headingStyle.fontSize ?? 'var(--theme-h3-fontsize)', lineHeight: 'var(--theme-h3-lineheight)', letterSpacing: 'var(--theme-h3-letterspacing)' },
-    '& p': { fontFamily: text.fontFamily, fontSize: `${text.fontSize}px`, fontWeight: text.fontWeight, fontStyle: text.fontStyle, color: 'var(--theme-text-color)', lineHeight: 'var(--theme-text-md-lineheight)', letterSpacing: 'var(--theme-text-md-letterspacing)' },
+    '& h1': { fontSize: headingSize ?? 'var(--theme-h1-fontsize)', lineHeight: 'var(--theme-h1-lineheight)', letterSpacing: 'var(--theme-h1-letterspacing)' },
+    '& h2, & h4, & h5, & h6': { fontSize: headingSize ?? 'var(--theme-h2-fontsize)', lineHeight: 'var(--theme-h2-lineheight)', letterSpacing: 'var(--theme-h2-letterspacing)' },
+    '& h3': { fontSize: headingSize ?? 'var(--theme-h3-fontsize)', lineHeight: 'var(--theme-h3-lineheight)', letterSpacing: 'var(--theme-h3-letterspacing)' },
+    '& p:not([data-public-page-richtext-size])': { fontFamily: text.fontFamily, fontSize: `${text.fontSize / 16}rem`, fontWeight: text.fontWeight, fontStyle: text.fontStyle, color: 'var(--theme-text-color)', lineHeight: 'var(--theme-text-md-lineheight)', letterSpacing: 'var(--theme-text-md-letterspacing)' },
   } as const;
   const leadingAvatarSectionRadius = (block: PageBlock, blockIndex: number) => (
     !isOff && block.type === 'avatar' && blockIndex === 0 ? sectionRadius : '0px'
@@ -125,6 +129,7 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
       '&:hover .public-page-block-actions, &:focus-within .public-page-block-actions': { opacity: 1, pointerEvents: 'auto' },
     }}
   >
+    {editor?.scheduleStatusLabel && (block.schedule.period || block.schedule.weekdays) ? <Chip size="small" sx={{ mb: 0.5 }} label={editor.scheduleStatusLabel(isBlockScheduledVisible(block.schedule, timezone, now))} /> : null}
     <PublicPageStyleBoundary>
       <BlockRenderer block={block} mediaUrlFor={mediaUrlFor} editor={Boolean(editor)} themeBorderRadius={theme.styleDefaults.blockBorderRadius}
         roundingStyle={theme.roundingStyle} services={services} publicPageSlug={publicPageSlug} />
@@ -214,6 +219,25 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
 type PublicPageRendererProps = { document: PublicPageDocument; mediaUrls?: ReadonlyMap<string, string>; services?: readonly PublicBookingService[]; editor?: PublicPageEditorRenderProps };
 
 function PublicPageRendererContent({ document, mediaUrls, services = [], editor }: PublicPageRendererProps) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {if (active) {setNow(Date.now());}});
+    return () => {active = false;};
+  }, [document]);
+  useEffect(() => {
+    const current = Date.now();
+    const boundary = nextScheduleVisibilityChange(document, current);
+    const refresh = () => setNow(Date.now());
+    const timeout = boundary === null ? undefined : window.setTimeout(refresh, Math.min(2_147_483_647, Math.max(1, boundary - current + 1)));
+    window.addEventListener('focus', refresh);
+    window.document.addEventListener('visibilitychange', refresh);
+    return () => {
+      if (timeout !== undefined) {window.clearTimeout(timeout);}
+      window.removeEventListener('focus', refresh);
+      window.document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [document, now]);
   const mainContainerRef = useRef<HTMLDivElement>(null);
   useSmoothDndContainer(mainContainerRef, {
     behaviour: 'move', groupName: PUBLIC_PAGE_DND_GROUP, orientation: 'vertical',
@@ -224,7 +248,7 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], editor 
       const child = mainContainerRef.current!.children[index] as HTMLElement;
       return { type: 'section', sectionId: child.dataset.sectionId! };
     },
-    shouldAcceptDrop: (_source, payload) => isBuilderDragPayload(payload) && payload.type === 'section',
+    shouldAcceptDrop: (_source, payload) => isBuilderDragPayload(payload),
     onDrop: ({ addedIndex, payload }) => {
       if (addedIndex !== null && isBuilderDragPayload(payload)) {
         editor?.onDropItem(payload, { type: 'main', index: addedIndex });
@@ -281,7 +305,7 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], editor 
           boxSizing: editor ? 'border-box' : undefined,
         }}
       >
-        {(document.profile.logoMediaId || document.profile.avatarMediaId || document.profile.displayName || document.profile.description) ? (
+        {(document.profile.logoMediaId || document.profile.avatarMediaId) ? (
           <PublicPageStyleBoundary>
             <Box component="header" sx={{ textAlign: 'center', display: 'grid', justifyItems: 'center', gap: 1.5, minWidth: 0, width: '100%', maxWidth: 320, mx: 'auto' }}>
               {document.profile.logoMediaId ? <Box component="img" src={mediaUrlFor(document.profile.logoMediaId)}
@@ -289,9 +313,7 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], editor 
                 sx={{ maxWidth: 180, maxHeight: 64, objectFit: 'contain' }} /> : null}
               {document.profile.avatarMediaId ? <Box component="img" src={mediaUrlFor(document.profile.avatarMediaId)}
                 alt={mediaFor(document.profile.avatarMediaId)?.alt || document.profile.displayName}
-                sx={{ width: 112, height: 112, borderRadius: '50%', objectFit: 'cover' }} /> : null}
-              {document.profile.displayName ? <Typography component="h1" variant="h4" sx={{ maxWidth: '100%', minWidth: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{document.profile.displayName}</Typography> : null}
-              {document.profile.description ? <Typography sx={{ maxWidth: '100%', minWidth: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{document.profile.description}</Typography> : null}
+                sx={{ width: 112, height: 112, borderRadius: '50%', objectFit: 'cover', objectPosition: document.profile.avatarPosition }} /> : null}
             </Box>
           </PublicPageStyleBoundary>
         ) : null}
@@ -303,12 +325,12 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], editor 
                 <Box className="public-page-dnd-section-shell">
                   {editor.renderSectionDragHandle?.(section, sectionIndex, {})}
                   <SectionRenderer section={section} sectionIndex={sectionIndex} mediaUrlFor={mediaUrlFor} theme={document.theme}
-                    services={services} publicPageSlug={document.slug} editor={editor} />
+                    services={services} publicPageSlug={document.slug} timezone={document.timezone} now={now} editor={editor} />
                 </Box>
               </Box>
             ))}
           </Box> : document.sections.map((section, sectionIndex) => <SectionRenderer key={section.id} section={section} sectionIndex={sectionIndex}
-            mediaUrlFor={mediaUrlFor} theme={document.theme} services={services} publicPageSlug={document.slug} />)}
+            mediaUrlFor={mediaUrlFor} theme={document.theme} services={services} publicPageSlug={document.slug} timezone={document.timezone} now={now} />)}
       </Container>
     </Box>
   );

@@ -21,7 +21,7 @@ export function ErrorLogsContainer() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const canViewLogs = user?.role === WebUserRole.ProductOwner;
+  const canViewLogs = user?.role === WebUserRole.ProductAdmin;
 
   const loadLogs = useCallback(async () => {
     if (!accessToken || !canViewLogs) {

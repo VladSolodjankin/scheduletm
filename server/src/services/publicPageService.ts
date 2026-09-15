@@ -1,5 +1,6 @@
 import {
   isValidPublicPageSlug,
+  isIanaTimezone,
   normalizePublicPageSlug,
   PUBLIC_PAGE_SCHEMA_VERSION,
   publicPageDocumentSchema,
@@ -23,6 +24,8 @@ import {
   savePublicPageDraft,
 } from '../repositories/publicPageRepository.js';
 import { listServices } from '../repositories/serviceRepository.js';
+import { findAccountSettingsByAccountId } from '../repositories/accountSettingsRepository.js';
+import { publicPageBlocks, publicSnapshotWithoutArchive } from '../utils/publicPageReferences.js';
 
 const PUBLIC_PAGE_ACCOUNT_QUOTA = 10;
 
@@ -91,7 +94,7 @@ async function validateOwnedServiceReferences(
   accountId: number,
   document: PublicPageDocument,
 ): Promise<PublishIssue[]> {
-  const blocks = document.sections.flatMap((section) => section.blocks)
+  const blocks = publicPageBlocks(document)
     .filter((block) => block.type === 'services');
   const requestedIds = [...new Set(blocks.flatMap((block) => block.content.serviceIds))];
   if (requestedIds.length === 0) return [];
@@ -103,7 +106,7 @@ function missingServiceReferenceIssues(
   document: PublicPageDocument,
   missingServiceIds: ReadonlySet<number>,
 ): PublishIssue[] {
-  return document.sections.flatMap((section) => section.blocks)
+  return publicPageBlocks(document)
     .filter((block) => block.type === 'services')
     .flatMap((block) => block.content.serviceIds.some((id) => missingServiceIds.has(id))
     ? [{
@@ -142,6 +145,9 @@ export async function getPublicPageSlugAvailability(
 
 export async function createPublicPageForAccount(accountId: number, input: unknown): Promise<PublicPageDto> {
   const parsed = parseDraftDocument(input);
+  const timezone = (await findAccountSettingsByAccountId(accountId))?.timezone.trim() || 'UTC';
+  if (!isIanaTimezone(timezone)) throw new PublicPageServiceError('INVALID_DOCUMENT');
+  parsed.timezone = timezone;
   if ((await validateOwnedServiceReferences(accountId, parsed)).length > 0) {
     throw new PublicPageServiceError('INVALID_DOCUMENT');
   }
@@ -150,7 +156,7 @@ export async function createPublicPageForAccount(accountId: number, input: unkno
   try {
     return toPublicPageDto(await createPublicPage({ accountId, document, quota: PUBLIC_PAGE_ACCOUNT_QUOTA }));
   } catch (error) {
-    if (error instanceof PublicPageRepositoryError && error.code === 'MISSING_SERVICES') {
+    if (error instanceof PublicPageRepositoryError && (error.code === 'MISSING_SERVICES' || error.code === 'INVALID_MEDIA')) {
       throw new PublicPageServiceError('INVALID_DOCUMENT');
     }
     throw error;
@@ -170,11 +176,12 @@ export async function putPublicPageDraft(input: {
   const current = await findPublicPage(input.accountId, input.pageId);
   if (!current || current.status === 'archived') throw new PublicPageRepositoryError('NOT_FOUND');
   if (current.revision !== input.expectedRevision) throw new PublicPageRepositoryError('REVISION_CONFLICT', current);
+  parsed.timezone = current.draft_document.timezone;
   const document = serverDocument(parsed, 'draft', iso(current.created_at), new Date().toISOString());
   try {
     return toPublicPageDto(await savePublicPageDraft({ ...input, document }));
   } catch (error) {
-    if (error instanceof PublicPageRepositoryError && error.code === 'MISSING_SERVICES') {
+    if (error instanceof PublicPageRepositoryError && (error.code === 'MISSING_SERVICES' || error.code === 'INVALID_MEDIA')) {
       throw new PublicPageServiceError('INVALID_DOCUMENT');
     }
     throw error;
@@ -191,20 +198,23 @@ export async function publishPublicPageForAccount(
   if (page.revision !== expectedRevision) throw new PublicPageRepositoryError('REVISION_CONFLICT', page);
   const parsed = parseDocument(page.draft_document, pageId);
   const now = new Date().toISOString();
-  const published = serverDocument(parsed, 'published', iso(page.created_at), now);
+  const published = publicSnapshotWithoutArchive(serverDocument(parsed, 'published', iso(page.created_at), now));
   const issues = [
     ...validatePublicPageForPublish(published),
-    ...await validateOwnedServiceReferences(accountId, published),
+    ...await validateOwnedServiceReferences(accountId, parsed),
   ];
   if (issues.length > 0) throw new PublicPageServiceError('PUBLISH_VALIDATION_FAILED', issues);
   try {
     return toPublicPageDto(await publishPublicPage(accountId, pageId, expectedRevision, published));
   } catch (error) {
+    if (error instanceof PublicPageRepositoryError && error.code === 'INVALID_MEDIA') {
+      throw new PublicPageServiceError('PUBLISH_VALIDATION_FAILED', error.issues);
+    }
     if (error instanceof PublicPageRepositoryError && error.code === 'MISSING_SERVICES') {
       const missingIds = new Set(error.missingServiceIds ?? []);
       throw new PublicPageServiceError(
         'PUBLISH_VALIDATION_FAILED',
-        missingServiceReferenceIssues(published, missingIds),
+        missingServiceReferenceIssues(parsed, missingIds),
       );
     }
     throw error;

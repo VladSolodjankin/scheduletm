@@ -15,6 +15,12 @@ function containsSocialPlatform(document: PublicPageDocument, platform: SocialPl
   return document.sections.some((section) => section.blocks.some((block) => block.id !== exceptBlockId && socialPlatform(block) === platform));
 }
 
+export function archiveRestoreConflict(document: PublicPageDocument, blockId: string): 'social-platform' | null {
+  const entry = document.archivedBlocks.find(({ block }) => block.id === blockId);
+  const platform = entry ? socialPlatform(entry.block) : null;
+  return platform && containsSocialPlatform(document, platform) ? 'social-platform' : null;
+}
+
 function cloneDocument(document: PublicPageDocument): PublicPageDocument {
   return structuredClone(document);
 }
@@ -430,6 +436,23 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           design: { ...block.design, ...action.changes },
         })),
       });
+    case 'block/archive': {
+      const block = state.document.sections.find((section) => section.id === action.sectionId)?.blocks.find((item) => item.id === action.blockId);
+      if (!block) {return state;}
+      const sections = removeBlockFromSource(state.document.sections, action.sectionId, action.blockId)
+        .filter((section) => section.id !== action.sectionId || section.blocks.length > 0);
+      return commit(state, { ...state.document, sections, archivedBlocks: [...state.document.archivedBlocks, { block: structuredClone(block), sourceSectionId: action.sectionId }] });
+    }
+    case 'block/restore': {
+      const entry = state.document.archivedBlocks.find(({ block }) => block.id === action.blockId);
+      if (!entry || archiveRestoreConflict(state.document, action.blockId)) {return state;}
+      const source = state.document.sections.find((section) => section.id === entry.sourceSectionId);
+      const restored = structuredClone(entry.block);
+      const sections = source
+        ? state.document.sections.map((section) => section.id === source.id ? { ...section, blocks: [...section.blocks, restored] } : section)
+        : insertStandaloneAt(state.document.sections, createEmptyPageSection('off'), [restored], state.document.sections.length).sections;
+      return commit(state, { ...state.document, sections, archivedBlocks: state.document.archivedBlocks.filter(({ block }) => block.id !== action.blockId) });
+    }
     case 'block/remove':
       {
         const sections = removeBlockFromSource(state.document.sections, action.sectionId, action.blockId);
@@ -492,11 +515,22 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         if (sections.every((section, index) => section.id === state.document.sections[index]?.id)) {return state;}
         return commit(state, { ...state.document, sections });
       }
-      if (action.to.type !== 'section') {return state;}
       const blockId = action.item.blockId;
       const source = state.document.sections.find((section) => section.blocks.some((block) => block.id === blockId));
       const block = source?.blocks.find((candidate) => candidate.id === blockId);
       if (!block || !source) {return state;}
+      if (action.to.type === 'main') {
+        if (!Number.isInteger(action.to.index)) {return state;}
+        const sourceIndex = state.document.sections.indexOf(source);
+        const boundaryIndex = clampIndex(action.to.index, state.document.sections.length);
+        const sections = removeBlockAndPruneSource(state.document.sections, source.id, block.id);
+        const insertionIndex = boundaryIndex - (source.blocks.length === 1 && sourceIndex < boundaryIndex ? 1 : 0);
+        const standalone = createEmptyPageSection('off');
+        standalone.id = splitSectionId(state.document.sections, source.id, block.id);
+        const inserted = insertStandaloneAt(sections, standalone, [block], insertionIndex);
+        const next = commit(state, { ...state.document, sections: inserted.sections });
+        return { ...next, selection: { sectionId: inserted.destinationId, blockId: block.id } };
+      }
       const document = projectBlockDrop(state.document, block, source.id, action.to);
       if (!document || document === state.document) {return state;}
       const next = commit(state, document);

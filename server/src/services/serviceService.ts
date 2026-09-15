@@ -1,5 +1,5 @@
 import type { User } from '../types/domain.js';
-import { env } from '../config/env.js';
+import { publicPageMediaUrl } from '../utils/publicPageMediaUrl.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { canManageServices } from '../policies/rolePermissions.js';
 import * as repository from '../repositories/serviceRepository.js';
@@ -25,11 +25,7 @@ type ServicePayload = {
 };
 type AssignmentPayload = { priceOverride?: number | null; durationOverrideMinutes?: number | null; isActive?: boolean };
 
-export const publicMediaUrl = (mediaId: string) => {
-  const url = new URL(`/api/public-pages/media/${mediaId}/content`, env.API_BASE_URL);
-  url.protocol = 'https:';
-  return url.toString();
-};
+export const publicMediaUrl = publicPageMediaUrl;
 const toReferenceImpact = (impact: repository.ServiceDeleteImpact): ServiceReferenceImpact => ({
   appointments: impact.appointmentCount,
   appointmentGroups: impact.appointmentGroupCount,

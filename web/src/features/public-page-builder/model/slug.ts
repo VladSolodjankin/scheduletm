@@ -33,7 +33,3 @@ export function validateSlug(value: string): SlugValidationCode | null {
   if (!SLUG_PATTERN.test(slug)) {return 'invalid_format';}
   return RESERVED_PUBLIC_PAGE_SLUGS.has(slug) ? 'reserved' : null;
 }
-
-export function isValidSlug(value: string): boolean {
-  return validateSlug(value) === null;
-}

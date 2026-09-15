@@ -39,10 +39,10 @@ const actor = (role: WebUserRole, accountId = 7): User => ({
 const record = {
   id: 2,
   account_id: 7,
-  email: 'admin@example.com',
-  role: WebUserRole.Admin,
+  email: 'owner@example.com',
+  role: WebUserRole.Owner,
   first_name: 'Account',
-  last_name: 'Admin',
+  last_name: 'Owner',
   phone: null,
   telegram_username: null,
   is_active: true,
@@ -62,7 +62,7 @@ describe('managed-user list scope', () => {
     cancelDeletionMock.mockReset().mockResolvedValue(undefined);
   });
 
-  it.each([WebUserRole.Owner, WebUserRole.Admin])(
+  it.each([WebUserRole.Owner])(
     'keeps %s within its own account',
     async (role) => {
       await expect(listManagedUsers(actor(role))).resolves.toHaveLength(1);
@@ -72,23 +72,23 @@ describe('managed-user list scope', () => {
     },
   );
 
-  it('gives product owners the global user directory', async () => {
-    await expect(listManagedUsers(actor(WebUserRole.ProductOwner))).resolves.toHaveLength(1);
+  it('gives product admins the global user directory', async () => {
+    await expect(listManagedUsers(actor(WebUserRole.ProductAdmin))).resolves.toHaveLength(1);
 
     expect(listAllAccountsMock).toHaveBeenCalledOnce();
     expect(listByAccountMock).not.toHaveBeenCalled();
   });
 
-  it('lets product owners update a user in the user account, not the actor account', async () => {
+  it('lets product admins update a user in the user account, not the actor account', async () => {
     const foreignRecord = { ...record, account_id: 42 };
     findByIdAnyAccountMock.mockResolvedValue(foreignRecord);
     findByIdMock.mockResolvedValue(foreignRecord);
 
-    await expect(updateManagedUser(actor(WebUserRole.ProductOwner), foreignRecord.id, {
+    await expect(updateManagedUser(actor(WebUserRole.ProductAdmin), foreignRecord.id, {
       email: foreignRecord.email,
-      role: 'admin',
+      role: 'specialist',
       firstName: 'Updated',
-      lastName: 'Admin',
+      lastName: 'Owner',
     })).resolves.toMatchObject({ id: foreignRecord.id, firstName: 'Account' });
 
     expect(findByIdAnyAccountMock).toHaveBeenCalledWith(foreignRecord.id);

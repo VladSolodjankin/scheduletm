@@ -14,6 +14,7 @@ const repository = vi.hoisted(() => ({
   deletePublicPage: vi.fn(),
 }));
 const serviceRepository = vi.hoisted(() => ({ listServices: vi.fn() }));
+const settingsRepository = vi.hoisted(() => ({ findAccountSettingsByAccountId: vi.fn() }));
 
 vi.mock('../src/repositories/publicPageRepository.js', async () => {
   const actual = await vi.importActual<typeof import('../src/repositories/publicPageRepository.js')>(
@@ -22,6 +23,7 @@ vi.mock('../src/repositories/publicPageRepository.js', async () => {
   return { ...actual, ...repository };
 });
 vi.mock('../src/repositories/serviceRepository.js', () => serviceRepository);
+vi.mock('../src/repositories/accountSettingsRepository.js', () => settingsRepository);
 
 import { PublicPageRepositoryError } from '../src/repositories/publicPageRepository.js';
 
@@ -39,6 +41,7 @@ describe('public page service', () => {
   beforeEach(() => {
     Object.values(repository).forEach((mock) => mock.mockReset());
     serviceRepository.listServices.mockReset();
+    settingsRepository.findAccountSettingsByAccountId.mockReset().mockResolvedValue(null);
   });
 
   const record = (overrides: Record<string, unknown> = {}) => ({
@@ -91,6 +94,55 @@ describe('public page service', () => {
     }));
     expect(result.status).toBe('draft');
     expect(serviceRepository.listServices).not.toHaveBeenCalled();
+  });
+
+  it.each([['Europe/Samara', 'Europe/Samara'], ['', 'UTC']])('initializes page timezone from account settings %s', async (stored, expected) => {
+    settingsRepository.findAccountSettingsByAccountId.mockResolvedValue({ timezone: stored });
+    repository.createPublicPage.mockImplementation(async (input) => record({ draft_document: input.document }));
+    const result = await createPublicPageForAccount(9, { ...validPublicPageDocument, timezone: 'America/New_York' });
+    expect(result.draft.timezone).toBe(expected);
+    expect(settingsRepository.findAccountSettingsByAccountId).toHaveBeenCalledWith(9);
+  });
+
+  it('rejects invalid account timezone without creating a page', async () => {
+    settingsRepository.findAccountSettingsByAccountId.mockResolvedValue({ timezone: 'Invalid/Zone' });
+    await expect(createPublicPageForAccount(9, validPublicPageDocument)).rejects.toMatchObject({ code: 'INVALID_DOCUMENT' });
+    expect(repository.createPublicPage).not.toHaveBeenCalled();
+  });
+
+  it('preserves the established page timezone on draft saves', async () => {
+    repository.findPublicPage.mockResolvedValue(record({ draft_document: { ...validPublicPageDocument, timezone: 'Europe/Samara' } }));
+    repository.savePublicPageDraft.mockImplementation(async (input) => record({ draft_document: input.document }));
+    const result = await putPublicPageDraft({ accountId: 9, pageId: 'page-1', expectedRevision: 3, document: validPublicPageDocument });
+    expect(result.draft.timezone).toBe('Europe/Samara');
+  });
+
+  it('publishes without archived content while preserving the draft archive', async () => {
+    const draft = { ...validPublicPageDocument, archivedBlocks: [{ sourceSectionId: 'section-1', block: {
+      ...validPublicPageDocument.sections[0]!.blocks[0], id: 'archive-block',
+    } }] };
+    repository.findPublicPage.mockResolvedValue(record({ draft_document: draft }));
+    repository.publishPublicPage.mockImplementation(async (_accountId, _pageId, _revision, published) => record({ draft_document: draft, published_document: published }));
+    const result = await publishPublicPageForAccount(9, 'page-1', 3);
+    expect(result.published?.archivedBlocks).toEqual([]);
+    expect(result.draft.archivedBlocks).toHaveLength(1);
+  });
+
+  it.each(['create', 'save', 'publish'] as const)('maps transactional invalid media to the existing %s validation response', async (operation) => {
+    repository.findPublicPage.mockResolvedValue(record());
+    const issues = [{ code: 'missing_media', path: 'media.0.id' }];
+    const error = new PublicPageRepositoryError('INVALID_MEDIA', undefined, undefined, issues);
+    repository.createPublicPage.mockRejectedValue(error);
+    repository.savePublicPageDraft.mockRejectedValue(error);
+    repository.publishPublicPage.mockRejectedValue(error);
+    const run = operation === 'create'
+      ? createPublicPageForAccount(9, validPublicPageDocument)
+      : operation === 'save'
+        ? putPublicPageDraft({ accountId: 9, pageId: 'page-1', document: validPublicPageDocument, expectedRevision: 3 })
+        : publishPublicPageForAccount(9, 'page-1', 3);
+    await expect(run).rejects.toMatchObject(operation === 'publish'
+      ? { code: 'PUBLISH_VALIDATION_FAILED', issues }
+      : { code: 'INVALID_DOCUMENT' });
   });
 
   it('accepts account-owned service IDs on create', async () => {

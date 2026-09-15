@@ -61,9 +61,8 @@ export function ServicesContainer() {
   const openedIntentRef = useRef('');
   const mediaPreviewUrlsRef = useRef<Map<string, string>>(new Map());
 
-  const canManage = user?.role === WebUserRole.ProductOwner
-    || user?.role === WebUserRole.Owner
-    || user?.role === WebUserRole.Admin;
+  const canManage = user?.role === WebUserRole.ProductAdmin
+    || user?.role === WebUserRole.Owner;
   const canAccess = canManage || user?.role === WebUserRole.Specialist;
 
   const resolvedServices = useMemo(() => services.map((service) => {

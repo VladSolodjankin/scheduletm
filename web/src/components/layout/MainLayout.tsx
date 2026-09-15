@@ -54,9 +54,6 @@ export function MainLayout() {
     if (user?.role === WebUserRole.Owner) {
       return t('appointments.pageSubtitleOwner');
     }
-    if (user?.role === WebUserRole.Admin) {
-      return t('appointments.pageSubtitleAdmin');
-    }
     if (user?.role === WebUserRole.Specialist) {
       return t('appointments.pageSubtitleSpecialist');
     }
@@ -68,22 +65,22 @@ export function MainLayout() {
 
   const menuItems = [
     { to: '/appointments', label: appointmentsMenuLabel, icon: 'calendar' as const },
-    ...(user?.role === WebUserRole.ProductOwner || user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin
+    ...(user?.role === WebUserRole.ProductAdmin || user?.role === WebUserRole.Owner
       ? [
         { to: '/specialists', label: t('common.specialists'), icon: 'specialists' as const },
         { to: '/public-pages', label: t('publicPageBuilder.pages'), icon: 'publicPages' as const },
       ]
       : []),
-    ...(user?.role === WebUserRole.ProductOwner || user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin || user?.role === WebUserRole.Specialist
+    ...(user?.role === WebUserRole.ProductAdmin || user?.role === WebUserRole.Owner || user?.role === WebUserRole.Specialist
       ? [{ to: '/services', label: t('common.services'), icon: 'calendar' as const }]
       : []),
-    ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin || user?.role === WebUserRole.Specialist
+    ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Specialist
       ? [{ to: '/users', label: t('common.users'), icon: 'users' as const }]
       : []),
-    ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin || user?.role === WebUserRole.Specialist
+    ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Specialist
       ? [{ to: '/notification-logs', label: t('common.notificationLogs'), icon: 'notifications' as const }]
       : []),
-    ...(user?.role === WebUserRole.ProductOwner
+    ...(user?.role === WebUserRole.ProductAdmin
       ? [{ to: '/error-logs', label: t('common.errorLogs'), icon: 'errors' as const }]
       : []),
     { to: '/settings', label: t('common.settings'), icon: 'settings' as const }

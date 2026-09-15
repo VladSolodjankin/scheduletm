@@ -10,6 +10,8 @@ import {
 } from '../repositories/publicBookingRepository.js';
 import { listExternalBusySlots } from './calendarAvailabilityService.js';
 import { publicMediaUrl } from './serviceService.js';
+import { listAppointments } from '../repositories/appointmentRepository.js';
+import { sendAppointmentNotificationByType } from './appointmentNotificationService.js';
 
 export class PublicBookingServiceError extends Error {
   constructor(public readonly code: 'NOT_FOUND' | 'INVALID_SELECTION' | 'SLOT_UNAVAILABLE') {
@@ -48,6 +50,9 @@ function isWithinWorkingSchedule(
     slot_step_min: number;
   },
 ) {
+  if (!Number.isFinite(startAt.getTime()) || startAt.getUTCSeconds() !== 0 || startAt.getUTCMilliseconds() !== 0) {
+    return false;
+  }
   const start = localSlotParts(startAt, specialist.timezone);
   const end = localSlotParts(
     new Date(startAt.getTime() + durationMin * 60_000),
@@ -156,6 +161,16 @@ export async function bookPublicAppointment(slug: string, input: {
     timezone: input.timezone ?? specialist.timezone ?? 'UTC',
     meetingProvider: input.meetingProvider ?? 'offline',
   });
+  // Delivery failure must not turn a committed booking into a failed request.
+  try {
+    const appointments = await listAppointments({ accountId, specialistId: specialist.id, from: startAt, to: endAt });
+    const hydrated = appointments.find((item) => item.id === appointment.id);
+    if (hydrated) {
+      await sendAppointmentNotificationByType({ accountId, appointment: hydrated, notificationType: 'appointment_created' });
+    }
+  } catch (error) {
+    console.error('Public booking notification failed', error);
+  }
   return {
     id: appointment.id,
     status: appointment.status,

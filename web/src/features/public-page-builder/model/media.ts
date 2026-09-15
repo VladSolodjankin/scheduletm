@@ -19,13 +19,6 @@ function isAbsoluteHttpsUrl(value: string): boolean {
   }
 }
 
-export function isPersistableMediaReference(media: MediaReference): boolean {
-  return media.width >= 0
-    && media.height >= 0
-    && ALLOWED_MEDIA_MIME_TYPES.has(media.mimeType)
-    && isAbsoluteHttpsUrl(media.url);
-}
-
 export function validateMediaReference(media: MediaReference): MediaValidationCode | null {
   if (!ALLOWED_MEDIA_MIME_TYPES.has(media.mimeType)) {return 'unsupported_type';}
   if (media.width < 0 || media.height < 0) {return 'invalid_dimensions';}
@@ -43,7 +36,8 @@ export function documentReferencesMedia(document: PublicPageDocument, mediaId: s
   return containsMediaId(document.profile, mediaId)
     || containsMediaId(document.theme, mediaId)
     || containsMediaId(document.seo, mediaId)
-    || containsMediaId(document.sections, mediaId);
+    || containsMediaId(document.sections, mediaId)
+    || containsMediaId(document.archivedBlocks, mediaId);
 }
 
 export function collectReferencedMediaIds(value: unknown): string[] {

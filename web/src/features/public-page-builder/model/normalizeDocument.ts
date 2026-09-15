@@ -33,6 +33,7 @@ import {
 } from '../config/themes';
 import { normalizeServicesContent } from './services';
 import { isCtaAction } from './cta';
+import { normalizeAvatarPosition } from './avatarPosition';
 
 const statuses = new Set<PublicPageStatus>(['draft', 'published', 'archived']);
 const layouts = new Set<SectionLayout>([
@@ -82,6 +83,7 @@ function normalizeProfile(value: unknown): PageProfile {
     description: stringValue(profile.description),
     logoMediaId: nullableString(profile.logoMediaId),
     avatarMediaId: nullableString(profile.avatarMediaId),
+    avatarPosition: normalizeAvatarPosition(profile.avatarPosition),
   };
 }
 
@@ -212,6 +214,8 @@ function normalizeDesign(value: unknown): BlockDesign {
   const design = isRecord(value) ? value : {};
 
   return {
+    linkStyle: isRecord(design.linkStyle) ? normalizeLinkStyle(design.linkStyle) : null,
+    animation: design.animation === 'pulse' || design.animation === 'lift' ? design.animation : 'none',
     backgroundColor: nullableString(design.backgroundColor),
     textColor: nullableString(design.textColor),
     backgroundMediaId: nullableString(design.backgroundMediaId),
@@ -312,6 +316,7 @@ function normalizeBlock(value: unknown): PageBlock | null {
           : value.type === 'contacts' ? normalizeContactsContent(rawContent)
           : rawContent as BlockContent,
     design: normalizeDesign(value.design),
+    schedule: isRecord(value.schedule) ? { period: isRecord(value.schedule.period) ? { startAt: stringValue(value.schedule.period.startAt), endAt: stringValue(value.schedule.period.endAt) } : null, weekdays: Array.isArray(value.schedule.weekdays) ? value.schedule.weekdays as number[] : null } : { period: null, weekdays: null },
   };
 }
 
@@ -439,6 +444,12 @@ export function normalizeDocument(input: unknown): PublicPageDocument {
     id: stableId(document.id),
     slug: stringValue(document.slug).trim().toLowerCase(),
     status,
+    timezone: stringValue(document.timezone, 'UTC'),
+    archivedBlocks: Array.isArray(document.archivedBlocks) ? document.archivedBlocks.flatMap((entry) => {
+      if (!isRecord(entry)) {return [];}
+      const block = normalizeBlock(entry.block);
+      return block ? [{ block, sourceSectionId: stringValue(entry.sourceSectionId) }] : [];
+    }) : [],
     profile: normalizeProfile(document.profile),
     theme: normalizeTheme(document.theme),
     sections,

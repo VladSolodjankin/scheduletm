@@ -185,7 +185,7 @@ export async function undoAccountDeletion(actor: User, requestedAccountId?: numb
 export const getSystemSettings = async (): Promise<SystemSettings> => mapSystemSettings();
 
 async function resolveManagedAccountId(actor: User, requestedAccountId?: number): Promise<number | null> {
-  if (actor.role !== WebUserRole.ProductOwner) {
+  if (actor.role !== WebUserRole.ProductAdmin) {
     return actor.accountId;
   }
 
@@ -198,7 +198,7 @@ async function resolveManagedAccountId(actor: User, requestedAccountId?: number)
 }
 
 export async function getSettingsScopeOptions(actor: User): Promise<SettingsScopeOptions | null> {
-  if (actor.role !== WebUserRole.ProductOwner) {
+  if (actor.role !== WebUserRole.ProductAdmin) {
     return null;
   }
 
@@ -447,7 +447,7 @@ export async function undoUserDeletion(actor: User): Promise<UserSettings | null
 }
 
 async function resolveSpecialistForPolicy(actor: User, specialistId?: number, requestedAccountId?: number): Promise<{ accountId: number; specialistId: number } | null> {
-  if (actor.role === WebUserRole.ProductOwner) {
+  if (actor.role === WebUserRole.ProductAdmin) {
     if (!specialistId || !Number.isInteger(specialistId)) {
       return null;
     }
@@ -459,7 +459,7 @@ async function resolveSpecialistForPolicy(actor: User, specialistId?: number, re
     return specialist ? { accountId: specialist.account_id, specialistId: specialist.id } : null;
   }
 
-  if (actor.role === WebUserRole.Owner || actor.role === WebUserRole.Admin) {
+  if (actor.role === WebUserRole.Owner) {
     if (!specialistId || !Number.isInteger(specialistId)) {
       return null;
     }
@@ -477,9 +477,8 @@ async function resolveSpecialistForPolicy(actor: User, specialistId?: number, re
 }
 
 export function canManageSpecialistBookingPolicies(role: User['role']): boolean {
-  return role === WebUserRole.ProductOwner
+  return role === WebUserRole.ProductAdmin
     || role === WebUserRole.Owner
-    || role === WebUserRole.Admin
     || role === WebUserRole.Specialist;
 }
 
@@ -549,9 +548,8 @@ export async function putAccountNotificationDefaults(actor: User, payload: unkno
 
 async function resolveSpecialistIdForNotifications(actor: User, specialistId?: number): Promise<number | null> {
   if (
-    actor.role === WebUserRole.ProductOwner
+    actor.role === WebUserRole.ProductAdmin
     || actor.role === WebUserRole.Owner
-    || actor.role === WebUserRole.Admin
   ) {
     if (!specialistId || !Number.isInteger(specialistId)) {
       return null;
@@ -571,9 +569,8 @@ async function resolveSpecialistIdForNotifications(actor: User, specialistId?: n
 
 async function resolveClientIdForNotifications(actor: User, clientId?: number): Promise<number | null> {
   if (
-    actor.role === WebUserRole.ProductOwner
+    actor.role === WebUserRole.ProductAdmin
     || actor.role === WebUserRole.Owner
-    || actor.role === WebUserRole.Admin
     || actor.role === WebUserRole.Specialist
   ) {
     if (!clientId || !Number.isInteger(clientId)) {

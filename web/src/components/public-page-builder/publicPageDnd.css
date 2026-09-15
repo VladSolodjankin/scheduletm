@@ -17,11 +17,14 @@
 }
 
 .meetli-design-system .public-page-dnd-main-container {
+  --public-page-main-drop-space: 24px;
   display: grid;
   flex: 0 0 auto;
   align-content: start;
   min-height: 52px;
-  gap: var(--theme-link-offset);
+  /* Expose the main drop target before, between and after section containers. */
+  gap: max(var(--theme-link-offset), var(--public-page-main-drop-space));
+  padding-block: var(--public-page-main-drop-space);
 }
 
 .meetli-design-system .public-page-dnd-section-shell,

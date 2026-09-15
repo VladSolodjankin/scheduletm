@@ -26,10 +26,9 @@ describe('specialist booking policy unit', () => {
     expect(parsed.success).toBe(false);
   });
 
-  it('grants specialist booking policy access to product owner and account managers', () => {
-    expect(canManageSpecialistBookingPolicies(WebUserRole.ProductOwner)).toBe(true);
+  it('grants specialist booking policy access to product admin and account managers', () => {
+    expect(canManageSpecialistBookingPolicies(WebUserRole.ProductAdmin)).toBe(true);
     expect(canManageSpecialistBookingPolicies(WebUserRole.Owner)).toBe(true);
-    expect(canManageSpecialistBookingPolicies(WebUserRole.Admin)).toBe(true);
     expect(canManageSpecialistBookingPolicies(WebUserRole.Specialist)).toBe(true);
     expect(canManageSpecialistBookingPolicies(WebUserRole.Client)).toBe(false);
   });

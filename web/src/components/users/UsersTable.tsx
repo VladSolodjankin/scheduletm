@@ -16,7 +16,6 @@ type UsersTableProps = {
   deleteLabel: string;
   resendInviteLabel: string;
   roleLabels: {
-    admin: string;
     specialist: string;
     client: string;
   };
@@ -44,9 +43,6 @@ export function UsersTable({
   const theme = useTheme();
 
   const getRoleLabel = (item: ManagedUserItem) => {
-    if (item.role === 'admin') {
-      return roleLabels.admin;
-    }
     if (item.role === 'client') {
       return roleLabels.client;
     }

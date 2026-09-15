@@ -31,11 +31,11 @@ vi.mock('../src/repositories/specialistSettingsRepository.js', async () => {
 
 const { updateSpecialistForActor } = await import('../src/services/specialistService.js');
 
-const productOwner: User = {
+const productAdmin: User = {
   id: '1',
   accountId: 7,
-  email: 'product-owner@example.com',
-  role: WebUserRole.ProductOwner,
+  email: 'product-admin@example.com',
+  role: WebUserRole.ProductAdmin,
   passwordHash: 'hash',
   passwordSalt: 'salt',
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -62,7 +62,7 @@ describe('specialist management scope', () => {
   });
 
   it('lets product owners update a specialist in the specialist account', async () => {
-    await expect(updateSpecialistForActor(productOwner, foreignSpecialist.id, {
+    await expect(updateSpecialistForActor(productAdmin, foreignSpecialist.id, {
       name: 'Updated specialist',
       defaultMeetingLink: 'https://meet.example.com/default',
     })).resolves.toMatchObject({ id: foreignSpecialist.id });

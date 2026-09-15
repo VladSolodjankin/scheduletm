@@ -35,7 +35,7 @@ import {
   restorePublicPageForAccount,
   toPublicPageDto,
 } from '../services/publicPageService.js';
-import { env } from '../config/env.js';
+import { publicPageMediaUrl } from '../utils/publicPageMediaUrl.js';
 import {
   deletePublicPageMedia,
   getAccountPublicPageMedia,
@@ -56,6 +56,21 @@ const mediaIdSchema = z.string().uuid();
 const publicStatusRateLimit = createRequestRateLimit({
   keyPrefix: 'public-appointment-status',
   maxRequests: 30,
+  windowMs: 60_000,
+});
+const publicPageLookupRateLimit = createRequestRateLimit({
+  keyPrefix: 'public-page-lookup',
+  maxRequests: 60,
+  windowMs: 60_000,
+});
+const publicPageMediaRateLimit = createRequestRateLimit({
+  keyPrefix: 'public-page-media',
+  maxRequests: 120,
+  windowMs: 60_000,
+});
+const publicBookingOptionsRateLimit = createRequestRateLimit({
+  keyPrefix: 'public-booking-options',
+  maxRequests: 60,
   windowMs: 60_000,
 });
 export const publicPageRoutes = Router();
@@ -88,12 +103,6 @@ const parseRawMedia = (req: Request, res: Response, next: NextFunction) => {
     return next();
   });
 };
-
-function mediaUrl(id: string): string {
-  const url = new URL(`/api/public-pages/media/${id}/content`, env.API_BASE_URL);
-  url.protocol = 'https:';
-  return url.toString();
-}
 
 function sendError(res: Response, error: unknown) {
   if (error instanceof PublicBookingServiceError) {
@@ -131,7 +140,7 @@ function sendError(res: Response, error: unknown) {
   return res.status(500).json({ code: 'internal_error' });
 }
 
-publicPageRoutes.get('/by-slug/:slug', async (req, res) => {
+publicPageRoutes.get('/by-slug/:slug', publicPageLookupRateLimit, async (req, res) => {
   try {
     const parsed = slugSchema.safeParse(req.params.slug);
     if (!parsed.success) return res.status(404).json({ code: 'not_found' });
@@ -142,7 +151,7 @@ publicPageRoutes.get('/by-slug/:slug', async (req, res) => {
   }
 });
 
-publicPageRoutes.get('/media/:mediaId/content', async (req, res) => {
+publicPageRoutes.get('/media/:mediaId/content', publicPageMediaRateLimit, async (req, res) => {
   const id = mediaIdSchema.safeParse(req.params.mediaId);
   if (!id.success) return res.status(404).json({ code: 'not_found' });
   try {
@@ -157,7 +166,7 @@ publicPageRoutes.get('/media/:mediaId/content', async (req, res) => {
   }
 });
 
-publicPageRoutes.get('/by-slug/:slug/booking-options', async (req, res) => {
+publicPageRoutes.get('/by-slug/:slug/booking-options', publicBookingOptionsRateLimit, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   try {
     const slug = slugSchema.safeParse(req.params.slug);
@@ -167,8 +176,13 @@ publicPageRoutes.get('/by-slug/:slug/booking-options', async (req, res) => {
     return sendError(res, error);
   }
 });
+const publicBookingRateLimit = createRequestRateLimit({
+  keyPrefix: 'public-appointment-create',
+  maxRequests: 10,
+  windowMs: 60_000,
+});
 
-publicPageRoutes.post('/by-slug/:slug/appointments', async (req, res) => {
+publicPageRoutes.post('/by-slug/:slug/appointments', publicBookingRateLimit, async (req, res) => {
   const slug = slugSchema.safeParse(req.params.slug);
   const requestedProvider = typeof req.body === 'object' && req.body !== null
     ? (req.body as { meetingProvider?: unknown }).meetingProvider
@@ -252,7 +266,7 @@ publicPageRoutes.post('/media', parseRawMedia, async (req, res) => {
     );
     return res.status(201).json({
       id: media.id,
-      url: mediaUrl(media.id),
+      url: publicPageMediaUrl(media.id),
       mimeType: media.mime,
       alt: '',
       width: media.width ?? 0,

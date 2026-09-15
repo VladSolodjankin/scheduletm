@@ -15,7 +15,7 @@ React 19 SPA на React Router, MUI, shared API/auth/i18n/theme и локаль�
 Основные flows:
 
 1. Auth/register/invite.
-2. Role-aware cabinet для `product_owner`, `owner`, `admin`, `specialist`, `client`.
+2. Role-aware cabinet для `product_admin`, `owner`, `specialist`, `client`.
 3. Appointments и create-only recurrence.
 4. Settings, integrations, client notifications и specialist default meeting link.
 5. Public Page management и public `/:slug`.

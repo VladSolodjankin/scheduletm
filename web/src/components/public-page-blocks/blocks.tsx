@@ -12,9 +12,18 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import {
-  Add, ChatBubbleOutlined, Delete, EmailOutlined, Facebook, Instagram, Link as LinkIcon, Pause, PhoneOutlined, PlayArrow, Telegram, WhatsApp,
-} from '@mui/icons-material';
+import Add from '@mui/icons-material/Add';
+import ChatBubbleOutlined from '@mui/icons-material/ChatBubbleOutlined';
+import Delete from '@mui/icons-material/Delete';
+import EmailOutlined from '@mui/icons-material/EmailOutlined';
+import Facebook from '@mui/icons-material/Facebook';
+import Instagram from '@mui/icons-material/Instagram';
+import LinkIcon from '@mui/icons-material/Link';
+import Pause from '@mui/icons-material/Pause';
+import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
+import PlayArrow from '@mui/icons-material/PlayArrow';
+import Telegram from '@mui/icons-material/Telegram';
+import WhatsApp from '@mui/icons-material/WhatsApp';
 import { SvgIcon, type SvgIconProps } from '@mui/material';
 import { useCallback, useEffect, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
@@ -211,7 +220,7 @@ function ActionEditor({
 
 const editorShape: Record<string, { fields?: string[]; list?: { key: string; fields: string[] } }> = {
   avatar: {},
-  button: { fields: ['label'] },
+  button: { fields: ['label', 'subtitle'] },
   links: { list: { key: 'links', fields: ['label'] } },
   text: {},
   image: {},
@@ -517,17 +526,26 @@ export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: Pa
 export function ButtonBlock({ block }: { block: PageBlock }) {
   const href = hrefFor(block.content.action);
   if (!href) {return null;}
-  const external = /^https?:\/\//i.test(href);
+  const external = /^https?:\/\//i.test(href) && block.content.openInNewTab === true;
   const icons = { link: <LinkIcon />, phone: <PhoneOutlined />, email: <EmailOutlined />, message: <ChatBubbleOutlined /> } as const;
   const icon = text(block.content.icon) as keyof typeof icons;
-  const backgroundColor = text(block.content.color);
-  const textColor = text(block.content.textColor);
+  const subtitle = text(block.content.subtitle).trim();
+  const animation = block.design.animation;
   return <Button component="a" href={href} target={external ? '_blank' : undefined} startIcon={icons[icon]}
     rel={external ? 'noopener noreferrer' : undefined} variant="contained" fullWidth
+    data-meetli-animation={animation}
     sx={{ ...ordinaryPublicPageLinkSx, minHeight: 48, textTransform: 'none',
-      ...(backgroundColor ? { '--theme-link-background': backgroundColor, '--theme-link-background-opacity': '100%' } : {}),
-      ...(textColor ? { '--theme-link-title-color': textColor } : {}),
-    }}>{text(block.content.label)}</Button>;
+      '--meetli-motion-duration': '700ms', '--meetli-motion-lift': '-3px', '--meetli-motion-scale': 1.025,
+      '@keyframes meetliPulse': { '0%, 100%': { transform: 'scale(1)' }, '50%': { transform: 'scale(var(--meetli-motion-scale))' } },
+      '@keyframes meetliLift': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(var(--meetli-motion-lift))' } },
+      animation: animation === 'none' ? 'none' : `${animation === 'pulse' ? 'meetliPulse' : 'meetliLift'} var(--meetli-motion-duration) ease-in-out 2`,
+      '@media (prefers-reduced-motion: reduce)': { animation: 'none', transform: 'none' },
+    }}><Box component="span" sx={{ display: 'grid', gap: '0.25rem', minWidth: 0 }}>
+      <Box component="span">{text(block.content.label)}</Box>
+      {subtitle ? <Box component="span" sx={{ fontFamily: 'var(--theme-link-subtitle-font-family)', fontSize: 'var(--theme-link-subtitle-fontsize)',
+        fontWeight: 'var(--theme-link-subtitle-font-weight)', fontStyle: 'var(--theme-link-subtitle-font-style)',
+        lineHeight: 'var(--theme-link-subtitle-lineheight)', color: 'var(--theme-link-subtitle-color)' }}>{subtitle}</Box> : null}
+    </Box></Button>;
 }
 
 export function LinksBlock({ block }: { block: PageBlock }) {
@@ -561,13 +579,16 @@ export function RichTextContent({ document }: { document: RichTextDocument }) {
   return <Stack spacing={0.75} sx={{ maxWidth: '100%', minWidth: 0 }}>
     {document.paragraphs.map((paragraph, paragraphIndex) => {
       const sizeStyle = richTextSizeVariables[paragraph.size];
-      return <Box key={paragraphIndex} component="p" sx={{
+      const heading = paragraph.size.startsWith('h');
+      return <Box key={paragraphIndex} component="p" data-public-page-richtext-size={paragraph.size} sx={{
       ...wrappingTextSx,
       m: 0,
       textAlign: paragraph.alignment,
       fontFamily: paragraph.fontFamily ?? sizeStyle.fontFamily,
       fontSize: sizeStyle.fontSize,
       fontWeight: sizeStyle.fontWeight,
+      fontStyle: heading ? 'var(--theme-heading-font-style)' : 'var(--theme-text-font-style)',
+      color: heading ? 'var(--theme-heading-color)' : 'var(--theme-text-color)',
       lineHeight: sizeStyle.lineHeight,
       letterSpacing: sizeStyle.letterSpacing,
     }}>
@@ -654,8 +675,9 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
   const selectedServices = serviceIds.flatMap((id) => byId.get(id) ?? []);
   const reducedMotion = useReducedMotion();
   const [emblaRef, emblaApi] = useEmblaCarousel({
-    align: 'start',
-    loop: selectedServices.length > 1,
+    align: 'center',
+    loop: false,
+    containScroll: false,
     duration: reducedMotion ? 0 : 25,
   });
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -681,9 +703,9 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
   }, []);
   useEffect(() => {
     if (!emblaApi || !autoplayConfigured || editor || reducedMotion || autoplayPaused || hovered || focusWithin || pageHidden) {return;}
-    const timer = window.setTimeout(() => emblaApi.scrollNext(), interval! * 1000);
+    const timer = window.setTimeout(() => emblaApi.scrollTo((emblaApi.selectedScrollSnap() + 1) % selectedServices.length), interval! * 1000);
     return () => window.clearTimeout(timer);
-  }, [autoplayConfigured, autoplayPaused, editor, emblaApi, focusWithin, hovered, interval, manualNavigation, pageHidden, reducedMotion, selectedIndex]);
+  }, [autoplayConfigured, autoplayPaused, editor, emblaApi, focusWithin, hovered, interval, manualNavigation, pageHidden, reducedMotion, selectedIndex, selectedServices.length]);
   const navigate = (index: number) => {
     emblaApi?.scrollTo(index);
     setManualNavigation((value) => value + 1);
@@ -715,12 +737,15 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
         flex: selectedServices.length === 1 ? '0 0 100%' : '0 0 88%',
         minWidth: 0,
         display: 'flex',
-        pr: selectedServices.length === 1 ? 0 : 1.5,
-        '@container public-services (min-width: 600px)': { flex: '0 0 100%' },
+        opacity: inactive ? 0.56 : 1,
+        '@container public-services (min-width: 600px)': { flex: selectedServices.length === 1 ? '0 0 100%' : '0 0 72%' },
       }}>
       <Card variant="outlined" sx={{ width: '100%', minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
         bgcolor: 'var(--avatar-surface-background)', color: 'var(--page-text)', borderColor: 'color-mix(in srgb, var(--page-text) 14%, transparent)',
         borderRadius: 'var(--block-border-radius)',
+        boxShadow: selectedServices.length > 1 && !inactive
+          ? '-6px 4px 18px -4px color-mix(in srgb, var(--page-text) 9%, transparent), 6px 4px 18px -4px color-mix(in srgb, var(--page-text) 9%, transparent)'
+          : 'none',
         '@container public-services (min-width: 600px)': { flexDirection: 'row' } }}>
         {imageUrl ? <Box component="img" src={imageUrl} alt="" loading="lazy" sx={{ width: '100%', height: 180, objectFit: 'cover',
           '@container public-services (min-width: 600px)': { width: 144, height: 'auto', maxHeight: 240, alignSelf: 'stretch' } }} /> : null}
@@ -753,11 +778,15 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
     onFocusCapture={() => setFocusWithin(true)} onBlurCapture={onBlur}>
     <Typography component="h2" variant="h5">{title}</Typography>
     {selectedServices.length === 1 ? slides[0] : <>
-      <Box ref={emblaRef} sx={{ overflow: 'hidden', minWidth: 0, maxWidth: '100%', touchAction: 'pan-y pinch-zoom' }}>
-        <Box sx={{ display: 'flex', alignItems: 'stretch', minWidth: 0 }}>{slides}</Box>
+      <Box ref={emblaRef} sx={{ overflow: 'hidden', minWidth: 0, maxWidth: '100%', touchAction: 'pan-y pinch-zoom', py: '20px',
+        '--carousel-edge-width': '18px',
+        maskImage: 'linear-gradient(to right, transparent, black var(--carousel-edge-width), black calc(100% - var(--carousel-edge-width)), transparent)',
+        '@container public-services (min-width: 600px)': { '--carousel-edge-width': '80px' } }}>
+        <Box sx={{ display: 'flex', alignItems: 'stretch', gap: '10px', minWidth: 0,
+          '@container public-services (min-width: 600px)': { gap: '20px' } }}>{slides}</Box>
       </Box>
-      <Stack direction="row" spacing={1} sx={{ justifyContent: 'center', alignItems: 'center' }}>
-        <Stack direction="row" spacing={0.75} role="group" aria-label={publicPageText(locale, 'carouselNavigation')}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', alignItems: 'center', rowGap: 0.5, minHeight: 34 }}>
+        <Stack direction="row" spacing={0.75} role="group" aria-label={publicPageText(locale, 'carouselNavigation')} sx={{ gridColumn: 2 }}>
           {selectedServices.map((service, index) => <ButtonBase key={service.id} data-service-dot
             aria-label={publicPageText(locale, 'goToServiceSlide').replace('{number}', String(index + 1))}
             aria-current={selectedIndex === index ? 'true' : undefined} onClick={() => navigate(index)}
@@ -766,8 +795,10 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
               border: '2px solid', borderColor: 'var(--theme-link-background)', '&:focus-visible': { outline: '2px solid var(--theme-link-border-color)', outlineOffset: 2 } }} />)}
         </Stack>
         {autoplayConfigured && !editor && !reducedMotion ? <IconButton size="small" aria-label={publicPageText(locale, autoplayPaused ? 'carouselPlay' : 'carouselPause')}
+          sx={{ gridColumn: 3, justifySelf: 'start', ml: 1,
+            '@container public-services (max-width: 300px)': { gridColumn: 2, gridRow: 2, justifySelf: 'center', ml: 0 } }}
           onClick={() => setAutoplayPaused((value) => !value)}>{autoplayPaused ? <PlayArrow /> : <Pause />}</IconButton> : null}
-      </Stack>
+      </Box>
     </>}
   </Stack></Surface>;
 }

@@ -8,16 +8,15 @@ Meetli applies role-based access control and least-privilege principles across t
 
 - Access is scoped by authenticated user identity and application role.
 - Tenant data is segregated by `account_id`.
-- System-level settings are restricted to the `product_owner` role.
-- Account management is restricted to `product_owner`, the tenant `owner`, and delegated `admin`.
+- System-level settings are restricted to the `product_admin` role.
+- Account management is restricted to `product_admin` and the tenant `owner`.
 - Client self-service is restricted to the client's own records and appointments.
 - Sensitive API actions require a valid bearer access token, and selected session actions require CSRF validation.
 
 ## Current Role Model
 
-- `product_owner`: global platform administrative scope.
+- `product_admin`: global platform administrative scope.
 - `owner`: full administrative scope within one customer account.
-- `admin`: delegated administrative scope within one customer account.
 - `specialist`: operational scope limited to specialist workflows and permitted records.
 - `client`: self-service scope for own profile and own appointments.
 

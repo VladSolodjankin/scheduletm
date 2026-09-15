@@ -48,9 +48,8 @@ const hasValidCsrf = (req: Request, cookies: Map<string, string>) => {
 authRoutes.post('/specialists', requireAccessToken, async (req, res) => {
   const actor = (req as AuthedRequest).user;
   if (
-    actor.role !== WebUserRole.ProductOwner
+    actor.role !== WebUserRole.ProductAdmin
     && actor.role !== WebUserRole.Owner
-    && actor.role !== WebUserRole.Admin
   ) {
     return res.status(403).json({ message: t(req, 'forbiddenCreateSpecialist') });
   }

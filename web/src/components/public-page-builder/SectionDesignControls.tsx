@@ -1,4 +1,6 @@
-import { Add, Remove, RestartAlt } from '@mui/icons-material';
+import Add from '@mui/icons-material/Add';
+import Remove from '@mui/icons-material/Remove';
+import RestartAlt from '@mui/icons-material/RestartAlt';
 import {
   Box,
   FormControlLabel,
@@ -15,10 +17,9 @@ import type { ReactNode } from 'react';
 import type { PageSection, PageTheme, TypographyStyle } from '../../features/public-page-builder/types/publicPage';
 import type { Locale } from '../../shared/i18n/dictionaries';
 import { ColorControl } from './ColorControl';
+import { SelectChip, SettingsRow } from './SettingsRow';
 import { publicPageText } from './uiText';
 import { resolvePublicPageThemeVariables } from '../public-page-blocks/publicPageThemeVariables';
-import { analyzeSectionContrast } from '../../features/public-page-builder/model/contrast';
-import { ContrastGuidance } from './ContrastGuidance';
 
 const SECTION_SPACING_STEP_PX = 14;
 const SECTION_SPACING_MAX_STEP = 5;
@@ -29,7 +30,7 @@ const TYPOGRAPHY_FONT_OPTIONS = [
   ['Montserrat', 'Montserrat, sans-serif'],
   ['Lato', 'Lato, sans-serif'],
 ] as const;
-const TYPOGRAPHY_SIZE_OPTIONS = [12, 14, 16, 18, 20, 24, 32, 40, 48, 64] as const;
+const TYPOGRAPHY_SIZE_OPTIONS = Array.from({ length: 45 }, (_, index) => 8 + index * 2);
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.max(minimum, Math.min(maximum, value));
@@ -91,7 +92,7 @@ function NumberStepper({ locale, label, value, inheritedValue, minimum = 0, maxi
   </Stack>;
 }
 
-function CompactTypographyControls({ locale, label, value, resolvedValue, onChange }: {
+export function CompactTypographyControls({ locale, label, value, resolvedValue, onChange }: {
   locale: Locale;
   label: string;
   value: TypographyStyle;
@@ -106,43 +107,47 @@ function CompactTypographyControls({ locale, label, value, resolvedValue, onChan
     ? TYPOGRAPHY_FONT_OPTIONS
     : [[effectiveFamily, effectiveFamily] as const, ...TYPOGRAPHY_FONT_OPTIONS];
   const sizeOptions = [...new Set([effectiveSize, ...TYPOGRAPHY_SIZE_OPTIONS])].sort((first, second) => first - second);
-  return <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: { sm: 'center' } }}>
-    <Typography variant="body2" sx={{ minWidth: 92, flex: 1 }}>{label}</Typography>
-    <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', justifyContent: { sm: 'flex-end' }, alignItems: 'center' }}>
-      <TextField size="small" select aria-label={`${label}: ${publicPageText(locale, 'fontFamily')}`}
+  return <Stack spacing={0.5} role="group" aria-label={label} sx={{ minWidth: 0 }}>
+    <Typography variant="subtitle2">{label}</Typography>
+    <SettingsRow label={publicPageText(locale, 'fontFamily')}>
+      <SelectChip ariaLabel={`${label}: ${publicPageText(locale, 'fontFamily')}`}
         value={effectiveFamily}
-        onChange={(event) => onChange({ ...value, fontFamily: event.target.value || null })}
-        sx={{ width: 116 }}>
-        {fontOptions.map(([fontLabel, fontFamily]) => <MenuItem key={fontFamily} value={fontFamily}>{fontLabel}</MenuItem>)}
-      </TextField>
-      <TextField size="small" select aria-label={`${label}: ${publicPageText(locale, 'fontSize')}`}
-        value={String(effectiveSize)}
-        onChange={(event) => onChange({ ...value, fontSize: Number(event.target.value) })}
-        sx={{ width: 62 }}>
-        {sizeOptions.map((size) => <MenuItem key={size} value={String(size)}>{size}</MenuItem>)}
-      </TextField>
-      <TextField size="small" select aria-label={`${label}: ${publicPageText(locale, 'fontWeight')}`}
+        options={fontOptions.map(([fontLabel, fontFamily]) => ({ value: fontFamily, label: fontLabel }))}
+        onChange={(fontFamily) => onChange({ ...value, fontFamily: fontFamily || null })} />
+    </SettingsRow>
+    <SettingsRow label={publicPageText(locale, 'fontSize')}>
+      <SelectChip ariaLabel={`${label}: ${publicPageText(locale, 'fontSize')}`}
+        value={String(effectiveSize / 16)}
+        options={sizeOptions.map((size) => ({ value: String(size / 16), label: `${size / 16}rem` }))}
+        onChange={(next) => onChange({ ...value, fontSize: Number(next) * 16 })} />
+    </SettingsRow>
+    <SettingsRow label={publicPageText(locale, 'fontWeight')}>
+      <SelectChip ariaLabel={`${label}: ${publicPageText(locale, 'fontWeight')}`}
         value={String(effectiveWeight)}
-        onChange={(event) => onChange({ ...value, fontWeight: event.target.value === '' ? null : Number(event.target.value) })}
-        sx={{ width: 72 }}>
-        {[100, 200, 300, 400, 500, 600, 700, 800, 900].map((weight) => <MenuItem key={weight} value={weight}>{weight}</MenuItem>)}
-      </TextField>
-      <TextField size="small" select aria-label={`${label}: ${publicPageText(locale, 'fontStyle')}`}
+        options={[100, 200, 300, 400, 500, 600, 700, 800, 900].map((weight) => ({ value: String(weight), label: String(weight) }))}
+        onChange={(next) => onChange({ ...value, fontWeight: Number(next) })} />
+    </SettingsRow>
+    <SettingsRow label={publicPageText(locale, 'fontStyle')}>
+      <SelectChip ariaLabel={`${label}: ${publicPageText(locale, 'fontStyle')}`}
         value={effectiveStyle}
-        onChange={(event) => onChange({ ...value, fontStyle: event.target.value === '' ? null : event.target.value as 'normal' | 'italic' })}
-        sx={{ width: 86 }}>
-        <MenuItem value="normal">{publicPageText(locale, 'normal')}</MenuItem>
-        <MenuItem value="italic">{publicPageText(locale, 'italic')}</MenuItem>
-      </TextField>
-      <ColorControl compact label={`${label}: ${publicPageText(locale, 'textColor')}`} value={value.color}
+        options={[
+          { value: 'normal', label: publicPageText(locale, 'normal') },
+          { value: 'italic', label: publicPageText(locale, 'italic') },
+        ]}
+        onChange={(next) => onChange({ ...value, fontStyle: next as 'normal' | 'italic' })} />
+    </SettingsRow>
+    <SettingsRow label={publicPageText(locale, 'textColor')}>
+      <ColorControl variant="chip" label={publicPageText(locale, 'textColor')} value={value.color}
         resolvedValue={resolvedValue.color} onChange={(color) => onChange({ ...value, color })} />
+    </SettingsRow>
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
       <Tooltip title={publicPageText(locale, 'inherit')}><span><IconButton size="small"
         aria-label={`${label}: ${publicPageText(locale, 'inherit')}`}
         disabled={Object.values(value).every((item) => item === null)}
         onClick={() => onChange({ fontFamily: null, fontSize: null, fontWeight: null, fontStyle: null, color: null })}>
         <RestartAlt fontSize="small" />
       </IconButton></span></Tooltip>
-    </Stack>
+    </Box>
   </Stack>;
 }
 
@@ -234,7 +239,6 @@ export function SectionDesignControls({ locale, theme, section, backgroundImageC
           <MenuItem value="false">{publicPageText(locale, 'hide')}</MenuItem>
         </TextField>
       </Stack>
-      <ContrastGuidance locale={locale} checks={analyzeSectionContrast(theme, section)} />
     </Stack>
   </Box>;
 }

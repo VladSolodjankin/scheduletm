@@ -10,6 +10,10 @@ const bookingRepository = vi.hoisted(() => ({
   findPublicAppointmentStatus: vi.fn(),
 }));
 const calendarAvailability = vi.hoisted(() => ({ listExternalBusySlots: vi.fn() }));
+const appointments = vi.hoisted(() => ({ listAppointments: vi.fn() }));
+const notifications = vi.hoisted(() => ({ sendAppointmentNotificationByType: vi.fn() }));
+vi.mock('../src/repositories/appointmentRepository.js', () => appointments);
+vi.mock('../src/services/appointmentNotificationService.js', () => notifications);
 
 vi.mock('../src/repositories/publicPageRepository.js', async () => {
   const actual = await vi.importActual<typeof import('../src/repositories/publicPageRepository.js')>(
@@ -41,6 +45,8 @@ describe('public booking service', () => {
     Object.values(pageRepository).forEach((mock) => mock.mockReset());
     Object.values(bookingRepository).forEach((mock) => mock.mockReset());
     calendarAvailability.listExternalBusySlots.mockReset().mockResolvedValue([]);
+    appointments.listAppointments.mockReset().mockResolvedValue([]);
+    notifications.sendAppointmentNotificationByType.mockReset().mockResolvedValue({ delivered: false });
     pageRepository.findPublishedPublicPageBySlug.mockResolvedValue({ account_id: 7 });
   });
 
@@ -120,6 +126,20 @@ describe('public booking service', () => {
     expect(bookingRepository.createPublicGuestAppointment).not.toHaveBeenCalled();
   });
 
+  it.each(['2030-08-01T17:00:01.000Z', '2030-08-01T17:00:00.001Z'])('rejects sub-minute slot %s before side effects', async (startAt) => {
+    bookingRepository.findPublicBookingSpecialist.mockResolvedValue({
+      id: 2, timezone: 'UTC', work_start_hour: 9, work_end_hour: 18,
+      work_days: '1,2,3,4,5,6', slot_step_min: 30,
+    });
+    bookingRepository.findPublicBookingService.mockResolvedValue({ id: 3, duration_min: 60 });
+    await expect(bookPublicAppointment('valid-page', {
+      firstName: 'Guest', lastName: 'User', phone: '+10000000000',
+      specialistId: 2, serviceId: 3, startAt,
+    })).rejects.toMatchObject({ code: 'SLOT_UNAVAILABLE' });
+    expect(calendarAvailability.listExternalBusySlots).not.toHaveBeenCalled();
+    expect(bookingRepository.createPublicGuestAppointment).not.toHaveBeenCalled();
+  });
+
   it('rejects a slot occupied in the specialist external calendar', async () => {
     bookingRepository.findPublicBookingSpecialist.mockResolvedValue({
       id: 2,
@@ -195,6 +215,31 @@ describe('public booking service', () => {
     expect(bookingRepository.createPublicGuestAppointment).toHaveBeenCalledWith(
       expect.objectContaining({ specialistId: 2, serviceId: 3, durationMin: 45, price: 250 }),
     );
+  });
+
+  it.each([false, true])('attempts notification after commit and preserves booking on delivery failure=%s', async (fails) => {
+    bookingRepository.findPublicBookingSpecialist.mockResolvedValue({
+      id: 2, timezone: 'UTC', work_start_hour: 9, work_end_hour: 18,
+      work_days: '1,2,3,4,5,6', slot_step_min: 30,
+    });
+    bookingRepository.findPublicBookingService.mockResolvedValue({ id: 3, duration_min: 60 });
+    bookingRepository.createPublicGuestAppointment.mockResolvedValue({
+      id: 10, status: 'new', appointment_at: new Date('2030-08-01T10:00:00Z'), duration_min: 60,
+    });
+    const hydrated = { id: 10, account_id: 7, specialist_id: 2, client_email: 'guest@example.com' };
+    appointments.listAppointments.mockResolvedValue([hydrated]);
+    if (fails) notifications.sendAppointmentNotificationByType.mockRejectedValue(new Error('delivery unavailable'));
+    await expect(bookPublicAppointment('valid-page', {
+      firstName: 'Guest', lastName: 'User', email: 'guest@example.com',
+      specialistId: 2, serviceId: 3, startAt: '2030-08-01T10:00:00Z',
+    })).resolves.toMatchObject({ id: 10, status: 'new' });
+    expect(appointments.listAppointments).toHaveBeenCalledWith(expect.objectContaining({ accountId: 7, specialistId: 2 }));
+    expect(notifications.sendAppointmentNotificationByType).toHaveBeenCalledWith({
+      accountId: 7, appointment: hydrated, notificationType: 'appointment_created',
+    });
+    expect(bookingRepository.createPublicGuestAppointment).toHaveBeenCalledTimes(1);
+    expect(bookingRepository.createPublicGuestAppointment.mock.invocationCallOrder[0])
+      .toBeLessThan(notifications.sendAppointmentNotificationByType.mock.invocationCallOrder[0]);
   });
 
   it('redacts status and treats a wrong specialist surname as not found', async () => {

@@ -6,7 +6,6 @@ import type {
 } from '../types/publicPage';
 
 const PAGE_TEXT = '#291d0a';
-const INTER = 'Inter, sans-serif';
 const ROBOTO = 'Roboto, sans-serif';
 
 type ThemeRow = {
@@ -39,20 +38,20 @@ function createTokens(row: ThemeRow): PageThemeTokens {
       checkboxBackground: row.primary,
     },
     typography: {
-      fontFamily: INTER,
+      fontFamily: ROBOTO,
       fontWeight: 500,
       boldFontWeight: 800,
       headingColor: PAGE_TEXT,
       avatarTitle: typographyToken(ROBOTO, 16, 700, 1.2),
       avatarBio: typographyToken(ROBOTO, 16, 400, 1.2),
-      linkTitle: typographyToken(INTER, 16, 500, 1.2),
-      linkSubtitle: typographyToken(INTER, 14, 500, 1.2),
-      h1: typographyToken(INTER, 50, 800, 1.15),
-      h2: typographyToken(INTER, 30, 800, 1.25, 2),
-      h3: typographyToken(INTER, 24, 800, 1.4),
-      textLarge: typographyToken(INTER, 20, 500, 1.45),
-      textMedium: typographyToken(INTER, 17, 500, 1.45, 1),
-      textSmall: typographyToken(INTER, 14, 500, 1.45),
+      linkTitle: typographyToken(ROBOTO, 16, 500, 1.2),
+      linkSubtitle: typographyToken(ROBOTO, 14, 500, 1.2),
+      h1: typographyToken(ROBOTO, 50, 800, 1.15),
+      h2: typographyToken(ROBOTO, 30, 800, 1.25, 2),
+      h3: typographyToken(ROBOTO, 24, 800, 1.4),
+      textLarge: typographyToken(ROBOTO, 20, 500, 1.45),
+      textMedium: typographyToken(ROBOTO, 17, 500, 1.45, 1),
+      textSmall: typographyToken(ROBOTO, 14, 500, 1.45),
     },
     layout: { blockRadius: 40, linkRadius: 40, linkGap: 10 },
   };
@@ -122,7 +121,7 @@ function createTheme(row: ThemeRow): PageTheme {
     swatches: row.swatches,
     colors,
     tokens,
-    fontFamily: INTER,
+    fontFamily: ROBOTO,
     roundingStyle: 'rounded',
     linkStylePreset: 'primary-fill',
     backgroundMediaId: null,
@@ -154,11 +153,10 @@ function shadowColor(text: string): string {
 
 export function applyPublicPagePalette(current: PageTheme, palette: PageTheme): PageTheme {
   return {
-    ...structuredClone(palette),
-    backgroundMediaId: current.backgroundMediaId,
-    backgroundPreset: current.backgroundPreset,
-    backgroundFit: current.backgroundFit,
-    backgroundPosition: current.backgroundPosition,
+    ...applyPublicPageThemeColors(current, palette.colors),
+    id: palette.id,
+    name: palette.name,
+    swatches: palette.swatches,
   };
 }
 
@@ -184,11 +182,16 @@ export function applyPublicPageThemeColors(
     },
     typography: { ...theme.tokens.typography, headingColor: colors.text },
   };
-  const styleDefaults = createStyleDefaults(tokens, colors);
+  const styleDefaults = structuredClone(theme.styleDefaults);
   const surfaceLink = theme.linkStylePreset.startsWith('surface-');
-  styleDefaults.linkStyle.backgroundColor = surfaceLink ? colors.surface : colors.primary;
-  styleDefaults.linkStyle.borderWidth = theme.linkStylePreset.endsWith('outline') ? 1 : 0;
-  styleDefaults.linkStyle.shadow = theme.linkStylePreset.includes('shadow') || theme.linkStylePreset.endsWith('strong');
+  const replaceColor = (value: string, previous: string, next: string) => value === previous ? next : value;
+  styleDefaults.headingStyle.color = replaceColor(styleDefaults.headingStyle.color, theme.colors.text, colors.text);
+  styleDefaults.textStyle.color = replaceColor(styleDefaults.textStyle.color, theme.colors.text, colors.text);
+  const oldTitle = surfaceLink ? theme.colors.text : theme.tokens.colors.contrast;
+  styleDefaults.linkStyle.titleStyle.color = replaceColor(styleDefaults.linkStyle.titleStyle.color, oldTitle, linkTitle);
+  styleDefaults.linkStyle.subtitleStyle.color = replaceColor(styleDefaults.linkStyle.subtitleStyle.color, oldTitle, linkTitle);
+  styleDefaults.linkStyle.backgroundColor = replaceColor(styleDefaults.linkStyle.backgroundColor, surfaceLink ? theme.colors.surface : theme.colors.primary, surfaceLink ? colors.surface : colors.primary);
+  styleDefaults.linkStyle.borderColor = replaceColor(styleDefaults.linkStyle.borderColor, theme.colors.primary, colors.primary);
   return {
     ...theme,
     id: 'custom',
@@ -224,11 +227,40 @@ export function applyPublicPageThemeFont(theme: PageTheme, fontFamily: string): 
   };
 }
 
+export function resetPublicPageDesignGroup(theme: PageTheme, group: 'typography' | 'buttons' | 'background' | 'sections'): PageTheme {
+  const palette = findPublicPageTheme(theme.id) ?? DEFAULT_PUBLIC_PAGE_THEME;
+  const defaults = applyPublicPageThemeColors(structuredClone(palette), theme.colors);
+  if (group === 'background') {
+    return { ...theme, colors: { ...theme.colors, background: (findPublicPageTheme(theme.id) ?? DEFAULT_PUBLIC_PAGE_THEME).colors.background },
+      backgroundMediaId: null, backgroundPreset: null, backgroundFit: 'cover', backgroundPosition: '50% 50%' };
+  }
+  if (group === 'sections') {
+    const reset = applyPublicPageThemeColors(theme, { primary: palette.colors.primary, surface: palette.colors.surface });
+    return { ...reset,
+      tokens: { ...reset.tokens, layout: { ...reset.tokens.layout, blockRadius: defaults.tokens.layout.blockRadius } },
+      styleDefaults: { ...reset.styleDefaults, sectionBorderRadius: defaults.styleDefaults.sectionBorderRadius, blockBorderRadius: defaults.styleDefaults.blockBorderRadius } };
+  }
+  if (group === 'buttons') {
+    return { ...theme, linkStylePreset: defaults.linkStylePreset,
+      styleDefaults: { ...theme.styleDefaults, linkStyle: defaults.styleDefaults.linkStyle },
+      tokens: { ...theme.tokens,
+        colors: { ...theme.tokens.colors, linkTitle: defaults.tokens.colors.linkTitle, linkSubtitle: defaults.tokens.colors.linkSubtitle, linkBorder: defaults.tokens.colors.linkBorder, linkShadow: defaults.tokens.colors.linkShadow },
+        typography: { ...theme.tokens.typography, linkTitle: defaults.tokens.typography.linkTitle, linkSubtitle: defaults.tokens.typography.linkSubtitle },
+        layout: { ...theme.tokens.layout, linkRadius: defaults.tokens.layout.linkRadius, linkGap: defaults.tokens.layout.linkGap } } };
+  }
+  return { ...theme, fontFamily: defaults.fontFamily,
+    tokens: { ...theme.tokens, typography: { ...defaults.tokens.typography, linkTitle: theme.tokens.typography.linkTitle, linkSubtitle: theme.tokens.typography.linkSubtitle } },
+    styleDefaults: { ...theme.styleDefaults, headingStyle: defaults.styleDefaults.headingStyle, textStyle: defaults.styleDefaults.textStyle } };
+}
+
 export function applyPublicPageThemeRounding(
   theme: PageTheme,
   roundingStyle: PageTheme['roundingStyle'],
 ): PageTheme {
-  return { ...theme, id: 'custom', name: 'Custom', roundingStyle };
+  const radius = roundingStyle === 'square' ? 2 : 40;
+  return { ...theme, id: 'custom', name: 'Custom', roundingStyle,
+    tokens: { ...theme.tokens, layout: { ...theme.tokens.layout, linkRadius: radius, blockRadius: radius } },
+    styleDefaults: { ...theme.styleDefaults, sectionBorderRadius: radius, blockBorderRadius: radius } };
 }
 
 export function applyPublicPageLinkStyle(

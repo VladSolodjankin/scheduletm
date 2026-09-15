@@ -7,7 +7,7 @@ Express/PostgreSQL API для Meetli web.
 - Auth: register, 4-digit email OTP, invite accept/resend, login, refresh и logout.
 - Self-registration создаёт отдельный account и пользователя `owner`.
 - Session resolution отклоняет inactive/deleted users и inactive accounts.
-- Роли: `product_owner`, `owner`, `admin`, `specialist`, `client`; матрица — [`docs/rbac.md`](./docs/rbac.md).
+- Роли: `product_admin`, `owner`, `specialist`, `client`; матрица — [`docs/rbac.md`](./docs/rbac.md).
 - Users/specialists CRUD с tenant isolation.
 - System/account/user settings, integrations и notification settings.
 - Appointments lifecycle, audit filters, recurrence и specialist booking policy.

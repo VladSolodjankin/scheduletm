@@ -414,14 +414,14 @@ export async function getAppointments(
     from: filters.from ? new Date(filters.from) : undefined,
     to: filters.to ? new Date(filters.to) : undefined,
   };
-  const items = actor.role === WebUserRole.ProductOwner
+  const items = actor.role === WebUserRole.ProductAdmin
     ? await listAppointmentsAllAccounts(listFilters)
     : await listAppointments({
       accountId,
       ...listFilters,
     });
 
-  const allSpecialists = actor.role === WebUserRole.ProductOwner
+  const allSpecialists = actor.role === WebUserRole.ProductAdmin
     ? await listSpecialistsAllAccounts()
     : await listSpecialistsByAccount(accountId);
 
@@ -496,7 +496,7 @@ export async function createAppointmentForActor(
     }
   }
 
-  const specialist = actor.role === WebUserRole.ProductOwner
+  const specialist = actor.role === WebUserRole.ProductAdmin
     ? await findSpecialistByIdAnyAccount(payload.specialistId)
     : await findSpecialistById(accountId, payload.specialistId);
   if (!specialist) {
@@ -624,7 +624,7 @@ export async function createAppointmentForActor(
 
 async function resolveManagedAppointment(actor: User, appointmentId: number) {
   const accountId = await resolveAccountId(actor);
-  const existing = actor.role === WebUserRole.ProductOwner
+  const existing = actor.role === WebUserRole.ProductAdmin
     ? await findAppointmentByIdAnyAccount(appointmentId)
     : await findAppointmentById(accountId, appointmentId);
 

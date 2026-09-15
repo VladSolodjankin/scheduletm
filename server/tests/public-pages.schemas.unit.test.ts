@@ -47,6 +47,29 @@ function setPath(target: Record<string, any>, path: string, value: unknown): voi
 }
 
 describe('public page schemas', () => {
+  it.each(['0% 0%', '50% 50%', '100% 100%', '7% 93%'])(
+    'accepts canonical profile avatar position %s',
+    (avatarPosition) => {
+      expect(publicPageDocumentSchema.safeParse({
+        ...validPublicPageDocument,
+        profile: { ...validPublicPageDocument.profile, avatarPosition },
+      }).success).toBe(true);
+    },
+  );
+
+  it.each(['-1% 50%', '101% 50%', '50.5% 50%', '050% 50%', '50%  50%', 'center center'])
+    ('rejects non-canonical profile avatar position %s', (avatarPosition) => {
+      expect(publicPageDocumentSchema.safeParse({
+        ...validPublicPageDocument,
+        profile: { ...validPublicPageDocument.profile, avatarPosition },
+      }).success).toBe(false);
+    });
+
+  it('requires profile avatar position in strict schema v4', () => {
+    const { avatarPosition: _avatarPosition, ...profile } = validPublicPageDocument.profile;
+    expect(publicPageDocumentSchema.safeParse({ ...validPublicPageDocument, profile }).success).toBe(false);
+  });
+
   it('matches slug formatting and reserved rules', () => {
     expect(isValidPublicPageSlug('my-page')).toBe(true);
     expect(isValidPublicPageSlug('Public-Pages')).toBe(false);
@@ -821,7 +844,7 @@ describe('public page schemas', () => {
         }, {
           ...validPublicPageDocument.sections[0]!.blocks[0], id: 'button-1', type: 'button',
           content: {
-            label: 'Visit', icon: 'link', color: '', textColor: '', radius: 12,
+            label: 'Visit', icon: 'link', subtitle: '', openInNewTab: false,
             action: { type: 'url', url: 'https://example.com' },
           },
         }],
@@ -862,11 +885,11 @@ describe('public page schemas', () => {
       layout: 'centered', avatarSize: 150, coverColor: null, coverMediaId: null,
     }],
     ['button without a label', 'button', {
-      label: '', icon: 'link', color: '', textColor: '', radius: 12,
+      label: '', icon: 'link', subtitle: '', openInNewTab: false,
       action: { type: 'url', url: 'https://example.com' },
     }],
     ['button with an invalid action', 'button', {
-      label: 'Visit', icon: 'link', color: '', textColor: '', radius: 12,
+      label: 'Visit', icon: 'link', subtitle: '', openInNewTab: false,
       action: { type: 'url', url: 'javascript:alert(1)' },
     }],
   ])('rejects %s on publish', (_name, type, content) => {

@@ -1,6 +1,6 @@
 # Web (`@scheduletm/web`)
 
-React SPA для `product_owner`, tenant `owner`, `admin`, `specialist` и `client`.
+React SPA для `product_admin`, tenant `owner`, `specialist` и `client`.
 
 ## Возможности
 

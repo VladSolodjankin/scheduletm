@@ -1,4 +1,9 @@
-import { ArrowDownward, ArrowUpward, DeleteOutlined, EditOutlined, OpenInNew, Refresh } from '@mui/icons-material';
+import ArrowDownward from '@mui/icons-material/ArrowDownward';
+import ArrowUpward from '@mui/icons-material/ArrowUpward';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
+import EditOutlined from '@mui/icons-material/EditOutlined';
+import OpenInNew from '@mui/icons-material/OpenInNew';
+import Refresh from '@mui/icons-material/Refresh';
 import {
   Alert,
   Button,

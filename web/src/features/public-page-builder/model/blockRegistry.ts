@@ -55,8 +55,11 @@ export function createBlock(type: string): PageBlock | null {
     type: definition.type,
     name: definition.name,
     visible: true,
+    schedule: { period: null, weekdays: null },
     content: definition.createContent(),
     design: definition.createDesign?.() ?? {
+      linkStyle: null,
+      animation: 'none',
       backgroundColor: null,
       textColor: null,
       backgroundMediaId: null,

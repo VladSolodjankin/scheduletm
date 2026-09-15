@@ -51,14 +51,6 @@ export type SpecialistWebUserOption = {
   email: string;
 };
 
-export async function findWebUserByEmail(accountId: number, email: string): Promise<WebUserRecord | null> {
-  const row = await db('web_users')
-    .where({ account_id: accountId, email })
-    .first<WebUserRecord>();
-
-  return row ?? null;
-}
-
 export async function findWebUserByEmailAnyAccount(email: string): Promise<WebUserRecord | null> {
   const row = await db('web_users')
     .where({ email })

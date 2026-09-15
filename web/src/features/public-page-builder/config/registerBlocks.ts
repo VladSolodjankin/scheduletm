@@ -33,7 +33,7 @@ const definitions: BlockDefinition[] = [
     ...required(content, 'heading'),
     ...(!content.imageMediaId ? ['imageMediaId is required'] : []),
   ] },
-  { type: 'button', name: 'Button', createContent: () => ({ label: 'Learn more', icon: 'link', color: '', textColor: '', radius: 12, action: { type: 'url', url: 'https://example.com' } }), Renderer: ButtonBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'label') },
+  { type: 'button', name: 'Button', createContent: () => ({ label: 'Learn more', icon: 'link', subtitle: '', openInNewTab: false, action: { type: 'url', url: 'https://example.com' } }), Renderer: ButtonBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'label') },
   { type: 'links', name: 'Links', createContent: () => ({ links: [{ id: 'link-1', label: 'Learn more', action: { type: 'url', url: 'https://example.com' } }] }), Renderer: LinksBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'links', ['label', 'action']) },
   { type: 'text', name: 'Text', createContent: () => ({ document: { type: 'rich-text-v1', paragraphs: [{ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: '' }] }] } }), Renderer: TextBlock, Editor: SpecializedBlockEditor,
     validate: ({ content }) => hasRichTextContent(content.document) ? [] : ['document is required'] },
@@ -54,5 +54,3 @@ export function registerPublicPageBlocks(): void {
     }
   });
 }
-
-export const publicPageBlockDefinitions = definitions;

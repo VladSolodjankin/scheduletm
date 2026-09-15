@@ -60,7 +60,7 @@ function RoleRoute({ children }: { children: ReactElement }) {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  return user?.role === WebUserRole.ProductOwner || user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin
+  return user?.role === WebUserRole.ProductAdmin || user?.role === WebUserRole.Owner
     ? children
     : <Navigate to="/appointments" replace />;
 }
@@ -70,9 +70,8 @@ function ServicesRoleRoute({ children }: { children: ReactElement }) {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  return user?.role === WebUserRole.ProductOwner
+  return user?.role === WebUserRole.ProductAdmin
     || user?.role === WebUserRole.Owner
-    || user?.role === WebUserRole.Admin
     || user?.role === WebUserRole.Specialist
     ? children
     : <Navigate to="/appointments" replace />;

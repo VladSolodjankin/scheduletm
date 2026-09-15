@@ -4,11 +4,11 @@ import {
   MenuItem,
   Select,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import type { ManagedUserItem } from "../../shared/types/api";
 import { AppButton } from "../../shared/ui/AppButton";
-import { AppConfirmDialog, AppDialog } from "../../shared/ui/AppDialog";
+import { AppDialog } from "../../shared/ui/AppDialog";
 import { AppRhfPhoneField } from "../../shared/ui/AppRhfPhoneField";
 import { AppRhfTextField } from "../../shared/ui/AppRhfTextField";
 import { FormContainer } from "../../shared/ui/FormContainer";
@@ -27,14 +27,10 @@ type UserFormDialogProps = {
   telegramLabel: string;
   closeLabel: string;
   saveLabel: string;
-  adminConfirmTitle: string;
-  adminConfirmDescription: string;
-  adminConfirmCancelLabel: string;
-  adminConfirmSubmitLabel: string;
   onClose: () => void;
   onSubmit: (payload: {
     email: string;
-    role: "admin" | "specialist" | "client";
+    role: "specialist" | "client";
     firstName: string;
     lastName: string;
     phone?: string;
@@ -44,7 +40,7 @@ type UserFormDialogProps = {
 
 type UserFormState = {
   email: string;
-  role: "admin" | "specialist" | "client";
+  role: "specialist" | "client";
   firstName: string;
   lastName: string;
   phone: string;
@@ -73,22 +69,9 @@ export function UserFormDialog({
   telegramLabel,
   closeLabel,
   saveLabel,
-  adminConfirmTitle,
-  adminConfirmDescription,
-  adminConfirmCancelLabel,
-  adminConfirmSubmitLabel,
   onClose,
   onSubmit,
 }: UserFormDialogProps) {
-  const [isAdminConfirmOpen, setIsAdminConfirmOpen] = useState(false);
-  const [pendingPayload, setPendingPayload] = useState<{
-    email: string;
-    role: "admin" | "specialist" | "client";
-    firstName: string;
-    lastName: string;
-    phone?: string;
-    telegramUsername?: string;
-  } | null>(null);
   const { t } = useI18n();
   const { control, handleSubmit, reset } = useForm<UserFormState>({
     defaultValues: EMPTY_FORM,
@@ -101,12 +84,7 @@ export function UserFormDialog({
 
     reset({
       email: editingUser?.email ?? "",
-      role:
-        editingUser?.role === "admin"
-          ? "admin"
-          : editingUser?.role === "client"
-            ? "client"
-            : "specialist",
+      role: editingUser?.role === "client" ? "client" : "specialist",
       firstName: editingUser?.firstName ?? "",
       lastName: editingUser?.lastName ?? "",
       phone: editingUser?.phone ?? "",
@@ -132,150 +110,119 @@ export function UserFormDialog({
       telegramUsername: form.telegramUsername.trim(),
     };
 
-    if (!editingUser && payload.role === "admin") {
-      setPendingPayload(payload);
-      setIsAdminConfirmOpen(true);
-      return;
-    }
-
     await onSubmit(payload);
   });
 
   return (
-    <>
-      <AppDialog
-        open={open}
-        onClose={onClose}
-        maxWidth="sm"
-        title={title}
-        actions={(
-          <>
-            <AppButton variant="text" onClick={onClose}>
-              {closeLabel}
-            </AppButton>
-            <AppButton
-              onClick={() => void submitForm()}
-              isLoading={isSaving}
-              disabled={!isValid}
-            >
-              {saveLabel}
-            </AppButton>
-          </>
-        )}
-      >
-        <FormContainer>
-          <Controller
-            name="email"
-            control={control}
-            render={({ field }) => (
-              <AppRhfTextField
-                margin="none"
-                fullWidth
-                label={emailLabel}
-                field={field}
-              />
-            )}
-          />
-          <Controller
-            name="role"
-            control={control}
-            render={({ field }) => (
-              <FormControl margin="none" fullWidth>
-                <InputLabel id="managed-user-role-label">
-                  {roleLabel}
-                </InputLabel>
-                <Select
-                  labelId="managed-user-role-label"
-                  label={roleLabel}
-                  value={field.value}
-                  onChange={(event) =>
-                    field.onChange(
-                      event.target.value as "admin" | "specialist" | "client",
-                    )
-                  }
-                >
-                  <MenuItem value="admin">
-                    {t("appointments.roleAdmin")}
-                  </MenuItem>
-                  <MenuItem value="specialist">
-                    {t("appointments.roleSpecialist")}
-                  </MenuItem>
-                  <MenuItem value="client">
-                    {t("appointments.roleClient")}
-                  </MenuItem>
-                </Select>
-              </FormControl>
-            )}
-          />
-          <Controller
-            name="firstName"
-            control={control}
-            render={({ field }) => (
-              <AppRhfTextField
-                margin="none"
-                fullWidth
-                label={firstNameLabel}
-                field={field}
-              />
-            )}
-          />
-          <Controller
-            name="lastName"
-            control={control}
-            render={({ field }) => (
-              <AppRhfTextField
-                margin="none"
-                fullWidth
-                label={lastNameLabel}
-                field={field}
-              />
-            )}
-          />
-          <Controller
-            name="phone"
-            control={control}
-            render={({ field }) => (
-              <AppRhfPhoneField
-                field={field}
-                label={phoneLabel}
-                sx={{ mt: 1 }}
-              />
-            )}
-          />
-          <Controller
-            name="telegramUsername"
-            control={control}
-            render={({ field }) => (
-              <AppRhfTextField
-                margin="none"
-                fullWidth
-                label={telegramLabel}
-                field={field}
-              />
-            )}
-          />
-        </FormContainer>
-      </AppDialog>
-
-      <AppConfirmDialog
-        open={isAdminConfirmOpen}
-        onClose={() => setIsAdminConfirmOpen(false)}
-        maxWidth="xs"
-        title={adminConfirmTitle}
-        description={adminConfirmDescription}
-        cancelLabel={adminConfirmCancelLabel}
-        confirmLabel={adminConfirmSubmitLabel}
-        isLoading={isSaving}
-        onCancel={() => setIsAdminConfirmOpen(false)}
-        onConfirm={() => {
-          if (!pendingPayload) {
-            return;
-          }
-
-          setIsAdminConfirmOpen(false);
-          void onSubmit(pendingPayload);
-        }}
-      />
-    </>
+    <AppDialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      title={title}
+      actions={(
+        <>
+          <AppButton variant="text" onClick={onClose}>
+            {closeLabel}
+          </AppButton>
+          <AppButton
+            onClick={() => void submitForm()}
+            isLoading={isSaving}
+            disabled={!isValid}
+          >
+            {saveLabel}
+          </AppButton>
+        </>
+      )}
+    >
+      <FormContainer>
+        <Controller
+          name="email"
+          control={control}
+          render={({ field }) => (
+            <AppRhfTextField
+              margin="none"
+              fullWidth
+              label={emailLabel}
+              field={field}
+            />
+          )}
+        />
+        <Controller
+          name="role"
+          control={control}
+          render={({ field }) => (
+            <FormControl margin="none" fullWidth>
+              <InputLabel id="managed-user-role-label">
+                {roleLabel}
+              </InputLabel>
+              <Select
+                labelId="managed-user-role-label"
+                label={roleLabel}
+                value={field.value}
+                onChange={(event) =>
+                  field.onChange(
+                    event.target.value as "specialist" | "client",
+                  )
+                }
+              >
+                <MenuItem value="specialist">
+                  {t("appointments.roleSpecialist")}
+                </MenuItem>
+                <MenuItem value="client">
+                  {t("appointments.roleClient")}
+                </MenuItem>
+              </Select>
+            </FormControl>
+          )}
+        />
+        <Controller
+          name="firstName"
+          control={control}
+          render={({ field }) => (
+            <AppRhfTextField
+              margin="none"
+              fullWidth
+              label={firstNameLabel}
+              field={field}
+            />
+          )}
+        />
+        <Controller
+          name="lastName"
+          control={control}
+          render={({ field }) => (
+            <AppRhfTextField
+              margin="none"
+              fullWidth
+              label={lastNameLabel}
+              field={field}
+            />
+          )}
+        />
+        <Controller
+          name="phone"
+          control={control}
+          render={({ field }) => (
+            <AppRhfPhoneField
+              field={field}
+              label={phoneLabel}
+              sx={{ mt: 1 }}
+            />
+          )}
+        />
+        <Controller
+          name="telegramUsername"
+          control={control}
+          render={({ field }) => (
+            <AppRhfTextField
+              margin="none"
+              fullWidth
+              label={telegramLabel}
+              field={field}
+            />
+          )}
+        />
+      </FormContainer>
+    </AppDialog>
   );
 }

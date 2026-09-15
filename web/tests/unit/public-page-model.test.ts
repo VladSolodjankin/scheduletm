@@ -11,8 +11,8 @@ import { PUBLIC_PAGE_SCHEMA_VERSION, type PublicPageDocument } from '../../src/f
 import { getPublicPageTemplate, PUBLIC_PAGE_TEMPLATES } from '../../src/features/public-page-builder/templates';
 import { canDeleteMediaFromDocuments, collectReferencedMediaIds, reconcilePendingMediaCleanup } from '../../src/features/public-page-builder/model/media';
 import { validateSocialPlatforms } from '../../src/features/public-page-builder/model/socialPlatforms';
-import { PUBLIC_PAGE_THEMES } from '../../src/features/public-page-builder/config/themes';
-import { blockSurfaceRadius, sectionThemeRadius, themeRadius } from '../../src/components/public-page-blocks/BlockRenderer';
+import { applyPublicPageThemeRounding, PUBLIC_PAGE_THEMES } from '../../src/features/public-page-builder/config/themes';
+import { blockSurfaceRadius, sectionThemeRadius } from '../../src/components/public-page-blocks/BlockRenderer';
 import { isServiceSelectable, normalizeServicesContent, validateServicesBlockContent } from '../../src/features/public-page-builder/model/services';
 import { isPublishValidationResultCurrent, resolvePublishIssueFocusTarget, validateForPublish } from '../../src/features/public-page-builder/model/publishValidation';
 import { validateSlug } from '../../src/features/public-page-builder/model/slug';
@@ -142,21 +142,20 @@ describe('public page theme choices', () => {
     expect(new Set(normalized)).toEqual(new Set(presets));
   });
 
-  it('maps all four screenshot button shapes', () => {
-    expect(themeRadius('rounded', 24)).toBe('24px');
-    expect(themeRadius('pill', 24)).toBe('40px');
-    expect(themeRadius('leaf', 24)).toBe('24px 4px 24px 4px');
-    expect(themeRadius('square', 24)).toBe('2px');
-  });
-
-  it('keeps leaf asymmetry on links while sections use the symmetric maximum radius', () => {
-    expect(themeRadius('leaf', 32)).toBe('32px 4px 32px 4px');
+  it('keeps section and block surfaces symmetric across rounding styles', () => {
     expect(sectionThemeRadius('rounded', 32)).toBe('32px');
-    expect(sectionThemeRadius('pill', 32)).toBe('40px');
+    expect(sectionThemeRadius('pill', 32)).toBe('32px');
     expect(sectionThemeRadius('leaf', 32)).toBe('32px');
-    expect(sectionThemeRadius('square', 32)).toBe('2px');
+    expect(sectionThemeRadius('square', 32)).toBe('32px');
     expect(blockSurfaceRadius(null, 'leaf', 32)).toBe('32px');
     expect(blockSurfaceRadius(11, 'leaf', 32)).toBe('11px');
+  });
+
+  it.each([['pill', 40], ['square', 2]] as const)('materializes %s preset radius in canonical defaults', (preset, radius) => {
+    const theme = applyPublicPageThemeRounding(PUBLIC_PAGE_THEMES[0], preset);
+    expect(theme.styleDefaults.sectionBorderRadius).toBe(radius);
+    expect(theme.styleDefaults.blockBorderRadius).toBe(radius);
+    expect(theme.tokens.layout.linkRadius).toBe(radius);
   });
 });
 
@@ -486,6 +485,69 @@ describe('public page document model', () => {
       .toEqual([decorated.blocks[0].id, off.blocks[0].id, 'second-free-block']);
   });
 
+  it.each([0, 1])('detaches the sole styled block at main boundary %s with its overrides and one undo entry', (index) => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('sole-detach');
+    const source = document.sections[0];
+    document.sections = [source];
+    source.design.variant = 'primary';
+    source.design.backgroundColor = '#123456';
+    source.design.paddingTop = 42;
+    const block = source.blocks[0];
+    source.blocks = [block];
+    block.design.textColor = '#abcdef';
+    const before = structuredClone(document);
+    const moved = editorReducer(createEditorState(document), {
+      type: 'layout/drop', item: { type: 'block', blockId: block.id }, to: { type: 'main', index },
+    });
+    expect(moved.document.sections).toHaveLength(1);
+    expect(moved.document.sections[0].id).not.toBe(source.id);
+    expect(moved.document.sections[0].design).toEqual(createEmptyPageSection('off').design);
+    expect(moved.document.sections[0].blocks).toEqual([block]);
+    expect(moved.document.media).toEqual(before.media);
+    expect(moved.selection).toEqual({ sectionId: moved.document.sections[0].id, blockId: block.id });
+    expect(moved.past).toHaveLength(1);
+    const undone = editorReducer(moved, { type: 'history/undo' });
+    expect(undone.document).toEqual(before);
+    expect(editorReducer(undone, { type: 'history/redo' }).document).toEqual(moved.document);
+  });
+
+  it.each([0, 1, 2, 3])('corrects main boundary %s after pruning the middle source', (index) => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('boundary-detach');
+    const first = document.sections[0];
+    const source = document.sections[1];
+    const last = { ...structuredClone(first), id: 'last-section', blocks: [{ ...structuredClone(first.blocks[0]), id: 'last-block' }] };
+    document.sections = [first, source, last];
+    for (const section of document.sections) {section.design.variant = 'primary';}
+    const block = source.blocks[0];
+    source.blocks = [block];
+    const moved = editorReducer(createEditorState(document), {
+      type: 'layout/drop', item: { type: 'block', blockId: block.id }, to: { type: 'main', index },
+    });
+    const expectedIndex = index > 1 ? index - 1 : index;
+    expect(moved.document.sections[expectedIndex].blocks).toEqual([block]);
+    expect(moved.document.sections[expectedIndex].design.variant).toBe('off');
+    expect(moved.document.sections.filter((section) => section.design.variant !== 'off')).toEqual([first, last]);
+    expect(moved.document.sections.some((section) => section.id === source.id)).toBe(false);
+  });
+
+  it.each([0, 2])('reuses an adjacent off group at main boundary %s without copying the source style', (index) => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('reuse-main');
+    const [source, off] = document.sections;
+    source.design.variant = 'primary'; off.design.variant = 'off';
+    const block = source.blocks[0];
+    const sibling = { ...structuredClone(block), id: 'retained-main-sibling' };
+    source.blocks = [block, sibling];
+    document.sections = index === 0 ? [off, source] : [source, off];
+    const moved = editorReducer(createEditorState(document), {
+      type: 'layout/drop', item: { type: 'block', blockId: block.id }, to: { type: 'main', index },
+    });
+    expect(moved.document.sections).toHaveLength(2);
+    expect(moved.document.sections.find((section) => section.id === source.id)?.blocks).toEqual([sibling]);
+    expect(moved.document.sections.find((section) => section.id === off.id)?.blocks)
+      .toEqual(index === 0 ? [block, ...off.blocks] : [...off.blocks, block]);
+    expect(moved.past).toHaveLength(1);
+  });
+
   it('prunes an ordinary source section when its last block moves out', () => {
     const document = getPublicPageTemplate('beauty')!.createDocument('pruned-source');
     const [source, destination] = document.sections;
@@ -775,10 +837,14 @@ describe('public page document model', () => {
     expect(document.media[0]?.mimeType).toBe('image/jpeg');
   });
 
-  it('rejects non-v2 and removed block shapes at the document boundary', () => {
-    const document = getPublicPageTemplate('specialist')!.createDocument('schema-v2-only');
+  it('rejects non-v4, incomplete profile and removed block shapes at the document boundary', () => {
+    const document = getPublicPageTemplate('specialist')!.createDocument('schema-v4-only');
     expect(validateDocument({ ...document, schemaVersion: 1 }).valid).toBe(false);
     expect(validateDocument({ ...document, schemaVersion: undefined }).valid).toBe(false);
+    const incompleteProfile: Record<string, unknown> = structuredClone(document.profile);
+    delete incompleteProfile.avatarPosition;
+    expect(validateDocument({ ...document, profile: incompleteProfile }).errors)
+      .toContainEqual({ code: 'invalid_value', path: 'profile.avatarPosition' });
     expect(validateDocument({
       ...document,
       sections: [{ ...document.sections[0], blocks: [{ ...document.sections[0].blocks[0], type: 'hero' }] }],

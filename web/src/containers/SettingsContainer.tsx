@@ -110,10 +110,10 @@ export function SettingsContainer() {
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const zoomOauthStatus = useMemo(() => searchParams.get('zoom_oauth'), [searchParams]);
-  const canManageSystemSettings = user?.role === 'product_owner';
-  const canManageAccountSettings = user?.role === 'owner' || user?.role === 'admin';
+  const canManageSystemSettings = user?.role === 'product_admin';
+  const canManageAccountSettings = user?.role === 'owner';
   const canManageSpecialistBookingPolicy =
-    user?.role === 'owner' || user?.role === 'admin' || user?.role === 'specialist';
+    user?.role === 'owner' || user?.role === 'specialist';
   const isOwner = user?.role === 'owner';
   const isClient = user?.role === 'client';
   const canSelfDeleteUser = Boolean(user && !canManageAccountSettings);

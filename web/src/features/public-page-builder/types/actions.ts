@@ -33,11 +33,13 @@ export type EditorAction =
   | { type: 'block/create-with-section'; section: PageSection; afterSectionId?: string | null; mediaChanges?: BlockMediaChanges }
   | { type: 'block/update'; sectionId: string; blockId: string; changes: Partial<Omit<PageBlock, 'id'>> }
   | { type: 'block/design'; sectionId: string; blockId: string; changes: Partial<BlockDesign> }
+  | { type: 'block/archive'; sectionId: string; blockId: string }
+  | { type: 'block/restore'; blockId: string }
   | { type: 'block/remove'; sectionId: string; blockId: string }
   | { type: 'block/move-or-detach'; fromSectionId: string; toSectionId?: string; block: PageBlock; index?: number; newSection?: PageSection; sectionChanges?: Partial<Omit<PageSection, 'id' | 'blocks'>> }
   | { type: 'block/reorder'; sectionId: string; blockId: string; toIndex: number }
   | { type: 'layout/drop'; item: { type: 'section'; sectionId: string }; to: { type: 'main'; index: number } }
-  | { type: 'layout/drop'; item: { type: 'block'; blockId: string }; to: { type: 'section'; sectionId: string; index: number } }
+  | { type: 'layout/drop'; item: { type: 'block'; blockId: string }; to: { type: 'section'; sectionId: string; index: number } | { type: 'main'; index: number } }
   | { type: 'block/toggle'; sectionId: string; blockId: string }
   | { type: 'selection/set'; sectionId: string | null; blockId?: string | null }
   | { type: 'selection/clear' }

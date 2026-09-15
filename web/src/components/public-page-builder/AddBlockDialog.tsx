@@ -1,20 +1,18 @@
-import {
-  AccountCircleOutlined,
-  ArrowBack,
-  ChatBubbleOutlined,
-  Close,
-  CollectionsOutlined,
-  ContactPageOutlined,
-  DesignServicesOutlined,
-  HorizontalRuleOutlined,
-  ImageOutlined,
-  LinkOutlined,
-  MapOutlined,
-  QuizOutlined,
-  ShareOutlined,
-  SmartButtonOutlined,
-  TextFieldsOutlined,
-} from '@mui/icons-material';
+import AccountCircleOutlined from '@mui/icons-material/AccountCircleOutlined';
+import ArrowBack from '@mui/icons-material/ArrowBack';
+import ChatBubbleOutlined from '@mui/icons-material/ChatBubbleOutlined';
+import Close from '@mui/icons-material/Close';
+import CollectionsOutlined from '@mui/icons-material/CollectionsOutlined';
+import ContactPageOutlined from '@mui/icons-material/ContactPageOutlined';
+import DesignServicesOutlined from '@mui/icons-material/DesignServicesOutlined';
+import HorizontalRuleOutlined from '@mui/icons-material/HorizontalRuleOutlined';
+import ImageOutlined from '@mui/icons-material/ImageOutlined';
+import LinkOutlined from '@mui/icons-material/LinkOutlined';
+import MapOutlined from '@mui/icons-material/MapOutlined';
+import QuizOutlined from '@mui/icons-material/QuizOutlined';
+import ShareOutlined from '@mui/icons-material/ShareOutlined';
+import SmartButtonOutlined from '@mui/icons-material/SmartButtonOutlined';
+import TextFieldsOutlined from '@mui/icons-material/TextFieldsOutlined';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, TextField, Typography } from '@mui/material';
 import { useId, useState } from 'react';
 import { SocialPlatformIcon, socialPlatformStyles } from '../public-page-blocks/blocks';
@@ -55,12 +53,14 @@ const platformKeys: Record<SocialPlatform, Parameters<typeof publicPageText>[1]>
   telegram: 'platformTelegram', facebook: 'platformFacebook', threads: 'platformThreads', instagram: 'platformInstagram', tiktok: 'platformTiktok',
 };
 
-export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, theme, repository, media, previewUrls, serviceCatalog, servicesLoading = false, servicesError = false, onRefreshServices, onClose, onConfirm }: {
+export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, theme, timezone, onOpenArchive, repository, media, previewUrls, serviceCatalog, servicesLoading = false, servicesError = false, onRefreshServices, onClose, onConfirm }: {
   open: boolean;
   compact?: boolean;
   locale: Locale;
   usedPlatforms: ReadonlySet<SocialPlatform>;
   theme: PageTheme;
+  timezone: string;
+  onOpenArchive: () => void;
   repository: ApiPublicPageRepository;
   media: readonly MediaReference[];
   previewUrls: ReadonlyMap<string, string>;
@@ -125,11 +125,11 @@ export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, t
           </Box>
         </Box>}
       </DialogContent>
-      <DialogActions>{category ? <Button startIcon={<ArrowBack />} onClick={() => { setCategory(null); setQuery(''); }}>{publicPageText(locale, 'back')}</Button> : null}</DialogActions>
+      <DialogActions><Button onClick={() => {close(); onOpenArchive();}}>{publicPageText(locale, 'blockArchive')}</Button>{category ? <Button startIcon={<ArrowBack />} onClick={() => { setCategory(null); setQuery(''); }}>{publicPageText(locale, 'back')}</Button> : null}</DialogActions>
     </Dialog>
     <BlockEditorDialog open={Boolean(draft)} block={draft} locale={locale} title={publicPageText(locale, 'configureBlock')}
       compact={compact}
-      theme={theme} repository={repository} media={media} previewUrls={previewUrls}
+      theme={theme} timezone={timezone} repository={repository} media={media} previewUrls={previewUrls}
       serviceCatalog={serviceCatalog} servicesLoading={servicesLoading} servicesError={servicesError} onRefreshServices={onRefreshServices}
       onClose={() => setDraft(null)} onSave={(result) => { onConfirm(result); close(); }} />
   </>;

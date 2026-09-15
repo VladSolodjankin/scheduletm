@@ -195,7 +195,7 @@ export const specialistUserCreationSchema = z.object({
     .max(120, v.specialistNameMax)
 });
 
-const managedUserRoleSchema = z.enum(['admin', 'specialist', 'client']);
+const managedUserRoleSchema = z.enum(['specialist', 'client']);
 
 export const managedUserCreateSchema = z.object({
   email: z.string().trim().email(v.emailInvalid).max(254, v.emailTooLong),

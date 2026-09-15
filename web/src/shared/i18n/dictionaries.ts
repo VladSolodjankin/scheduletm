@@ -351,12 +351,6 @@ export const dictionaries = {
         phone: 'Phone',
         telegram: 'Telegram'
       },
-      adminConfirm: {
-        title: 'Create admin user?',
-        description: 'You are about to create a user with admin role. Please confirm this action.',
-        cancel: 'Cancel',
-        confirm: 'Create admin'
-      },
       deactivateConfirm: {
         title: 'Deactivate user?',
         description: 'The user will immediately lose access to the account, but will remain visible in the users list.',
@@ -452,7 +446,6 @@ export const dictionaries = {
       pageTitle: 'Appointments',
       pageSubtitle: 'Calendar view with schedule by day and time.',
       pageSubtitleOwner: 'All appointments',
-      pageSubtitleAdmin: 'Appointments in your account',
       pageSubtitleSpecialist: 'Appointments with you',
       pageSubtitleClient: 'My appointments',
       accountFilter: 'Account',
@@ -496,7 +489,6 @@ export const dictionaries = {
       client: 'Client',
       newClient: 'New client',
       durationMinutesShort: '{minutes}m',
-      roleAdmin: 'admin',
       roleSpecialist: 'specialist',
       roleClient: 'client',
       paymentStatusPaid: 'Paid',
@@ -553,14 +545,27 @@ export const dictionaries = {
       status: 'Status', openMeeting: 'Open meeting', errors: { load: 'Appointment was not found.' }
     },
     publicPageBuilder: {
-      pages: 'Public pages', create: 'Create page', empty: 'No public pages yet',
+     pages: 'Public pages', editorWorkspaceTitle: 'Public Pages · Editor', pagesSubtitle: 'Create, publish and manage account pages.',
+      implementedTemplates: 'Implemented templates · {count}', templatePreviewHint: 'Preview only. Links and controls are inactive.',
+      create: 'Create page', empty: 'No public pages yet',
       loading: 'Loading…', retry: 'Retry', edit: 'Edit', duplicate: 'Duplicate',
       archive: 'Archive', restore: 'Restore', draft: 'Draft', published: 'Published', archived: 'Archived',
+      unsaved: 'Unsaved changes', leaveWarning: 'Save your changes before leaving, or discard them.', stay: 'Stay', discardAndLeave: 'Discard and leave', saveAndLeave: 'Save and leave',
+      publishMissingTitle: 'Enter a page title in Page settings.', publishMissingDescription: 'Enter a page description in Page settings.', publishMissingBlock: 'Add at least one visible block.', publishInvalidBlock: 'Check the content of the selected block.', publishInvalidLink: 'Enter a valid link or contact action.', publishInvalidMedia: 'Select an available image and check its settings.', publishMissingAlt: 'Add a description for the image.', publishMissingLabel: 'Add a label for the link or action.', publishInvalidDocument: 'Check the page settings and block content before publishing.',
+      advancedDesign: 'Advanced design', simpleEditor: 'Simple editor', advancedEditor: 'Advanced editor', designEditorMode: 'Design editor mode', typography: 'Typography', buttons: 'Buttons', customValues: 'Custom values', fromPageTheme: 'From page theme', resetGroup: 'Reset group',
+      palettePreserves: 'Changing the palette preserves your custom typography and button settings. Reset affects only this group.', sectionDefaults: 'Section defaults',
+      customButtonDesign: 'Custom button design', buttonInheritance: 'Uses section styling, then page styling.', resetButtonDesign: 'Use section style', animation: 'Animation', pulse: 'Pulse', lift: 'Lift', softShadow: 'Soft',
+      reducedMotionHint: 'Animation plays twice and stops. Reduced motion turns animation off.', openInNewTab: 'Open link in a new tab',
+      scheduleEnabled: 'Show during a date range', scheduleFrom: 'From', scheduleUntil: 'Until', scheduleTimezone: 'Page time zone: {timezone}', scheduleBoundaryHint: 'Start is inclusive. The end hides the block. Weekdays use the page time zone.', scheduleWeekdays: 'Limit days of the week',
+      scheduleInvalidDates: 'Enter both dates. The end must be later than the start.', scheduleNoDays: 'Select at least one day.', scheduleAmbiguous: 'This local time occurs twice during the clock change. Choose an unambiguous time.', scheduleNonexistent: 'This local time does not exist during the clock change. Choose another time.',
+      scheduleActive: 'Scheduled · visible now', scheduleInactive: 'Scheduled · hidden now', monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu', friday: 'Fri', saturday: 'Sat', sunday: 'Sun',
+      blockArchive: 'Block archive', archiveBlock: 'Archive block', blockArchiveHint: 'Archived blocks are hidden. Their content and design are preserved.', blockArchiveEmpty: 'No archived blocks yet', blockArchiveEmptyHint: 'Choose Archive block in a block action menu to keep it for later.', sourceSectionRemoved: 'Original section removed',
+      blockRestoreHint: 'Restore appends to the original section, or to the end of the page if the section was removed.', blockRestored: 'Block restored. Save or publish your changes when ready.', blockRestoreConflict: 'This social platform already has a block. Archive or remove that block before restoring this one.',
       save: 'Save', saving: 'Saving…', saved: 'Saved', saveError: 'Could not save',
       publish: 'Publish', undo: 'Undo', redo: 'Redo', preview: 'Preview',
       open: 'Open', copyLink: 'Copy link', linkCopied: 'Link copied', mobileNavigation: 'Page editor navigation',
-      sections: 'Sections', blocks: 'Blocks', addSection: 'Add section', addBlock: 'Add block', createNewSection: 'Create new section',
-      inspector: 'Inspector', page: 'Page', section: 'Section', block: 'Block',
+      addBlock: 'Add block', createNewSection: 'Create new section',
+      page: 'Page', section: 'Section', block: 'Block',
       title: 'Title', description: 'Description', slug: 'Public address', visible: 'Visible',
       remove: 'Delete', moveUp: 'Move up', moveDown: 'Move down', name: 'Name',
       reorderKeyboardHint: 'Use Alt+Up Arrow or Alt+Down Arrow to move.',
@@ -570,20 +575,6 @@ export const dictionaries = {
       blockMovedAnnouncement: '{name} moved to block position {position} of {total}.',
       reorderAtStart: '{name} is already at the start.', reorderAtEnd: '{name} is already at the end.',
       theme: 'Theme', background: 'Background', textColor: 'Text color',
-      contrastGuidance: 'Text contrast',
-      contrastGuidanceDescription: 'Advisory check for default text on known solid surfaces. Images, gradients, rich-text colors, nested card surfaces, hover and focus states, and non-text contrast require manual review.',
-      contrastPass: 'Pass', contrastFail: 'Needs attention', contrastUnknown: 'Check manually',
-      contrastRatio: 'Ratio {ratio}:1 (minimum {minimum}:1)',
-      contrastRatioUnknown: 'Ratio is unavailable (minimum {minimum}:1)',
-      contrastPageHeading: 'Page heading', contrastPageText: 'Page text',
-      contrastSectionHeading: 'Section heading', contrastSectionText: 'Section text',
-      contrastBlockHeading: 'Block heading', contrastBlockText: 'Block text',
-      contrastLinkTitle: 'Link title', contrastLinkSubtitle: 'Link subtitle', contrastText: 'Text',
-      contrastCardHeading: 'Service card heading', contrastCardText: 'Service card text',
-      contrastCardLinkTitle: 'Booking button', contrastCardContent: 'Nested card content',
-      contrastImageReason: 'The surface contains an image.', contrastPresetReason: 'The surface contains a gradient preset.',
-      contrastColorReason: 'A color format is not supported.', contrastSurfaceReason: 'The effective surface is not known.',
-      contrastNestedReason: 'This nested card uses an application surface that cannot be derived from the page theme.',
       deviceMobile: 'Mobile', deviceTablet: 'Tablet', deviceDesktop: 'Desktop',
       noSelection: 'Select a section or block to edit it',
       invalidSlug: 'Use 3–40 lowercase letters, numbers, or single hyphens',
@@ -608,7 +599,9 @@ export const dictionaries = {
       uploadImage: 'Upload image', replaceImage: 'Replace image', imageAlt: 'Image description',
       invalidImageType: 'Choose a JPEG, PNG, or WebP image.', imageTooLarge: 'Image must be 5 MB or smaller.',
       imageUploadError: 'Could not upload the image.', displayName: 'Display name', profileDescription: 'Profile description',
-      logo: 'Logo', avatar: 'Profile photo', blockBackground: 'Block background', pageBackground: 'Page background',
+      logo: 'Logo', avatar: 'Profile photo', avatarPosition: 'Adjust profile photo position',
+      avatarPositionHint: 'Drag the photo to position it. You can also use the arrow keys.', centerImage: 'Center photo',
+      blockBackground: 'Block background', pageBackground: 'Page background',
       overlay: 'Overlay (%)', imageFit: 'Image fit', imageFitCover: 'Cover', imageFitContain: 'Contain', focalPoint: 'Focal point', font: 'Font',
       pageColor: 'Page color', backgroundPreset: 'Background style',
       cancel: 'Cancel', configureBlock: 'Configure block', back: 'Back', close: 'Close', searchPlatforms: 'Search platforms', pageSettings: 'Page settings',
@@ -1011,12 +1004,6 @@ export const dictionaries = {
         phone: 'Телефон',
         telegram: 'Telegram'
       },
-      adminConfirm: {
-        title: 'Создать администратора?',
-        description: 'Вы собираетесь создать пользователя с ролью admin. Подтвердите действие.',
-        cancel: 'Отмена',
-        confirm: 'Создать admin'
-      },
       deactivateConfirm: {
         title: 'Деактивировать пользователя?',
         description: 'Пользователь сразу потеряет доступ к аккаунту, но останется в списке пользователей.',
@@ -1112,7 +1099,6 @@ export const dictionaries = {
       pageTitle: 'Записи',
       pageSubtitle: 'Календарный вид с расписанием по дням и времени.',
       pageSubtitleOwner: 'Все записи',
-      pageSubtitleAdmin: 'Записи в вашем аккаунте',
       pageSubtitleSpecialist: 'Записи с вами',
       pageSubtitleClient: 'Мои записи',
       accountFilter: 'Аккаунт',
@@ -1156,7 +1142,6 @@ export const dictionaries = {
       client: 'Клиент',
       newClient: 'Новый клиент',
       durationMinutesShort: '{minutes}м',
-      roleAdmin: 'admin',
       roleSpecialist: 'specialist',
       roleClient: 'client',
       paymentStatusPaid: 'Оплачено',
@@ -1217,14 +1202,27 @@ export const dictionaries = {
       unknownBlockDescription: 'Этот тип блока недоступен, но остальная страница продолжает отображаться.',
       blockErrorTitle: 'Не удалось отобразить блок',
       blockErrorDescription: 'В этом блоке произошла ошибка. Остальная страница по-прежнему доступна.',
-      pages: 'Публичные страницы', create: 'Создать страницу', empty: 'Публичных страниц пока нет',
+     pages: 'Публичные страницы', editorWorkspaceTitle: 'Публичные страницы · Редактор', pagesSubtitle: 'Создавайте, публикуйте и управляйте страницами аккаунта.',
+      implementedTemplates: 'Готовые шаблоны · {count}', templatePreviewHint: 'Только предпросмотр. Ссылки и элементы управления неактивны.',
+      create: 'Создать страницу', empty: 'Публичных страниц пока нет',
       loading: 'Загрузка…', retry: 'Повторить', edit: 'Редактировать', duplicate: 'Дублировать',
       archive: 'В архив', restore: 'Восстановить', draft: 'Черновик', published: 'Опубликована', archived: 'В архиве',
+      unsaved: 'Есть несохранённые изменения', leaveWarning: 'Сохраните изменения перед выходом или отмените их.', stay: 'Остаться', discardAndLeave: 'Выйти без сохранения', saveAndLeave: 'Сохранить и выйти',
+      publishMissingTitle: 'Укажите заголовок страницы в настройках страницы.', publishMissingDescription: 'Укажите описание страницы в настройках страницы.', publishMissingBlock: 'Добавьте хотя бы один видимый блок.', publishInvalidBlock: 'Проверьте содержимое выбранного блока.', publishInvalidLink: 'Укажите корректную ссылку или действие для связи.', publishInvalidMedia: 'Выберите доступное изображение и проверьте его настройки.', publishMissingAlt: 'Добавьте описание изображения.', publishMissingLabel: 'Добавьте подпись ссылки или действия.', publishInvalidDocument: 'Проверьте настройки страницы и содержимое блоков перед публикацией.',
+      advancedDesign: 'Расширенное оформление', simpleEditor: 'Простой редактор', advancedEditor: 'Расширенный редактор', designEditorMode: 'Режим редактора дизайна', typography: 'Типографика', buttons: 'Кнопки', customValues: 'Собственные значения', fromPageTheme: 'Из темы страницы', resetGroup: 'Сбросить группу',
+      palettePreserves: 'Смена палитры сохраняет ваши настройки типографики и кнопок. Сброс затрагивает только эту группу.', sectionDefaults: 'Стили секций',
+      customButtonDesign: 'Собственное оформление кнопки', buttonInheritance: 'Используется оформление секции, затем страницы.', resetButtonDesign: 'Использовать стиль секции', animation: 'Анимация', pulse: 'Пульсация', lift: 'Приподнять', softShadow: 'Мягкая',
+      reducedMotionHint: 'Анимация повторяется дважды и останавливается. При уменьшении движения анимация отключена.', openInNewTab: 'Открывать ссылку в новой вкладке',
+      scheduleEnabled: 'Показывать в период', scheduleFrom: 'С', scheduleUntil: 'До', scheduleTimezone: 'Часовой пояс страницы: {timezone}', scheduleBoundaryHint: 'Начало включительно. Окончание скрывает блок. Дни недели учитываются в часовом поясе страницы.', scheduleWeekdays: 'Ограничить дни недели',
+      scheduleInvalidDates: 'Укажите обе даты. Окончание должно быть позже начала.', scheduleNoDays: 'Выберите хотя бы один день.', scheduleAmbiguous: 'Это местное время повторяется при переводе часов. Выберите однозначное время.', scheduleNonexistent: 'Такого местного времени нет из-за перевода часов. Выберите другое время.',
+      scheduleActive: 'По расписанию · виден сейчас', scheduleInactive: 'По расписанию · скрыт сейчас', monday: 'Пн', tuesday: 'Вт', wednesday: 'Ср', thursday: 'Чт', friday: 'Пт', saturday: 'Сб', sunday: 'Вс',
+      blockArchive: 'Архив блоков', archiveBlock: 'В архив', blockArchiveHint: 'Архивные блоки скрыты. Их содержимое и оформление сохраняются.', blockArchiveEmpty: 'В архиве пока нет блоков', blockArchiveEmptyHint: 'Выберите «В архив» в меню действий блока, чтобы сохранить его на будущее.', sourceSectionRemoved: 'Исходная секция удалена',
+      blockRestoreHint: 'Блок вернётся в конец исходной секции. Если секция удалена — в конец страницы.', blockRestored: 'Блок восстановлен. Сохраните или опубликуйте изменения, когда будете готовы.', blockRestoreConflict: 'Блок этой соцсети уже есть. Архивируйте или удалите его перед восстановлением.',
       save: 'Сохранить', saving: 'Сохранение…', saved: 'Сохранено', saveError: 'Не удалось сохранить',
       publish: 'Опубликовать', undo: 'Отменить', redo: 'Повторить', preview: 'Предпросмотр',
       open: 'Открыть', copyLink: 'Копировать ссылку', linkCopied: 'Ссылка скопирована', mobileNavigation: 'Навигация редактора страницы',
-      sections: 'Секции', blocks: 'Блоки', addSection: 'Добавить секцию', addBlock: 'Добавить блок', createNewSection: 'Создать новую секцию',
-      inspector: 'Настройки', page: 'Страница', section: 'Секция', block: 'Блок',
+      addBlock: 'Добавить блок', createNewSection: 'Создать новую секцию',
+      page: 'Страница', section: 'Секция', block: 'Блок',
       title: 'Заголовок', description: 'Описание', slug: 'Публичный адрес', visible: 'Показывать',
       remove: 'Удалить', moveUp: 'Вверх', moveDown: 'Вниз', name: 'Название',
       reorderKeyboardHint: 'Для перемещения нажмите Alt+Стрелка вверх или Alt+Стрелка вниз.',
@@ -1234,20 +1232,6 @@ export const dictionaries = {
       blockMovedAnnouncement: '{name}: блок перемещён на позицию {position} из {total}.',
       reorderAtStart: '{name} уже находится в начале.', reorderAtEnd: '{name} уже находится в конце.',
       theme: 'Тема', background: 'Фон', textColor: 'Цвет текста',
-      contrastGuidance: 'Контраст текста',
-      contrastGuidanceDescription: 'Рекомендательная проверка стандартного текста на известном однотонном фоне. Изображения, градиенты, цвета внутри форматированного текста, поверхности старых карточек, состояния наведения и фокуса, а также нетекстовый контраст требуют ручной проверки.',
-      contrastPass: 'Соответствует', contrastFail: 'Требует внимания', contrastUnknown: 'Проверьте вручную',
-      contrastRatio: 'Контраст {ratio}:1 (минимум {minimum}:1)',
-      contrastRatioUnknown: 'Контраст не рассчитан (минимум {minimum}:1)',
-      contrastPageHeading: 'Заголовок страницы', contrastPageText: 'Текст страницы',
-      contrastSectionHeading: 'Заголовок секции', contrastSectionText: 'Текст секции',
-      contrastBlockHeading: 'Заголовок блока', contrastBlockText: 'Текст блока',
-      contrastLinkTitle: 'Заголовок ссылки', contrastLinkSubtitle: 'Подзаголовок ссылки', contrastText: 'Текст',
-      contrastCardHeading: 'Заголовок карточки услуги', contrastCardText: 'Текст карточки услуги',
-      contrastCardLinkTitle: 'Кнопка записи', contrastCardContent: 'Содержимое вложенной карточки',
-      contrastImageReason: 'Фон содержит изображение.', contrastPresetReason: 'Фон содержит градиентный стиль.',
-      contrastColorReason: 'Формат цвета не поддерживается.', contrastSurfaceReason: 'Итоговый фон неизвестен.',
-      contrastNestedReason: 'Эта вложенная карточка использует поверхность приложения, которую нельзя определить из темы страницы.',
       deviceMobile: 'Телефон', deviceTablet: 'Планшет', deviceDesktop: 'Компьютер',
       noSelection: 'Выберите секцию или блок для редактирования',
       invalidSlug: 'От 3 до 40 строчных букв, цифр или одиночных дефисов',
@@ -1272,7 +1256,9 @@ export const dictionaries = {
       uploadImage: 'Загрузить изображение', replaceImage: 'Заменить изображение', imageAlt: 'Описание изображения',
       invalidImageType: 'Выберите изображение JPEG, PNG или WebP.', imageTooLarge: 'Размер изображения не должен превышать 5 МБ.',
       imageUploadError: 'Не удалось загрузить изображение.', displayName: 'Отображаемое имя', profileDescription: 'Описание профиля',
-      logo: 'Логотип', avatar: 'Фото профиля', blockBackground: 'Фон блока', pageBackground: 'Фон страницы',
+      logo: 'Логотип', avatar: 'Фото профиля', avatarPosition: 'Настроить положение фото профиля',
+      avatarPositionHint: 'Перетащите фото в нужное положение. Также можно использовать клавиши со стрелками.', centerImage: 'По центру',
+      blockBackground: 'Фон блока', pageBackground: 'Фон страницы',
       overlay: 'Затемнение (%)', imageFit: 'Вписывание изображения', imageFitCover: 'Заполнить', imageFitContain: 'Вместить', focalPoint: 'Фокусная точка', font: 'Шрифт',
       pageColor: 'Цвет страницы', backgroundPreset: 'Стиль фона',
       cancel: 'Отмена', configureBlock: 'Настройка блока', back: 'Назад', close: 'Закрыть', searchPlatforms: 'Поиск платформ', pageSettings: 'Настройки страницы',
@@ -1585,10 +1571,6 @@ export type TranslationKey =
   | 'users.form.lastName'
   | 'users.form.phone'
   | 'users.form.telegram'
-  | 'users.adminConfirm.title'
-  | 'users.adminConfirm.description'
-  | 'users.adminConfirm.cancel'
-  | 'users.adminConfirm.confirm'
   | 'users.deactivateConfirm.title'
   | 'users.deactivateConfirm.description'
   | 'users.deactivateConfirm.cancel'
@@ -1623,12 +1605,10 @@ export type TranslationKey =
   | 'appointments.currentTimezone'
   | 'appointments.useCustomTimezone'
   | 'appointments.hideCustomTimezone'
-  | 'appointments.roleAdmin'
   | 'appointments.newClient'
   | 'appointments.pageTitle'
   | 'appointments.pageSubtitle'
   | 'appointments.pageSubtitleOwner'
-  | 'appointments.pageSubtitleAdmin'
   | 'appointments.pageSubtitleSpecialist'
   | 'appointments.pageSubtitleClient'
   | 'appointments.accountFilter'

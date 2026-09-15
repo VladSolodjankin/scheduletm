@@ -4,7 +4,7 @@ import { deactivateSpecialistByWebUserId, findSpecialistByWebUserId } from '../r
 import {
   cancelWebUserDeletion,
   createWebUser,
-  findWebUserByEmail,
+  findWebUserByEmailAnyAccount,
   findWebUserById,
   findWebUserByIdAnyAccount,
   listWebUsersAllAccounts,
@@ -46,7 +46,7 @@ export type ManagedUserDeleteImpact = {
 
 type UserCreatePayload = {
   email: string;
-  role: "admin" | "specialist" | "client";
+  role: "specialist" | "client";
   firstName: string;
   lastName: string;
   phone?: string;
@@ -55,7 +55,7 @@ type UserCreatePayload = {
 
 type UserUpdatePayload = {
   email: string;
-  role: "admin" | "specialist" | "client";
+  role: "specialist" | "client";
   firstName: string;
   lastName: string;
   phone?: string;
@@ -81,7 +81,7 @@ async function resolveAccountId(actor: User): Promise<number> {
 }
 
 async function resolveManagedUserAccountId(actor: User, userId: number): Promise<number | null> {
-  if (actor.role !== WebUserRole.ProductOwner) {
+  if (actor.role !== WebUserRole.ProductAdmin) {
     return actor.accountId;
   }
 
@@ -118,7 +118,7 @@ export async function listManagedUsers(actor: User): Promise<UserManagementItem[
   }
 
   const accountId = await resolveAccountId(actor);
-  const users = actor.role === WebUserRole.ProductOwner
+  const users = actor.role === WebUserRole.ProductAdmin
     ? await listWebUsersAllAccounts()
     : await listWebUsersByAccount(accountId);
   const filtered = canManageFullUserDirectory(actor.role)
@@ -135,7 +135,7 @@ export async function createManagedUser(actor: User, payload: UserCreatePayload)
   const accountId = await resolveAccountId(actor);
   const email = sanitizeEmail(payload.email);
 
-  const existing = await findWebUserByEmail(accountId, email);
+  const existing = await findWebUserByEmailAnyAccount(email);
   if (existing) {
     throw new Error('EMAIL_IN_USE');
   }
@@ -209,7 +209,7 @@ export async function updateManagedUser(actor: User, userId: number, payload: Us
 
   const email = sanitizeEmail(payload.email);
   if (email !== existing.email) {
-    const duplicate = await findWebUserByEmail(accountId, email);
+    const duplicate = await findWebUserByEmailAnyAccount(email);
     if (duplicate && duplicate.id !== userId) {
       throw new Error('EMAIL_IN_USE');
     }

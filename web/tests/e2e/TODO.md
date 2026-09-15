@@ -35,7 +35,7 @@ unless explicitly invoked.
 
 ## Iteration 2
 
-- [ ] Roles and tenant isolation: `product_owner`, `owner`, `admin`,
+- [ ] Roles and tenant isolation: `product_admin`, `owner`,
   `specialist`, and `client`, including direct URL and API denial.
 - [ ] Auth register, OTP/resend, invite, refresh, and password recovery.
 - [ ] Users create/edit/deactivate/delete/resend invite/default meeting link.

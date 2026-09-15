@@ -1,15 +1,13 @@
 export enum WebUserRole {
-  ProductOwner = 'product_owner',
+  ProductAdmin = 'product_admin',
   Owner = 'owner',
-  Admin = 'admin',
   Specialist = 'specialist',
   Client = 'client',
 }
 
 export const WEB_USER_ROLES = [
-  WebUserRole.ProductOwner,
+  WebUserRole.ProductAdmin,
   WebUserRole.Owner,
-  WebUserRole.Admin,
   WebUserRole.Specialist,
   WebUserRole.Client,
 ] as const;

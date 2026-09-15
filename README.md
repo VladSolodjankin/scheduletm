@@ -8,7 +8,7 @@ TypeScript npm-workspaces monorepo:
 
 ## Текущая web/server модель
 
-- Роли: глобальный `product_owner`, tenant `owner`, `admin`, `specialist`, `client`.
+- Роли: глобальный `product_admin`, tenant `owner`, `specialist`, `client`.
 - Self-registration создаёт новый account и tenant `owner`.
 - Users/specialists/settings/appointments изолированы по `account_id`.
 - Locale/timezone являются пользовательскими настройками.

@@ -26,7 +26,7 @@ export function SpecialistsContainer() {
   const [editingSpecialist, setEditingSpecialist] = useState<SpecialistManagementItem | null>(null);
   const [isSavingSpecialist, setIsSavingSpecialist] = useState(false);
 
-  const canManageSpecialists = user?.role === 'product_owner' || user?.role === 'owner' || user?.role === 'admin';
+  const canManageSpecialists = user?.role === 'product_admin' || user?.role === 'owner';
   const canManageSpecialistSettings = canManageSpecialists || user?.role === 'specialist';
 
   useEffect(() => {

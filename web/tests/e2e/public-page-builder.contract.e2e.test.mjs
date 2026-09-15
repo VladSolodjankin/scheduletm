@@ -30,7 +30,7 @@ describe('public page builder source contracts', () => {
     assert.match(slug, /RESERVED_PUBLIC_PAGE_SLUGS\.has\(slug\) \? 'reserved' : null/);
   });
 
-  it('registers only schema-v2 blocks while keeping unknown renderer failures recoverable', async () => {
+  it('registers only schema-v4 blocks while keeping unknown renderer failures recoverable', async () => {
     const registrations = await read('src/features/public-page-builder/config/registerBlocks.ts');
     const registry = await read('src/features/public-page-builder/model/blockRegistry.ts');
     const renderer = await read('src/components/public-page-blocks/BlockRenderer.tsx');
@@ -44,7 +44,7 @@ describe('public page builder source contracts', () => {
       'avatar', 'button', 'links', 'text', 'image', 'gallery', 'services',
       'contacts', 'social-button', 'map', 'divider', 'faq',
     ]);
-    assert.match(types, /PUBLIC_PAGE_SCHEMA_VERSION = 2 as const/);
+    assert.match(types, /PUBLIC_PAGE_SCHEMA_VERSION = 4 as const/);
     assert.doesNotMatch(types, /\| 'hero'/);
     assert.doesNotMatch(registrations, /type: 'hero'/);
     assert.doesNotMatch(templates, /-hero`|'hero'/);
@@ -74,7 +74,7 @@ describe('public page builder source contracts', () => {
     assert.equal([...dictionaries.matchAll(/fieldAction: 'Действие'/g)].length, 1);
   });
 
-  it('fails closed when API documents are missing, invalid, or not schema v2', async () => {
+  it('fails closed when API documents are missing, invalid, or not schema v4', async () => {
     const repository = await read('src/features/public-page-builder/repository/ApiPublicPageRepository.ts');
     const validator = await read('src/features/public-page-builder/model/validateDocument.ts');
 
@@ -203,38 +203,11 @@ describe('public page builder source contracts', () => {
     assert.match(dictionaries, /unknownBlockDescription:/);
   });
 
-  it('wires localized, accessible contrast guidance into page, section, and customized block design surfaces', async () => {
-    const guidance = await read('src/components/public-page-builder/ContrastGuidance.tsx');
-    const designPanel = await read('src/components/public-page-builder/DesignPanel.tsx');
+  it('preserves page colors and Avatar typography overrides', async () => {
     const inspector = await read('src/components/public-page-builder/InspectorPanel.tsx');
-    const sectionControls = await read('src/components/public-page-builder/SectionDesignControls.tsx');
-    const blockDialog = await read('src/components/public-page-builder/BlockEditorDialog.tsx');
     const blockRenderer = await read('src/components/public-page-blocks/BlockRenderer.tsx');
     const blocks = await read('src/components/public-page-blocks/blocks.tsx');
-    const uiText = await read('src/components/public-page-builder/uiText.ts');
-    const dictionaries = await read('src/shared/i18n/dictionaries.ts');
-
-    assert.match(guidance, /component="section"[\s\S]{0,100}aria-labelledby=\{titleId\}/);
-    assert.match(guidance, /<List[\s\S]{0,120}aria-live="polite"[\s\S]{0,80}aria-atomic="true"/);
-    assert.match(guidance, /data-contrast-status=\{check\.status\}/);
-    for (const status of ['contrastPass', 'contrastFail', 'contrastUnknown']) {
-      assert.ok(guidance.includes(status), `missing visible contrast status: ${status}`);
-    }
-    for (const icon of ['CheckCircleOutlined', 'ErrorOutlined', 'HelpOutlined']) {
-      assert.match(guidance, new RegExp(`<${icon} aria-hidden`));
-    }
-
-    assert.ok(designPanel.indexOf('<ContrastGuidance') > designPanel.indexOf("'colorPalettes'"));
-    assert.ok(designPanel.indexOf('<ContrastGuidance') < designPanel.indexOf("'fonts'"));
-    assert.match(designPanel, /checks=\{analyzePageContrast\(theme\)\}/);
-    assert.match(inspector, /checks=\{analyzePageContrast\(state\.document\.theme\)\}/);
-    assert.match(inspector, /block\.design\.backgroundColor \|\| block\.design\.backgroundMediaId \|\| block\.design\.textColor/);
-    assert.match(inspector, /checks=\{analyzeBlockContrast\(state\.document\.theme, section, block\)\}/);
-    assert.ok(sectionControls.indexOf('<ContrastGuidance') > sectionControls.indexOf('data-section-settings-group="links"'));
-    assert.match(sectionControls, /checks=\{analyzeSectionContrast\(theme, section\)\}/);
-    assert.match(blockDialog, /draft\.design\.backgroundColor \|\| draft\.design\.backgroundMediaId \|\| draft\.design\.textColor/);
-    assert.match(blockDialog, /const contrastSection = sectionDraft \?\? selectedSection/);
-    assert.match(blockDialog, /checks=\{analyzeBlockContrast\(theme, contrastSection, draft\)\}/);
+    assert.match(inspector, /applyPublicPageThemeColors\(state\.document\.theme, \{ \[color\]: value \}\)/);
     for (const variable of ['--page-section-text', '--theme-heading-color', '--theme-text-color', '--avatar-title-color', '--avatar-bio-color']) {
       assert.match(blockRenderer, new RegExp(`'${variable}': block\\.design\\.textColor`));
     }
@@ -247,10 +220,6 @@ describe('public page builder source contracts', () => {
     assert.match(avatarCopy, /component="h1"[\s\S]{0,180}'&&': \{[\s\S]{0,220}fontSize: 'var\(--avatar-title-size\)'[\s\S]{0,220}color: 'var\(--avatar-title-color\)'/);
     assert.match(avatarCopy, /block\.content\.subtitle[\s\S]{0,140}'&&': \{[\s\S]{0,220}fontSize: 'var\(--avatar-bio-size\)'[\s\S]{0,220}color: 'var\(--avatar-bio-color\)'/);
 
-    for (const key of ['contrastGuidance', 'contrastPass', 'contrastFail', 'contrastUnknown', 'contrastRatio', 'contrastRatioUnknown']) {
-      assert.match(uiText, new RegExp(`${key}: 'publicPageBuilder\\.${key}'`));
-      assert.equal([...dictionaries.matchAll(new RegExp(`\\b${key}:`, 'g'))].length, 2, `expected EN/RU ${key}`);
-    }
   });
 
   it('serializes saves and advances the server revision before retrying newer local edits', async () => {
@@ -260,8 +229,10 @@ describe('public page builder source contracts', () => {
     assert.match(editor, /if \(inFlightSaveRef\.current\)[\s\S]*return inFlightSaveRef\.current/);
     assert.match(editor, /serverRevisionRef\.current = saved\.revision;[\s\S]*localEditRevisionRef\.current !== localRevision[\s\S]*status: 'idle'/);
     assert.match(editor, /finally \{[\s\S]*inFlightSaveRef\.current = null/);
-    assert.match(toolbar, /disabled=\{saveStatus === 'saving' \|\| props\.isPublishing \|\| props\.isSlugUnavailable\}[\s\S]*onClick=\{props\.onSave\}/);
-    assert.match(toolbar, /disabled=\{saveStatus === 'saving' \|\| props\.isPublishing \|\| props\.isSlugUnavailable\}[\s\S]*onClick=\{props\.onPublish\}/);
+    assert.match(toolbar, /const isBusy = saveStatus === 'saving' \|\| props\.isPublishing \|\| props\.isSlugUnavailable/);
+    assert.match(toolbar, /compactAction\(publicPageText\(locale, 'save'\),[\s\S]{0,120}props\.onSave, isBusy\)/);
+    assert.match(toolbar, /compactAction\(publicPageText\(locale, 'publish'\),[\s\S]{0,120}props\.onPublish, isBusy\)/);
+    assert.equal([...toolbar.matchAll(/disabled=\{isBusy\}/g)].length, 2);
   });
 
   it('preflights canonical slugs without blocking autosave or stale responses', async () => {
@@ -311,7 +282,7 @@ describe('public page builder source contracts', () => {
     assert.match(page, /const publishedSlugChanged = editor\.publishedSlug !== null\s*&& canonicalSlug !== editor\.publishedSlug/);
     assert.match(page, /publishedSlugChangeWarning[\s\S]{0,180}publicPageDisplayUrl\(editor\.publishedSlug\)/);
     assert.match(page, /if \(!editor\.publishedSlug\) \{return;\}[\s\S]{0,120}clipboard\.writeText\(publicPageUrl\(editor\.publishedSlug\)\)/);
-    assert.match(page, /\{editor\.publishedSlug \? \([\s\S]{0,260}copyLink\(\)[\s\S]{0,260}href=\{publicPageUrl\(editor\.publishedSlug\)\}[\s\S]{0,100}rel="noopener noreferrer"/);
+    assert.match(page, /\{editor\.publishedSlug \? \([\s\S]*copyLink\(\)[\s\S]*href=\{publicPageUrl\(editor\.publishedSlug\)\}[\s\S]{0,180}rel="noopener noreferrer"/);
     assert.doesNotMatch(page, /publicLinkSlug|editor\.publishedSlug \?\? canonicalSlug/);
     assert.doesNotMatch(page, /https:\/\/meetli\.cc|href=\{`\/\$\{editor\.publishedSlug\}`\}/);
     assert.match(publicPageUrlConfig, /VITE_PUBLIC_PAGE_ORIGIN/);
@@ -346,6 +317,7 @@ describe('public page builder source contracts', () => {
     assert.match(page, /if \(!event\.altKey \|\| \(event\.key !== 'ArrowUp' && event\.key !== 'ArrowDown'\)\)[\s\S]{0,120}activator\?\.onKeyDown\?\.\(event\)/);
     assert.match(page, /const issues = await editor\.publish\(\);[\s\S]{0,100}const firstIssue = issues\[0\]/);
     assert.match(page, /resolvePublishIssueFocusTarget\(state\.document, firstIssue\)/);
+    assert.match(page, /target\.type === 'page-settings'[\s\S]{0,100}dispatch\(\{ type: 'selection\/clear' \}\);[\s\S]{0,140}setPageSettingsOpen\(true\)/);
     assert.match(page, /scrollIntoView\([\s\S]{0,180}prefers-reduced-motion: reduce[\s\S]{0,120}block: 'center'/);
     assert.match(page, /ref=\{validationAlertRef\} tabIndex=\{-1\}/);
     assert.match(page, /ref=\{addBlockButtonRef\}/);
@@ -355,7 +327,7 @@ describe('public page builder source contracts', () => {
     assert.match(validation, /issue\.blockId[\s\S]*blocks\\\.\(\[\^\.\]\+\)/);
     assert.match(validation, /mediaOwnerFocusTarget[\s\S]*profile\.logoMediaId[\s\S]*block\.design\.backgroundMediaId/);
     assert.match(validation, /section\.design\.backgroundMediaId[\s\S]*type: 'design-panel'/);
-    assert.match(page, /target\.type === 'design-panel'[\s\S]{0,180}setDesignOpen\(true\)/);
+    assert.match(page, /target\.type === 'design-panel'[\s\S]{0,500}setDesignOpen\(true\)/);
     assert.match(design, /focusMarker="theme\.backgroundMediaId"/);
     assert.match(upload, /focusMarker=\{focusMarker\}[\s\S]*altFocusMarker=\{altFocusMarker\}/);
     assert.match(sharedUpload, /altFocusMarker[\s\S]*'data-public-page-focus': altFocusMarker/);
@@ -649,9 +621,9 @@ describe('public page builder source contracts', () => {
     assert.match(renderer, /borderRadius: isOff[\s\S]{0,30}\? 0[\s\S]{0,50}: sectionRadius/);
     assert.match(renderer, /section\.design\.borderRadius/);
     assert.match(renderer, /sectionSurfaceRadius\([\s\S]{0,140}theme\.styleDefaults\.sectionBorderRadius/);
-    assert.match(blockRenderer, /style === 'pill'\) \{return '40px';\}/);
-    assert.match(blockRenderer, /sectionThemeRadius[\s\S]{0,180}style === 'pill'\) \{return '40px';\}/);
-    assert.match(blockRenderer, /sectionThemeRadius[\s\S]{0,240}style === 'square'\) \{return '2px';\}[\s\S]{0,80}return `\$\{roundedRadius\}px`/);
+    const canonicalRadius = blockRenderer.slice(blockRenderer.indexOf('export function sectionThemeRadius'), blockRenderer.indexOf('export function sectionSurfaceRadius'));
+    assert.match(canonicalRadius, /return `\$\{roundedRadius\}px`/);
+    assert.doesNotMatch(canonicalRadius, /'pill'|'square'/);
     assert.match(renderer, /\.\.\.resolvePublicPageThemeVariables\(theme, section\)/);
     const rendererWrapper = blockRenderer.slice(blockRenderer.indexOf('return <Box sx='), blockRenderer.indexOf('<BlockErrorBoundary'));
     assert.match(blockRenderer, /blockSurfaceRadius\(block\.design\.borderRadius, roundingStyle, themeBorderRadius\)/);
@@ -685,7 +657,8 @@ describe('public page builder source contracts', () => {
     assert.match(sectionControls, /const effectiveSize = value\.fontSize \?\? resolvedValue\.fontSize/);
     assert.match(sectionControls, /const effectiveWeight = value\.fontWeight \?\? resolvedValue\.fontWeight/);
     assert.match(sectionControls, /TYPOGRAPHY_FONT_OPTIONS/);
-    assert.match(sectionControls, /<ColorControl compact/);
+    assert.match(sectionControls, /<ColorControl label=\{publicPageText\(locale, 'textColor'\)\} value=\{value\.color\}/);
+    assert.match(sectionControls, /gridTemplateColumns: \{ xs: 'minmax\(0, 1fr\)', sm: 'repeat\(2, minmax\(0, 1fr\)\)' \}/);
     assert.match(sectionControls, /resolvedValue=\{resolvedHeadingStyle\}/);
     assert.match(sectionControls, /resolvedValue=\{resolvedLinkTitleStyle\}/);
     assert.match(sectionControls, /resolvePublicPageThemeVariables\(theme, section\)/);
@@ -866,7 +839,9 @@ describe('public page builder source contracts', () => {
     assert.match(sectionHighlightCss, /pointer-events: none/);
     assert.doesNotMatch(page + renderer, /dragPreviewDocument|activeDrag|onDndOver|collisionDetection|PublicPageDragPreview|chromeFreeBlockPreview/);
     assert.match(renderer, /document\.sections\.map\(\(section, sectionIndex\) => \([\s\S]{0,500}data-public-page-sortable="section"/);
-    assert.match(renderer, /shouldAcceptDrop: \(_source, payload\) => isBuilderDragPayload\(payload\) && payload\.type === 'section'/);
+    assert.match(renderer, /shouldAcceptDrop: \(_source, payload\) => isBuilderDragPayload\(payload\),/);
+    assert.match(dndCss, /gap: max\(var\(--theme-link-offset\), var\(--public-page-main-drop-space\)\)/);
+    assert.match(dndCss, /padding-block: var\(--public-page-main-drop-space\)/);
     assert.doesNotMatch(renderer, /MainRenderItem|mainItems|free-block|data-public-page-free-block/);
     assert.doesNotMatch(renderer, /dropPlaceholder/);
     assert.match(renderer, /shouldAnimateDrop: \(\) => false/);
@@ -874,7 +849,8 @@ describe('public page builder source contracts', () => {
     assert.match(renderer, /ordinaryPublicPageLinkSx/);
     assert.match(blocks, /export const ordinaryPublicPageLinkSx/);
     assert.match(blocks, /export function CtaButton[\s\S]{0,500}sx=\{\{ \.\.\.ordinaryPublicPageLinkSx/);
-    assert.match(blocks, /export function ButtonBlock[\s\S]{0,700}sx=\{\{ \.\.\.ordinaryPublicPageLinkSx/);
+    const buttonBlock = blocks.slice(blocks.indexOf('export function ButtonBlock'), blocks.indexOf('export function LinksBlock'));
+    assert.match(buttonBlock, /sx=\{\{ \.\.\.ordinaryPublicPageLinkSx/);
     const socialButton = blocks.slice(blocks.indexOf('export function SocialButtonBlock'), blocks.indexOf('export function MapBlock'));
     assert.doesNotMatch(socialButton, /ordinaryPublicPageLinkSx/);
     assert.doesNotMatch(renderer, /style=\{\{ overflow: 'visible' \}\}/);
@@ -894,12 +870,14 @@ describe('public page builder source contracts', () => {
     assert.match(preview, /'& > \*': \{ width: '100%', minWidth: 0, flex: '1 0 auto', boxSizing: 'border-box' \}/);
     assert.match(preview, /'& > \* > \.MuiContainer-root': editor \? \{[\s\S]{0,120}width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box'/);
     assert.match(preview, /editorDragGutter: 64/);
-    assert.match(preview, /: editor\s*\? `\$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.widths\[device\] \+ PUBLIC_PAGE_PREVIEW_GEOMETRY\.editorDragGutter \+ PUBLIC_PAGE_PREVIEW_GEOMETRY\.frameBorder \* 2\}px`/);
-    assert.match(preview, /: showPhoneFrame \? `\$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.widths\[editor \? device : 'mobile'\]\}px` : '100%'/);
+    assert.match(preview, /const virtualWidth = PUBLIC_PAGE_PREVIEW_GEOMETRY\.widths\[device\]/);
+    assert.match(preview, /const editorOuterWidth = virtualWidth[\s\S]{0,180}PUBLIC_PAGE_PREVIEW_GEOMETRY\.editorDragGutter[\s\S]{0,180}PUBLIC_PAGE_PREVIEW_GEOMETRY\.frameBorder \* 2/);
+    assert.match(preview, /const nextScale = Math\.min\(1, stage\.clientWidth \/ editorOuterWidth\)/);
+    assert.match(preview, /width: editor[\s\S]{0,120}`\$\{virtualWidth\}px`/);
     assert.match(preview, /boxSizing: showPhoneFrame \? 'content-box' : 'border-box'/);
     assert.match(preview, /frameRadius: 32/);
     assert.match(preview, /borderRadius: showPhoneFrame \? undefined : 0/);
-    assert.match(preview, /pl: compactEditor \? 0 : editor \? `\$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.editorDragGutter\}px` : 0/);
+    assert.match(preview, /pl: editor && !compactEditor \? `\$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.editorDragGutter\}px` : 0/);
     assert.match(preview, /display: 'flex', flexDirection: 'column'/);
     assert.match(preview, /flex: '1 0 auto'/);
     assert.match(renderer, /maxWidth: 320/);
@@ -921,7 +899,7 @@ describe('public page builder source contracts', () => {
     assert.match(preview, /framed = false/);
     assert.match(preview, /interactive = true/);
     assert.match(preview, /ariaLabel\?: string/);
-    assert.match(preview, /const PreviewScroller = styled\(Box\)\(\{[\s\S]{0,100}overflow: 'auto'/);
+    assert.match(preview, /const PreviewScroller = styled\(Box\)\(\{[\s\S]{0,120}overflowX: 'hidden', overflowY: 'auto'/);
     assert.match(preview, /<PreviewScroller data-public-page-preview-scroller role=\{ariaLabel \? 'region' : undefined\} tabIndex=\{ariaLabel \? 0 : undefined\} aria-label=\{ariaLabel\}/);
     assert.match(preview, /px: editor \? \{ xs: 1\.25, md: 3 \} : framed \? 1 : \{ xs: 1, md: 3 \}/);
     assert.match(preview, /<PreviewFrame[\s\S]{0,120}inert: true, 'aria-hidden': true/);
@@ -945,23 +923,30 @@ describe('public page builder source contracts', () => {
     const dictionaries = await read('src/shared/i18n/dictionaries.ts');
 
     assert.match(page, /useMediaQuery\(theme\.breakpoints\.down\('md'\)\)/);
+    assert.match(page, /useState<PreviewDevice>\(\(\) => isCompact \? 'mobile' : 'desktop'\)/);
     assert.match(page, /const effectiveDevice: PreviewDevice = isCompact \? 'mobile' : device/);
     assert.match(page, /<ResponsivePreview document=\{previewDocument\} device=\{effectiveDevice\}/);
     assert.match(page, /services=\{previewServices\} compactEditor=\{isCompact\}/);
-    assert.match(page, /controls=\{!isCompact \? <DeviceSwitcher locale=\{locale\} value=\{device\} onChange=\{setDevice\} \/>/);
+    assert.match(page, /<DeviceSwitcher compact=\{isCompact\} locale=\{locale\} value=\{effectiveDevice\} onChange=\{setDevice\} \/>/);
     assert.match(page, /<BuilderToolbar[\s\S]{0,100}compact=\{isCompact\}/);
     for (const key of ['undo', 'redo']) {
-      assert.match(toolbar, new RegExp(`Tooltip title=\\{publicPageText\\(locale, '${key}'\\)\\}[\\s\\S]{0,180}aria-label=\\{publicPageText\\(locale, '${key}'\\)\\}`));
+      assert.match(toolbar, new RegExp(`<Button variant="text"[\\s\\S]{0,100}aria-label=\\{publicPageText\\(locale, '${key}'\\)\\}[\\s\\S]{0,160}>\\{publicPageText\\(locale, '${key}'\\)\\}</Button>`));
     }
-    assert.equal([...toolbar.matchAll(/disabled=\{saveStatus === 'saving' \|\| props\.isPublishing \|\| props\.isSlugUnavailable\}/g)].length, 2);
+    assert.equal([...toolbar.matchAll(/disabled=\{isBusy\}/g)].length, 2);
     assert.match(toolbar, /aria-label=\{statusLabel\}/);
+    assert.match(toolbar, /title=\{statusLabel\}/);
+    assert.match(toolbar, /flexShrink: 1, maxWidth: '100%'[\s\S]{0,240}textOverflow: 'ellipsis', whiteSpace: 'nowrap'/);
 
     assert.match(shell, /bottomNavigation\?: ReactNode/);
-    assert.match(shell, /gridTemplateRows: bottomNavigation \? 'auto minmax\(0, 1fr\) auto' : 'auto minmax\(0, 1fr\)'/);
+    assert.match(shell, /gridTemplateRows: 'auto minmax\(0, 1fr\)'/);
+    assert.doesNotMatch(shell, /<Paper square elevation=\{8\}/);
+    assert.match(shell, /position: 'absolute'[\s\S]{0,180}bottom: 'calc\(16px \+ env\(safe-area-inset-bottom\)\)'[\s\S]{0,220}pointerEvents: 'none'/);
+    assert.match(shell, /onWheel=\{\(event\) => \{[\s\S]{0,320}scrollPreview\(event\.deltaY \* multiplier\)/);
+    assert.match(shell, /onTouchMove=\{\(event\) => \{[\s\S]{0,320}scrollPreview\(touchYRef\.current - y\)/);
     assert.match(page, /pageActions=\{<Stack component="nav" aria-label=\{publicPageText\(locale, 'mobileNavigation'\)\}/);
     assert.match(page, /aria-label=\{publicPageText\(locale, 'copyLink'\)\} onClick=\{\(\) => void copyLink\(\)\}/);
     assert.match(page, /aria-label=\{publicPageText\(locale, 'open'\)\} href=\{publicPageUrl\(editor\.publishedSlug\)\} target="_blank" rel="noopener noreferrer"/);
-    assert.match(page, /footer=\{<Button ref=\{addBlockButtonRef\}[\s\S]{0,160}onClick=\{\(\) => setAddBlockOpen\(true\)\}/);
+    assert.match(page, /bottomNavigation=\{<Box data-public-page-add-block-shell[\s\S]{0,320}<Button ref=\{addBlockButtonRef\}[\s\S]{0,180}onClick=\{\(\) => setAddBlockOpen\(true\)\}/);
 
     assert.match(page, /<AddBlockDialog open=\{addBlockOpen\} compact=\{isCompact\}/);
     assert.match(page, /<BlockEditorDialog open=\{blockEditorOpen\} compact=\{isCompact\}/);
@@ -972,10 +957,13 @@ describe('public page builder source contracts', () => {
     assert.match(blockDialog, /fullScreen=\{compact\}/);
     assert.match(blockDialog, /variant=\{compact \? 'scrollable' : 'standard'\} scrollButtons=\{compact \? 'auto' : false\} allowScrollButtonsMobile=\{compact\}/);
     assert.match(responsivePreview, /compactEditor = false/);
-    assert.match(responsivePreview, /width: compactEditor[\s\S]{0,100}`min\(100%, \$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.framedMobileOuterWidth\}px\)`/);
-    assert.match(responsivePreview, /pl: compactEditor \? 0 : editor \? `\$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.editorDragGutter\}px` : 0/);
-    assert.match(responsivePreview, /width: compactEditor \|\| framed[\s\S]{0,120}`calc\(100% - \$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.frameBorder \* 2\}px\)`/);
-    assert.match(responsivePreview, /maxWidth: compactEditor \|\| framed \? `\$\{PUBLIC_PAGE_PREVIEW_GEOMETRY\.widths\.mobile\}px` : undefined/);
+    assert.match(responsivePreview, /pb: editor \? 'calc\(80px \+ env\(safe-area-inset-bottom\)\)'/);
+    assert.match(responsivePreview, /scrollPaddingBottom: editor \? 'calc\(80px \+ env\(safe-area-inset-bottom\)\)'/);
+    assert.match(responsivePreview, /const nextScale = Math\.min\(1, stage\.clientWidth \/ editorOuterWidth\)/);
+    assert.match(responsivePreview, /setScaledFrameHeight\(Math\.ceil\(frame\.scrollHeight \* nextScale\)\)/);
+    assert.match(responsivePreview, /overflowX: 'hidden', overflowY: 'auto'/);
+    assert.match(responsivePreview, /width: editor \? `\$\{editorOuterWidth \* editorScale\}px` : '100%'/);
+    assert.match(responsivePreview, /transform: editor \? `scale\(\$\{editorScale\}\)` : undefined/);
     assert.match(responsivePreview, /public-page-editor-preview-surface--compact/);
     assert.match(dndCss, /\.public-page-editor-preview-surface--compact \.public-page-block-drag-rail \{\s*display: none;/);
     assert.match(uiText, /mobileNavigation: 'publicPageBuilder\.mobileNavigation'/);
@@ -988,7 +976,6 @@ describe('public page builder source contracts', () => {
     const platforms = await read('src/features/public-page-builder/model/socialPlatforms.ts');
     const addDialog = await read('src/components/public-page-builder/AddBlockDialog.tsx');
     const page = await read('src/pages/PublicPageEditorPage.tsx');
-    const sortable = await read('src/components/public-page-builder/SortableList.tsx');
 
     for (const platform of ['facebook-messenger', 'vk', 'whatsapp', 'viber', 'telegram', 'facebook', 'threads', 'instagram', 'tiktok']) {
       assert.match(platforms, new RegExp(`'${platform}'`));
@@ -1024,8 +1011,6 @@ describe('public page builder source contracts', () => {
     assert.doesNotMatch(publicRenderer, /'& a, & a\.MuiButtonBase-root'/);
     assert.doesNotMatch(registrations, /Editor: GenericBlockEditor/);
     assert.match(registrations, /validateSocialPlatforms\(content\)/);
-    assert.match(sortable, /aria-label=\{`\$\{publicPageText\(locale, 'moveUp'\)/);
-    assert.match(sortable, /aria-label=\{`\$\{publicPageText\(locale, 'moveDown'\)/);
   });
 
   it('blocks block-editor save when replacement and rollback media cleanup both fail', async () => {
@@ -1033,7 +1018,33 @@ describe('public page builder source contracts', () => {
 
     assert.match(dialog, /const oldPending = pending\.find/);
     assert.match(dialog, /if \(oldPending && !\(await cleanupItems\(\[oldPending\]\)\)\) \{ await cleanupItems\(\[uploadedItem\]\); return; \}/);
-    assert.match(dialog, /disabled=\{cleaning \|\| cleanupError\}[\s\S]*onClick=\{\(\) => onSave\(/);
+    assert.match(dialog, /disabled=\{cleaning \|\| cleanupError \|\| !scheduleValid\}[\s\S]*onClick=\{\(\) => onSave\(/);
+  });
+
+  it('uses Figma-aligned Public Pages content and a data-driven responsive template picker', async () => {
+    const pages = await read('src/pages/PublicPagesPage.tsx');
+    const editorPage = await read('src/pages/PublicPageEditorPage.tsx');
+    const switcher = await read('src/components/public-page-builder/DeviceSwitcher.tsx');
+
+    assert.match(pages, /publicPageText\(locale, 'pagesSubtitle'\)/);
+    assert.match(pages, /<Box component="section" aria-labelledby=\{pagesHeadingId\} sx=\{\{ minHeight: '100%'/);
+    assert.match(pages, /<Typography id=\{pagesHeadingId\} variant="h4">/);
+    assert.doesNotMatch(pages, /height: '100dvh'|<Box component="main"|workspaceTitle|HelpOutlined/);
+    assert.match(pages, /size=\{\{ xs: 12, md: 6, lg: 4 \}\}/);
+    assert.equal([...pages.matchAll(/PUBLIC_PAGE_TEMPLATES\.map\(\(template\)/g)].length, 2);
+    assert.match(pages, /role="group" aria-labelledby=\{templatesHeadingId\}[\s\S]{0,600}<ButtonBase key=\{template\.id\} aria-pressed=\{selected\}/);
+    assert.match(pages, /'&:focus-visible': \{ outline: '2px solid', outlineColor: 'primary\.main', outlineOffset: 2 \}/);
+    assert.doesNotMatch(pages, /role="listbox"|role="option"|aria-selected/);
+    assert.match(pages, /<Box inert aria-hidden aria-label=\{publicPageText\(locale, 'templatePreview'\)\}/);
+    assert.match(pages, /<PublicPageRenderer document=\{templatePreview\} \/>/);
+    assert.match(editorPage, /title=\{publicPageText\(locale, 'editorWorkspaceTitle'\)\}/);
+    const navigation = editorPage.slice(editorPage.indexOf('pageActions={<Stack'), editorPage.indexOf('</Stack>}', editorPage.indexOf('pageActions={<Stack')) + 9);
+    assert.doesNotMatch(navigation, /blockArchive/);
+    assert.match(editorPage, /<AddBlockDialog[\s\S]{0,180}onOpenArchive=\{\(\) => setArchiveOpen\(true\)\}/);
+    assert.match(switcher, /compact\?: boolean/);
+    assert.match(switcher, /minWidth: compact \? 44/);
+    assert.match(switcher, /disabled=\{compact && device !== 'mobile'\}/);
+    assert.match(switcher, /<Tooltip title=\{label\}>\{icon\}<\/Tooltip>/);
   });
 
   it('does not expose archived-page editing', async () => {
@@ -1049,7 +1060,7 @@ describe('public page builder source contracts', () => {
     assert.match(pages, /const restore = async \(record: PublicPageRecord\)[\s\S]*repository\.restore\(record\.id, record\.revision\)[\s\S]*catch \(error\)[\s\S]*await load\(\)/);
     assert.match(pages, /record\.status === 'archived' \? \([\s\S]{0,180}<RestoreFromTrash/);
     assert.match(pages, /record\.status === 'archived' \? \([\s\S]{0,200}<Delete/);
-    assert.match(pages, /<Typography color="text\.secondary">\{publicPageDisplayUrl\(record\.draft\.slug\)\}<\/Typography>/);
+    assert.match(pages, /<Typography color="text\.secondary"[^>]*>\{publicPageDisplayUrl\(record\.draft\.slug\)\}<\/Typography>/);
     assert.match(pages, /record\.published \? \([\s\S]{0,200}href=\{publicPageUrl\(record\.published\.slug\)\}[\s\S]{0,100}rel="noopener noreferrer"/);
     assert.doesNotMatch(pages, /meetli\.cc|href=\{publicPageUrl\(record\.draft\.slug\)\}/);
     assert.equal([...dictionaries.matchAll(/archive: [^\n]+restore: [^\n]+draft:/g)].length, 2);
@@ -1074,7 +1085,7 @@ describe('public page builder source contracts', () => {
 
     assert.match(registrations, /serviceIds: \[\], autoplayIntervalSeconds: null, showBookingButton: true/);
     assert.match(blocks, /from 'embla-carousel-react'/);
-    assert.match(blocks, /align: 'start'/);
+    assert.match(blocks, /align: 'center'/);
     assert.match(blocks, /containerType: 'inline-size', containerName: 'public-services'/);
     assert.match(blocks, /bgcolor: 'var\(--avatar-surface-background\)'/);
     assert.match(blocks, /borderRadius: 'var\(--block-border-radius\)'/);

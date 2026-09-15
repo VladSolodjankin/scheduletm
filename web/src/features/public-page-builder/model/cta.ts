@@ -2,12 +2,6 @@ import type { CtaAction } from '../types/publicPage';
 
 const SAFE_PROTOCOLS = new Set(['http:', 'https:']);
 
-export type ContactRow = {
-  id: string;
-  label: string;
-  action: CtaAction;
-};
-
 type ContactRecord = Record<string, unknown>;
 
 function isRecord(value: unknown): value is ContactRecord {

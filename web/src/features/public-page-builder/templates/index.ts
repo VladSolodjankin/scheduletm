@@ -1,4 +1,4 @@
-import { PUBLIC_PAGE_SCHEMA_VERSION, type PageBlock, type PublicPageDocument, type SectionDesign } from '../types/publicPage';
+import { DEFAULT_AVATAR_POSITION, PUBLIC_PAGE_SCHEMA_VERSION, type PageBlock, type PublicPageDocument, type SectionDesign } from '../types/publicPage';
 import { PUBLIC_PAGE_THEMES } from '../config/themes';
 
 export type PublicPageTemplate = {
@@ -7,10 +7,10 @@ export type PublicPageTemplate = {
   createDocument: (pageId: string, now?: string) => PublicPageDocument;
 };
 
-const design = () => ({ backgroundColor: null, textColor: null, backgroundMediaId: null,
+const design = () => ({ linkStyle: null, animation: 'none' as const, backgroundColor: null, textColor: null, backgroundMediaId: null,
   backgroundOverlay: 0, backgroundFit: 'cover' as const, backgroundPosition: '50% 50%', paddingTop: 0, paddingBottom: 0, borderRadius: null });
 const block = (id: string, type: string, name: string, content: Record<string, unknown>): PageBlock => ({
-  id, type, name, visible: true, content, design: design(),
+  id, type, name, visible: true, content, design: design(), schedule: { period: null, weekdays: null },
 });
 const sectionDesign = (): SectionDesign => ({ variant: 'custom', backgroundColor: null, textColor: null, paddingTop: 24, paddingBottom: 24,
   backgroundMediaId: null, backgroundOverlay: 0, backgroundFit: 'cover', backgroundPosition: '50% 50%',
@@ -33,7 +33,9 @@ function documentFor(
     id,
     slug: `page-${id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`.slice(0, 40),
     status: 'draft',
-    profile: { displayName: blocks.length ? '' : name, description: '', logoMediaId: null, avatarMediaId: null },
+    timezone: 'UTC',
+    archivedBlocks: [],
+    profile: { displayName: blocks.length ? '' : name, description: '', logoMediaId: null, avatarMediaId: null, avatarPosition: DEFAULT_AVATAR_POSITION },
     theme: structuredClone(PUBLIC_PAGE_THEMES[themeIndex]),
     sections: blocks.map((pageBlock, index) => ({
       id: `${id}-section-${index + 1}`,
@@ -62,7 +64,7 @@ export const PUBLIC_PAGE_TEMPLATES: PublicPageTemplate[] = [
   ], now) },
   { id: 'specialist', name: 'Specialist', createDocument: (id, now) => documentFor(id, 'Specialist', 0, [
     block(`${id}-avatar`, 'avatar', 'Profile', { heading: 'Your name', subtitle: 'Professional specialist', imageMediaId: null, imageAlt: '', layout: 'centered', avatarSize: 150, coverColor: null, coverMediaId: null }),
-    block(`${id}-button`, 'button', 'Book a consultation', { label: 'Book a consultation', icon: 'link', color: '', textColor: '', radius: 12, action: { type: 'url', url: 'https://example.com' } }),
+    block(`${id}-button`, 'button', 'Book a consultation', { label: 'Book a consultation', icon: 'link', subtitle: '', openInNewTab: false, action: { type: 'url', url: 'https://example.com' } }),
     block(`${id}-text`, 'text', 'About', { document: { type: 'rich-text-v1', paragraphs: [
       { size: 'large', fontFamily: null, alignment: 'left', runs: [{ text: 'About me', marks: { bold: true } }] },
       { size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: 'Describe your experience, approach, and who you help.' }] },
@@ -78,7 +80,7 @@ export const PUBLIC_PAGE_TEMPLATES: PublicPageTemplate[] = [
   ], now) },
   { id: 'small-business', name: 'Small business', createDocument: (id, now) => documentFor(id, 'Our business', 2, [
     block(`${id}-avatar`, 'avatar', 'Welcome', { heading: 'Our business', subtitle: 'Reliable service near you', imageMediaId: null, imageAlt: '', layout: 'centered', avatarSize: 150, coverColor: null, coverMediaId: null }),
-    block(`${id}-button`, 'button', 'Contact us', { label: 'Contact us', icon: 'phone', color: '', textColor: '', radius: 12, action: { type: 'phone', phone: '+10000000000' } }),
+    block(`${id}-button`, 'button', 'Contact us', { label: 'Contact us', icon: 'phone', subtitle: '', openInNewTab: false, action: { type: 'phone', phone: '+10000000000' } }),
     block(`${id}-services`, 'services', 'Services', { title: 'What we offer', serviceIds: [], autoplayIntervalSeconds: null, showBookingButton: true }),
     block(`${id}-contacts`, 'contacts', 'Contacts', { title: 'Contacts', contacts: [{ id: `${id}-contact-1`, label: 'Call us', action: { type: 'phone', phone: '+10000000000' } }] }),
     block(`${id}-map`, 'map', 'Address', { title: 'Find us', address: 'Your address', label: 'Open map', url: 'https://maps.google.com' }),

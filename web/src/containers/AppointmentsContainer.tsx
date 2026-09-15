@@ -84,9 +84,8 @@ export function AppointmentsContainer() {
     setPastSlotToastOpen(true);
   };
 
-  const canManageAll = user?.role === WebUserRole.Owner || user?.role === WebUserRole.Admin;
+  const canManageAll = user?.role === WebUserRole.Owner;
   const isOwner = user?.role === WebUserRole.Owner;
-  const isAdmin = user?.role === WebUserRole.Admin;
   const isSpecialist = user?.role === WebUserRole.Specialist;
   const isClient = user?.role === WebUserRole.Client;
   const selectedSpecialist = selectedSpecialistId === 'all'
@@ -199,9 +198,6 @@ export function AppointmentsContainer() {
     if (isOwner) {
       return t('appointments.pageSubtitleOwner');
     }
-    if (isAdmin) {
-      return t('appointments.pageSubtitleAdmin');
-    }
     if (isSpecialist) {
       return t('appointments.pageSubtitleSpecialist');
     }
@@ -210,7 +206,7 @@ export function AppointmentsContainer() {
     }
 
     return t('appointments.pageSubtitle');
-  }, [isAdmin, isClient, isOwner, isSpecialist, t]);
+  }, [isClient, isOwner, isSpecialist, t]);
 
   function getGridDayKey(day: Date) {
     const noon = new Date(day);
@@ -609,7 +605,7 @@ export function AppointmentsContainer() {
                 </FormControl>
               )}
 
-              {(isOwner || isAdmin || isSpecialist) && (
+              {(isOwner || isSpecialist) && (
                 <FormControl sx={{ minWidth: 0, gridColumn: { md: 'span 2' } }} size="small">
                   <InputLabel id="client-filter">{t('appointments.clientFilter')}</InputLabel>
                   <Select
