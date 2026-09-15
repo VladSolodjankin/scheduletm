@@ -50,14 +50,15 @@ describe('web user integration secret repository mapping', () => {
     expect(queryMock.insert).toHaveBeenCalledWith(expect.objectContaining({
       account_id: 7,
       web_user_id: 42,
-      google_api_key: null,
-      google_refresh_token: null,
       google_access_token_encrypted: expect.not.stringContaining('google-access-secret'),
       google_refresh_token_encrypted: expect.not.stringContaining('google-refresh-secret'),
     }));
+    const inserted = queryMock.insert.mock.calls[0]?.[0];
+    expect(inserted).not.toHaveProperty('google_api_key');
+    expect(inserted).not.toHaveProperty('google_refresh_token');
   });
 
-  it('prefers encrypted values and returns the established plaintext-shaped contract', async () => {
+  it('decrypts stored values from the encrypted columns only (no plaintext columns remain)', async () => {
     await updateWebUserGoogleCredentials({
       accountId: 7,
       webUserId: 42,
@@ -70,20 +71,15 @@ describe('web user integration secret repository mapping', () => {
       id: 1,
       account_id: 7,
       web_user_id: 42,
-      google_api_key: 'stale-plaintext-access',
-      google_refresh_token: 'stale-plaintext-refresh',
       google_access_token_encrypted: inserted.google_access_token_encrypted,
       google_refresh_token_encrypted: inserted.google_refresh_token_encrypted,
       google_token_expires_at: null,
       google_calendar_id: null,
       google_connected_at: null,
-      telegram_bot_token: null,
       telegram_bot_token_encrypted: null,
       telegram_bot_username: null,
       telegram_bot_name: null,
-      zoom_access_token: null,
       zoom_access_token_encrypted: null,
-      zoom_refresh_token: null,
       zoom_refresh_token_encrypted: null,
       zoom_token_expires_at: null,
       zoom_connected_at: null,
@@ -102,40 +98,30 @@ describe('web user integration secret repository mapping', () => {
     expect(result).not.toHaveProperty('google_access_token_encrypted');
   });
 
-  it('uses plaintext only when the encrypted value is absent', async () => {
+  it('returns null when the encrypted value is absent (no plaintext fallback)', async () => {
     queryMock.first.mockResolvedValue({
       account_id: 7,
       web_user_id: 42,
-      google_api_key: 'legacy-access',
-      google_refresh_token: null,
       google_access_token_encrypted: null,
       google_refresh_token_encrypted: null,
-      telegram_bot_token: null,
       telegram_bot_token_encrypted: null,
-      zoom_access_token: null,
       zoom_access_token_encrypted: null,
-      zoom_refresh_token: null,
       zoom_refresh_token_encrypted: null,
     });
 
     await expect(findWebUserIntegrationByWebUserId(7, 42)).resolves.toEqual(
-      expect.objectContaining({ google_api_key: 'legacy-access' }),
+      expect.objectContaining({ google_api_key: null }),
     );
   });
 
-  it('fails explicitly instead of falling back when encrypted data cannot be read', async () => {
+  it('fails explicitly when encrypted data cannot be decrypted', async () => {
     queryMock.first.mockResolvedValue({
       account_id: 7,
       web_user_id: 42,
-      google_api_key: 'must-not-fallback',
-      google_refresh_token: null,
       google_access_token_encrypted: 'invalid-ciphertext',
       google_refresh_token_encrypted: null,
-      telegram_bot_token: null,
       telegram_bot_token_encrypted: null,
-      zoom_access_token: null,
       zoom_access_token_encrypted: null,
-      zoom_refresh_token: null,
       zoom_refresh_token_encrypted: null,
     });
 

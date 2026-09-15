@@ -72,9 +72,9 @@ Meetli applies:
 Meetli limits data access using account scoping, role-based authorization, and operational access controls.
 
 - Passwords are not stored in plaintext.
-- Some system-level alerting secrets are encrypted at the application layer before database storage.
+- System-level alerting secrets and third-party integration credentials (Google OAuth tokens, Zoom OAuth tokens, Telegram bot tokens) are encrypted at the application layer (AES-256-GCM) before database storage; the corresponding plaintext columns have been removed from the primary integrations table.
 - Session and integration records are stored in restricted backend tables and are intended to be protected by infrastructure and database access controls.
-- Not all integration secrets currently use uniform application-layer field encryption. This area is tracked as an ongoing hardening concern and should not be overstated in customer-facing claims.
+- Encryption key rotation is currently a manual, documented procedure rather than an automated one; this is tracked as an ongoing hardening item.
 
 ## 7. Logging, Monitoring, and Auditability
 

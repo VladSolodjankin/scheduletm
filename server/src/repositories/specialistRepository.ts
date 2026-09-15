@@ -276,16 +276,12 @@ export async function findSpecialistsCalendarCredentials(
     })
     .where('s.account_id', accountId)
     .whereIn('s.id', specialistIds)
-    .where(function findConfiguredGoogleToken() {
-      this.whereNotNull('wui.google_access_token_encrypted').orWhereNotNull('wui.google_api_key');
-    })
+    .whereNotNull('wui.google_access_token_encrypted')
     .select(
       's.id as specialistId',
       'wu.id as webUserId',
       'wui.google_access_token_encrypted as googleAccessTokenEncrypted',
       'wui.google_refresh_token_encrypted as googleRefreshTokenEncrypted',
-      'wui.google_api_key as googleApiKey',
-      'wui.google_refresh_token as googleRefreshToken',
       'wui.google_token_expires_at as googleTokenExpiresAt',
       'wui.google_calendar_id as googleCalendarId',
     );
@@ -295,12 +291,12 @@ export async function findSpecialistsCalendarCredentials(
     webUserId: row.webUserId,
     googleApiKey: decryptIntegrationSecret(
       row.googleAccessTokenEncrypted,
-      row.googleApiKey,
+      null,
       'Google access token',
     ) as string,
     googleRefreshToken: decryptIntegrationSecret(
       row.googleRefreshTokenEncrypted,
-      row.googleRefreshToken,
+      null,
       'Google refresh token',
     ),
     googleTokenExpiresAt: row.googleTokenExpiresAt,

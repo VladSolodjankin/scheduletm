@@ -1,6 +1,6 @@
 # Zoom Beta Evidence Package
 
-Last updated: 2026-05-13
+Last updated: 2026-09-15
 
 This directory contains the technical evidence and review artifacts prepared for the Meetli Zoom Beta package.
 
@@ -19,6 +19,7 @@ Public-facing policy documents now live at the parent level in `docs/compliance/
 ## Evidence and supporting artifacts
 
 - `index.md`
+- `oauth-scope-and-token-handling.md`
 - `tls-1.2-evidence.md`
 - `dast-latest.md`
 - `sast-latest.md`

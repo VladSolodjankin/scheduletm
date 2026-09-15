@@ -1,6 +1,6 @@
 # Zoom Beta Evidence Index
 
-Last updated: 2026-05-13
+Last updated: 2026-09-15
 
 | Control / requirement | Artifact | Status | Notes |
 |---|---|---|---|
@@ -10,8 +10,12 @@ Last updated: 2026-05-13
 | Vulnerability policy | `../security-policy-vulnerability-management.md`, `../vulnerability-management.md` | Ready for external review | Public-facing process and release-gate expectations. |
 | Incident response policy | `../security-policy-incident-response.md`, `../incident-response.md` | Ready for external review | Public-facing response lifecycle summary. |
 | TLS 1.2+ evidence | `tls-1.2-evidence.md`, `evidence/tls-check-latest.txt`, `evidence/tls-summary-latest.md` | Ready | Latest evidence files are present. |
-| DAST on staging | `dast-latest.md`, `evidence/zap-report.md`, `evidence/zap-report.json` | Review with remediation plan | Evidence is present; current findings status should be checked before making formal assurance claims. |
-| SAST and dependency review | `sast-latest.md`, `evidence/npm-audit-latest.json`, `evidence/semgrep-latest.json` | Review with remediation plan | Evidence is present; open findings must be evaluated before release sign-off. |
+| DAST on staging | `dast-latest.md`, `evidence/zap-report.md`, `evidence/zap-report.json` | Review with remediation plan | Evidence dated 2026-08-10; rerun the pipeline shortly before submission so the timestamp is current. |
+| SAST and dependency review | `sast-latest.md`, `evidence/npm-audit-latest.json`, `evidence/semgrep-latest.json` | Review with remediation plan | Evidence dated 2026-08-10; a local `npm audit` on 2026-09-15 found 12 advisories, all in web-build devDependencies (vite/postcss/sharp/qs/nanoid), fixable via `npm audit fix` — none affect the deployed server runtime. Rerun the CI pipeline for a current signed-off snapshot. |
+| OAuth scope minimality (Zoom) | `oauth-scope-and-token-handling.md` | Reviewed, compliant | Only `meeting:read:meeting`/`meeting:write:meeting` requested; no broader scopes. |
+| Token caching/refresh-before-expiry (Zoom requirement) | `oauth-scope-and-token-handling.md` | Reviewed, compliant | `zoomService.ts` reuses the cached token and refreshes ~30s before expiry rather than on every call; see issue #234 for the still-open Google Calendar half of that audit. |
+| Integration secret encryption at rest | `../../../server/docs/integration-secrets.md` | Completed 2026-09-15 | Plaintext OAuth token columns removed from `web_user_integrations` (issue #228); all Google/Zoom/Telegram secrets in that table are now AES-256-GCM encrypted only. |
+| On Behalf Of (OBF) token applicability | — | Not yet confirmed with Zoom | App only creates meetings in the connected specialist's own account; needs explicit confirmation during Technical Design Review, see `oauth-scope-and-token-handling.md`. |
 
 ## Definition of Done for External Sharing
 
