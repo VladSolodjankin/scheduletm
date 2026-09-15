@@ -73,16 +73,28 @@ export async function listExternalBusySlots(input: {
   const busySlots = await Promise.all(
     credentials.map(async (item) => {
       let googleApiKey = item.googleApiKey;
-      if (isAccessTokenExpired(item.googleTokenExpiresAt) && item.googleRefreshToken) {
+      if (isAccessTokenExpired(item.googleTokenExpiresAt)) {
+        if (!item.googleRefreshToken) {
+          console.error(
+            `[calendarAvailability] specialist ${item.specialistId}: Google access token expired and no refresh token on file, skipping their Google calendar`,
+          );
+          return [];
+        }
+
         const refreshed = await refreshGoogleAccessToken({
           accountId: input.accountId,
           webUserId: item.webUserId,
           refreshToken: item.googleRefreshToken,
         });
 
-        if (refreshed) {
-          googleApiKey = refreshed.googleApiKey;
+        if (!refreshed) {
+          console.error(
+            `[calendarAvailability] specialist ${item.specialistId}: Google token refresh failed, likely revoked access — skipping their Google calendar until they reconnect`,
+          );
+          return [];
         }
+
+        googleApiKey = refreshed.googleApiKey;
       }
 
       const calendarId = item.googleCalendarId?.trim() || 'primary';
@@ -122,14 +134,15 @@ export async function listExternalBusySlots(input: {
           })
           .filter((slot): slot is ExternalBusySlot => Boolean(slot));
       } catch (error: unknown) {
-        if (axios.isAxiosError(error)) {
-          throw new Error(
-            `Failed to fetch calendar ${calendarId}: ${
-              error.response?.data?.error?.message ?? error.message
-            }`
-          );
-        }
-        throw error;
+        const message = axios.isAxiosError(error)
+          ? error.response?.data?.error?.message ?? error.message
+          : error instanceof Error
+            ? error.message
+            : String(error);
+        console.error(
+          `[calendarAvailability] specialist ${item.specialistId}: failed to fetch calendar ${calendarId}, skipping their Google calendar: ${message}`,
+        );
+        return [];
       }
     }),
   );
