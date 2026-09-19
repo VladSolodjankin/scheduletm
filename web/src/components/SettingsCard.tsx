@@ -13,6 +13,7 @@ import type {
 import type { SettingsCardCopy } from './SettingsCard.types';
 import { AppTab, AppTabs } from '../shared/ui/AppTabs';
 import { AccountSettingsTab } from './settings-tabs/AccountSettingsTab';
+import { EmailChangeSettingsTab } from './settings-tabs/EmailChangeSettingsTab';
 import { NotificationSettingsTab } from './settings-tabs/NotificationSettingsTab';
 import { PasswordSettingsTab } from './settings-tabs/PasswordSettingsTab';
 import { SpecialistPolicyTab } from './settings-tabs/SpecialistPolicyTab';
@@ -65,6 +66,16 @@ type SettingsCardProps = {
   onCancelPasswordChange: () => void;
   onRequestPasswordOtp: () => Promise<void> | void;
   onConfirmPasswordOtp: () => Promise<void> | void;
+  newEmail: string;
+  emailChangePassword: string;
+  emailOtpCode: string;
+  emailChangeStep: 'email' | 'otp';
+  onNewEmailChange: (value: string) => void;
+  onEmailChangePasswordChange: (value: string) => void;
+  onEmailOtpCodeChange: (value: string) => void;
+  onCancelEmailChange: () => void;
+  onRequestEmailChangeOtp: () => Promise<void> | void;
+  onConfirmEmailChangeOtp: () => Promise<void> | void;
   activeTab: string;
   onTabChange: (tab: string) => void;
 };
@@ -114,6 +125,16 @@ export function SettingsCard({
   ,onCancelPasswordChange
   ,onRequestPasswordOtp
   ,onConfirmPasswordOtp
+  ,newEmail
+  ,emailChangePassword
+  ,emailOtpCode
+  ,emailChangeStep
+  ,onNewEmailChange
+  ,onEmailChangePasswordChange
+  ,onEmailOtpCodeChange
+  ,onCancelEmailChange
+  ,onRequestEmailChangeOtp
+  ,onConfirmEmailChangeOtp
   ,activeTab
   ,onTabChange
 }: SettingsCardProps) {
@@ -124,7 +145,8 @@ export function SettingsCard({
     ...(canManageAccountSettings || canManageClientNotifications ? [{ key: 'notifications', label: copy.notificationsTab }] : []),
     { key: 'user', label: copy.userTab },
     { key: 'integrations', label: copy.integrationsTab },
-    { key: 'password', label: copy.passwordTab }
+    { key: 'password', label: copy.passwordTab },
+    { key: 'emailChange', label: copy.emailChangeTab }
   ] as const), [copy, canManageSystemSettings, canManageAccountSettings, canManageClientNotifications, canManageSpecialistBookingPolicy]);
 
   const initialTab = tabs[0]?.key ?? 'user';
@@ -217,6 +239,21 @@ export function SettingsCard({
           onCancel={onCancelPasswordChange}
           onRequestOtp={onRequestPasswordOtp}
           onConfirmOtp={onConfirmPasswordOtp}
+        />
+      )}
+      {resolvedTab === 'emailChange' && (
+        <EmailChangeSettingsTab
+          copy={copy}
+          newEmail={newEmail}
+          password={emailChangePassword}
+          otpCode={emailOtpCode}
+          step={emailChangeStep}
+          onNewEmailChange={onNewEmailChange}
+          onPasswordChange={onEmailChangePasswordChange}
+          onOtpCodeChange={onEmailOtpCodeChange}
+          onCancel={onCancelEmailChange}
+          onRequestOtp={onRequestEmailChangeOtp}
+          onConfirmOtp={onConfirmEmailChangeOtp}
         />
       )}
       {resolvedTab === 'notifications' && (

@@ -124,7 +124,8 @@ export const dictionaries = {
         notifications: 'Notifications',
         user: 'User settings',
         integrations: 'Integrations',
-        password: 'Password'
+        password: 'Password',
+        emailChange: 'Change email'
       },
       systemTitle: 'System settings',
       accountTitle: 'Account settings',
@@ -235,6 +236,16 @@ export const dictionaries = {
         confirmOtp: 'Confirm code',
         otpSent: 'OTP code sent to your email.',
         success: 'Password updated successfully.'
+      },
+      emailChange: {
+        title: 'Change email',
+        newEmail: 'New email',
+        currentPassword: 'Current password',
+        submit: 'Send confirmation code',
+        otpLabel: 'Confirmation code (4 digits)',
+        confirmOtp: 'Confirm new email',
+        otpSent: 'A confirmation code has been sent to the new email address.',
+        invalidInput: 'Enter a new email and your current password.'
       },
       errors: {
         load: 'Unable to load settings.',
@@ -778,7 +789,8 @@ export const dictionaries = {
         notifications: 'Оповещения',
         user: 'Пользовательские',
         integrations: 'Интеграции',
-        password: 'Пароль'
+        password: 'Пароль',
+        emailChange: 'Смена email'
       },
       systemTitle: 'Системные настройки',
       accountTitle: 'Настройки аккаунта',
@@ -889,6 +901,16 @@ export const dictionaries = {
         confirmOtp: 'Подтвердить код',
         otpSent: 'OTP-код отправлен на ваш email.',
         success: 'Пароль успешно обновлён.'
+      },
+      emailChange: {
+        title: 'Смена email',
+        newEmail: 'Новый email',
+        currentPassword: 'Текущий пароль',
+        submit: 'Отправить код подтверждения',
+        otpLabel: 'Код подтверждения (4 цифры)',
+        confirmOtp: 'Подтвердить новый email',
+        otpSent: 'Код подтверждения отправлен на новый email.',
+        invalidInput: 'Введите новый email и текущий пароль.'
       },
       errors: {
         load: 'Не удалось загрузить настройки.',
@@ -1444,6 +1466,7 @@ export type TranslationKey =
   | 'settings.tabs.user'
   | 'settings.tabs.integrations'
   | 'settings.tabs.password'
+  | 'settings.tabs.emailChange'
   | 'settings.systemTitle'
   | 'settings.accountTitle'
   | 'settings.userTitle'
@@ -1520,6 +1543,14 @@ export type TranslationKey =
   | 'settings.passwordChange.confirmOtp'
   | 'settings.passwordChange.otpSent'
   | 'settings.passwordChange.success'
+  | 'settings.emailChange.title'
+  | 'settings.emailChange.newEmail'
+  | 'settings.emailChange.currentPassword'
+  | 'settings.emailChange.submit'
+  | 'settings.emailChange.otpLabel'
+  | 'settings.emailChange.confirmOtp'
+  | 'settings.emailChange.otpSent'
+  | 'settings.emailChange.invalidInput'
   | 'settings.specialists.title'
   | 'settings.specialists.add'
   | 'settings.specialists.edit'

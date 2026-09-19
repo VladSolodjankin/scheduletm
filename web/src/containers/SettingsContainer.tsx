@@ -80,7 +80,7 @@ export function SettingsContainer() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { tab } = useParams<{ tab?: string }>();
-  const { accessToken, user } = useAuth();
+  const { accessToken, user, clearAuth } = useAuth();
   const { t } = useI18n();
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(defaultSystemSettings);
   const [accountSettings, setAccountSettings] = useState<AccountSettings>(defaultAccountSettings);
@@ -109,6 +109,11 @@ export function SettingsContainer() {
   const [otpCode, setOtpCode] = useState('');
   const [passwordStep, setPasswordStep] = useState<'password' | 'otp'>('password');
 
+  const [newEmail, setNewEmail] = useState('');
+  const [emailChangePassword, setEmailChangePassword] = useState('');
+  const [emailOtpCode, setEmailOtpCode] = useState('');
+  const [emailChangeStep, setEmailChangeStep] = useState<'email' | 'otp'>('email');
+
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const zoomOauthStatus = useMemo(() => searchParams.get('zoom_oauth'), [searchParams]);
   const canManageSystemSettings = user?.role === 'product_admin';
@@ -132,7 +137,8 @@ export function SettingsContainer() {
     ...(canManageAccountSettings || isClient ? ['notifications'] : []),
     'user',
     'integrations',
-    'password'
+    'password',
+    'emailChange'
   ] as const), [canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, isClient]);
 
   const activeTab = useMemo(() => {
@@ -592,6 +598,44 @@ export function SettingsContainer() {
     }
   };
 
+  const requestEmailChangeOtp = async () => {
+    if (!accessToken || !newEmail.trim() || !emailChangePassword.trim()) {
+      setError(t('settings.emailChange.invalidInput'));
+      return;
+    }
+
+    try {
+      await apiClient.post('/api/auth/email-change/request', { newEmail, password: emailChangePassword }, { headers: authHeaders(accessToken) });
+      setEmailChangeStep('otp');
+      setError('');
+      setSuccess(t('settings.emailChange.otpSent'));
+    } catch (err) {
+      setError(resolveApiError(err, { fallbackMessage: t('settings.errors.save'), networkMessage: t('common.errors.network') }).message);
+    }
+  };
+
+  const confirmEmailChangeOtp = async () => {
+    if (!accessToken) {
+      return;
+    }
+    try {
+      await apiClient.post('/api/auth/email-change/confirm', { code: emailOtpCode }, { headers: authHeaders(accessToken) });
+      setNewEmail('');
+      setEmailChangePassword('');
+      setEmailOtpCode('');
+      setEmailChangeStep('email');
+      clearAuth();
+      navigate('/login');
+    } catch (err) {
+      setError(resolveApiError(err, { fallbackMessage: t('settings.errors.save'), networkMessage: t('common.errors.network') }).message);
+    }
+  };
+
+  const cancelEmailChange = () => {
+    setEmailChangeStep('email');
+    setEmailOtpCode('');
+  };
+
   const disconnectGoogle = async () => {
     if (!accessToken || isGoogleDisconnecting) {
       return;
@@ -707,10 +751,17 @@ export function SettingsContainer() {
               userTab: t('settings.tabs.user'),
               integrationsTab: t('settings.tabs.integrations'),
               passwordTab: t('settings.tabs.password'),
+              emailChangeTab: t('settings.tabs.emailChange'),
               systemTitle: t('settings.systemTitle'),
               accountTitle: t('settings.accountTitle'),
               userTitle: t('settings.userTitle'),
               passwordTitle: t('settings.passwordChange.title'),
+              emailChangeTitle: t('settings.emailChange.title'),
+              newEmail: t('settings.emailChange.newEmail'),
+              currentPasswordForEmail: t('settings.emailChange.currentPassword'),
+              emailOtpCode: t('settings.emailChange.otpLabel'),
+              sendEmailOtp: t('settings.emailChange.submit'),
+              confirmEmailOtp: t('settings.emailChange.confirmOtp'),
               timezone: t('settings.timezone'),
               locale: t('settings.locale'),
               firstName: t('users.form.firstName'),
@@ -822,6 +873,16 @@ export function SettingsContainer() {
             onCancelPasswordChange={cancelPasswordChange}
             onRequestPasswordOtp={requestPasswordOtp}
             onConfirmPasswordOtp={confirmPasswordOtp}
+            newEmail={newEmail}
+            emailChangePassword={emailChangePassword}
+            emailOtpCode={emailOtpCode}
+            emailChangeStep={emailChangeStep}
+            onNewEmailChange={setNewEmail}
+            onEmailChangePasswordChange={setEmailChangePassword}
+            onEmailOtpCodeChange={setEmailOtpCode}
+            onCancelEmailChange={cancelEmailChange}
+            onRequestEmailChangeOtp={requestEmailChangeOtp}
+            onConfirmEmailChangeOtp={confirmEmailChangeOtp}
             activeTab={activeTab}
             onTabChange={handleTabChange}
             />

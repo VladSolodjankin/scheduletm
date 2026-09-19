@@ -6,6 +6,7 @@ export type SettingsCardCopy = {
   userTab: string;
   integrationsTab: string;
   passwordTab: string;
+  emailChangeTab: string;
   specialistPolicyTab: string;
   notificationsTab: string;
   systemTitle: string;
@@ -13,6 +14,12 @@ export type SettingsCardCopy = {
   userTitle: string;
   integrationsTitle: string;
   passwordTitle: string;
+  emailChangeTitle: string;
+  newEmail: string;
+  currentPasswordForEmail: string;
+  emailOtpCode: string;
+  sendEmailOtp: string;
+  confirmEmailOtp: string;
   timezone: string;
   locale: string;
   firstName: string;
