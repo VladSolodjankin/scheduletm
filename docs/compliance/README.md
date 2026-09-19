@@ -22,6 +22,12 @@ Operational procedures for privileged, DB-level changes that have no in-app path
 
 - `runbook-first-product-admin.md`
 
+## Internal assessments
+
+Point-in-time technical decisions, not standing policy — revisit when the stated trigger conditions change.
+
+- `error-monitoring-assessment.md`
+
 ## Technical evidence packages
 
 Technical evidence, scan summaries, and Zoom Marketplace review artifacts are maintained separately:

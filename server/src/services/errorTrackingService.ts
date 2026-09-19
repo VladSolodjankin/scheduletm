@@ -47,8 +47,10 @@ function mapErrorLog(item: ErrorLogRecord): ErrorLogDto {
   };
 }
 
+const ERROR_LOG_RETENTION_DAYS = 30;
+
 async function cleanupExpiredLogs(): Promise<void> {
-  await purgeExpiredErrorLogs(7);
+  await purgeExpiredErrorLogs(ERROR_LOG_RETENTION_DAYS);
 }
 
 function normalizeInline(value: string | null | undefined, max = 120): string {
