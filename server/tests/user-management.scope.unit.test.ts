@@ -8,6 +8,11 @@ const findByIdAnyAccountMock = vi.hoisted(() => vi.fn());
 const findByIdMock = vi.hoisted(() => vi.fn());
 const updateProfileMock = vi.hoisted(() => vi.fn());
 const cancelDeletionMock = vi.hoisted(() => vi.fn());
+const createAuditEventMock = vi.hoisted(() => vi.fn());
+
+vi.mock('../src/repositories/userManagementAuditRepository.js', () => ({
+  createUserManagementAuditEvent: createAuditEventMock,
+}));
 
 vi.mock('../src/repositories/webUserRepository.js', async () => {
   const actual = await vi.importActual<typeof import('../src/repositories/webUserRepository.js')>(
@@ -60,6 +65,7 @@ describe('managed-user list scope', () => {
     findByIdMock.mockReset();
     updateProfileMock.mockReset().mockResolvedValue(undefined);
     cancelDeletionMock.mockReset().mockResolvedValue(undefined);
+    createAuditEventMock.mockReset().mockResolvedValue(undefined);
   });
 
   it.each([WebUserRole.Owner])(
@@ -98,5 +104,11 @@ describe('managed-user list scope', () => {
       id: foreignRecord.id,
     }));
     expect(cancelDeletionMock).toHaveBeenCalledWith(42, foreignRecord.id);
+    expect(createAuditEventMock).toHaveBeenCalledWith(expect.objectContaining({
+      accountId: 42,
+      targetWebUserId: foreignRecord.id,
+      action: 'role_change',
+      metadata: { fromRole: WebUserRole.Owner, toRole: 'specialist' },
+    }));
   });
 });

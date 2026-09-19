@@ -2,13 +2,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const [{ createApp }, { env }, { startNotificationDefaultsJob }, { startAppointmentNotificationsJob }, { startAppointmentAutoCancelUnpaidJob }, { startAppointmentAuditRetentionJob }, { startDeletionCleanupJob }] = await Promise.all([
+const [{ createApp }, { env }, { startNotificationDefaultsJob }, { startAppointmentNotificationsJob }, { startAppointmentAutoCancelUnpaidJob }, { startAppointmentAuditRetentionJob }, { startUserManagementAuditRetentionJob }, { startDeletionCleanupJob }] = await Promise.all([
   import('./app.js'),
   import('./config/env.js'),
   import('./jobs/notificationDefaults.job.js'),
   import('./jobs/appointmentNotifications.job.js'),
   import('./jobs/appointmentAutoCancelUnpaid.job.js'),
   import('./jobs/appointmentAuditRetention.job.js'),
+  import('./jobs/userManagementAuditRetention.job.js'),
   import('./jobs/deletionCleanup.job.js'),
 ]);
 const { trackServerError } = await import('./services/errorTrackingService.js');
@@ -87,6 +88,7 @@ server = app.listen(env.PORT, () => {
   jobTimers.push(startAppointmentNotificationsJob());
   jobTimers.push(startAppointmentAutoCancelUnpaidJob());
   jobTimers.push(startAppointmentAuditRetentionJob());
+  jobTimers.push(startUserManagementAuditRetentionJob());
   jobTimers.push(startDeletionCleanupJob());
   console.log(`server listening on http://localhost:${env.PORT}`);
 });

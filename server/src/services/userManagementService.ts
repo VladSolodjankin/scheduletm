@@ -21,6 +21,7 @@ import { env } from '../config/env.js';
 import { sendManagedUserInviteEmail } from './emailDeliveryService.js';
 import { deleteWebUserSessionsByWebUserId } from '../repositories/webUserSessionRepository.js';
 import { countAppointmentsByClientId, countAppointmentsBySpecialistId } from '../repositories/appointmentRepository.js';
+import { createUserManagementAuditEvent, type UserManagementAuditAction } from '../repositories/userManagementAuditRepository.js';
 
 export type UserManagementItem = {
   id: number;
@@ -78,6 +79,22 @@ const mapUser = (item: Awaited<ReturnType<typeof listWebUsersByAccount>>[number]
 
 async function resolveAccountId(actor: User): Promise<number> {
   return actor.accountId;
+}
+
+async function appendAuditEvent(
+  accountId: number,
+  targetWebUserId: number,
+  actor: User,
+  action: UserManagementAuditAction,
+  metadata?: Record<string, unknown>,
+) {
+  await createUserManagementAuditEvent({
+    accountId,
+    targetWebUserId,
+    actorWebUserId: Number.isFinite(Number(actor.id)) ? Number(actor.id) : null,
+    action,
+    metadata,
+  });
 }
 
 async function resolveManagedUserAccountId(actor: User, userId: number): Promise<number | null> {
@@ -185,6 +202,8 @@ export async function createManagedUser(actor: User, payload: UserCreatePayload)
     inviteLink,
   });
 
+  await appendAuditEvent(accountId, created.id, actor, 'create', { role: payload.role });
+
   return mapUser(created);
 }
 
@@ -228,6 +247,13 @@ export async function updateManagedUser(actor: User, userId: number, payload: Us
   });
   await cancelWebUserDeletion(accountId, userId);
 
+  if (payload.role !== existing.role) {
+    await appendAuditEvent(accountId, userId, actor, 'role_change', {
+      fromRole: existing.role,
+      toRole: payload.role,
+    });
+  }
+
   const updated = await findWebUserById(accountId, userId);
   return updated ? mapUser(updated) : null;
 }
@@ -256,6 +282,7 @@ export async function deactivateManagedUser(actor: User, userId: number): Promis
   });
   await deleteWebUserSessionsByWebUserId(accountId, userId);
   await deactivateSpecialistByWebUserId(accountId, userId);
+  await appendAuditEvent(accountId, userId, actor, 'deactivate');
 
   const updated = await findWebUserById(accountId, userId);
   return updated ? mapUser(updated) : null;
@@ -308,6 +335,7 @@ export async function deleteManagedUser(actor: User, userId: number): Promise<Ma
   await softDeleteWebUser(accountId, userId);
   await deleteWebUserSessionsByWebUserId(accountId, userId);
   await deactivateSpecialistByWebUserId(accountId, userId);
+  await appendAuditEvent(accountId, userId, actor, 'delete');
 
   return impact;
 }
