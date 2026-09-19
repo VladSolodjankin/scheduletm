@@ -6,6 +6,7 @@ import { findWebUserById, updateWebUserAuthState, updateWebUserCredentials } fro
 import { sendEmailVerificationEmail } from '../services/emailDeliveryService.js';
 import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
+import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 import {
   canManageAccountSettings,
   canManageSystemSettings,
@@ -33,6 +34,8 @@ import {
 } from '../services/settingsService.js';
 
 export const settingsRoutes = Router();
+const PASSWORD_OTP_TTL_MS = 10 * 60 * 1000;
+const passwordOtpConfirmRateLimit = createRequestRateLimit({ keyPrefix: 'user-password-otp-confirm', maxRequests: 10, windowMs: 60_000 });
 
 function parsePositiveInt(value: unknown): number | undefined {
   if (typeof value !== 'string') {
@@ -355,7 +358,7 @@ settingsRoutes.post('/user/password/request', requireAccessToken, async (req, re
   return res.json({ message: 'ok' });
 })
 
-settingsRoutes.post('/user/password/confirm', requireAccessToken, async (req, res) => {
+settingsRoutes.post('/user/password/confirm', requireAccessToken, passwordOtpConfirmRateLimit, async (req, res) => {
   const user = (req as AuthedRequest).user;
   const parsedPassword = passwordSchema.safeParse(req.body?.password);
   const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
@@ -365,7 +368,12 @@ settingsRoutes.post('/user/password/confirm', requireAccessToken, async (req, re
 
   const numericUserId = Number(user.id);
   const webUser = Number.isInteger(numericUserId) ? await findWebUserById(user.accountId, numericUserId) : null;
-  if (!webUser || !webUser.email_verification_code) {
+  if (!webUser || !webUser.email_verification_code || !webUser.email_verification_sent_at) {
+    return res.status(400).json({ message: t(req, 'emailVerificationFailed') });
+  }
+
+  const isExpired = Date.now() - webUser.email_verification_sent_at.getTime() > PASSWORD_OTP_TTL_MS;
+  if (isExpired) {
     return res.status(400).json({ message: t(req, 'emailVerificationFailed') });
   }
 
