@@ -22,6 +22,7 @@ export type SettingsCardCopy = {
   defaultMeetingDuration: string;
   dailyDigestEnabled: string;
   weekStartsOnMonday: string;
+  specialistsSeeAllAppointments: string;
   businessAddress: string;
   businessLat: string;
   businessLng: string;

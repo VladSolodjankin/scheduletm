@@ -41,6 +41,7 @@ const defaultAccountSettings: AccountSettings = {
   businessAddress: '',
   businessLat: null,
   businessLng: null,
+  specialistsSeeAllAppointments: false,
   deleteScheduledAt: null,
 };
 
@@ -719,6 +720,7 @@ export function SettingsContainer() {
               defaultMeetingDuration: t('settings.defaultMeetingDuration'),
               dailyDigestEnabled: t('settings.dailyDigestEnabled'),
               weekStartsOnMonday: t('settings.weekStartsOnMonday'),
+              specialistsSeeAllAppointments: t('settings.specialistsSeeAllAppointments'),
               businessAddress: t('settings.businessAddress'),
               businessLat: t('settings.businessLat'),
               businessLng: t('settings.businessLng'),

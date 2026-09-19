@@ -67,6 +67,7 @@ export type AccountSettings = {
   businessAddress: string;
   businessLat: number | null;
   businessLng: number | null;
+  specialistsSeeAllAppointments: boolean;
   deleteScheduledAt: string | null;
 };
 

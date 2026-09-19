@@ -117,6 +117,17 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
         )}
       />
 
+      <Controller
+        name="specialistsSeeAllAppointments"
+        control={control}
+        render={({ field }: any) => (
+          <FormControlLabel
+            control={<Switch checked={field.value} onChange={(event) => field.onChange(event.target.checked)} />}
+            label={copy.specialistsSeeAllAppointments}
+          />
+        )}
+      />
+
       <AppButton type="submit" startIcon={<AppIcons.save />} isLoading={isSaving}>
         {copy.saveSettings}
       </AppButton>

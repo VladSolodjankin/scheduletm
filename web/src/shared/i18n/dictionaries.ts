@@ -136,6 +136,7 @@ export const dictionaries = {
       defaultMeetingDuration: 'Default meeting duration (min)',
       dailyDigestEnabled: 'Daily digest enabled',
       weekStartsOnMonday: 'Week starts on Monday',
+      specialistsSeeAllAppointments: 'Specialists can see every appointment in the workspace',
       businessAddress: 'Business address',
       businessLat: 'Business latitude',
       businessLng: 'Business longitude',
@@ -789,6 +790,7 @@ export const dictionaries = {
       defaultMeetingDuration: 'Длительность встречи по умолчанию (мин)',
       dailyDigestEnabled: 'Ежедневный дайджест включен',
       weekStartsOnMonday: 'Неделя начинается с понедельника',
+      specialistsSeeAllAppointments: 'Специалисты видят все записи в аккаунте',
       businessAddress: 'Адрес офлайн-встреч',
       businessLat: 'Широта',
       businessLng: 'Долгота',
@@ -1452,6 +1454,7 @@ export type TranslationKey =
   | 'settings.defaultMeetingDuration'
   | 'settings.dailyDigestEnabled'
   | 'settings.weekStartsOnMonday'
+  | 'settings.specialistsSeeAllAppointments'
   | 'settings.businessAddress'
   | 'settings.businessLat'
   | 'settings.businessLng'
