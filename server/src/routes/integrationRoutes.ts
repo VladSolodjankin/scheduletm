@@ -3,12 +3,21 @@ import { z } from 'zod';
 import { env } from '../config/env.js';
 import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
+import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 import { completeGoogleOAuth, createGoogleOAuthUrl, disconnectGoogleOAuth } from '../services/googleOAuthService.js';
 import { createZoomMeeting } from '../services/zoomService.js';
 import { completeZoomOAuth, createZoomOAuthUrl, disconnectZoomOAuth } from '../services/zoomOAuthService.js';
+import {
+  buildZoomUrlValidationResponse,
+  isZoomWebhookConfigured,
+  processZoomWebhookEvent,
+  verifyZoomWebhookSignature,
+  type ZoomWebhookPayload,
+} from '../services/zoomWebhookService.js';
 import { formatZodError } from '../utils/validation.js';
 
 export const integrationRoutes = Router();
+const zoomWebhookRateLimit = createRequestRateLimit({ keyPrefix: 'zoom-webhook', maxRequests: 120, windowMs: 60_000 });
 
 const zoomCreateMeetingSchema = z.object({
   topic: z.string().trim().min(1).max(200),
@@ -157,4 +166,40 @@ integrationRoutes.post('/zoom/meetings', requireAccessToken, async (req, res) =>
   }
 
   return res.status(201).json(result.meeting);
+});
+
+integrationRoutes.post('/zoom/webhook', zoomWebhookRateLimit, async (req, res) => {
+  if (!isZoomWebhookConfigured()) {
+    return res.status(404).end();
+  }
+
+  const body = req.body as ZoomWebhookPayload;
+
+  // Zoom's one-time endpoint validation ping is not HMAC-signed like real events —
+  // it proves ownership of the secret token via the response itself.
+  if (body?.event === 'endpoint.url_validation') {
+    const plainToken = (body as { payload?: { plainToken?: string } }).payload?.plainToken;
+    if (typeof plainToken !== 'string' || !plainToken) {
+      return res.status(400).end();
+    }
+    return res.status(200).json(buildZoomUrlValidationResponse(plainToken));
+  }
+
+  const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
+  const isValid = rawBody && verifyZoomWebhookSignature({
+    rawBody,
+    timestampHeader: req.header('x-zm-request-timestamp'),
+    signatureHeader: req.header('x-zm-signature'),
+  });
+  if (!isValid) {
+    return res.status(401).end();
+  }
+
+  try {
+    await processZoomWebhookEvent(body);
+  } catch (error) {
+    console.error('[zoom-webhook] processing failed', error);
+  }
+
+  return res.status(200).end();
 });

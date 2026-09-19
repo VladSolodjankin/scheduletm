@@ -91,6 +91,15 @@ export const createApp = () => {
       return next(error);
     },
   );
+  app.use(
+    '/api/integrations/zoom/webhook',
+    express.json({
+      limit: '32kb',
+      verify: (req, _res, buf) => {
+        (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
+      },
+    }),
+  );
   app.use(express.json({ limit: '32kb' }));
 
   app.use(healthRoutes);

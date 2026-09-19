@@ -483,6 +483,7 @@ export async function createAppointmentForActor(
   ].filter((provider, index, list): provider is 'manual' | 'zoom' | 'offline' => Boolean(provider) && list.indexOf(provider) === index);
 
   let meetingLink = payload.meetingLink?.trim() ?? '';
+  let zoomMeetingId: string | null = null;
   let meetingProvider: 'manual' | 'zoom' | 'offline' = candidateProviders[0] ?? (meetingLink ? 'manual' : 'offline');
   if (!payload.meetingProvider && !preferred && meetingLink && meetingProvider !== 'manual' && allowedProviders.includes('manual')) {
     meetingProvider = 'manual';
@@ -504,6 +505,7 @@ export async function createAppointmentForActor(
       if (zoom.ok) {
         meetingLink = zoom.meeting.joinUrl;
         meetingProvider = 'zoom';
+        zoomMeetingId = zoom.meeting.zoomMeetingId;
         break;
       }
 
@@ -539,6 +541,7 @@ export async function createAppointmentForActor(
     meetingLink: meetingLink || null,
     meetingProvider,
     locationAddress: payload.locationAddress?.trim() || null,
+    zoomMeetingId,
     userId,
     serviceId,
     durationMin: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),

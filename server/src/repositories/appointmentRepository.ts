@@ -13,6 +13,9 @@ export type AppointmentRecord = {
   meeting_link: string | null;
   meeting_provider: 'manual' | 'zoom' | 'offline';
   location_address: string | null;
+  zoom_meeting_id: string | null;
+  zoom_meeting_started_at: Date | null;
+  zoom_meeting_ended_at: Date | null;
   duration_min: number;
   is_paid: boolean;
   user_id: number;
@@ -67,6 +70,7 @@ type CreateAppointmentInput = {
   meetingLink?: string | null;
   meetingProvider?: 'manual' | 'zoom' | 'offline';
   locationAddress?: string | null;
+  zoomMeetingId?: string | null;
   userId: number;
   serviceId: number;
   durationMin: number;
@@ -94,6 +98,8 @@ type UpdateAppointmentInput = {
   durationMin?: number;
   isPaid?: boolean;
   userId?: number;
+  zoomMeetingStartedAt?: Date;
+  zoomMeetingEndedAt?: Date;
 };
 
 export async function listAppointments(filters: AppointmentListFilters): Promise<AppointmentRecord[]> {
@@ -145,6 +151,15 @@ export async function findAppointmentByIdAnyAccount(id: number): Promise<Appoint
   return row ?? null;
 }
 
+export async function findAppointmentByZoomMeetingIdAnyAccount(zoomMeetingId: string): Promise<AppointmentRecord | null> {
+  const row = await db('appointments')
+    .where({ zoom_meeting_id: zoomMeetingId })
+    .orderBy('id', 'desc')
+    .first<AppointmentRecord>();
+
+  return row ?? null;
+}
+
 export async function listAppointmentsAllAccounts(filters: Omit<AppointmentListFilters, 'accountId'>): Promise<AppointmentRecord[]> {
   const query = db('appointments')
     .leftJoin('clients', function joinClients() {
@@ -191,6 +206,7 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
         meeting_link: input.meetingLink ?? null,
         meeting_provider: input.meetingProvider ?? 'manual',
         location_address: input.locationAddress ?? null,
+        zoom_meeting_id: input.zoomMeetingId ?? null,
         user_id: input.userId,
         service_id: input.serviceId,
         duration_min: input.durationMin,
@@ -231,6 +247,7 @@ export async function createAppointmentSeries(input: CreateAppointmentInput & {
           meeting_link: input.meetingLink ?? null,
           meeting_provider: input.meetingProvider ?? 'manual',
           location_address: input.locationAddress ?? null,
+          zoom_meeting_id: input.zoomMeetingId ?? null,
           user_id: input.userId,
           service_id: input.serviceId,
           group_id: group.id,
@@ -277,6 +294,14 @@ export async function updateAppointment(input: UpdateAppointmentInput): Promise<
 
   if (Object.prototype.hasOwnProperty.call(input, 'locationAddress')) {
     payload.location_address = input.locationAddress;
+  }
+
+  if (input.zoomMeetingStartedAt !== undefined) {
+    payload.zoom_meeting_started_at = input.zoomMeetingStartedAt;
+  }
+
+  if (input.zoomMeetingEndedAt !== undefined) {
+    payload.zoom_meeting_ended_at = input.zoomMeetingEndedAt;
   }
 
   if (input.durationMin !== undefined) {

@@ -21,6 +21,7 @@ const envSchema = z.object({
   ZOOM_OAUTH_CLIENT_SECRET: z.string().default(''),
   ZOOM_OAUTH_REDIRECT_URI: z.string().url().default('http://localhost:3003/api/integrations/zoom/oauth/callback'),
   ZOOM_OAUTH_SCOPES: z.string().default(''),
+  ZOOM_WEBHOOK_SECRET_TOKEN: z.string().default(''),
   APP_ENCRYPTION_KEY: z.string().default(''),
   AWS_ENDPOINT_URL: z.string().default(''),
   AWS_ACCESS_KEY_ID: z.string().default(''),
