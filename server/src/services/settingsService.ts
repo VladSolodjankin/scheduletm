@@ -55,6 +55,7 @@ export type AccountSettings = {
   businessAddress: string;
   businessLat: number | null;
   businessLng: number | null;
+  specialistsSeeAllAppointments: boolean;
   deleteScheduledAt: string | null;
 };
 
@@ -139,6 +140,7 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
       businessAddress: row.business_address ?? '',
       businessLat: row.business_lat === null ? null : Number(row.business_lat),
       businessLng: row.business_lng === null ? null : Number(row.business_lng),
+      specialistsSeeAllAppointments: row.specialists_see_all_appointments,
       deleteScheduledAt: deleteScheduledAt ? new Date(deleteScheduledAt).toISOString() : null,
     };
   }
@@ -152,6 +154,7 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
       businessAddress: '',
       businessLat: null,
       businessLng: null,
+      specialistsSeeAllAppointments: false,
       deleteScheduledAt: deleteScheduledAt ? new Date(deleteScheduledAt).toISOString() : null,
     };
   }
@@ -163,6 +166,7 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
     businessAddress: '',
     businessLat: null,
     businessLng: null,
+    specialistsSeeAllAppointments: false,
     deleteScheduledAt: deleteScheduledAt ? new Date(deleteScheduledAt).toISOString() : null,
   };
 };
@@ -280,6 +284,7 @@ export const updateAccountSettings = async (actor: User, payload: unknown, reque
     businessAddress: parsed.data.businessAddress,
     businessLat: parsed.data.businessLat,
     businessLng: parsed.data.businessLng,
+    specialistsSeeAllAppointments: parsed.data.specialistsSeeAllAppointments,
   });
 
   await updateAppSettingsByAccountId({

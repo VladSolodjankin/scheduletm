@@ -129,6 +129,7 @@ export const accountSettingsSchema = z.object({
   businessAddress: z.string().trim().max(512),
   businessLat: z.coerce.number().min(-90).max(90).nullable(),
   businessLng: z.coerce.number().min(-180).max(180).nullable(),
+  specialistsSeeAllAppointments: z.boolean(),
 }).partial();
 
 export const userSettingsSchema = z.object({

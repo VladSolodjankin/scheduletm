@@ -32,6 +32,7 @@ import {
   type SpecialistRecord,
 } from '../repositories/specialistRepository.js';
 import { findWebUserById } from '../repositories/webUserRepository.js';
+import { findAccountSettingsByAccountId } from '../repositories/accountSettingsRepository.js';
 import { listExternalBusySlots, type ExternalBusySlot } from './calendarAvailabilityService.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
@@ -205,6 +206,11 @@ async function resolveAllowedSpecialistId(actor: User, accountId: number): Promi
     return null;
   }
   if (isClientRole(actor.role)) {
+    return null;
+  }
+
+  const accountSettings = await findAccountSettingsByAccountId(accountId);
+  if (accountSettings?.specialists_see_all_appointments) {
     return null;
   }
 

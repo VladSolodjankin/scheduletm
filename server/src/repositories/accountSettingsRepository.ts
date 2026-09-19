@@ -11,6 +11,7 @@ export type AccountSettingsRecord = {
   business_address: string;
   business_lat: string | null;
   business_lng: string | null;
+  specialists_see_all_appointments: boolean;
 };
 
 export type UpdateAccountSettingsInput = {
@@ -23,6 +24,7 @@ export type UpdateAccountSettingsInput = {
   businessAddress?: string;
   businessLat?: number | null;
   businessLng?: number | null;
+  specialistsSeeAllAppointments?: boolean;
 };
 
 const baseQuery = (accountId: number) => db('account_settings').where({ account_id: accountId });
@@ -66,6 +68,10 @@ export async function updateAccountSettingsByAccountId(input: UpdateAccountSetti
     patch.business_lng = input.businessLng;
   }
 
+  if (input.specialistsSeeAllAppointments !== undefined) {
+    patch.specialists_see_all_appointments = input.specialistsSeeAllAppointments;
+  }
+
   await db('account_settings')
     .insert({
       account_id: input.accountId,
@@ -77,6 +83,7 @@ export async function updateAccountSettingsByAccountId(input: UpdateAccountSetti
       business_address: input.businessAddress ?? '',
       business_lat: input.businessLat ?? null,
       business_lng: input.businessLng ?? null,
+      specialists_see_all_appointments: input.specialistsSeeAllAppointments ?? false,
       created_at: db.fn.now(),
       updated_at: db.fn.now(),
     })
