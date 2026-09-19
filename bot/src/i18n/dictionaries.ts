@@ -102,6 +102,7 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'notifications.appointmentReminder':
       'Напоминание: {{service}} у {{specialist}} {{date}} в {{time}}.',
     'notifications.appointmentReminderComment': 'Комментарий: {{comment}}',
+    'notifications.appointmentReminderEmailSubject': 'Meetli — напоминание о записи',
   },
 
   en: {
@@ -200,5 +201,6 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'notifications.appointmentReminder':
       'Reminder: {{service}} with {{specialist}} on {{date}} at {{time}}.',
     'notifications.appointmentReminderComment': 'Comment: {{comment}}',
+    'notifications.appointmentReminderEmailSubject': 'Meetli — appointment reminder',
   },
 };

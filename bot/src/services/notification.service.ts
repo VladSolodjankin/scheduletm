@@ -1,4 +1,6 @@
+import axios from 'axios';
 import { sendMessage } from '../bot/bot';
+import { env } from '../config/env';
 import { t as translate } from '../i18n';
 import { getAppSettings } from '../repositories/app-settings.repository';
 import {
@@ -120,6 +122,38 @@ export async function processDueNotifications(limit = 100) {
   return notifications.length;
 }
 
+const BREVO_SEND_EMAIL_URL = 'https://api.brevo.com/v3/smtp/email';
+
+async function sendReminderEmail(to: string, message: string, language: 'ru' | 'en'): Promise<void> {
+  if (!env.brevoApiKey) {
+    throw new Error('Email provider not configured (BREVO_API_KEY missing)');
+  }
+
+  const subject = translate(language, 'notifications.appointmentReminderEmailSubject');
+  const htmlContent = `<div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827;max-width:560px;margin:0 auto;white-space:pre-line;">${message}</div>`;
+
+  await axios.post(
+    BREVO_SEND_EMAIL_URL,
+    {
+      sender: {
+        email: env.emailFromAddress,
+        name: env.emailFromName,
+      },
+      to: [{ email: to }],
+      subject,
+      htmlContent,
+      textContent: message,
+    },
+    {
+      headers: {
+        'api-key': env.brevoApiKey,
+        'content-type': 'application/json',
+      },
+      timeout: 10_000,
+    },
+  );
+}
+
 type DispatchInput = {
   recipientChatId: number | null;
   recipientEmail: string | null;
@@ -144,11 +178,8 @@ async function dispatchNotification(channel: NotificationChannel, input: Dispatc
       throw new Error('Missing email recipient');
     }
 
-    // Stub provider for MVP: save multichannel contract and status flow.
-    logInfo('notification.email_stub_sent', {
-      recipient: input.recipientEmail,
-      message,
-    });
+    const language = (input.payload.language === 'en' ? 'en' : 'ru') as 'ru' | 'en';
+    await sendReminderEmail(input.recipientEmail, message, language);
     return;
   }
 

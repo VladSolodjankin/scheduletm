@@ -23,6 +23,25 @@ vi.mock('../../bot/bot', () => {
   };
 });
 
+vi.mock('axios', () => {
+  return {
+    default: {
+      post: vi.fn(),
+    },
+  };
+});
+
+vi.mock('../../config/env', () => {
+  return {
+    env: {
+      brevoApiKey: 'test-key',
+      emailFromAddress: 'no-reply@meetli.cc',
+      emailFromName: 'Meetli',
+    },
+  };
+});
+
+import axios from 'axios';
 import { sendMessage } from '../../bot/bot';
 import { getAppSettings } from '../../repositories/app-settings.repository';
 import {
@@ -148,6 +167,67 @@ describe('notification.service', () => {
     expect(processed).toBe(1);
     expect(sendMessage).toHaveBeenCalledTimes(1);
     expect(markNotificationSent).toHaveBeenCalledWith(99);
+  });
+
+  it('sends a real email via Brevo and marks the notification sent', async () => {
+    vi.mocked(axios.post).mockResolvedValue({ data: {} });
+    vi.mocked(findDueNotifications).mockResolvedValue([
+      {
+        id: 42,
+        attempts: 0,
+        maxAttempts: 3,
+        channel: 'email',
+        recipientChatId: null,
+        recipientEmail: 'client@example.com',
+        recipientPhone: null,
+        payload: {
+          serviceName: 'Test',
+          specialistName: 'Spec',
+          selectedDate: '2026-04-22',
+          selectedTime: '10:00',
+          language: 'ru',
+        },
+      },
+    ] as any);
+
+    const processed = await processDueNotifications();
+
+    expect(processed).toBe(1);
+    expect(axios.post).toHaveBeenCalledWith(
+      'https://api.brevo.com/v3/smtp/email',
+      expect.objectContaining({
+        to: [{ email: 'client@example.com' }],
+      }),
+      expect.any(Object),
+    );
+    expect(markNotificationSent).toHaveBeenCalledWith(42);
+  });
+
+  it('retries an email notification when Brevo delivery fails', async () => {
+    vi.mocked(axios.post).mockRejectedValue(new Error('network error'));
+    vi.mocked(findDueNotifications).mockResolvedValue([
+      {
+        id: 43,
+        attempts: 0,
+        maxAttempts: 3,
+        channel: 'email',
+        recipientChatId: null,
+        recipientEmail: 'client@example.com',
+        recipientPhone: null,
+        payload: {
+          serviceName: 'Test',
+          specialistName: 'Spec',
+          selectedDate: '2026-04-22',
+          selectedTime: '10:00',
+          language: 'ru',
+        },
+      },
+    ] as any);
+
+    await processDueNotifications();
+
+    expect(scheduleNotificationRetry).toHaveBeenCalledTimes(1);
+    expect(markNotificationSent).not.toHaveBeenCalled();
   });
 
   it('schedules retry for failed notification', async () => {
