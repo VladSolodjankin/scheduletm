@@ -101,6 +101,27 @@ export async function sendEmailVerificationEmail(input: SendEmailVerificationInp
   });
 }
 
+export type SendEmailChangeVerificationEmailInput = {
+  to: string;
+  firstName?: string;
+  verificationCode: string;
+};
+
+export async function sendEmailChangeVerificationEmail(input: SendEmailChangeVerificationEmailInput): Promise<boolean> {
+  const greetingName = input.firstName?.trim() || 'пользователь';
+  const template = renderEmailTemplate({
+    title: 'Подтверждение нового email',
+    body: `Здравствуйте, ${greetingName}! Код для подтверждения нового email: ${input.verificationCode}`,
+    footer: 'Если вы не запрашивали смену email — просто проигнорируйте письмо.',
+  });
+
+  return sendEmail({
+    to: input.to,
+    subject: 'Meetli — подтверждение нового email',
+    ...template,
+  });
+}
+
 export type SendPasswordResetEmailInput = {
   to: string;
   firstName?: string;

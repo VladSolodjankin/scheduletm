@@ -4,6 +4,7 @@ import { env } from '../config/env.js';
 import { clearLoginAttempt, findLoginAttemptByIp, upsertFailedLoginAttempt } from '../repositories/loginAttemptRepository.js';
 import { createAccount, findAccountById, isAccountActive } from '../repositories/accountRepository.js';
 import { confirmPasswordReset, createPasswordResetChallenge } from '../repositories/passwordResetRepository.js';
+import { confirmEmailChange as confirmEmailChangeChallenge, createEmailChangeChallenge } from '../repositories/emailChangeRepository.js';
 import { createDefaultSpecialistForWebUserIfMissing, createSpecialistForWebUser } from '../repositories/specialistRepository.js';
 import {
   createWebUser,
@@ -26,13 +27,14 @@ import { WebUserRole } from '../types/webUserRole.js';
 import { canManageSpecialists } from '../policies/rolePermissions.js';
 import { createOtpCode, createToken, hashPassword, sanitizeEmail, verifyPassword } from '../utils/crypto.js';
 import { csrfCookieName } from '../utils/cookies.js';
-import { sendEmailVerificationEmail, sendPasswordResetEmail, sendRegistrationSuccessEmail } from './emailDeliveryService.js';
+import { sendEmailChangeVerificationEmail, sendEmailVerificationEmail, sendPasswordResetEmail, sendRegistrationSuccessEmail } from './emailDeliveryService.js';
 
 const now = () => Date.now();
 const cookieExpiresMs = env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;
 const accessExpiresMs = env.ACCESS_TOKEN_TTL_SECONDS * 1000;
 const inviteTtlMs = 24 * 60 * 60 * 1000;
 const passwordResetTtlMs = 10 * 60 * 1000;
+const emailChangeTtlMs = 10 * 60 * 1000;
 const sessionCookieDomain = env.SESSION_COOKIE_DOMAIN.trim() || undefined;
 
 export const isLockedIp = async (ip: string) => {
@@ -101,6 +103,61 @@ export const resetPassword = async (
     now: new Date(),
   });
 };
+
+export const requestEmailChange = async (
+  actor: Pick<User, 'id' | 'accountId'>,
+  newEmailRaw: string,
+  password: string,
+): Promise<'ok' | 'invalid_password' | 'email_taken' | 'rate_limited'> => {
+  const accountId = actor.accountId;
+  const webUserId = Number(actor.id);
+  const user = await findWebUserById(accountId, webUserId);
+  if (!user || !verifyPassword(password, user.password_salt, user.password_hash)) {
+    return 'invalid_password';
+  }
+
+  const newEmail = sanitizeEmail(newEmailRaw);
+  if (newEmail === user.email) {
+    return 'email_taken';
+  }
+
+  const existing = await findWebUserByEmailAnyAccount(newEmail);
+  if (existing) {
+    return 'email_taken';
+  }
+
+  const verificationCode = createOtpCode();
+  const codeSalt = crypto.randomBytes(16).toString('hex');
+  const requestTime = new Date();
+  const created = await createEmailChangeChallenge({
+    accountId,
+    webUserId,
+    newEmail,
+    codeHash: hashPassword(verificationCode, codeSalt),
+    codeSalt,
+    expiresAt: new Date(requestTime.getTime() + emailChangeTtlMs),
+    now: requestTime,
+  });
+  if (!created) return 'rate_limited';
+
+  await sendEmailChangeVerificationEmail({
+    to: newEmail,
+    firstName: user.first_name ?? undefined,
+    verificationCode,
+  });
+
+  return 'ok';
+};
+
+export const confirmEmailChange = async (
+  actor: Pick<User, 'id' | 'accountId'>,
+  codeRaw: string,
+): Promise<boolean> => confirmEmailChangeChallenge({
+  accountId: actor.accountId,
+  webUserId: Number(actor.id),
+  code: codeRaw.trim(),
+  now: new Date(),
+});
 
 export const issueSession = async (user: Pick<User, 'id' | 'accountId'>, res: Response) => {
   const numericUserId = Number(user.id);

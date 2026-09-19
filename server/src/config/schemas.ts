@@ -56,6 +56,15 @@ export const passwordResetConfirmSchema = z.object({
   password: passwordSchema,
 });
 
+export const emailChangeRequestSchema = z.object({
+  newEmail: z.string().trim().email(v.emailInvalid).max(254, v.emailTooLong),
+  password: z.string().min(1, v.loginPasswordRequired),
+});
+
+export const emailChangeConfirmSchema = z.object({
+  code: z.string().trim().regex(/^\d{4}$/, v.passwordResetCodeInvalid),
+});
+
 export const verifyEmailSchema = z.object({
   email: z
     .string()

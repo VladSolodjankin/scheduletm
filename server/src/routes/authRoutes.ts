@@ -3,6 +3,8 @@ import { env } from '../config/env.js';
 import {
   acceptInviteSchema,
   verifyInviteSchema,
+  emailChangeConfirmSchema,
+  emailChangeRequestSchema,
   loginSchema,
   passwordResetConfirmSchema,
   passwordResetRequestSchema,
@@ -14,14 +16,17 @@ import {
 import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { blockIfTooManyAttempts } from '../middlewares/loginRateLimit.js';
+import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 import {
   authenticateUser,
   acceptInvite,
   clearAttempts,
+  confirmEmailChange,
   createSpecialistUser,
   issueSession,
   logoutSession,
   refreshAccess,
+  requestEmailChange,
   requestPasswordReset,
   resetPassword,
   registerFailedAttempt,
@@ -35,6 +40,7 @@ import { csrfCookieName, parseCookies } from '../utils/cookies.js';
 import { formatZodError } from '../utils/validation.js';
 
 export const authRoutes = Router();
+const emailChangeRequestRateLimit = createRequestRateLimit({ keyPrefix: 'email-change-request', maxRequests: 5, windowMs: 60_000 });
 const csrfHeaderName = 'x-csrf-token';
 const sessionCookieDomain = env.SESSION_COOKIE_DOMAIN.trim() || undefined;
 
@@ -149,6 +155,44 @@ authRoutes.post('/password-reset/confirm', async (req, res) => {
   } catch (error) {
     console.error('[password-reset] confirm-failed', error);
     return res.status(400).json({ message: t(req, 'passwordResetInvalid') });
+  }
+});
+
+authRoutes.post('/email-change/request', requireAccessToken, emailChangeRequestRateLimit, async (req, res) => {
+  const actor = (req as AuthedRequest).user;
+  const parsed = emailChangeRequestSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json(formatZodError(parsed.error));
+
+  try {
+    const result = await requestEmailChange(actor, parsed.data.newEmail, parsed.data.password);
+    if (result === 'invalid_password') {
+      return res.status(400).json({ message: t(req, 'invalidCurrentPassword') });
+    }
+    if (result === 'email_taken') {
+      return res.status(409).json({ message: t(req, 'emailChangeEmailTaken') });
+    }
+    if (result === 'rate_limited') {
+      return res.status(429).json({ message: t(req, 'emailChangeRateLimited') });
+    }
+    return res.json({ message: t(req, 'emailChangeRequestAccepted') });
+  } catch (error) {
+    console.error('[email-change] request-failed', error);
+    return res.status(500).json({ message: t(req, 'emailChangeRateLimited') });
+  }
+});
+
+authRoutes.post('/email-change/confirm', requireAccessToken, async (req, res) => {
+  const actor = (req as AuthedRequest).user;
+  const parsed = emailChangeConfirmSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json(formatZodError(parsed.error));
+
+  try {
+    const confirmed = await confirmEmailChange(actor, parsed.data.code);
+    if (!confirmed) return res.status(400).json({ message: t(req, 'emailChangeInvalidCode') });
+    return res.json({ message: t(req, 'emailChangeSuccess') });
+  } catch (error) {
+    console.error('[email-change] confirm-failed', error);
+    return res.status(400).json({ message: t(req, 'emailChangeInvalidCode') });
   }
 });
 
