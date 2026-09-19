@@ -27,6 +27,7 @@ const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string().default(''),
   AWS_S3_BUCKET_NAME: z.string().default(''),
   AWS_DEFAULT_REGION: z.string().default(''),
+  REDIS_URL: z.string().default(''),
 });
 
 export const env = envSchema.parse(process.env);

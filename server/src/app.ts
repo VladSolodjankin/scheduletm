@@ -42,6 +42,9 @@ export const createApp = () => {
   );
 
   app.disable('x-powered-by');
+  // Deployed behind a single reverse-proxy hop (Railway); trust its X-Forwarded-For
+  // so req.ip is the real client IP, not the proxy's — IP-based rate limiting relies on this.
+  app.set('trust proxy', 1);
   app.use(helmet());
   morgan.token('safe-url', (req) => {
     const rawUrl = req.url ?? '/';

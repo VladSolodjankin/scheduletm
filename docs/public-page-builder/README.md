@@ -108,9 +108,10 @@ Public endpoints:
 - Backend проверяет прошедшее время, рабочие дни/часы, slot step, внешний календарь и DB overlap.
 - Slot policy errors возвращаются как стабильные `slot_unavailable`/`slot_conflict`.
 - Начало записи должно попадать точно на минуту: ненулевые секунды и миллисекунды отклоняются без округления.
-- POST записи ограничен 10 запросами в минуту на IP в пределах процесса; превышение возвращает 429 и `Retry-After`. На стенде за reverse proxy необходимо проверить фактический `req.ip`.
+- POST записи ограничен 10 запросами в минуту на IP; превышение возвращает 429 и `Retry-After`. `app.set('trust proxy', 1)` в `src/app.ts` доверяет первому хопу reverse proxy, так что `req.ip` — реальный IP клиента, а не адрес proxy.
 - После создания выполняется обычное уведомление `appointment_created` с учётом настроек и отказов клиента. Ошибка доставки не отменяет созданную запись.
-- Public lookup (`GET /by-slug/:slug`, 60/мин), media serving (`GET /media/:mediaId/content`, 120/мин) и booking options (`GET /by-slug/:slug/booking-options`, 60/мин) также ограничены per-IP в пределах процесса; превышение возвращает 429 и `Retry-After`.
+- Public lookup (`GET /by-slug/:slug`, 60/мин), media serving (`GET /media/:mediaId/content`, 120/мин) и booking options (`GET /by-slug/:slug/booking-options`, 60/мин) также ограничены per-IP; превышение возвращает 429 и `Retry-After`.
+- Лимиты хранятся в Redis (`REDIS_URL`), что даёт корректный подсчёт при нескольких инстансах сервера; без `REDIS_URL` используется in-process Map (верно только для одного инстанса). При недоступности Redis лимитер fail-open (пропускает запрос и логирует ошибку), а не тихо переключается на локальный счётчик.
 
 ## Public status privacy
 
