@@ -554,6 +554,12 @@ export async function createAppointmentForActor(
         break;
       }
 
+      if (zoom.reason === 'zoom_auth_failed') {
+        console.error(
+          `[appointmentService] specialist ${payload.specialistId}: Zoom token refresh failed, likely revoked access — falling back to next meeting provider until they reconnect Zoom`,
+        );
+      }
+
       continue;
     }
 
