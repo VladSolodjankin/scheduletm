@@ -16,6 +16,12 @@ These documents are suitable for customer, partner, or reviewer access and are w
 - `vulnerability-management.md`
 - `incident-response.md`
 
+## Internal runbooks
+
+Operational procedures for privileged, DB-level changes that have no in-app path by design. Not customer-facing.
+
+- `runbook-first-product-admin.md`
+
 ## Technical evidence packages
 
 Technical evidence, scan summaries, and Zoom Marketplace review artifacts are maintained separately:
