@@ -4,6 +4,7 @@ import type { ThemeMode } from './constants';
 type ThemeSettingsContextValue = {
   mode: ThemeMode;
   toggleMode: () => void;
+  setMode: (mode: ThemeMode) => void;
 };
 
 export const ThemeSettingsContext = createContext<ThemeSettingsContextValue | null>(null);

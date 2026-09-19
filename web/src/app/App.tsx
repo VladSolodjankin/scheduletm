@@ -8,6 +8,7 @@ import { type ThemeMode } from '../shared/theme/constants';
 import { createAppTheme } from '../shared/theme/createAppTheme';
 import { router } from './router';
 import { AppErrorBoundary } from './AppErrorBoundary';
+import { ThemeModeSync } from './ThemeModeSync';
 import { WebErrorTracker } from './WebErrorTracker';
 
 function RouteLoadingFallback() {
@@ -34,6 +35,11 @@ export function App() {
     localStorage.setItem('ui-theme-palette', 'default');
   }, []);
 
+  const applyMode = (next: ThemeMode) => {
+    localStorage.setItem('ui-theme-mode', next);
+    setMode(next);
+  };
+
   const toggleMode = () => {
     setMode((prev) => {
       const next = prev === 'light' ? 'dark' : 'light';
@@ -44,12 +50,13 @@ export function App() {
 
   return (
     <AppErrorBoundary>
-      <ThemeSettingsContext.Provider value={{ mode, toggleMode }}>
+      <ThemeSettingsContext.Provider value={{ mode, toggleMode, setMode: applyMode }}>
         <ThemeProvider theme={theme}>
           <I18nProvider>
             <AppErrorBoundary>
               <AuthProvider>
                 <WebErrorTracker />
+                <ThemeModeSync />
                 <CssBaseline />
                 <Suspense fallback={<RouteLoadingFallback />}>
                   <RouterProvider router={router} />
