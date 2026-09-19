@@ -179,17 +179,16 @@ export async function bookPublicAppointment(slug: string, input: {
   };
 }
 
-function meetingInfo(comment: string | null, businessAddress: string | null) {
-  const lines = comment?.split('\n').map((line) => line.trim()) ?? [];
-  const provider = lines.find((line) => line.startsWith('meetingProvider: '))?.slice(17).trim();
-  const meetingUrl = lines.find((line) => line.startsWith('meetingLink: '))?.slice(13).trim();
-  const location = lines.find((line) => line.startsWith('locationAddress: '))?.slice(17).trim();
-  const safeProvider = provider === 'manual' || provider === 'zoom' || provider === 'offline'
-    ? provider : 'offline';
+function meetingInfo(
+  provider: 'manual' | 'zoom' | 'offline',
+  meetingUrl: string | null,
+  location: string | null,
+  businessAddress: string | null,
+) {
   return {
-    provider: safeProvider,
+    provider,
     ...(meetingUrl ? { meetingUrl } : {}),
-    ...(safeProvider === 'offline' && (location || businessAddress)
+    ...(provider === 'offline' && (location || businessAddress)
       ? { location: location || businessAddress || undefined } : {}),
   };
 }
@@ -211,6 +210,6 @@ export async function getPublicAppointmentStatus(
     duration: appointment.duration_min,
     service: appointment.service_name_en || appointment.service_name_ru,
     specialist: appointment.specialist_name,
-    meeting: meetingInfo(appointment.comment, appointment.business_address),
+    meeting: meetingInfo(appointment.meeting_provider, appointment.meeting_link, appointment.location_address, appointment.business_address),
   };
 }

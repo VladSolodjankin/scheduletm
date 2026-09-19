@@ -135,57 +135,6 @@ type UpdateAppointmentPayload = {
   notes?: string;
 } & AppointmentClientPayload;
 
-function parseMeetingMetaFromNotes(notes: string | null): { notes: string; meetingLink: string; locationAddress: string; meetingProvider: 'manual' | 'zoom' | 'offline' } {
-  if (!notes) {
-    return { notes: '', meetingLink: '', locationAddress: '', meetingProvider: 'manual' };
-  }
-
-  const lines = notes.split('\n');
-  let meetingLink = '';
-  let locationAddress = '';
-  let meetingProvider: 'manual' | 'zoom' | 'offline' = 'manual';
-  const restLines: string[] = [];
-  for (const line of lines) {
-    if (line.startsWith('meetingLink: ')) {
-      meetingLink = line.slice('meetingLink: '.length).trim();
-      continue;
-    }
-    if (line.startsWith('meetingProvider: ')) {
-      const parsed = line.slice('meetingProvider: '.length).trim();
-      meetingProvider = parsed === 'zoom' ? 'zoom' : parsed === 'offline' ? 'offline' : 'manual';
-      continue;
-    }
-    if (line.startsWith('locationAddress: ')) {
-      locationAddress = line.slice('locationAddress: '.length).trim();
-      continue;
-    }
-    restLines.push(line);
-  }
-  return { meetingLink, locationAddress, meetingProvider, notes: restLines.join('\n').trim() };
-}
-
-function composeNotes(meetingLink: string | undefined, locationAddress: string | undefined, notes: string | undefined, meetingProvider: 'manual' | 'zoom' | 'offline' | undefined): string | null {
-  const normalizedMeetingLink = meetingLink?.trim() ?? '';
-  const normalizedLocationAddress = locationAddress?.trim() ?? '';
-  const normalizedNotes = notes?.trim() ?? '';
-  const normalizedProvider = meetingProvider ?? 'manual';
-
-  if (!normalizedMeetingLink && !normalizedNotes && !normalizedProvider) {
-    return null;
-  }
-  const lines = [`meetingProvider: ${normalizedProvider}`];
-  if (normalizedMeetingLink) {
-    lines.push(`meetingLink: ${normalizedMeetingLink}`);
-  }
-  if (normalizedLocationAddress) {
-    lines.push(`locationAddress: ${normalizedLocationAddress}`);
-  }
-  if (normalizedNotes) {
-    lines.push(normalizedNotes);
-  }
-  return lines.filter(Boolean).join('\n');
-}
-
 function mapClient(row: ClientRecord): AppointmentClientDto {
   return {
     id: row.id,
@@ -198,8 +147,6 @@ function mapClient(row: ClientRecord): AppointmentClientDto {
 }
 
 function mapAppointment(row: AppointmentRecord): AppointmentDto {
-  const parsed = parseMeetingMetaFromNotes(row.comment);
-
   return {
     id: row.id,
     specialistId: row.specialist_id,
@@ -207,10 +154,10 @@ function mapAppointment(row: AppointmentRecord): AppointmentDto {
     durationMin: row.duration_min,
     status: row.status,
     paymentStatus: row.is_paid ? 'paid' : 'unpaid',
-    meetingProvider: parsed.meetingProvider,
-    notes: parsed.notes,
-    meetingLink: parsed.meetingLink,
-    locationAddress: parsed.locationAddress,
+    meetingProvider: row.meeting_provider,
+    notes: row.comment ?? '',
+    meetingLink: row.meeting_link ?? '',
+    locationAddress: row.location_address ?? '',
     client: {
       id: row.user_id,
       username: row.client_username ?? '',
@@ -582,7 +529,10 @@ export async function createAppointmentForActor(
     accountId,
     specialistId: payload.specialistId,
     status: payload.status ?? 'new',
-    notes: composeNotes(meetingLink, payload.locationAddress, payload.notes, meetingProvider),
+    notes: payload.notes?.trim() || null,
+    meetingLink: meetingLink || null,
+    meetingProvider,
+    locationAddress: payload.locationAddress?.trim() || null,
     userId,
     serviceId,
     durationMin: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
@@ -701,9 +651,10 @@ export async function updateAppointmentForActor(
     durationMin,
     status: payload.status,
     userId,
-    notes: Object.prototype.hasOwnProperty.call(payload, 'notes') || Object.prototype.hasOwnProperty.call(payload, 'meetingLink') || Object.prototype.hasOwnProperty.call(payload, 'meetingProvider') || Object.prototype.hasOwnProperty.call(payload, 'locationAddress')
-      ? composeNotes(payload.meetingLink, payload.locationAddress, payload.notes, payload.meetingProvider)
-      : undefined,
+    notes: Object.prototype.hasOwnProperty.call(payload, 'notes') ? (payload.notes?.trim() || null) : undefined,
+    meetingLink: Object.prototype.hasOwnProperty.call(payload, 'meetingLink') ? (payload.meetingLink?.trim() || null) : undefined,
+    meetingProvider: payload.meetingProvider,
+    locationAddress: Object.prototype.hasOwnProperty.call(payload, 'locationAddress') ? (payload.locationAddress?.trim() || null) : undefined,
   });
 
   if (!updated) {

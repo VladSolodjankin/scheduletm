@@ -126,7 +126,7 @@ describe('appointment provider fallback unit', () => {
 
     expect(createZoomMeetingMock).toHaveBeenCalledTimes(1);
     expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({
-      notes: expect.stringContaining('meetingProvider: offline'),
+      meetingProvider: 'offline',
     }));
     expect(updateClientPreferredMeetingProviderMock).toHaveBeenCalledWith(1, 20, 'offline');
   });
@@ -150,7 +150,8 @@ describe('appointment provider fallback unit', () => {
     );
 
     expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({
-      notes: 'meetingProvider: manual\nmeetingLink: https://meet.example.com/default',
+      meetingProvider: 'manual',
+      meetingLink: 'https://meet.example.com/default',
     }));
   });
 
@@ -176,7 +177,8 @@ describe('appointment provider fallback unit', () => {
     );
 
     expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({
-      notes: 'meetingProvider: zoom\nmeetingLink: https://zoom.us/j/generated',
+      meetingProvider: 'zoom',
+      meetingLink: 'https://zoom.us/j/generated',
     }));
   });
 
@@ -200,7 +202,8 @@ describe('appointment provider fallback unit', () => {
     );
 
     expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({
-      notes: 'meetingProvider: offline\nlocationAddress: Main st. 1',
+      meetingProvider: 'offline',
+      locationAddress: 'Main st. 1',
     }));
   });
 });

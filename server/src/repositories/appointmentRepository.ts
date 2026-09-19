@@ -10,6 +10,9 @@ export type AppointmentRecord = {
   appointment_at: Date;
   status: AppointmentStatus;
   comment: string | null;
+  meeting_link: string | null;
+  meeting_provider: 'manual' | 'zoom' | 'offline';
+  location_address: string | null;
   duration_min: number;
   is_paid: boolean;
   user_id: number;
@@ -61,6 +64,9 @@ type CreateAppointmentInput = {
   scheduledAt: Date;
   status: AppointmentStatus;
   notes: string | null;
+  meetingLink?: string | null;
+  meetingProvider?: 'manual' | 'zoom' | 'offline';
+  locationAddress?: string | null;
   userId: number;
   serviceId: number;
   durationMin: number;
@@ -82,6 +88,9 @@ type UpdateAppointmentInput = {
   scheduledAt?: Date;
   status?: AppointmentStatus;
   notes?: string | null;
+  meetingLink?: string | null;
+  meetingProvider?: 'manual' | 'zoom' | 'offline';
+  locationAddress?: string | null;
   durationMin?: number;
   isPaid?: boolean;
   userId?: number;
@@ -179,6 +188,9 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
         appointment_at: input.scheduledAt,
         status: input.status,
         comment: input.notes,
+        meeting_link: input.meetingLink ?? null,
+        meeting_provider: input.meetingProvider ?? 'manual',
+        location_address: input.locationAddress ?? null,
         user_id: input.userId,
         service_id: input.serviceId,
         duration_min: input.durationMin,
@@ -216,6 +228,9 @@ export async function createAppointmentSeries(input: CreateAppointmentInput & {
           appointment_at: scheduledAt,
           status: input.status,
           comment: input.notes,
+          meeting_link: input.meetingLink ?? null,
+          meeting_provider: input.meetingProvider ?? 'manual',
+          location_address: input.locationAddress ?? null,
           user_id: input.userId,
           service_id: input.serviceId,
           group_id: group.id,
@@ -250,6 +265,18 @@ export async function updateAppointment(input: UpdateAppointmentInput): Promise<
 
   if (Object.prototype.hasOwnProperty.call(input, 'notes')) {
     payload.comment = input.notes;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(input, 'meetingLink')) {
+    payload.meeting_link = input.meetingLink;
+  }
+
+  if (input.meetingProvider !== undefined) {
+    payload.meeting_provider = input.meetingProvider;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(input, 'locationAddress')) {
+    payload.location_address = input.locationAddress;
   }
 
   if (input.durationMin !== undefined) {

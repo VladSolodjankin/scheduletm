@@ -31,7 +31,9 @@ export type PublicAppointmentStatusRecord = {
   status: 'new' | 'confirmed' | 'cancelled';
   appointment_at: Date;
   duration_min: number;
-  comment: string | null;
+  meeting_provider: 'manual' | 'zoom' | 'offline';
+  meeting_link: string | null;
+  location_address: string | null;
   specialist_name: string;
   service_name_ru: string;
   service_name_en: string;
@@ -191,7 +193,7 @@ export async function createPublicGuestAppointment(input: {
         specialist_id: input.specialistId,
         appointment_at: input.startAt,
         status: 'new',
-        comment: `meetingProvider: ${input.meetingProvider}`,
+        meeting_provider: input.meetingProvider,
         duration_min: input.durationMin,
         user_id: client.id,
         service_id: input.serviceId,
@@ -226,7 +228,8 @@ export async function findPublicAppointmentStatus(
     .leftJoin('account_settings as aset', 'aset.account_id', 'a.account_id')
     .where({ 'a.account_id': accountId, 'a.id': appointmentId })
     .select(
-      'a.id', 'a.status', 'a.appointment_at', 'a.duration_min', 'a.comment',
+      'a.id', 'a.status', 'a.appointment_at', 'a.duration_min',
+      'a.meeting_provider', 'a.meeting_link', 'a.location_address',
       's.name as specialist_name',
       'sv.name_ru as service_name_ru',
       'sv.name_en as service_name_en',
