@@ -30,7 +30,9 @@ export function ThemeModeSync() {
     apiClient
       .get<UserSettingsResponse>('/api/settings/user', { headers: authHeaders(accessToken) })
       .then((response) => {
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
         const serverMode = response.data.uiThemeMode;
         if (serverMode === 'light' || serverMode === 'dark') {
           lastKnownServerMode.current = serverMode;
@@ -39,7 +41,9 @@ export function ThemeModeSync() {
       })
       .catch(() => undefined)
       .finally(() => {
-        if (!cancelled) hasSyncedDown.current = true;
+        if (!cancelled) {
+          hasSyncedDown.current = true;
+        }
       });
 
     return () => {
@@ -59,7 +63,6 @@ export function ThemeModeSync() {
     void apiClient
       .put('/api/settings/user', { uiThemeMode: mode }, { headers: authHeaders(accessToken) })
       .catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken, mode]);
 
   return null;
