@@ -76,6 +76,14 @@ export async function findWebUserByIdAnyAccount(id: number): Promise<WebUserReco
   return row ?? null;
 }
 
+export async function findWebUserByAccountAndClientId(accountId: number, clientId: number): Promise<WebUserRecord | null> {
+  const row = await db('web_users')
+    .where({ account_id: accountId, client_id: clientId })
+    .first<WebUserRecord>();
+
+  return row ?? null;
+}
+
 export async function listWebUsersByAccount(accountId: number): Promise<WebUserRecord[]> {
   return db('web_users')
     .where({ account_id: accountId, is_deleted: false })

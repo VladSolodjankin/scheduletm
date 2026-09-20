@@ -544,16 +544,20 @@ export const dictionaries = {
     publicBooking: {
       title: 'Book an appointment', subtitle: 'Choose a specialist, service, date and time.',
       loading: 'Loading booking options...', specialist: 'Specialist', service: 'Service',
-      dateTime: 'Date and time', firstName: 'First name', lastName: 'Last name',
+      date: 'Date', availableSlots: 'Available times', loadingSlots: 'Loading available times...',
+      noSlots: 'No available times on this date. Try another date.',
+      firstName: 'First name', lastName: 'Last name',
       email: 'Email', phone: 'Phone', contactHint: 'Provide at least an email or phone number.',
       provider: 'Meeting format', providerAutomatic: 'Automatic', providerManual: 'Online link',
       providerZoom: 'Zoom', providerOffline: 'In person', submit: 'Book', successTitle: 'Appointment booked',
       successMessage: 'Your appointment number is {id}.',
-      errors: { load: 'Could not load booking options.', required: 'Complete required fields and provide a contact.', submit: 'Could not book the appointment.' }
+      accessCodeLabel: 'Access code', accessCodeHint: 'Save this code — you\'ll need it with your appointment number to check its status later.',
+      errors: { load: 'Could not load booking options.', slots: 'Could not load available times.', required: 'Complete required fields and provide a contact.', submit: 'Could not book the appointment.' }
     },
     publicStatus: {
       title: 'Appointment status', appointmentId: 'Appointment number',
-      specialistLastName: 'Specialist last name', submit: 'Check status', minutes: 'min',
+      accessCode: 'Access code', accessCodeHint: 'You received this code when you booked the appointment.',
+      submit: 'Check status', minutes: 'min',
       status: 'Status', openMeeting: 'Open meeting', errors: { load: 'Appointment was not found.' }
     },
     publicPageBuilder: {
@@ -1209,16 +1213,20 @@ export const dictionaries = {
     publicBooking: {
       title: 'Запись на встречу', subtitle: 'Выберите специалиста, услугу, дату и время.',
       loading: 'Загружаем варианты записи...', specialist: 'Специалист', service: 'Услуга',
-      dateTime: 'Дата и время', firstName: 'Имя', lastName: 'Фамилия',
+      date: 'Дата', availableSlots: 'Доступное время', loadingSlots: 'Загружаем доступное время...',
+      noSlots: 'На эту дату нет свободного времени. Выберите другую дату.',
+      firstName: 'Имя', lastName: 'Фамилия',
       email: 'Email', phone: 'Телефон', contactHint: 'Укажите хотя бы email или телефон.',
       provider: 'Формат встречи', providerAutomatic: 'Автоматически', providerManual: 'Онлайн-ссылка',
       providerZoom: 'Zoom', providerOffline: 'Лично', submit: 'Записаться', successTitle: 'Встреча забронирована',
       successMessage: 'Номер вашей встречи: {id}.',
-      errors: { load: 'Не удалось загрузить варианты записи.', required: 'Заполните обязательные поля и укажите контакт.', submit: 'Не удалось забронировать встречу.' }
+      accessCodeLabel: 'Код доступа', accessCodeHint: 'Сохраните этот код — он понадобится вместе с номером встречи, чтобы проверить её статус позже.',
+      errors: { load: 'Не удалось загрузить варианты записи.', slots: 'Не удалось загрузить доступное время.', required: 'Заполните обязательные поля и укажите контакт.', submit: 'Не удалось забронировать встречу.' }
     },
     publicStatus: {
       title: 'Статус встречи', appointmentId: 'Номер встречи',
-      specialistLastName: 'Фамилия специалиста', submit: 'Проверить статус', minutes: 'мин',
+      accessCode: 'Код доступа', accessCodeHint: 'Этот код вы получили при бронировании встречи.',
+      submit: 'Проверить статус', minutes: 'мин',
       status: 'Статус', openMeeting: 'Открыть встречу', errors: { load: 'Встреча не найдена.' }
     },
     publicPageBuilder: {

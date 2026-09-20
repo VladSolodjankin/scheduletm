@@ -2,6 +2,7 @@ import { raw, Router, type NextFunction, type Request, type Response } from 'exp
 import { z } from 'zod';
 import {
   publicAppointmentStatusQuerySchema,
+  publicAvailableSlotsQuerySchema,
   publicBookingSchema,
   createPublicPageSchema,
   isValidPublicPageSlug,
@@ -18,6 +19,7 @@ import { PublicBookingRepositoryError } from '../repositories/publicBookingRepos
 import {
   bookPublicAppointment,
   getPublicAppointmentStatus,
+  getPublicAvailableSlots,
   getPublicBookingOptions,
   PublicBookingServiceError,
 } from '../services/publicBookingService.js';
@@ -176,6 +178,23 @@ publicPageRoutes.get('/by-slug/:slug/booking-options', publicBookingOptionsRateL
     return sendError(res, error);
   }
 });
+const publicAvailableSlotsRateLimit = createRequestRateLimit({
+  keyPrefix: 'public-available-slots',
+  maxRequests: 60,
+  windowMs: 60_000,
+});
+
+publicPageRoutes.get('/by-slug/:slug/available-slots', publicAvailableSlotsRateLimit, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const slug = slugSchema.safeParse(req.params.slug);
+  const query = publicAvailableSlotsQuerySchema.safeParse(req.query);
+  if (!slug.success || !query.success) return res.status(400).json({ code: 'invalid_request' });
+  try {
+    return res.json(await getPublicAvailableSlots(slug.data, query.data.specialistId, query.data.serviceId, query.data.date));
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
 const publicBookingRateLimit = createRequestRateLimit({
   keyPrefix: 'public-appointment-create',
   maxRequests: 10,
@@ -217,7 +236,7 @@ publicPageRoutes.get(
       return res.json(await getPublicAppointmentStatus(
         slug.data,
         appointmentId.data,
-        query.data.specialistLastName,
+        query.data.accessCode,
       ));
     } catch (error) {
       return sendError(res, error);

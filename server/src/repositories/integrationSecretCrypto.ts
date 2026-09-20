@@ -19,11 +19,10 @@ export function encryptIntegrationSecret(value: string | null, secretName: strin
 
 export function decryptIntegrationSecret(
   encryptedValue: string | null | undefined,
-  plaintextFallback: string | null | undefined,
   secretName: string,
 ): string | null {
   if (encryptedValue === null || encryptedValue === undefined) {
-    return plaintextFallback ?? null;
+    return null;
   }
 
   const decrypted = decryptText(

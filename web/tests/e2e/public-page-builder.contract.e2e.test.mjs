@@ -1130,7 +1130,7 @@ describe('public page builder source contracts', () => {
     assert.match(booking, /Intl\.DateTimeFormat\(\)\.resolvedOptions\(\)\.timeZone/);
     assert.match(booking, /data\.specialists\.length === 1/);
     assert.match(booking, /data\.services\.length === 1/);
-    assert.match(status, /specialistLastName/);
+    assert.match(status, /accessCode/);
     assert.match(status, /PublicAppointmentMeetingStatus/);
     assert.doesNotMatch(status, /meeting\.client|meeting\.email|meeting\.phone/);
   });

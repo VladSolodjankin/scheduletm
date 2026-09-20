@@ -291,12 +291,10 @@ export async function findSpecialistsCalendarCredentials(
     webUserId: row.webUserId,
     googleApiKey: decryptIntegrationSecret(
       row.googleAccessTokenEncrypted,
-      null,
       'Google access token',
     ) as string,
     googleRefreshToken: decryptIntegrationSecret(
       row.googleRefreshTokenEncrypted,
-      null,
       'Google refresh token',
     ),
     googleTokenExpiresAt: row.googleTokenExpiresAt,

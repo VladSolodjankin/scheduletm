@@ -1,4 +1,16 @@
+import { randomBytes } from 'node:crypto';
 import { db } from '../db/knex.js';
+
+const ACCESS_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function generatePublicAccessCode(): string {
+  const bytes = randomBytes(10);
+  let code = '';
+  for (const byte of bytes) {
+    code += ACCESS_CODE_ALPHABET[byte % ACCESS_CODE_ALPHABET.length];
+  }
+  return code;
+}
 
 export type PublicBookingSpecialist = {
   id: number;
@@ -38,6 +50,7 @@ export type PublicAppointmentStatusRecord = {
   service_name_ru: string;
   service_name_en: string;
   business_address: string | null;
+  public_access_code: string | null;
 };
 
 export async function listPublicBookingSpecialists(accountId: number): Promise<PublicBookingSpecialist[]> {
@@ -150,7 +163,7 @@ export async function createPublicGuestAppointment(input: {
   telegramUsername?: string;
   timezone: string;
   meetingProvider: 'manual' | 'zoom' | 'offline';
-}): Promise<{ id: number; status: 'new'; appointment_at: Date; duration_min: number }> {
+}): Promise<{ id: number; status: 'new'; appointment_at: Date; duration_min: number; public_access_code: string; client_id: number }> {
   return db.transaction(async (trx) => {
     const endAt = new Date(input.startAt.getTime() + input.durationMin * 60_000);
     const conflict = await trx('appointments')
@@ -201,10 +214,11 @@ export async function createPublicGuestAppointment(input: {
         price: input.price,
         currency: input.currency,
         is_paid: false,
-      }).returning<Array<{ id: number; status: 'new'; appointment_at: Date; duration_min: number }>>(
-        ['id', 'status', 'appointment_at', 'duration_min'],
+        public_access_code: generatePublicAccessCode(),
+      }).returning<Array<{ id: number; status: 'new'; appointment_at: Date; duration_min: number; public_access_code: string }>>(
+        ['id', 'status', 'appointment_at', 'duration_min', 'public_access_code'],
       );
-      return appointment;
+      return { ...appointment, client_id: client.id };
     } catch (error) {
       if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23P01') {
         throw new PublicBookingRepositoryError('SLOT_CONFLICT');
@@ -234,6 +248,7 @@ export async function findPublicAppointmentStatus(
       'sv.name_ru as service_name_ru',
       'sv.name_en as service_name_en',
       'aset.business_address',
+      'a.public_access_code',
     )
     .first<PublicAppointmentStatusRecord>()) ?? null;
 }

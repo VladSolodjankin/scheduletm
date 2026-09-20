@@ -13,8 +13,8 @@
     "verify": "npm run migrate:latest && npm run test"
   },
   "dependencies": {
-    "@xmldom/xmldom": "^0.9.10",
-    "axios": "^1.15.0",
+    "@xmldom/xmldom": "^0.9.12",
+    "axios": "^1.20.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "knex": "^3.2.9",
@@ -26,7 +26,6 @@
     "@types/node": "^25.6.0",
     "@vitest/coverage-v8": "^4.1.4",
     "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.8",

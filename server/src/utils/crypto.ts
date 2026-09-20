@@ -11,11 +11,6 @@ export const createOtpCode = () => crypto.randomInt(0, 10_000).toString().padSta
 export const verifyPassword = (password: string, salt: string, hash: string) =>
   crypto.timingSafeEqual(Buffer.from(hashPassword(password, salt), 'hex'), Buffer.from(hash, 'hex'));
 
-export const generateTemporaryPassword = (length = 14) => {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
-  return Array.from(crypto.randomBytes(length), (value) => alphabet[value % alphabet.length]).join('');
-};
-
 function buildEncryptionKey(secret: string): Buffer {
   return crypto.createHash('sha256').update(secret).digest();
 }

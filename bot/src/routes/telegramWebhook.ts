@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { env } from '../config/env';
 import {
   answerCallbackQuery,
@@ -217,9 +217,13 @@ telegramWebhookRouter.post(
   '/telegram/webhook/:secret',
   async (req: Request, res: Response) => {
     const requestId = req.header('x-request-id') ?? randomUUID();
-    const secret = req.params.secret;
+    const secret = String(req.params.secret ?? '');
 
-    if (secret !== env.webhookSecret) {
+    const secretBuffer = Buffer.from(secret);
+    const expectedBuffer = Buffer.from(env.webhookSecret);
+    const isSecretValid = secretBuffer.length === expectedBuffer.length
+      && timingSafeEqual(secretBuffer, expectedBuffer);
+    if (!isSecretValid) {
       logWarn('webhook.forbidden', { request_id: requestId });
       return res.status(403).json({ ok: false, error: 'Forbidden' });
     }

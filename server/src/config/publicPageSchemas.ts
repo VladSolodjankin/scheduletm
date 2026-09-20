@@ -397,7 +397,13 @@ export const publicBookingSchema = z.object({
 });
 
 export const publicAppointmentStatusQuerySchema = z.object({
-  specialistLastName: z.string().trim().min(1).max(100),
+  accessCode: z.string().trim().min(1).max(32),
+}).strict();
+
+export const publicAvailableSlotsQuerySchema = z.object({
+  specialistId: z.coerce.number().int().positive(),
+  serviceId: z.coerce.number().int().positive(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 }).strict();
 
 export function normalizePublicPageSlug(value: string): string {

@@ -255,11 +255,16 @@ export type PublicBookingOptions = {
   services: PublicBookingService[];
 };
 
+export type PublicAvailableSlots = {
+  slots: string[];
+};
+
 export type PublicBookingResult = {
   id: number;
   status: AppointmentStatus;
   scheduledAt: string;
   duration: number;
+  accessCode: string;
 };
 
 export type PublicAppointmentMeetingStatus = {

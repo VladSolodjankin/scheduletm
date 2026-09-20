@@ -292,7 +292,7 @@ describe('public pages routes', () => {
       meeting: { provider: 'zoom', meetingUrl: 'https://zoom.us/j/123' },
     });
     const response = await fetch(
-      `${baseUrl}/api/public-pages/by-slug/valid-page/appointments/10/status?specialistLastName=Smith`,
+      `${baseUrl}/api/public-pages/by-slug/valid-page/appointments/10/status?accessCode=ABCDEFGHJK`,
     );
     const body = await response.json();
 

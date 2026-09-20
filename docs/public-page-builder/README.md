@@ -97,7 +97,7 @@ Public endpoints:
 - `GET /api/public-pages/by-slug/:slug`
 - `GET /api/public-pages/by-slug/:slug/booking-options`
 - `POST /api/public-pages/by-slug/:slug/appointments`
-- `GET /api/public-pages/by-slug/:slug/appointments/:appointmentId/status?specialistLastName=...`
+- `GET /api/public-pages/by-slug/:slug/appointments/:appointmentId/status?accessCode=...` — `accessCode` — высокоэнтропийный код, выданный клиенту при бронировании (см. `POST .../appointments` response `accessCode`).
 
 ## Booking
 

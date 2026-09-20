@@ -96,11 +96,11 @@ function mapIntegrationRecord(row: WebUserIntegrationStorageRecord): WebUserInte
 
   return {
     ...record,
-    google_api_key: decryptIntegrationSecret(googleAccessTokenEncrypted, null, 'Google access token'),
-    google_refresh_token: decryptIntegrationSecret(googleRefreshTokenEncrypted, null, 'Google refresh token'),
-    telegram_bot_token: decryptIntegrationSecret(telegramBotTokenEncrypted, null, 'Telegram bot token'),
-    zoom_access_token: decryptIntegrationSecret(zoomAccessTokenEncrypted, null, 'Zoom access token'),
-    zoom_refresh_token: decryptIntegrationSecret(zoomRefreshTokenEncrypted, null, 'Zoom refresh token'),
+    google_api_key: decryptIntegrationSecret(googleAccessTokenEncrypted, 'Google access token'),
+    google_refresh_token: decryptIntegrationSecret(googleRefreshTokenEncrypted, 'Google refresh token'),
+    telegram_bot_token: decryptIntegrationSecret(telegramBotTokenEncrypted, 'Telegram bot token'),
+    zoom_access_token: decryptIntegrationSecret(zoomAccessTokenEncrypted, 'Zoom access token'),
+    zoom_refresh_token: decryptIntegrationSecret(zoomRefreshTokenEncrypted, 'Zoom refresh token'),
   };
 }
 

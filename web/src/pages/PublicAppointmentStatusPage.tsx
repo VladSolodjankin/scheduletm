@@ -13,7 +13,7 @@ export function PublicAppointmentStatusPage() {
   const { slug = '' } = useParams();
   const { t } = useI18n();
   const [appointmentId, setAppointmentId] = useState('');
-  const [specialistLastName, setSpecialistLastName] = useState('');
+  const [accessCode, setAccessCode] = useState('');
   const [meeting, setMeeting] = useState<PublicAppointmentMeetingStatus | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +26,7 @@ export function PublicAppointmentStatusPage() {
     try {
       const response = await apiClient.get<PublicAppointmentMeetingStatus>(
         `/api/public-pages/by-slug/${encodeURIComponent(slug)}/appointments/${encodeURIComponent(appointmentId)}/status`,
-        { params: { specialistLastName } },
+        { params: { accessCode } },
       );
       setMeeting(response.data);
     } catch (requestError) {
@@ -41,8 +41,8 @@ export function PublicAppointmentStatusPage() {
       <AppSurface component="form" onSubmit={submit}>
         <Stack spacing={2}>
           <TextField label={t('publicStatus.appointmentId')} inputMode="numeric" value={appointmentId} onChange={(e) => setAppointmentId(e.target.value)} />
-          <TextField label={t('publicStatus.specialistLastName')} value={specialistLastName} onChange={(e) => setSpecialistLastName(e.target.value)} />
-          <AppButton type="submit" variant="contained" disabled={!appointmentId || !specialistLastName.trim()} isLoading={isLoading}>{t('publicStatus.submit')}</AppButton>
+          <TextField label={t('publicStatus.accessCode')} helperText={t('publicStatus.accessCodeHint')} value={accessCode} onChange={(e) => setAccessCode(e.target.value)} />
+          <AppButton type="submit" variant="contained" disabled={!appointmentId || !accessCode.trim()} isLoading={isLoading}>{t('publicStatus.submit')}</AppButton>
         </Stack>
       </AppSurface>
       {error ? <Alert severity="error">{error}</Alert> : null}
