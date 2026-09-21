@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npm run typecheck && npm run lint && vite",
     "build": "npm run lint && tsc -p tsconfig.json && vite build",
-    "start": "serve -s dist -l tcp://0.0.0.0:5173",
+    "start": "serve -s dist -l tcp://0.0.0.0:${PORT:-5173}",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run --config vitest.config.ts",
     "test": "npm run test:e2e:contracts",
