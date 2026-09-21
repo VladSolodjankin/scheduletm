@@ -39,6 +39,11 @@ Technical evidence, scan summaries, and Zoom Marketplace review artifacts are ma
 - `zoom-beta/dast-latest.md`
 - `zoom-beta/evidence/`
 
+Google OAuth verification evidence (issue #226) is maintained separately:
+
+- `google-verification/index.md`
+- `google-verification/oauth-scope-review.md`
+
 ## Publishing note
 
 Public policies should stay aligned with the implemented product behavior. Technical evidence may include ongoing remediation details and should be reviewed separately before making formal assurance or release-signoff claims.
