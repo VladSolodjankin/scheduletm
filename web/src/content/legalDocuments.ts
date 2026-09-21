@@ -1,6 +1,7 @@
 import privacyPolicyMarkdown from './legal/privacy-policy.md?raw';
 import securityPolicyMarkdown from './legal/security-policy.md?raw';
 import termsOfUseMarkdown from './legal/terms-of-use.md?raw';
+import supportMarkdown from './legal/support.md?raw';
 
 export type LegalDocumentSection = {
   title: string;
@@ -83,3 +84,4 @@ function parseLegalDocument(markdown: string): LegalDocument {
 export const privacyPolicyDocument = parseLegalDocument(privacyPolicyMarkdown);
 export const securityPolicyDocument = parseLegalDocument(securityPolicyMarkdown);
 export const termsOfUseDocument = parseLegalDocument(termsOfUseMarkdown);
+export const supportDocument = parseLegalDocument(supportMarkdown);

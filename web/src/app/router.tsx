@@ -19,6 +19,7 @@ const ErrorLogsPage = lazy(() => import('../pages/ErrorLogsPage').then((module) 
 const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage').then((module) => ({ default: module.PrivacyPolicyPage })));
 const SecurityPolicyPage = lazy(() => import('../pages/SecurityPolicyPage').then((module) => ({ default: module.SecurityPolicyPage })));
 const TermsOfUsePage = lazy(() => import('../pages/TermsOfUsePage').then((module) => ({ default: module.TermsOfUsePage })));
+const SupportPage = lazy(() => import('../pages/SupportPage').then((module) => ({ default: module.SupportPage })));
 const PublicPagesPage = lazy(async () => {
   const [pageModule, registryModule] = await Promise.all([
     import('../pages/PublicPagesPage'),
@@ -122,6 +123,7 @@ export const router = createBrowserRouter([
           { path: '/privacy-policy', element: <PrivacyPolicyPage /> },
           { path: '/security-policy', element: <SecurityPolicyPage /> },
           { path: '/terms-of-use', element: <TermsOfUsePage /> },
+          { path: '/support', element: <SupportPage /> },
           {
             path: '/appointments',
             element: (

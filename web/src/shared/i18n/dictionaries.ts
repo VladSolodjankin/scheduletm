@@ -36,7 +36,8 @@ export const dictionaries = {
       appErrorReload: 'Reload page',
       privacyPolicy: 'Privacy Policy',
       securityPolicy: 'Security Policy',
-      termsOfUse: 'Terms of Use'
+      termsOfUse: 'Terms of Use',
+      support: 'Support'
     },
     auth: {
       loginTitle: 'Sign in to your account',
@@ -705,7 +706,8 @@ export const dictionaries = {
       appErrorReload: 'Перезагрузить страницу',
       privacyPolicy: 'Политика конфиденциальности',
       securityPolicy: 'Политика безопасности',
-      termsOfUse: 'Условия использования'
+      termsOfUse: 'Условия использования',
+      support: 'Поддержка'
     },
     auth: {
       back: 'Назад',
@@ -1387,6 +1389,7 @@ export type TranslationKey =
   | 'common.privacyPolicy'
   | 'common.securityPolicy'
   | 'common.termsOfUse'
+  | 'common.support'
   | 'common.appErrorSupport'
   | 'common.appErrorDescription'
   | 'common.appErrorTitle'

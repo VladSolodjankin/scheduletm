@@ -1,5 +1,5 @@
 import { Box, Stack, Typography } from '@mui/material';
-import { PRIVACY_POLICY_ROUTE, SECURITY_POLICY_ROUTE, TERMS_OF_USE_ROUTE } from '../../shared/legal/routes';
+import { PRIVACY_POLICY_ROUTE, SECURITY_POLICY_ROUTE, SUPPORT_ROUTE, TERMS_OF_USE_ROUTE } from '../../shared/legal/routes';
 import { useI18n } from '../../shared/i18n/I18nContext';
 import { AppLink } from '../../shared/ui/AppLink';
 
@@ -23,6 +23,12 @@ export function LegalFooter() {
         </Typography>
         <AppLink to={TERMS_OF_USE_ROUTE} underline="hover" className="app-legal-footer__link">
           {t('common.termsOfUse')}
+        </AppLink>
+        <Typography variant="caption" className="app-legal-footer__separator">
+          •
+        </Typography>
+        <AppLink to={SUPPORT_ROUTE} underline="hover" className="app-legal-footer__link">
+          {t('common.support')}
         </AppLink>
       </Stack>
     </Box>
