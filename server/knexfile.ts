@@ -18,20 +18,24 @@ const resolveConnectionString = (envName: 'development' | 'production'): string 
   return connection;
 };
 
-const config: Record<string, Knex.Config> = {
-  development: {
-    client: 'pg',
-    connection: resolveConnectionString('development'),
-    migrations: {
-      directory: './src/db/migrations',
-      extension: 'ts',
-    },
-    pool: {
-      min: 0,
-      max: 7,
-    },
-    acquireConnectionTimeout: 10_000,
+const developmentConfig: Knex.Config = {
+  client: 'pg',
+  connection: resolveConnectionString('development'),
+  migrations: {
+    directory: './src/db/migrations',
+    extension: 'ts',
   },
+  pool: {
+    min: 0,
+    max: 7,
+  },
+  acquireConnectionTimeout: 10_000,
+};
+
+const config: Record<string, Knex.Config> = {
+  development: developmentConfig,
+  // NODE_ENV=test (e.g. CI) has no dedicated settings of its own; reuse development's.
+  test: developmentConfig,
   production: {
     client: 'pg',
     connection: resolveConnectionString('production'),
