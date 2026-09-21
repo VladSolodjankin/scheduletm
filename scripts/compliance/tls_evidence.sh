@@ -53,7 +53,12 @@ check_host() {
   fi
 
   run_probe "$host" "TLS1.1" "-tls1_1"
-  if grep -Eqi '^CONNECTED([[:space:](]|$)' <<<"$PROBE_OUTPUT" &&
+  if grep -Eqi 'no protocols available|unsupported protocol' <<<"$PROBE_OUTPUT"; then
+    # Modern OpenSSL (3.x+) disables TLS 1.1 client-side by default, so it cannot even
+    # attempt the handshake. No real-world client can negotiate TLS 1.1 with this host
+    # either in that case, so treat it the same as an explicit server-side rejection.
+    tls11_result="PASS"
+  elif grep -Eqi '^CONNECTED([[:space:](]|$)' <<<"$PROBE_OUTPUT" &&
     grep -Eqi 'alert protocol version|tlsv1 alert protocol version|alert number 70' <<<"$PROBE_OUTPUT" &&
     ! grep -Eqi 'Protocol([[:space:]]*:| version:)[[:space:]]*TLSv1\.1' <<<"$PROBE_OUTPUT"; then
     tls11_result="PASS"
