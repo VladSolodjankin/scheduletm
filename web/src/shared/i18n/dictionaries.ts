@@ -35,7 +35,8 @@ export const dictionaries = {
       appErrorSupport: 'If the issue persists, contact your administrator.',
       appErrorReload: 'Reload page',
       privacyPolicy: 'Privacy Policy',
-      securityPolicy: 'Security Policy'
+      securityPolicy: 'Security Policy',
+      termsOfUse: 'Terms of Use'
     },
     auth: {
       loginTitle: 'Sign in to your account',
@@ -703,7 +704,8 @@ export const dictionaries = {
       appErrorSupport: 'Если проблема повторяется, обратитесь к администратору.',
       appErrorReload: 'Перезагрузить страницу',
       privacyPolicy: 'Политика конфиденциальности',
-      securityPolicy: 'Политика безопасности'
+      securityPolicy: 'Политика безопасности',
+      termsOfUse: 'Условия использования'
     },
     auth: {
       back: 'Назад',
@@ -1384,6 +1386,7 @@ export type TranslationKey =
   | 'common.appErrorReload'
   | 'common.privacyPolicy'
   | 'common.securityPolicy'
+  | 'common.termsOfUse'
   | 'common.appErrorSupport'
   | 'common.appErrorDescription'
   | 'common.appErrorTitle'

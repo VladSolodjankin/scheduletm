@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material';
 import { useI18n } from '../../shared/i18n/I18nContext';
-import { PRIVACY_POLICY_ROUTE, SECURITY_POLICY_ROUTE } from '../../shared/legal/routes';
+import { PRIVACY_POLICY_ROUTE, TERMS_OF_USE_ROUTE } from '../../shared/legal/routes';
 import { AppLink } from '../../shared/ui/AppLink';
 
 export function AuthLegalNotice() {
@@ -9,7 +9,7 @@ export function AuthLegalNotice() {
   return (
     <Typography variant="caption" className="app-auth-legal-notice">
       {t('auth.legalPrefix')}{' '}
-      <AppLink to={SECURITY_POLICY_ROUTE} underline="hover">
+      <AppLink to={TERMS_OF_USE_ROUTE} underline="hover">
         {t('auth.termsLabel')}
       </AppLink>{' '}
       {t('auth.legalJoin')}{' '}
