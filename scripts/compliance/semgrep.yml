@@ -33,6 +33,26 @@ rules:
     languages:
       - javascript
       - typescript
-    pattern-either:
-      - pattern: $CP.exec($COMMAND, ...)
-      - pattern: $CP.execSync($COMMAND, ...)
+    patterns:
+      - pattern-either:
+          - pattern-inside: |
+              import $CP from "child_process"
+              ...
+          - pattern-inside: |
+              import $CP from "node:child_process"
+              ...
+          - pattern-inside: |
+              import * as $CP from "child_process"
+              ...
+          - pattern-inside: |
+              import * as $CP from "node:child_process"
+              ...
+          - pattern-inside: |
+              const $CP = require("child_process")
+              ...
+          - pattern-inside: |
+              const $CP = require("node:child_process")
+              ...
+      - pattern-either:
+          - pattern: $CP.exec($COMMAND, ...)
+          - pattern: $CP.execSync($COMMAND, ...)

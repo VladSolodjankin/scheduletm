@@ -18,7 +18,7 @@ function buildEncryptionKey(secret: string): Buffer {
 export function encryptText(value: string, secret: string): string {
   const iv = crypto.randomBytes(12);
   const key = buildEncryptionKey(secret);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv, { authTagLength: 16 });
   const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
   const tag = cipher.getAuthTag();
   return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted.toString('hex')}`;
