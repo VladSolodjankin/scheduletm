@@ -12,15 +12,26 @@ Code paths reviewed:
 
 ## OAuth scope minimality (Zoom App Review requirement #2)
 
-`ZOOM_OAUTH_SCOPES` (`server/src/config/env.ts`) defaults to
-`meeting:write:meeting meeting:read:meeting` (`zoomOAuthService.ts:19`) when the env var is unset.
-These are the only scopes the app needs: it creates a meeting via
-`POST /v2/users/me/meetings` (`zoomService.ts:97`) and does not read any other Zoom resource
-(no chat, recordings, phone, contacts, etc.). No scope broader than `meeting:*` is requested.
+`ZOOM_OAUTH_SCOPES` (`server/src/config/env.ts`) defaults to `meeting:write:meeting user:read:user`
+(`zoomOAuthService.ts:19`) when the env var is unset. This matches the scopes actually
+registered/approved for this app in the Zoom Marketplace console (Scopes section) as of
+2026-09-21: `meeting:write:meeting` (create a meeting) and `user:read:user` (identify the
+connected user). The app creates a meeting via `POST /v2/users/me/meetings` (`zoomService.ts:97`)
+and does not read any other Zoom resource (no chat, recordings, phone, contacts, etc.). No scope
+broader than these two is requested or registered.
+
+**Correction (2026-09-21):** this document previously stated the default/registered scopes were
+`meeting:write:meeting meeting:read:meeting`. That was the code's hardcoded fallback default at
+the time, but it did not match what was actually registered in the Zoom console for this app
+(`meeting:write:meeting` + `user:read:user`) — `meeting:read:meeting` was never registered/approved
+and is unused in the codebase. If `ZOOM_OAUTH_SCOPES` were ever unset in production, the OAuth
+authorize request would have asked for an unregistered scope, which Zoom would reject, breaking
+the Connect Zoom flow. The code default was corrected in `zoomOAuthService.ts` to match the
+console registration.
 
 **Finding: compliant.** No action needed unless product scope changes (e.g. #230's webhook status
 sync may need an additional scope if Zoom requires it for webhook subscription management —
-re-check when that issue is implemented).
+re-check when that issue is implemented, and register any new scope in the console first).
 
 ## Token caching / refresh-before-expiry (Zoom App Review requirement #4)
 

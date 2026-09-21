@@ -16,7 +16,10 @@ type ZoomTokenResponse = {
 
 const ZOOM_AUTH_BASE_URL = 'https://zoom.us/oauth/authorize';
 const ZOOM_TOKEN_URL = 'https://zoom.us/oauth/token';
-const ZOOM_DEFAULT_SCOPES = ['meeting:write:meeting', 'meeting:read:meeting'];
+// Must match the scopes actually registered/approved for this app in the Zoom
+// Marketplace console (Scopes section) — Zoom rejects an authorize request for any
+// scope not registered there, regardless of what this default lists.
+const ZOOM_DEFAULT_SCOPES = ['meeting:write:meeting', 'user:read:user'];
 
 const resolveTokenExpiresAt = (expiresIn: number) => new Date(Date.now() + expiresIn * 1000);
 

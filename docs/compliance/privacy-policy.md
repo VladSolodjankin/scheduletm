@@ -100,7 +100,7 @@ Meetli applies technical and organizational measures that include:
 - Audit/event logging for appointment actions and short-retention error logging for security operations.
 - Password hashing using PBKDF2 with per-user salts.
 
-Some secrets in the system settings flow are encrypted at the application layer before storage. Other integration credentials are currently protected through database and infrastructure access controls rather than uniform application-layer field encryption. Meetli reviews this area as part of ongoing security hardening.
+Third-party integration credentials (Zoom, Google, and Telegram OAuth tokens/secrets) are encrypted at the application layer with AES-256-GCM before storage; the corresponding plaintext columns have been removed from the primary integrations table. Other system settings secrets are protected through database and infrastructure access controls.
 
 ## 9. Retention
 
