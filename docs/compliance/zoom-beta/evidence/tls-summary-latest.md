@@ -1,11 +1,12 @@
 # TLS Evidence Summary
 
-Generated: 2026-08-10 07:21:29 UTC
+Generated: 2026-09-21 09:41:43 UTC
 
-Hosts: - www.meetli.cc - dev.meetli.cc
+| Host | TLS 1.2 handshake succeeds | TLS 1.1 handshake rejected |
+| --- | --- | --- |
+| `www.meetli.cc` | PASS | PASS |
+| `dev.meetli.cc` | PASS | PASS |
 
-Raw log: - \
+Raw log: `tls-check-latest.txt`
 
-## Quick checks
-- TLS 1.2 handshake: detected in output.
-- TLS 1.1 appears blocked or failed (verify raw output).
+Overall result: PASS

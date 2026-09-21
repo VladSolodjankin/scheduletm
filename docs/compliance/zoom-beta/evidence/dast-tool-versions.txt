@@ -1,0 +1,2 @@
+OWASP ZAP 2.17.0
+zaproxy/action-baseline 7c4deb10e6261301961c86d65d54a516394f9aed
