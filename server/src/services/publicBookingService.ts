@@ -12,7 +12,7 @@ import {
 import { listExternalBusySlots } from './calendarAvailabilityService.js';
 import { publicMediaUrl } from './serviceService.js';
 import { listAppointments } from '../repositories/appointmentRepository.js';
-import { sendAppointmentNotificationByType } from './appointmentNotificationService.js';
+import { enqueueTrackedAppointmentNotification } from './notificationDeliveryService.js';
 import { ensurePublicBookingClientInvite } from './publicBookingInviteService.js';
 
 export class PublicBookingServiceError extends Error {
@@ -246,7 +246,7 @@ export async function bookPublicAppointment(slug: string, input: {
     const appointments = await listAppointments({ accountId, specialistId: specialist.id, from: startAt, to: endAt });
     const hydrated = appointments.find((item) => item.id === appointment.id);
     if (hydrated) {
-      await sendAppointmentNotificationByType({ accountId, appointment: hydrated, notificationType: 'appointment_created' });
+      await enqueueTrackedAppointmentNotification({ appointment: hydrated, notificationType: 'appointment_created' });
     }
   } catch (error) {
     console.error('Public booking notification failed', error);

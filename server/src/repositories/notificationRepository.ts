@@ -61,7 +61,8 @@ export async function upsertNotificationJob(input: {
   type: string;
   channel: 'email';
   sendAt: Date;
-  recipientEmail: string;
+  recipientEmail: string | null;
+  recipientChatId?: number | null;
   payload?: Record<string, unknown>;
   maxAttempts?: number;
 }): Promise<{ id: number; status: string; attempts: number; max_attempts: number }> {
@@ -76,6 +77,7 @@ export async function upsertNotificationJob(input: {
       send_at: input.sendAt,
       next_retry_at: input.sendAt,
       recipient_email: input.recipientEmail,
+      recipient_chat_id: input.recipientChatId ?? null,
       payload_json: JSON.stringify(input.payload ?? {}),
       attempts: 0,
       max_attempts: input.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
@@ -163,24 +165,39 @@ export async function heartbeatNotificationProcessing(input: {
 export async function markNotificationSent(input: {
   notificationId: number;
   processingToken: string;
-  recipientEmail: string;
+  recipientEmail?: string | null;
+  recipientChatId?: number | null;
+  actualChannel?: string;
   sentAt?: Date;
 }): Promise<boolean> {
+  const updates: Record<string, unknown> = {
+    status: 'sent',
+    processing_token: null,
+    sent_at: input.sentAt ?? db.fn.now(),
+    last_error: null,
+    next_retry_at: null,
+    updated_at: db.fn.now(),
+  };
+
+  if (input.recipientEmail !== undefined) {
+    updates.recipient_email = input.recipientEmail;
+  }
+
+  if (input.recipientChatId !== undefined) {
+    updates.recipient_chat_id = input.recipientChatId;
+  }
+
+  if (input.actualChannel) {
+    updates.payload_json = db.raw('payload_json || ?::jsonb', [JSON.stringify({ actualChannel: input.actualChannel })]);
+  }
+
   const updated = await db('notifications')
     .where({
       id: input.notificationId,
       status: 'processing',
       processing_token: input.processingToken,
     })
-    .update({
-      status: 'sent',
-      processing_token: null,
-      sent_at: input.sentAt ?? db.fn.now(),
-      recipient_email: input.recipientEmail,
-      last_error: null,
-      next_retry_at: null,
-      updated_at: db.fn.now(),
-    });
+    .update(updates);
 
   return updated > 0;
 }
@@ -272,6 +289,38 @@ export async function insertSentNotification(input: {
       next_retry_at: null,
       updated_at: db.fn.now(),
     });
+}
+
+const IMMEDIATE_NOTIFICATION_TYPE_PREFIXES = [
+  'appointment_created:',
+  'appointment_changed:',
+  'appointment_cancelled:',
+];
+
+export async function listDueImmediateNotifications(now: Date): Promise<
+  { id: number; account_id: number; appointment_id: number; type: string }[]
+> {
+  return db('notifications')
+    .where((builder) => {
+      builder
+        .whereIn('status', ['pending', 'retry'])
+        .andWhere('attempts', '<', db.ref('max_attempts'))
+        .andWhere((due) => {
+          due.whereNull('next_retry_at').orWhere('next_retry_at', '<=', now);
+        });
+    })
+    .andWhere((typeBuilder) => {
+      IMMEDIATE_NOTIFICATION_TYPE_PREFIXES.forEach((prefix, index) => {
+        if (index === 0) {
+          typeBuilder.where('type', 'like', `${prefix}%`);
+        } else {
+          typeBuilder.orWhere('type', 'like', `${prefix}%`);
+        }
+      });
+    })
+    .select<{ id: number; account_id: number; appointment_id: number; type: string }[]>(
+      ['id', 'account_id', 'appointment_id', 'type'],
+    );
 }
 
 export async function listNotificationLogs(filters: {

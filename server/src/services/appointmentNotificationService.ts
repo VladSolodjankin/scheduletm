@@ -13,6 +13,14 @@ function resolveClientName(appointment: AppointmentRecord): string {
   return `${appointment.client_first_name ?? ''} ${appointment.client_last_name ?? ''}`.trim() || 'Клиент';
 }
 
+const TELEGRAM_MESSAGE_BY_TYPE: Record<NotificationType, (specialistName: string, scheduledAt: string) => string> = {
+  appointment_created: (specialistName, scheduledAt) => `Запись подтверждена: к ${specialistName} на ${scheduledAt}.`,
+  appointment_changed: (specialistName, scheduledAt) => `Запись перенесена: к ${specialistName} на ${scheduledAt}.`,
+  appointment_cancelled: (specialistName, scheduledAt) => `Запись к ${specialistName} на ${scheduledAt} отменена.`,
+  appointment_reminder: (specialistName, scheduledAt) => `Напоминание: запись к ${specialistName} на ${scheduledAt}.`,
+  payment_reminder: (specialistName, scheduledAt) => `Напоминание об оплате записи к ${specialistName} на ${scheduledAt}.`,
+};
+
 export async function sendAppointmentNotificationByType(input: {
   accountId: number;
   appointment: AppointmentRecord;
@@ -59,10 +67,11 @@ export async function sendAppointmentNotificationByType(input: {
         continue;
       }
 
+      const buildMessage = TELEGRAM_MESSAGE_BY_TYPE[input.notificationType] ?? TELEGRAM_MESSAGE_BY_TYPE.appointment_reminder;
       const delivered = await sendTelegramBotMessage(
         telegramToken,
         telegramChatId,
-        `Напоминание: запись к ${specialist?.name ?? 'специалист'} на ${input.appointment.appointment_at.toISOString()}.`,
+        buildMessage(specialist?.name ?? 'специалист', input.appointment.appointment_at.toISOString()),
       );
       if (delivered) {
         return { delivered: true, channel: 'telegram' };
@@ -81,6 +90,7 @@ export async function sendAppointmentNotificationByType(input: {
         clientName: resolveClientName(input.appointment),
         specialistName: specialist?.name ?? 'специалист',
         scheduledAt: input.appointment.appointment_at.toISOString(),
+        notificationType: input.notificationType,
       });
 
       if (delivered) {

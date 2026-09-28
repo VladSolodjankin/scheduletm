@@ -64,7 +64,8 @@ export async function sendTelegramBotMessage(token: string, chatId: string, text
     );
 
     return Boolean(response.data.ok);
-  } catch {
+  } catch (error) {
+    console.error('[telegram] delivery-failed', axios.isAxiosError(error) ? error.response?.data ?? error.message : error);
     return false;
   }
 }

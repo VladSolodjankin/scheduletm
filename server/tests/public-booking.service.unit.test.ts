@@ -11,10 +11,10 @@ const bookingRepository = vi.hoisted(() => ({
 }));
 const calendarAvailability = vi.hoisted(() => ({ listExternalBusySlots: vi.fn() }));
 const appointments = vi.hoisted(() => ({ listAppointments: vi.fn() }));
-const notifications = vi.hoisted(() => ({ sendAppointmentNotificationByType: vi.fn() }));
+const notifications = vi.hoisted(() => ({ enqueueTrackedAppointmentNotification: vi.fn() }));
 const bookingInvite = vi.hoisted(() => ({ ensurePublicBookingClientInvite: vi.fn() }));
 vi.mock('../src/repositories/appointmentRepository.js', () => appointments);
-vi.mock('../src/services/appointmentNotificationService.js', () => notifications);
+vi.mock('../src/services/notificationDeliveryService.js', () => notifications);
 vi.mock('../src/services/publicBookingInviteService.js', () => bookingInvite);
 
 vi.mock('../src/repositories/publicPageRepository.js', async () => {
@@ -49,7 +49,7 @@ describe('public booking service', () => {
     Object.values(bookingRepository).forEach((mock) => mock.mockReset());
     calendarAvailability.listExternalBusySlots.mockReset().mockResolvedValue([]);
     appointments.listAppointments.mockReset().mockResolvedValue([]);
-    notifications.sendAppointmentNotificationByType.mockReset().mockResolvedValue({ delivered: false });
+    notifications.enqueueTrackedAppointmentNotification.mockReset().mockResolvedValue(false);
     bookingInvite.ensurePublicBookingClientInvite.mockReset().mockResolvedValue(undefined);
     pageRepository.findPublishedPublicPageBySlug.mockResolvedValue({ account_id: 7 });
   });
@@ -233,7 +233,7 @@ describe('public booking service', () => {
     });
     const hydrated = { id: 10, account_id: 7, specialist_id: 2, client_email: 'guest@example.com' };
     appointments.listAppointments.mockResolvedValue([hydrated]);
-    if (fails) notifications.sendAppointmentNotificationByType.mockRejectedValue(new Error('delivery unavailable'));
+    if (fails) notifications.enqueueTrackedAppointmentNotification.mockRejectedValue(new Error('delivery unavailable'));
     await expect(bookPublicAppointment('valid-page', {
       firstName: 'Guest', lastName: 'User', email: 'guest@example.com',
       specialistId: 2, serviceId: 3, startAt: '2030-08-01T10:00:00Z',
@@ -242,12 +242,12 @@ describe('public booking service', () => {
     expect(bookingInvite.ensurePublicBookingClientInvite).toHaveBeenCalledWith(expect.objectContaining({
       accountId: 7, clientId: 42, email: 'guest@example.com', firstName: 'Guest', lastName: 'User',
     }));
-    expect(notifications.sendAppointmentNotificationByType).toHaveBeenCalledWith({
-      accountId: 7, appointment: hydrated, notificationType: 'appointment_created',
+    expect(notifications.enqueueTrackedAppointmentNotification).toHaveBeenCalledWith({
+      appointment: hydrated, notificationType: 'appointment_created',
     });
     expect(bookingRepository.createPublicGuestAppointment).toHaveBeenCalledTimes(1);
     expect(bookingRepository.createPublicGuestAppointment.mock.invocationCallOrder[0])
-      .toBeLessThan(notifications.sendAppointmentNotificationByType.mock.invocationCallOrder[0]);
+      .toBeLessThan(notifications.enqueueTrackedAppointmentNotification.mock.invocationCallOrder[0]);
   });
 
   it('preserves the booking when the client invite fails to send', async () => {

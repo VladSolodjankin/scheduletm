@@ -226,22 +226,62 @@ export async function sendManagedUserInviteEmail(input: SendManagedUserInviteEma
   });
 }
 
+export type AppointmentNotificationEmailType =
+  | 'appointment_created'
+  | 'appointment_changed'
+  | 'appointment_cancelled'
+  | 'appointment_reminder'
+  | 'payment_reminder';
+
 export type SendAppointmentNotificationEmailInput = {
   to: string;
   clientName: string;
   specialistName: string;
   scheduledAt: string;
+  notificationType?: AppointmentNotificationEmailType;
+  manageUrl?: string;
+};
+
+const APPOINTMENT_EMAIL_COPY: Record<AppointmentNotificationEmailType, { subject: string; title: string; body: (input: SendAppointmentNotificationEmailInput) => string }> = {
+  appointment_created: {
+    subject: 'Meetli — запись подтверждена',
+    title: 'Запись подтверждена',
+    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} на ${input.scheduledAt} подтверждена.`,
+  },
+  appointment_changed: {
+    subject: 'Meetli — запись перенесена',
+    title: 'Запись перенесена',
+    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} перенесена на ${input.scheduledAt}.`,
+  },
+  appointment_cancelled: {
+    subject: 'Meetli — запись отменена',
+    title: 'Запись отменена',
+    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName}, которая была назначена на ${input.scheduledAt}, отменена.`,
+  },
+  appointment_reminder: {
+    subject: 'Meetli — напоминание о записи',
+    title: 'Напоминание о записи',
+    body: (input) => `${input.clientName}, у вас запись к специалисту ${input.specialistName} на ${input.scheduledAt}.`,
+  },
+  payment_reminder: {
+    subject: 'Meetli — напоминание об оплате',
+    title: 'Напоминание об оплате',
+    body: (input) => `${input.clientName}, напоминаем об оплате записи к специалисту ${input.specialistName} на ${input.scheduledAt}.`,
+  },
 };
 
 export async function sendAppointmentNotificationEmail(input: SendAppointmentNotificationEmailInput): Promise<boolean> {
+  const copy = APPOINTMENT_EMAIL_COPY[input.notificationType ?? 'appointment_reminder'];
   const template = renderEmailTemplate({
-    title: 'Напоминание о записи',
-    body: `${input.clientName}, у вас запись к специалисту ${input.specialistName} на ${input.scheduledAt}.`,
+    title: copy.title,
+    body: copy.body(input),
+    ctaLabel: input.manageUrl ? 'Управлять записью' : undefined,
+    ctaLink: input.manageUrl,
   });
 
   return sendEmail({
     to: input.to,
-    subject: 'Meetli — напоминание о записи',
+    subject: copy.subject,
     ...template,
   });
 }

@@ -1,20 +1,16 @@
 import {
+  findAppointmentByIdAnyAccount,
   listAppointmentsAllAccounts,
   listUnpaidAppointmentsCreatedBetweenAllAccounts,
 } from '../repositories/appointmentRepository.js';
-import {
-  claimNotificationForDelivery,
-  heartbeatNotificationProcessing,
-  markNotificationDeliveryFailure,
-  markNotificationSent,
-  upsertNotificationJob,
-} from '../repositories/notificationRepository.js';
+import { listDueImmediateNotifications } from '../repositories/notificationRepository.js';
 import { sendAppointmentNotificationByType } from '../services/appointmentNotificationService.js';
+import { attemptNotificationDelivery, deliverAndMarkNotification } from '../services/notificationDeliveryService.js';
 import { trackServerError } from '../services/errorTrackingService.js';
+import type { NotificationType } from '../services/notificationSettingsService.js';
 
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
 const DEFAULT_WINDOW_MIN = 10;
-const PROCESSING_HEARTBEAT_MS = 5 * 60 * 1000;
 let isRunInProgress = false;
 
 const REMINDER_TIMINGS = [
@@ -41,13 +37,6 @@ function createWindow(now: Date, baseMinutes: number, windowMinutes: number, dir
   return { from, to };
 }
 
-function safeDeliveryError(error: unknown): string {
-  if (!(error instanceof Error)) {
-    return 'delivery_failed';
-  }
-  return error.message.trim().slice(0, 500) || 'delivery_failed';
-}
-
 async function deliverAndMark(input: {
   appointmentId: number;
   accountId: number;
@@ -58,78 +47,48 @@ async function deliverAndMark(input: {
   payload: Record<string, unknown>;
   sender: () => Promise<{ delivered: boolean; reason?: string }>;
 }) {
-  const job = await upsertNotificationJob({
-    accountId: input.accountId,
-    appointmentId: input.appointmentId,
-    userId: input.userId,
-    type: input.typeKey,
-    channel: 'email',
-    sendAt: input.sendAt,
-    recipientEmail: input.email,
-    payload: input.payload,
+  return deliverAndMarkNotification({
+    ...input,
+    heartbeatPath: '/jobs/appointment-notifications/heartbeat',
   });
+}
 
-  if (job.status === 'sent' || job.status === 'failed') {
-    return false;
-  }
+async function runImmediateNotificationsRetrySweep(now: Date): Promise<number> {
+  const dueRows = await listDueImmediateNotifications(now);
+  let delivered = 0;
 
-  const processingToken = await claimNotificationForDelivery({ notificationId: job.id, now: input.sendAt });
-  if (!processingToken) {
-    return false;
-  }
+  for (const row of dueRows) {
+    const appointment = await findAppointmentByIdAnyAccount(row.appointment_id);
+    if (!appointment) {
+      continue;
+    }
 
-  const heartbeat = setInterval(() => {
-    void heartbeatNotificationProcessing({
-      notificationId: job.id,
-      processingToken,
-    }).catch((error) => {
-      void trackServerError({
-        method: 'JOB',
-        path: '/jobs/appointment-notifications/heartbeat',
-        error,
+    const notificationType = row.type.split(':')[0] as NotificationType;
+
+    try {
+      const didDeliver = await attemptNotificationDelivery({
+        notificationId: row.id,
+        email: appointment.client_email?.trim() || null,
+        chatId: null,
+        sendAt: now,
+        heartbeatPath: '/jobs/appointment-notifications/immediate-retry-heartbeat',
+        sender: () =>
+          sendAppointmentNotificationByType({
+            accountId: row.account_id,
+            appointment,
+            notificationType,
+          }),
       });
-    });
-  }, PROCESSING_HEARTBEAT_MS);
 
-  let outcome:
-    | { ok: true; result: { delivered: boolean; reason?: string } }
-    | { ok: false; error: unknown } = { ok: false, error: new Error('delivery_not_started') };
-  try {
-    outcome = { ok: true, result: await input.sender() };
-  } catch (error) {
-    outcome = { ok: false, error };
-  } finally {
-    clearInterval(heartbeat);
+      if (didDeliver) {
+        delivered += 1;
+      }
+    } catch (error) {
+      void trackServerError({ method: 'JOB', path: '/jobs/appointment-notifications/immediate-retry', error });
+    }
   }
 
-  if (!outcome.ok) {
-    await markNotificationDeliveryFailure({
-      notificationId: job.id,
-      processingToken,
-      error: safeDeliveryError(outcome.error),
-      now: input.sendAt,
-    });
-    throw outcome.error;
-  }
-
-  const { result } = outcome;
-  if (result.delivered) {
-    return markNotificationSent({
-      notificationId: job.id,
-      processingToken,
-      recipientEmail: input.email,
-      sentAt: input.sendAt,
-    });
-  }
-
-  await markNotificationDeliveryFailure({
-    notificationId: job.id,
-    processingToken,
-    error: result.reason ?? 'delivery_failed',
-    now: input.sendAt,
-  });
-
-  return false;
+  return delivered;
 }
 
 export function startAppointmentNotificationsJob(intervalMs = DEFAULT_INTERVAL_MS): NodeJS.Timeout {
@@ -212,6 +171,8 @@ async function executeAppointmentNotificationsJob(now: Date, windowMinutes: numb
       }
     }
   }
+
+  deliveredCount += await runImmediateNotificationsRetrySweep(now);
 
   return deliveredCount;
 }

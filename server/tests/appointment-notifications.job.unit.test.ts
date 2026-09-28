@@ -3,16 +3,19 @@ import { runAppointmentNotificationsJob } from '../src/jobs/appointmentNotificat
 
 const listAppointmentsAllAccountsMock = vi.hoisted(() => vi.fn());
 const listUnpaidAppointmentsCreatedBetweenAllAccountsMock = vi.hoisted(() => vi.fn());
+const findAppointmentByIdAnyAccountMock = vi.hoisted(() => vi.fn());
 const upsertNotificationJobMock = vi.hoisted(() => vi.fn());
 const claimNotificationForDeliveryMock = vi.hoisted(() => vi.fn());
 const heartbeatNotificationProcessingMock = vi.hoisted(() => vi.fn());
 const markNotificationSentMock = vi.hoisted(() => vi.fn());
 const markNotificationDeliveryFailureMock = vi.hoisted(() => vi.fn());
+const listDueImmediateNotificationsMock = vi.hoisted(() => vi.fn());
 const sendAppointmentNotificationByTypeMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../src/repositories/appointmentRepository.js', () => ({
   listAppointmentsAllAccounts: listAppointmentsAllAccountsMock,
   listUnpaidAppointmentsCreatedBetweenAllAccounts: listUnpaidAppointmentsCreatedBetweenAllAccountsMock,
+  findAppointmentByIdAnyAccount: findAppointmentByIdAnyAccountMock,
 }));
 
 vi.mock('../src/repositories/notificationRepository.js', () => ({
@@ -21,6 +24,7 @@ vi.mock('../src/repositories/notificationRepository.js', () => ({
   heartbeatNotificationProcessing: heartbeatNotificationProcessingMock,
   markNotificationSent: markNotificationSentMock,
   markNotificationDeliveryFailure: markNotificationDeliveryFailureMock,
+  listDueImmediateNotifications: listDueImmediateNotificationsMock,
 }));
 
 vi.mock('../src/services/appointmentNotificationService.js', () => ({
@@ -31,20 +35,24 @@ describe('appointment notifications job unit', () => {
   beforeEach(() => {
     listAppointmentsAllAccountsMock.mockReset();
     listUnpaidAppointmentsCreatedBetweenAllAccountsMock.mockReset();
+    findAppointmentByIdAnyAccountMock.mockReset();
     upsertNotificationJobMock.mockReset();
     claimNotificationForDeliveryMock.mockReset();
     heartbeatNotificationProcessingMock.mockReset();
     markNotificationSentMock.mockReset();
     markNotificationDeliveryFailureMock.mockReset();
+    listDueImmediateNotificationsMock.mockReset();
     sendAppointmentNotificationByTypeMock.mockReset();
 
     listAppointmentsAllAccountsMock.mockResolvedValue([]);
     listUnpaidAppointmentsCreatedBetweenAllAccountsMock.mockResolvedValue([]);
+    findAppointmentByIdAnyAccountMock.mockResolvedValue(null);
     upsertNotificationJobMock.mockResolvedValue({ id: 1, status: 'pending', attempts: 0, max_attempts: 3 });
     claimNotificationForDeliveryMock.mockResolvedValue('worker-token');
     heartbeatNotificationProcessingMock.mockResolvedValue(true);
     markNotificationSentMock.mockResolvedValue(true);
     markNotificationDeliveryFailureMock.mockResolvedValue(true);
+    listDueImmediateNotificationsMock.mockResolvedValue([]);
     sendAppointmentNotificationByTypeMock.mockResolvedValue({ delivered: true, channel: 'email' });
   });
 

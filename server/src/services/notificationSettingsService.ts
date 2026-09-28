@@ -17,7 +17,13 @@ import {
   specialistNotificationSettingsBatchSchema,
 } from '../config/schemas.js';
 
-export const NOTIFICATION_TYPES = ['appointment_created', 'appointment_reminder', 'payment_reminder'] as const;
+export const NOTIFICATION_TYPES = [
+  'appointment_created',
+  'appointment_changed',
+  'appointment_cancelled',
+  'appointment_reminder',
+  'payment_reminder',
+] as const;
 export const NOTIFICATION_CHANNELS = ['email', 'telegram', 'viber', 'whatsapp', 'sms'] as const;
 export const NOTIFICATION_FREQUENCIES = ['immediate', 'daily'] as const;
 
@@ -52,6 +58,18 @@ export type EffectiveNotificationSetting = {
 
 const DEFAULTS_BY_TYPE: Record<NotificationType, Omit<AccountNotificationDefault, 'notificationType'>> = {
   appointment_created: {
+    preferredChannel: 'email',
+    enabled: true,
+    sendTimings: ['immediate'],
+    frequency: 'immediate',
+  },
+  appointment_changed: {
+    preferredChannel: 'email',
+    enabled: true,
+    sendTimings: ['immediate'],
+    frequency: 'immediate',
+  },
+  appointment_cancelled: {
     preferredChannel: 'email',
     enabled: true,
     sendTimings: ['immediate'],

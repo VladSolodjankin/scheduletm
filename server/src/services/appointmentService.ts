@@ -38,6 +38,7 @@ import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
 import { canCreateAppointments, canManageAllAppointments, canMarkPaidAndNotify, isClientRole } from '../policies/rolePermissions.js';
 import { sendAppointmentNotificationByType } from './appointmentNotificationService.js';
+import { enqueueTrackedAppointmentNotification } from './notificationDeliveryService.js';
 import { createZoomMeeting } from './zoomService.js';
 
 type AppointmentClientDto = {
@@ -570,11 +571,10 @@ export async function createAppointmentForActor(
   const rows = await listAppointments({ accountId, specialistId: created.specialist_id });
   const hydrated = rows.find((item) => item.id === created.id) ?? created;
 
-  await sendAppointmentNotificationByType({
-    accountId,
+  await enqueueTrackedAppointmentNotification({
     appointment: hydrated,
     notificationType: 'appointment_created',
-  }).catch(() => undefined);
+  });
 
   return {
     ...mapAppointment(hydrated),
@@ -686,6 +686,15 @@ export async function cancelAppointmentForActor(actor: User, appointmentId: numb
   const accountId = await resolveAccountId(actor);
   await appendAuditEvent(accountId, appointmentId, actor, 'cancel');
 
+  const rows = await listAppointments({ accountId, specialistId: updated.specialistId });
+  const hydrated = rows.find((item) => item.id === updated.id);
+  if (hydrated) {
+    await enqueueTrackedAppointmentNotification({
+      appointment: hydrated,
+      notificationType: 'appointment_cancelled',
+    });
+  }
+
   return updated;
 }
 
@@ -710,6 +719,15 @@ export async function rescheduleAppointmentForActor(
 
   const accountId = await resolveAccountId(actor);
   await appendAuditEvent(accountId, appointmentId, actor, 'reschedule', { scheduledAt });
+
+  const rows = await listAppointments({ accountId, specialistId: updated.specialistId });
+  const hydrated = rows.find((item) => item.id === updated.id);
+  if (hydrated) {
+    await enqueueTrackedAppointmentNotification({
+      appointment: hydrated,
+      notificationType: 'appointment_changed',
+    });
+  }
 
   return updated;
 }

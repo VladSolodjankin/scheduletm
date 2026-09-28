@@ -211,19 +211,26 @@ export function SettingsContainer() {
         let resolvedScopeSpecialists: SettingsScopeSpecialist[] = [];
 
         if (canManageSystemSettings) {
-          const scopeResponse = await apiClient.get<SettingsScopeOptionsResponse>('/api/settings/scope-options', {
-            headers: authHeaders(accessToken)
-          });
-          resolvedScopeSpecialists = scopeResponse.data.specialists;
-          setScopeAccounts(scopeResponse.data.accounts);
-          setScopeSpecialists(scopeResponse.data.specialists);
+          try {
+            const scopeResponse = await apiClient.get<SettingsScopeOptionsResponse>('/api/settings/scope-options', {
+              headers: authHeaders(accessToken)
+            });
+            resolvedScopeSpecialists = scopeResponse.data.specialists;
+            setScopeAccounts(scopeResponse.data.accounts);
+            setScopeSpecialists(scopeResponse.data.specialists);
 
-          resolvedAccountId = selectedAccountId
-            ?? scopeResponse.data.accounts[0]?.id
-            ?? null;
+            resolvedAccountId = selectedAccountId
+              ?? scopeResponse.data.accounts[0]?.id
+              ?? null;
 
-          if (resolvedAccountId !== selectedAccountId) {
-            setSelectedAccountId(resolvedAccountId);
+            if (resolvedAccountId !== selectedAccountId) {
+              setSelectedAccountId(resolvedAccountId);
+            }
+          } catch (scopeErr) {
+            setError(resolveApiError(scopeErr, {
+              fallbackMessage: t('settings.errors.load'),
+              networkMessage: t('common.errors.network')
+            }).message);
           }
         }
 
