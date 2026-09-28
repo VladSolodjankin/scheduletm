@@ -64,7 +64,7 @@ Telegram-сервис использует собственный
   Для MVP достаточно production email и Telegram; SMS/WhatsApp/Viber не обязательны.
 - [ ] Добавить короткий onboarding владельца: account/timezone → specialist →
   schedule → service → meeting method → publish → test booking.
-- [ ] Опубликовать Terms of Service рядом с Privacy Policy и Security Policy;
+- [x] Опубликовать Terms of Service рядом с Privacy Policy и Security Policy;
   согласовать support/legal contact и acceptance в registration/invite flows.
 
 ## P1 — коммерчески цельный MVP

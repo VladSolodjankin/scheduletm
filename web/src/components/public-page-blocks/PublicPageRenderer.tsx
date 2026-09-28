@@ -293,7 +293,7 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], editor 
       }}
     >
       <Container
-        maxWidth="md"
+        maxWidth={false}
         sx={{
           display: editor ? 'flex' : 'grid',
           flexDirection: editor ? 'column' : undefined,
@@ -303,6 +303,7 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], editor 
           minHeight: editor ? '100%' : undefined,
           flex: editor ? '1 0 auto' : undefined,
           boxSizing: editor ? 'border-box' : undefined,
+          maxWidth: editor ? undefined : '720px',
         }}
       >
         {(document.profile.logoMediaId || document.profile.avatarMediaId) ? (

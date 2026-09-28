@@ -51,6 +51,14 @@ function formatDuration(value: number, labels: Record<string, string>) {
     : `${hours} ${labels.hoursShort}`;
 }
 
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) {
+    return '?';
+  }
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('');
+}
+
 function AssignmentEditor({
   assignment,
   service,
@@ -90,11 +98,15 @@ function AssignmentEditor({
   return (
     <Box className="service-card__assignment">
       <Stack className="service-card__assignment-content">
-        <Stack
-          className="service-card__assignment-header"
-        >
-          <Typography className="service-card__specialist-name">{assignment.specialistName}</Typography>
+        <Stack direction="row" className="service-card__assignment-header">
+          <Stack direction="row" className="service-card__assignment-identity">
+            <Box className="service-card__assignment-avatar" aria-hidden="true">
+              {getInitials(assignment.specialistName)}
+            </Box>
+            <Typography className="service-card__specialist-name">{assignment.specialistName}</Typography>
+          </Stack>
           <FormControlLabel
+            className="service-card__assignment-switch"
             control={(
               <Switch
                 size="small"
@@ -107,54 +119,56 @@ function AssignmentEditor({
           />
         </Stack>
 
-        <Box className="service-card__assignment-fields">
-          <AppTextField
-            type="number"
-            label={labels.price}
-            value={price}
-            disabled={!canEdit || isSaving}
-            error={priceInvalid}
-            helperText={priceInvalid ? labels.priceError : (priceInherited ? labels.serviceDefault : labels.customValue)}
-            slotProps={{ htmlInput: { min: 0, max: 10_000_000, step: 1 } }}
-            onChange={(event) => {
-              setPrice(event.target.value);
-              setPriceInherited(false);
-            }}
-          />
-          <AppTextField
-            type="number"
-            label={labels.duration}
-            value={duration}
-            disabled={!canEdit || isSaving}
-            error={durationInvalid}
-            helperText={durationInvalid ? labels.durationError : (durationInherited ? labels.serviceDefault : labels.customValue)}
-            slotProps={{ htmlInput: { min: 5, max: 1440, step: 1 } }}
-            onChange={(event) => {
-              setDuration(event.target.value);
-              setDurationInherited(false);
-            }}
-          />
-        </Box>
+        <Box className="service-card__assignment-controls">
+          <Box className="service-card__assignment-fields">
+            <AppTextField
+              type="number"
+              label={labels.price}
+              value={price}
+              disabled={!canEdit || isSaving}
+              error={priceInvalid}
+              helperText={priceInvalid ? labels.priceError : (priceInherited ? labels.serviceDefault : labels.customValue)}
+              slotProps={{ htmlInput: { min: 0, max: 10_000_000, step: 1 } }}
+              onChange={(event) => {
+                setPrice(event.target.value);
+                setPriceInherited(false);
+              }}
+            />
+            <AppTextField
+              type="number"
+              label={labels.duration}
+              value={duration}
+              disabled={!canEdit || isSaving}
+              error={durationInvalid}
+              helperText={durationInvalid ? labels.durationError : (durationInherited ? labels.serviceDefault : labels.customValue)}
+              slotProps={{ htmlInput: { min: 5, max: 1440, step: 1 } }}
+              onChange={(event) => {
+                setDuration(event.target.value);
+                setDurationInherited(false);
+              }}
+            />
+          </Box>
 
-        {canEdit ? (
-          <Stack className="service-card__assignment-actions">
-            <AppButton variant="text" size="small" disabled={isSaving} onClick={useServiceDefaults}>
-              {labels.useServiceDefaults}
-            </AppButton>
-            <AppButton
-              size="small"
-              isLoading={isSaving}
-              disabled={!dirty || priceInvalid || durationInvalid}
-              onClick={() => void onSave({
-                isActive,
-                priceOverride: priceInherited ? null : parsedPrice,
-                durationOverrideMinutes: durationInherited ? null : parsedDuration,
-              })}
-            >
-              {labels.save}
-            </AppButton>
-          </Stack>
-        ) : null}
+          {canEdit ? (
+            <Stack direction="row" className="service-card__assignment-actions">
+              <AppButton variant="text" size="small" disabled={isSaving} onClick={useServiceDefaults}>
+                {labels.useServiceDefaults}
+              </AppButton>
+              <AppButton
+                size="small"
+                isLoading={isSaving}
+                disabled={!dirty || priceInvalid || durationInvalid}
+                onClick={() => void onSave({
+                  isActive,
+                  priceOverride: priceInherited ? null : parsedPrice,
+                  durationOverrideMinutes: durationInherited ? null : parsedDuration,
+                })}
+              >
+                {labels.save}
+              </AppButton>
+            </Stack>
+          ) : null}
+        </Box>
       </Stack>
     </Box>
   );
@@ -191,7 +205,7 @@ export function ServiceCard({
           )}
 
           <Stack className="service-card__copy">
-            <Stack className="service-card__heading">
+            <Stack direction="row" className="service-card__heading">
               <Typography variant="h6" className="service-card__title">{service.name}</Typography>
               <AppStatusBadge
                 label={service.isActive ? labels.active : labels.archived}
@@ -202,7 +216,7 @@ export function ServiceCard({
               ) : null}
             </Stack>
             {service.description ? <Typography className="service-card__description">{service.description}</Typography> : null}
-            <Stack className="service-card__price-line">
+            <Stack direction="row" className="service-card__price-line">
               <Typography className="service-card__price">{formatPrice(service.basePrice, locale)}</Typography>
               <Typography className="service-card__muted">·</Typography>
               <Typography>{formatDuration(service.baseDurationMinutes, labels)}</Typography>

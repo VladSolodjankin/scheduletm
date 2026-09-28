@@ -19,6 +19,11 @@
   border-color: var(--app-color-border);
   border-radius: var(--app-radius-m);
   overflow: hidden;
+  transition: box-shadow var(--app-motion-default) var(--app-easing);
+}
+
+.service-card:hover {
+  box-shadow: var(--app-shadow-soft);
 }
 
 .service-card .service-card__content {
@@ -30,17 +35,17 @@
 }
 
 .service-card__summary {
-  align-items: start;
-  display: grid;
+  align-items: flex-start;
+  display: flex;
   gap: var(--app-space-m);
-  grid-template-columns: minmax(10rem, 3fr) minmax(0, 5fr);
 }
 
 .service-card__image,
 .service-card__image-placeholder {
-  aspect-ratio: 16 / 9;
   border-radius: var(--app-radius-s);
-  width: 100%;
+  flex: 0 0 6.5rem;
+  height: 6.5rem;
+  width: 6.5rem;
 }
 
 .service-card__image {
@@ -65,17 +70,18 @@
 .service-card__assignment-content {
   display: flex;
   flex-direction: column;
-  gap: var(--app-space-m);
+  gap: var(--app-space-s);
 }
 
 .service-card__copy {
-  gap: var(--app-space-m);
+  gap: var(--app-space-xs);
   min-width: 0;
 }
 
 .service-card__heading,
 .service-card__price-line,
 .service-card__assignment-header,
+.service-card__assignment-identity,
 .service-card__assignment-actions,
 .service-card .service-card__actions {
   align-items: center;
@@ -90,9 +96,23 @@
   line-height: var(--app-line-compact);
 }
 
-.service-card__description,
+.service-card__description {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--app-color-text-muted);
+  display: -webkit-box;
+  font-size: var(--app-font-s);
+  line-height: var(--app-line-default);
+  overflow: hidden;
+}
+
 .service-card__muted {
   color: var(--app-color-text-muted);
+}
+
+.service-card__price-line {
+  font-size: var(--app-font-s);
+  gap: var(--app-space-xs);
 }
 
 .service-card__price {
@@ -101,33 +121,76 @@
 
 .service-card__divider {
   border-color: var(--app-color-border);
-  margin-block: var(--app-space-l);
+  margin-block: var(--app-space-m);
 }
 
 .service-card__assignments {
-  gap: var(--app-space-m);
+  gap: var(--app-space-s);
 }
 
 .service-card__assignments-heading {
   display: flex;
   flex-direction: column;
-  gap: var(--app-space-s);
+  gap: var(--app-space-xs);
+}
+
+.service-card__section-title {
+  font-size: var(--app-font-s);
+  font-weight: var(--app-weight-bold);
 }
 
 .service-card__assignment {
+  background: var(--app-color-surface-muted);
   border: var(--app-border-width) solid var(--app-color-border);
   border-radius: var(--app-radius-s);
-  gap: var(--app-space-m);
-  padding: var(--app-space-m);
+  gap: var(--app-space-s);
+  padding: var(--app-space-s) var(--app-space-m);
 }
 
 .service-card__assignment-header {
   justify-content: space-between;
 }
 
+.service-card__assignment-identity {
+  gap: var(--app-space-s);
+  min-width: 0;
+}
+
+.service-card__assignment-avatar {
+  align-items: center;
+  background: var(--app-color-surface);
+  border: var(--app-border-width) solid var(--app-color-border);
+  border-radius: var(--app-radius-circle);
+  color: var(--app-color-text-muted);
+  display: flex;
+  flex: 0 0 var(--app-avatar-s);
+  font-size: var(--app-font-xs);
+  font-weight: var(--app-weight-bold);
+  height: var(--app-avatar-s);
+  justify-content: center;
+  width: var(--app-avatar-s);
+}
+
+.service-card__assignment-switch {
+  margin: 0;
+}
+
 .service-card__specialist-name,
 .service-card__section-title {
   font-weight: var(--app-weight-bold);
+}
+
+.service-card__specialist-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-card__assignment-controls {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-s);
 }
 
 .service-card__assignment-fields,
@@ -137,13 +200,19 @@
   gap: var(--app-space-m);
 }
 
-.service-card__assignment-fields,
+.service-card__assignment-fields {
+  flex: 1 1 20rem;
+  grid-template-columns: repeat(2, minmax(9rem, 11rem));
+}
+
 .service-form__specialists-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .service-card__assignment-actions {
+  flex: 0 0 auto;
   justify-content: flex-end;
+  margin-left: auto;
 }
 
 .service-card .service-card__actions {
@@ -180,7 +249,17 @@
 }
 
 @media (max-width: 37.499rem) {
-  .service-card__summary,
+  .service-card__summary {
+    flex-direction: column;
+  }
+
+  .service-card__image,
+  .service-card__image-placeholder {
+    height: auto;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+  }
+
   .service-card__assignment-fields,
   .service-form__specialists-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -189,7 +268,11 @@
   .service-card__assignment-header,
   .service-card__assignment-actions {
     align-items: stretch;
-    flex-direction: column;
+    flex-direction: column !important;
+  }
+
+  .service-card__assignment-actions {
+    margin-left: 0;
   }
 
   .service-card .service-card__content {

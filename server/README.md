@@ -19,6 +19,7 @@ Express/PostgreSQL API для Meetli web.
 - Public status:
   - `GET /api/public-pages/by-slug/:slug/appointments/:appointmentId/status?specialistLastName=...`.
 - Notification delivery/retry lease, logs и manual resend.
+- Письма Brevo используют общий брендированный HTML-шаблон и текстовую версию: подтверждение email/его смены, восстановление пароля (RU/EN), успешная регистрация, приглашение и напоминание о записи (`src/services/emailDeliveryService.ts`).
 - `/health` — liveness; `/ready` — database readiness.
 
 Public booking проверяет active account/entities, рабочие дни/часы, slot step, прошедшее время, внешний календарь и PostgreSQL overlap. Timezone запроса опциональна; fallback — timezone специалиста.
