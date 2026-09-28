@@ -28,7 +28,7 @@ const zoomCreateMeetingSchema = z.object({
 
 integrationRoutes.post('/google/oauth/start', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  const oauthInit = await createGoogleOAuthUrl(user.id);
+  const oauthInit = await createGoogleOAuthUrl(user.id, user.accountId);
 
   if (!oauthInit) {
     return res.status(503).json({
@@ -67,7 +67,7 @@ integrationRoutes.get('/google/oauth/callback', async (req, res) => {
 
 integrationRoutes.post('/google/disconnect', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  const ok = await disconnectGoogleOAuth(user.id);
+  const ok = await disconnectGoogleOAuth(user.id, user.accountId);
   if (!ok) {
     return res.status(400).json({ message: t(req, 'invalidUserId') });
   }
@@ -81,7 +81,7 @@ integrationRoutes.post('/google/disconnect', requireAccessToken, async (req, res
 
 integrationRoutes.post('/zoom/oauth/start', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  const oauthInit = await createZoomOAuthUrl(user.id);
+  const oauthInit = await createZoomOAuthUrl(user.id, user.accountId);
 
   if (!oauthInit) {
     return res.status(503).json({
@@ -120,7 +120,7 @@ integrationRoutes.get('/zoom/oauth/callback', async (req, res) => {
 
 integrationRoutes.post('/zoom/disconnect', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  const ok = await disconnectZoomOAuth(user.id);
+  const ok = await disconnectZoomOAuth(user.id, user.accountId);
   if (!ok) {
     return res.status(400).json({ message: t(req, 'invalidUserId') });
   }
@@ -139,6 +139,7 @@ integrationRoutes.post('/zoom/meetings', requireAccessToken, async (req, res) =>
   }
 
   const result = await createZoomMeeting({
+    accountId: user.accountId,
     userId: user.id,
     topic: parsed.data.topic,
     startTime: parsed.data.startTime,

@@ -2,7 +2,6 @@ import axios from 'axios';
 import { randomBytes } from 'node:crypto';
 import { URLSearchParams } from 'node:url';
 import { env } from '../config/env.js';
-import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import { createZoomOAuthState, consumeZoomOAuthState } from '../repositories/zoomOAuthStateRepository.js';
 import { clearWebUserZoomCredentials, updateWebUserZoomIntegration } from '../repositories/webUserIntegrationRepository.js';
 
@@ -49,7 +48,7 @@ const isZoomOAuthConfigured = () => {
   );
 };
 
-export const createZoomOAuthUrl = async (userId: string) => {
+export const createZoomOAuthUrl = async (userId: string, accountId: number) => {
   if (!isZoomOAuthConfigured()) {
     return null;
   }
@@ -59,7 +58,6 @@ export const createZoomOAuthUrl = async (userId: string) => {
     return null;
   }
 
-  const accountId = await getDefaultAccountId();
   const state = randomBytes(32).toString('hex');
 
   await createZoomOAuthState({
@@ -88,11 +86,12 @@ export const completeZoomOAuth = async (state: string, code: string) => {
     return { ok: false as const, reason: 'zoom_oauth_not_configured' };
   }
 
-  const accountId = await getDefaultAccountId();
-  const pending = await consumeZoomOAuthState(accountId, state);
+  const pending = await consumeZoomOAuthState(state);
   if (!pending) {
     return { ok: false as const, reason: 'invalid_state' };
   }
+
+  const accountId = pending.account_id;
 
   try {
     const payload = new URLSearchParams({
@@ -123,13 +122,12 @@ export const completeZoomOAuth = async (state: string, code: string) => {
   }
 };
 
-export const disconnectZoomOAuth = async (userId: string) => {
+export const disconnectZoomOAuth = async (userId: string, accountId: number) => {
   const webUserId = Number(userId);
   if (!Number.isInteger(webUserId)) {
     return false;
   }
 
-  const accountId = await getDefaultAccountId();
   await clearWebUserZoomCredentials(accountId, webUserId);
   return true;
 };

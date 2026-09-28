@@ -2,7 +2,6 @@ import axios from 'axios';
 import { randomBytes } from 'node:crypto';
 import { URLSearchParams } from 'node:url';
 import { env } from '../config/env.js';
-import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import { createGoogleOAuthState, consumeGoogleOAuthState } from '../repositories/googleOAuthStateRepository.js';
 import { clearWebUserGoogleCredentials, updateWebUserGoogleCredentials } from '../repositories/webUserIntegrationRepository.js';
 
@@ -61,7 +60,7 @@ const isGoogleOAuthConfigured = () => {
   );
 };
 
-export const createGoogleOAuthUrl = async (userId: string) => {
+export const createGoogleOAuthUrl = async (userId: string, accountId: number) => {
   if (!isGoogleOAuthConfigured()) {
     return null;
   }
@@ -71,7 +70,6 @@ export const createGoogleOAuthUrl = async (userId: string) => {
     return null;
   }
 
-  const accountId = await getDefaultAccountId();
   const state = randomBytes(32).toString('hex');
 
   await createGoogleOAuthState({
@@ -103,11 +101,12 @@ export const completeGoogleOAuth = async (state: string, code: string) => {
     return { ok: false as const, reason: 'google_oauth_not_configured' };
   }
 
-  const accountId = await getDefaultAccountId();
-  const pending = await consumeGoogleOAuthState(accountId, state);
+  const pending = await consumeGoogleOAuthState(state);
   if (!pending) {
     return { ok: false as const, reason: 'invalid_state' };
   }
+
+  const accountId = pending.account_id;
 
   try {
     const payload = new URLSearchParams({
@@ -187,13 +186,12 @@ export const refreshGoogleAccessToken = async (input: RefreshGoogleAccessTokenIn
   }
 };
 
-export const disconnectGoogleOAuth = async (userId: string) => {
+export const disconnectGoogleOAuth = async (userId: string, accountId: number) => {
   const webUserId = Number(userId);
   if (!Number.isInteger(webUserId)) {
     return false;
   }
 
-  const accountId = await getDefaultAccountId();
   await clearWebUserGoogleCredentials(accountId, webUserId);
   return true;
 };

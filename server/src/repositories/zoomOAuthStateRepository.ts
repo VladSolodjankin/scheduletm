@@ -24,12 +24,11 @@ export async function createZoomOAuthState(input: {
 }
 
 export async function consumeZoomOAuthState(
-  accountId: number,
   stateToken: string,
 ): Promise<ZoomOAuthStateRecord | null> {
   const row = await db.transaction(async (trx) => {
     const found = await trx('zoom_oauth_states')
-      .where({ account_id: accountId, state_token: stateToken })
+      .where({ state_token: stateToken })
       .first<ZoomOAuthStateRecord>();
 
     if (!found) {

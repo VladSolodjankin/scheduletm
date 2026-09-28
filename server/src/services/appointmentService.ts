@@ -497,6 +497,7 @@ export async function createAppointmentForActor(
   for (const provider of candidateProviders) {
     if (provider === 'zoom' && !meetingLink) {
       const zoom = await createZoomMeeting({
+        accountId,
         userId: actor.id,
         topic: 'Appointment',
         startTime: payload.appointmentAt,

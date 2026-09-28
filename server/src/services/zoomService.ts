@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { URLSearchParams } from 'node:url';
 import { env } from '../config/env.js';
-import { getDefaultAccountId } from '../repositories/accountRepository.js';
 import { findWebUserIntegrationByWebUserId, updateWebUserZoomIntegration } from '../repositories/webUserIntegrationRepository.js';
 
 type CreateZoomMeetingInput = {
+  accountId: number;
   userId: string;
   topic: string;
   startTime: string;
@@ -61,7 +61,7 @@ export async function createZoomMeeting(input: CreateZoomMeetingInput) {
     return { ok: false as const, reason: 'invalid_user' };
   }
 
-  const accountId = await getDefaultAccountId();
+  const accountId = input.accountId;
   const existing = await findWebUserIntegrationByWebUserId(accountId, webUserId);
   if (!existing?.zoom_access_token) {
     return { ok: false as const, reason: 'zoom_not_connected' };

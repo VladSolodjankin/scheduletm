@@ -24,12 +24,11 @@ export async function createGoogleOAuthState(input: {
 }
 
 export async function consumeGoogleOAuthState(
-  accountId: number,
   stateToken: string,
 ): Promise<GoogleOAuthStateRecord | null> {
   const row = await db.transaction(async (trx) => {
     const found = await trx('google_oauth_states')
-      .where({ account_id: accountId, state_token: stateToken })
+      .where({ state_token: stateToken })
       .first<GoogleOAuthStateRecord>();
 
     if (!found) {
