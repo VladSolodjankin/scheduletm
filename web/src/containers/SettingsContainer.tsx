@@ -210,7 +210,7 @@ export function SettingsContainer() {
         let resolvedAccountId = selectedAccountId;
         let resolvedScopeSpecialists: SettingsScopeSpecialist[] = [];
 
-        if (isOwner) {
+        if (canManageSystemSettings) {
           const scopeResponse = await apiClient.get<SettingsScopeOptionsResponse>('/api/settings/scope-options', {
             headers: authHeaders(accessToken)
           });
@@ -265,7 +265,7 @@ export function SettingsContainer() {
           const specialistId = user?.role === 'specialist'
             ? null
             : await (async () => {
-              const specialists = isOwner
+              const specialists = canManageSystemSettings
                 ? resolvedScopeSpecialists.filter((item) => !resolvedAccountId || item.accountId === resolvedAccountId)
                 : (await apiClient.get<{ specialists: Array<{ id: number }> }>('/api/specialists', { headers: authHeaders(accessToken) })).data.specialists;
               const stillValid = selectedSpecialistId
