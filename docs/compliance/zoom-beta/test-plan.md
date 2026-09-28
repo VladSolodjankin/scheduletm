@@ -5,6 +5,12 @@ Effective date: 2026-09-28
 This document is the step-by-step test plan referenced from the Zoom Marketplace
 submission's release notes, for use by the Zoom App Review team.
 
+**Verified end-to-end on production (`meetli.cc`) on 2026-09-28** using a real
+test account: connected Zoom via OAuth, created an appointment with Zoom as the
+meeting provider from the internal dashboard, and confirmed a real Zoom join
+link (`us05web.zoom.us/j/...`) was attached to it. The steps below match what
+was actually exercised, not just a theoretical flow.
+
 ## 1. What the app does
 
 Meetli is a scheduling/appointments SaaS. Once a user connects their Zoom account,
@@ -25,6 +31,8 @@ for the full scope-minimality rationale.
 
 Login URL: `https://meetli.cc/login`
 Credentials: provided separately in the Zoom Marketplace "Test account and credentials" field.
+The account has one specialist (`zoomtestowner`) and one bookable service ("Test service",
+30 min) already set up, so the reviewer does not need to create anything before testing.
 
 ## 4. Step-by-step test flow
 
