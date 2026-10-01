@@ -19,6 +19,7 @@ vi.mock('../../config/env', () => ({
   env: {
     webhookSecret: 'test-secret',
     appUrl: 'http://localhost:3000',
+    sessionStateTtlMs: 30 * 60 * 1000,
   },
 }));
 
@@ -61,6 +62,7 @@ vi.mock('../../repositories/user.repository', () => ({
 vi.mock('../../repositories/user-session.repository', () => ({
   findSessionByUserId: findSessionByUserIdMock,
   getSessionPayload: vi.fn(() => ({})),
+  isSessionStateStale: vi.fn(() => false),
   mergeSessionPayload: mergeSessionPayloadMock,
   updateSessionState: updateSessionStateMock,
 }));

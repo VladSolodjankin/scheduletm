@@ -36,6 +36,7 @@ import { getAvailableSlots } from '../services/slot.service';
 import {
   findSessionByUserId,
   getSessionPayload,
+  isSessionStateStale,
   mergeSessionPayload,
   updateSessionState,
 } from '../repositories/user-session.repository';
@@ -233,6 +234,15 @@ telegramWebhookRouter.post(
     const telegramUserId = update.callback_query?.from.id ?? update.message?.from?.id;
     let updateProcessingToken: string | null = null;
     let userProcessingToken: string | null = null;
+    let accountId: number | undefined;
+    let internalUserId: number | undefined;
+
+    const logFields = () => ({
+      request_id: requestId,
+      update_id: updateId,
+      account_id: accountId,
+      user_id: internalUserId,
+    });
 
     const releaseOwnedLeasesForRetry = async () => {
       if (updateId !== undefined && updateProcessingToken) {
@@ -241,11 +251,7 @@ telegramWebhookRouter.post(
         try {
           await releaseProcessingUpdate(updateId, token);
         } catch (error) {
-          logError('webhook.update_lease_release_failed', {
-            request_id: requestId,
-            update_id: updateId,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          logError('webhook.update_lease_release_failed', { ...logFields(), error });
         }
       }
 
@@ -255,20 +261,12 @@ telegramWebhookRouter.post(
         try {
           await releaseTelegramUserLease(telegramUserId, token);
         } catch (error) {
-          logError('webhook.user_lease_release_failed', {
-            request_id: requestId,
-            update_id: updateId,
-            telegram_user_id: telegramUserId,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          logError('webhook.user_lease_release_failed', { ...logFields(), error });
         }
       }
     };
 
-    logInfo('webhook.request_received', {
-      request_id: requestId,
-      update_id: updateId,
-    });
+    logInfo('webhook.request_received', logFields());
 
     try {
       if (updateId !== undefined) {
@@ -276,18 +274,12 @@ telegramWebhookRouter.post(
         const updateClaim = await beginProcessingUpdate(updateId);
 
         if (updateClaim.status === 'processed') {
-          logInfo('webhook.duplicate_update_skipped', {
-            request_id: requestId,
-            update_id: updateId,
-          });
+          logInfo('webhook.duplicate_update_skipped', logFields());
           return res.status(200).json({ ok: true, duplicate: true });
         }
 
         if (updateClaim.status === 'active') {
-          logInfo('webhook.active_update_retry', {
-            request_id: requestId,
-            update_id: updateId,
-          });
+          logInfo('webhook.active_update_retry', logFields());
           return res.status(503).json({ ok: false, retry: true });
         }
 
@@ -301,11 +293,7 @@ telegramWebhookRouter.post(
       if (telegramUserId !== undefined) {
         userProcessingToken = await acquireTelegramUserLease(telegramUserId);
         if (!userProcessingToken) {
-          logInfo('webhook.user_busy', {
-            request_id: requestId,
-            update_id: updateId,
-            telegram_user_id: telegramUserId,
-          });
+          logInfo('webhook.user_busy', logFields());
           await releaseOwnedLeasesForRetry();
           return res.status(503).json({ ok: false, retry: true });
         }
@@ -329,8 +317,16 @@ telegramWebhookRouter.post(
         });
 
         const user = userResult.user;
+        accountId = user.account_id;
+        internalUserId = user.id;
         const lang = normalizeLanguageCode(user.language_code);
         const timezone = user.timezone || await getDefaultTimezone(user.account_id);
+
+        const existingSession = await findSessionByUserId(user.account_id, user.id);
+        if (existingSession && isSessionStateStale(existingSession, env.sessionStateTtlMs)) {
+          await updateSessionState(user.account_id, user.id, UserSessionState.IDLE, {});
+          logInfo('session.state_expired', { ...logFields(), reason: 'ttl_exceeded' });
+        }
 
         if (data.startsWith('service:')) {
           const serviceId = Number(data.split(':')[1]);
@@ -1080,11 +1076,19 @@ telegramWebhookRouter.post(
       });
 
       const user = userResult.user;
+      accountId = user.account_id;
+      internalUserId = user.id;
       const lang = normalizeLanguageCode(user.language_code);
       const timezone = user.timezone || await getDefaultTimezone(user.account_id);
       const firstName = user.first_name || message.from.first_name || 'friend';
       const session = await findSessionByUserId(user.account_id, user.id);
-      const state = (session?.state as UserSessionState | undefined) ?? UserSessionState.IDLE;
+      let state = (session?.state as UserSessionState | undefined) ?? UserSessionState.IDLE;
+
+      if (session && isSessionStateStale(session, env.sessionStateTtlMs)) {
+        await updateSessionState(user.account_id, user.id, UserSessionState.IDLE, {});
+        logInfo('session.state_expired', { ...logFields(), reason: 'ttl_exceeded' });
+        state = UserSessionState.IDLE;
+      }
 
       if (state === UserSessionState.ENTERING_PHONE) {
         const skipText = t(lang, 'booking.skipPhone');
@@ -1104,9 +1108,8 @@ telegramWebhookRouter.post(
             await updateUserByTelegramId(user.account_id, message.from.id, { phone: enteredPhone });
           } else {
             logInfo('client.phone_deduplicated', {
-              accountId: user.account_id,
-              telegramId: message.from.id,
-              existingClientId: existingByPhone.id,
+              ...logFields(),
+              existing_client_id: existingByPhone.id,
             });
           }
         }
@@ -1277,18 +1280,11 @@ telegramWebhookRouter.post(
       }
 
       await sendMessage(chatId, t(lang, 'start.chooseAction'), getMainMenuKeyboard(lang));
-      logInfo('webhook.request_processed', {
-        request_id: requestId,
-        update_id: updateId,
-      });
+      logInfo('webhook.request_processed', logFields());
       return res.status(200).json({ ok: true });
     } catch (error) {
       recordHttp5xx();
-      logError('webhook.request_failed', {
-        request_id: requestId,
-        update_id: updateId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logError('webhook.request_failed', { ...logFields(), error });
       await releaseOwnedLeasesForRetry();
       return res.status(500).json({ ok: false });
     } finally {
@@ -1300,11 +1296,7 @@ telegramWebhookRouter.post(
             await markProcessedUpdate(updateId, updateProcessingToken);
           }
         } catch (error) {
-          logError('webhook.update_lease_finalize_failed', {
-            request_id: requestId,
-            update_id: updateId,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          logError('webhook.update_lease_finalize_failed', { ...logFields(), error });
         }
       }
 
@@ -1312,12 +1304,7 @@ telegramWebhookRouter.post(
         try {
           await releaseTelegramUserLease(telegramUserId, userProcessingToken);
         } catch (error) {
-          logError('webhook.user_lease_release_failed', {
-            request_id: requestId,
-            update_id: updateId,
-            telegram_user_id: telegramUserId,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          logError('webhook.user_lease_release_failed', { ...logFields(), error });
         }
       }
     }

@@ -11,6 +11,7 @@ import { findSpecialistById } from '../repositories/specialist.repository';
 import { createAppointmentGroup } from '../repositories/appointment-group.repository';
 import { toDateTimeFromUtc, toUtcIsoFromTimezone } from '../utils/timezone';
 import { getSpecialistBookingPolicy, getSpecialistCancelGraceHours } from '../repositories/specialist-booking-policy.repository';
+import { db } from '../db/knex';
 
 type CreateBookingAppointmentInput = {
   accountId: number;
@@ -68,32 +69,35 @@ export async function createBookingAppointment(input: CreateBookingAppointmentIn
   });
 
   try {
-    const groupId = sessionCount > 1
-      ? (await createAppointmentGroup({
-        accountId: input.accountId,
-        userId: input.userId,
-        serviceId: input.serviceId,
-        specialistId: input.specialistId,
-        totalSessions: sessionCount,
-        totalPrice,
-        currency: service.currency,
-      })).id
-      : null;
+    const appointments = await db.transaction(async (trx) => {
+      const groupId = sessionCount > 1
+        ? (await createAppointmentGroup({
+          accountId: input.accountId,
+          userId: input.userId,
+          serviceId: input.serviceId,
+          specialistId: input.specialistId,
+          totalSessions: sessionCount,
+          totalPrice,
+          currency: service.currency,
+        }, trx)).id
+        : null;
 
-    const appointments = await createAppointments(
-      appointmentTimes.map((appointmentAt, index) => ({
-        accountId: input.accountId,
-        userId: input.userId,
-        serviceId: input.serviceId,
-        specialistId: input.specialistId,
-        appointmentAt,
-        durationMin: service.duration_min,
-        price: index === 0 ? totalPrice : 0,
-        currency: service.currency,
-        groupId,
-        isPaid: false,
-      })),
-    );
+      return createAppointments(
+        appointmentTimes.map((appointmentAt, index) => ({
+          accountId: input.accountId,
+          userId: input.userId,
+          serviceId: input.serviceId,
+          specialistId: input.specialistId,
+          appointmentAt,
+          durationMin: service.duration_min,
+          price: index === 0 ? totalPrice : 0,
+          currency: service.currency,
+          groupId,
+          isPaid: false,
+        })),
+        trx,
+      );
+    });
 
     return {
       ok: true as const,
@@ -159,32 +163,35 @@ export async function createBookingAppointmentsFromSlots(
   });
 
   try {
-    const groupId = input.slots.length > 1
-      ? (await createAppointmentGroup({
-        accountId: input.accountId,
-        userId: input.userId,
-        serviceId: input.serviceId,
-        specialistId: input.specialistId,
-        totalSessions: input.slots.length,
-        totalPrice,
-        currency: service.currency,
-      })).id
-      : null;
+    const appointments = await db.transaction(async (trx) => {
+      const groupId = input.slots.length > 1
+        ? (await createAppointmentGroup({
+          accountId: input.accountId,
+          userId: input.userId,
+          serviceId: input.serviceId,
+          specialistId: input.specialistId,
+          totalSessions: input.slots.length,
+          totalPrice,
+          currency: service.currency,
+        }, trx)).id
+        : null;
 
-    const appointments = await createAppointments(
-      appointmentTimes.map((appointmentAt, index) => ({
-        accountId: input.accountId,
-        userId: input.userId,
-        serviceId: input.serviceId,
-        specialistId: input.specialistId,
-        appointmentAt,
-        durationMin: service.duration_min,
-        price: index === 0 ? totalPrice : 0,
-        currency: service.currency,
-        groupId,
-        isPaid: false,
-      })),
-    );
+      return createAppointments(
+        appointmentTimes.map((appointmentAt, index) => ({
+          accountId: input.accountId,
+          userId: input.userId,
+          serviceId: input.serviceId,
+          specialistId: input.specialistId,
+          appointmentAt,
+          durationMin: service.duration_min,
+          price: index === 0 ? totalPrice : 0,
+          currency: service.currency,
+          groupId,
+          isPaid: false,
+        })),
+        trx,
+      );
+    });
 
     return {
       ok: true as const,

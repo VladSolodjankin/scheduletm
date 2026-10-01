@@ -108,18 +108,21 @@ describe('createBookingAppointment', () => {
     expect(out.ok).toBe(true);
     if (!out.ok) return;
 
-    expect(createAppointments).toHaveBeenCalledWith([
-      expect.objectContaining({
-        accountId: 7,
-        userId: 1,
-        serviceId: 10,
-        specialistId: 2,
-        appointmentAt: '2026-04-18T06:00:00.000Z',
-        durationMin: 90,
-        price: 5000,
-        currency: 'RUB',
-      }),
-    ]);
+    expect(createAppointments).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          accountId: 7,
+          userId: 1,
+          serviceId: 10,
+          specialistId: 2,
+          appointmentAt: '2026-04-18T06:00:00.000Z',
+          durationMin: 90,
+          price: 5000,
+          currency: 'RUB',
+        }),
+      ],
+      expect.anything(),
+    );
   });
 
   it('creates weekly series when service has multiple sessions', async () => {
@@ -153,13 +156,17 @@ describe('createBookingAppointment', () => {
     expect(out.ok).toBe(true);
     if (!out.ok) return;
 
-    expect(createAppointments).toHaveBeenCalledWith([
-      expect.objectContaining({ appointmentAt: '2026-04-18T06:00:00.000Z', price: 6000, groupId: 99, isPaid: false }),
-      expect.objectContaining({ appointmentAt: '2026-04-25T06:00:00.000Z', price: 0, groupId: 99, isPaid: false }),
-      expect.objectContaining({ appointmentAt: '2026-05-02T06:00:00.000Z', price: 0, groupId: 99, isPaid: false }),
-    ]);
+    expect(createAppointments).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({ appointmentAt: '2026-04-18T06:00:00.000Z', price: 6000, groupId: 99, isPaid: false }),
+        expect.objectContaining({ appointmentAt: '2026-04-25T06:00:00.000Z', price: 0, groupId: 99, isPaid: false }),
+        expect.objectContaining({ appointmentAt: '2026-05-02T06:00:00.000Z', price: 0, groupId: 99, isPaid: false }),
+      ],
+      expect.anything(),
+    );
     expect(createAppointmentGroup).toHaveBeenCalledWith(
       expect.objectContaining({ totalSessions: 3, totalPrice: 6000 }),
+      expect.anything(),
     );
   });
 
@@ -203,13 +210,17 @@ describe('createBookingAppointmentsFromSlots', () => {
     expect(out.ok).toBe(true);
     if (!out.ok) return;
 
-    expect(createAppointments).toHaveBeenCalledWith([
-      expect.objectContaining({ appointmentAt: '2026-04-18T06:00:00.000Z', price: 6000, groupId: 15, isPaid: false }),
-      expect.objectContaining({ appointmentAt: '2026-04-21T08:30:00.000Z', price: 0, groupId: 15, isPaid: false }),
-      expect.objectContaining({ appointmentAt: '2026-04-26T07:00:00.000Z', price: 0, groupId: 15, isPaid: false }),
-    ]);
+    expect(createAppointments).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({ appointmentAt: '2026-04-18T06:00:00.000Z', price: 6000, groupId: 15, isPaid: false }),
+        expect.objectContaining({ appointmentAt: '2026-04-21T08:30:00.000Z', price: 0, groupId: 15, isPaid: false }),
+        expect.objectContaining({ appointmentAt: '2026-04-26T07:00:00.000Z', price: 0, groupId: 15, isPaid: false }),
+      ],
+      expect.anything(),
+    );
     expect(createAppointmentGroup).toHaveBeenCalledWith(
       expect.objectContaining({ totalSessions: 3, totalPrice: 6000 }),
+      expect.anything(),
     );
   });
 

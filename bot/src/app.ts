@@ -119,8 +119,6 @@ bootstrap().catch((error) => {
     path: '/process/bootstrap',
     error,
   });
-  logError('app.bootstrap_failed', {
-    error: error instanceof Error ? error.message : String(error),
-  });
+  logError('app.bootstrap_failed', { error });
   process.exit(1);
 });

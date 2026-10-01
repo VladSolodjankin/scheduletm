@@ -11,9 +11,7 @@ export function startReminderJob(intervalMs = DEFAULT_INTERVAL_MS) {
         logInfo('reminder.job_processed', { processed });
       }
     } catch (error) {
-      logError('reminder.job_failed', {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logError('reminder.job_failed', { error });
     }
   }, intervalMs);
 

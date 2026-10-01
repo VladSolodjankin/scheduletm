@@ -95,3 +95,20 @@ export async function getSessionPayload(accountId: number, userId: number): Prom
 export async function deleteExpiredSessions(cutoff: Date): Promise<number> {
   return db('telegram_user_sessions').where('updated_at', '<', cutoff).delete();
 }
+
+export function isSessionStateStale(
+  session: { state?: string; updated_at?: string | Date },
+  ttlMs: number,
+  now = new Date(),
+): boolean {
+  if (!session.updated_at || session.state === UserSessionState.IDLE) {
+    return false;
+  }
+
+  const updatedAt = new Date(session.updated_at).getTime();
+  if (Number.isNaN(updatedAt)) {
+    return false;
+  }
+
+  return now.getTime() - updatedAt > ttlMs;
+}

@@ -61,6 +61,7 @@ import {
   createSession,
   getOrCreateSession,
   getSessionPayload,
+  isSessionStateStale,
   mergeSessionPayload,
   updateSessionState,
 } from '../user-session.repository';
@@ -182,5 +183,41 @@ describe('user-session.repository', () => {
 
     const out = await getSessionPayload(7, 10);
     expect(out).toEqual({});
+  });
+
+  describe('isSessionStateStale', () => {
+    const now = new Date('2026-01-01T12:00:00.000Z');
+
+    it('is never stale while idle, regardless of age', () => {
+      expect(isSessionStateStale(
+        { state: UserSessionState.IDLE, updated_at: new Date('2020-01-01').toISOString() },
+        30 * 60 * 1000,
+        now,
+      )).toBe(false);
+    });
+
+    it('is not stale when within the TTL window', () => {
+      expect(isSessionStateStale(
+        { state: UserSessionState.ENTERING_PHONE, updated_at: new Date(now.getTime() - 10 * 60 * 1000).toISOString() },
+        30 * 60 * 1000,
+        now,
+      )).toBe(false);
+    });
+
+    it('is stale once a non-idle session exceeds the TTL', () => {
+      expect(isSessionStateStale(
+        { state: UserSessionState.ENTERING_PHONE, updated_at: new Date(now.getTime() - 31 * 60 * 1000).toISOString() },
+        30 * 60 * 1000,
+        now,
+      )).toBe(true);
+    });
+
+    it('is not stale when updated_at is missing', () => {
+      expect(isSessionStateStale(
+        { state: UserSessionState.CONFIRMING },
+        30 * 60 * 1000,
+        now,
+      )).toBe(false);
+    });
   });
 });

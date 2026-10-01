@@ -55,4 +55,8 @@ export const env = {
     'TELEGRAM_USER_SESSION_CLEANUP_INTERVAL_MS',
     24 * 60 * 60 * 1000,
   ),
+  sessionStateTtlMs: getPositiveNumber(
+    'TELEGRAM_SESSION_STATE_TTL_MS',
+    30 * 60 * 1000,
+  ),
 };

@@ -60,4 +60,26 @@ describe('logger', () => {
       message: '[redacted]',
     });
   });
+
+  it('allows the internal user_id for correlation but drops the raw telegram id', () => {
+    expect(sanitizeLogValue({
+      account_id: 1,
+      user_id: 42,
+      telegram_user_id: 999999,
+      telegramId: 999999,
+    })).toEqual({
+      account_id: 1,
+      user_id: 42,
+      telegram_user_id: '[redacted]',
+    });
+  });
+
+  it('omits undefined allowlisted fields instead of stringifying them', () => {
+    const output = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    logInfo('test.event', { account_id: undefined, request_id: 'req-1' });
+
+    const payload = JSON.parse(String(output.mock.calls[0]?.[0]));
+    expect(payload.request_id).toBe('req-1');
+    expect('account_id' in payload).toBe(false);
+  });
 });

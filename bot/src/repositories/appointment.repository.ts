@@ -1,3 +1,4 @@
+import { Knex } from 'knex';
 import { db } from '../db/knex';
 import { getUtcRangeForTimezoneDate, toDateTimeFromUtc } from '../utils/timezone';
 
@@ -106,35 +107,44 @@ export async function createAppointment(input: CreateAppointmentInput) {
   return appointment;
 }
 
-export async function createAppointments(input: CreateAppointmentInput[]) {
+async function insertAppointments(conn: Knex | Knex.Transaction, input: CreateAppointmentInput[]) {
+  const created = [];
+
+  for (const item of input) {
+    const [appointment] = await conn('appointments')
+      .insert({
+        account_id: item.accountId,
+        user_id: item.userId,
+        service_id: item.serviceId,
+        specialist_id: item.specialistId,
+        appointment_at: item.appointmentAt,
+        duration_min: item.durationMin,
+        status: 'new',
+        comment: item.comment ?? null,
+        price: item.price,
+        currency: item.currency,
+        group_id: item.groupId ?? null,
+        is_paid: item.isPaid ?? false,
+      })
+      .returning('*');
+
+    created.push(appointment);
+  }
+
+  return created;
+}
+
+export async function createAppointments(
+  input: CreateAppointmentInput[],
+  trx?: Knex.Transaction,
+) {
   if (!input.length) return [];
 
-  return db.transaction(async (trx) => {
-    const created = [];
+  if (trx) {
+    return insertAppointments(trx, input);
+  }
 
-    for (const item of input) {
-      const [appointment] = await trx('appointments')
-        .insert({
-          account_id: item.accountId,
-          user_id: item.userId,
-          service_id: item.serviceId,
-          specialist_id: item.specialistId,
-          appointment_at: item.appointmentAt,
-          duration_min: item.durationMin,
-          status: 'new',
-          comment: item.comment ?? null,
-          price: item.price,
-          currency: item.currency,
-          group_id: item.groupId ?? null,
-          is_paid: item.isPaid ?? false,
-        })
-        .returning('*');
-
-      created.push(appointment);
-    }
-
-    return created;
-  });
+  return db.transaction((newTrx) => insertAppointments(newTrx, input));
 }
 
 export async function findUserAppointments(accountId: number, userId: number) {

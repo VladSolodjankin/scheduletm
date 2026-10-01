@@ -12,12 +12,20 @@
 - [x] Межпроцессная защита от гонок callback/query для одного пользователя.
   - [x] DB lease по `telegram_user_id` сериализует flow между несколькими bot instances.
   - [x] При занятом lease webhook возвращает retryable `503`, чтобы Telegram повторил update.
-  - [ ] Атомарные операции в БД на критичных шагах state machine.
-- [ ] Recovery состояния после рестартов (session restore + TTL).
+  - [x] Атомарные операции в БД на критичных шагах state machine.
+    - Создание appointment_group и appointments для multi-session booking обёрнуто
+      в одну DB-транзакцию (`db.transaction`), так что конфликт слота больше не
+      оставляет orphaned `appointment_groups` без записей.
+- [x] Recovery состояния после рестартов (session restore + TTL).
+  - Короткий `TELEGRAM_SESSION_STATE_TTL_MS` (по умолчанию 30 минут) сбрасывает
+    "зависшую" не-idle сессию в IDLE при следующем взаимодействии, независимо
+    от долгого retention для полной очистки строки (`TELEGRAM_USER_SESSION_RETENTION_MS`).
 
 ## Наблюдаемость
 
-- [ ] Structured logs: `request_id`, `update_id`, `account_id`, `user_id`.
+- [x] Structured logs: `request_id`, `update_id`, `account_id`, `user_id`.
+  - `account_id`/`user_id` (внутренний numeric id клиента, не telegram id)
+    теперь прокинуты через все ключевые события webhook-обработчика.
 - [ ] Метрики latency/error/notification-failed.
 - [ ] Алерты: 5xx, нет входящих updates, рост failed уведомлений.
 - [ ] Post-deploy smoke-дашборд на первые 60 минут после релиза.
@@ -25,8 +33,13 @@
 ## Безопасность
 
 - [ ] Надежный `WEBHOOK_SECRET` + ротация.
-- [ ] Rate-limit и anti-spam на webhook.
-- [ ] Маскирование PII (phone/email) в логах.
+- [x] Rate-limit и anti-spam на webhook.
+  - `createWebhookRateLimiter` подключен в `app.ts` на `/telegram/webhook/:secret`.
+- [x] Маскирование PII (phone/email) в логах.
+  - Логгер редактирует по allowlist ключей; исправлены места, которые обходили
+    его и писали сырые ошибки (включая Brevo API key и email) напрямую в
+    `console.error` (`webUserOnboarding.service.ts`, `errorTracking.service.ts`
+    и несколько catch-блоков в `telegramWebhook.ts`/`app.ts`/job'ах).
 - [ ] Проверка маскирования выборкой production-подобных webhook/event логов.
 
 ## База данных

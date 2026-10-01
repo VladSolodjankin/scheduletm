@@ -10,6 +10,7 @@ const ALLOWED_KEYS = new Set([
   'count',
   'deleted_count',
   'error',
+  'existing_client_id',
   'last_error_date',
   'level',
   'message',
@@ -25,9 +26,12 @@ const ALLOWED_KEYS = new Set([
   'status',
   'ts',
   'update_id',
+  'user_id',
 ]);
 
-const REDACTED_KEYS = /^(?:authorization|body|chat(?:_id)?|email|first_?name|ip|last_?name|message(?:_text)?|payload(?:_json)?|phone|recipient|secret|token|url|user(?:_id)?)$/i;
+// `user_id` refers to the app's own internal client id (a sequential integer), never the
+// raw Telegram user id, which stays out of ALLOWED_KEYS and is dropped like other PII.
+const REDACTED_KEYS = /^(?:authorization|body|chat(?:_id)?|email|first_?name|ip|last_?name|message(?:_text)?|payload(?:_json)?|phone|recipient|secret|telegram(?:_user)?_id|token|url)$/i;
 const MAX_DEPTH = 5;
 const MAX_STRING_LENGTH = 500;
 
@@ -40,6 +44,7 @@ function sanitizeError(error: Error): Record<string, unknown> {
 
 export function sanitizeLogValue(value: unknown, depth = 0): unknown {
   if (depth > MAX_DEPTH) return '[truncated]';
+  if (value === undefined) return undefined;
   if (value instanceof Error) return sanitizeError(value);
   if (value === null || typeof value === 'boolean' || typeof value === 'number') return value;
   if (typeof value === 'string') return value.slice(0, MAX_STRING_LENGTH);

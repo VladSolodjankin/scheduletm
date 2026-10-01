@@ -2,6 +2,7 @@ import axios from 'axios';
 import crypto from 'node:crypto';
 import { db } from '../db/knex';
 import { env } from '../config/env';
+import { logError } from '../utils/logger';
 
 const BREVO_SEND_EMAIL_URL = 'https://api.brevo.com/v3/smtp/email';
 
@@ -57,7 +58,8 @@ async function sendManagedUserInviteEmail(input: {
 
     return true;
   } catch (error) {
-    console.error('[bot:web-user-onboarding] invite-email-failed', error);
+    const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+    logError('web_user_onboarding.invite_email_failed', { status, error });
     return false;
   }
 }

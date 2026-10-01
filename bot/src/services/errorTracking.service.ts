@@ -1,4 +1,5 @@
 import { db } from '../db/knex';
+import { logError } from '../utils/logger';
 
 const ERROR_MESSAGE_MAX = 2000;
 const ERROR_STACK_MAX = 6000;
@@ -35,7 +36,11 @@ export async function trackBotError(input: {
       created_at: db.fn.now(),
     });
   } catch (trackingError) {
-    console.error('[error-tracking] trackBotError failed', trackingError);
-    console.error('[error-tracking] original bot error', error);
+    logError('error_tracking.persist_failed', {
+      error: trackingError instanceof Error ? trackingError.message : String(trackingError),
+    });
+    logError('error_tracking.original_bot_error', {
+      error: message,
+    });
   }
 }

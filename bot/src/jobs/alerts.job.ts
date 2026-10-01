@@ -12,9 +12,7 @@ export function startAlertsJob(
     try {
       await runAlertChecks({ noUpdatesThresholdMs, failedGrowthThreshold });
     } catch (error) {
-      logError('alerts.job_failed', {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      logError('alerts.job_failed', { error });
     }
   }, intervalMs);
 

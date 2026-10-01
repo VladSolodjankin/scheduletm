@@ -1,3 +1,4 @@
+import { Knex } from 'knex';
 import { db } from '../db/knex';
 
 type CreateAppointmentGroupInput = {
@@ -10,8 +11,11 @@ type CreateAppointmentGroupInput = {
   currency: string;
 };
 
-export async function createAppointmentGroup(input: CreateAppointmentGroupInput) {
-  const [group] = await db('appointment_groups')
+export async function createAppointmentGroup(
+  input: CreateAppointmentGroupInput,
+  conn: Knex | Knex.Transaction = db,
+) {
+  const [group] = await conn('appointment_groups')
     .insert({
       account_id: input.accountId,
       user_id: input.userId,
