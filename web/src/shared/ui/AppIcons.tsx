@@ -1,6 +1,7 @@
 import AddRounded from '@mui/icons-material/AddRounded';
 import BlockRounded from '@mui/icons-material/BlockRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
+import ContentCopyRounded from '@mui/icons-material/ContentCopyRounded';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import DeleteRounded from '@mui/icons-material/DeleteRounded';
 import EditRounded from '@mui/icons-material/EditRounded';
@@ -13,6 +14,7 @@ import LoginRounded from '@mui/icons-material/LoginRounded';
 import LogoutRounded from '@mui/icons-material/LogoutRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
 import NotificationsRounded from '@mui/icons-material/NotificationsRounded';
+import OpenInNewRounded from '@mui/icons-material/OpenInNewRounded';
 import PaletteRounded from '@mui/icons-material/PaletteRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
@@ -25,6 +27,7 @@ export const AppIcons = {
   add: AddRounded,
   deactivate: BlockRounded,
   close: CloseRounded,
+  copy: ContentCopyRounded,
   darkMode: DarkModeRounded,
   delete: DeleteRounded,
   edit: EditRounded,
@@ -37,6 +40,7 @@ export const AppIcons = {
   logout: LogoutRounded,
   menu: MenuRounded,
   notifications: NotificationsRounded,
+  openLink: OpenInNewRounded,
   publicPages: WebRounded,
   palette: PaletteRounded,
   filters: TuneRounded,

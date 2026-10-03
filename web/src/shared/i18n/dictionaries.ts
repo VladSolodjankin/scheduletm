@@ -518,6 +518,9 @@ export const dictionaries = {
       recurrence: 'Repeat', recurrenceNone: 'Does not repeat', recurrenceDaily: 'Daily',
       recurrenceWeekly: 'Weekly', recurrenceOccurrences: 'Occurrences',
       generateMeetingLink: 'Generate meeting link',
+      copyMeetingLink: 'Copy meeting link',
+      openMeetingLink: 'Open meeting link',
+      meetingLinkCopied: 'Meeting link copied',
       errors: {
         load: 'Unable to load appointments.',
         save: 'Unable to save appointment.',
@@ -561,6 +564,15 @@ export const dictionaries = {
       accessCode: 'Access code', accessCodeHint: 'You received this code when you booked the appointment.',
       submit: 'Check status', minutes: 'min',
       status: 'Status', openMeeting: 'Open meeting', errors: { load: 'Appointment was not found.' }
+    },
+    appointmentManage: {
+      title: 'Manage appointment', specialist: 'Specialist', service: 'Service',
+      scheduledAt: 'Date and time', duration: 'Duration', minutes: 'min', status: 'Status',
+      openMeeting: 'Open meeting', cancelAction: 'Cancel appointment', rescheduleAction: 'Reschedule',
+      rescheduleLabel: 'New date and time', rescheduleSubmit: 'Confirm new time', rescheduleCancel: 'Close',
+      cancelConfirmTitle: 'Cancel appointment', cancelConfirmDescription: 'Are you sure you want to cancel this appointment?',
+      notManageable: 'This appointment can no longer be changed.',
+      errors: { load: 'Link is invalid or has expired.', cancel: 'Unable to cancel appointment.', reschedule: 'Unable to reschedule appointment.' },
     },
     publicPageBuilder: {
      pages: 'Public pages', editorWorkspaceTitle: 'Public Pages · Editor', pagesSubtitle: 'Create, publish and manage account pages.',
@@ -1189,6 +1201,9 @@ export const dictionaries = {
       recurrence: 'Повтор', recurrenceNone: 'Не повторять', recurrenceDaily: 'Каждый день',
       recurrenceWeekly: 'Каждую неделю', recurrenceOccurrences: 'Количество встреч',
       generateMeetingLink: 'Сгенерировать ссылку на встречу',
+      copyMeetingLink: 'Копировать ссылку на встречу',
+      openMeetingLink: 'Открыть ссылку на встречу',
+      meetingLinkCopied: 'Ссылка скопирована',
       errors: {
         load: 'Не удалось загрузить записи.',
         save: 'Не удалось сохранить запись.',
@@ -1232,6 +1247,15 @@ export const dictionaries = {
       accessCode: 'Код доступа', accessCodeHint: 'Этот код вы получили при бронировании встречи.',
       submit: 'Проверить статус', minutes: 'мин',
       status: 'Статус', openMeeting: 'Открыть встречу', errors: { load: 'Встреча не найдена.' }
+    },
+    appointmentManage: {
+      title: 'Управление записью', specialist: 'Специалист', service: 'Услуга',
+      scheduledAt: 'Дата и время', duration: 'Длительность', minutes: 'мин', status: 'Статус',
+      openMeeting: 'Открыть встречу', cancelAction: 'Отменить запись', rescheduleAction: 'Перенести',
+      rescheduleLabel: 'Новая дата и время', rescheduleSubmit: 'Подтвердить новое время', rescheduleCancel: 'Закрыть',
+      cancelConfirmTitle: 'Отмена записи', cancelConfirmDescription: 'Вы уверены, что хотите отменить эту запись?',
+      notManageable: 'Эту запись больше нельзя изменить.',
+      errors: { load: 'Ссылка недействительна или устарела.', cancel: 'Не удалось отменить запись.', reschedule: 'Не удалось перенести запись.' },
     },
     publicPageBuilder: {
       unknownBlockTitle: 'Неподдерживаемый блок',
@@ -1350,6 +1374,8 @@ type PublicBookingTranslationKey = `publicBooking.${Exclude<keyof typeof diction
   | `publicBooking.errors.${keyof typeof dictionaries.en.publicBooking.errors}`;
 type PublicStatusTranslationKey = `publicStatus.${Exclude<keyof typeof dictionaries.en.publicStatus, 'errors'>}`
   | `publicStatus.errors.${keyof typeof dictionaries.en.publicStatus.errors}`;
+type AppointmentManageTranslationKey = `appointmentManage.${Exclude<keyof typeof dictionaries.en.appointmentManage, 'errors'>}`
+  | `appointmentManage.errors.${keyof typeof dictionaries.en.appointmentManage.errors}`;
 type ServicesTranslationKey = `services.${Exclude<keyof typeof dictionaries.en.services, 'errors'>}`
   | `services.errors.${keyof typeof dictionaries.en.services.errors}`;
 
@@ -1357,6 +1383,7 @@ export type TranslationKey =
   | PublicPageBuilderTranslationKey
   | PublicBookingTranslationKey
   | PublicStatusTranslationKey
+  | AppointmentManageTranslationKey
   | ServicesTranslationKey
   | 'publicPageBuilder.unknownBlockTitle'
   | 'publicPageBuilder.unknownBlockDescription'
@@ -1709,6 +1736,9 @@ export type TranslationKey =
   | 'appointments.recurrenceWeekly'
   | 'appointments.recurrenceOccurrences'
   | 'appointments.generateMeetingLink'
+  | 'appointments.copyMeetingLink'
+  | 'appointments.openMeetingLink'
+  | 'appointments.meetingLinkCopied'
   | 'appointments.errors.load'
   | 'appointments.errors.save'
   | 'appointments.errors.cancel'

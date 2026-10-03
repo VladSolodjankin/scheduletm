@@ -47,6 +47,7 @@ const PublicPageViewPage = lazy(async () => {
 });
 const PublicPageBookingPage = lazy(() => import('../pages/PublicPageBookingPage').then((module) => ({ default: module.PublicPageBookingPage })));
 const PublicAppointmentStatusPage = lazy(() => import('../pages/PublicAppointmentStatusPage').then((module) => ({ default: module.PublicAppointmentStatusPage })));
+const AppointmentManagePage = lazy(() => import('../pages/AppointmentManagePage').then((module) => ({ default: module.AppointmentManagePage })));
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuth();
@@ -187,6 +188,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/:slug/booking', element: <PublicPageBookingPage /> },
       { path: '/:slug/appointment-status', element: <PublicAppointmentStatusPage /> },
+      { path: '/appointments/manage/:token', element: <AppointmentManagePage /> },
       { path: '/:slug', element: <PublicPageViewPage /> },
     ]
   }

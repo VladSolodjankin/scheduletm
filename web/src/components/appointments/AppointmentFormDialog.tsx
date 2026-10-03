@@ -1,10 +1,14 @@
 import {
+  Avatar,
   Box,
   Collapse,
   FormControl,
+  IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
+  Snackbar,
   Stack,
   Typography,
 } from '@mui/material';
@@ -13,9 +17,11 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { AppointmentItem, AppointmentStatus, ClientItem, SpecialistItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppDialog } from '../../shared/ui/AppDialog';
+import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
 import { isValidPhoneValue } from '../../shared/ui/phoneUtils';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
+import { toInitials } from '../../shared/utils/initials';
 import {
   BROWSER_TIMEZONE,
   buildStartEndIso,
@@ -55,6 +61,7 @@ type Props = {
   initialScheduledAtIso: string | null;
   isSubmittingForm: boolean;
   accessToken: string;
+  isClient?: boolean;
   isCancellingAppointment: boolean;
   isMarkingPaid: boolean;
   isNotifyingClient: boolean;
@@ -119,6 +126,7 @@ export function AppointmentFormDialog({
   initialScheduledAtIso,
   isSubmittingForm,
   accessToken,
+  isClient = false,
   isCancellingAppointment,
   isMarkingPaid,
   isNotifyingClient,
@@ -133,6 +141,9 @@ export function AppointmentFormDialog({
   const [formTimeZone, setFormTimeZone] = useState(BROWSER_TIMEZONE);
   const [isGeneratingMeetingLink, setIsGeneratingMeetingLink] = useState(false);
   const [generateMeetingLinkError, setGenerateMeetingLinkError] = useState('');
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
+
+  const isClientRestricted = isClient && Boolean(editingItem);
 
   const initialValues = useMemo(() => {
     const defaultSpecialistId = selectedSpecialistId === 'all' ? specialists[0]?.id : selectedSpecialistId;
@@ -229,6 +240,7 @@ export function AppointmentFormDialog({
   const startTimeValue = useWatch({ control, name: 'startTime' });
   const endTimeValue = useWatch({ control, name: 'endTime' });
   const meetingProviderValue = useWatch({ control, name: 'meetingProvider' });
+  const meetingLinkValue = useWatch({ control, name: 'meetingLink' });
   const recurrenceFrequency = useWatch({ control, name: 'recurrenceFrequency' });
 
   useEffect(() => {
@@ -309,6 +321,7 @@ export function AppointmentFormDialog({
   };
 
   return (
+    <>
     <AppDialog
       open={open}
       onClose={handleClose}
@@ -373,11 +386,29 @@ export function AppointmentFormDialog({
                     labelId="specialist-label"
                     label={t('appointments.specialistFilter')}
                     value={field.value}
-                    disabled={Boolean(editingItem)}
+                    disabled={Boolean(editingItem) || isClientRestricted}
+                    renderValue={(value) => {
+                      const selectedSpecialist = specialists.find((specialist) => String(specialist.id) === String(value));
+                      if (!selectedSpecialist) {
+                        return '';
+                      }
+
+                      return (
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                          <Avatar className="app-avatar--xs">{toInitials(selectedSpecialist.name)}</Avatar>
+                          <span>{selectedSpecialist.name}</span>
+                        </Stack>
+                      );
+                    }}
                     onChange={(event) => field.onChange(String(event.target.value))}
                   >
                     {specialists.map((specialist) => (
-                      <MenuItem key={specialist.id} value={String(specialist.id)}>{specialist.name}</MenuItem>
+                      <MenuItem key={specialist.id} value={String(specialist.id)}>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                          <Avatar className="app-avatar--xs">{toInitials(specialist.name)}</Avatar>
+                          <span>{specialist.name}</span>
+                        </Stack>
+                      </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -388,7 +419,7 @@ export function AppointmentFormDialog({
               control={control}
               render={({ field }: any) => (
                 <FormControl fullWidth>
-                  <InputLabel id="client-label">{t('appointments.client')}</InputLabel>
+                  <InputLabel id="client-label" shrink>{t('appointments.client')}</InputLabel>
                   <Select
                     labelId="client-label"
                     label={t('appointments.client')}
@@ -400,14 +431,32 @@ export function AppointmentFormDialog({
                       }
 
                       const selectedClient = clients.find((client) => String(client.id) === String(value));
-                      return selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}`.trim() : t('appointments.newClient');
+                      if (!selectedClient) {
+                        return t('appointments.newClient');
+                      }
+
+                      const clientName = `${selectedClient.firstName} ${selectedClient.lastName}`.trim();
+                      return (
+                        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                          <Avatar className="app-avatar--xs">{toInitials(clientName)}</Avatar>
+                          <span>{clientName}</span>
+                        </Stack>
+                      );
                     }}
                     onChange={(event) => field.onChange(String(event.target.value))}
                   >
                     <MenuItem value="">{t('appointments.newClient')}</MenuItem>
-                    {clients.map((client) => (
-                      <MenuItem key={client.id} value={String(client.id)}>{`${client.firstName} ${client.lastName}`.trim()}</MenuItem>
-                    ))}
+                    {clients.map((client) => {
+                      const clientName = `${client.firstName} ${client.lastName}`.trim();
+                      return (
+                        <MenuItem key={client.id} value={String(client.id)}>
+                          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                            <Avatar className="app-avatar--xs">{toInitials(clientName)}</Avatar>
+                            <span>{clientName}</span>
+                          </Stack>
+                        </MenuItem>
+                      );
+                    })}
                   </Select>
                 </FormControl>
               )}
@@ -472,6 +521,7 @@ export function AppointmentFormDialog({
                     labelId="status-label"
                     label={t('appointments.fields.status')}
                     value={field.value}
+                    disabled={isClientRestricted}
                     onChange={(event) => field.onChange(event.target.value as AppointmentStatus)}
                   >
                     {STATUS_OPTIONS.map((status) => (
@@ -491,6 +541,7 @@ export function AppointmentFormDialog({
                     labelId="meeting-provider-label"
                     label={t('appointments.fields.meetingProvider')}
                     value={field.value}
+                    disabled={isClientRestricted}
                     onChange={(event) => field.onChange(event.target.value as 'manual' | 'zoom' | 'offline')}
                   >
                     <MenuItem value="manual">{t('appointments.meetingProviderManual')}</MenuItem>
@@ -500,7 +551,7 @@ export function AppointmentFormDialog({
                 </FormControl>
               )}
             />
-            {meetingProviderValue === 'zoom' && (
+            {meetingProviderValue === 'zoom' && !isClientRestricted && (
               <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}>
                 <AppButton
                   onClick={handleGenerateMeetingLink}
@@ -525,6 +576,38 @@ export function AppointmentFormDialog({
                   field={field}
                   label={t('appointments.fields.meetingLink')}
                   sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}
+                  slotProps={{
+                    input: {
+                      readOnly: isClientRestricted,
+                      endAdornment: meetingLinkValue ? (
+                        <InputAdornment position="end">
+                          <IconButton
+                            edge="end"
+                            size="small"
+                            aria-label={t('appointments.copyMeetingLink')}
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(meetingLinkValue);
+                                setIsLinkCopied(true);
+                              } catch {
+                                // Clipboard access denied - ничего не делаем.
+                              }
+                            }}
+                          >
+                            <AppIcons.copy fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            edge="end"
+                            size="small"
+                            aria-label={t('appointments.openMeetingLink')}
+                            onClick={() => window.open(meetingLinkValue, '_blank', 'noopener,noreferrer')}
+                          >
+                            <AppIcons.openLink fontSize="small" />
+                          </IconButton>
+                        </InputAdornment>
+                      ) : undefined,
+                    },
+                  }}
                 />
               )}
             />
@@ -611,5 +694,12 @@ export function AppointmentFormDialog({
           )}
         </Stack>
     </AppDialog>
+    <Snackbar
+      open={isLinkCopied}
+      autoHideDuration={2000}
+      onClose={() => setIsLinkCopied(false)}
+      message={t('appointments.meetingLinkCopied')}
+    />
+    </>
   );
 }

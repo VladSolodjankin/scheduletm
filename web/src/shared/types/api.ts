@@ -280,6 +280,21 @@ export type PublicAppointmentMeetingStatus = {
   };
 };
 
+export type AppointmentManagementDetails = {
+  status: AppointmentStatus;
+  scheduledAt: string;
+  durationMin: number;
+  service: string;
+  specialist: string;
+  meeting: {
+    provider: 'manual' | 'zoom' | 'offline';
+    meetingUrl?: string;
+    location?: string;
+  };
+  canCancel: boolean;
+  canReschedule: boolean;
+};
+
 export type ManagedUserDeleteImpact = {
   userId: number;
   specialistAppointmentCount: number;
