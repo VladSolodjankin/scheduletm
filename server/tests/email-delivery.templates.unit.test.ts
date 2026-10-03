@@ -62,6 +62,44 @@ describe('branded email payloads', () => {
     }
   });
 
+  it('renders a structured details block with service, duration, meeting link and manage CTA', async () => {
+    await emails.sendAppointmentNotificationEmail({
+      to: recipient,
+      clientName: name,
+      specialistName: 'Doctor <A> & B',
+      scheduledAt,
+      notificationType: 'appointment_created',
+      serviceName: 'Consultation <X>',
+      durationMin: 45,
+      meetingLink: 'https://zoom.us/j/123',
+      meetingProvider: 'zoom',
+      manageUrl: 'https://meetli.cc/appointments/manage/token123',
+    });
+
+    const [, payload] = axiosPostMock.mock.calls[0]!;
+    expect(payload.htmlContent).toContain('Consultation &lt;X&gt;');
+    expect(payload.htmlContent).toContain('45 мин');
+    expect(payload.htmlContent).toContain('https://zoom.us/j/123');
+    expect(payload.htmlContent).toContain('href="https://meetli.cc/appointments/manage/token123"');
+    expect(payload.textContent).toContain('Consultation <X>');
+    expect(payload.textContent).toContain('45 мин');
+  });
+
+  it('omits the meeting link row for a cancelled appointment', async () => {
+    await emails.sendAppointmentNotificationEmail({
+      to: recipient,
+      clientName: name,
+      specialistName: 'Doctor',
+      scheduledAt,
+      notificationType: 'appointment_cancelled',
+      meetingLink: 'https://zoom.us/j/123',
+      meetingProvider: 'zoom',
+    });
+
+    const [, payload] = axiosPostMock.mock.calls[0]!;
+    expect(payload.htmlContent).not.toContain('https://zoom.us/j/123');
+  });
+
   it('retains greeting fallbacks and long names without truncating content', async () => {
     await emails.sendPasswordResetEmail({ to: recipient, resetCode: '0042', locale: 'en', firstName: ' ' });
     expect(axiosPostMock.mock.calls[0]![1].textContent).toContain('Hello, there!');

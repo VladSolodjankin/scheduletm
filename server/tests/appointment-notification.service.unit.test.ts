@@ -6,6 +6,8 @@ const findSpecialistByIdMock = vi.hoisted(() => vi.fn());
 const sendAppointmentNotificationEmailMock = vi.hoisted(() => vi.fn());
 const findTelegramIntegrationByAccountIdMock = vi.hoisted(() => vi.fn());
 const sendTelegramBotMessageMock = vi.hoisted(() => vi.fn());
+const findServiceMock = vi.hoisted(() => vi.fn());
+const getOrCreateAppointmentManageUrlMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../src/services/notificationSettingsService.js', () => ({
   getEffectiveNotificationSetting: getEffectiveNotificationSettingMock,
@@ -27,6 +29,14 @@ vi.mock('../src/services/telegramService.js', () => ({
   sendTelegramBotMessage: sendTelegramBotMessageMock,
 }));
 
+vi.mock('../src/repositories/serviceRepository.js', () => ({
+  findService: findServiceMock,
+}));
+
+vi.mock('../src/services/appointmentManagementTokenService.js', () => ({
+  getOrCreateAppointmentManageUrl: getOrCreateAppointmentManageUrlMock,
+}));
+
 describe('appointment notification service unit', () => {
   beforeEach(() => {
     getEffectiveNotificationSettingMock.mockReset();
@@ -34,6 +44,10 @@ describe('appointment notification service unit', () => {
     sendAppointmentNotificationEmailMock.mockReset();
     findTelegramIntegrationByAccountIdMock.mockReset();
     sendTelegramBotMessageMock.mockReset();
+    findServiceMock.mockReset();
+    getOrCreateAppointmentManageUrlMock.mockReset();
+    findServiceMock.mockResolvedValue({ name: 'Consultation' });
+    getOrCreateAppointmentManageUrlMock.mockResolvedValue('https://meetli.cc/appointments/manage/token123');
   });
 
   it('does not send when notification type disabled', async () => {
@@ -132,6 +146,46 @@ describe('appointment notification service unit', () => {
 
     expect(result.delivered).toBe(true);
     expect(sendAppointmentNotificationEmailMock).toHaveBeenCalledOnce();
+    expect(sendAppointmentNotificationEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        serviceName: 'Consultation',
+        durationMin: 30,
+        manageUrl: 'https://meetli.cc/appointments/manage/token123',
+      }),
+    );
+  });
+
+  it('does not create a manage-url token for a cancellation notification', async () => {
+    getEffectiveNotificationSettingMock.mockResolvedValue(
+      { notificationType: 'appointment_cancelled', preferredChannel: 'email', deliveryChannels: ['email'], enabled: true, sendTimings: ['24h'], frequency: 'immediate', deniedByClient: false },
+    );
+    findSpecialistByIdMock.mockResolvedValue({ name: 'Dr. Test' });
+    sendAppointmentNotificationEmailMock.mockResolvedValue(true);
+
+    await sendAppointmentNotificationByType({
+      accountId: 1,
+      notificationType: 'appointment_cancelled',
+      appointment: {
+        id: 1,
+        account_id: 1,
+        specialist_id: 1,
+        appointment_at: new Date('2026-04-26T10:00:00.000Z'),
+        status: 'cancelled',
+        comment: null,
+        duration_min: 30,
+        is_paid: false,
+        user_id: 5,
+        service_id: 1,
+        created_at: new Date(),
+        updated_at: new Date(),
+        client_email: 'a@b.com',
+      },
+    });
+
+    expect(getOrCreateAppointmentManageUrlMock).not.toHaveBeenCalled();
+    expect(sendAppointmentNotificationEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({ manageUrl: undefined }),
+    );
   });
 
   it('returns client_deny when denied by client channel override (edge case)', async () => {

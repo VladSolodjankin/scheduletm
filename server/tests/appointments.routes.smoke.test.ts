@@ -16,9 +16,11 @@ vi.mock('../src/services/authService.js', () => ({
   resolveUserByAccessToken: resolveUserByAccessTokenMock,
 }));
 
+const updateAppointmentForActorMock = vi.hoisted(() => vi.fn());
+
 vi.mock('../src/services/appointmentService.js', () => ({
   getAppointments: getAppointmentsMock,
-  updateAppointmentForActor: vi.fn(),
+  updateAppointmentForActor: updateAppointmentForActorMock,
   createAppointmentForActor: createAppointmentForActorMock,
   rescheduleAppointmentForActor: rescheduleAppointmentForActorMock,
   cancelAppointmentForActor: cancelAppointmentForActorMock,
@@ -60,6 +62,7 @@ describe('appointments API route-smoke scenarios (mocked service layer)', () => 
     resolveUserByAccessTokenMock.mockReset();
     createAppointmentForActorMock.mockReset();
     getAppointmentsMock.mockReset();
+    updateAppointmentForActorMock.mockReset();
     rescheduleAppointmentForActorMock.mockReset();
     cancelAppointmentForActorMock.mockReset();
     markPaidAppointmentForActorMock.mockReset();
@@ -292,6 +295,21 @@ describe('appointments API route-smoke scenarios (mocked service layer)', () => 
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ paymentStatus: 'paid' });
+  });
+
+  it('update: PATCH /api/appointments/:id maps FORBIDDEN_CLIENT_FIELDS to 403', async () => {
+    updateAppointmentForActorMock.mockRejectedValue(new Error('FORBIDDEN_CLIENT_FIELDS'));
+
+    const response = await fetch(`${baseUrl}/api/appointments/41`, {
+      method: 'PATCH',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'Bearer smoke-token',
+      },
+      body: JSON.stringify({ meetingLink: 'https://zoom.us/evil' }),
+    });
+
+    expect(response.status).toBe(403);
   });
 
   it('notify: POST /api/appointments/:id/notify returns 200', async () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assertClientEditableFields,
   canCreateUserRole,
   canManageSpecialistSettings,
   canManageSystemSettings,
@@ -32,5 +33,22 @@ describe('role permissions', () => {
     expect(canCreateUserRole(WebUserRole.ProductAdmin, WebUserRole.Owner)).toBe(false);
     expect(canCreateUserRole(WebUserRole.Owner, WebUserRole.Specialist)).toBe(true);
     expect(canCreateUserRole(WebUserRole.Owner, WebUserRole.Client)).toBe(true);
+  });
+
+  describe('assertClientEditableFields', () => {
+    it('allows a client to update only the notes field', () => {
+      expect(() => assertClientEditableFields(WebUserRole.Client, { notes: 'hi' })).not.toThrow();
+    });
+
+    it('blocks a client from changing sensitive fields', () => {
+      expect(() => assertClientEditableFields(WebUserRole.Client, { meetingLink: 'https://zoom.us/1' })).toThrow('FORBIDDEN_CLIENT_FIELDS');
+      expect(() => assertClientEditableFields(WebUserRole.Client, { status: 'cancelled' })).toThrow('FORBIDDEN_CLIENT_FIELDS');
+      expect(() => assertClientEditableFields(WebUserRole.Client, { meetingProvider: 'zoom' })).toThrow('FORBIDDEN_CLIENT_FIELDS');
+    });
+
+    it('does not restrict non-client roles', () => {
+      expect(() => assertClientEditableFields(WebUserRole.Owner, { meetingLink: 'https://zoom.us/1', status: 'cancelled' })).not.toThrow();
+      expect(() => assertClientEditableFields(WebUserRole.Specialist, { meetingLink: 'https://zoom.us/1' })).not.toThrow();
+    });
   });
 });
