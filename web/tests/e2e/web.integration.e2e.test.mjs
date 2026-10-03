@@ -44,16 +44,16 @@ describe('web integration contracts: appointments lifecycle + users CRUD + RBAC'
     const appointmentsContainer = await read('src/containers/AppointmentsContainer.tsx');
 
     assert.match(roles, /Owner = 'owner'/);
-    assert.match(roles, /Admin = 'admin'/);
+    assert.match(roles, /ProductAdmin = 'product_admin'/);
     assert.match(roles, /Specialist = 'specialist'/);
     assert.match(roles, /Client = 'client'/);
 
-    assert.match(mainLayout, /user\?\.role === WebUserRole\.Owner \|\| user\?\.role === WebUserRole\.Admin/);
-    assert.match(mainLayout, /user\?\.role === WebUserRole\.Owner \|\| user\?\.role === WebUserRole\.Admin \|\| user\?\.role === WebUserRole\.Specialist/);
+    assert.match(mainLayout, /user\?\.role === WebUserRole\.ProductAdmin \|\| user\?\.role === WebUserRole\.Owner\b/);
+    assert.match(mainLayout, /user\?\.role === WebUserRole\.ProductAdmin \|\| user\?\.role === WebUserRole\.Owner \|\| user\?\.role === WebUserRole\.Specialist/);
     assert.match(mainLayout, /user\?\.role === WebUserRole\.Owner[\s\S]*?\{ to: '\/error-logs'/);
 
-    assert.match(usersContainer, /const canManageUsers = user\?\.role === 'owner' \|\| user\?\.role === 'admin' \|\| user\?\.role === 'specialist'/);
-    assert.match(specialistsContainer, /const canManageSpecialists = user\?\.role === 'product_owner' \|\| user\?\.role === 'owner' \|\| user\?\.role === 'admin'/);
-    assert.match(appointmentsContainer, /const canManageAll = user\?\.role === WebUserRole\.Owner \|\| user\?\.role === WebUserRole\.Admin/);
+    assert.match(usersContainer, /const canManageUsers = user\?\.role === 'owner' \|\| user\?\.role === 'specialist'/);
+    assert.match(specialistsContainer, /const canManageSpecialists = user\?\.role === 'product_admin' \|\| user\?\.role === 'owner'/);
+    assert.match(appointmentsContainer, /const canManageAll = user\?\.role === WebUserRole\.Owner;/);
   });
 });

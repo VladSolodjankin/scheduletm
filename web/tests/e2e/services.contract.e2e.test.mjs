@@ -12,7 +12,7 @@ describe('web service catalog contracts', () => {
     const layout = await read('src/components/layout/MainLayout.tsx');
 
     assert.match(router, /path: '\/services'/);
-    assert.match(router, /WebUserRole\.ProductOwner[\s\S]*WebUserRole\.Specialist/);
+    assert.match(router, /WebUserRole\.ProductAdmin[\s\S]*WebUserRole\.Specialist/);
     assert.match(layout, /\{ to: '\/services', label: t\('common\.services'\)/);
   });
 

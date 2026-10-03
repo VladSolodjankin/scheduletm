@@ -59,7 +59,7 @@ describe('web smoke (auth/settings/specialists/appointments/specialist booking p
     assert.match(specialistsContainer, /baseSessionPrice/);
     assert.match(specialistsContainer, /defaultSessionContinuationMin/);
     assert.match(specialistsContainer, /defaultMeetingLink:\s*payload\.defaultMeetingLink/);
-    assert.match(specialistsContainer, /user\?\.role === 'product_owner'/);
+    assert.match(specialistsContainer, /user\?\.role === 'product_admin'/);
     assert.match(specialistDialog, /url\.protocol === "http:" \|\| url\.protocol === "https:"/);
     assert.match(specialistDialog, /defaultMeetingLink:\s*defaultMeetingLink\.trim\(\)/);
     assert.match(appointmentsContainer, /'\/api\/appointments'/);
