@@ -495,9 +495,8 @@ export function AppointmentFormDialog({
               )}
             </Box>
           )}
-          <Box sx={createResponsiveFieldGridSx(2)}>
+          <Box sx={createResponsiveFieldGridSx(3)}>
             <Controller name="startDate" control={control} render={({ field }: any) => <AppRhfTextField field={field} label="Start date" type="date" />} />
-            <Box sx={createResponsiveFieldGridSx(2)}>
             <Controller
               name="startTime"
               control={control}
@@ -508,7 +507,6 @@ export function AppointmentFormDialog({
               control={control}
               render={({ field }: any) => <AppRhfTextField field={field} label="End time" type="time" minutesStep={selectedSlotStepMin} />}
             />
-            </Box>
           </Box>
           <Box sx={createResponsiveFieldGridSx(2)}>
             <Controller

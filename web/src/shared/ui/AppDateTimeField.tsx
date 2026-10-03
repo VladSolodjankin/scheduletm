@@ -4,19 +4,35 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { type Dayjs } from 'dayjs';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, FocusEventHandler } from 'react';
 
 type AppDateTimeFieldProps = Omit<TextFieldProps, 'type'> & {
   type?: 'datetime-local' | 'time';
   minutesStep?: number;
 };
 
-export function AppDateTimeField({ type = 'datetime-local', minutesStep, ...props }: AppDateTimeFieldProps) {
+export function AppDateTimeField({
+  type = 'datetime-local',
+  minutesStep,
+  value,
+  onChange,
+  className,
+  label,
+  error,
+  helperText,
+  required,
+  disabled,
+  placeholder,
+  name,
+  onBlur,
+  inputRef,
+  sx,
+}: AppDateTimeFieldProps) {
   const pickerValue =
-    typeof props.value === 'string' && props.value
+    typeof value === 'string' && value
       ? type === 'time'
-        ? dayjs(`1970-01-01T${props.value}`)
-        : dayjs(props.value)
+        ? dayjs(`1970-01-01T${value}`)
+        : dayjs(value)
       : null;
 
   const emitChange = (formattedValue: string) => {
@@ -24,7 +40,7 @@ export function AppDateTimeField({ type = 'datetime-local', minutesStep, ...prop
       target: { value: formattedValue },
     } as ChangeEvent<HTMLInputElement>;
 
-    props.onChange?.(syntheticEvent);
+    onChange?.(syntheticEvent);
   };
 
   const handleDateTimeChange = (newValue: Dayjs | null) => {
@@ -35,6 +51,21 @@ export function AppDateTimeField({ type = 'datetime-local', minutesStep, ...prop
     emitChange(newValue?.isValid() ? newValue.format('HH:mm') : '');
   };
 
+  const textFieldSlotProps = {
+    label,
+    error,
+    helperText,
+    required,
+    disabled,
+    placeholder,
+    name,
+    onBlur: onBlur as unknown as FocusEventHandler<HTMLDivElement> | undefined,
+    inputRef,
+    sx,
+    size: 'small' as const,
+    className: ['app-field', className].filter(Boolean).join(' '),
+  };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       {type === 'time' ? (
@@ -43,13 +74,14 @@ export function AppDateTimeField({ type = 'datetime-local', minutesStep, ...prop
           value={pickerValue}
           onChange={handleTimeChange}
           timeSteps={minutesStep ? { minutes: minutesStep } : undefined}
-
+          slotProps={{ textField: textFieldSlotProps }}
         />
       ) : (
         <DateTimePicker
           ampm={false}
           value={pickerValue}
           onChange={handleDateTimeChange}
+          slotProps={{ textField: textFieldSlotProps }}
         />
       )}
     </LocalizationProvider>

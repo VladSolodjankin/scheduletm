@@ -282,7 +282,7 @@ export function ServiceFormDialog({
             title={labels.specialistsTitle}
             description={labels.specialistsHelper}
             action={specialists.length ? (
-              <Stack className="service-form__selector-actions">
+              <Stack direction="row" className="service-form__selector-actions">
                 <AppButton
                   size="small"
                   variant="text"

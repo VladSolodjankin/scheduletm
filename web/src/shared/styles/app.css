@@ -455,7 +455,8 @@
   color: var(--app-color-primary-hover);
 }
 
-.app-field .MuiOutlinedInput-root {
+.app-field .MuiOutlinedInput-root,
+.app-field .MuiPickersOutlinedInput-root {
   min-height: var(--app-control-m);
 }
 
