@@ -455,11 +455,6 @@
   color: var(--app-color-primary-hover);
 }
 
-.app-field .MuiOutlinedInput-root,
-.app-field .MuiPickersOutlinedInput-root {
-  min-height: var(--app-control-m);
-}
-
 .app-dialog .MuiDialog-paper {
   max-width: var(--app-dialog-m);
   width: 100%;

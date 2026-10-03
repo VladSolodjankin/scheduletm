@@ -62,8 +62,7 @@ export function AppDateTimeField({
     onBlur: onBlur as unknown as FocusEventHandler<HTMLDivElement> | undefined,
     inputRef,
     sx,
-    size: 'small' as const,
-    className: ['app-field', className].filter(Boolean).join(' '),
+    className,
   };
 
   return (

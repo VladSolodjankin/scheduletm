@@ -384,6 +384,12 @@ export function createMeetliAppTheme(mode: ThemeMode, portalContainer?: HTMLElem
           },
         },
       },
+      MuiTextField: {
+        defaultProps: { size: 'small' },
+      },
+      MuiSelect: {
+        defaultProps: { size: 'small' },
+      },
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
@@ -399,6 +405,30 @@ export function createMeetliAppTheme(mode: ThemeMode, portalContainer?: HTMLElem
           input: { ...typography.bodyS, padding: '0 var(--app-space-m)' },
           inputSizeSmall: { padding: '0 var(--app-space-m)' },
           multiline: { alignItems: 'flex-start', minHeight: '7.5rem', padding: 'var(--app-space-m)' },
+          notchedOutline: { borderColor: 'var(--app-color-border)' },
+        },
+      },
+      // MUI X Date/Time Pickers render through their own component namespace
+      // (MuiPickers*), separate from MuiOutlinedInput, so the overrides above
+      // never reach them. Mirrored here so every field looks identical
+      // regardless of which component renders it.
+      MuiPickersTextField: {
+        defaultProps: { size: 'small' },
+      },
+      MuiPickersOutlinedInput: {
+        styleOverrides: {
+          root: {
+            borderRadius: 'var(--app-radius-xs)',
+            minHeight: 'var(--app-control-m)',
+            backgroundColor: 'var(--app-color-surface)',
+            padding: '0 var(--app-space-m)',
+            '&:hover .MuiPickersOutlinedInput-notchedOutline': { borderColor: 'var(--app-color-border-strong)' },
+            '&.Mui-focused': { boxShadow: '0 0 0 var(--app-space-xs) var(--app-color-focus-ring)' },
+            '&.Mui-focused .MuiPickersOutlinedInput-notchedOutline': { borderColor: 'var(--app-color-primary)', borderWidth: 2 },
+            '&.Mui-error .MuiPickersOutlinedInput-notchedOutline': { borderColor: 'var(--app-color-danger)' },
+            '&.Mui-disabled': { backgroundColor: 'var(--app-color-surface-muted)' },
+          },
+          sectionsContainer: { ...typography.bodyS },
           notchedOutline: { borderColor: 'var(--app-color-border)' },
         },
       },
