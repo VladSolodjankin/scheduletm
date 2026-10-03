@@ -22,6 +22,9 @@ const expectedSwatches = {
   z108: ['#FDFDFD', '#DAFF89', '#C7D8B6', '#EEEEEE'],
   z109: ['#ede2ea', '#7c5872', '#D1BFCD', '#7C5872'],
   z110: ['#f5f5f5', '#e2d4ce', '#E9DFDA', '#E2D4CE'],
+  z111: ['#14151a', '#5eead4', '#2a2d35', '#394049'],
+  z112: ['#161312', '#e8b65a', '#2b2521', '#3d342c'],
+  z113: ['#18121c', '#b48ae0', '#2a2032', '#3b2e46'],
 };
 
 const sectionDesign = (
@@ -46,7 +49,7 @@ const sectionDesign = (
 });
 
 describe('public page theme parity', () => {
-  it('publishes exactly the approved ten palette swatch tuples', () => {
+  it('publishes exactly the approved palette swatch tuples', () => {
     expect(Object.fromEntries(PUBLIC_PAGE_THEMES.map((theme) => [theme.id, theme.swatches])))
       .toEqual(expectedSwatches);
   });
@@ -144,6 +147,12 @@ describe('public page theme parity', () => {
     const expectedPrimary = {
       z101: '#ffffff', z102: '#291d0a', z103: '#ffffff', z104: '#ffffff', z105: '#ffffff',
       z106: '#ffffff', z107: '#ffffff', z108: '#291d0a', z109: '#ffffff', z110: '#291d0a',
+      z111: '#291d0a', z112: '#291d0a', z113: '#291d0a',
+    };
+    const expectedSurface = {
+      z101: '#291d0a', z102: '#291d0a', z103: '#291d0a', z104: '#291d0a', z105: '#291d0a',
+      z106: '#291d0a', z107: '#291d0a', z108: '#291d0a', z109: '#291d0a', z110: '#291d0a',
+      z111: '#ffffff', z112: '#ffffff', z113: '#ffffff',
     };
 
     for (const theme of PUBLIC_PAGE_THEMES) {
@@ -154,10 +163,11 @@ describe('public page theme parity', () => {
       expect(primary['--avatar-bio-color'], `${theme.id} primary avatar bio`).toBe(expectedPrimary[theme.id as keyof typeof expectedPrimary]);
 
       const surface = resolvePublicPageThemeVariables(theme, sectionDesign('secondary'));
-      expect(surface['--page-section-text'], `${theme.id} surface body`).toBe('#291d0a');
-      expect(surface['--theme-heading-color'], `${theme.id} surface heading`).toBe('#291d0a');
-      expect(surface['--avatar-title-color'], `${theme.id} surface avatar title`).toBe('#291d0a');
-      expect(surface['--avatar-bio-color'], `${theme.id} surface avatar bio`).toBe('#291d0a');
+      const expectedSurfaceText = expectedSurface[theme.id as keyof typeof expectedSurface];
+      expect(surface['--page-section-text'], `${theme.id} surface body`).toBe(expectedSurfaceText);
+      expect(surface['--theme-heading-color'], `${theme.id} surface heading`).toBe(expectedSurfaceText);
+      expect(surface['--avatar-title-color'], `${theme.id} surface avatar title`).toBe(expectedSurfaceText);
+      expect(surface['--avatar-bio-color'], `${theme.id} surface avatar bio`).toBe(expectedSurfaceText);
     }
   });
 
@@ -189,11 +199,11 @@ describe('public page theme parity', () => {
     expect(darkLink['--theme-link-subtitle-color']).toBe('#ffffff');
   });
 
-  it('keeps page-level copy dark on the light page background', () => {
+  it('keeps page-level copy readable against each theme\'s own page background', () => {
     for (const theme of PUBLIC_PAGE_THEMES) {
       const variables = resolvePublicPageThemeVariables(theme);
-      expect(variables['--theme-heading-color'], `${theme.id} page heading`).toBe('#291d0a');
-      expect(variables['--theme-text-color'], `${theme.id} page body`).toBe('#291d0a');
+      expect(variables['--theme-heading-color'], `${theme.id} page heading`).toBe(theme.colors.text);
+      expect(variables['--theme-text-color'], `${theme.id} page body`).toBe(theme.colors.text);
     }
   });
 
@@ -245,6 +255,6 @@ describe('public page theme parity', () => {
   it('preserves unknown background presets until the editor explicitly replaces them', () => {
     const normalized = normalizeDocument({ theme: { backgroundPreset: 'unknown-custom-background' } });
     expect(normalized.theme.backgroundPreset).toBe('unknown-custom-background');
-    expect(PUBLIC_PAGE_BACKGROUND_PRESETS[0]).toEqual({ id: 'none', css: 'none' });
+    expect(PUBLIC_PAGE_BACKGROUND_PRESETS[0]).toEqual({ id: 'none', css: 'none', category: null });
   });
 });

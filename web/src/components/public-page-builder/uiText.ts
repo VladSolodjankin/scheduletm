@@ -84,6 +84,8 @@ const keys = {
   fontPreview: 'publicPageBuilder.fontPreview',
   rounding: 'publicPageBuilder.rounding', rounded: 'publicPageBuilder.rounded', pill: 'publicPageBuilder.pill', leaf: 'publicPageBuilder.leaf', square: 'publicPageBuilder.square',
   linkStyles: 'publicPageBuilder.linkStyles', linkStyle: 'publicPageBuilder.linkStyle', backgroundImage: 'publicPageBuilder.backgroundImage',
+  centeredText: 'publicPageBuilder.centeredText',
+  categoryNeutral: 'publicPageBuilder.categoryNeutral', categoryBright: 'publicPageBuilder.categoryBright', categoryDark: 'publicPageBuilder.categoryDark',
   deleteBlockConfirm: 'publicPageBuilder.deleteBlockConfirm',
   deleteSectionConfirm: 'publicPageBuilder.deleteSectionConfirm', blockEditorLabel: 'publicPageBuilder.blockEditorLabel',
   mediaCleanupError: 'publicPageBuilder.mediaCleanupError',

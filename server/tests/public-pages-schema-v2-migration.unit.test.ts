@@ -11,6 +11,7 @@ import {
 import { publicPageDocumentSchema } from '../src/config/publicPageSchemas.js';
 import { convertPublicPageDocumentToSchemaV3 } from '../src/db/migrations/20260910160000_migrate_public_pages_to_schema_v3.js';
 import { convertPublicPageDocumentToSchemaV4 } from '../src/db/migrations/20260910180000_migrate_public_pages_to_schema_v4.js';
+import { convertPublicPageDocumentToSchemaV5 } from '../src/db/migrations/20261003193000_migrate_public_pages_to_schema_v5.js';
 
 const design = { backgroundColor: null, textColor: null };
 const block = (id: string, type: string, content: Record<string, unknown>) => ({
@@ -94,7 +95,7 @@ describe('Public Page schema v2 migration', () => {
       title: 'Services', serviceIds: [7], autoplayIntervalSeconds: null, showBookingButton: true,
     });
     expect(publicPageDocumentSchema.safeParse(
-      convertPublicPageDocumentToSchemaV4(convertPublicPageDocumentToSchemaV3(result.document, 'UTC')),
+      convertPublicPageDocumentToSchemaV5(convertPublicPageDocumentToSchemaV4(convertPublicPageDocumentToSchemaV3(result.document, 'UTC'))),
     ).success).toBe(true);
   });
 
@@ -310,7 +311,7 @@ describe('Public Page schema v2 migration', () => {
       titleStyle: { fontFamily: 'Inter, system-ui, sans-serif', color: '#111827' },
     });
     expect(publicPageDocumentSchema.safeParse(
-      convertPublicPageDocumentToSchemaV4(convertPublicPageDocumentToSchemaV3(result.document, 'UTC')),
+      convertPublicPageDocumentToSchemaV5(convertPublicPageDocumentToSchemaV4(convertPublicPageDocumentToSchemaV3(result.document, 'UTC'))),
     ).success).toBe(true);
   });
 

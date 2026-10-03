@@ -73,8 +73,8 @@ function setNestedValue(target: unknown, path: string, value: unknown): void {
 
 describe('public page theme choices', () => {
   it('exposes the fixed palette set and defaults missing theme controls', () => {
-    expect(PUBLIC_PAGE_THEMES).toHaveLength(10);
-    expect(new Set(PUBLIC_PAGE_THEMES.map((theme) => theme.id)).size).toBe(10);
+    expect(PUBLIC_PAGE_THEMES).toHaveLength(13);
+    expect(new Set(PUBLIC_PAGE_THEMES.map((theme) => theme.id)).size).toBe(13);
     const incomplete = structuredClone(getPublicPageTemplate('beauty')!.createDocument('incomplete-theme')) as unknown as Record<string, unknown>;
     delete (incomplete.theme as Record<string, unknown>).roundingStyle;
     delete (incomplete.theme as Record<string, unknown>).linkStylePreset;
@@ -151,11 +151,13 @@ describe('public page theme choices', () => {
     expect(blockSurfaceRadius(11, 'leaf', 32)).toBe('11px');
   });
 
-  it.each([['pill', 40], ['square', 2]] as const)('materializes %s preset radius in canonical defaults', (preset, radius) => {
+  it.each([
+    ['rounded', 14, 14], ['pill', 40, 100], ['leaf', 18, 18], ['square', 2, 2],
+  ] as const)('materializes %s preset radius in canonical defaults', (preset, blockRadius, linkRadius) => {
     const theme = applyPublicPageThemeRounding(PUBLIC_PAGE_THEMES[0], preset);
-    expect(theme.styleDefaults.sectionBorderRadius).toBe(radius);
-    expect(theme.styleDefaults.blockBorderRadius).toBe(radius);
-    expect(theme.tokens.layout.linkRadius).toBe(radius);
+    expect(theme.styleDefaults.sectionBorderRadius).toBe(blockRadius);
+    expect(theme.styleDefaults.blockBorderRadius).toBe(blockRadius);
+    expect(theme.tokens.layout.linkRadius).toBe(linkRadius);
   });
 });
 

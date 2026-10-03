@@ -117,6 +117,7 @@ function normalizeTheme(value: unknown): PageTheme {
     fontFamily,
     roundingStyle: theme.roundingStyle === 'pill' || theme.roundingStyle === 'leaf' || theme.roundingStyle === 'square' ? theme.roundingStyle : 'rounded',
     linkStylePreset: normalizeLinkStylePreset(theme.linkStylePreset, styles.linkStyle, normalizedColors),
+    linkTextAlign: theme.linkTextAlign === 'left' ? 'left' : 'center',
     backgroundMediaId: nullableString(theme.backgroundMediaId),
     backgroundPreset: nullableString(theme.backgroundPreset),
     backgroundFit: fitValue(theme.backgroundFit),

@@ -127,6 +127,7 @@ export const ordinaryPublicPageLinkSx = {
   fontWeight: 'var(--theme-link-title-font-weight)', fontStyle: 'var(--theme-link-title-font-style)',
   color: 'var(--theme-link-title-color)',
   backgroundColor: 'color-mix(in srgb, var(--theme-link-background) var(--theme-link-background-opacity), transparent)',
+  justifyContent: 'var(--theme-link-justify)', textAlign: 'var(--theme-link-text-align)',
   lineHeight: 'var(--theme-link-title-lineheight)', letterSpacing: 'var(--theme-link-title-letterspacing)',
   borderWidth: 'var(--theme-link-border-width)', borderStyle: 'solid', borderColor: 'var(--theme-link-border-color)',
   boxShadow: 'var(--theme-link-shadow-params)', borderRadius: 'var(--theme-link-border-radius)',
@@ -837,7 +838,7 @@ export function SocialButtonBlock({ block }: { block: PageBlock }) {
       background: style.background, color: style.color, '&:hover': { background: style.background, filter: 'brightness(.94)' } }}>
     <SocialPlatformIcon className="social-button__icon" platform={platform} aria-hidden="true"
       sx={{ position: 'absolute', left: 18, width: 24, height: 24, color: style.iconColor }} />
-    <Box component="span" className="social-button__label" sx={{ width: '100%', textAlign: 'center' }}>{text(block.content.label)}</Box>
+    <Box component="span" className="social-button__label" sx={{ width: '100%', textAlign: 'var(--theme-link-text-align)', paddingInlineStart: 'var(--theme-link-label-offset)' }}>{text(block.content.label)}</Box>
   </Button>;
 }
 

@@ -1,14 +1,22 @@
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, Box, MenuItem, Stack, Tab, Tabs, TextField, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, FormControlLabel, MenuItem, Stack, Switch, Tab, Tabs, TextField, Typography } from '@mui/material';
 import { useEffect, useId, useRef, useState, type Dispatch, type SyntheticEvent } from 'react';
 import {
   applyPublicPageLinkStyle,
+  applyPublicPageLinkTextAlign,
   applyPublicPagePalette,
   applyPublicPageThemeFont,
   applyPublicPageThemeRounding,
+  PUBLIC_PAGE_THEME_CATEGORIES,
+  PUBLIC_PAGE_THEME_CATEGORY,
   PUBLIC_PAGE_THEMES,
+  type PublicPageThemeCategory,
 } from '../../features/public-page-builder/config/themes';
-import { PUBLIC_PAGE_BACKGROUND_PRESETS } from '../../features/public-page-builder/config/backgroundPresets';
+import {
+  PUBLIC_PAGE_BACKGROUND_CATEGORIES,
+  PUBLIC_PAGE_BACKGROUND_PRESETS,
+  type PublicPageBackgroundCategory,
+} from '../../features/public-page-builder/config/backgroundPresets';
 import type { ApiPublicPageRepository } from '../../features/public-page-builder/repository/ApiPublicPageRepository';
 import type { EditorAction } from '../../features/public-page-builder/types/actions';
 import type { EditorState } from '../../features/public-page-builder/types/editor';
@@ -48,6 +56,17 @@ const accordionSx = {
   '&.Mui-expanded': { m: 0 },
 };
 
+function CategoryTabs<T extends string>({ value, categories, labels, onChange, ariaLabel }: {
+  value: T; categories: readonly T[]; labels: Record<T, string>; onChange: (value: T) => void; ariaLabel: string;
+}) {
+  return <Tabs value={value} onChange={(_event, next: T) => onChange(next)} aria-label={ariaLabel} variant="scrollable" scrollButtons={false}
+    sx={{ mb: 1.5, minHeight: 32,
+      '& .MuiTab-root': { minHeight: 32, py: 0, px: 1.5, fontSize: 12, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', minWidth: 0 },
+      '& .MuiTabs-indicator': { height: 2 } }}>
+    {categories.map((category) => <Tab key={category} value={category} label={labels[category]} />)}
+  </Tabs>;
+}
+
 export function DesignPanel({ state, locale, dispatch, repository, previewUrls, onMediaPreview, busy = false, onBusyChange, focusMarker = null }: {
   state: EditorState; locale: Locale; dispatch: Dispatch<EditorAction>; repository: ApiPublicPageRepository;
   busy?: boolean; onBusyChange?: (busy: boolean) => void;
@@ -59,6 +78,8 @@ export function DesignPanel({ state, locale, dispatch, repository, previewUrls, 
   const backgroundFocusRequested = focusMarker === 'theme.backgroundMediaId' || focusMarker?.startsWith('media:') === true;
   const [activeTab, setActiveTab] = useState<DesignTab>('simple');
   const [simpleExpanded, setSimpleExpanded] = useState<SimpleDesignSection | false>(backgroundFocusRequested ? 'background' : 'colors');
+  const [colorCategory, setColorCategory] = useState<PublicPageThemeCategory>('neutral');
+  const [backgroundCategory, setBackgroundCategory] = useState<PublicPageBackgroundCategory>('neutral');
   const themeRef = useRef(theme);
   const mountedRef = useRef(true);
   const repositoryRef = useRef(repository);
@@ -78,6 +99,9 @@ export function DesignPanel({ state, locale, dispatch, repository, previewUrls, 
   const backgroundMedia = state.document.media.find((media) => media.id === theme.backgroundMediaId) ?? null;
   const activeBackgroundPreset = theme.backgroundPreset ?? 'none';
   const toggleSimple = (section: SimpleDesignSection) => (_event: SyntheticEvent, expanded: boolean) => setSimpleExpanded(expanded ? section : false);
+  const categoryLabels = { neutral: publicPageText(locale, 'categoryNeutral'), bright: publicPageText(locale, 'categoryBright'), dark: publicPageText(locale, 'categoryDark') };
+  const visiblePalettes = PUBLIC_PAGE_THEMES.filter((palette) => PUBLIC_PAGE_THEME_CATEGORY[palette.id] === colorCategory);
+  const visibleBackgroundPresets = PUBLIC_PAGE_BACKGROUND_PRESETS.filter((preset) => preset.category === null || preset.category === backgroundCategory);
   return <Box component="fieldset" disabled={busy} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}>
     <Tabs value={activeTab} onChange={(_event, value: DesignTab) => setActiveTab(value)} aria-label={publicPageText(locale, 'designEditorMode')}
       variant="fullWidth" sx={{ mb: 2, minHeight: 40, bgcolor: 'action.hover', borderRadius: 2, p: 0.5,
@@ -91,8 +115,9 @@ export function DesignPanel({ state, locale, dispatch, repository, previewUrls, 
         <Accordion disableGutters expanded={simpleExpanded === 'colors'} onChange={toggleSimple('colors')} sx={accordionSx}>
           <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'colorPalettes')}</Typography></AccordionSummary>
           <AccordionDetails>
+            <CategoryTabs value={colorCategory} categories={PUBLIC_PAGE_THEME_CATEGORIES} labels={categoryLabels} onChange={setColorCategory} ariaLabel={publicPageText(locale, 'colorPalettes')} />
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(5, minmax(0, 1fr))' }, gap: 1.5 }}>
-        {PUBLIC_PAGE_THEMES.map((palette) => <Box component="button" type="button" key={palette.id} aria-label={palette.name} aria-pressed={theme.id === palette.id} onClick={() => selectPalette(palette)} sx={cardSx(theme.id === palette.id)}>
+        {visiblePalettes.map((palette) => <Box component="button" type="button" key={palette.id} aria-label={palette.name} aria-pressed={theme.id === palette.id} onClick={() => selectPalette(palette)} sx={cardSx(theme.id === palette.id)}>
           <Stack direction="row" spacing={-0.75}>{palette.swatches.map((color, index) => <Box key={`${color}-${index}`} sx={{ width: { xs: 24, xl: 30 }, height: { xs: 24, xl: 30 }, borderRadius: '50%', bgcolor: color, border: '1px solid', borderColor: 'divider' }} />)}</Stack>
         </Box>)}
             </Box>
@@ -123,14 +148,18 @@ export function DesignPanel({ state, locale, dispatch, repository, previewUrls, 
         return <Box component="button" type="button" aria-label={`${publicPageText(locale, 'linkStyle')} ${index + 1}`} aria-pressed={active} key={item.id} onClick={() => update(applyPublicPageLinkStyle(theme, item.id))} sx={cardSx(active)}>
           <Box sx={{ width: '75%', height: 34, bgcolor: bg, border: `${borderWidth}px solid ${theme.colors.primary}`, borderRadius: 1, boxShadow: item.shadow === 'strong' ? `0 4px 0 ${theme.colors.text}` : item.shadow ? 2 : 0 }} /></Box>;
             })}</Box>
+            <FormControlLabel sx={{ mt: 1.5, ml: 0 }} control={<Switch checked={theme.linkTextAlign === 'center'}
+              onChange={(event) => update(applyPublicPageLinkTextAlign(theme, event.target.checked ? 'center' : 'left'))} />}
+              label={publicPageText(locale, 'centeredText')} />
           </AccordionDetails>
         </Accordion>
         <Accordion disableGutters expanded={simpleExpanded === 'background'} onChange={toggleSimple('background')} sx={accordionSx}>
           <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'background')}</Typography></AccordionSummary>
           <AccordionDetails><Stack spacing={3}>
             <Box><Typography variant="subtitle2" sx={{ mb: 1.5 }}>{publicPageText(locale, 'backgroundPreset')}</Typography>
+              <CategoryTabs value={backgroundCategory} categories={PUBLIC_PAGE_BACKGROUND_CATEGORIES} labels={categoryLabels} onChange={setBackgroundCategory} ariaLabel={publicPageText(locale, 'backgroundPreset')} />
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(88px, 1fr))', gap: 1 }}>
-        {PUBLIC_PAGE_BACKGROUND_PRESETS.map((preset) => {
+        {visibleBackgroundPresets.map((preset) => {
           const active = activeBackgroundPreset === preset.id;
           const label = preset.id === 'none' ? publicPageText(locale, 'none') : preset.id;
           return <Box component="button" type="button" key={preset.id} aria-label={`${publicPageText(locale, 'backgroundPreset')}: ${label}`}

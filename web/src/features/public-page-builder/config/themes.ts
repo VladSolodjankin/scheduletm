@@ -8,6 +8,24 @@ import type {
 const PAGE_TEXT = '#291d0a';
 const ROBOTO = 'Roboto, sans-serif';
 
+const LINK_ROUNDING_RADIUS: Record<PageTheme['roundingStyle'], number> = {
+  square: 2,
+  rounded: 14,
+  leaf: 18,
+  pill: 100, // server schema caps layout.linkRadius at 100; still a true pill for any realistic button height
+};
+
+const BLOCK_ROUNDING_RADIUS: Record<PageTheme['roundingStyle'], number> = {
+  square: 2,
+  rounded: 14,
+  leaf: 18,
+  pill: 40,
+};
+
+export type PublicPageThemeCategory = 'neutral' | 'bright' | 'dark';
+
+export const PUBLIC_PAGE_THEME_CATEGORIES: readonly PublicPageThemeCategory[] = ['neutral', 'bright', 'dark'];
+
 type ThemeRow = {
   id: string;
   swatches: ThemeSwatches;
@@ -16,6 +34,8 @@ type ThemeRow = {
   linkTitle: string;
   linkShadow: string;
   contrast: string;
+  text?: string;
+  category: PublicPageThemeCategory;
 };
 
 const typographyToken = (
@@ -41,7 +61,7 @@ function createTokens(row: ThemeRow): PageThemeTokens {
       fontFamily: ROBOTO,
       fontWeight: 500,
       boldFontWeight: 800,
-      headingColor: PAGE_TEXT,
+      headingColor: row.text ?? PAGE_TEXT,
       avatarTitle: typographyToken(ROBOTO, 16, 700, 1.2),
       avatarBio: typographyToken(ROBOTO, 16, 400, 1.2),
       linkTitle: typographyToken(ROBOTO, 16, 500, 1.2),
@@ -100,20 +120,27 @@ function createStyleDefaults(tokens: PageThemeTokens, colors: PageTheme['colors'
 }
 
 const themeRows: readonly ThemeRow[] = [
-  { id: 'z101', swatches: ['#f5f5f5', '#313233', '#D1D9DB', '#E4E7E9'], surface: '#fff', primary: '#313233', linkTitle: '#fff', linkShadow: '#00000033', contrast: '#ffffff' },
-  { id: 'z102', swatches: ['#e1ecdf', '#ffffff', '#303030', '#CCDFC9'], surface: '#eff5ee', primary: '#fff', linkTitle: '#1a1a1a', linkShadow: '#c2c2c233', contrast: '#000000' },
-  { id: 'z103', swatches: ['#FFF2CF', '#151515', '#F2D589', '#FEE6A5'], surface: '#fff3d2', primary: '#151515', linkTitle: '#fff', linkShadow: '#00000033', contrast: '#ffffff' },
-  { id: 'z104', swatches: ['#FEFAEF', '#7194AA', '#7194AA', '#F3E9D5'], surface: '#f7f3e9', primary: '#7194AA', linkTitle: '#fff', linkShadow: '#3a5e7233', contrast: '#ffffff' },
-  { id: 'z105', swatches: ['#FFFFFF', '#575E70', '#AA0428', '#EFEFFB'], surface: '#f3f3f3', primary: '#575E70', linkTitle: '#fff', linkShadow: '#262d3d33', contrast: '#ffffff' },
-  { id: 'z106', swatches: ['#EAE7DC', '#948369', '#A39686', '#CBC8C1'], surface: '#f5f4ee', primary: '#948369', linkTitle: '#fff', linkShadow: '#5d4e3633', contrast: '#ffffff' },
-  { id: 'z107', swatches: ['#fffaf4', '#5d755d', '#5d755d', '#ebdece'], surface: '#fff', primary: '#5d755d', linkTitle: '#fff', linkShadow: '#2b412c33', contrast: '#ffffff' },
-  { id: 'z108', swatches: ['#FDFDFD', '#DAFF89', '#C7D8B6', '#EEEEEE'], surface: '#f3f3f3', primary: '#DAFF89', linkTitle: '#233300', linkShadow: '#9dc25033', contrast: '#000000' },
-  { id: 'z109', swatches: ['#ede2ea', '#7c5872', '#D1BFCD', '#7C5872'], surface: '#fff', primary: '#7c5872', linkTitle: '#fff', linkShadow: '#00000033', contrast: '#ffffff' },
-  { id: 'z110', swatches: ['#f5f5f5', '#e2d4ce', '#E9DFDA', '#E2D4CE'], surface: '#E9DFDA', primary: '#e2d4ce', linkTitle: '#201713', linkShadow: '#00000033', contrast: '#000000' },
+  { id: 'z101', swatches: ['#f5f5f5', '#313233', '#D1D9DB', '#E4E7E9'], surface: '#fff', primary: '#313233', linkTitle: '#fff', linkShadow: '#00000033', contrast: '#ffffff', category: 'neutral' },
+  { id: 'z102', swatches: ['#e1ecdf', '#ffffff', '#303030', '#CCDFC9'], surface: '#eff5ee', primary: '#fff', linkTitle: '#1a1a1a', linkShadow: '#c2c2c233', contrast: '#000000', category: 'neutral' },
+  { id: 'z103', swatches: ['#FFF2CF', '#151515', '#F2D589', '#FEE6A5'], surface: '#fff3d2', primary: '#151515', linkTitle: '#fff', linkShadow: '#00000033', contrast: '#ffffff', category: 'bright' },
+  { id: 'z104', swatches: ['#FEFAEF', '#7194AA', '#7194AA', '#F3E9D5'], surface: '#f7f3e9', primary: '#7194AA', linkTitle: '#fff', linkShadow: '#3a5e7233', contrast: '#ffffff', category: 'neutral' },
+  { id: 'z105', swatches: ['#FFFFFF', '#575E70', '#AA0428', '#EFEFFB'], surface: '#f3f3f3', primary: '#575E70', linkTitle: '#fff', linkShadow: '#262d3d33', contrast: '#ffffff', category: 'bright' },
+  { id: 'z106', swatches: ['#EAE7DC', '#948369', '#A39686', '#CBC8C1'], surface: '#f5f4ee', primary: '#948369', linkTitle: '#fff', linkShadow: '#5d4e3633', contrast: '#ffffff', category: 'neutral' },
+  { id: 'z107', swatches: ['#fffaf4', '#5d755d', '#5d755d', '#ebdece'], surface: '#fff', primary: '#5d755d', linkTitle: '#fff', linkShadow: '#2b412c33', contrast: '#ffffff', category: 'neutral' },
+  { id: 'z108', swatches: ['#FDFDFD', '#DAFF89', '#C7D8B6', '#EEEEEE'], surface: '#f3f3f3', primary: '#DAFF89', linkTitle: '#233300', linkShadow: '#9dc25033', contrast: '#000000', category: 'bright' },
+  { id: 'z109', swatches: ['#ede2ea', '#7c5872', '#D1BFCD', '#7C5872'], surface: '#fff', primary: '#7c5872', linkTitle: '#fff', linkShadow: '#00000033', contrast: '#ffffff', category: 'bright' },
+  { id: 'z110', swatches: ['#f5f5f5', '#e2d4ce', '#E9DFDA', '#E2D4CE'], surface: '#E9DFDA', primary: '#e2d4ce', linkTitle: '#201713', linkShadow: '#00000033', contrast: '#000000', category: 'neutral' },
+  { id: 'z111', swatches: ['#14151a', '#5eead4', '#2a2d35', '#394049'], surface: '#1c1e24', primary: '#5eead4', linkTitle: '#0b1013', linkShadow: '#00000055', contrast: '#0b1013', text: '#f2f3f5', category: 'dark' },
+  { id: 'z112', swatches: ['#161312', '#e8b65a', '#2b2521', '#3d342c'], surface: '#211c19', primary: '#e8b65a', linkTitle: '#211c19', linkShadow: '#00000055', contrast: '#211c19', text: '#f5efe6', category: 'dark' },
+  { id: 'z113', swatches: ['#18121c', '#b48ae0', '#2a2032', '#3b2e46'], surface: '#211829', primary: '#b48ae0', linkTitle: '#18121c', linkShadow: '#00000055', contrast: '#18121c', text: '#f1eaf7', category: 'dark' },
 ];
 
+export const PUBLIC_PAGE_THEME_CATEGORY: Readonly<Record<string, PublicPageThemeCategory>> =
+  Object.fromEntries(themeRows.map((row) => [row.id, row.category]));
+
 function createTheme(row: ThemeRow): PageTheme {
-  const colors = { background: row.swatches[0], surface: row.surface, text: PAGE_TEXT, primary: row.primary };
+  const text = row.text ?? PAGE_TEXT;
+  const colors = { background: row.swatches[0], surface: row.surface, text, primary: row.primary };
   const tokens = createTokens(row);
   return {
     id: row.id,
@@ -124,6 +151,7 @@ function createTheme(row: ThemeRow): PageTheme {
     fontFamily: ROBOTO,
     roundingStyle: 'rounded',
     linkStylePreset: 'primary-fill',
+    linkTextAlign: 'center',
     backgroundMediaId: null,
     backgroundPreset: null,
     backgroundFit: 'cover',
@@ -257,10 +285,11 @@ export function applyPublicPageThemeRounding(
   theme: PageTheme,
   roundingStyle: PageTheme['roundingStyle'],
 ): PageTheme {
-  const radius = roundingStyle === 'square' ? 2 : 40;
+  const linkRadius = LINK_ROUNDING_RADIUS[roundingStyle];
+  const blockRadius = BLOCK_ROUNDING_RADIUS[roundingStyle];
   return { ...theme, id: 'custom', name: 'Custom', roundingStyle,
-    tokens: { ...theme.tokens, layout: { ...theme.tokens.layout, linkRadius: radius, blockRadius: radius } },
-    styleDefaults: { ...theme.styleDefaults, sectionBorderRadius: radius, blockBorderRadius: radius } };
+    tokens: { ...theme.tokens, layout: { ...theme.tokens.layout, linkRadius, blockRadius } },
+    styleDefaults: { ...theme.styleDefaults, sectionBorderRadius: blockRadius, blockBorderRadius: blockRadius } };
 }
 
 export function applyPublicPageLinkStyle(
@@ -289,4 +318,11 @@ export function applyPublicPageLinkStyle(
       },
     },
   };
+}
+
+export function applyPublicPageLinkTextAlign(
+  theme: PageTheme,
+  linkTextAlign: PageTheme['linkTextAlign'],
+): PageTheme {
+  return { ...theme, id: 'custom', name: 'Custom', linkTextAlign };
 }

@@ -1,4 +1,4 @@
-export const PUBLIC_PAGE_SCHEMA_VERSION = 4 as const;
+export const PUBLIC_PAGE_SCHEMA_VERSION = 5 as const;
 
 export const DEFAULT_AVATAR_POSITION = '50% 50%' as const;
 
@@ -69,6 +69,7 @@ export type PageTheme = {
   fontFamily: string;
   roundingStyle: 'rounded' | 'pill' | 'leaf' | 'square';
   linkStylePreset: 'primary-fill' | 'primary-shadow' | 'primary-strong' | 'primary-outline' | 'surface-fill' | 'surface-outline' | 'surface-shadow' | 'surface-strong';
+  linkTextAlign: 'center' | 'left';
   backgroundMediaId: string | null;
   backgroundPreset: string | null;
   backgroundFit: 'cover' | 'contain';

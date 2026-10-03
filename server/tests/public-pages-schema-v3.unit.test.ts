@@ -3,6 +3,7 @@ import type { Knex } from 'knex';
 import { publicPageDocumentSchema } from '../src/config/publicPageSchemas.js';
 import { convertPublicPageDocumentToSchemaV3, down, up } from '../src/db/migrations/20260910160000_migrate_public_pages_to_schema_v3.js';
 import { convertPublicPageDocumentToSchemaV4 } from '../src/db/migrations/20260910180000_migrate_public_pages_to_schema_v4.js';
+import { convertPublicPageDocumentToSchemaV5 } from '../src/db/migrations/20261003193000_migrate_public_pages_to_schema_v5.js';
 import { publicSnapshotWithoutArchive } from '../src/utils/publicPageReferences.js';
 import { validPublicPageDocument } from './publicPageTestFixture.js';
 
@@ -58,12 +59,13 @@ describe('public page v3 contract', () => {
     const originalBlock = validPublicPageDocument.sections[0]!.blocks[0]!;
     const { linkStyle: _link, animation: _animation, ...design } = originalBlock.design;
     const { schedule: _schedule, ...block } = originalBlock;
-    const v2 = { ...base, profile, schemaVersion: 2, sections: [{ ...base.sections[0], blocks: [{
+    const { linkTextAlign: _linkTextAlign, ...theme } = base.theme;
+    const v2 = { ...base, profile, theme, schemaVersion: 2, sections: [{ ...base.sections[0], blocks: [{
       ...block, design, type: 'button', content: { label: 'Go', icon: 'link', color: '#ff0000', textColor: '#ffffff', radius: 99,
         action: { type: 'url', url: 'https://example.org' } },
     }] }] };
     const result = convertPublicPageDocumentToSchemaV3(v2, 'Europe/Samara');
-    expect(publicPageDocumentSchema.safeParse(convertPublicPageDocumentToSchemaV4(result)).success).toBe(true);
+    expect(publicPageDocumentSchema.safeParse(convertPublicPageDocumentToSchemaV5(convertPublicPageDocumentToSchemaV4(result))).success).toBe(true);
     expect(result.timezone).toBe('Europe/Samara');
     expect(result.media).toEqual(v2.media);
     expect(result.theme).toEqual(v2.theme);
@@ -88,7 +90,8 @@ describe('public page v3 contract', () => {
   it('migrates draft and published independently, preserves null publication and touches no record metadata', async () => {
     const { timezone: _zone, archivedBlocks: _archive, ...base } = validPublicPageDocument;
     const { avatarPosition: _avatarPosition, ...profile } = base.profile;
-    const v2 = { ...base, profile, schemaVersion: 2, sections: base.sections.map((section) => ({ ...section,
+    const { linkTextAlign: _linkTextAlign, ...theme } = base.theme;
+    const v2 = { ...base, profile, theme, schemaVersion: 2, sections: base.sections.map((section) => ({ ...section,
       blocks: section.blocks.map(({ schedule: _schedule, design: { linkStyle: _link, animation: _animation, ...design }, ...block }) => ({ ...block, design })),
     })) };
     const rows = [

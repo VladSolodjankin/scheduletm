@@ -28,7 +28,6 @@ describe('dashboard design system contracts', () => {
       read('src/shared/ui/AppDataTable.tsx'),
       read('src/shared/ui/AppButton.tsx'),
       read('src/shared/ui/AppLink.tsx'),
-      read('src/shared/ui/AppTextField.tsx'),
       read('src/shared/ui/AppDialog.tsx'),
       read('src/shared/ui/AppImageUpload.tsx'),
     ]);
@@ -38,7 +37,6 @@ describe('dashboard design system contracts', () => {
       'app-data-table__table',
       'app-button',
       'app-link',
-      'app-field',
       'app-dialog',
       'app-image-upload',
     ]) {

@@ -61,6 +61,15 @@ function linkRadius(theme: PageTheme): string {
   return `${theme.tokens.layout.linkRadius}px`;
 }
 
+function linkAlignVariables(theme: PageTheme): PublicPageThemeVariables {
+  const left = theme.linkTextAlign === 'left';
+  return {
+    '--theme-link-justify': left ? 'flex-start' : 'center',
+    '--theme-link-text-align': left ? 'left' : 'center',
+    '--theme-link-label-offset': left ? '46px' : '0px',
+  };
+}
+
 function textVariables(prefix: string, token: ThemeTypographyToken, override?: TypographyStyle): PublicPageThemeVariables {
   return {
     [`--${prefix}-font-family`]: override?.fontFamily ?? token.fontFamily,
@@ -138,6 +147,7 @@ export function resolvePublicPageThemeVariables(
     '--block-border-radius': `${theme.tokens.layout.blockRadius}px`,
     '--theme-link-offset': `${theme.tokens.layout.linkGap}px`,
     '--theme-link-border-radius': linkRadius(theme),
+    ...linkAlignVariables(theme),
     '--theme-link-background': linkBackground,
     '--theme-link-background-opacity': `${linkOpacity * 100}%`,
     '--theme-link-title-transform': 'none',

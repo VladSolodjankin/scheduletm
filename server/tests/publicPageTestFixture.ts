@@ -15,7 +15,7 @@ const typographyToken = (fontSize: number, fontWeight: number) => ({
 });
 
 export const validPublicPageDocument = {
-  schemaVersion: 4 as const,
+  schemaVersion: 5 as const,
   timezone: 'UTC',
   archivedBlocks: [],
   id: 'page-1',
@@ -60,6 +60,7 @@ export const validPublicPageDocument = {
     backgroundFit: 'cover' as const,
     backgroundPosition: '50% 50%',
     linkStylePreset: 'primary-fill' as const,
+    linkTextAlign: 'center' as const,
     styleDefaults: {
       sectionBorderRadius: 0,
       blockBorderRadius: 24,

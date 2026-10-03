@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const PUBLIC_PAGE_SCHEMA_VERSION = 4 as const;
+export const PUBLIC_PAGE_SCHEMA_VERSION = 5 as const;
 export function isIanaTimezone(value: string): boolean {
   try { new Intl.DateTimeFormat('en-US', { timeZone: value }); return true; }
   catch { return false; }
@@ -303,6 +303,7 @@ const themeSchema = z.object({
     'primary-fill', 'primary-shadow', 'primary-strong', 'primary-outline',
     'surface-fill', 'surface-outline', 'surface-shadow', 'surface-strong',
   ]),
+  linkTextAlign: z.enum(['center', 'left']),
   styleDefaults: themeStyleDefaultsSchema,
 }).strict();
 

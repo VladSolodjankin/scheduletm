@@ -144,7 +144,7 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
   } else {
     value.swatches.forEach((swatch, index) => validateRequiredString(swatch, `theme.swatches.${index}`, errors));
   }
-  validateExactKeys(value, ['id', 'name', 'swatches', 'colors', 'tokens', 'fontFamily', 'roundingStyle', 'linkStylePreset', 'backgroundMediaId', 'backgroundPreset', 'backgroundFit', 'backgroundPosition', 'styleDefaults'], 'theme', errors);
+  validateExactKeys(value, ['id', 'name', 'swatches', 'colors', 'tokens', 'fontFamily', 'roundingStyle', 'linkStylePreset', 'linkTextAlign', 'backgroundMediaId', 'backgroundPreset', 'backgroundFit', 'backgroundPosition', 'styleDefaults'], 'theme', errors);
   if (!isRecord(value.colors)) {
     addError(errors, 'invalid_type', 'theme.colors');
     return;
@@ -162,6 +162,7 @@ function validateTheme(value: unknown, errors: DocumentValidationError[]): void 
   validateRequiredString(value.backgroundPosition, 'theme.backgroundPosition', errors);
   if (!['rounded', 'pill', 'leaf', 'square'].includes(String(value.roundingStyle))) {addError(errors, 'invalid_value', 'theme.roundingStyle');}
   if (!['primary-fill', 'primary-shadow', 'primary-strong', 'primary-outline', 'surface-fill', 'surface-outline', 'surface-shadow', 'surface-strong'].includes(String(value.linkStylePreset))) {addError(errors, 'invalid_value', 'theme.linkStylePreset');}
+  if (!['center', 'left'].includes(String(value.linkTextAlign))) {addError(errors, 'invalid_value', 'theme.linkTextAlign');}
   if (!isRecord(value.styleDefaults)) { addError(errors, 'invalid_type', 'theme.styleDefaults'); }
   else {
     validateExactKeys(value.styleDefaults, ['sectionBorderRadius', 'blockBorderRadius', 'headingStyle', 'textStyle', 'linkStyle'], 'theme.styleDefaults', errors);

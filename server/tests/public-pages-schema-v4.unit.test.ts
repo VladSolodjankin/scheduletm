@@ -7,11 +7,13 @@ import {
   down,
   up,
 } from '../src/db/migrations/20260910180000_migrate_public_pages_to_schema_v4.js';
+import { convertPublicPageDocumentToSchemaV5 } from '../src/db/migrations/20261003193000_migrate_public_pages_to_schema_v5.js';
 import { validPublicPageDocument } from './publicPageTestFixture.js';
 
 const schemaV3Document = () => {
   const { avatarPosition: _avatarPosition, ...profile } = validPublicPageDocument.profile;
-  return { ...validPublicPageDocument, schemaVersion: 3, profile };
+  const { linkTextAlign: _linkTextAlign, ...theme } = validPublicPageDocument.theme;
+  return { ...validPublicPageDocument, schemaVersion: 3, profile, theme };
 };
 
 describe('Public Page schema v4 migration', () => {
@@ -19,7 +21,7 @@ describe('Public Page schema v4 migration', () => {
     const source = schemaV3Document();
     const result = convertPublicPageDocumentToSchemaV4(source);
 
-    expect(publicPageDocumentSchema.safeParse(result).success).toBe(true);
+    expect(publicPageDocumentSchema.safeParse(convertPublicPageDocumentToSchemaV5(result)).success).toBe(true);
     expect(result).toEqual({
       ...source,
       schemaVersion: 4,
