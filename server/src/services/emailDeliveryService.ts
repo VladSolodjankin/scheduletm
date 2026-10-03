@@ -62,11 +62,18 @@ function renderEmailTemplate(content: {
   body: string;
   locale?: 'ru' | 'en';
   code?: { label: string; value: string };
+  details?: Array<{ label: string; value: string; href?: string }>;
   ctaLabel?: string;
   ctaLink?: string;
   footer?: string;
 }): { htmlContent: string; textContent: string } {
   const footer = content.footer ?? 'Вы получили это письмо, потому что пользуетесь Meetli.';
+  const detailsHtml = content.details?.length
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:24px;border-top:1px solid #d5dce7;padding-top:16px;">${content.details.map((row) => `<tr><td style="padding:4px 0;color:#526078;font-size:14px;line-height:20px;white-space:nowrap;vertical-align:top;">${escapeHtml(row.label)}</td><td style="padding:4px 0 4px 16px;color:#0f172a;font-size:14px;line-height:20px;font-weight:600;">${row.href ? `<a href="${escapeHtml(row.href)}" style="color:#2563eb;text-decoration:none;word-break:break-all;">${escapeHtml(row.value)}</a>` : escapeHtml(row.value)}</td></tr>`).join('')}</table>`
+    : '';
+  const detailsText = content.details?.length
+    ? `\n\n${content.details.map((row) => `${row.label}: ${row.value}`).join('\n')}`
+    : '';
   const ctaHtml = content.ctaLabel && content.ctaLink
     ? `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0;"><tr><td bgcolor="#2563eb" style="border-radius:8px;text-align:center;"><a href="${escapeHtml(content.ctaLink)}" style="display:inline-block;padding:14px 24px;background:#2563eb;color:#ffffff;font-size:16px;font-weight:700;line-height:24px;text-decoration:none;border-radius:8px;">${escapeHtml(content.ctaLabel)}</a></td></tr></table>
       <p style="margin:0 0 8px;font-size:12px;line-height:20px;">Если кнопка не работает, откройте ссылку:</p>
@@ -99,6 +106,7 @@ function renderEmailTemplate(content: {
             <h1 style="margin:0 0 16px;color:#0f172a;font-size:28px;line-height:36px;font-weight:700;">${escapeHtml(content.title)}</h1>
             <p style="margin:0;font-size:16px;line-height:26px;">${escapeHtml(content.body)}</p>
             ${codeHtml}
+            ${detailsHtml}
             ${ctaHtml}
             <p style="margin:24px 0 0;padding-top:24px;border-top:1px solid #d5dce7;font-size:12px;line-height:20px;color:#526078;">${escapeHtml(footer)}</p>
           </td></tr></table>
@@ -107,7 +115,7 @@ function renderEmailTemplate(content: {
         </td></tr></table>
       </body></html>
     `.trim(),
-    textContent: `${content.title}\n\n${content.body}${content.code ? `\n\n${content.code.label}: ${content.code.value}` : ''}${ctaText}\n\n${footer}\n\nMeetli · meetli.cc`,
+    textContent: `${content.title}\n\n${content.body}${content.code ? `\n\n${content.code.label}: ${content.code.value}` : ''}${detailsText}${ctaText}\n\n${footer}\n\nMeetli · meetli.cc`,
   };
 }
 
@@ -240,41 +248,71 @@ export type SendAppointmentNotificationEmailInput = {
   scheduledAt: string;
   notificationType?: AppointmentNotificationEmailType;
   manageUrl?: string;
+  serviceName?: string;
+  durationMin?: number;
+  meetingLink?: string;
+  meetingProvider?: 'manual' | 'zoom' | 'offline';
+  locationAddress?: string;
 };
 
 const APPOINTMENT_EMAIL_COPY: Record<AppointmentNotificationEmailType, { subject: string; title: string; body: (input: SendAppointmentNotificationEmailInput) => string }> = {
   appointment_created: {
     subject: 'Meetli — запись подтверждена',
     title: 'Запись подтверждена',
-    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} на ${input.scheduledAt} подтверждена.`,
+    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} подтверждена.`,
   },
   appointment_changed: {
     subject: 'Meetli — запись перенесена',
     title: 'Запись перенесена',
-    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} перенесена на ${input.scheduledAt}.`,
+    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} перенесена.`,
   },
   appointment_cancelled: {
     subject: 'Meetli — запись отменена',
     title: 'Запись отменена',
-    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName}, которая была назначена на ${input.scheduledAt}, отменена.`,
+    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} отменена.`,
   },
   appointment_reminder: {
     subject: 'Meetli — напоминание о записи',
     title: 'Напоминание о записи',
-    body: (input) => `${input.clientName}, у вас запись к специалисту ${input.specialistName} на ${input.scheduledAt}.`,
+    body: (input) => `${input.clientName}, напоминаем о записи к специалисту ${input.specialistName}.`,
   },
   payment_reminder: {
     subject: 'Meetli — напоминание об оплате',
     title: 'Напоминание об оплате',
-    body: (input) => `${input.clientName}, напоминаем об оплате записи к специалисту ${input.specialistName} на ${input.scheduledAt}.`,
+    body: (input) => `${input.clientName}, напоминаем об оплате записи к специалисту ${input.specialistName}.`,
   },
 };
+
+function buildAppointmentDetailsRows(input: SendAppointmentNotificationEmailInput): Array<{ label: string; value: string; href?: string }> {
+  const rows: Array<{ label: string; value: string; href?: string }> = [];
+
+  if (input.serviceName) {
+    rows.push({ label: 'Услуга', value: input.serviceName });
+  }
+
+  rows.push({ label: 'Дата и время', value: input.scheduledAt });
+
+  if (input.durationMin) {
+    rows.push({ label: 'Длительность', value: `${input.durationMin} мин` });
+  }
+
+  if (input.notificationType !== 'appointment_cancelled') {
+    if (input.meetingProvider === 'offline' && input.locationAddress) {
+      rows.push({ label: 'Адрес', value: input.locationAddress });
+    } else if (input.meetingLink) {
+      rows.push({ label: 'Встреча', value: input.meetingLink, href: input.meetingLink });
+    }
+  }
+
+  return rows;
+}
 
 export async function sendAppointmentNotificationEmail(input: SendAppointmentNotificationEmailInput): Promise<boolean> {
   const copy = APPOINTMENT_EMAIL_COPY[input.notificationType ?? 'appointment_reminder'];
   const template = renderEmailTemplate({
     title: copy.title,
     body: copy.body(input),
+    details: buildAppointmentDetailsRows(input),
     ctaLabel: input.manageUrl ? 'Управлять записью' : undefined,
     ctaLink: input.manageUrl,
   });

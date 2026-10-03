@@ -15,6 +15,7 @@ import { apiClient, authHeaders } from '../../shared/api/client';
 import { useAuth } from '../../shared/auth/AuthContext';
 import { useI18n } from '../../shared/i18n/I18nContext';
 import { AppIcons } from '../../shared/ui/AppIcons';
+import { toInitials } from '../../shared/utils/initials';
 
 function toDisplayName(email: string, fullName?: string) {
   if (fullName?.trim()) {
@@ -31,19 +32,6 @@ function toDisplayName(email: string, fullName?: string) {
     .split(/\s+/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
-}
-
-function toInitials(displayName: string) {
-  const words = displayName
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-
-  if (words.length >= 2) {
-    return `${words[0][0] ?? ''}${words[1][0] ?? ''}`.toUpperCase();
-  }
-
-  return (words[0] ?? '').slice(0, 2).toUpperCase();
 }
 
 type UserMenuProps = {

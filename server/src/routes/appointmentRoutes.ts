@@ -144,6 +144,9 @@ appointmentRoutes.patch('/:id', async (req, res) => {
     if (message === 'FORBIDDEN_CLIENT') {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
+    if (message === 'FORBIDDEN_CLIENT_FIELDS') {
+      return res.status(403).json({ message: t(req, 'forbiddenClientFields') });
+    }
     if (message === 'CLIENT_NOT_FOUND') {
       return res.status(404).json({ message: t(req, 'clientNotFound') });
     }

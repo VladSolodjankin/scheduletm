@@ -13,6 +13,7 @@ import { userManagementRoutes } from './routes/userManagementRoutes.js';
 import { notificationRoutes } from './routes/notificationRoutes.js';
 import { errorLogRoutes } from './routes/errorLogRoutes.js';
 import { publicPageRoutes } from './routes/publicPageRoutes.js';
+import { publicAppointmentManagementRoutes } from './routes/publicAppointmentManagementRoutes.js';
 import { serviceRoutes } from './routes/serviceRoutes.js';
 import { trackServerError } from './services/errorTrackingService.js';
 
@@ -112,6 +113,7 @@ export const createApp = () => {
   app.use('/api/integrations', integrationRoutes);
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/error-logs', errorLogRoutes);
+  app.use('/api/public/appointment-management', publicAppointmentManagementRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({ code: 'not_found' });

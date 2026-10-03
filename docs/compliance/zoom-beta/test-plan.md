@@ -3,7 +3,8 @@
 Effective date: 2026-09-28
 
 This document is the step-by-step test plan referenced from the Zoom Marketplace
-submission's release notes, for use by the Zoom App Review team.
+submission's release notes, for use by the Zoom App Review team. Same content
+published at `https://meetli.cc/zoom-test-plan` for reviewers to open directly.
 
 **Verified end-to-end on production (`meetli.cc`) on 2026-09-28** using a real
 test account: connected Zoom via OAuth, created an appointment with Zoom as the

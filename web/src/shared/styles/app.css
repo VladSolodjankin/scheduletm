@@ -1088,6 +1088,19 @@
   margin-bottom: var(--app-space-s);
 }
 
+.meetli-design-system .app-legal-document__table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.meetli-design-system .app-legal-document__table th,
+.meetli-design-system .app-legal-document__table td {
+  border: var(--app-border-width) solid var(--app-color-border);
+  padding: var(--app-space-s) var(--app-space-m);
+  text-align: left;
+  vertical-align: top;
+}
+
 .meetli-design-system .app-legal-footer {
   background: var(--app-color-surface);
   border-top: var(--app-border-width) solid var(--app-color-border);

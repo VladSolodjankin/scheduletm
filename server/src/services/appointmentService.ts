@@ -36,7 +36,7 @@ import { findAccountSettingsByAccountId } from '../repositories/accountSettingsR
 import { listExternalBusySlots, type ExternalBusySlot } from './calendarAvailabilityService.js';
 import type { User } from '../types/domain.js';
 import { WebUserRole } from '../types/webUserRole.js';
-import { canCreateAppointments, canManageAllAppointments, canMarkPaidAndNotify, isClientRole } from '../policies/rolePermissions.js';
+import { assertClientEditableFields, canCreateAppointments, canManageAllAppointments, canMarkPaidAndNotify, isClientRole } from '../policies/rolePermissions.js';
 import { sendAppointmentNotificationByType } from './appointmentNotificationService.js';
 import { enqueueTrackedAppointmentNotification } from './notificationDeliveryService.js';
 import { createZoomMeeting } from './zoomService.js';
@@ -638,6 +638,16 @@ export async function updateAppointmentForActor(
   appointmentId: number,
   payload: UpdateAppointmentPayload,
 ): Promise<AppointmentDto | null> {
+  assertClientEditableFields(actor.role, payload);
+
+  return applyAppointmentUpdate(actor, appointmentId, payload);
+}
+
+async function applyAppointmentUpdate(
+  actor: User,
+  appointmentId: number,
+  payload: UpdateAppointmentPayload,
+): Promise<AppointmentDto | null> {
   const { accountId, existing } = await resolveManagedAppointment(actor, appointmentId);
 
   if (!existing) {
@@ -678,7 +688,7 @@ export async function updateAppointmentForActor(
 }
 
 export async function cancelAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
-  const updated = await updateAppointmentForActor(actor, appointmentId, { status: 'cancelled' });
+  const updated = await applyAppointmentUpdate(actor, appointmentId, { status: 'cancelled' });
 
   if (!updated) {
     return null;
@@ -709,7 +719,7 @@ export async function rescheduleAppointmentForActor(
     return null;
   }
 
-  const updated = await updateAppointmentForActor(actor, appointmentId, {
+  const updated = await applyAppointmentUpdate(actor, appointmentId, {
     appointmentAt: scheduledAt,
     appointmentEndAt: new Date(new Date(scheduledAt).getTime() + existing.duration_min * 60_000).toISOString(),
   });

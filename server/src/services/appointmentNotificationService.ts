@@ -1,13 +1,22 @@
 import type { AppointmentRecord } from '../repositories/appointmentRepository.js';
 import { findSpecialistById } from '../repositories/specialistRepository.js';
+import { findService } from '../repositories/serviceRepository.js';
 import { findTelegramIntegrationByAccountId } from '../repositories/webUserIntegrationRepository.js';
 import { sendAppointmentNotificationEmail } from './emailDeliveryService.js';
 import { sendTelegramBotMessage } from './telegramService.js';
+import { formatAppointmentDateTime } from '../utils/dateTimeFormat.js';
+import { getOrCreateAppointmentManageUrl } from './appointmentManagementTokenService.js';
 import {
   type NotificationChannel,
   getEffectiveNotificationSetting,
   type NotificationType,
 } from './notificationSettingsService.js';
+
+const MANAGE_URL_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
+  'appointment_created',
+  'appointment_changed',
+  'appointment_reminder',
+]);
 
 function resolveClientName(appointment: AppointmentRecord): string {
   return `${appointment.client_first_name ?? ''} ${appointment.client_last_name ?? ''}`.trim() || 'Клиент';
@@ -55,6 +64,7 @@ export async function sendAppointmentNotificationByType(input: {
   }
 
   const specialist = await findSpecialistById(input.accountId, input.appointment.specialist_id);
+  const timezone = specialist?.timezone || 'UTC';
   for (const channel of channelsToTry) {
     if (channel === 'telegram') {
       if (!telegramChatId || !telegramUsername) {
@@ -85,12 +95,25 @@ export async function sendAppointmentNotificationByType(input: {
         continue;
       }
 
+      const [service, manageUrl] = await Promise.all([
+        findService(input.accountId, input.appointment.service_id),
+        MANAGE_URL_NOTIFICATION_TYPES.has(input.notificationType)
+          ? getOrCreateAppointmentManageUrl(input.appointment)
+          : Promise.resolve(undefined),
+      ]);
+
       const delivered = await sendAppointmentNotificationEmail({
         to: email,
         clientName: resolveClientName(input.appointment),
         specialistName: specialist?.name ?? 'специалист',
-        scheduledAt: input.appointment.appointment_at.toISOString(),
+        scheduledAt: formatAppointmentDateTime(input.appointment.appointment_at, timezone),
         notificationType: input.notificationType,
+        manageUrl,
+        serviceName: service?.name,
+        durationMin: input.appointment.duration_min,
+        meetingLink: input.appointment.meeting_link ?? undefined,
+        meetingProvider: input.appointment.meeting_provider,
+        locationAddress: input.appointment.location_address ?? undefined,
       });
 
       if (delivered) {
