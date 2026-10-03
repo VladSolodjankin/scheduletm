@@ -5,17 +5,7 @@ import { AppSurface } from '../shared/ui/AppSurface';
 import { AppButton } from '../shared/ui/AppButton';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
-
-const SCOPES = [
-  {
-    scope: 'meeting:write:meeting',
-    purpose: "Create a Zoom meeting on the connected user's behalf when they book an appointment with Zoom selected as the meeting provider."
-  },
-  {
-    scope: 'user:read:user',
-    purpose: 'Read basic profile info (name, email) of the connected Zoom account, shown in Settings → Integrations to confirm which Zoom account is connected.'
-  }
-];
+import { zoomTestPlanContent as c } from '../content/zoomTestPlan';
 
 export function ZoomTestPlanPage() {
   const navigate = useNavigate();
@@ -32,7 +22,7 @@ export function ZoomTestPlanPage() {
   };
 
   return (
-    <AppPage title="Meetli — Zoom App Test Plan" subtitle="Effective date: 2026-09-28" maxWidth={960}>
+    <AppPage title={c.pageTitle} subtitle={c.effectiveDate} maxWidth={960}>
       <AppSurface className="app-legal-document">
         <Stack className="app-legal-document__content">
           <Box>
@@ -42,39 +32,26 @@ export function ZoomTestPlanPage() {
           </Box>
 
           <Stack className="app-legal-document__intro">
-            <Typography variant="body1" color="text.secondary">
-              This document is the step-by-step test plan referenced from the Zoom Marketplace
-              submission's release notes, for use by the Zoom App Review team.
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Verified end-to-end on production (<code>meetli.cc</code>) on 2026-09-28 using a real
-              test account: connected Zoom via OAuth, created an appointment with Zoom as the
-              meeting provider from the internal dashboard, and confirmed a real Zoom join link
-              (<code>us05web.zoom.us/j/...</code>) was attached to it. The steps below match what
-              was actually exercised, not just a theoretical flow.
-            </Typography>
+            <Typography variant="body1" color="text.secondary">{c.intro1}</Typography>
+            <Typography variant="body1" color="text.secondary">{c.intro2}</Typography>
           </Stack>
 
           <Stack className="app-legal-document__section">
-            <Typography variant="h6">1. What the app does</Typography>
-            <Typography variant="body1">
-              Meetli is a scheduling/appointments SaaS. Once a user connects their Zoom account,
-              Meetli can create a Zoom meeting automatically for any appointment and attach the
-              join link to booking confirmations and reminders sent to the client.
-            </Typography>
+            <Typography variant="h6">{c.section1Title}</Typography>
+            <Typography variant="body1">{c.section1Body}</Typography>
           </Stack>
 
           <Stack className="app-legal-document__section">
-            <Typography variant="h6">2. Scopes requested and why</Typography>
+            <Typography variant="h6">{c.section2Title}</Typography>
             <Box component="table" className="app-legal-document__table">
               <Box component="thead">
                 <Box component="tr">
-                  <Box component="th">Scope</Box>
-                  <Box component="th">Purpose</Box>
+                  <Box component="th">{c.scopeTableScopeHeader}</Box>
+                  <Box component="th">{c.scopeTablePurposeHeader}</Box>
                 </Box>
               </Box>
               <Box component="tbody">
-                {SCOPES.map((row) => (
+                {c.scopes.map((row) => (
                   <Box component="tr" key={row.scope}>
                     <Box component="td"><code>{row.scope}</code></Box>
                     <Box component="td">{row.purpose}</Box>
@@ -82,109 +59,67 @@ export function ZoomTestPlanPage() {
                 ))}
               </Box>
             </Box>
-            <Typography variant="body1">No other scopes are requested.</Typography>
+            <Typography variant="body1">{c.section2Footer}</Typography>
           </Stack>
 
           <Stack className="app-legal-document__section">
-            <Typography variant="h6">3. Test account</Typography>
+            <Typography variant="h6">{c.section3Title}</Typography>
             <Typography variant="body1">
-              Login URL: <Link href="https://meetli.cc/login">https://meetli.cc/login</Link>
+              {c.section3LoginLabel} <Link href={c.section3LoginUrl}>{c.section3LoginUrl}</Link>
             </Typography>
-            <Typography variant="body1">
-              Credentials: provided separately in the Zoom Marketplace "Test account and
-              credentials" field. The account has one specialist (<code>zoomtestowner</code>) and
-              one bookable service ("Test service", 30 min) already set up, so the reviewer does
-              not need to create anything before testing.
-            </Typography>
+            <Typography variant="body1">{c.section3Credentials}</Typography>
           </Stack>
 
           <Stack className="app-legal-document__section">
-            <Typography variant="h6">4. Step-by-step test flow</Typography>
+            <Typography variant="h6">{c.section4Title}</Typography>
 
-            <Typography variant="subtitle1">4.1 Connect Zoom (OAuth authorization)</Typography>
+            <Typography variant="subtitle1">{c.step41Title}</Typography>
             <Box component="ol" className="app-legal-document__list">
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">Sign in to Meetli with the provided test account.</Typography>
-              </Box>
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">Go to Settings → Integrations.</Typography>
-              </Box>
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">Locate the Zoom card and select Connect.</Typography>
-              </Box>
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">
-                  You are redirected to Zoom's OAuth consent screen (<code>zoom.us/oauth/authorize</code>).
-                  Review the requested scopes and select Authorize.
-                </Typography>
-              </Box>
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">
-                  You are redirected back to <code>https://meetli.cc/settings?zoom_oauth=success</code>,
-                  and the Zoom card now shows Connected, along with the connected Zoom account's
-                  name/email (from <code>user:read:user</code>).
-                </Typography>
-              </Box>
+              {c.step41Items.map((item) => (
+                <Box component="li" className="app-legal-document__list-item" key={item}>
+                  <Typography variant="body1">{item}</Typography>
+                </Box>
+              ))}
             </Box>
-            <Typography variant="body1" color="text.secondary">
-              Expected result: no errors; the Zoom card persists as Connected after a page refresh.
-            </Typography>
+            <Typography variant="body1" color="text.secondary">{c.step41Result}</Typography>
 
-            <Typography variant="subtitle1">4.2 Create an appointment with a Zoom meeting</Typography>
+            <Typography variant="subtitle1">{c.step42Title}</Typography>
             <Box component="ol" className="app-legal-document__list">
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">From the Meetli dashboard, create a new appointment (or edit an existing one).</Typography>
-              </Box>
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">In the meeting provider field, select Zoom.</Typography>
-              </Box>
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">Save the appointment.</Typography>
-              </Box>
+              {c.step42Items.map((item) => (
+                <Box component="li" className="app-legal-document__list-item" key={item}>
+                  <Typography variant="body1">{item}</Typography>
+                </Box>
+              ))}
             </Box>
-            <Typography variant="body1" color="text.secondary">
-              Expected result: the appointment now shows a Join Zoom Meeting link. This calls the
-              Zoom REST API (<code>POST /v2/users/me/meetings</code>) server-side using the access
-              token obtained in step 4.1, via <code>meeting:write:meeting</code>.
-            </Typography>
+            <Typography variant="body1" color="text.secondary">{c.step42Result}</Typography>
 
-            <Typography variant="subtitle1">4.3 Verify the meeting link</Typography>
+            <Typography variant="subtitle1">{c.step43Title}</Typography>
             <Box component="ol" className="app-legal-document__list">
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">
-                  Open the appointment detail view and confirm the Join link is present and points
-                  to a valid <code>zoom.us/j/...</code> URL.
-                </Typography>
-              </Box>
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">Optionally, open the link to confirm it loads a real Zoom meeting.</Typography>
-              </Box>
+              {c.step43Items.map((item) => (
+                <Box component="li" className="app-legal-document__list-item" key={item}>
+                  <Typography variant="body1">{item}</Typography>
+                </Box>
+              ))}
             </Box>
 
-            <Typography variant="subtitle1">4.4 Disconnect Zoom</Typography>
+            <Typography variant="subtitle1">{c.step44Title}</Typography>
             <Box component="ol" className="app-legal-document__list">
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">Go to Settings → Integrations.</Typography>
-              </Box>
-              <Box component="li" className="app-legal-document__list-item">
-                <Typography variant="body1">Select Disconnect on the Zoom card.</Typography>
-              </Box>
+              {c.step44Items.map((item) => (
+                <Box component="li" className="app-legal-document__list-item" key={item}>
+                  <Typography variant="body1">{item}</Typography>
+                </Box>
+              ))}
             </Box>
-            <Typography variant="body1" color="text.secondary">
-              Expected result: the card returns to a disconnected state; Meetli clears the stored
-              Zoom OAuth token for that user immediately. Creating a new appointment with Zoom as
-              the provider now fails gracefully (the UI indicates Zoom needs to be reconnected)
-              until the user connects again.
-            </Typography>
+            <Typography variant="body1" color="text.secondary">{c.step44Result}</Typography>
           </Stack>
 
           <Stack className="app-legal-document__section">
-            <Typography variant="h6">5. Related documents</Typography>
+            <Typography variant="h6">{c.section5Title}</Typography>
             <Box component="ul" className="app-legal-document__list">
               <Box component="li" className="app-legal-document__list-item">
                 <Typography variant="body1">
-                  <Link href="https://meetli.cc/support">Support and Documentation</Link> —
-                  end-user-facing instructions for adding, using, and removing the app.
+                  <Link href={c.section5SupportLinkUrl}>{c.section5SupportLinkLabel}</Link>
+                  {c.section5SupportDescription}
                 </Typography>
               </Box>
             </Box>
