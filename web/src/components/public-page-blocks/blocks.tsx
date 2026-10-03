@@ -60,6 +60,7 @@ import {
   type AvatarLayout,
 } from './avatarPresentation';
 import { resolvePublicPageThemeVariables } from './publicPageThemeVariables';
+import { PublicBookingDialog } from './PublicBookingDialog';
 import type { PublicBookingService } from '../../shared/types/api';
 
 export { normalizeAvatarLayout, normalizeAvatarSize, resolveAvatarPresentation } from './avatarPresentation';
@@ -687,6 +688,7 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
   const [focusWithin, setFocusWithin] = useState(false);
   const [pageHidden, setPageHidden] = useState(() => typeof document !== 'undefined' && document.hidden);
   const [manualNavigation, setManualNavigation] = useState(0);
+  const [bookingServiceId, setBookingServiceId] = useState<number | null>(null);
   const interval = Number.isInteger(block.content.autoplayIntervalSeconds)
     ? Number(block.content.autoplayIntervalSeconds) : null;
   const autoplayConfigured = interval !== null && interval >= 3 && interval <= 30 && selectedServices.length > 1;
@@ -763,8 +765,8 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
               {publicPageText(locale, 'serviceFirstSessionFree')}
             </Typography> : null}
           </Stack>
-          {block.content.showBookingButton !== false && publicPageSlug ? <Button component="a"
-            href={`/${encodeURIComponent(publicPageSlug)}/booking?service=${service.id}`} variant="contained"
+          {block.content.showBookingButton !== false && publicPageSlug ? <Button
+            onClick={() => setBookingServiceId(service.id)} variant="contained"
             sx={{ ...ordinaryPublicPageLinkSx, mt: 0.5, minHeight: 44, textTransform: 'none',
               '@container public-services (min-width: 600px)': { mt: 0, flexShrink: 0, maxWidth: '40%' } }}>
             {publicPageText(locale, 'serviceBook')}
@@ -801,6 +803,8 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
           onClick={() => setAutoplayPaused((value) => !value)}>{autoplayPaused ? <PlayArrow /> : <Pause />}</IconButton> : null}
       </Box>
     </>}
+    {!editor && publicPageSlug && bookingServiceId !== null ? <PublicBookingDialog open onClose={() => setBookingServiceId(null)}
+      slug={publicPageSlug} serviceId={String(bookingServiceId)} /> : null}
   </Stack></Surface>;
 }
 
