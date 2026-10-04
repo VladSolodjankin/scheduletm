@@ -30,6 +30,7 @@ const keys = {
   publishMissingAlt: 'publicPageBuilder.publishMissingAlt',
   publishMissingLabel: 'publicPageBuilder.publishMissingLabel',
   publishInvalidDocument: 'publicPageBuilder.publishInvalidDocument',
+  publishPlaceholderLink: 'publicPageBuilder.publishPlaceholderLink',
   pages: 'publicPageBuilder.pages', editorWorkspaceTitle: 'publicPageBuilder.editorWorkspaceTitle', pagesSubtitle: 'publicPageBuilder.pagesSubtitle',
   implementedTemplates: 'publicPageBuilder.implementedTemplates', templatePreviewHint: 'publicPageBuilder.templatePreviewHint',
   create: 'publicPageBuilder.create', empty: 'publicPageBuilder.empty',

@@ -17,7 +17,8 @@ export type PublishValidationCode =
   | 'missing_alt'
   | 'missing_accessible_label'
   | 'missing_seo_title'
-  | 'missing_seo_description';
+  | 'missing_seo_description'
+  | 'placeholder_link';
 
 export type PublishValidationIssue = {
   code: PublishValidationCode;
@@ -71,6 +72,13 @@ function isCtaAction(value: unknown): value is CtaAction {
     default:
       return false;
   }
+}
+
+const PLACEHOLDER_LINK_URLS = new Set(['https://example.com', 'https://example.com/']);
+
+/** True for the unmodified default URL new link/button/social blocks are created with. */
+function isPlaceholderLinkUrl(url: string): boolean {
+  return PLACEHOLDER_LINK_URLS.has(url.trim());
 }
 
 function findBlockById(document: PublicPageDocument, blockId: string): BlockLocation | null {
@@ -265,6 +273,9 @@ function validateBlockContent(
   visitContent(block.content, `${path}.content`, (value, contentPath) => {
     if (isCtaAction(value) && !isSafeCtaAction(value)) {
       issues.push({ code: 'invalid_cta', path: contentPath, sectionId, blockId: block.id });
+    }
+    if (isCtaAction(value) && (value.type === 'url' || value.type === 'messenger') && isPlaceholderLinkUrl(value.url)) {
+      issues.push({ code: 'placeholder_link', path: contentPath, sectionId, blockId: block.id });
     }
     if (isRecord(value) && typeof value.label === 'string' && isCtaAction(value.action)
       && !value.label.trim()) {

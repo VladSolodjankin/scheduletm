@@ -15,6 +15,7 @@ const issueKeys = {
   missing_accessible_label: 'publishMissingLabel',
   missing_seo_title: 'publishMissingTitle',
   missing_seo_description: 'publishMissingDescription',
+  placeholder_link: 'publishPlaceholderLink',
 } satisfies Record<PublishValidationCode, PublicPageUiKey>;
 
 export function publishIssueText(locale: Locale, issue: PublishValidationIssue): string {

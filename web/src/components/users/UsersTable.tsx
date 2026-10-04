@@ -16,6 +16,8 @@ type UsersTableProps = {
   deleteLabel: string;
   resendInviteLabel: string;
   roleLabels: {
+    owner: string;
+    productAdmin: string;
     specialist: string;
     client: string;
   };
@@ -43,10 +45,16 @@ export function UsersTable({
   const theme = useTheme();
 
   const getRoleLabel = (item: ManagedUserItem) => {
-    if (item.role === 'client') {
-      return roleLabels.client;
+    switch (item.role) {
+      case 'client':
+        return roleLabels.client;
+      case 'owner':
+        return roleLabels.owner;
+      case 'product_admin':
+        return roleLabels.productAdmin;
+      default:
+        return roleLabels.specialist;
     }
-    return roleLabels.specialist;
   };
 
   const getDisplayName = (item: ManagedUserItem) => [item.firstName, item.lastName].filter(Boolean).join(' ').trim() || item.email;

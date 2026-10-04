@@ -102,7 +102,7 @@ export const dictionaries = {
       submitRegister: 'Create account',
       switchToRegister: "Don't have an account? Register",
       switchToLogin: 'Already have an account? Sign in',
-      termsLabel: 'security policy',
+      termsLabel: 'terms of use',
       privacyPolicyLabel: 'privacy policy',
       legalPrefix: 'By continuing, you acknowledge our',
       legalJoin: 'and',
@@ -505,6 +505,8 @@ export const dictionaries = {
       durationMinutesShort: '{minutes}m',
       roleSpecialist: 'specialist',
       roleClient: 'client',
+      roleOwner: 'owner',
+      roleProductAdmin: 'product admin',
       paymentStatusPaid: 'Paid',
       paymentStatusUnpaid: 'Unpaid',
       auditTitle: 'Activity',
@@ -581,7 +583,7 @@ export const dictionaries = {
       loading: 'Loading…', retry: 'Retry', edit: 'Edit', duplicate: 'Duplicate',
       archive: 'Archive', restore: 'Restore', draft: 'Draft', published: 'Published', archived: 'Archived',
       unsaved: 'Unsaved changes', leaveWarning: 'Save your changes before leaving, or discard them.', stay: 'Stay', discardAndLeave: 'Discard and leave', saveAndLeave: 'Save and leave',
-      publishMissingTitle: 'Enter a page title in Page settings.', publishMissingDescription: 'Enter a page description in Page settings.', publishMissingBlock: 'Add at least one visible block.', publishInvalidBlock: 'Check the content of the selected block.', publishInvalidLink: 'Enter a valid link or contact action.', publishInvalidMedia: 'Select an available image and check its settings.', publishMissingAlt: 'Add a description for the image.', publishMissingLabel: 'Add a label for the link or action.', publishInvalidDocument: 'Check the page settings and block content before publishing.',
+      publishMissingTitle: 'Enter a page title in Page settings.', publishMissingDescription: 'Enter a page description in Page settings.', publishMissingBlock: 'Add at least one visible block.', publishInvalidBlock: 'Check the content of the selected block.', publishInvalidLink: 'Enter a valid link or contact action.', publishInvalidMedia: 'Select an available image and check its settings.', publishMissingAlt: 'Add a description for the image.', publishMissingLabel: 'Add a label for the link or action.', publishInvalidDocument: 'Check the page settings and block content before publishing.', publishPlaceholderLink: 'This still points to the placeholder example.com address — replace it with the real link before publishing.',
       advancedDesign: 'Advanced design', simpleEditor: 'Simple editor', advancedEditor: 'Advanced editor', designEditorMode: 'Design editor mode', typography: 'Typography', buttons: 'Buttons', customValues: 'Custom values', fromPageTheme: 'From page theme', resetGroup: 'Reset group',
       palettePreserves: 'Changing the palette preserves your custom typography and button settings. Reset affects only this group.', sectionDefaults: 'Section defaults',
       customButtonDesign: 'Custom button design', buttonInheritance: 'Uses section styling, then page styling.', resetButtonDesign: 'Use section style', animation: 'Animation', pulse: 'Pulse', lift: 'Lift', softShadow: 'Soft',
@@ -787,7 +789,7 @@ export const dictionaries = {
       submitRegister: 'Зарегистрироваться',
       switchToRegister: 'Нет аккаунта? Зарегистрироваться',
       switchToLogin: 'Уже есть аккаунт? Войти',
-      termsLabel: 'политикой безопасности',
+      termsLabel: 'условиями использования',
       privacyPolicyLabel: 'политикой конфиденциальности',
       legalPrefix: 'Продолжая, вы подтверждаете ознакомление с нашими',
       legalJoin: 'и',
@@ -1190,6 +1192,8 @@ export const dictionaries = {
       durationMinutesShort: '{minutes}м',
       roleSpecialist: 'specialist',
       roleClient: 'client',
+      roleOwner: 'владелец',
+      roleProductAdmin: 'администратор платформы',
       paymentStatusPaid: 'Оплачено',
       paymentStatusUnpaid: 'Не оплачено',
       auditTitle: 'История действий',
@@ -1270,7 +1274,7 @@ export const dictionaries = {
       loading: 'Загрузка…', retry: 'Повторить', edit: 'Редактировать', duplicate: 'Дублировать',
       archive: 'В архив', restore: 'Восстановить', draft: 'Черновик', published: 'Опубликована', archived: 'В архиве',
       unsaved: 'Есть несохранённые изменения', leaveWarning: 'Сохраните изменения перед выходом или отмените их.', stay: 'Остаться', discardAndLeave: 'Выйти без сохранения', saveAndLeave: 'Сохранить и выйти',
-      publishMissingTitle: 'Укажите заголовок страницы в настройках страницы.', publishMissingDescription: 'Укажите описание страницы в настройках страницы.', publishMissingBlock: 'Добавьте хотя бы один видимый блок.', publishInvalidBlock: 'Проверьте содержимое выбранного блока.', publishInvalidLink: 'Укажите корректную ссылку или действие для связи.', publishInvalidMedia: 'Выберите доступное изображение и проверьте его настройки.', publishMissingAlt: 'Добавьте описание изображения.', publishMissingLabel: 'Добавьте подпись ссылки или действия.', publishInvalidDocument: 'Проверьте настройки страницы и содержимое блоков перед публикацией.',
+      publishMissingTitle: 'Укажите заголовок страницы в настройках страницы.', publishMissingDescription: 'Укажите описание страницы в настройках страницы.', publishMissingBlock: 'Добавьте хотя бы один видимый блок.', publishInvalidBlock: 'Проверьте содержимое выбранного блока.', publishInvalidLink: 'Укажите корректную ссылку или действие для связи.', publishInvalidMedia: 'Выберите доступное изображение и проверьте его настройки.', publishMissingAlt: 'Добавьте описание изображения.', publishMissingLabel: 'Добавьте подпись ссылки или действия.', publishInvalidDocument: 'Проверьте настройки страницы и содержимое блоков перед публикацией.', publishPlaceholderLink: 'Эта ссылка всё ещё ведёт на тестовый адрес example.com — замените её на настоящую ссылку перед публикацией.',
       advancedDesign: 'Расширенное оформление', simpleEditor: 'Простой редактор', advancedEditor: 'Расширенный редактор', designEditorMode: 'Режим редактора дизайна', typography: 'Типографика', buttons: 'Кнопки', customValues: 'Собственные значения', fromPageTheme: 'Из темы страницы', resetGroup: 'Сбросить группу',
       palettePreserves: 'Смена палитры сохраняет ваши настройки типографики и кнопок. Сброс затрагивает только эту группу.', sectionDefaults: 'Стили секций',
       customButtonDesign: 'Собственное оформление кнопки', buttonInheritance: 'Используется оформление секции, затем страницы.', resetButtonDesign: 'Использовать стиль секции', animation: 'Анимация', pulse: 'Пульсация', lift: 'Приподнять', softShadow: 'Мягкая',
@@ -1679,6 +1683,8 @@ export type TranslationKey =
   | 'appointments.roleClient'
   | 'appointments.durationMinutesShort'
   | 'appointments.roleSpecialist'
+  | 'appointments.roleOwner'
+  | 'appointments.roleProductAdmin'
   | 'appointments.client'
   | 'appointments.timezone'
   | 'appointments.currentTimezone'

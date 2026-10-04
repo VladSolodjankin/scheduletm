@@ -228,6 +228,8 @@ export function UsersContainer() {
                 deleteLabel={t('users.delete')}
                 resendInviteLabel={t('users.resendInvite')}
                 roleLabels={{
+                  owner: t('appointments.roleOwner'),
+                  productAdmin: t('appointments.roleProductAdmin'),
                   specialist: t('appointments.roleSpecialist'),
                   client: t('appointments.roleClient')
                 }}

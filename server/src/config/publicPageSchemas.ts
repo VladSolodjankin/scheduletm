@@ -13,6 +13,8 @@ export const RESERVED_PUBLIC_PAGE_SLUGS = new Set([
   'api', 'appointments', 'assets', 'booking', 'health', 'login', 'logout',
   'public-pages', 'register', 'settings', 'specialists', 'users',
 ]);
+/** Unmodified default URL new link/button/social blocks are created with — never a real publish target. */
+const PLACEHOLDER_LINK_URLS = new Set(['https://example.com', 'https://example.com/']);
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const socialButtonPlatformValues = [
   'facebook-messenger', 'vk', 'whatsapp', 'viber', 'telegram',
@@ -564,6 +566,10 @@ export function validatePublicPageForPublish(document: PublicPageDocument): Publ
     const record = value as Record<string, unknown>;
     if (isCtaAction(record) && !isSafeCtaAction(record)) {
       issues.push({ code: 'invalid_cta', path });
+    }
+    if (isCtaAction(record) && (record.type === 'url' || record.type === 'messenger')
+      && PLACEHOLDER_LINK_URLS.has(String(record.url).trim())) {
+      issues.push({ code: 'placeholder_link', path });
     }
     if (typeof record.label === 'string' && 'action' in record
       && isCtaAction(record.action) && !record.label.trim()) {

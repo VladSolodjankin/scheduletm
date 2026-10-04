@@ -845,7 +845,7 @@ describe('public page schemas', () => {
           ...validPublicPageDocument.sections[0]!.blocks[0], id: 'button-1', type: 'button',
           content: {
             label: 'Visit', icon: 'link', subtitle: '', openInNewTab: false,
-            action: { type: 'url', url: 'https://example.com' },
+            action: { type: 'url', url: 'https://example.org/visit' },
           },
         }],
       }],
@@ -855,6 +855,29 @@ describe('public page schemas', () => {
       }],
     });
     expect(validatePublicPageForPublish(parsed)).toEqual([]);
+  });
+
+  it.each([
+    'https://example.com',
+    'https://example.com/',
+  ])('rejects a button block still pointing at the unmodified placeholder URL %s', (url) => {
+    const parsed = publicPageDocumentSchema.parse({
+      ...validPublicPageDocument,
+      sections: [{
+        ...validPublicPageDocument.sections[0],
+        blocks: [{
+          ...validPublicPageDocument.sections[0]!.blocks[0], id: 'button-1', type: 'button',
+          content: {
+            label: 'Learn more', icon: 'link', subtitle: '', openInNewTab: false,
+            action: { type: 'url', url },
+          },
+        }],
+      }],
+    });
+    expect(validatePublicPageForPublish(parsed)).toContainEqual({
+      code: 'placeholder_link',
+      path: 'blocks.button-1.content.action',
+    });
   });
 
   it.each([
