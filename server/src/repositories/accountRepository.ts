@@ -64,6 +64,35 @@ export async function listAccountsDueForDeletion(now: Date): Promise<Array<{ id:
     .select<Array<{ id: number }>>('id');
 }
 
+export type OnboardingStateRecord = {
+  onboarding_completed_steps: string | null;
+  onboarding_dismissed_at: Date | null;
+};
+
+export async function getOnboardingState(accountId: number): Promise<OnboardingStateRecord | null> {
+  const account = await db('accounts')
+    .where({ id: accountId })
+    .first<OnboardingStateRecord>('onboarding_completed_steps', 'onboarding_dismissed_at');
+
+  return account ?? null;
+}
+
+export async function markOnboardingStepComplete(accountId: number, step: string): Promise<void> {
+  const current = await getOnboardingState(accountId);
+  const steps = new Set((current?.onboarding_completed_steps ?? '').split(',').filter(Boolean));
+  steps.add(step);
+
+  await db('accounts')
+    .where({ id: accountId })
+    .update({ onboarding_completed_steps: Array.from(steps).join(',') });
+}
+
+export async function dismissOnboarding(accountId: number): Promise<void> {
+  await db('accounts')
+    .where({ id: accountId })
+    .update({ onboarding_dismissed_at: db.fn.now() });
+}
+
 export async function deleteAccountById(id: number): Promise<void> {
   await db('accounts')
     .where({ id })

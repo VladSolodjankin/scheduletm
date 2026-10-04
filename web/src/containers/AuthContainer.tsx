@@ -6,11 +6,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/AuthCard';
 import { AuthLegalNotice } from '../components/legal/AuthLegalNotice';
 import logoText from '../static/images/logo_text.svg';
-import { apiClient } from '../shared/api/client';
+import { apiClient, authHeaders } from '../shared/api/client';
 import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
-import type { AuthResponse, PasswordResetResponse, RegisterResponse, VerifyEmailResponse } from '../shared/types/api';
+import { WebUserRole } from '../shared/types/roles';
+import type { AuthResponse, OnboardingStatus, PasswordResetResponse, RegisterResponse, VerifyEmailResponse } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppForm } from '../shared/ui/AppForm';
 import { AppOtpCodeField } from '../shared/ui/AppOtpCodeField';
@@ -198,6 +199,21 @@ export function AuthContainer({ mode }: AuthContainerProps) {
         setInfo('');
         setFieldErrors({});
         setAuthSession(response.data.accessToken, response.data.user);
+
+        if (response.data.user.role === WebUserRole.Owner) {
+          try {
+            const onboarding = await apiClient.get<OnboardingStatus>('/api/onboarding', {
+              headers: authHeaders(response.data.accessToken),
+            });
+            if (!onboarding.data.dismissed && onboarding.data.steps.some((step) => !step.completed)) {
+              navigate('/onboarding');
+              return;
+            }
+          } catch {
+            // Onboarding status is a convenience redirect only — fall through to settings on failure.
+          }
+        }
+
         navigate('/settings');
         return;
       }

@@ -100,6 +100,33 @@ export type SpecialistBookingPolicy = {
   meetingProviderOverrideEnabled: boolean;
 };
 
+export type ScheduleExceptionType = 'day_off' | 'vacation' | 'interval' | 'break';
+
+export type ScheduleException = {
+  id: number;
+  specialistId: number;
+  date: string;
+  type: ScheduleExceptionType;
+  startsAtMinute: number | null;
+  endsAtMinute: number | null;
+  note: string | null;
+};
+
+export type ScheduleExceptionCreatePayload = {
+  date: string;
+  type: ScheduleExceptionType;
+  startsAtMinute?: number;
+  endsAtMinute?: number;
+  note?: string;
+};
+
+export type OnboardingStepKey = 'account' | 'specialist' | 'schedule' | 'service' | 'meeting' | 'publish' | 'testBooking';
+
+export type OnboardingStatus = {
+  steps: Array<{ key: OnboardingStepKey; completed: boolean }>;
+  dismissed: boolean;
+};
+
 export type NotificationType = 'appointment_created' | 'appointment_reminder' | 'payment_reminder';
 export type NotificationChannel = 'email' | 'telegram' | 'viber' | 'sms' | 'whatsapp';
 export type NotificationFrequency = 'immediate' | 'daily';

@@ -11,6 +11,7 @@ const RegisterPage = lazy(() => import('../pages/RegisterPage').then((module) =>
 const InviteAcceptPage = lazy(() => import('../pages/InviteAcceptPage').then((module) => ({ default: module.InviteAcceptPage })));
 const AppointmentsPage = lazy(() => import('../pages/AppointmentsPage').then((module) => ({ default: module.AppointmentsPage })));
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
+const OnboardingPage = lazy(() => import('../pages/OnboardingPage').then((module) => ({ default: module.OnboardingPage })));
 const SpecialistsPage = lazy(() => import('../pages/SpecialistsPage').then((module) => ({ default: module.SpecialistsPage })));
 const ServicesPage = lazy(() => import('../pages/ServicesPage').then((module) => ({ default: module.ServicesPage })));
 const UsersPage = lazy(() => import('../pages/UsersPage').then((module) => ({ default: module.UsersPage })));
@@ -143,6 +144,7 @@ export const router = createBrowserRouter([
               </ProtectedRoute>
             )
           },
+          { path: '/onboarding', element: <RoleRoute><OnboardingPage /></RoleRoute> },
           {
             path: '/specialists',
             element: (

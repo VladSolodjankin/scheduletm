@@ -1,4 +1,22 @@
-import type { NotificationChannel } from '../shared/types/api';
+import type { NotificationChannel, ScheduleExceptionType } from '../shared/types/api';
+
+export type ScheduleExceptionsCopy = {
+  title: string;
+  addButton: string;
+  deleteLabel: string;
+  empty: string;
+  dialogTitle: string;
+  date: string;
+  type: string;
+  startsAt: string;
+  endsAt: string;
+  note: string;
+  wholeDayHint: string;
+  wholeDayLabel: string;
+  save: string;
+  cancel: string;
+  types: Record<ScheduleExceptionType, string>;
+};
 
 export type SettingsCardCopy = {
   systemTab: string;
@@ -8,7 +26,9 @@ export type SettingsCardCopy = {
   passwordTab: string;
   emailChangeTab: string;
   specialistPolicyTab: string;
+  scheduleExceptionsTab: string;
   notificationsTab: string;
+  scheduleExceptions: ScheduleExceptionsCopy;
   systemTitle: string;
   accountTitle: string;
   userTitle: string;

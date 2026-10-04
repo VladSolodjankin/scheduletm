@@ -123,6 +123,7 @@ export const dictionaries = {
         system: 'System settings',
         account: 'Account settings',
         specialistPolicy: 'Booking policies',
+        scheduleExceptions: 'Schedule exceptions',
         notifications: 'Notifications',
         user: 'User settings',
         integrations: 'Integrations',
@@ -226,6 +227,26 @@ export const dictionaries = {
         defaultSessionContinuationMin: 'Default session continuation (min)',
         defaultMeetingLink: 'Default meeting link',
         defaultMeetingLinkInvalid: 'Enter a valid http:// or https:// URL.'
+      },
+      scheduleExceptions: {
+        title: 'Schedule exceptions',
+        addButton: 'Add exception',
+        deleteLabel: 'Delete exception',
+        empty: 'No schedule exceptions yet.',
+        dialogTitle: 'Add schedule exception',
+        date: 'Date',
+        type: 'Type',
+        startsAt: 'Starts at',
+        endsAt: 'Ends at',
+        note: 'Note',
+        wholeDayHint: 'This blocks the entire day — no start/end time needed.',
+        wholeDayLabel: 'Whole day',
+        types: {
+          dayOff: 'Day off',
+          vacation: 'Vacation',
+          interval: 'Unavailable interval',
+          break: 'Break'
+        }
       },
       passwordChange: {
         openButton: 'Change password',
@@ -454,6 +475,49 @@ export const dictionaries = {
       },
       errors: {
         load: 'Unable to load error logs.'
+      }
+    },
+    onboarding: {
+      pageTitle: 'Get your workspace ready',
+      pageSubtitle: 'A few quick steps to start taking bookings.',
+      openStep: 'Open',
+      markDone: 'Mark as done',
+      allDone: "You're all set! You can revisit any step from the sidebar at any time.",
+      skip: 'Skip for now',
+      goToSettings: 'Go to settings',
+      steps: {
+        account: {
+          title: 'Confirm your account and timezone',
+          description: 'Check your workspace name and timezone in account settings.'
+        },
+        specialist: {
+          title: 'Set up your specialist profile',
+          description: 'Review or add the specialist who will take bookings.'
+        },
+        schedule: {
+          title: 'Set working hours',
+          description: 'Set the working hours and slot length for your specialist.'
+        },
+        service: {
+          title: 'Add a service',
+          description: 'Create at least one bookable service with a price and duration.'
+        },
+        meeting: {
+          title: 'Choose a meeting method',
+          description: 'Connect Zoom or Google, or use an offline/manual meeting link.'
+        },
+        publish: {
+          title: 'Publish your booking page',
+          description: 'Create and publish your public booking page.'
+        },
+        testBooking: {
+          title: 'Make a test booking',
+          description: 'Open your public page and book a test appointment end to end.'
+        }
+      },
+      errors: {
+        load: 'Unable to load onboarding status.',
+        save: 'Unable to update onboarding status.'
       }
     },
     appointments: {
@@ -810,6 +874,7 @@ export const dictionaries = {
         system: 'Системные',
         account: 'Аккаунт',
         specialistPolicy: 'Правила брони',
+        scheduleExceptions: 'Исключения в расписании',
         notifications: 'Оповещения',
         user: 'Пользовательские',
         integrations: 'Интеграции',
@@ -913,6 +978,26 @@ export const dictionaries = {
         defaultSessionContinuationMin: 'Продление сессии по умолчанию (мин)',
         defaultMeetingLink: 'Ссылка на встречу по умолчанию',
         defaultMeetingLinkInvalid: 'Введите корректный URL с http:// или https://.'
+      },
+      scheduleExceptions: {
+        title: 'Исключения в расписании',
+        addButton: 'Добавить исключение',
+        deleteLabel: 'Удалить исключение',
+        empty: 'Исключений пока нет.',
+        dialogTitle: 'Добавить исключение в расписании',
+        date: 'Дата',
+        type: 'Тип',
+        startsAt: 'Начало',
+        endsAt: 'Окончание',
+        note: 'Комментарий',
+        wholeDayHint: 'Блокирует весь день — время начала/окончания не нужно.',
+        wholeDayLabel: 'Весь день',
+        types: {
+          dayOff: 'Выходной',
+          vacation: 'Отпуск',
+          interval: 'Недоступный интервал',
+          break: 'Перерыв'
+        }
       },
       passwordChange: {
         openButton: 'Сменить пароль',
@@ -1141,6 +1226,49 @@ export const dictionaries = {
       },
       errors: {
         load: 'Не удалось загрузить логи ошибок.'
+      }
+    },
+    onboarding: {
+      pageTitle: 'Настройте рабочее пространство',
+      pageSubtitle: 'Несколько быстрых шагов, чтобы начать принимать записи.',
+      openStep: 'Открыть',
+      markDone: 'Отметить выполненным',
+      allDone: 'Всё готово! Вы можете вернуться к любому шагу из бокового меню в любой момент.',
+      skip: 'Пропустить пока',
+      goToSettings: 'Перейти в настройки',
+      steps: {
+        account: {
+          title: 'Подтвердите аккаунт и часовой пояс',
+          description: 'Проверьте название рабочего пространства и часовой пояс в настройках аккаунта.'
+        },
+        specialist: {
+          title: 'Настройте профиль специалиста',
+          description: 'Проверьте или добавьте специалиста, который будет принимать записи.'
+        },
+        schedule: {
+          title: 'Настройте рабочие часы',
+          description: 'Укажите рабочие часы и длительность слота для специалиста.'
+        },
+        service: {
+          title: 'Добавьте услугу',
+          description: 'Создайте хотя бы одну услугу с ценой и длительностью.'
+        },
+        meeting: {
+          title: 'Выберите способ встречи',
+          description: 'Подключите Zoom или Google, либо используйте offline/ручную ссылку на встречу.'
+        },
+        publish: {
+          title: 'Опубликуйте страницу бронирования',
+          description: 'Создайте и опубликуйте публичную страницу бронирования.'
+        },
+        testBooking: {
+          title: 'Сделайте тестовую запись',
+          description: 'Откройте публичную страницу и пройдите бронирование от начала до конца.'
+        }
+      },
+      errors: {
+        load: 'Не удалось загрузить статус онбординга.',
+        save: 'Не удалось обновить статус онбординга.'
       }
     },
     appointments: {
@@ -1386,6 +1514,10 @@ type AppointmentManageTranslationKey = `appointmentManage.${Exclude<keyof typeof
   | `appointmentManage.errors.${keyof typeof dictionaries.en.appointmentManage.errors}`;
 type ServicesTranslationKey = `services.${Exclude<keyof typeof dictionaries.en.services, 'errors'>}`
   | `services.errors.${keyof typeof dictionaries.en.services.errors}`;
+type OnboardingStepTranslationKey = `onboarding.steps.${keyof typeof dictionaries.en.onboarding.steps}.${'title' | 'description'}`;
+type OnboardingTranslationKey = `onboarding.${Exclude<keyof typeof dictionaries.en.onboarding, 'steps' | 'errors'>}`
+  | `onboarding.errors.${keyof typeof dictionaries.en.onboarding.errors}`
+  | OnboardingStepTranslationKey;
 
 export type TranslationKey =
   | PublicPageBuilderTranslationKey
@@ -1393,6 +1525,7 @@ export type TranslationKey =
   | PublicStatusTranslationKey
   | AppointmentManageTranslationKey
   | ServicesTranslationKey
+  | OnboardingTranslationKey
   | 'publicPageBuilder.unknownBlockTitle'
   | 'publicPageBuilder.unknownBlockDescription'
   | 'publicPageBuilder.blockErrorTitle'
@@ -1511,6 +1644,7 @@ export type TranslationKey =
   | 'settings.tabs.system'
   | 'settings.tabs.account'
   | 'settings.tabs.specialistPolicy'
+  | 'settings.tabs.scheduleExceptions'
   | 'settings.tabs.notifications'
   | 'settings.tabs.user'
   | 'settings.tabs.integrations'
@@ -1622,6 +1756,22 @@ export type TranslationKey =
   | 'settings.specialistSettings.defaultSessionContinuationMin'
   | 'settings.specialistSettings.defaultMeetingLink'
   | 'settings.specialistSettings.defaultMeetingLinkInvalid'
+  | 'settings.scheduleExceptions.title'
+  | 'settings.scheduleExceptions.addButton'
+  | 'settings.scheduleExceptions.deleteLabel'
+  | 'settings.scheduleExceptions.empty'
+  | 'settings.scheduleExceptions.dialogTitle'
+  | 'settings.scheduleExceptions.date'
+  | 'settings.scheduleExceptions.type'
+  | 'settings.scheduleExceptions.startsAt'
+  | 'settings.scheduleExceptions.endsAt'
+  | 'settings.scheduleExceptions.note'
+  | 'settings.scheduleExceptions.wholeDayHint'
+  | 'settings.scheduleExceptions.wholeDayLabel'
+  | 'settings.scheduleExceptions.types.dayOff'
+  | 'settings.scheduleExceptions.types.vacation'
+  | 'settings.scheduleExceptions.types.interval'
+  | 'settings.scheduleExceptions.types.break'
   | 'settings.errors.load'
   | 'settings.errors.save'
   | 'settings.errors.connectGoogle'

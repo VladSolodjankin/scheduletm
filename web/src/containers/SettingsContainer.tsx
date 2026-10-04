@@ -14,6 +14,8 @@ import type {
   AccountSettings,
   GoogleOAuthDisconnectResponse,
   GoogleOAuthStartResponse,
+  ScheduleException,
+  ScheduleExceptionCreatePayload,
   SettingsScopeAccount,
   SettingsScopeOptionsResponse,
   SettingsScopeSpecialist,
@@ -97,6 +99,8 @@ export function SettingsContainer() {
   const [isSavingSpecialistPolicy, setIsSavingSpecialistPolicy] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [specialistBookingPolicy, setSpecialistBookingPolicy] = useState<SpecialistBookingPolicy>(defaultSpecialistBookingPolicy);
+  const [scheduleExceptions, setScheduleExceptions] = useState<ScheduleException[]>([]);
+  const [isSavingScheduleException, setIsSavingScheduleException] = useState(false);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | null>(null);
   const [scopeAccounts, setScopeAccounts] = useState<SettingsScopeAccount[]>([]);
   const [scopeSpecialists, setScopeSpecialists] = useState<SettingsScopeSpecialist[]>([]);
@@ -135,6 +139,7 @@ export function SettingsContainer() {
     ...(canManageSystemSettings ? ['system'] : []),
     ...(canManageAccountSettings ? ['account'] : []),
     ...(canManageSpecialistBookingPolicy ? ['specialistPolicy'] : []),
+    ...(canManageSpecialistBookingPolicy ? ['scheduleExceptions'] : []),
     ...(canManageAccountSettings || isClient ? ['notifications'] : []),
     'user',
     'integrations',
@@ -284,14 +289,21 @@ export function SettingsContainer() {
             })();
 
           if (user?.role === 'specialist' || specialistId) {
+            const scopeParams = {
+              ...(resolvedAccountId ? { accountId: resolvedAccountId } : {}),
+              ...(specialistId ? { specialistId } : {}),
+            };
             const policyResponse = await apiClient.get<SpecialistBookingPolicy>('/api/settings/specialist-booking-policy', {
               headers: authHeaders(accessToken),
-              params: {
-                ...(resolvedAccountId ? { accountId: resolvedAccountId } : {}),
-                ...(specialistId ? { specialistId } : {}),
-              }
+              params: scopeParams,
             });
             setSpecialistBookingPolicy(policyResponse.data);
+
+            const exceptionsResponse = await apiClient.get<ScheduleException[]>('/api/settings/specialist-schedule-exceptions', {
+              headers: authHeaders(accessToken),
+              params: scopeParams,
+            });
+            setScheduleExceptions(exceptionsResponse.data);
           }
         }
       } catch (err) {
@@ -496,6 +508,59 @@ export function SettingsContainer() {
     }
   };
 
+
+  const buildScheduleExceptionScopeParams = () => (
+    user?.role === 'specialist'
+      ? undefined
+      : selectedSpecialistId
+        ? {
+          ...(selectedAccountId ? { accountId: selectedAccountId } : {}),
+          specialistId: selectedSpecialistId,
+        }
+        : undefined
+  );
+
+  const createScheduleException = async (payload: ScheduleExceptionCreatePayload) => {
+    if (!accessToken || !canManageSpecialistBookingPolicy) {
+      return;
+    }
+
+    setIsSavingScheduleException(true);
+    try {
+      const response = await apiClient.post<ScheduleException>(
+        '/api/settings/specialist-schedule-exceptions',
+        payload,
+        { headers: authHeaders(accessToken), params: buildScheduleExceptionScopeParams() },
+      );
+      setScheduleExceptions((prev) => [...prev, response.data].sort((left, right) => left.date.localeCompare(right.date)));
+      setError('');
+      setSuccess('');
+    } catch (err) {
+      setError(resolveError(err, t('settings.errors.save')).message);
+      setSuccess('');
+    } finally {
+      setIsSavingScheduleException(false);
+    }
+  };
+
+  const deleteScheduleException = async (id: number) => {
+    if (!accessToken || !canManageSpecialistBookingPolicy) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(`/api/settings/specialist-schedule-exceptions/${id}`, {
+        headers: authHeaders(accessToken),
+        params: buildScheduleExceptionScopeParams(),
+      });
+      setScheduleExceptions((prev) => prev.filter((item) => item.id !== id));
+      setError('');
+      setSuccess('');
+    } catch (err) {
+      setError(resolveError(err, t('settings.errors.save')).message);
+      setSuccess('');
+    }
+  };
 
   const connectGoogle = async () => {
     if (!accessToken || isGoogleConnecting) {
@@ -713,6 +778,7 @@ export function SettingsContainer() {
             accountSettings={accountSettings}
             userSettings={userSettings}
             specialistBookingPolicy={specialistBookingPolicy}
+            scheduleExceptions={scheduleExceptions}
             accountNotificationDefaults={accountNotificationDefaults}
             canManageSystemSettings={canManageSystemSettings}
             canManageAccountSettings={canManageAccountSettings}
@@ -723,6 +789,7 @@ export function SettingsContainer() {
               systemTab: t('settings.tabs.system'),
               accountTab: t('settings.tabs.account'),
               specialistPolicyTab: t('settings.tabs.specialistPolicy'),
+              scheduleExceptionsTab: t('settings.tabs.scheduleExceptions'),
               userTab: t('settings.tabs.user'),
               integrationsTab: t('settings.tabs.integrations'),
               passwordTab: t('settings.tabs.password'),
@@ -790,6 +857,28 @@ export function SettingsContainer() {
               meetingProvidersPriority: t('settings.meetingProvidersPriority'),
               allowedMeetingProviders: t('settings.allowedMeetingProviders'),
               meetingProviderOverrideEnabled: t('settings.meetingProviderOverrideEnabled'),
+              scheduleExceptions: {
+                title: t('settings.scheduleExceptions.title'),
+                addButton: t('settings.scheduleExceptions.addButton'),
+                deleteLabel: t('settings.scheduleExceptions.deleteLabel'),
+                empty: t('settings.scheduleExceptions.empty'),
+                dialogTitle: t('settings.scheduleExceptions.dialogTitle'),
+                date: t('settings.scheduleExceptions.date'),
+                type: t('settings.scheduleExceptions.type'),
+                startsAt: t('settings.scheduleExceptions.startsAt'),
+                endsAt: t('settings.scheduleExceptions.endsAt'),
+                note: t('settings.scheduleExceptions.note'),
+                wholeDayHint: t('settings.scheduleExceptions.wholeDayHint'),
+                wholeDayLabel: t('settings.scheduleExceptions.wholeDayLabel'),
+                save: t('common.saveSettings'),
+                cancel: t('common.cancel'),
+                types: {
+                  day_off: t('settings.scheduleExceptions.types.dayOff'),
+                  vacation: t('settings.scheduleExceptions.types.vacation'),
+                  interval: t('settings.scheduleExceptions.types.interval'),
+                  break: t('settings.scheduleExceptions.types.break'),
+                },
+              },
               notificationsTab: t('settings.tabs.notifications'),
               notificationSettingsTitle: t('settings.notificationSettingsTitle'),
               reminderChannelsLabel: t('settings.reminderChannelsLabel'),
@@ -823,6 +912,7 @@ export function SettingsContainer() {
             isSavingUser={isSavingUser}
             isSavingSpecialistBookingPolicy={isSavingSpecialistPolicy}
             isSavingNotificationDefaults={isSavingNotificationDefaults}
+            isSavingScheduleException={isSavingScheduleException}
             currentPassword={currentPassword}
             newPassword={newPassword}
             confirmPassword={confirmPassword}
@@ -837,6 +927,8 @@ export function SettingsContainer() {
             onSaveUser={saveUserSettings}
             onSaveSpecialistBookingPolicy={saveSpecialistBookingPolicy}
             onSaveNotificationDefaults={saveAccountNotificationDefaults}
+            onCreateScheduleException={createScheduleException}
+            onDeleteScheduleException={deleteScheduleException}
             onClearTelegramBotToken={clearTelegramBotToken}
             onConnectGoogle={connectGoogle}
             onConnectZoom={connectZoom}

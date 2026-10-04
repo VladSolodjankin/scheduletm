@@ -19,6 +19,9 @@ import {
   updateSystemSettings,
   updateUserSettings,
   canManageSpecialistBookingPolicies,
+  createScheduleExceptionForActor,
+  deleteScheduleExceptionForActor,
+  listScheduleExceptionsForActor,
   getAccountNotificationDefaults,
   getClientNotificationSettings,
   getEffectiveNotificationSetting,
@@ -320,6 +323,65 @@ settingsRoutes.put('/specialist-booking-policy', requireAccessToken, async (req,
   }
 
   return res.json(updated);
+});
+
+settingsRoutes.get('/specialist-schedule-exceptions', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageSpecialistBookingPolicies(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenSpecialistBookingPolicySettings') });
+  }
+
+  const specialistId = parsePositiveInt(req.query.specialistId);
+  const accountId = parsePositiveInt(req.query.accountId);
+
+  const items = await listScheduleExceptionsForActor(user, specialistId, accountId);
+  if (!items) {
+    return res.status(400).json({ message: t(req, 'specialistBookingPolicySpecialistRequired') });
+  }
+
+  return res.json(items);
+});
+
+settingsRoutes.post('/specialist-schedule-exceptions', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageSpecialistBookingPolicies(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenSpecialistBookingPolicySettings') });
+  }
+
+  const specialistId = parsePositiveInt(req.query.specialistId);
+  const accountId = parsePositiveInt(req.query.accountId);
+
+  const created = await createScheduleExceptionForActor(user, specialistId, req.body, accountId);
+  if (!created) {
+    return res.status(400).json({ message: t(req, 'invalidPayloadScheduleException') });
+  }
+
+  return res.status(201).json(created);
+});
+
+settingsRoutes.delete('/specialist-schedule-exceptions/:id', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageSpecialistBookingPolicies(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenSpecialistBookingPolicySettings') });
+  }
+
+  const exceptionId = parsePositiveInt(req.params.id);
+  if (!exceptionId) {
+    return res.status(400).json({ message: t(req, 'specialistBookingPolicySpecialistRequired') });
+  }
+
+  const specialistId = parsePositiveInt(req.query.specialistId);
+  const accountId = parsePositiveInt(req.query.accountId);
+
+  const result = await deleteScheduleExceptionForActor(user, specialistId, exceptionId, accountId);
+  if (result === null) {
+    return res.status(400).json({ message: t(req, 'specialistBookingPolicySpecialistRequired') });
+  }
+  if (!result) {
+    return res.status(404).json({ message: t(req, 'scheduleExceptionNotFound') });
+  }
+
+  return res.status(204).send();
 });
 
 

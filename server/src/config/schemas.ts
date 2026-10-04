@@ -163,6 +163,31 @@ export const specialistBookingPolicySchema = z.object({
   meetingProviderOverrideEnabled: z.boolean(),
 }).partial();
 
+const WHOLE_DAY_EXCEPTION_TYPES = new Set(['day_off', 'vacation']);
+const PARTIAL_DAY_EXCEPTION_TYPES = new Set(['interval', 'break']);
+
+export const scheduleExceptionCreateSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, v.scheduleExceptionDateInvalid),
+  type: z.enum(['day_off', 'vacation', 'interval', 'break']),
+  startsAtMinute: z.coerce.number().int().min(0).max(1439).optional(),
+  endsAtMinute: z.coerce.number().int().min(1).max(1440).optional(),
+  note: z.string().trim().max(200).optional(),
+}).refine((value) => (value.startsAtMinute === undefined) === (value.endsAtMinute === undefined), {
+  message: v.scheduleExceptionIntervalRequired,
+}).refine((value) => (
+  !WHOLE_DAY_EXCEPTION_TYPES.has(value.type) || value.startsAtMinute === undefined
+), {
+  message: v.scheduleExceptionWholeDayNoInterval,
+}).refine((value) => (
+  !PARTIAL_DAY_EXCEPTION_TYPES.has(value.type) || value.startsAtMinute !== undefined
+), {
+  message: v.scheduleExceptionIntervalRequired,
+}).refine((value) => (
+  value.startsAtMinute === undefined || value.endsAtMinute === undefined || value.startsAtMinute < value.endsAtMinute
+), {
+  message: v.scheduleExceptionEndAfterStart,
+});
+
 const notificationTypeSchema = z.enum(['appointment_created', 'appointment_reminder', 'payment_reminder']);
 const notificationChannelSchema = z.enum(['email', 'telegram', 'viber', 'whatsapp', 'sms']);
 const notificationFrequencySchema = z.enum(['immediate', 'daily']);

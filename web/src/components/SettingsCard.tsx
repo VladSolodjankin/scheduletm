@@ -6,6 +6,8 @@ import type {
   AccountNotificationDefault,
   AccountSettings,
   NotificationChannel,
+  ScheduleException,
+  ScheduleExceptionCreatePayload,
   SpecialistBookingPolicy,
   SystemSettings,
   UserSettings,
@@ -16,6 +18,7 @@ import { AccountSettingsTab } from './settings-tabs/AccountSettingsTab';
 import { EmailChangeSettingsTab } from './settings-tabs/EmailChangeSettingsTab';
 import { NotificationSettingsTab } from './settings-tabs/NotificationSettingsTab';
 import { PasswordSettingsTab } from './settings-tabs/PasswordSettingsTab';
+import { ScheduleExceptionsTab } from './settings-tabs/ScheduleExceptionsTab';
 import { SpecialistPolicyTab } from './settings-tabs/SpecialistPolicyTab';
 import { SystemSettingsTab } from './settings-tabs/SystemSettingsTab';
 import { IntegrationsSettingsTab } from './settings-tabs/IntegrationsSettingsTab';
@@ -27,6 +30,7 @@ type SettingsCardProps = {
   userSettings: UserSettings;
   specialistBookingPolicy: SpecialistBookingPolicy;
   accountNotificationDefaults: AccountNotificationDefault[];
+  scheduleExceptions: ScheduleException[];
   copy: SettingsCardCopy;
   canManageSystemSettings: boolean;
   canManageAccountSettings: boolean;
@@ -41,6 +45,7 @@ type SettingsCardProps = {
   isSavingUser?: boolean;
   isSavingSpecialistBookingPolicy?: boolean;
   isSavingNotificationDefaults?: boolean;
+  isSavingScheduleException?: boolean;
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
@@ -55,6 +60,8 @@ type SettingsCardProps = {
   onSaveUser: (next: UserSettings) => Promise<void> | void;
   onSaveSpecialistBookingPolicy: (next: SpecialistBookingPolicy) => Promise<void> | void;
   onSaveNotificationDefaults: (items: AccountNotificationDefault[]) => Promise<void> | void;
+  onCreateScheduleException: (payload: ScheduleExceptionCreatePayload) => Promise<void> | void;
+  onDeleteScheduleException: (id: number) => Promise<void> | void;
   onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
   onConnectZoom: () => void;
@@ -86,6 +93,7 @@ export function SettingsCard({
   userSettings,
   specialistBookingPolicy,
   accountNotificationDefaults,
+  scheduleExceptions,
   copy,
   canManageSystemSettings,
   canManageAccountSettings,
@@ -100,6 +108,7 @@ export function SettingsCard({
   isSavingUser = false,
   isSavingSpecialistBookingPolicy = false,
   isSavingNotificationDefaults = false,
+  isSavingScheduleException = false,
   currentPassword,
   newPassword,
   confirmPassword,
@@ -114,6 +123,8 @@ export function SettingsCard({
   onSaveUser,
   onSaveSpecialistBookingPolicy,
   onSaveNotificationDefaults,
+  onCreateScheduleException,
+  onDeleteScheduleException,
   onClearTelegramBotToken,
   onConnectGoogle,
   onConnectZoom,
@@ -142,6 +153,7 @@ export function SettingsCard({
     ...(canManageSystemSettings ? [{ key: 'system', label: copy.systemTab }] : []),
     ...(canManageAccountSettings ? [{ key: 'account', label: copy.accountTab }] : []),
     ...(canManageSpecialistBookingPolicy ? [{ key: 'specialistPolicy', label: copy.specialistPolicyTab }] : []),
+    ...(canManageSpecialistBookingPolicy ? [{ key: 'scheduleExceptions', label: copy.scheduleExceptionsTab }] : []),
     ...(canManageAccountSettings || canManageClientNotifications ? [{ key: 'notifications', label: copy.notificationsTab }] : []),
     { key: 'user', label: copy.userTab },
     { key: 'integrations', label: copy.integrationsTab },
@@ -197,6 +209,15 @@ export function SettingsCard({
       {resolvedTab === 'system' && <SystemSettingsTab copy={copy} control={systemControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingSystem} onSubmit={handleSystemSubmit(onSaveSystem)} />}
       {resolvedTab === 'account' && <AccountSettingsTab copy={copy} control={accountControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingAccount} onSubmit={handleAccountSubmit(onSaveAccount)} onRequestAccountDeletion={onRequestAccountDeletion} onCancelAccountDeletion={onCancelAccountDeletion} />}
       {resolvedTab === 'specialistPolicy' && <SpecialistPolicyTab copy={copy} control={specialistPolicyControl} isSaving={isSavingSpecialistBookingPolicy} onSubmit={handleSpecialistPolicySubmit(onSaveSpecialistBookingPolicy)} />}
+      {resolvedTab === 'scheduleExceptions' && (
+        <ScheduleExceptionsTab
+          copy={copy.scheduleExceptions}
+          items={scheduleExceptions}
+          isSaving={isSavingScheduleException}
+          onCreate={onCreateScheduleException}
+          onDelete={onDeleteScheduleException}
+        />
+      )}
       {resolvedTab === 'user' && (
         <UserSettingsTab
           copy={copy}

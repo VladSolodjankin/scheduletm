@@ -8,6 +8,7 @@ import { healthRoutes } from './routes/healthRoutes.js';
 import { integrationRoutes } from './routes/integrationRoutes.js';
 import { appointmentRoutes } from './routes/appointmentRoutes.js';
 import { settingsRoutes } from './routes/settingsRoutes.js';
+import { onboardingRoutes } from './routes/onboardingRoutes.js';
 import { specialistRoutes } from './routes/specialistRoutes.js';
 import { userManagementRoutes } from './routes/userManagementRoutes.js';
 import { notificationRoutes } from './routes/notificationRoutes.js';
@@ -109,6 +110,7 @@ export const createApp = () => {
   app.use(healthRoutes);
   app.use('/api/auth', authRoutes);
   app.use('/api/settings', settingsRoutes);
+  app.use('/api/onboarding', onboardingRoutes);
   app.use('/api/appointments', appointmentRoutes);
   app.use('/api/specialists', specialistRoutes);
   app.use('/api/services', serviceRoutes);

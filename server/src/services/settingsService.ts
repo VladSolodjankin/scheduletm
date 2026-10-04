@@ -12,9 +12,17 @@ import {
   findSpecialistBookingPolicy,
   upsertSpecialistBookingPolicy,
 } from '../repositories/specialistBookingPolicyRepository.js';
+import {
+  createScheduleException,
+  deleteScheduleExceptionById,
+  findScheduleExceptionById,
+  listScheduleExceptions,
+  type ScheduleExceptionRecord,
+} from '../repositories/specialistScheduleExceptionRepository.js';
 import type { User } from '../types/domain.js';
 import {
   accountSettingsSchema,
+  scheduleExceptionCreateSchema,
   specialistBookingPolicySchema,
   systemSettingsSchema,
   userSettingsSchema,
@@ -539,6 +547,90 @@ export async function updateSpecialistBookingPolicy(
   });
 
   return getSpecialistBookingPolicy(actor, resolved.specialistId, resolved.accountId);
+}
+
+export type ScheduleException = {
+  id: number;
+  specialistId: number;
+  date: string;
+  type: ScheduleExceptionRecord['type'];
+  startsAtMinute: number | null;
+  endsAtMinute: number | null;
+  note: string | null;
+};
+
+function mapScheduleException(row: ScheduleExceptionRecord): ScheduleException {
+  return {
+    id: row.id,
+    specialistId: row.specialist_id,
+    date: row.exception_date,
+    type: row.type,
+    startsAtMinute: row.starts_at_minute,
+    endsAtMinute: row.ends_at_minute,
+    note: row.note,
+  };
+}
+
+export async function listScheduleExceptionsForActor(
+  actor: User,
+  specialistId?: number,
+  requestedAccountId?: number,
+): Promise<ScheduleException[] | null> {
+  const resolved = await resolveSpecialistForPolicy(actor, specialistId, requestedAccountId);
+  if (!resolved) {
+    return null;
+  }
+
+  const rows = await listScheduleExceptions(resolved.accountId, resolved.specialistId);
+  return rows.map(mapScheduleException);
+}
+
+export async function createScheduleExceptionForActor(
+  actor: User,
+  specialistId: number | undefined,
+  payload: unknown,
+  requestedAccountId?: number,
+): Promise<ScheduleException | null> {
+  const parsed = scheduleExceptionCreateSchema.safeParse(payload);
+  if (!parsed.success) {
+    return null;
+  }
+
+  const resolved = await resolveSpecialistForPolicy(actor, specialistId, requestedAccountId);
+  if (!resolved) {
+    return null;
+  }
+
+  const created = await createScheduleException({
+    accountId: resolved.accountId,
+    specialistId: resolved.specialistId,
+    date: parsed.data.date,
+    type: parsed.data.type,
+    startsAtMinute: parsed.data.startsAtMinute ?? null,
+    endsAtMinute: parsed.data.endsAtMinute ?? null,
+    note: parsed.data.note ?? null,
+  });
+
+  return mapScheduleException(created);
+}
+
+export async function deleteScheduleExceptionForActor(
+  actor: User,
+  specialistId: number | undefined,
+  exceptionId: number,
+  requestedAccountId?: number,
+): Promise<boolean | null> {
+  const resolved = await resolveSpecialistForPolicy(actor, specialistId, requestedAccountId);
+  if (!resolved) {
+    return null;
+  }
+
+  const existing = await findScheduleExceptionById(resolved.accountId, resolved.specialistId, exceptionId);
+  if (!existing) {
+    return false;
+  }
+
+  return deleteScheduleExceptionById(resolved.accountId, resolved.specialistId, exceptionId);
 }
 
 export async function getAccountNotificationDefaults(actor: User, requestedAccountId?: number) {

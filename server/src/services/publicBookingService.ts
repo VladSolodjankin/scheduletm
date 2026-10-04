@@ -14,6 +14,7 @@ import { publicMediaUrl } from './serviceService.js';
 import { listAppointments } from '../repositories/appointmentRepository.js';
 import { enqueueTrackedAppointmentNotification } from './notificationDeliveryService.js';
 import { ensurePublicBookingClientInvite } from './publicBookingInviteService.js';
+import { findScheduleExceptionsForDate } from '../repositories/specialistScheduleExceptionRepository.js';
 
 export class PublicBookingServiceError extends Error {
   constructor(public readonly code: 'NOT_FOUND' | 'INVALID_SELECTION' | 'SLOT_UNAVAILABLE') {
@@ -95,6 +96,43 @@ function isoWeekday(year: number, month: number, day: number): number {
   return sundayZeroBased === 0 ? 7 : sundayZeroBased;
 }
 
+function localDateParts(date: Date, timezone: string): { year: number; month: number; day: number } {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value ?? 0);
+  return { year: value('year'), month: value('month'), day: value('day') };
+}
+
+function dateKey(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+async function findBlockingExceptions(
+  accountId: number,
+  specialistId: number,
+  year: number,
+  month: number,
+  day: number,
+  timezone: string,
+): Promise<{ fullDay: boolean; busyIntervals: Array<{ scheduledAt: string; durationMin: number }> }> {
+  const exceptions = await findScheduleExceptionsForDate(accountId, specialistId, dateKey(year, month, day));
+  const fullDay = exceptions.some((item) => item.starts_at_minute === null || item.ends_at_minute === null);
+  const busyIntervals = fullDay ? [] : exceptions.map((item) => ({
+    scheduledAt: zonedTimeToUtc(
+      year, month, day,
+      Math.floor((item.starts_at_minute as number) / 60),
+      (item.starts_at_minute as number) % 60,
+      timezone,
+    ).toISOString(),
+    durationMin: (item.ends_at_minute as number) - (item.starts_at_minute as number),
+  }));
+
+  return { fullDay, busyIntervals };
+}
+
 function overlaps(
   startAt: Date,
   durationMin: number,
@@ -163,6 +201,11 @@ export async function getPublicAvailableSlots(
     return { slots: [] };
   }
 
+  const exceptions = await findBlockingExceptions(accountId, specialist.id, year, month, day, specialist.timezone);
+  if (exceptions.fullDay) {
+    return { slots: [] };
+  }
+
   const dayStart = zonedTimeToUtc(year, month, day, 0, 0, specialist.timezone);
   const dayEnd = zonedTimeToUtc(year, month, day, 23, 59, specialist.timezone);
 
@@ -175,6 +218,7 @@ export async function getPublicAvailableSlots(
       .filter((item) => item.status !== 'cancelled')
       .map((item) => ({ scheduledAt: item.appointment_at.toISOString(), durationMin: item.duration_min })),
     ...externalBusySlots,
+    ...exceptions.busyIntervals,
   ];
 
   const workStart = specialist.work_start_hour * 60;
@@ -212,6 +256,14 @@ export async function bookPublicAppointment(slug: string, input: {
   if (
     startAt.getTime() <= Date.now()
     || !isWithinWorkingSchedule(startAt, service.duration_min, specialist)
+  ) {
+    throw new PublicBookingServiceError('SLOT_UNAVAILABLE');
+  }
+  const { year, month, day } = localDateParts(startAt, specialist.timezone);
+  const exceptions = await findBlockingExceptions(accountId, specialist.id, year, month, day, specialist.timezone);
+  if (
+    exceptions.fullDay
+    || exceptions.busyIntervals.some((slot) => overlaps(startAt, service.duration_min, slot))
   ) {
     throw new PublicBookingServiceError('SLOT_UNAVAILABLE');
   }

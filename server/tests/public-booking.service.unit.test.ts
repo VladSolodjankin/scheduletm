@@ -13,9 +13,11 @@ const calendarAvailability = vi.hoisted(() => ({ listExternalBusySlots: vi.fn() 
 const appointments = vi.hoisted(() => ({ listAppointments: vi.fn() }));
 const notifications = vi.hoisted(() => ({ enqueueTrackedAppointmentNotification: vi.fn() }));
 const bookingInvite = vi.hoisted(() => ({ ensurePublicBookingClientInvite: vi.fn() }));
+const scheduleExceptions = vi.hoisted(() => ({ findScheduleExceptionsForDate: vi.fn() }));
 vi.mock('../src/repositories/appointmentRepository.js', () => appointments);
 vi.mock('../src/services/notificationDeliveryService.js', () => notifications);
 vi.mock('../src/services/publicBookingInviteService.js', () => bookingInvite);
+vi.mock('../src/repositories/specialistScheduleExceptionRepository.js', () => scheduleExceptions);
 
 vi.mock('../src/repositories/publicPageRepository.js', async () => {
   const actual = await vi.importActual<typeof import('../src/repositories/publicPageRepository.js')>(
@@ -51,6 +53,7 @@ describe('public booking service', () => {
     appointments.listAppointments.mockReset().mockResolvedValue([]);
     notifications.enqueueTrackedAppointmentNotification.mockReset().mockResolvedValue(false);
     bookingInvite.ensurePublicBookingClientInvite.mockReset().mockResolvedValue(undefined);
+    scheduleExceptions.findScheduleExceptionsForDate.mockReset().mockResolvedValue([]);
     pageRepository.findPublishedPublicPageBySlug.mockResolvedValue({ account_id: 7 });
   });
 
@@ -177,6 +180,40 @@ describe('public booking service', () => {
       specialistId: 2,
       serviceId: 3,
       startAt: '2030-08-01T10:00:00.000Z',
+    })).rejects.toMatchObject({ code: 'SLOT_UNAVAILABLE' });
+    expect(bookingRepository.createPublicGuestAppointment).not.toHaveBeenCalled();
+  });
+
+  it('rejects a booking on a full-day schedule exception', async () => {
+    bookingRepository.findPublicBookingSpecialist.mockResolvedValue({
+      id: 2, account_id: 7, timezone: 'UTC',
+      work_start_hour: 9, work_end_hour: 18, work_days: '1,2,3,4,5,6', slot_step_min: 30,
+    });
+    bookingRepository.findPublicBookingService.mockResolvedValue({ id: 3, account_id: 7, duration_min: 60 });
+    scheduleExceptions.findScheduleExceptionsForDate.mockResolvedValue([
+      { id: 1, starts_at_minute: null, ends_at_minute: null, type: 'vacation' },
+    ]);
+
+    await expect(bookPublicAppointment('valid-page', {
+      firstName: 'Guest', lastName: 'User', phone: '+10000000000',
+      specialistId: 2, serviceId: 3, startAt: '2030-08-01T10:00:00.000Z',
+    })).rejects.toMatchObject({ code: 'SLOT_UNAVAILABLE' });
+    expect(bookingRepository.createPublicGuestAppointment).not.toHaveBeenCalled();
+  });
+
+  it('rejects a booking overlapping a partial-day schedule exception', async () => {
+    bookingRepository.findPublicBookingSpecialist.mockResolvedValue({
+      id: 2, account_id: 7, timezone: 'UTC',
+      work_start_hour: 9, work_end_hour: 18, work_days: '1,2,3,4,5,6', slot_step_min: 30,
+    });
+    bookingRepository.findPublicBookingService.mockResolvedValue({ id: 3, account_id: 7, duration_min: 60 });
+    scheduleExceptions.findScheduleExceptionsForDate.mockResolvedValue([
+      { id: 1, starts_at_minute: 600, ends_at_minute: 660, type: 'break' },
+    ]);
+
+    await expect(bookPublicAppointment('valid-page', {
+      firstName: 'Guest', lastName: 'User', phone: '+10000000000',
+      specialistId: 2, serviceId: 3, startAt: '2030-08-01T10:00:00.000Z',
     })).rejects.toMatchObject({ code: 'SLOT_UNAVAILABLE' });
     expect(bookingRepository.createPublicGuestAppointment).not.toHaveBeenCalled();
   });
@@ -344,6 +381,27 @@ describe('public booking service', () => {
 
       const result = await getPublicAvailableSlots('valid-page', 2, 3, '2030-08-03');
       expect(result.slots).toEqual([]);
+    });
+
+    it('returns no slots on a day fully blocked by a schedule exception', async () => {
+      scheduleExceptions.findScheduleExceptionsForDate.mockResolvedValue([
+        { id: 1, starts_at_minute: null, ends_at_minute: null, type: 'day_off' },
+      ]);
+
+      const result = await getPublicAvailableSlots('valid-page', 2, 3, '2030-08-01');
+      expect(result.slots).toEqual([]);
+      expect(appointments.listAppointments).not.toHaveBeenCalled();
+    });
+
+    it('excludes only the slots overlapping a partial-day schedule exception', async () => {
+      scheduleExceptions.findScheduleExceptionsForDate.mockResolvedValue([
+        { id: 1, starts_at_minute: 600, ends_at_minute: 660, type: 'break' },
+      ]);
+
+      const result = await getPublicAvailableSlots('valid-page', 2, 3, '2030-08-01');
+      expect(result.slots).not.toContain('2030-08-01T10:00:00.000Z');
+      expect(result.slots).toContain('2030-08-01T09:00:00.000Z');
+      expect(result.slots).toContain('2030-08-01T11:00:00.000Z');
     });
 
     it('rejects an unknown specialist/service pair', async () => {
