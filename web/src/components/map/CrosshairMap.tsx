@@ -14,7 +14,7 @@ type Props = {
   onSave: (payload: { lat: number; lng: number; fullAddress: string | null }) => void;
 };
 
-export const CroshairMap = observer(function CroshairMap({ token, mapStore, saveLabel, onSave }: Props) {
+export const CrosshairMap = observer(function CrosshairMap({ token, mapStore, saveLabel, onSave }: Props) {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
@@ -61,4 +61,4 @@ export const CroshairMap = observer(function CroshairMap({ token, mapStore, save
     </Stack>
   );
 });
-CroshairMap.displayName = 'CroshairMap';
+CrosshairMap.displayName = 'CrosshairMap';

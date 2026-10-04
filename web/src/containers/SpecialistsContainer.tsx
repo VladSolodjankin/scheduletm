@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { SpecialistFormDialog } from '../components/specialists/SpecialistFormDialog';
 import { SpecialistsTable } from '../components/specialists/SpecialistsTable';
 import { apiClient, authHeaders } from '../shared/api/client';
-import { resolveApiError } from '../shared/api/error';
+import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
@@ -17,6 +17,7 @@ export function SpecialistsContainer() {
   const navigate = useNavigate();
   const { accessToken, user } = useAuth();
   const { t } = useI18n();
+  const resolveError = useApiErrorResolver();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -59,10 +60,7 @@ export function SpecialistsContainer() {
           return;
         }
 
-        setError(resolveApiError(err, {
-          fallbackMessage: t('settings.errors.load'),
-          networkMessage: t('common.errors.network'),
-        }).message);
+        setError(resolveError(err, t('settings.errors.load')).message);
       } finally {
         if (isActive) {
           setIsLoading(false);
@@ -75,7 +73,7 @@ export function SpecialistsContainer() {
     return () => {
       isActive = false;
     };
-  }, [accessToken, canManageSpecialistSettings, navigate, t]);
+  }, [accessToken, canManageSpecialistSettings, navigate, resolveError, t]);
 
   const openCreateSpecialistDialog = () => {
     setEditingSpecialist(null);
@@ -151,10 +149,7 @@ export function SpecialistsContainer() {
       setIsSpecialistDialogOpen(false);
       setEditingSpecialist(null);
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('settings.errors.saveSpecialist'),
-        networkMessage: t('common.errors.network'),
-      }).message);
+      setError(resolveError(err, t('settings.errors.saveSpecialist')).message);
       setSuccess('');
     } finally {
       setIsSavingSpecialist(false);
@@ -175,10 +170,7 @@ export function SpecialistsContainer() {
       setError('');
       setSuccess('');
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('settings.errors.deleteSpecialist'),
-        networkMessage: t('common.errors.network'),
-      }).message);
+      setError(resolveError(err, t('settings.errors.deleteSpecialist')).message);
       setSuccess('');
     }
   };

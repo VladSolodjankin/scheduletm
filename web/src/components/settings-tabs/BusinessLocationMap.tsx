@@ -1,7 +1,7 @@
 import { Stack, Typography } from '@mui/material';
 import { useMemo } from 'react';
 
-import { CroshairMap } from '../map/CroshairMap';
+import { CrosshairMap } from '../map/CrosshairMap';
 import { MapStore, type MapCoordinates } from '../map/mapStore';
 
 type Props = {
@@ -22,7 +22,7 @@ export function BusinessLocationMap({ initialCoordinates, onSave, saveLabel, hin
     <Stack spacing={1}>
       <Typography variant="body2" color="text.secondary">{hintLabel}</Typography>
       {token ? (
-        <CroshairMap token={token} mapStore={mapStore} saveLabel={saveLabel} onSave={onSave} />
+        <CrosshairMap token={token} mapStore={mapStore} saveLabel={saveLabel} onSave={onSave} />
       ) : (
         <Typography variant="caption" color="text.secondary">{tokenMissingLabel}</Typography>
       )}

@@ -2,7 +2,7 @@ import { Stack } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, authHeaders } from '../shared/api/client';
-import { resolveApiError } from '../shared/api/error';
+import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import type { ErrorLogItem, ErrorLogsResponse } from '../shared/types/api';
@@ -16,6 +16,7 @@ export function ErrorLogsContainer() {
   const { accessToken, user } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const resolveError = useApiErrorResolver();
 
   const [items, setItems] = useState<ErrorLogItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,14 +37,11 @@ export function ErrorLogsContainer() {
       setItems(response.data.items);
       setError('');
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('errorLogs.errors.load'),
-        networkMessage: t('common.errors.network'),
-      }).message);
+      setError(resolveError(err, t('errorLogs.errors.load')).message);
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, canViewLogs, t]);
+  }, [accessToken, canViewLogs, resolveError, t]);
 
   useEffect(() => {
     if (!accessToken) {

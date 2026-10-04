@@ -15,7 +15,7 @@ import type {
   ServiceSpecialist,
 } from '../components/services/types';
 import { imageMediaApi, servicesApi } from '../shared/api/client';
-import { resolveApiError } from '../shared/api/error';
+import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { WebUserRole } from '../shared/types/roles';
@@ -33,6 +33,7 @@ type MediaPreviewState = { accessToken: string | null; urls: Map<string, string>
 export function ServicesContainer() {
   const { accessToken, user } = useAuth();
   const { locale, t } = useI18n();
+  const resolveError = useApiErrorResolver();
   const [services, setServices] = useState<ServiceCatalogItem[]>([]);
   const [specialists, setSpecialists] = useState<ServiceSpecialist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,11 +81,8 @@ export function ServicesContainer() {
   }, [searchParams, setSearchParams]);
 
   const reportError = useCallback((caught: unknown, fallbackMessage: string) => {
-    setError(resolveApiError(caught, {
-      fallbackMessage,
-      networkMessage: t('common.errors.network'),
-    }).message);
-  }, [t]);
+    setError(resolveError(caught, fallbackMessage).message);
+  }, [resolveError]);
 
   const cleanupManagedImage = async (mediaId: string) => {
     if (!accessToken) {
@@ -282,10 +280,7 @@ export function ServicesContainer() {
       }
       return true;
     } catch (caught) {
-      setDialogError(resolveApiError(caught, {
-        fallbackMessage: t('services.errors.save'),
-        networkMessage: t('common.errors.network'),
-      }).message);
+      setDialogError(resolveError(caught, t('services.errors.save')).message);
       return false;
     } finally {
       setIsSaving(false);
@@ -347,10 +342,7 @@ export function ServicesContainer() {
       const response = await servicesApi.getDeleteImpact<ServiceDeleteImpact>(accessToken, service.id);
       setDeleteImpact(response.data);
     } catch (caught) {
-      setDeleteError(resolveApiError(caught, {
-        fallbackMessage: t('services.errors.deleteImpact'),
-        networkMessage: t('common.errors.network'),
-      }).message);
+      setDeleteError(resolveError(caught, t('services.errors.deleteImpact')).message);
     } finally {
       setIsDeleteImpactLoading(false);
     }
@@ -371,10 +363,7 @@ export function ServicesContainer() {
         await cleanupManagedImage(service.imageMediaId);
       }
     } catch (caught) {
-      setDeleteError(resolveApiError(caught, {
-        fallbackMessage: t('services.errors.delete'),
-        networkMessage: t('common.errors.network'),
-      }).message);
+      setDeleteError(resolveError(caught, t('services.errors.delete')).message);
       try {
         const response = await servicesApi.getDeleteImpact<ServiceDeleteImpact>(accessToken, service.id);
         setDeleteImpact(response.data);

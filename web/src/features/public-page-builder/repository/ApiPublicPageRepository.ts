@@ -212,7 +212,7 @@ export class ApiPublicPageRepository implements PublicPageRepository {
         headers: this.headers,
         data: { expectedRevision },
       });
-    } catch (error) { mapError(error); }
+    } catch (error) { return mapError(error); }
   }
 
   public async getBySlug(slug: string): Promise<PublicPageDocument> {
@@ -247,6 +247,6 @@ export class ApiPublicPageRepository implements PublicPageRepository {
   public async deleteMedia(mediaId: string): Promise<void> {
     try {
       await apiClient.delete(`/api/public-pages/media/${encodeURIComponent(mediaId)}`, { headers: this.headers });
-    } catch (error) { mapError(error); }
+    } catch (error) { return mapError(error); }
   }
 }

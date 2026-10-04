@@ -1,4 +1,6 @@
 import { isAxiosError } from 'axios';
+import { useCallback } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 
 type ApiErrorResponse = {
   message?: string;
@@ -56,4 +58,17 @@ export function resolveApiError(error: unknown, options: ResolveApiErrorOptions)
     message: options.fallbackMessage,
     fieldErrors: {}
   };
+}
+
+// Every container repeated `resolveApiError(err, { fallbackMessage, networkMessage:
+// t('common.errors.network') })` by hand; this fills in the network message from the
+// current locale so call sites only need to say what the fallback is.
+export function useApiErrorResolver() {
+  const { t } = useI18n();
+
+  return useCallback(
+    (error: unknown, fallbackMessage: string): ResolvedApiError =>
+      resolveApiError(error, { fallbackMessage, networkMessage: t('common.errors.network') }),
+    [t],
+  );
 }

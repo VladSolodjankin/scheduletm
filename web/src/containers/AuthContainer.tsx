@@ -7,7 +7,7 @@ import { AuthCard } from '../components/AuthCard';
 import { AuthLegalNotice } from '../components/legal/AuthLegalNotice';
 import logoText from '../static/images/logo_text.svg';
 import { apiClient } from '../shared/api/client';
-import { resolveApiError } from '../shared/api/error';
+import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import type { AuthResponse, PasswordResetResponse, RegisterResponse, VerifyEmailResponse } from '../shared/types/api';
@@ -59,6 +59,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
   const location = useLocation();
   const { setAuthSession } = useAuth();
   const { t } = useI18n();
+  const resolveError = useApiErrorResolver();
 
   const isLogin = mode === 'login';
 
@@ -218,10 +219,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       setInfo(withEmail(t('auth.registerOtpSentHint'), response.data.user.email));
     } catch (err) {
       const fallbackMessage = isLogin ? t('auth.errors.loginFailed') : t('auth.errors.registerFailed');
-      const resolvedError = resolveApiError(err, {
-        fallbackMessage,
-        networkMessage: t('common.errors.network')
-      });
+      const resolvedError = resolveError(err, fallbackMessage);
 
       setError(resolvedError.message);
       setInfo('');
@@ -251,10 +249,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       window.sessionStorage.removeItem(REGISTER_PENDING_EMAIL_KEY);
       navigate('/login', { state: { successMessage: t('auth.registerSuccessLoginHint') } });
     } catch (err) {
-      const resolvedError = resolveApiError(err, {
-        fallbackMessage: t('auth.errors.verifyFailed'),
-        networkMessage: t('common.errors.network')
-      });
+      const resolvedError = resolveError(err, t('auth.errors.verifyFailed'));
 
       setError(resolvedError.message);
       setFieldErrors(resolvedError.fieldErrors);
@@ -283,10 +278,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       setInfo(response.data.message);
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (err) {
-      const resolvedError = resolveApiError(err, {
-        fallbackMessage: t('auth.errors.verifyResendFailed'),
-        networkMessage: t('common.errors.network')
-      });
+      const resolvedError = resolveError(err, t('auth.errors.verifyResendFailed'));
       setError(resolvedError.message);
     } finally {
       setIsResending(false);
@@ -314,10 +306,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       setInfo(withEmail(t('auth.passwordResetCodeSent'), email));
       setResendCooldown(PASSWORD_RESET_RESEND_COOLDOWN_SECONDS);
     } catch (err) {
-      const resolvedError = resolveApiError(err, {
-        fallbackMessage: t('auth.errors.passwordResetRequestFailed'),
-        networkMessage: t('common.errors.network')
-      });
+      const resolvedError = resolveError(err, t('auth.errors.passwordResetRequestFailed'));
       setError(resolvedError.message);
       setInfo('');
       setFieldErrors(resolvedError.fieldErrors);
@@ -339,10 +328,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       setInfo(withEmail(t('auth.passwordResetCodeSent'), pendingEmail));
       setResendCooldown(PASSWORD_RESET_RESEND_COOLDOWN_SECONDS);
     } catch (err) {
-      const resolvedError = resolveApiError(err, {
-        fallbackMessage: t('auth.errors.passwordResetRequestFailed'),
-        networkMessage: t('common.errors.network')
-      });
+      const resolvedError = resolveError(err, t('auth.errors.passwordResetRequestFailed'));
       setError(resolvedError.message);
     } finally {
       setIsResending(false);
@@ -367,10 +353,7 @@ export function AuthContainer({ mode }: AuthContainerProps) {
       setResetConfirmValue('passwordConfirm', '');
       setInfo(t('auth.passwordResetSuccess'));
     } catch (err) {
-      const resolvedError = resolveApiError(err, {
-        fallbackMessage: t('auth.errors.passwordResetConfirmFailed'),
-        networkMessage: t('common.errors.network')
-      });
+      const resolvedError = resolveError(err, t('auth.errors.passwordResetConfirmFailed'));
       setError(resolvedError.message);
       setInfo('');
       setFieldErrors(resolvedError.fieldErrors);

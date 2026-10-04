@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserFormDialog } from '../components/users/UserFormDialog';
 import { UsersTable } from '../components/users/UsersTable';
 import { apiClient, authHeaders } from '../shared/api/client';
-import { resolveApiError } from '../shared/api/error';
+import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppButton } from '../shared/ui/AppButton';
@@ -18,6 +18,7 @@ export function UsersContainer() {
   const navigate = useNavigate();
   const { accessToken, user } = useAuth();
   const { t } = useI18n();
+  const resolveError = useApiErrorResolver();
   const [error, setError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isResendingInviteForUserId, setIsResendingInviteForUserId] = useState<number | null>(null);
@@ -52,17 +53,14 @@ export function UsersContainer() {
         setUsers(response.data.users);
         setSuccess('');
       } catch (err) {
-        setError(resolveApiError(err, {
-          fallbackMessage: t('users.errors.load'),
-          networkMessage: t('common.errors.network')
-        }).message);
+        setError(resolveError(err, t('users.errors.load')).message);
       } finally {
         setIsUsersLoading(false);
       }
     };
 
     void load();
-  }, [accessToken, canManageUsers, navigate, t]);
+  }, [accessToken, canManageUsers, navigate, resolveError, t]);
 
   const saveUser = async (payload: { email: string; role: 'specialist' | 'client'; firstName: string; lastName: string; phone?: string; telegramUsername?: string }) => {
     if (!accessToken) {
@@ -88,10 +86,7 @@ export function UsersContainer() {
       setIsDialogOpen(false);
       setEditingUser(null);
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('users.errors.save'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('users.errors.save')).message);
     } finally {
       setIsSaving(false);
     }
@@ -112,10 +107,7 @@ export function UsersContainer() {
       setSuccess('');
       setDeactivatingUser(null);
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('users.errors.deactivate'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('users.errors.deactivate')).message);
     } finally {
       setIsSaving(false);
     }
@@ -137,10 +129,7 @@ export function UsersContainer() {
       setError('');
     } catch (err) {
       setDeletingUser(null);
-      setError(resolveApiError(err, {
-        fallbackMessage: t('users.errors.deleteImpact'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('users.errors.deleteImpact')).message);
     } finally {
       setIsDeleteImpactLoading(false);
     }
@@ -162,10 +151,7 @@ export function UsersContainer() {
       setDeletingUser(null);
       setDeleteImpact(null);
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('users.errors.delete'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('users.errors.delete')).message);
     } finally {
       setIsSaving(false);
     }
@@ -184,10 +170,7 @@ export function UsersContainer() {
       setError('');
       setSuccess(response.data.message || t('users.success.inviteResent'));
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('users.errors.inviteResend'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('users.errors.inviteResend')).message);
       setSuccess('');
     } finally {
       setIsResendingInviteForUserId(null);

@@ -10,7 +10,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import logoText from '../static/images/logo_text.svg';
 import { apiClient } from '../shared/api/client';
-import { resolveApiError } from '../shared/api/error';
+import { useApiErrorResolver } from '../shared/api/error';
 import { useI18n } from '../shared/i18n/I18nContext';
 import type { InviteVerifyResponse, VerifyEmailResponse } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
@@ -45,6 +45,7 @@ function isStrongPassword(password: string): boolean {
 
 export function InviteAcceptContainer() {
   const { t } = useI18n();
+  const resolveError = useApiErrorResolver();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [error, setError] = useState('');
@@ -147,10 +148,7 @@ export function InviteAcceptContainer() {
       setInfo(response.data.message || t('auth.inviteAcceptedSuccess'));
       setTimeout(() => navigate('/login'), 1200);
     } catch (err) {
-      const resolvedError = resolveApiError(err, {
-        fallbackMessage: t('auth.errors.verifyFailed'),
-        networkMessage: t('common.errors.network'),
-      });
+      const resolvedError = resolveError(err, t('auth.errors.verifyFailed'));
 
       setError(resolvedError.message || t('auth.inviteServerError'));
       setInfo('');
@@ -172,10 +170,7 @@ export function InviteAcceptContainer() {
       setError('');
       setInfo(response.data.message);
     } catch (err) {
-      const resolvedError = resolveApiError(err, {
-        fallbackMessage: t('auth.inviteServerError'),
-        networkMessage: t('common.errors.network'),
-      });
+      const resolvedError = resolveError(err, t('auth.inviteServerError'));
       setError(resolvedError.message);
       setInfo('');
     } finally {

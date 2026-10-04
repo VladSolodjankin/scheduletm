@@ -2,7 +2,7 @@ import { Stack } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, authHeaders } from '../shared/api/client';
-import { resolveApiError } from '../shared/api/error';
+import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import type { NotificationLogItem, NotificationLogsResponse, VerifyEmailResponse } from '../shared/types/api';
@@ -39,6 +39,7 @@ export function NotificationLogsContainer() {
   const { accessToken, user } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const resolveError = useApiErrorResolver();
 
   const [items, setItems] = useState<NotificationLogItem[]>([]);
   const [error, setError] = useState('');
@@ -72,14 +73,11 @@ export function NotificationLogsContainer() {
       setItems(response.data.items);
       setError('');
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('notificationLogs.errors.load'),
-        networkMessage: t('common.errors.network'),
-      }).message);
+      setError(resolveError(err, t('notificationLogs.errors.load')).message);
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, canViewLogs, filters.accountId, filters.specialistId, filters.userId, t]);
+  }, [accessToken, canViewLogs, filters.accountId, filters.specialistId, filters.userId, resolveError, t]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -108,10 +106,7 @@ export function NotificationLogsContainer() {
       setError('');
       await loadLogs();
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('notificationLogs.errors.resend'),
-        networkMessage: t('common.errors.network'),
-      }).message);
+      setError(resolveError(err, t('notificationLogs.errors.resend')).message);
       setSuccess('');
     } finally {
       setIsResendingId(null);

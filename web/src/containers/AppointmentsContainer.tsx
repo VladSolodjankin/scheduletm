@@ -28,7 +28,7 @@ import {
   toTimeKeyInTimezone,
 } from '../components/appointments/appointmentsUtils';
 import { apiClient, authHeaders } from '../shared/api/client';
-import { resolveApiError } from '../shared/api/error';
+import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import type {
@@ -48,6 +48,7 @@ import { AppTextField } from '../shared/ui/AppTextField';
 export function AppointmentsContainer() {
   const { t } = useI18n();
   const { accessToken, user } = useAuth();
+  const resolveError = useApiErrorResolver();
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistItem[]>([]);
@@ -250,10 +251,7 @@ export function AppointmentsContainer() {
       setBusySlots(response.data.busySlots ?? []);
       setError('');
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('appointments.errors.load'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('appointments.errors.load')).message);
     } finally {
       setIsLoading(false);
       setHasLoadedOnce(true);
@@ -413,10 +411,7 @@ export function AppointmentsContainer() {
       setIsCreateOpen(false);
       await loadAppointments(selectedSpecialistId);
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('appointments.errors.save'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('appointments.errors.save')).message);
     } finally {
       setIsSubmittingForm(false);
     }
@@ -438,10 +433,7 @@ export function AppointmentsContainer() {
       setIsCancelConfirmOpen(false);
       await loadAppointments(selectedSpecialistId);
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('appointments.errors.cancel'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('appointments.errors.cancel')).message);
     } finally {
       setIsCancellingAppointment(false);
     }
@@ -460,10 +452,7 @@ export function AppointmentsContainer() {
       });
       await loadAppointments(selectedSpecialistId);
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('appointments.errors.markPaid'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('appointments.errors.markPaid')).message);
     } finally {
       setIsMarkingPaid(false);
     }
@@ -482,10 +471,7 @@ export function AppointmentsContainer() {
       });
       await loadAppointments(selectedSpecialistId);
     } catch (err) {
-      setError(resolveApiError(err, {
-        fallbackMessage: t('appointments.errors.notify'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('appointments.errors.notify')).message);
     } finally {
       setIsNotifyingClient(false);
     }
@@ -533,10 +519,7 @@ export function AppointmentsContainer() {
           ? { ...item, scheduledAt: previousScheduledAt }
           : item
       )));
-      setError(resolveApiError(err, {
-        fallbackMessage: t('appointments.errors.reschedule'),
-        networkMessage: t('common.errors.network')
-      }).message);
+      setError(resolveError(err, t('appointments.errors.reschedule')).message);
     }
   };
 

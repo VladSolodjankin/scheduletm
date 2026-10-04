@@ -3,8 +3,7 @@ import crypto from 'node:crypto';
 import { db } from '../db/knex';
 import { env } from '../config/env';
 import { logError } from '../utils/logger';
-
-const BREVO_SEND_EMAIL_URL = 'https://api.brevo.com/v3/smtp/email';
+import { sendBrevoEmail } from './email.service';
 
 function sanitizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -23,38 +22,20 @@ async function sendManagedUserInviteEmail(input: {
   firstName: string;
   inviteLink: string;
 }): Promise<boolean> {
-  if (!env.brevoApiKey) {
-    return false;
-  }
-
   try {
-    await axios.post(
-      BREVO_SEND_EMAIL_URL,
-      {
-        sender: {
-          email: env.emailFromAddress,
-          name: env.emailFromName,
-        },
-        to: [{ email: input.to }],
-        subject: 'Meetli — приглашение в аккаунт',
-        htmlContent: `
-          <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827;max-width:560px;margin:0 auto;">
-            <h2>Приглашение в Meetli</h2>
-            <p>Здравствуйте, ${input.firstName}! Для завершения регистрации перейдите по ссылке и задайте пароль.</p>
-            <p><a href="${input.inviteLink}" style="display:inline-block;padding:10px 16px;background:#4f46e5;color:#ffffff;text-decoration:none;border-radius:6px;">Принять приглашение</a></p>
-            <p style="color:#6b7280;font-size:12px;">Ссылка действует 24 часа и может быть использована только один раз.</p>
-          </div>
-        `.trim(),
-        textContent: `Приглашение в Meetli\n\nЗдравствуйте, ${input.firstName}! Для завершения регистрации перейдите по ссылке и задайте пароль.\n\nПринять приглашение: ${input.inviteLink}\n\nСсылка действует 24 часа и может быть использована только один раз.`,
-      },
-      {
-        headers: {
-          'api-key': env.brevoApiKey,
-          'content-type': 'application/json',
-        },
-        timeout: 10_000,
-      },
-    );
+    await sendBrevoEmail({
+      to: input.to,
+      subject: 'Meetli — приглашение в аккаунт',
+      htmlContent: `
+        <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827;max-width:560px;margin:0 auto;">
+          <h2>Приглашение в Meetli</h2>
+          <p>Здравствуйте, ${input.firstName}! Для завершения регистрации перейдите по ссылке и задайте пароль.</p>
+          <p><a href="${input.inviteLink}" style="display:inline-block;padding:10px 16px;background:#4f46e5;color:#ffffff;text-decoration:none;border-radius:6px;">Принять приглашение</a></p>
+          <p style="color:#6b7280;font-size:12px;">Ссылка действует 24 часа и может быть использована только один раз.</p>
+        </div>
+      `.trim(),
+      textContent: `Приглашение в Meetli\n\nЗдравствуйте, ${input.firstName}! Для завершения регистрации перейдите по ссылке и задайте пароль.\n\nПринять приглашение: ${input.inviteLink}\n\nСсылка действует 24 часа и может быть использована только один раз.`,
+    });
 
     return true;
   } catch (error) {
