@@ -30,6 +30,14 @@ vi.mock('../../repositories/appointment-group.repository', () => {
   };
 });
 
+vi.mock('../../db/knex', () => {
+  return {
+    db: {
+      transaction: vi.fn((callback: (trx: unknown) => unknown) => callback({})),
+    },
+  };
+});
+
 import { createAppointments } from '../../repositories/appointment.repository';
 import { getDefaultTimezone } from '../../repositories/app-settings.repository';
 import { findServiceById } from '../../repositories/service.repository';
