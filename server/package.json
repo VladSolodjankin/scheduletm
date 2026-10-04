@@ -9,9 +9,9 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "knex": "node --loader ts-node/esm ../node_modules/knex/bin/cli.js --knexfile knexfile.ts",
-    "migrate:make": "npm run knex -- migrate:make --env make",
-    "migrate:latest": "npm run build && npm run knex -- migrate:latest",
-    "migrate:rollback": "npm run build && npm run knex -- migrate:rollback",
+    "migrate:make": "npm run knex -- migrate:make",
+    "migrate:latest": "npm run knex -- migrate:latest",
+    "migrate:rollback": "npm run knex -- migrate:rollback",
     "test": "vitest run --config vitest.config.ts",
     "verify": "npm run migrate:latest && npm run test"
   },

@@ -18,17 +18,14 @@ const resolveConnectionString = (envName: 'development' | 'production'): string 
   return connection;
 };
 
-// Every environment that actually RUNS migrations (local dev, CI, both the "dev" and
-// "production" Railway services — Railway sets NODE_ENV=production on every service
-// regardless of which database it points at) must resolve migrations the same way:
-// against the compiled ./dist/db/migrations/*.js output. If dev and prod ever disagree
-// on directory/extension here, each database's knex_migrations history silently diverges
-// (rows get recorded under whichever name was active when they were applied) and a later
-// "corrupt migration directory" error becomes unavoidable. `npm run migrate:latest`/
-// `migrate:rollback` rebuild dist first (see package.json), so this is always fresh.
+// Every environment (local dev, CI, and both the "dev" and "production" Railway services)
+// resolves migrations the same way: TypeScript source under src/, interpreted directly via
+// ts-node — no compiled dist/*.js copy, no build step before migrating. This is the single
+// canonical representation migration rows get recorded under everywhere, so dev and prod
+// knex_migrations history can never diverge by extension/directory again.
 const runtimeMigrations: Knex.Config['migrations'] = {
-  directory: './dist/db/migrations',
-  extension: 'js',
+  directory: './src/db/migrations',
+  extension: 'ts',
 };
 
 const developmentConfig: Knex.Config = {
@@ -55,18 +52,6 @@ const config: Record<string, Knex.Config> = {
       max: 7,
     },
     acquireConnectionTimeout: 10_000,
-  },
-  // Only `migrate:make` (authoring a new migration) targets this: new migrations are always
-  // written as TypeScript source under src/, then compiled to dist/ like the rest of the app.
-  // Selected explicitly via `--env make`, never by NODE_ENV, so it can't be picked up by
-  // migrate:latest/rollback by accident.
-  make: {
-    client: 'pg',
-    connection: resolveConnectionString('development'),
-    migrations: {
-      directory: './src/db/migrations',
-      extension: 'ts',
-    },
   },
 };
 
