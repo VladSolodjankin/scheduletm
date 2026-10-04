@@ -899,8 +899,6 @@ telegramWebhookRouter.post(
             timezone,
             appointmentResult.service.duration_min,
           );
-          const paymentUrl = `https://example.com/pay/${appointmentResult.appointment.id}`;
-
           await sendMessage(
             chatId,
             t(lang, 'booking.finalMessage', {
@@ -914,7 +912,6 @@ telegramWebhookRouter.post(
               calendarGoogleUrl,
               calendarAppleUrl,
               calendarMicrosoftUrl,
-              paymentUrl,
             ),
           );
 

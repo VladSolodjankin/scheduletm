@@ -15,6 +15,7 @@ import {
   type ZoomWebhookPayload,
 } from '../services/zoomWebhookService.js';
 import { formatZodError } from '../utils/validation.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 
 export const integrationRoutes = Router();
 const zoomWebhookRateLimit = createRequestRateLimit({ keyPrefix: 'zoom-webhook', maxRequests: 120, windowMs: 60_000 });
@@ -199,7 +200,7 @@ integrationRoutes.post('/zoom/webhook', zoomWebhookRateLimit, async (req, res) =
   try {
     await processZoomWebhookEvent(body);
   } catch (error) {
-    console.error('[zoom-webhook] processing failed', error);
+    void trackServerError({ method: req.method, path: req.path, error });
   }
 
   return res.status(200).end();

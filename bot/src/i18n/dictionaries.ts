@@ -45,18 +45,11 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.confirmPrompt':
       'Все верно? Нажмите ✅, чтобы подтвердить, или ✏️, чтобы начать заново.',
     'booking.created': 'Готово! Запись подтверждена.',
-    'booking.calendarLink': 'Сохранить в календарь: {{url}}',
-    'booking.paymentLink': 'Ссылка на оплату (заглушка): {{url}}',
     'booking.finalMessage':
       '🎉 {{created}}\n\n🧑‍⚕️ Специалист: {{specialist}}\n📅 Дата: {{date}}\n🕒 Время: {{time}}\n\nВыберите действие в меню ниже.\n\nСпециалист свяжется с вами и пришлёт ссылку на встречу.',
     'booking.openCalendarGoogle': '📅 Google Calendar',
     'booking.openCalendarApple': '🍎 Apple Calendar (.ics)',
     'booking.openCalendarMicrosoft': '🪟 Microsoft Calendar',
-    'booking.openPayment': '💳 Перейти к оплате',
-    'booking.notificationStub':
-      'Заглушка уведомлений: отправим напоминание о «{{service}}» на {{date}} {{time}} через {{channels}}.',
-    'booking.channelPhone': 'телефон',
-    'booking.channelEmail': 'email',
     'booking.restart': 'Начинаем заново. Выберите услугу:',
     'booking.sessionExpired': 'Сессия записи устарела. Начните запись заново.',
     'booking.noSlots': 'На эту дату нет свободных слотов.',
@@ -145,18 +138,11 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'booking.contactNone': 'not provided',
     'booking.confirmPrompt': 'Everything looks good? Tap ✅ to confirm or ✏️ to restart.',
     'booking.created': 'Done! Your booking is confirmed.',
-    'booking.calendarLink': 'Save to calendar: {{url}}',
-    'booking.paymentLink': 'Payment link (stub): {{url}}',
     'booking.finalMessage':
       '🎉 {{created}}\n\n🧑‍⚕️ Specialist: {{specialist}}\n📅 Date: {{date}}\n🕒 Time: {{time}}\n\nChoose an action from the menu below.\n\nA specialist will contact you and send a meeting link.',
     'booking.openCalendarGoogle': '📅 Google Calendar',
     'booking.openCalendarApple': '🍎 Apple Calendar (.ics)',
     'booking.openCalendarMicrosoft': '🪟 Microsoft Calendar',
-    'booking.openPayment': '💳 Open payment',
-    'booking.notificationStub':
-      'Notification stub: we will send a reminder for "{{service}}" at {{date}} {{time}} via {{channels}}.',
-    'booking.channelPhone': 'phone',
-    'booking.channelEmail': 'email',
     'booking.restart': 'Starting over. Choose a service:',
     'booking.sessionExpired': 'Booking session expired. Please start again.',
     'booking.noSlots': 'No available time slots for this date.',

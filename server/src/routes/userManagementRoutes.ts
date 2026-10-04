@@ -13,6 +13,7 @@ import {
 } from '../services/userManagementService.js';
 import { formatZodError } from '../utils/validation.js';
 import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 
 export const userManagementRoutes = Router();
 const resendInviteRateLimit = createRequestRateLimit({ keyPrefix: 'resend-invite', maxRequests: 10, windowMs: 60_000 });
@@ -30,7 +31,8 @@ userManagementRoutes.get('/', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenManageUsers') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'usersLoadFailed') });
   }
 });
@@ -54,7 +56,8 @@ userManagementRoutes.post('/', async (req, res) => {
       return res.status(409).json({ message: t(req, 'managedUserEmailInUse') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'userCreateFailed') });
   }
 });
@@ -86,7 +89,8 @@ userManagementRoutes.patch('/:id', async (req, res) => {
       return res.status(409).json({ message: t(req, 'managedUserEmailInUse') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'userUpdateFailed') });
   }
 });
@@ -110,7 +114,8 @@ userManagementRoutes.get('/:id/delete-impact', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenManageUsers') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'userDeleteFailed') });
   }
 });
@@ -134,7 +139,8 @@ userManagementRoutes.post('/:id/deactivate', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenManageUsers') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'userUpdateFailed') });
   }
 });
@@ -158,7 +164,8 @@ userManagementRoutes.delete('/:id', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenManageUsers') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'userDeleteFailed') });
   }
 });
@@ -184,7 +191,8 @@ userManagementRoutes.post('/:id/resend-invite', resendInviteRateLimit, async (re
       return res.status(409).json({ message: t(req, 'userInviteAlreadyVerified') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'userInviteResendFailed') });
   }
 });

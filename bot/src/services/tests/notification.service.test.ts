@@ -91,15 +91,12 @@ describe('notification.service', () => {
       reminderComment: 'Ссылка на встречу появится здесь',
     });
 
-    expect(createNotification).toHaveBeenCalledTimes(9);
+    expect(createNotification).toHaveBeenCalledTimes(6);
     expect(createNotification).toHaveBeenCalledWith(
       expect.objectContaining({ channel: 'telegram', type: 'appointment_reminder_1440m' }),
     );
     expect(createNotification).toHaveBeenCalledWith(
       expect.objectContaining({ channel: 'email', type: 'appointment_reminder_60m' }),
-    );
-    expect(createNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ channel: 'sms', type: 'appointment_reminder_30m' }),
     );
     expect(createNotification).toHaveBeenCalledWith(
       expect.objectContaining({ payload: expect.objectContaining({ reminderComment: 'Ссылка на встречу появится здесь' }) }),
@@ -140,7 +137,7 @@ describe('notification.service', () => {
     });
 
     expect(cancelPendingNotificationsByAppointment).toHaveBeenCalledWith(1, 10);
-    expect(createNotification).toHaveBeenCalledTimes(9);
+    expect(createNotification).toHaveBeenCalledTimes(6);
   });
 
   it('marks telegram notification as sent', async () => {

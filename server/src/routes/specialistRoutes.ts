@@ -10,6 +10,7 @@ import {
   updateSpecialistForActor,
 } from '../services/specialistService.js';
 import { formatZodError } from '../utils/validation.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 
 export const specialistRoutes = Router();
 
@@ -25,7 +26,8 @@ specialistRoutes.get('/', async (req, res) => {
     ]);
     return res.json({ specialists, availableWebUsers });
   } catch (error) {
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'specialistsLoadFailed') });
   }
 });
@@ -50,7 +52,8 @@ specialistRoutes.post('/', async (req, res) => {
       return res.status(400).json({ message: t(req, 'specialistWebUserUnavailable') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'specialistCreateFailed') });
   }
 });
@@ -81,7 +84,8 @@ specialistRoutes.patch('/:id', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenUpdateSpecialist') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'specialistUpdateFailed') });
   }
 });
@@ -109,7 +113,8 @@ specialistRoutes.delete('/:id', async (req, res) => {
     }
 
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'specialistDeleteFailed') });
   }
 });

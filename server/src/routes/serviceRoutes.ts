@@ -11,6 +11,7 @@ import {
   updateServiceForActor,
 } from '../services/serviceService.js';
 import { formatZodError } from '../utils/validation.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 
 export const serviceRoutes = Router();
 serviceRoutes.use(requireAccessToken);
@@ -23,21 +24,26 @@ const statusFor = (error: ServiceCatalogError) =>
   error.code === 'FORBIDDEN' ? 403
     : error.code === 'NOT_FOUND' || error.code === 'MEDIA_NOT_FOUND' ? 404
       : error.code === 'CONFLICT' || error.code === 'SERVICE_IN_USE' ? 409 : 400;
-const handleError = (error: unknown, res: Parameters<Parameters<typeof serviceRoutes.get>[1]>[1]) => {
+const handleError = (
+  error: unknown,
+  req: Parameters<Parameters<typeof serviceRoutes.get>[1]>[0],
+  res: Parameters<Parameters<typeof serviceRoutes.get>[1]>[1],
+) => {
   if (error instanceof ServiceCatalogError) {
     if (error.code === 'SERVICE_IN_USE') {
       return res.status(409).json({ code: 'service_in_use', impact: error.impact });
     }
     return res.status(statusFor(error)).json({ code: error.code.toLowerCase() });
   }
-  console.error(error);
+  void trackServerError({ method: req.method, path: req.path, error });
+  res.locals.errorTracked = true;
   return res.status(500).json({ code: 'internal_error' });
 };
 
 serviceRoutes.get('/', async (req, res) => {
   try {
     return res.json(await getServicesForActor((req as AuthedRequest).user));
-  } catch (error) { return handleError(error, res); }
+  } catch (error) { return handleError(error, req, res); }
 });
 
 serviceRoutes.post('/', async (req, res) => {
@@ -45,7 +51,7 @@ serviceRoutes.post('/', async (req, res) => {
   if (!parsed.success) return res.status(400).json(formatZodError(parsed.error));
   try {
     return res.status(201).json(await createServiceForActor((req as AuthedRequest).user, parsed.data));
-  } catch (error) { return handleError(error, res); }
+  } catch (error) { return handleError(error, req, res); }
 });
 
 serviceRoutes.get('/:id/delete-impact', async (req, res) => {
@@ -53,7 +59,7 @@ serviceRoutes.get('/:id/delete-impact', async (req, res) => {
   if (!id) return res.status(400).json({ code: 'invalid_service_id' });
   try {
     return res.json(await getServiceDeleteImpactForActor((req as unknown as AuthedRequest).user, id));
-  } catch (error) { return handleError(error, res); }
+  } catch (error) { return handleError(error, req, res); }
 });
 
 serviceRoutes.delete('/:id', async (req, res) => {
@@ -62,7 +68,7 @@ serviceRoutes.delete('/:id', async (req, res) => {
   try {
     await deleteServiceForActor((req as unknown as AuthedRequest).user, id);
     return res.status(204).send();
-  } catch (error) { return handleError(error, res); }
+  } catch (error) { return handleError(error, req, res); }
 });
 
 serviceRoutes.patch('/:id', async (req, res) => {
@@ -72,7 +78,7 @@ serviceRoutes.patch('/:id', async (req, res) => {
   if (!parsed.success) return res.status(400).json(formatZodError(parsed.error));
   try {
     return res.json(await updateServiceForActor((req as unknown as AuthedRequest).user, id, parsed.data));
-  } catch (error) { return handleError(error, res); }
+  } catch (error) { return handleError(error, req, res); }
 });
 
 serviceRoutes.patch('/:serviceId/specialists/:specialistId', async (req, res) => {
@@ -83,5 +89,5 @@ serviceRoutes.patch('/:serviceId/specialists/:specialistId', async (req, res) =>
   if (!parsed.success) return res.status(400).json(formatZodError(parsed.error));
   try {
     return res.json(await updateAssignmentForActor((req as unknown as AuthedRequest).user, serviceId, specialistId, parsed.data));
-  } catch (error) { return handleError(error, res); }
+  } catch (error) { return handleError(error, req, res); }
 });

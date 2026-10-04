@@ -39,7 +39,9 @@ export function ThemeModeSync() {
           setMode(serverMode);
         }
       })
-      .catch(() => undefined)
+      .catch((error) => {
+        console.warn('[ThemeModeSync] failed to load theme mode from server', error);
+      })
       .finally(() => {
         if (!cancelled) {
           hasSyncedDown.current = true;
@@ -62,7 +64,9 @@ export function ThemeModeSync() {
     lastKnownServerMode.current = mode;
     void apiClient
       .put('/api/settings/user', { uiThemeMode: mode }, { headers: authHeaders(accessToken) })
-      .catch(() => undefined);
+      .catch((error) => {
+        console.warn('[ThemeModeSync] failed to save theme mode to server', error);
+      });
   }, [accessToken, mode]);
 
   return null;

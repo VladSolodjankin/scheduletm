@@ -11,6 +11,7 @@ import {
 } from '../services/appointmentManagementTokenService.js';
 import { formatZodError } from '../utils/validation.js';
 import type { AppointmentRecord } from '../repositories/appointmentRepository.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 
 export const publicAppointmentManagementRoutes = Router();
 
@@ -52,11 +53,12 @@ async function toAppointmentDetails(accountId: number, appointment: AppointmentR
   };
 }
 
-function handleTokenError(error: unknown, res: import('express').Response) {
+function handleTokenError(error: unknown, req: import('express').Request, res: import('express').Response) {
   if (error instanceof AppointmentManagementTokenError) {
     return res.status(404).json({ code: 'not_found' });
   }
-  console.error(error);
+  void trackServerError({ method: req.method, path: req.path, error });
+  res.locals.errorTracked = true;
   return res.status(500).json({ code: 'internal_error' });
 }
 
@@ -65,7 +67,7 @@ publicAppointmentManagementRoutes.get('/:token', async (req, res) => {
     const { accountId, appointment } = await resolveAppointmentByManagementToken(req.params.token);
     return res.json(await toAppointmentDetails(accountId, appointment));
   } catch (error) {
-    return handleTokenError(error, res);
+    return handleTokenError(error, req, res);
   }
 });
 
@@ -78,7 +80,7 @@ publicAppointmentManagementRoutes.post('/:token/cancel', async (req, res) => {
     const updated = await cancelAppointmentByManagementToken(req.params.token);
     return res.json(await toAppointmentDetails(accountId, updated));
   } catch (error) {
-    return handleTokenError(error, res);
+    return handleTokenError(error, req, res);
   }
 });
 
@@ -96,6 +98,6 @@ publicAppointmentManagementRoutes.post('/:token/reschedule', async (req, res) =>
     const updated = await rescheduleAppointmentByManagementToken(req.params.token, parsed.data.scheduledAt);
     return res.json(await toAppointmentDetails(accountId, updated));
   } catch (error) {
-    return handleTokenError(error, res);
+    return handleTokenError(error, req, res);
   }
 });

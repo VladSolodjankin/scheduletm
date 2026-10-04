@@ -627,8 +627,8 @@ describe('public pages routes', () => {
     expect(response.status).toBe(500);
     expect(trackServerErrorMock).toHaveBeenCalledWith(expect.objectContaining({
       method: 'GET',
-      path: '/api/public-pages',
-      error: expect.objectContaining({ message: 'HTTP_500' }),
+      path: '/',
+      error: expect.objectContaining({ message: 'database unavailable' }),
     }));
   });
 

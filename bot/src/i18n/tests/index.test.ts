@@ -18,17 +18,17 @@ describe('i18n', () => {
   });
 
   it('replaces multiple params in one string', () => {
-    const out = t('en', 'booking.notificationStub', {
+    const out = t('en', 'notifications.appointmentReminder', {
       service: 'Service',
+      specialist: 'Doctor',
       date: '2026-04-18',
       time: '09:00',
-      channels: 'email',
     });
 
     expect(out).toContain('Service');
+    expect(out).toContain('Doctor');
     expect(out).toContain('2026-04-18');
     expect(out).toContain('09:00');
-    expect(out).toContain('email');
     expect(out).not.toContain('{{service}}');
   });
 

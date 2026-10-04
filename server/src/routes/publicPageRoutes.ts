@@ -38,6 +38,7 @@ import {
   toPublicPageDto,
 } from '../services/publicPageService.js';
 import { publicPageMediaUrl } from '../utils/publicPageMediaUrl.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 import {
   deletePublicPageMedia,
   getAccountPublicPageMedia,
@@ -77,14 +78,15 @@ const publicBookingOptionsRateLimit = createRequestRateLimit({
 });
 export const publicPageRoutes = Router();
 
-function mediaError(res: Response, error: unknown) {
+function mediaError(req: Request, res: Response, error: unknown) {
   if (error instanceof PublicPageMediaError) {
     if (error.code === 'NOT_FOUND') return res.status(404).json({ code: 'not_found' });
     if (error.code === 'MEDIA_IN_USE') return res.status(409).json({ code: 'media_in_use' });
     if (error.code === 'UNSUPPORTED_MEDIA') return res.status(415).json({ code: 'unsupported_media' });
     return res.status(503).json({ code: 'storage_unavailable' });
   }
-  console.error(error);
+  void trackServerError({ method: req.method, path: req.path, error });
+  res.locals.errorTracked = true;
   return res.status(500).json({ code: 'internal_error' });
 }
 
@@ -106,7 +108,7 @@ const parseRawMedia = (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-function sendError(res: Response, error: unknown) {
+function sendError(req: Request, res: Response, error: unknown) {
   if (error instanceof PublicBookingServiceError) {
     if (error.code === 'NOT_FOUND') return res.status(404).json({ code: 'not_found' });
     if (error.code === 'SLOT_UNAVAILABLE') return res.status(409).json({ code: 'slot_unavailable' });
@@ -138,7 +140,8 @@ function sendError(res: Response, error: unknown) {
         return res.status(409).json({ code: 'quota_exceeded' });
     }
   }
-  console.error(error);
+  void trackServerError({ method: req.method, path: req.path, error });
+  res.locals.errorTracked = true;
   return res.status(500).json({ code: 'internal_error' });
 }
 
@@ -149,7 +152,7 @@ publicPageRoutes.get('/by-slug/:slug', publicPageLookupRateLimit, async (req, re
     const document = await getPublishedPublicPage(parsed.data);
     return document ? res.json(document) : res.status(404).json({ code: 'not_found' });
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 
@@ -164,7 +167,7 @@ publicPageRoutes.get('/media/:mediaId/content', publicPageMediaRateLimit, async 
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     return res.send(Buffer.from(media.body));
   } catch (error) {
-    return mediaError(res, error);
+    return mediaError(req, res, error);
   }
 });
 
@@ -175,7 +178,7 @@ publicPageRoutes.get('/by-slug/:slug/booking-options', publicBookingOptionsRateL
     if (!slug.success) return res.status(404).json({ code: 'not_found' });
     return res.json(await getPublicBookingOptions(slug.data));
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 const publicAvailableSlotsRateLimit = createRequestRateLimit({
@@ -192,7 +195,7 @@ publicPageRoutes.get('/by-slug/:slug/available-slots', publicAvailableSlotsRateL
   try {
     return res.json(await getPublicAvailableSlots(slug.data, query.data.specialistId, query.data.serviceId, query.data.date));
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 const publicBookingRateLimit = createRequestRateLimit({
@@ -217,7 +220,7 @@ publicPageRoutes.post('/by-slug/:slug/appointments', publicBookingRateLimit, asy
   try {
     return res.status(201).json(await bookPublicAppointment(slug.data, input.data));
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 
@@ -239,7 +242,7 @@ publicPageRoutes.get(
         query.data.accessCode,
       ));
     } catch (error) {
-      return sendError(res, error);
+      return sendError(req, res, error);
     }
   },
 );
@@ -262,7 +265,7 @@ publicPageRoutes.get('/media/:mediaId/preview', async (req, res) => {
     res.setHeader('Cache-Control', 'private, no-store');
     return res.send(Buffer.from(media.body));
   } catch (error) {
-    return mediaError(res, error);
+    return mediaError(req, res, error);
   }
 });
 
@@ -292,7 +295,7 @@ publicPageRoutes.post('/media', parseRawMedia, async (req, res) => {
       height: media.height ?? 0,
     });
   } catch (error) {
-    return mediaError(res, error);
+    return mediaError(req, res, error);
   }
 });
 
@@ -303,7 +306,7 @@ publicPageRoutes.delete('/media/:mediaId', async (req, res) => {
     await deletePublicPageMedia((req as unknown as AuthedRequest).user.accountId, id.data);
     return res.status(204).send();
   } catch (error) {
-    return mediaError(res, error);
+    return mediaError(req, res, error);
   }
 });
 
@@ -313,7 +316,7 @@ publicPageRoutes.get('/', async (req, res) => {
     if (!status.success) return res.status(400).json({ code: 'invalid_request' });
     return res.json(await getPublicPages((req as unknown as AuthedRequest).user.accountId, status.data));
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 
@@ -328,7 +331,7 @@ publicPageRoutes.get('/slug-availability', async (req, res) => {
       query.data.pageId,
     ));
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 
@@ -339,7 +342,7 @@ publicPageRoutes.get('/:pageId', async (req, res) => {
     const page = await getPublicPage((req as unknown as AuthedRequest).user.accountId, pageId.data);
     return page ? res.json(page) : res.status(404).json({ code: 'not_found' });
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 
@@ -352,7 +355,7 @@ publicPageRoutes.post('/', async (req, res) => {
       input.data.document,
     ));
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 
@@ -367,7 +370,7 @@ publicPageRoutes.put('/:pageId/draft', async (req, res) => {
       ...input.data,
     }));
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 
@@ -380,7 +383,7 @@ publicPageRoutes.post('/:pageId/publish', async (req, res) => {
       (req as unknown as AuthedRequest).user.accountId, pageId.data, input.data.expectedRevision,
     ));
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 
@@ -393,7 +396,7 @@ publicPageRoutes.post('/:pageId/archive', async (req, res) => {
       (req as unknown as AuthedRequest).user.accountId, pageId.data, input.data.expectedRevision,
     ));
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 
@@ -406,7 +409,7 @@ publicPageRoutes.post('/:pageId/restore', async (req, res) => {
       (req as unknown as AuthedRequest).user.accountId, pageId.data, input.data.expectedRevision,
     ));
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });
 
@@ -420,6 +423,6 @@ publicPageRoutes.delete('/:pageId', async (req, res) => {
     );
     return res.status(204).send();
   } catch (error) {
-    return sendError(res, error);
+    return sendError(req, res, error);
   }
 });

@@ -42,12 +42,20 @@ async function bootstrap() {
   );
   app.use(telegramWebhookRouter);
 
-  app.use((error: unknown, _req: express.Request, _res: express.Response, _next: express.NextFunction) => {
+  app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     void trackBotError({
       method: 'WEBHOOK',
       path: '/telegram/webhook',
       error,
     });
+
+    if (res.headersSent) {
+      return;
+    }
+
+    // Acknowledge the webhook even on an uncaught error so Telegram does not
+    // keep retrying the same update; the failure is still captured above.
+    res.status(200).json({ ok: true });
   });
 
   const stopReminderJob = startReminderJob(env.notificationPollMs);

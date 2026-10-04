@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
-import { getErrorLogsForActor, trackWebError } from '../services/errorTrackingService.js';
+import { getErrorLogsForActor, trackServerError, trackWebError } from '../services/errorTrackingService.js';
 
 const listErrorLogsQuerySchema = z.object({
   source: z.enum(['web', 'server']).optional(),
@@ -36,7 +36,8 @@ errorLogRoutes.get('/', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenErrorLogsScope') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'errorLogsLoadFailed') });
   }
 });
@@ -60,7 +61,8 @@ errorLogRoutes.post('/web', async (req, res) => {
 
     return res.status(201).json({ ok: true });
   } catch (error) {
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'errorLogsCreateFailed') });
   }
 });

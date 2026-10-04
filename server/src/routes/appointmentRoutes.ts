@@ -18,6 +18,7 @@ import {
 import { formatZodError } from '../utils/validation.js';
 import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 import { AppointmentRepositoryError } from '../repositories/appointmentRepository.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 
 export const appointmentRoutes = Router();
 const notifyRateLimit = createRequestRateLimit({ keyPrefix: 'appointment-notify', maxRequests: 20, windowMs: 60_000 });
@@ -74,7 +75,8 @@ appointmentRoutes.get('/', async (req, res) => {
     if (message === 'CLIENT_PROFILE_NOT_FOUND') {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'appointmentsLoadFailed') });
   }
 });
@@ -111,7 +113,8 @@ appointmentRoutes.post('/', async (req, res) => {
       return res.status(404).json({ message: t(req, 'clientNotFound') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'appointmentCreateFailed') });
   }
 });
@@ -151,7 +154,8 @@ appointmentRoutes.patch('/:id', async (req, res) => {
       return res.status(404).json({ message: t(req, 'clientNotFound') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'appointmentUpdateFailed') });
   }
 });
@@ -180,7 +184,8 @@ appointmentRoutes.post('/:id/cancel', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'appointmentCancelFailed') });
   }
 });
@@ -214,7 +219,8 @@ appointmentRoutes.post('/:id/reschedule', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'appointmentRescheduleFailed') });
   }
 });
@@ -243,7 +249,8 @@ appointmentRoutes.post('/:id/mark-paid', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'appointmentMarkPaidFailed') });
   }
 });
@@ -275,7 +282,8 @@ appointmentRoutes.post('/:id/notify', notifyRateLimit, async (req, res) => {
       return res.status(502).json({ message: t(req, 'appointmentNotifyFailed') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'appointmentNotifyFailed') });
   }
 });

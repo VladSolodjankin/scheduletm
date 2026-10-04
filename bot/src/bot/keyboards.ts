@@ -161,14 +161,12 @@ export function getBookingFinalInlineKeyboard(
   calendarGoogleUrl: string,
   calendarAppleUrl: string,
   calendarMicrosoftUrl: string,
-  paymentUrl: string,
 ) {
   return {
     inline_keyboard: [
       [{ text: translate(lang, 'booking.openCalendarGoogle'), url: calendarGoogleUrl }],
       [{ text: translate(lang, 'booking.openCalendarApple'), url: calendarAppleUrl }],
       [{ text: translate(lang, 'booking.openCalendarMicrosoft'), url: calendarMicrosoftUrl }],
-      [{ text: translate(lang, 'booking.openPayment'), url: paymentUrl }],
     ],
   };
 }

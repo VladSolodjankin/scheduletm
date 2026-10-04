@@ -12,7 +12,6 @@ import {
   scheduleNotificationRetry,
   cancelPendingNotificationsByAppointment,
 } from '../repositories/notification.repository';
-import { logInfo } from '../utils/logger';
 
 type QueueAppointmentReminderInput = {
   accountId: number;
@@ -35,7 +34,8 @@ export async function queueAppointmentReminder(input: QueueAppointmentReminderIn
 
   if (input.chatId) channels.push('telegram');
   if (input.email) channels.push('email');
-  if (input.phone) channels.push('sms');
+  // SMS is not a wired-up delivery channel yet (see TODO.md backlog) — don't
+  // queue a notification we have no way to actually send.
 
   if (!channels.length) {
     return [];
@@ -183,15 +183,7 @@ async function dispatchNotification(channel: NotificationChannel, input: Dispatc
     return;
   }
 
-  if (!input.recipientPhone) {
-    throw new Error('Missing phone recipient');
-  }
-
-  // Stub provider for MVP: save multichannel contract and status flow.
-  logInfo('notification.sms_stub_sent', {
-    recipient: input.recipientPhone,
-    message,
-  });
+  throw new Error(`Notification channel "${channel}" is not implemented`);
 }
 
 function buildReminderText(payload: Record<string, unknown>) {

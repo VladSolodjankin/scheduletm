@@ -68,7 +68,10 @@ export const createApp = () => {
 
   app.use((req, res, next) => {
     res.on('finish', () => {
-      if (res.statusCode >= 500) {
+      // Route handlers that already called trackServerError with the real error
+      // and stack set res.locals.errorTracked — don't also report a synthetic
+      // HTTP_500 for the same failure.
+      if (res.statusCode >= 500 && !res.locals.errorTracked) {
         void trackServerError({
           method: req.method,
           path: new URL(req.originalUrl, 'http://localhost').pathname,

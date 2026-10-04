@@ -38,6 +38,7 @@ import {
 import { WebUserRole } from '../types/webUserRole.js';
 import { csrfCookieName, parseCookies } from '../utils/cookies.js';
 import { formatZodError } from '../utils/validation.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 
 export const authRoutes = Router();
 const emailChangeRequestRateLimit = createRequestRateLimit({ keyPrefix: 'email-change-request', maxRequests: 5, windowMs: 60_000 });
@@ -94,7 +95,8 @@ authRoutes.post('/specialists', requireAccessToken, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'specialistCreateFailed') });
   }
 });
@@ -129,7 +131,8 @@ authRoutes.post('/register', async (req, res) => {
       user: { id: user.id, email: user.email, role: user.role },
     });
   } catch (error) {
-    console.error(error);
+    void trackServerError({ method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'registerFailed') });
   }
 });
@@ -138,8 +141,8 @@ authRoutes.post('/password-reset/request', async (req, res) => {
   const parsed = passwordResetRequestSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(formatZodError(parsed.error));
 
-  void requestPasswordReset(parsed.data.email).catch(() => {
-    console.error('[password-reset] request-failed');
+  void requestPasswordReset(parsed.data.email).catch((error) => {
+    void trackServerError({ method: req.method, path: req.path, error });
   });
   return res.json({ message: t(req, 'passwordResetRequestAccepted') });
 });
@@ -153,7 +156,7 @@ authRoutes.post('/password-reset/confirm', async (req, res) => {
     if (!reset) return res.status(400).json({ message: t(req, 'passwordResetInvalid') });
     return res.json({ message: t(req, 'passwordResetSuccess') });
   } catch (error) {
-    console.error('[password-reset] confirm-failed', error);
+    void trackServerError({ method: req.method, path: req.path, error });
     return res.status(400).json({ message: t(req, 'passwordResetInvalid') });
   }
 });
@@ -176,7 +179,8 @@ authRoutes.post('/email-change/request', requireAccessToken, emailChangeRequestR
     }
     return res.json({ message: t(req, 'emailChangeRequestAccepted') });
   } catch (error) {
-    console.error('[email-change] request-failed', error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'emailChangeRateLimited') });
   }
 });
@@ -191,7 +195,7 @@ authRoutes.post('/email-change/confirm', requireAccessToken, async (req, res) =>
     if (!confirmed) return res.status(400).json({ message: t(req, 'emailChangeInvalidCode') });
     return res.json({ message: t(req, 'emailChangeSuccess') });
   } catch (error) {
-    console.error('[email-change] confirm-failed', error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
     return res.status(400).json({ message: t(req, 'emailChangeInvalidCode') });
   }
 });
@@ -214,7 +218,8 @@ authRoutes.post('/verify-email', async (req, res) => {
       message: t(req, 'emailVerificationSuccess'),
     });
   } catch (error) {
-    console.error(error);
+    void trackServerError({ method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'registerFailed') });
   }
 });
@@ -242,7 +247,8 @@ authRoutes.get('/verify-invite', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    void trackServerError({ method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'registerFailed') });
   }
 });
@@ -265,7 +271,8 @@ authRoutes.post('/accept-invite', async (req, res) => {
       message: t(req, 'inviteAcceptSuccess'),
     });
   } catch (error) {
-    console.error(error);
+    void trackServerError({ method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'registerFailed') });
   }
 });
@@ -284,7 +291,8 @@ authRoutes.post('/resend-verification-code', async (req, res) => {
 
     return res.json({ message: t(req, 'emailVerificationCodeResent') });
   } catch (error) {
-    console.error(error);
+    void trackServerError({ method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'registerFailed') });
   }
 });
@@ -323,7 +331,8 @@ authRoutes.post('/login', blockIfTooManyAttempts, async (req, res) => {
       return res.status(403).json({ message: t(req, 'accountInactive') });
     }
 
-    console.error(error);
+    void trackServerError({ method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'loginFailed') });
   }
 });
@@ -382,7 +391,8 @@ authRoutes.post('/logout', async (req, res) => {
     });
     return res.status(204).send();
   } catch (error) {
-    console.error(error);
+    void trackServerError({ method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'logoutFailed') });
   }
 });

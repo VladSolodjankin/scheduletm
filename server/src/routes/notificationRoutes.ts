@@ -6,6 +6,7 @@ import {
   getNotificationLogsForActor,
   resendFailedNotificationForActor,
 } from '../services/notificationLogService.js';
+import { trackServerError } from '../services/errorTrackingService.js';
 
 const listNotificationQuerySchema = z.object({
   accountId: z.coerce.number().int().positive().optional(),
@@ -35,7 +36,8 @@ notificationRoutes.get('/', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenNotificationScope') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'notificationsLoadFailed') });
   }
 });
@@ -62,7 +64,8 @@ notificationRoutes.post('/:id/resend', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenNotificationScope') });
     }
 
-    console.error(error);
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'notificationResendFailed') });
   }
 });
