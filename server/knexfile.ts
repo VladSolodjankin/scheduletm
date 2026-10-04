@@ -36,16 +36,18 @@ const config: Record<string, Knex.Config> = {
   development: developmentConfig,
   // NODE_ENV=test (e.g. CI) has no dedicated settings of its own; reuse development's.
   test: developmentConfig,
-  // DATABASE_URL and DATABASE_PUBLIC_URL point at the same Postgres instance (internal vs.
-  // public Railway address), so production must record migrations under the same
-  // directory/extension as development — otherwise rows written by one env's filenames
-  // (.ts) don't match the other's (.js) and knex reports the whole history as "missing".
+  // Production has its own dedicated Postgres instance (separate from development's), so its
+  // knex_migrations history is independent: it was built entirely from compiled .js files and
+  // must keep using them. Do not "unify" this with developmentConfig — the two databases have
+  // separate, unrelated migration histories, and pointing production at ./src (.ts) causes knex
+  // to report every already-applied migration as missing (verified against the real prod table:
+  // 78/78 rows recorded with a .js extension, batches 1-43).
   production: {
     client: 'pg',
     connection: resolveConnectionString('production'),
     migrations: {
-      directory: './src/db/migrations',
-      extension: 'ts',
+      directory: './dist/db/migrations',
+      extension: 'js',
     },
     pool: {
       min: 0,
