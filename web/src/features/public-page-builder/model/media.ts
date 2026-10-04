@@ -1,3 +1,4 @@
+import { apiClient } from '../../../shared/api/client';
 import type { MediaReference, PublicPageDocument } from '../types/publicPage';
 
 export const ALLOWED_MEDIA_MIME_TYPES = new Set<MediaReference['mimeType']>([
@@ -11,9 +12,17 @@ export type MediaValidationCode =
   | 'invalid_dimensions'
   | 'https_url_required';
 
-function isAbsoluteHttpsUrl(value: string): boolean {
+function isAllowedMediaUrl(value: string): boolean {
   try {
-    return new URL(value).protocol === 'https:';
+    const url = new URL(value);
+    if (url.protocol === 'https:') {return true;}
+    // The API's own origin may legitimately serve media over plain HTTP in
+    // self-hosted/local-dev deployments; any other origin must be https.
+    if (!apiClient.defaults.baseURL) {return false;}
+    const apiBaseUrl = new URL(apiClient.defaults.baseURL);
+    return url.protocol === apiBaseUrl.protocol
+      && url.hostname === apiBaseUrl.hostname
+      && url.port === apiBaseUrl.port;
   } catch {
     return false;
   }
@@ -22,7 +31,7 @@ function isAbsoluteHttpsUrl(value: string): boolean {
 export function validateMediaReference(media: MediaReference): MediaValidationCode | null {
   if (!ALLOWED_MEDIA_MIME_TYPES.has(media.mimeType)) {return 'unsupported_type';}
   if (media.width < 0 || media.height < 0) {return 'invalid_dimensions';}
-  return isAbsoluteHttpsUrl(media.url) ? null : 'https_url_required';
+  return isAllowedMediaUrl(media.url) ? null : 'https_url_required';
 }
 
 function containsMediaId(value: unknown, mediaId: string): boolean {

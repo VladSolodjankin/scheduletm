@@ -81,6 +81,11 @@ export const validItems = (content: BlockContent, key: string, fields: string[])
     fields.filter((field) => !hasValue(item[field])).map((field) => `${key}.${index}.${field} is required`),
   );
 
+/** Rejects single-label hosts (e.g. punycode from typed placeholder text like "https://тест"). */
+function hasPlausibleHostname(hostname: string): boolean {
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes('.');
+}
+
 export function normalizeSafeHref(value: unknown): string | null {
   const href = text(value).trim();
   if (!href) {
@@ -89,7 +94,9 @@ export function normalizeSafeHref(value: unknown): string | null {
   if (/^https?:\/\//i.test(href)) {
     try {
       const url = new URL(href);
-      return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;
+      return (url.protocol === 'http:' || url.protocol === 'https:') && hasPlausibleHostname(url.hostname)
+        ? url.toString()
+        : null;
     } catch {
       return null;
     }

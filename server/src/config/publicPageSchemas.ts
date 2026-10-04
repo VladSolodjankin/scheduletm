@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { env } from './env.js';
 
 export const PUBLIC_PAGE_SCHEMA_VERSION = 5 as const;
 export function isIanaTimezone(value: string): boolean {
@@ -435,12 +436,18 @@ function hasRichTextContent(value: unknown): boolean {
   });
 }
 
+/** Rejects single-label hosts (e.g. punycode from typed placeholder text like "https://тест"). */
+function hasPlausibleHostname(hostname: string): boolean {
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes('.');
+}
+
 function isSafeHref(value: unknown, kind: 'contact' | 'web'): boolean {
   if (typeof value !== 'string' || !value.trim()) return false;
   const href = value.trim();
   if (/^https?:\/\//i.test(href)) {
     try {
-      return ['http:', 'https:'].includes(new URL(href).protocol);
+      const url = new URL(href);
+      return ['http:', 'https:'].includes(url.protocol) && hasPlausibleHostname(url.hostname);
     } catch {
       return false;
     }
@@ -524,14 +531,22 @@ export function validatePublicPageForPublish(document: PublicPageDocument): Publ
     }
   }
   document.media.forEach((media, index) => {
-    let isAbsoluteHttpsUrl = false;
+    let isAllowedMediaUrl = false;
     try {
       const url = new URL(media.url);
-      isAbsoluteHttpsUrl = /^https:\/\//i.test(media.url) && url.protocol === 'https:' && Boolean(url.hostname);
+      const apiBaseUrl = new URL(env.API_BASE_URL);
+      const isHttps = url.protocol === 'https:' && Boolean(url.hostname);
+      // Our own API origin may legitimately serve media over plain HTTP in
+      // self-hosted/local-dev deployments; any other origin must be https.
+      const isOwnApiOrigin = url.protocol === apiBaseUrl.protocol
+        && url.hostname === apiBaseUrl.hostname
+        && url.port === apiBaseUrl.port
+        && Boolean(url.hostname);
+      isAllowedMediaUrl = isHttps || isOwnApiOrigin;
     } catch {
       // Publish validation reports all malformed and non-absolute URLs uniformly.
     }
-    if (!isAbsoluteHttpsUrl) {
+    if (!isAllowedMediaUrl) {
       issues.push({
         code: 'invalid_media',
         path: `media.${index}.url`,

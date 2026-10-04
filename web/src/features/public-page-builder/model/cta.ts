@@ -8,10 +8,15 @@ function isRecord(value: unknown): value is ContactRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** Rejects single-label hosts (e.g. punycode from typed placeholder text like "https://тест"). */
+function hasPlausibleHostname(hostname: string): boolean {
+  return /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname.includes('.');
+}
+
 function parseSafeUrl(value: string): URL | null {
   try {
     const url = new URL(value.trim());
-    return SAFE_PROTOCOLS.has(url.protocol) ? url : null;
+    return SAFE_PROTOCOLS.has(url.protocol) && hasPlausibleHostname(url.hostname) ? url : null;
   } catch {
     return null;
   }

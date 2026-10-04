@@ -772,6 +772,23 @@ describe('public page schemas', () => {
     }));
   });
 
+  it('allows plain-HTTP media URLs served from our own API origin (e.g. local dev)', () => {
+    const document = publicPageDocumentSchema.parse({
+      ...validPublicPageDocument,
+      media: [{
+        id: 'media-1',
+        url: 'http://localhost:3003/api/public-pages/media/media-1/content',
+        mimeType: 'image/webp',
+        alt: 'Example',
+        width: 640,
+        height: 480,
+      }],
+    });
+    expect(validatePublicPageForPublish(document)).not.toContainEqual(expect.objectContaining({
+      code: 'invalid_media',
+    }));
+  });
+
   it.each([
     'http://cdn.example.com/image.webp',
     '/image.webp',

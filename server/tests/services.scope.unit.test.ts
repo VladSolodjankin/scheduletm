@@ -120,7 +120,6 @@ describe('service scope', () => {
 
     const result = await getServicesForActor(owner);
     const expectedImageUrl = new URL(`/api/public-pages/media/${mediaId}/content`, env.API_BASE_URL);
-    expectedImageUrl.protocol = 'https:';
     expect(result.services[0]).toMatchObject({ imageMediaId: mediaId, imageUrl: expectedImageUrl.toString() });
     expect(result.services[1]).toMatchObject({ imageMediaId: mediaId, imageUrl: null, isActive: false });
   });
