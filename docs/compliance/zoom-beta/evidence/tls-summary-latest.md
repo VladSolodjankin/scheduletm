@@ -1,6 +1,6 @@
 # TLS Evidence Summary
 
-Generated: 2026-09-21 11:47:44 UTC
+Generated: 2026-10-05 13:24:13 UTC
 
 | Host | TLS 1.2 handshake succeeds | TLS 1.1 handshake rejected |
 | --- | --- | --- |

@@ -1,8 +1,8 @@
 {
 	"@programName": "ZAP",
 	"@version": "2.17.0",
-	"@generated": "Mon, 21 Sept 2026 11:48:53",
-	"created": "2026-09-21T11:48:53.155163291Z",
+	"@generated": "Mon, 5 Oct 2026 13:25:13",
+	"created": "2026-10-05T13:25:13.257844093Z",
 	"insights":[
 		{
 			"level": "Low",
@@ -95,7 +95,7 @@
 					"desc": "<p>Content Security Policy (CSP) is an added layer of security that helps to detect and mitigate certain types of attacks. Including (but not limited to) Cross Site Scripting (XSS), and data injection attacks. These attacks are used for everything from data theft to site defacement or distribution of malware. CSP provides a set of standard HTTP headers that allow website owners to declare approved sources of content that browsers should be allowed to load on that page \u2014 covered types are JavaScript, CSS, HTML frames, fonts, images and embeddable objects such as Java applets, ActiveX, audio and video files.</p>",
 					"instances":[ 
 						{
-							"id": "1",
+							"id": "7",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -105,7 +105,7 @@
 							"otherinfo": "style-src includes unsafe-inline."
 						},
 						{
-							"id": "20",
+							"id": "37",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -115,7 +115,7 @@
 							"otherinfo": "style-src includes unsafe-inline."
 						},
 						{
-							"id": "21",
+							"id": "36",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -145,9 +145,9 @@
 					"desc": "<p>A timestamp was disclosed by the application/web server. - Unix</p>",
 					"instances":[ 
 						{
-							"id": "44",
-							"uri": "https://dev.meetli.cc/assets/I18nContext-jvWqPk2O.js",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/I18nContext-jvWqPk2O.js",
+							"id": "56",
+							"uri": "https://dev.meetli.cc/assets/I18nContext-CVhK0Gmv.js",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/I18nContext-CVhK0Gmv.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -162,7 +162,7 @@
 					"reference": "<p>https://cwe.mitre.org/data/definitions/200.html</p>",
 					"cweid": "497",
 					"wascid": "13",
-					"sourceid": "24"
+					"sourceid": "22"
 				},
 				{
 					"pluginid": "10094",
@@ -175,130 +175,130 @@
 					"desc": "<p>Base64 encoded data was disclosed by the application/web server. Note: in the interests of performance not all base64 strings in the response were analyzed individually, the entire response should be looked at by the analyst/security team/developer(s).</p>",
 					"instances":[ 
 						{
-							"id": "3",
+							"id": "0",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2B70bfRTd43MbO26I5D3x4loP7yYm2l4k7W5hIwLHm2qryOymcv9",
-							"otherinfo": "\uFFFD\\x001e\uFFFDm\uFFFDSw\uFFFD\uFFFDl\uFFFD#\uFFFD\uFFFD\u01C9h?\uFFFD\uFFFD\uFFFDix\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\\x000b\\x001em\uFFFD\uFFFD#\uFFFD\uFFFD\uFFFD\uFFFD"
+							"evidence": "2FwRilsb7qhX9oX7bNC5vYsFnx12grVWIyzmWnjlyoXSufCnCq5VjrG2gKTPFT9",
+							"otherinfo": "\uFFFD\\\\x0011\uFFFD[\\x001b\uFFFDW\uFFFD\uFFFD\uFFFDl\u0439\uFFFD\uFFFD\\x0005\uFFFD\\x001dv\uFFFD\uFFFDV#,\uFFFDZx\uFFFD\u0285\u04B9\uFFFD\n\uFFFDU\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\\x0015?"
 						},
 						{
-							"id": "12",
+							"id": "14",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2BkDXfVODynTkm2ViwuQRzB2RfKUjAi",
-							"otherinfo": "\uFFFD\\x0019\\x0003]\uFFFDN\\x000f)\u04D2m\uFFFD\uFFFD\\x000b\uFFFDG0vE\uFFFD\\x0008"
+							"evidence": "H7QFlXpmOpkyGud0HxV9ujMT228WggOBE5DtsmT3C3zet6iKJVNpQ2bpgQLhilGWWMpPYI0xK7thixmT5Xq8xDLljg8x",
+							"otherinfo": "\\x001f\uFFFD\\x0005\uFFFDzf:\uFFFD2\\x001a\uFFFDt\\x001f\\x0015}\uFFFD3\\x0013\uFFFDo\\x0016\uFFFD\\x0003\uFFFD\\x0013\uFFFD\uFFFDd\uFFFD\\x000b|\u07B7\uFFFD\uFFFD%SiCf\uFFFD\\x0002\uFFFDQ\uFFFDX\uFFFDO`\uFFFD1+\uFFFDa\uFFFD\\x0019\uFFFD\uFFFDz\uFFFD\uFFFD2\uFFFD\\x000f1"
 						},
 						{
-							"id": "40",
-							"uri": "https://dev.meetli.cc/assets/Grow-o6u_-PQx.js",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/Grow-o6u_-PQx.js",
+							"id": "44",
+							"uri": "https://dev.meetli.cc/assets/Alert-DMLyzHKT.js",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/Alert-DMLyzHKT.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2FPsf1CvkCYB2Hu5lLWLqAqAsY4lPINvnrtIcZXeEjAsZ9hDN4Or",
-							"otherinfo": "\uFFFDS\uFFFDP\uFFFD\uFFFD&\\x0001\uFFFD{\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\n\uFFFD\uFFFD\uFFFD%<\uFFFDo\uFFFD\uFFFDHq\uFFFD\uFFFD\\x00120,g\uFFFDC7\uFFFD\uFFFD"
+							"evidence": "2FtrZSiwG1zrwBeuLIo8QaSCbQduCdn1L1n5Bp9A4YrOcfrBFdMdbO0hykIXalEdy8iDsVYBocJcdAf",
+							"otherinfo": "\uFFFD[ke(\uFFFD\\x001b\\\uFFFD\uFFFD\\x0017\uFFFD,\uFFFD<A\uFFFD\uFFFDm\\x0007n\t\uFFFD\uFFFD/Y\uFFFD\\x0006\uFFFD@\uFFFD\uFFFDq\uFFFD\uFFFD\\x0015\uFFFD\\x001dl\uFFFD!\uFFFDB\\x0017jQ\\x001d\uFFFD\u0203\uFFFDV\\x0001\uFFFD\uFFFD\\t\\x0007"
 						},
 						{
-							"id": "49",
-							"uri": "https://dev.meetli.cc/assets/I18nContext-jvWqPk2O.js",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/I18nContext-jvWqPk2O.js",
+							"id": "46",
+							"uri": "https://dev.meetli.cc/assets/Grow-B6-Uwv8M.js",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/Grow-B6-Uwv8M.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2Fvw8en8mGjxgTk904rVOesrXcZUAicN",
-							"otherinfo": "\uFFFD[\uFFFD\uFFFD\uFFFD\uFFFD\uFFFDh\uFFFD9=\u04CA\uFFFD9\uFFFD+]\uFFFDT\\x0002'\r"
-						},
-						{
-							"id": "38",
-							"uri": "https://dev.meetli.cc/assets/Select-CYnhuT6_.js",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/Select-CYnhuT6_.js",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "tFG94T3UjcZtfaNmBYmQ0K0bcJ4GKEh",
-							"otherinfo": "\uFFFDQ\uFFFD\uFFFD=\u050D\uFFFDm}\uFFFDf\\x0005\uFFFD\uFFFD\u042D\\x001bp\uFFFD\\x0006(H"
-						},
-						{
-							"id": "42",
-							"uri": "https://dev.meetli.cc/assets/constants-B8Faz0Zy.js",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/constants-B8Faz0Zy.js",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "sDQNK1HhKnsBSz7DMs8jp2uy2U5iwQZrHvNdex2vQw1aPv128Eo8SVe12Ac",
-							"otherinfo": "\uFFFD4\r+Q\uFFFD*{\\x0001K>\uFFFD2\uFFFD#\uFFFDk\uFFFD\uFFFDNb\uFFFD\\x0006k\\x001e\uFFFD]{\\x001d\uFFFDC\rZ>\uFFFDv\uFFFDJ<IW\uFFFD\uFFFD\\x0007"
-						},
-						{
-							"id": "23",
-							"uri": "https://dev.meetli.cc/assets/index-BvQ7Uj6e.css",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-BvQ7Uj6e.css",
-							"method": "GET",
-							"param": "",
-							"attack": "",
-							"evidence": "2FlX009aXBmS0T8YaBTdsrNpSaq7f5kat07n4x0AOGL2mpDnuBUjraIErkIeN32ViS69iiZfzKifT1",
-							"otherinfo": "\uFFFDYW\uFFFDOZ\\\\x0019\uFFFD\uFFFD?\\x0018h\\x0014\u0772\uFFFDiI\uFFFD\uFFFD\uFFFD\\x001a\uFFFDN\uFFFD\uFFFD\\x001d\\x00008b\uFFFD\uFFFD\uFFFD\uFFFD\\x0015#\uFFFD\uFFFD\\x0004\uFFFDB\\x001e7}\uFFFD\uFFFD.\uFFFD\uFFFD&_\u0328\uFFFDO"
+							"evidence": "2FQvxnpe1wI2aHqq85uIqK7tdGUaNAMyXZYASQCI0sejB6wszSj8Zmq",
+							"otherinfo": "\uFFFDT/\uFFFDz^\uFFFD\\x00026hz\uFFFD\uDB2C\uDE28\uFFFD\uFFFDte\\x001a4\\x00032]\uFFFD\\x0000I\\x0000\uFFFD\uFFFD\u01E3\\x0007\uFFFD,\uFFFD(\uFFFDfj"
 						},
 						{
 							"id": "52",
-							"uri": "https://dev.meetli.cc/assets/index-DSVoAaM2.js",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-DSVoAaM2.js",
+							"uri": "https://dev.meetli.cc/assets/I18nContext-CVhK0Gmv.js",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/I18nContext-CVhK0Gmv.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2B8yZEBCbzzddPMmAVlKb7xKHdOQFiO4fzin91RE2tyEbmW4ubmfyMWGyNpu",
-							"otherinfo": "\uFFFD\\x001f2d@Bo<\uFFFDt\uFFFD&\\x0001YJo\uFFFDJ\\x001d\u04D0\\x0016#\uFFFD8\uFFFD\uFFFDTD\uFFFD\u0704ne\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\u0146\uFFFD\uFFFDn"
+							"evidence": "2BRgeIP0k8s49eK4x2p63xOUSSUDkomm2KRFSaiNQjHcsLq",
+							"otherinfo": "\uFFFD\\x0014`x\uFFFD\uFFFD\uFFFD\uFFFD8\uFFFD\uFFFD\uFFFDjz\uFFFD\\x0013\uFFFDI%\\x0003\uFFFD\uFFFD\uFFFD\u0624EI\uFFFD\uFFFDB1\u0730\uFFFD"
 						},
 						{
-							"id": "34",
+							"id": "48",
+							"uri": "https://dev.meetli.cc/assets/Select-BtdVlnra.js",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/Select-BtdVlnra.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "2FDvNksYxSxkXAMALaeTuotC6edMU1rtHr9ONowBTZGHAjOiOVKi4df7NbCR1brpAmKHs2888NTMct5NC5TL49LqxrYxlvatJ41Lz58r",
+							"otherinfo": "\uFFFDP\uFFFD6K\\x0018\uFFFD,d\\\\x0003\\x0000-\uFFFD\uFFFD\uFFFD\uFFFDB\uFFFD\uFFFDLSZ\uFFFD\\x001e\uFFFDN6\uFFFD\\x0001M\uFFFD\uFFFD\\x00023\uFFFD9R\uFFFD\uFFFD\uFFFD\uFFFD5\uFFFD\uFFFD\u057A\uFFFD\\x0002b\uFFFD\uFFFDo<\uFFFD\uFFFD\uFFFDr\uFFFDM\\x000b\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\u01B61\uFFFD\uFFFD\uFFFD'\uFFFDK\u03DF+"
+						},
+						{
+							"id": "54",
+							"uri": "https://dev.meetli.cc/assets/index-DVWPIqz0.js",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-DVWPIqz0.js",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "vqFjxJPWclBLDtNZeuS7xI2eOnZhXUQtY04pwNykkLm6E277zWg7bJEBbLTyFoGHgONCusPr4Ky2VCR8HDAhDzOp9PtxbXyO",
+							"otherinfo": "\uFFFD\uFFFDc\u0113\uFFFDrPK\\x000e\uFFFDYz\uFFFD\u010D\uFFFD:va]D-cN)\uFFFD\u0724\uFFFD\uFFFD\uFFFD\\x0013n\uFFFD\uFFFDh;l\uFFFD\\x0001l\uFFFD\uFFFD\\x0016\uFFFD\uFFFD\uFFFD\uFFFDB\uFFFD\uFFFD\uFFFD\u0B36T$|\\x001c0!\\x000f3\uFFFD\uFFFD\uFFFDqm|\uFFFD"
+						},
+						{
+							"id": "42",
+							"uri": "https://dev.meetli.cc/assets/index-g1GfYzkt.css",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-g1GfYzkt.css",
+							"method": "GET",
+							"param": "",
+							"attack": "",
+							"evidence": "2FRHBPP47rNx2pw1SxAFNQUYgMGhhdJ3A2S4kQHI",
+							"otherinfo": "\uFFFDTG\\x0004\uFFFD\uFFFD\uFFFDq\u069C5K\\x0010\\x00055\\x0005\\x0018\uFFFD\uFFFD\uFFFD\uFFFD\uFFFDw\\x0003d\uFFFD\uFFFD\\x0001\uFFFD"
+						},
+						{
+							"id": "9",
 							"uri": "https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/logo_one_latter-DesWG7-J.svg",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2BNySlja3p1OxuJYJ74aWlI1oUcQtObOCBsw3ExUcT1tUOhCEn",
-							"otherinfo": "\uFFFD\\x0013rJX\uFFFD\u079DN\uFFFD\uFFFDX'\uFFFD\\x001aZR5\uFFFDG\\x0010\uFFFD\uFFFD\uFFFD\\x0008\\x001b0\uFFFDLTq=mP\uFFFDB\\x0012"
+							"evidence": "2BzkrEMS4PxYhDFp8B6L74RRbHSgADAcrRuoh6iQgOJryPanfbPOi0hjQbTojgZs3P2",
+							"otherinfo": "\uFFFD\\x001c\uFFFDC\\x0012\uFFFD\uFFFDX\uFFFD1i\uFFFD\\x001e\uFFFD\uFFFDQlt\uFFFD\\x00000\\x001c\uFFFD\\x001b\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFDk\uFFFD\uFFFD\uFFFD}\uFFFD\u038BHcA\uFFFD\uFFFD\\x0006l\uFFFD\uFFFD"
 						},
 						{
-							"id": "36",
+							"id": "50",
 							"uri": "https://dev.meetli.cc/assets/rolldown-runtime-8BhlS34s.js",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/rolldown-runtime-8BhlS34s.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2BJ9L7nbfQ3Ya65lCuzm9nyHTxSnyC",
-							"otherinfo": "\uFFFD\\x0012}/\uFFFD\uFFFD}\r\uFFFDk\uFFFDe\n\uFFFD\uFFFD\uFFFD|\uFFFDO\\x0014\uFFFD\uFFFD"
+							"evidence": "2BNS2KidrWpMFm8GVhCMo5yv373fTm3yeClfLIFa0MOFW3qetu",
+							"otherinfo": "\uFFFD\\x0013R\u0628\uFFFD\uFFFDjL\\x0016o\\x0006V\\x0010\uFFFD\uFFFD\uFFFD\uFFFD\u07FD\uFFFDNm\uFFFDx)_,\uFFFDZ\uFFFD\u00C5[z\uFFFD\uFFFD"
 						},
 						{
-							"id": "29",
+							"id": "13",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2Bjb8r9KxPsQeMWTx00xLo7PMoB5vYOfcu5A1Pgi",
-							"otherinfo": "\uFFFD\\x0018\uFFFD\uFFFDJ\uFFFD\uFFFD\\x0010x\u0153\uFFFDM1.\uFFFD\uFFFD2\uFFFDy\uFFFD\uFFFD\uFFFDr\uFFFD@\uFFFD\uFFFD\""
+							"evidence": "2Fzby7429EpvutAJKutJxTZSuYjEAvENRAo9aYck8g",
+							"otherinfo": "\uFFFD\\\uFFFD\u02FE6\uFFFDJo\uFFFD\uFFFD\t*\uFFFDI\uFFFD6R\uFFFD\uFFFD\uFFFD\\x0002\uFFFD\rD\n=i\uFFFD$\uFFFD"
 						},
 						{
-							"id": "32",
+							"id": "10",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "2FuAQum0fR7txnWQpxcK8RIw5zS9QTKMzv",
-							"otherinfo": "\uFFFD[\uFFFDB\uFFFD}\\x001e\uFFFD\uFFFDu\uFFFD\uFFFD\\x0017\n\uFFFD\\x00120\uFFFD4\uFFFDA2\uFFFD\uFFFD"
+							"evidence": "2B4KcBlogPcnuaenMGkHvTqwXf6RRmqQoixjWBp",
+							"otherinfo": "\uFFFD\\x001e\np\\x0019h\uFFFD\uFFFD'\uFFFD\uFFFD\uFFFD0i\\x0007\uFFFD:\uFFFD]\uFFFD\uFFFDFj\uFFFD\uFFFD,cX\\x001a"
 						}
 					],
 					"count": "12",
 					"systemic": false,
 					"solution": "<p>Manually confirm that the Base64 data does not leak sensitive information, and that the data cannot be aggregated/used to exploit other vulnerabilities.</p>",
-					"otherinfo": "<p>\uFFFD\\x001e\uFFFDm\uFFFDSw\uFFFD\uFFFDl\uFFFD#\uFFFD\uFFFD\u01C9h?\uFFFD\uFFFD\uFFFDix\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\\x000b\\x001em\uFFFD\uFFFD#\uFFFD\uFFFD\uFFFD\uFFFD</p>",
+					"otherinfo": "<p>\uFFFD\\\\x0011\uFFFD[\\x001b\uFFFDW\uFFFD\uFFFD\uFFFDl\u0439\uFFFD\uFFFD\\x0005\uFFFD\\x001dv\uFFFD\uFFFDV#,\uFFFDZx\uFFFD\u0285\u04B9\uFFFD</p><p>\uFFFDU\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\uFFFD\\x0015?</p>",
 					"reference": "<p>https://projects.webappsec.org/w/page/13246936/Information%20Leakage</p>",
 					"cweid": "319",
 					"wascid": "13",
@@ -315,9 +315,9 @@
 					"desc": "<p>The response appears to contain suspicious comments which may help an attacker.</p>",
 					"instances":[ 
 						{
-							"id": "51",
-							"uri": "https://dev.meetli.cc/assets/index-DSVoAaM2.js",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-DSVoAaM2.js",
+							"id": "61",
+							"uri": "https://dev.meetli.cc/assets/index-DVWPIqz0.js",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-DVWPIqz0.js",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -332,7 +332,7 @@
 					"reference": "",
 					"cweid": "615",
 					"wascid": "13",
-					"sourceid": "25"
+					"sourceid": "23"
 				},
 				{
 					"pluginid": "10109",
@@ -345,33 +345,33 @@
 					"desc": "<p>The application appears to be a modern web application. If you need to explore it automatically then the Client Spider may well be more effective than the standard one.</p>",
 					"instances":[ 
 						{
-							"id": "2",
+							"id": "8",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DSVoAaM2.js\"></script>",
+							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DVWPIqz0.js\"></script>",
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						},
 						{
-							"id": "22",
+							"id": "40",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DSVoAaM2.js\"></script>",
+							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DVWPIqz0.js\"></script>",
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						},
 						{
-							"id": "28",
+							"id": "39",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
 							"param": "",
 							"attack": "",
-							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DSVoAaM2.js\"></script>",
+							"evidence": "<script type=\"module\" crossorigin src=\"/assets/index-DVWPIqz0.js\"></script>",
 							"otherinfo": "No links have been found while there are scripts, which is an indication that this is a modern web application."
 						}
 					],
@@ -395,7 +395,7 @@
 					"desc": "<p>The cache-control header has not been set properly or is missing, allowing the browser and proxies to cache content. For static assets like css, js, or image files this might be intended, however, the resources should be reviewed to ensure that no sensitive content will be cached.</p>",
 					"instances":[ 
 						{
-							"id": "0",
+							"id": "6",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -405,7 +405,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "18",
+							"id": "34",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -415,7 +415,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "19",
+							"id": "33",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
@@ -445,7 +445,7 @@
 					"desc": "<p>Specifies how and where the data would be used. For instance, if the value is audio, then the requested resource must be audio data and not any other type of resource.</p>",
 					"instances":[ 
 						{
-							"id": "6",
+							"id": "3",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -455,9 +455,29 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "26",
-							"uri": "https://dev.meetli.cc/assets/index-BvQ7Uj6e.css",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-BvQ7Uj6e.css",
+							"id": "20",
+							"uri": "https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/logo_one_latter-DesWG7-J.svg",
+							"method": "GET",
+							"param": "Sec-Fetch-Dest",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "25",
+							"uri": "https://dev.meetli.cc/robots.txt",
+							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
+							"method": "GET",
+							"param": "Sec-Fetch-Dest",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "19",
+							"uri": "https://dev.meetli.cc/sitemap.xml",
+							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
 							"param": "Sec-Fetch-Dest",
 							"attack": "",
@@ -465,7 +485,7 @@
 							"otherinfo": ""
 						}
 					],
-					"count": "2",
+					"count": "4",
 					"systemic": false,
 					"solution": "<p>Ensure that Sec-Fetch-Dest header is included in request headers.</p>",
 					"otherinfo": "",
@@ -485,7 +505,7 @@
 					"desc": "<p>Allows to differentiate between requests for navigating between HTML pages and requests for loading resources like images, audio etc.</p>",
 					"instances":[ 
 						{
-							"id": "5",
+							"id": "2",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -495,9 +515,29 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "25",
-							"uri": "https://dev.meetli.cc/assets/index-BvQ7Uj6e.css",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-BvQ7Uj6e.css",
+							"id": "18",
+							"uri": "https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/logo_one_latter-DesWG7-J.svg",
+							"method": "GET",
+							"param": "Sec-Fetch-Mode",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "21",
+							"uri": "https://dev.meetli.cc/robots.txt",
+							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
+							"method": "GET",
+							"param": "Sec-Fetch-Mode",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "12",
+							"uri": "https://dev.meetli.cc/sitemap.xml",
+							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
 							"param": "Sec-Fetch-Mode",
 							"attack": "",
@@ -505,7 +545,7 @@
 							"otherinfo": ""
 						}
 					],
-					"count": "2",
+					"count": "4",
 					"systemic": false,
 					"solution": "<p>Ensure that Sec-Fetch-Mode header is included in request headers.</p>",
 					"otherinfo": "",
@@ -525,7 +565,7 @@
 					"desc": "<p>Specifies the relationship between request initiator's origin and target's origin.</p>",
 					"instances":[ 
 						{
-							"id": "4",
+							"id": "1",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -535,9 +575,29 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "24",
-							"uri": "https://dev.meetli.cc/assets/index-BvQ7Uj6e.css",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-BvQ7Uj6e.css",
+							"id": "15",
+							"uri": "https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/logo_one_latter-DesWG7-J.svg",
+							"method": "GET",
+							"param": "Sec-Fetch-Site",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "16",
+							"uri": "https://dev.meetli.cc/robots.txt",
+							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
+							"method": "GET",
+							"param": "Sec-Fetch-Site",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "11",
+							"uri": "https://dev.meetli.cc/sitemap.xml",
+							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
 							"param": "Sec-Fetch-Site",
 							"attack": "",
@@ -545,7 +605,7 @@
 							"otherinfo": ""
 						}
 					],
-					"count": "2",
+					"count": "4",
 					"systemic": false,
 					"solution": "<p>Ensure that Sec-Fetch-Site header is included in request headers.</p>",
 					"otherinfo": "",
@@ -565,7 +625,7 @@
 					"desc": "<p>Specifies if a navigation request was initiated by a user.</p>",
 					"instances":[ 
 						{
-							"id": "7",
+							"id": "4",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -575,9 +635,29 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "27",
-							"uri": "https://dev.meetli.cc/assets/index-BvQ7Uj6e.css",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-BvQ7Uj6e.css",
+							"id": "29",
+							"uri": "https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/logo_one_latter-DesWG7-J.svg",
+							"method": "GET",
+							"param": "Sec-Fetch-User",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "28",
+							"uri": "https://dev.meetli.cc/robots.txt",
+							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
+							"method": "GET",
+							"param": "Sec-Fetch-User",
+							"attack": "",
+							"evidence": "",
+							"otherinfo": ""
+						},
+						{
+							"id": "22",
+							"uri": "https://dev.meetli.cc/sitemap.xml",
+							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
 							"param": "Sec-Fetch-User",
 							"attack": "",
@@ -585,7 +665,7 @@
 							"otherinfo": ""
 						}
 					],
-					"count": "2",
+					"count": "4",
 					"systemic": false,
 					"solution": "<p>Ensure that Sec-Fetch-User header is included in user initiated requests.</p>",
 					"otherinfo": "",
@@ -605,7 +685,7 @@
 					"desc": "<p>The response contents are storable by caching components such as proxy servers, and may be retrieved directly from the cache, rather than from the origin server by the caching servers, in response to similar requests from other users. If the response data is sensitive, personal or user-specific, this may result in sensitive information being leaked. In some cases, this may even result in a user gaining complete control of the session of another user, depending on the configuration of the caching components in use in their environment. This is primarily an issue where \"shared\" caching servers such as \"proxy\" caches are configured on the local network. This configuration is typically found in corporate or educational environments, for instance.</p>",
 					"instances":[ 
 						{
-							"id": "8",
+							"id": "5",
 							"uri": "https://dev.meetli.cc",
 							"nodeName": "https:\/\/dev.meetli.cc",
 							"method": "GET",
@@ -615,9 +695,9 @@
 							"otherinfo": "In the absence of an explicitly specified caching lifetime directive in the response, a liberal lifetime heuristic of 1 year was assumed. This is permitted by rfc7234."
 						},
 						{
-							"id": "30",
-							"uri": "https://dev.meetli.cc/assets/index-BvQ7Uj6e.css",
-							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-BvQ7Uj6e.css",
+							"id": "43",
+							"uri": "https://dev.meetli.cc/assets/index-g1GfYzkt.css",
+							"nodeName": "https:\/\/dev.meetli.cc\/assets\/index-g1GfYzkt.css",
 							"method": "GET",
 							"param": "",
 							"attack": "",
@@ -625,7 +705,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "35",
+							"id": "32",
 							"uri": "https://dev.meetli.cc/assets/logo_one_latter-DesWG7-J.svg",
 							"nodeName": "https:\/\/dev.meetli.cc\/assets\/logo_one_latter-DesWG7-J.svg",
 							"method": "GET",
@@ -635,7 +715,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "31",
+							"id": "30",
 							"uri": "https://dev.meetli.cc/robots.txt",
 							"nodeName": "https:\/\/dev.meetli.cc\/robots.txt",
 							"method": "GET",
@@ -645,7 +725,7 @@
 							"otherinfo": ""
 						},
 						{
-							"id": "33",
+							"id": "24",
 							"uri": "https://dev.meetli.cc/sitemap.xml",
 							"nodeName": "https:\/\/dev.meetli.cc\/sitemap.xml",
 							"method": "GET",
