@@ -18,6 +18,7 @@ import OpenInNewRounded from '@mui/icons-material/OpenInNewRounded';
 import PaletteRounded from '@mui/icons-material/PaletteRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
+import RateReviewRounded from '@mui/icons-material/RateReviewRounded';
 import SaveRounded from '@mui/icons-material/SaveRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import TuneRounded from '@mui/icons-material/TuneRounded';
@@ -45,6 +46,7 @@ export const AppIcons = {
   palette: PaletteRounded,
   filters: TuneRounded,
   register: PersonAddRounded,
+  reviews: RateReviewRounded,
   users: PeopleAltRounded,
   save: SaveRounded,
   settings: SettingsRounded

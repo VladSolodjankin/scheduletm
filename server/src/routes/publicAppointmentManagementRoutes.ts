@@ -3,6 +3,9 @@ import { appointmentRescheduleSchema } from '../config/schemas.js';
 import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 import { findService } from '../repositories/serviceRepository.js';
 import { findSpecialistByIdAnyAccount } from '../repositories/specialistRepository.js';
+import { findWebUserById } from '../repositories/webUserRepository.js';
+import { isClientRole } from '../policies/rolePermissions.js';
+import { resolveUserByAccessToken } from '../services/authService.js';
 import {
   AppointmentManagementTokenError,
   cancelAppointmentByManagementToken,
@@ -27,7 +30,27 @@ function canManage(appointment: AppointmentRecord): boolean {
   return appointment.status !== 'cancelled' && appointment.appointment_at.getTime() > Date.now();
 }
 
-async function toAppointmentDetails(accountId: number, appointment: AppointmentRecord) {
+/** True when the bearer token (if any) belongs to the client who owns this appointment, so the page can offer a link into the logged-in app instead of just the token flow. */
+async function resolveCanOpenInApp(req: import('express').Request, appointment: AppointmentRecord): Promise<boolean> {
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith('Bearer ')) {
+    return false;
+  }
+
+  const actor = await resolveUserByAccessToken(auth.slice('Bearer '.length));
+  if (!actor || !isClientRole(actor.role) || actor.accountId !== appointment.account_id) {
+    return false;
+  }
+
+  const webUser = await findWebUserById(actor.accountId, Number(actor.id));
+  return webUser?.client_id === appointment.user_id;
+}
+
+async function toAppointmentDetails(
+  accountId: number,
+  appointment: AppointmentRecord,
+  canOpenInApp: boolean,
+) {
   const [service, specialist] = await Promise.all([
     findService(accountId, appointment.service_id),
     findSpecialistByIdAnyAccount(appointment.specialist_id),
@@ -50,6 +73,7 @@ async function toAppointmentDetails(accountId: number, appointment: AppointmentR
     },
     canCancel: manageable,
     canReschedule: manageable,
+    canOpenInApp,
   };
 }
 
@@ -65,7 +89,8 @@ function handleTokenError(error: unknown, req: import('express').Request, res: i
 publicAppointmentManagementRoutes.get('/:token', async (req, res) => {
   try {
     const { accountId, appointment } = await resolveAppointmentByManagementToken(req.params.token);
-    return res.json(await toAppointmentDetails(accountId, appointment));
+    const canOpenInApp = await resolveCanOpenInApp(req, appointment);
+    return res.json(await toAppointmentDetails(accountId, appointment, canOpenInApp));
   } catch (error) {
     return handleTokenError(error, req, res);
   }
@@ -77,8 +102,9 @@ publicAppointmentManagementRoutes.post('/:token/cancel', async (req, res) => {
     if (!canManage(appointment)) {
       return res.status(409).json({ code: 'not_manageable' });
     }
+    const canOpenInApp = await resolveCanOpenInApp(req, appointment);
     const updated = await cancelAppointmentByManagementToken(req.params.token);
-    return res.json(await toAppointmentDetails(accountId, updated));
+    return res.json(await toAppointmentDetails(accountId, updated, canOpenInApp));
   } catch (error) {
     return handleTokenError(error, req, res);
   }
@@ -95,8 +121,9 @@ publicAppointmentManagementRoutes.post('/:token/reschedule', async (req, res) =>
     if (!canManage(appointment)) {
       return res.status(409).json({ code: 'not_manageable' });
     }
+    const canOpenInApp = await resolveCanOpenInApp(req, appointment);
     const updated = await rescheduleAppointmentByManagementToken(req.params.token, parsed.data.scheduledAt);
-    return res.json(await toAppointmentDetails(accountId, updated));
+    return res.json(await toAppointmentDetails(accountId, updated, canOpenInApp));
   } catch (error) {
     return handleTokenError(error, req, res);
   }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   isValidPublicPageSlug,
+  PUBLIC_PAGE_SCHEMA_VERSION,
   publicPageDocumentSchema,
   validatePublicPageForPublish,
 } from '../src/config/publicPageSchemas.js';
@@ -941,5 +942,61 @@ describe('public page schemas', () => {
       }],
     });
     expect(validatePublicPageForPublish(parsed).length).toBeGreaterThan(0);
+  });
+
+  describe('credentials and reviews blocks', () => {
+    const year = new Date().getFullYear();
+    const item = (patch: Record<string, unknown> = {}) => ({
+      id: 'c1', imageMediaId: 'media-1', alt: 'Diploma', title: 'Diploma', organization: 'Uni', year: '2020', ...patch,
+    });
+    const documentWith = (type: string, content: unknown) => ({
+      ...validPublicPageDocument,
+      sections: [{
+        ...validPublicPageDocument.sections[0],
+        blocks: [{ ...validPublicPageDocument.sections[0]!.blocks[0], type, content }],
+      }],
+      media: [{
+        id: 'media-1', url: 'https://cdn.example.com/image.webp', mimeType: 'image/webp' as const,
+        alt: 'Diploma', width: 320, height: 320,
+      }],
+    });
+    const credentials = (items: unknown[], title = 'Credentials') => documentWith('credentials', { title, items });
+
+    it('keeps schema version 5 and accepts both blocks', () => {
+      expect(PUBLIC_PAGE_SCHEMA_VERSION).toBe(5);
+      const parsed = publicPageDocumentSchema.parse(credentials([item(), item({ id: 'c2', year: '' })]));
+      expect(validatePublicPageForPublish(parsed)).toEqual([]);
+      const reviews = publicPageDocumentSchema.parse(documentWith('reviews', { title: '', showSummary: true, autoplay: false }));
+      expect(validatePublicPageForPublish(reviews)).toEqual([]);
+    });
+    it('accepts an empty credentials list on publish like gallery', () => {
+      expect(validatePublicPageForPublish(publicPageDocumentSchema.parse(credentials([])))).toEqual([]);
+    });
+    it.each([
+      ['more than 10 items', () => credentials(Array.from({ length: 11 }, (_, i) => item({ id: `c${i}` })))],
+      ['long block title', () => credentials([], 'x'.repeat(121))],
+      ['long alt', () => credentials([item({ alt: 'x'.repeat(201) })])],
+      ['long organization', () => credentials([item({ organization: 'x'.repeat(121) })])],
+      ['year below range', () => credentials([item({ year: '1949' })])],
+      ['year above range', () => credentials([item({ year: String(year + 2) })])],
+      ['non-numeric year', () => credentials([item({ year: '20a0' })])],
+      ['extra item key', () => credentials([item({ pdf: 'x' })])],
+      ['reviews extra key', () => documentWith('reviews', { title: '', showSummary: true, autoplay: false, limit: 3 })],
+      ['reviews missing flag', () => documentWith('reviews', { title: '', showSummary: true })],
+    ])('rejects %s', (_name, build) => {
+      expect(publicPageDocumentSchema.safeParse(build()).success).toBe(false);
+    });
+    it('accepts the boundary years', () => {
+      expect(publicPageDocumentSchema.safeParse(credentials([item({ year: '1950' }), item({ id: 'c2', year: String(year + 1) })])).success).toBe(true);
+    });
+    it.each([
+      ['no title', item({ title: ' ' })],
+      ['no image', item({ imageMediaId: null })],
+      ['no alt', item({ alt: ' ' })],
+      ['image not in document media', item({ imageMediaId: 'missing' })],
+    ])('rejects credential item with %s on publish', (_name, bad) => {
+      const parsed = publicPageDocumentSchema.parse(credentials([bad]));
+      expect(validatePublicPageForPublish(parsed).length).toBeGreaterThan(0);
+    });
   });
 });

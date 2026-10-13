@@ -69,6 +69,7 @@ export function MainLayout() {
       ? [
         { to: '/specialists', label: t('common.specialists'), icon: 'specialists' as const },
         { to: '/public-pages', label: t('publicPageBuilder.pages'), icon: 'publicPages' as const },
+        { to: '/account-reviews', label: t('common.accountReviews'), icon: 'reviews' as const },
       ]
       : []),
     ...(user?.role === WebUserRole.ProductAdmin || user?.role === WebUserRole.Owner || user?.role === WebUserRole.Specialist

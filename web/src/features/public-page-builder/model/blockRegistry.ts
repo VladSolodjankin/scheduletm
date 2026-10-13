@@ -1,7 +1,8 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { BlockContent, BlockDesign, PageBlock, PageSection, PageTheme } from '../types/publicPage';
 import { createStableId } from '../utils/createStableId';
-import type { PublicBookingService } from '../../../shared/types/api';
+import type { PublicBookingService, PublicReviewsData } from '../../../shared/types/api';
+import type { Locale } from '../../../shared/i18n/dictionaries';
 
 export type BlockComponentProps = {
   block: PageBlock;
@@ -12,6 +13,7 @@ export type BlockComponentProps = {
   pageTheme?: PageTheme;
   pageSection?: PageSection;
   services?: readonly PublicBookingService[];
+  reviews?: PublicReviewsData | null;
   publicPageSlug?: string;
   editor?: boolean;
 };
@@ -19,7 +21,8 @@ export type BlockComponentProps = {
 export type BlockDefinition = {
   type: string;
   name: string;
-  createContent: () => BlockContent;
+  localizedName?: (locale: Locale) => string;
+  createContent: (locale: Locale) => BlockContent;
   createDesign?: () => BlockDesign;
   Renderer: ComponentType<BlockComponentProps>;
   Editor?: ComponentType<BlockComponentProps>;
@@ -44,7 +47,7 @@ export function getBlockDefinitions(): BlockDefinition[] {
   return Array.from(definitions.values());
 }
 
-export function createBlock(type: string): PageBlock | null {
+export function createBlock(type: string, locale: Locale): PageBlock | null {
   const definition = getBlockDefinition(type);
   if (!definition) {
     return null;
@@ -53,10 +56,10 @@ export function createBlock(type: string): PageBlock | null {
   return {
     id: createStableId(),
     type: definition.type,
-    name: definition.name,
+    name: definition.localizedName?.(locale) ?? definition.name,
     visible: true,
     schedule: { period: null, weekdays: null },
-    content: definition.createContent(),
+    content: definition.createContent(locale),
     design: definition.createDesign?.() ?? {
       linkStyle: null,
       animation: 'none',

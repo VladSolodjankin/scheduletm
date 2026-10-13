@@ -17,6 +17,7 @@ export const dictionaries = {
       country: 'Country',
       specialists: 'Specialists',
       services: 'Services',
+      accountReviews: 'Reviews',
       users: 'Users',
       notificationLogs: 'Notification logs',
       errorLogs: 'Error logs',
@@ -363,6 +364,60 @@ export const dictionaries = {
       }
     },
 
+    accountReviews: {
+      pageTitle: 'Reviews',
+      pageSubtitle: 'Add client reviews to show on your public page. Changes appear on the public page immediately.',
+      create: 'Add review',
+      createTitle: 'Add review',
+      editTitle: 'Edit review',
+      formDescription: 'Reviews you add here are shown in the Reviews block of your public page.',
+      counter: '{count} of {limit}',
+      limitReached: 'You have reached the limit of {limit} reviews.',
+      empty: 'No reviews yet.',
+      emptyHelper: 'Add your first review to show it on your public page.',
+      edit: 'Edit',
+      hide: 'Hide',
+      show: 'Show',
+      delete: 'Delete',
+      deleteConfirmTitle: 'Delete review?',
+      deleteConfirmDescription: 'The review will be removed from your public page and cannot be restored.',
+      statusPublished: 'Published',
+      statusHidden: 'Hidden',
+      status: 'Status',
+      name: 'Author name',
+      nameError: 'Enter the author name (up to 80 characters).',
+      text: 'Review text',
+      textError: 'Enter the review text (up to 1500 characters).',
+      rating: 'Rating',
+      ratingError: 'Choose a rating from 1 to 5.',
+      ratingValue: 'Rating {rating} out of 5',
+      date: 'Review date',
+      dateHelper: 'Free text, for example "March 2026" (up to 40 characters).',
+      screenshot: 'Screenshot',
+      screenshotAlt: 'Screenshot description',
+      screenshotAltError: 'Describe the screenshot for screen readers.',
+      uploadImage: 'Upload screenshot',
+      replaceImage: 'Replace screenshot',
+      removeImage: 'Remove screenshot',
+      invalidImageType: 'Use a JPEG, PNG, or WebP image.',
+      imageTooLarge: 'The image must be 5 MB or smaller.',
+      imageCleanupWarning: 'The review was saved, but an unused screenshot could not be removed automatically.',
+      retryImageCleanup: 'Retry cleanup',
+      retry: 'Retry',
+      save: 'Save',
+      errors: {
+        load: 'Unable to load reviews.',
+        save: 'Unable to save the review.',
+        delete: 'Unable to delete the review.',
+        imageUpload: 'Unable to upload the image. Try again.',
+        imageCleanup: 'Unable to remove the unsaved image. Try again before closing.',
+        forbidden: 'You do not have access to manage reviews.',
+        notFound: 'The review was not found. It may have been deleted.',
+        mediaNotFound: 'The screenshot was not found. Upload it again.',
+        limitReached: 'You have reached the limit of 30 reviews.',
+      }
+    },
+
     users: {
       pageTitle: 'Users',
       pageSubtitle: 'Create, edit, deactivate, and delete users for your account.',
@@ -638,6 +693,7 @@ export const dictionaries = {
       rescheduleLabel: 'New date and time', rescheduleSubmit: 'Confirm new time', rescheduleCancel: 'Close',
       cancelConfirmTitle: 'Cancel appointment', cancelConfirmDescription: 'Are you sure you want to cancel this appointment?',
       notManageable: 'This appointment can no longer be changed.',
+      openInApp: 'Open in app', login: 'Log in to manage all your appointments',
       errors: { load: 'Link is invalid or has expired.', cancel: 'Unable to cancel appointment.', reschedule: 'Unable to reschedule appointment.' },
     },
     publicPageBuilder: {
@@ -744,6 +800,25 @@ export const dictionaries = {
       serviceBook: 'Book', serviceMinutes: 'min', serviceFirstSessionFree: 'First session free', carouselSlide: 'slide',
       serviceSlidePosition: 'Service {current} of {total}', carouselNavigation: 'Service carousel navigation',
       goToServiceSlide: 'Go to service {number}', carouselPlay: 'Start autoplay', carouselPause: 'Pause autoplay',
+      blockTypeCredentials: 'Credentials', blockTypeReviews: 'Reviews', blockTypeSocialButton: 'Social button',
+      defaultAvatarHeading: 'Your name', defaultAvatarSubtitle: 'A short introduction', defaultLearnMore: 'Learn more',
+      defaultContactLabel: 'Email', defaultMapTitle: 'Find us', defaultMapLabel: 'Open map',
+      defaultFaqTitle: 'Frequently asked questions', defaultFaqQuestion: 'What should visitors know?',
+      defaultFaqAnswer: 'Share a concise answer to a common question.',
+      credentialsDefaultTitle: 'Credentials and certificates', reviewsDefaultTitle: 'Client reviews',
+      lightboxClose: 'Close', lightboxZoomIn: 'Zoom in', lightboxZoomOut: 'Zoom out',
+      lightboxPrevious: 'Previous image', lightboxNext: 'Next image',
+      credentialsEmpty: 'No certificates yet. Add one to show it on the page.', credentialsItem: 'Certificate {number}',
+      credentialsItemTitle: 'Title', credentialsOrganization: 'Issued by', credentialsYear: 'Year',
+      credentialsYearHelper: 'Four digits, for example 2024', credentialsAddItem: 'Add certificate',
+      credentialsCount: '{count} of {max}', credentialsImage: 'Certificate image', credentialsOpen: 'Open {title} in full size',
+      reviewsSummary: '{average} · {count} reviews', reviewsSummaryOne: '{average} · {count} review',
+      reviewsRating: 'Rating {rating} out of 5', reviewsSlidePosition: 'Review {current} of {total}',
+      goToReviewSlide: 'Go to review {number}', reviewsCarouselNavigation: 'Review carousel navigation',
+      reviewsPrevious: 'Previous review', reviewsNext: 'Next review',
+      reviewsEditorHint: 'Reviews are managed on the Reviews page.', reviewsManageLink: 'Open the Reviews page',
+      reviewsShowSummary: 'Show rating summary', reviewsAutoplay: 'Autoplay', reviewsLoadError: 'Reviews could not be loaded.',
+      reviewsScreenshotOpen: 'Open screenshot of the review by {name}',
       unknownBlockTitle: 'Unsupported block',
       unknownBlockDescription: 'This block type is not available, but the rest of the page can still be displayed.',
       blockErrorTitle: 'Block could not be displayed',
@@ -765,6 +840,7 @@ export const dictionaries = {
       my_appointments: 'Мои Записи',
       workspace: 'Рабочая область',
       specialists: 'Специалисты',
+      accountReviews: 'Отзывы',
       services: 'Услуги',
       country: 'Страна',
       users: 'Пользователи',
@@ -1114,6 +1190,60 @@ export const dictionaries = {
       }
     },
 
+    accountReviews: {
+      pageTitle: 'Отзывы',
+      pageSubtitle: 'Добавляйте отзывы клиентов для публичной страницы. Изменения сразу видны на публичной странице.',
+      create: 'Добавить отзыв',
+      createTitle: 'Добавить отзыв',
+      editTitle: 'Редактировать отзыв',
+      formDescription: 'Добавленные здесь отзывы показываются в блоке «Отзывы» вашей публичной страницы.',
+      counter: '{count} из {limit}',
+      limitReached: 'Достигнут лимит: {limit} отзывов.',
+      empty: 'Отзывов пока нет.',
+      emptyHelper: 'Добавьте первый отзыв, чтобы показать его на публичной странице.',
+      edit: 'Редактировать',
+      hide: 'Скрыть',
+      show: 'Показать',
+      delete: 'Удалить',
+      deleteConfirmTitle: 'Удалить отзыв?',
+      deleteConfirmDescription: 'Отзыв исчезнет с публичной страницы, восстановить его будет нельзя.',
+      statusPublished: 'Опубликован',
+      statusHidden: 'Скрыт',
+      status: 'Статус',
+      name: 'Имя автора',
+      nameError: 'Укажите имя автора (до 80 символов).',
+      text: 'Текст отзыва',
+      textError: 'Введите текст отзыва (до 1500 символов).',
+      rating: 'Оценка',
+      ratingError: 'Выберите оценку от 1 до 5.',
+      ratingValue: 'Оценка {rating} из 5',
+      date: 'Дата отзыва',
+      dateHelper: 'Произвольный текст, например «март 2026» (до 40 символов).',
+      screenshot: 'Скриншот',
+      screenshotAlt: 'Описание скриншота',
+      screenshotAltError: 'Опишите скриншот для программ чтения с экрана.',
+      uploadImage: 'Загрузить скриншот',
+      replaceImage: 'Заменить скриншот',
+      removeImage: 'Удалить скриншот',
+      invalidImageType: 'Используйте изображение JPEG, PNG или WebP.',
+      imageTooLarge: 'Размер изображения не должен превышать 5 МБ.',
+      imageCleanupWarning: 'Отзыв сохранён, но неиспользуемый скриншот не удалось удалить автоматически.',
+      retryImageCleanup: 'Повторить очистку',
+      retry: 'Повторить',
+      save: 'Сохранить',
+      errors: {
+        load: 'Не удалось загрузить отзывы.',
+        save: 'Не удалось сохранить отзыв.',
+        delete: 'Не удалось удалить отзыв.',
+        imageUpload: 'Не удалось загрузить изображение. Попробуйте снова.',
+        imageCleanup: 'Не удалось удалить несохранённое изображение. Повторите попытку перед закрытием.',
+        forbidden: 'У вас нет доступа к управлению отзывами.',
+        notFound: 'Отзыв не найден. Возможно, он уже удалён.',
+        mediaNotFound: 'Скриншот не найден. Загрузите его снова.',
+        limitReached: 'Достигнут лимит: 30 отзывов.',
+      }
+    },
+
     users: {
       pageTitle: 'Пользователи',
       pageSubtitle: 'Добавляйте, редактируйте, деактивируйте и удаляйте пользователей аккаунта.',
@@ -1389,6 +1519,7 @@ export const dictionaries = {
       rescheduleLabel: 'Новая дата и время', rescheduleSubmit: 'Подтвердить новое время', rescheduleCancel: 'Закрыть',
       cancelConfirmTitle: 'Отмена записи', cancelConfirmDescription: 'Вы уверены, что хотите отменить эту запись?',
       notManageable: 'Эту запись больше нельзя изменить.',
+      openInApp: 'Открыть в приложении', login: 'Войти, чтобы управлять всеми своими записями',
       errors: { load: 'Ссылка недействительна или устарела.', cancel: 'Не удалось отменить запись.', reschedule: 'Не удалось перенести запись.' },
     },
     publicPageBuilder: {
@@ -1499,6 +1630,25 @@ export const dictionaries = {
       serviceBook: 'Записаться', serviceMinutes: 'мин', serviceFirstSessionFree: 'Первая встреча бесплатно', carouselSlide: 'слайд',
       serviceSlidePosition: 'Услуга {current} из {total}', carouselNavigation: 'Навигация по услугам',
       goToServiceSlide: 'Перейти к услуге {number}', carouselPlay: 'Запустить автопрокрутку', carouselPause: 'Остановить автопрокрутку',
+      blockTypeCredentials: 'Сертификаты и дипломы', blockTypeReviews: 'Отзывы', blockTypeSocialButton: 'Кнопка соцсети',
+      defaultAvatarHeading: 'Ваше имя', defaultAvatarSubtitle: 'Короткое представление', defaultLearnMore: 'Узнать больше',
+      defaultContactLabel: 'Эл. почта', defaultMapTitle: 'Как нас найти', defaultMapLabel: 'Открыть карту',
+      defaultFaqTitle: 'Частые вопросы', defaultFaqQuestion: 'Что важно знать посетителям?',
+      defaultFaqAnswer: 'Дайте краткий ответ на частый вопрос.',
+      credentialsDefaultTitle: 'Сертификаты и дипломы', reviewsDefaultTitle: 'Отзывы клиентов',
+      lightboxClose: 'Закрыть', lightboxZoomIn: 'Приблизить', lightboxZoomOut: 'Отдалить',
+      lightboxPrevious: 'Предыдущее изображение', lightboxNext: 'Следующее изображение',
+      credentialsEmpty: 'Пока нет сертификатов. Добавьте первый, чтобы показать его на странице.', credentialsItem: 'Сертификат {number}',
+      credentialsItemTitle: 'Название', credentialsOrganization: 'Кем выдан', credentialsYear: 'Год',
+      credentialsYearHelper: 'Четыре цифры, например 2024', credentialsAddItem: 'Добавить сертификат',
+      credentialsCount: '{count} из {max}', credentialsImage: 'Изображение сертификата', credentialsOpen: 'Открыть «{title}» в полном размере',
+      reviewsSummary: '{average} · отзывов: {count}', reviewsSummaryOne: '{average} · отзывов: {count}',
+      reviewsRating: 'Оценка {rating} из 5', reviewsSlidePosition: 'Отзыв {current} из {total}',
+      goToReviewSlide: 'Перейти к отзыву {number}', reviewsCarouselNavigation: 'Навигация по отзывам',
+      reviewsPrevious: 'Предыдущий отзыв', reviewsNext: 'Следующий отзыв',
+      reviewsEditorHint: 'Отзывами управляют на странице «Отзывы».', reviewsManageLink: 'Открыть страницу «Отзывы»',
+      reviewsShowSummary: 'Показывать сводку оценок', reviewsAutoplay: 'Автопрокрутка', reviewsLoadError: 'Не удалось загрузить отзывы.',
+      reviewsScreenshotOpen: 'Открыть скриншот отзыва от {name}',
     }
   }
 } as const;
@@ -1514,6 +1664,8 @@ type AppointmentManageTranslationKey = `appointmentManage.${Exclude<keyof typeof
   | `appointmentManage.errors.${keyof typeof dictionaries.en.appointmentManage.errors}`;
 type ServicesTranslationKey = `services.${Exclude<keyof typeof dictionaries.en.services, 'errors'>}`
   | `services.errors.${keyof typeof dictionaries.en.services.errors}`;
+type AccountReviewsTranslationKey = `accountReviews.${Exclude<keyof typeof dictionaries.en.accountReviews, 'errors'>}`
+  | `accountReviews.errors.${keyof typeof dictionaries.en.accountReviews.errors}`;
 type OnboardingStepTranslationKey = `onboarding.steps.${keyof typeof dictionaries.en.onboarding.steps}.${'title' | 'description'}`;
 type OnboardingTranslationKey = `onboarding.${Exclude<keyof typeof dictionaries.en.onboarding, 'steps' | 'errors'>}`
   | `onboarding.errors.${keyof typeof dictionaries.en.onboarding.errors}`
@@ -1525,6 +1677,7 @@ export type TranslationKey =
   | PublicStatusTranslationKey
   | AppointmentManageTranslationKey
   | ServicesTranslationKey
+  | AccountReviewsTranslationKey
   | OnboardingTranslationKey
   | 'publicPageBuilder.unknownBlockTitle'
   | 'publicPageBuilder.unknownBlockDescription'
@@ -1546,6 +1699,7 @@ export type TranslationKey =
   | 'common.workspace'
   | 'common.specialists'
   | 'common.services'
+  | 'common.accountReviews'
   | 'common.users'
   | 'common.notificationLogs'
   | 'common.errorLogs'

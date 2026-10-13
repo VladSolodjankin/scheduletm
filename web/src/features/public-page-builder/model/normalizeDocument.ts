@@ -32,6 +32,8 @@ import {
   findPublicPageTheme,
 } from '../config/themes';
 import { normalizeServicesContent } from './services';
+import { normalizeCredentialsContent } from './credentials';
+import { normalizeReviewsContent } from './reviews';
 import { isCtaAction } from './cta';
 import { normalizeAvatarPosition } from './avatarPosition';
 
@@ -314,6 +316,8 @@ function normalizeBlock(value: unknown): PageBlock | null {
     content: value.type === 'text' ? normalizeTextContent(rawContent)
       : value.type === 'avatar' ? normalizeAvatarContent(rawContent)
         : value.type === 'services' ? normalizeServicesContent(rawContent)
+          : value.type === 'credentials' ? normalizeCredentialsContent(rawContent)
+            : value.type === 'reviews' ? normalizeReviewsContent(rawContent)
           : value.type === 'contacts' ? normalizeContactsContent(rawContent)
           : rawContent as BlockContent,
     design: normalizeDesign(value.design),

@@ -21,6 +21,7 @@ import {
   getPublicAppointmentStatus,
   getPublicAvailableSlots,
   getPublicBookingOptions,
+  getPublicReviewsBySlug,
   PublicBookingServiceError,
 } from '../services/publicBookingService.js';
 import {
@@ -168,6 +169,17 @@ publicPageRoutes.get('/media/:mediaId/content', publicPageMediaRateLimit, async 
     return res.send(Buffer.from(media.body));
   } catch (error) {
     return mediaError(req, res, error);
+  }
+});
+
+publicPageRoutes.get('/by-slug/:slug/reviews', publicBookingOptionsRateLimit, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  try {
+    const slug = slugSchema.safeParse(req.params.slug);
+    if (!slug.success) return res.status(404).json({ code: 'not_found' });
+    return res.json(await getPublicReviewsBySlug(slug.data));
+  } catch (error) {
+    return sendError(req, res, error);
   }
 });
 

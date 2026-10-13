@@ -16,6 +16,9 @@ import { normalizeRichTextDocument } from '../../features/public-page-builder/mo
 import { resolvePublicPageThemeVariables } from '../public-page-blocks/publicPageThemeVariables';
 import { SectionDesignControls } from './SectionDesignControls';
 import { ServicesBlockEditor } from './ServicesBlockEditor';
+import { CredentialsBlockEditor } from './CredentialsBlockEditor';
+import { ReviewsBlockEditor } from './ReviewsBlockEditor';
+import { credentialItems, type CredentialItem } from '../../features/public-page-builder/model/credentials';
 import { ButtonDesignControls } from './ButtonDesignControls';
 import { BlockScheduleControls } from './BlockScheduleControls';
 import type { ServicesResponse } from '../services/types';
@@ -168,6 +171,8 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
   const originalImageMediaId = block.type === 'image' && typeof block.content.imageMediaId === 'string' ? block.content.imageMediaId : null;
   const originalGalleryMediaIds = block.type === 'gallery' && Array.isArray(block.content.images)
     ? block.content.images.flatMap((item) => item && typeof item === 'object' && typeof (item as Record<string, unknown>).mediaId === 'string' ? [(item as Record<string, unknown>).mediaId as string] : []) : [];
+  const originalCredentialMediaIds = block.type === 'credentials'
+    ? credentialItems(block.content).flatMap((item) => item.imageMediaId ? [item.imageMediaId] : []) : [];
   const originalSectionMediaId = selectedSection?.design.backgroundMediaId ?? null;
   const avatarMediaId = draft.type === 'avatar' && typeof draft.content.imageMediaId === 'string' ? draft.content.imageMediaId : null;
   const avatarCoverMediaId = draft.type === 'avatar' && typeof draft.content.coverMediaId === 'string' ? draft.content.coverMediaId : null;
@@ -192,6 +197,44 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
     return failed.size === 0;
   };
   const cancel = () => { if (cleaning) {return;} void (async () => { if (await cleanupItems(pending)) {onClose();} })(); };
+  const patchCredential = (itemId: string, changes: Partial<CredentialItem>) => setDraft((current) => ({
+    ...current,
+    content: { ...current.content, items: credentialItems(current.content).map((item) => item.id === itemId ? { ...item, ...changes } : item) },
+  }));
+  const removeCredential = (itemId: string) => {
+    const oldPending = pending.find((candidate) => candidate.media.id === credentialItems(draft.content).find((item) => item.id === itemId)?.imageMediaId);
+    void (async () => {
+      if (oldPending && !(await cleanupItems([oldPending]))) {return;}
+      setDraft((current) => ({ ...current, content: { ...current.content, items: credentialItems(current.content).filter((item) => item.id !== itemId) } }));
+    })();
+  };
+  const renderCredentialImage = (item: CredentialItem) => repository ? <ImageUploadControl focusMarker="block.content.media"
+    altFocusMarker={item.imageMediaId ? `media:${item.imageMediaId}:alt` : undefined} label={publicPageText(locale, 'credentialsImage')}
+    media={mediaFor(item.imageMediaId)} previewUrl={item.imageMediaId ? mediaUrlFor(item.imageMediaId) : undefined}
+    repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
+    removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
+    invalidTypeText={publicPageText(locale, 'invalidImageType')} tooLargeText={publicPageText(locale, 'imageTooLarge')} uploadErrorText={publicPageText(locale, 'imageUploadError')}
+    onAltChange={(updated) => {
+      if (pending.some((candidate) => candidate.media.id === updated.id)) {setPending((items) => items.map((candidate) => candidate.media.id === updated.id ? { ...candidate, media: updated } : candidate));}
+      else {setUpdatedMedia((items) => [...items.filter((candidate) => candidate.id !== updated.id), updated]);}
+      patchCredential(item.id, { alt: updated.alt });
+    }}
+    onUploaded={(uploaded, objectUrl) => {
+      const uploadedItem = { media: uploaded, objectUrl };
+      setPending((items) => [...items, uploadedItem]);
+      const oldPending = pending.find((candidate) => candidate.media.id === item.imageMediaId);
+      void (async () => {
+        if (oldPending && !(await cleanupItems([oldPending]))) {await cleanupItems([uploadedItem]); return;}
+        patchCredential(item.id, { imageMediaId: uploaded.id, alt: uploaded.alt });
+      })();
+    }}
+    onRemoved={() => {
+      const oldPending = pending.find((candidate) => candidate.media.id === item.imageMediaId);
+      void (async () => {
+        if (oldPending && !(await cleanupItems([oldPending]))) {return;}
+        patchCredential(item.id, { imageMediaId: null, alt: '' });
+      })();
+    }} /> : null;
   const blockDefinition = getBlockDefinition(draft.type);
   const Editor = blockDefinition?.Editor;
   const blockValidationIssues = blockDefinition?.validate?.(draft) ?? [];
@@ -277,6 +320,11 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
           </Stack> : null}
           {draft.type === 'services' ? <ServicesBlockEditor block={draft} locale={locale} catalog={serviceCatalog}
             loading={servicesLoading} error={servicesError} onRefresh={onRefreshServices ?? (() => undefined)}
+            onContentChange={(content) => setDraft((current) => ({ ...current, content }))} />
+          : draft.type === 'credentials' ? <CredentialsBlockEditor block={draft} locale={locale}
+            onContentChange={(content) => setDraft((current) => ({ ...current, content }))}
+            onRemoveItem={removeCredential} renderImageControl={renderCredentialImage} />
+          : draft.type === 'reviews' ? <ReviewsBlockEditor block={draft} locale={locale}
             onContentChange={(content) => setDraft((current) => ({ ...current, content }))} />
           : draft.type === 'text' ? <RichTextEditor locale={locale} value={normalizeRichTextDocument(draft.content.document)}
             onChange={(document) => setDraft((current) => ({ ...current, content: { document } }))} />
@@ -428,6 +476,8 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
           ...(originalImageMediaId && originalImageMediaId !== imageMediaId ? [originalImageMediaId] : []),
           ...originalGalleryMediaIds.filter((mediaId) => !(draft.type === 'gallery' && Array.isArray(draft.content.images)
             && draft.content.images.some((item) => item && typeof item === 'object' && (item as Record<string, unknown>).mediaId === mediaId))),
+          ...originalCredentialMediaIds.filter((mediaId) => !(draft.type === 'credentials'
+            && credentialItems(draft.content).some((item) => item.imageMediaId === mediaId))),
           ...(originalSectionMediaId && originalSectionMediaId !== sectionDraft?.design.backgroundMediaId ? [originalSectionMediaId] : []),
         ] })}>{publicPageText(locale, 'save')}</Button>
       </DialogActions>

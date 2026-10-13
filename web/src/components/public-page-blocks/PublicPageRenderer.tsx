@@ -25,7 +25,7 @@ import { resolvePublicPageThemeVariables } from './publicPageThemeVariables';
 import { resolveLeadingAvatarSectionMarginTop } from './avatarPresentation';
 import { ordinaryPublicPageLinkSx } from './blocks';
 import '../public-page-builder/publicPageDnd.css';
-import type { PublicBookingService } from '../../shared/types/api';
+import type { PublicBookingService, PublicReviewsData } from '../../shared/types/api';
 import { PublicPageStyleBoundary } from './PublicPageStyleBoundary';
 
 const columnsByLayout: Record<SectionLayout, string> = {
@@ -51,7 +51,7 @@ export type PublicPageEditorRenderProps = {
   renderSectionResizeHandle?: (section: PageSection, sectionIndex: number) => ReactNode;
   onDropItem: (payload: BuilderDragPayload, destination: BuilderDropDestination) => void;
 };
-function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, publicPageSlug, timezone, now, editor }: { section: PageSection; sectionIndex: number; mediaUrlFor: (id: string) => string | undefined; theme: PublicPageDocument['theme']; services: readonly PublicBookingService[]; publicPageSlug: string; timezone: string; now: number; editor?: PublicPageEditorRenderProps }) {
+function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, reviews, publicPageSlug, timezone, now, editor }: { section: PageSection; sectionIndex: number; mediaUrlFor: (id: string) => string | undefined; theme: PublicPageDocument['theme']; services: readonly PublicBookingService[]; reviews: PublicReviewsData | null; publicPageSlug: string; timezone: string; now: number; editor?: PublicPageEditorRenderProps }) {
   const blockContainerRef = useRef<HTMLDivElement>(null);
   useSmoothDndContainer(blockContainerRef, {
     behaviour: 'move',
@@ -77,6 +77,7 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
   const isRenderableBlock = (block: PageBlock) => {
     if (!block.visible) {return false;}
     if (!isBlockScheduledVisible(block.schedule, timezone, now)) {return false;}
+    if (block.type === 'reviews') {return Boolean(reviews && reviews.reviews.length > 0);}
     if (block.type !== 'services') {return true;}
     return Array.isArray(block.content.serviceIds) && block.content.serviceIds.some((id) => typeof id === 'number' && serviceIds.has(id));
   };
@@ -132,7 +133,7 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
     {editor?.scheduleStatusLabel && (block.schedule.period || block.schedule.weekdays) ? <Chip size="small" sx={{ mb: 0.5 }} label={editor.scheduleStatusLabel(isBlockScheduledVisible(block.schedule, timezone, now))} /> : null}
     <PublicPageStyleBoundary>
       <BlockRenderer block={block} mediaUrlFor={mediaUrlFor} editor={Boolean(editor)} themeBorderRadius={theme.styleDefaults.blockBorderRadius}
-        roundingStyle={theme.roundingStyle} services={services} publicPageSlug={publicPageSlug} />
+        roundingStyle={theme.roundingStyle} services={services} reviews={reviews} publicPageSlug={publicPageSlug} />
     </PublicPageStyleBoundary>
     {editor ? editor.renderBlockActions(section, blockIndex) : null}
   </Box>;
@@ -216,9 +217,9 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
   );
 }
 
-type PublicPageRendererProps = { document: PublicPageDocument; mediaUrls?: ReadonlyMap<string, string>; services?: readonly PublicBookingService[]; editor?: PublicPageEditorRenderProps };
+type PublicPageRendererProps = { document: PublicPageDocument; mediaUrls?: ReadonlyMap<string, string>; services?: readonly PublicBookingService[]; reviews?: PublicReviewsData | null; editor?: PublicPageEditorRenderProps };
 
-function PublicPageRendererContent({ document, mediaUrls, services = [], editor }: PublicPageRendererProps) {
+function PublicPageRendererContent({ document, mediaUrls, services = [], reviews = null, editor }: PublicPageRendererProps) {
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
     let active = true;
@@ -326,12 +327,12 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], editor 
                 <Box className="public-page-dnd-section-shell">
                   {editor.renderSectionDragHandle?.(section, sectionIndex, {})}
                   <SectionRenderer section={section} sectionIndex={sectionIndex} mediaUrlFor={mediaUrlFor} theme={document.theme}
-                    services={services} publicPageSlug={document.slug} timezone={document.timezone} now={now} editor={editor} />
+                    services={services} reviews={reviews} publicPageSlug={document.slug} timezone={document.timezone} now={now} editor={editor} />
                 </Box>
               </Box>
             ))}
           </Box> : document.sections.map((section, sectionIndex) => <SectionRenderer key={section.id} section={section} sectionIndex={sectionIndex}
-            mediaUrlFor={mediaUrlFor} theme={document.theme} services={services} publicPageSlug={document.slug} timezone={document.timezone} now={now} />)}
+            mediaUrlFor={mediaUrlFor} theme={document.theme} services={services} reviews={reviews} publicPageSlug={document.slug} timezone={document.timezone} now={now} />)}
       </Container>
     </Box>
   );

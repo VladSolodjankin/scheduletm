@@ -16,6 +16,7 @@ import { errorLogRoutes } from './routes/errorLogRoutes.js';
 import { publicPageRoutes } from './routes/publicPageRoutes.js';
 import { publicAppointmentManagementRoutes } from './routes/publicAppointmentManagementRoutes.js';
 import { serviceRoutes } from './routes/serviceRoutes.js';
+import { reviewRoutes } from './routes/reviewRoutes.js';
 import { trackServerError } from './services/errorTrackingService.js';
 
 const getBodyParserErrorStatus = (error: unknown): 400 | 413 | null => {
@@ -114,6 +115,7 @@ export const createApp = () => {
   app.use('/api/appointments', appointmentRoutes);
   app.use('/api/specialists', specialistRoutes);
   app.use('/api/services', serviceRoutes);
+  app.use('/api/account-reviews', reviewRoutes);
   app.use('/api/users', userManagementRoutes);
   app.use('/api/integrations', integrationRoutes);
   app.use('/api/notifications', notificationRoutes);

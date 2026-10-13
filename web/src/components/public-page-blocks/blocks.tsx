@@ -75,7 +75,7 @@ export const required = (content: BlockContent, ...keys: string[]): string[] =>
   keys.filter((key) => !text(content[key]).trim()).map((key) => `${key} is required`);
 const hasValue = (value: unknown): boolean =>
   typeof value === 'string' ? Boolean(value.trim()) : value !== null && value !== undefined;
-const wrappingTextSx = { maxWidth: '100%', minWidth: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } as const;
+export const wrappingTextSx = { maxWidth: '100%', minWidth: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } as const;
 export const validItems = (content: BlockContent, key: string, fields: string[]): string[] =>
   items(content[key]).flatMap((item, index) =>
     fields.filter((field) => !hasValue(item[field])).map((field) => `${key}.${index}.${field} is required`),
@@ -104,7 +104,7 @@ export function normalizeSafeHref(value: unknown): string | null {
   return null;
 }
 
-function Surface({ children }: { block: PageBlock; children: ReactNode }) {
+export function Surface({ children }: { block: PageBlock; children: ReactNode }) {
   return (
     <Box
       sx={{
@@ -234,6 +234,8 @@ const editorShape: Record<string, { fields?: string[]; list?: { key: string; fie
   text: {},
   image: {},
   services: { fields: ['title'] },
+  credentials: { fields: ['title'] },
+  reviews: { fields: ['title'] },
   contacts: { fields: ['title'], list: { key: 'contacts', fields: ['label'] } },
   'social-button': { fields: ['label', 'url'] },
   map: { fields: ['title', 'address', 'label', 'url'] },
@@ -658,7 +660,7 @@ function formatServicePrice(service: PublicBookingService, locale: string): stri
   }
 }
 
-function useReducedMotion(): boolean {
+export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(() => typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   useEffect(() => {

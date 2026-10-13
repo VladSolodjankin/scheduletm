@@ -13,6 +13,7 @@ const AppointmentsPage = lazy(() => import('../pages/AppointmentsPage').then((mo
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
 const OnboardingPage = lazy(() => import('../pages/OnboardingPage').then((module) => ({ default: module.OnboardingPage })));
 const SpecialistsPage = lazy(() => import('../pages/SpecialistsPage').then((module) => ({ default: module.SpecialistsPage })));
+const AccountReviewsPage = lazy(() => import('../pages/AccountReviewsPage').then((module) => ({ default: module.AccountReviewsPage })));
 const ServicesPage = lazy(() => import('../pages/ServicesPage').then((module) => ({ default: module.ServicesPage })));
 const UsersPage = lazy(() => import('../pages/UsersPage').then((module) => ({ default: module.UsersPage })));
 const NotificationLogsPage = lazy(() => import('../pages/NotificationLogsPage').then((module) => ({ default: module.NotificationLogsPage })));
@@ -154,6 +155,7 @@ export const router = createBrowserRouter([
             )
           },
           { path: '/services', element: <ServicesRoleRoute><ServicesPage /></ServicesRoleRoute> },
+          { path: '/account-reviews', element: <RoleRoute><AccountReviewsPage /></RoleRoute> },
           {
             path: '/users',
             element: (

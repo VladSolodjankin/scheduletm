@@ -10,9 +10,11 @@ import ImageOutlined from '@mui/icons-material/ImageOutlined';
 import LinkOutlined from '@mui/icons-material/LinkOutlined';
 import MapOutlined from '@mui/icons-material/MapOutlined';
 import QuizOutlined from '@mui/icons-material/QuizOutlined';
+import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
 import ShareOutlined from '@mui/icons-material/ShareOutlined';
 import SmartButtonOutlined from '@mui/icons-material/SmartButtonOutlined';
 import TextFieldsOutlined from '@mui/icons-material/TextFieldsOutlined';
+import WorkspacePremiumOutlined from '@mui/icons-material/WorkspacePremiumOutlined';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, TextField, Typography } from '@mui/material';
 import { useId, useState } from 'react';
 import { SocialPlatformIcon, socialPlatformStyles } from '../public-page-blocks/blocks';
@@ -28,6 +30,7 @@ import type { ServicesResponse } from '../services/types';
 const blockLabelKeys = {
   avatar: 'blockTypeAvatar', button: 'blockTypeButton', links: 'blockTypeLinks', text: 'blockTypeText', image: 'blockTypeImage',
   gallery: 'blockTypeGallery', services: 'blockTypeServices', contacts: 'blockTypeContacts', map: 'blockTypeMap', divider: 'blockTypeDivider', faq: 'blockTypeFaq',
+  credentials: 'blockTypeCredentials', reviews: 'blockTypeReviews',
 } as const;
 const categories = {
   messagingApps: ['facebook-messenger', 'vk', 'whatsapp', 'viber', 'telegram'],
@@ -47,6 +50,8 @@ const blockIcons = {
   map: MapOutlined,
   divider: HorizontalRuleOutlined,
   faq: QuizOutlined,
+  credentials: WorkspacePremiumOutlined,
+  reviews: RateReviewOutlined,
 } as const;
 const platformKeys: Record<SocialPlatform, Parameters<typeof publicPageText>[1]> = {
   'facebook-messenger': 'platformFacebookMessenger', vk: 'platformVk', whatsapp: 'platformWhatsapp', viber: 'platformViber',
@@ -79,7 +84,7 @@ export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, t
   const selectPlatform = (platform: SocialPlatform) => {
     if (usedPlatforms.has(platform)) {return;}
     const label = publicPageText(locale, platformKeys[platform]);
-    const block = createBlock('social-button');
+    const block = createBlock('social-button', locale);
     if (block) {setDraft({ ...block, name: label, content: { platform, label, url: 'https://' } });}
   };
   const tileSx = { p: 2.5, minHeight: 112, cursor: 'pointer', border: '1px solid', borderColor: 'divider', borderRadius: 2, textAlign: 'center', bgcolor: 'background.paper',
@@ -105,7 +110,7 @@ export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, t
           {getBlockDefinitions().filter(({ type }) => type !== 'social-button').map((definition) => {
             const labelKey = blockLabelKeys[definition.type as keyof typeof blockLabelKeys];
             const Icon = blockIcons[definition.type as keyof typeof blockIcons];
-            return <Paper key={definition.type} component="button" type="button" onClick={() => setDraft(createBlock(definition.type))} sx={tileSx}>
+            return <Paper key={definition.type} component="button" type="button" onClick={() => setDraft(createBlock(definition.type, locale))} sx={tileSx}>
               {Icon ? <Icon aria-hidden="true" sx={{ fontSize: 44, color: 'text.secondary' }} /> : null}
               <Typography sx={{ mt: 0.75, fontWeight: 700 }}>{labelKey ? publicPageText(locale, labelKey) : definition.name}</Typography>
             </Paper>;

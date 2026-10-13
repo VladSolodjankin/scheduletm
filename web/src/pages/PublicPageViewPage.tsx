@@ -8,7 +8,7 @@ import { PublicPageRepositoryError } from '../features/public-page-builder/repos
 import type { PublicPageDocument } from '../features/public-page-builder/types/publicPage';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { apiClient } from '../shared/api/client';
-import type { PublicBookingOptions, PublicBookingService } from '../shared/types/api';
+import type { PublicBookingOptions, PublicBookingService, PublicReviewsData } from '../shared/types/api';
 import { publicPageUrl } from '../features/public-page-builder/config/publicPageUrl';
 import { normalizeSlug } from '../features/public-page-builder/model/slug';
 
@@ -104,8 +104,11 @@ export function PublicPageViewPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'not-found' | 'unavailable'>('loading');
   const [services, setServices] = useState<PublicBookingService[]>([]);
   const [servicesError, setServicesError] = useState(false);
+  const [reviews, setReviews] = useState<PublicReviewsData | null>(null);
+  const [reviewsError, setReviewsError] = useState(false);
   const requestIdRef = useRef(0);
   const servicesRequestIdRef = useRef(0);
+  const reviewsRequestIdRef = useRef(0);
   const load = useCallback(async () => {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
@@ -120,6 +123,8 @@ export function PublicPageViewPage() {
       }
       setServices([]);
       setServicesError(false);
+      setReviews(null);
+      setReviewsError(false);
       setPage(document);
       setStatus('ready');
     } catch (error) {
@@ -165,6 +170,34 @@ export function PublicPageViewPage() {
       servicesRequestIdRef.current += 1;
     };
   }, [loadServices]);
+  const needsReviews = useMemo(() => Boolean(page?.sections.some((section) => section.visible && section.blocks.some((block) =>
+    block.visible && block.type === 'reviews'))), [page]);
+  const loadReviews = useCallback(async () => {
+    if (status !== 'ready' || !page || page.slug !== canonicalRouteSlug || !needsReviews) {
+      setReviews(null);
+      setReviewsError(false);
+      return;
+    }
+    const requestId = reviewsRequestIdRef.current + 1;
+    reviewsRequestIdRef.current = requestId;
+    setReviews(null);
+    setReviewsError(false);
+    try {
+      const { data } = await apiClient.get<PublicReviewsData>(`/api/public-pages/by-slug/${encodeURIComponent(canonicalRouteSlug)}/reviews`);
+      if (reviewsRequestIdRef.current !== requestId) {return;}
+      setReviews(data);
+    } catch {
+      if (reviewsRequestIdRef.current !== requestId) {return;}
+      setReviewsError(true);
+    }
+  }, [canonicalRouteSlug, needsReviews, page, status]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {void loadReviews();}, 0);
+    return () => {
+      window.clearTimeout(timer);
+      reviewsRequestIdRef.current += 1;
+    };
+  }, [loadReviews]);
   if (status === 'loading') {return <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress /></Box>;}
   if (status !== 'ready' || !page) {
     return <Alert severity="info" action={<Button onClick={() => void load()}>{publicPageText(locale, 'retry')}</Button>}>{publicPageText(locale, status === 'not-found' ? 'notFound' : 'unavailable')}</Alert>;
@@ -173,6 +206,9 @@ export function PublicPageViewPage() {
     {servicesError ? <Alert severity="warning" action={<Button onClick={() => void loadServices()}>{publicPageText(locale, 'retry')}</Button>}>
       {publicPageText(locale, 'servicesLoadError')}
     </Alert> : null}
-    <PublicPageRenderer document={page} services={services} />
+    {reviewsError ? <Alert severity="warning" action={<Button onClick={() => void loadReviews()}>{publicPageText(locale, 'retry')}</Button>}>
+      {publicPageText(locale, 'reviewsLoadError')}
+    </Alert> : null}
+    <PublicPageRenderer document={page} services={services} reviews={reviews} />
   </>;
 }

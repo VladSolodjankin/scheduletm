@@ -43,7 +43,7 @@ const imageMimeTypes = new Set<MediaReference['mimeType']>([
 ]);
 const knownBlockTypes = new Set([
   'avatar', 'button', 'links', 'text', 'image', 'gallery', 'services',
-  'contacts', 'social-button', 'map', 'divider', 'faq',
+  'contacts', 'social-button', 'map', 'divider', 'faq', 'credentials', 'reviews',
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -340,6 +340,23 @@ function validateBlockContent(type: unknown, value: unknown, path: string, error
       return;
     case 'divider':
       validateExactKeys(value, [], path, errors);
+      return;
+    case 'credentials':
+      validateExactKeys(value, ['title', 'items'], path, errors);
+      validateString(value.title, `${path}.title`, errors);
+      rows('items', (row, rowPath) => {
+        validateExactKeys(row, ['id', 'imageMediaId', 'alt', 'title', 'organization', 'year'], rowPath, errors);
+        validateRequiredString(row.id, `${rowPath}.id`, errors);
+        validateNullableString(row.imageMediaId, `${rowPath}.imageMediaId`, errors);
+        for (const field of ['alt', 'title', 'organization', 'year']) {validateString(row[field], `${rowPath}.${field}`, errors);}
+      });
+      return;
+    case 'reviews':
+      validateExactKeys(value, ['title', 'showSummary', 'autoplay'], path, errors);
+      validateString(value.title, `${path}.title`, errors);
+      for (const field of ['showSummary', 'autoplay']) {
+        if (typeof value[field] !== 'boolean') {addError(errors, 'invalid_type', `${path}.${field}`);}
+      }
       return;
     case 'faq':
       validateExactKeys(value, ['title', 'items'], path, errors);

@@ -8,7 +8,7 @@ export function isIanaTimezone(value: string): boolean {
 }
 export const KNOWN_PUBLIC_PAGE_BLOCKS = new Set([
   'avatar', 'button', 'links', 'text', 'image', 'gallery', 'services',
-  'contacts', 'social-button', 'map', 'divider', 'faq',
+  'contacts', 'social-button', 'map', 'divider', 'faq', 'credentials', 'reviews',
 ]);
 export const RESERVED_PUBLIC_PAGE_SLUGS = new Set([
   'api', 'appointments', 'assets', 'booking', 'health', 'login', 'logout',
@@ -140,6 +140,12 @@ const blockFields = {
   visible: z.boolean(),
   design: blockDesignSchema,
 };
+const isCredentialYear = (value: string) => {
+  if (value === '') return true;
+  if (!/^\d{4}$/.test(value)) return false;
+  const year = Number(value);
+  return year >= 1950 && year <= new Date().getFullYear() + 1;
+};
 const blockSchema = z.discriminatedUnion('type', [
   z.object({ ...blockFields, type: z.literal('avatar'), content: z.object({
     heading: z.string(),
@@ -202,6 +208,22 @@ const blockSchema = z.discriminatedUnion('type', [
       title: z.string(),
       description: z.string(),
     }).strict()),
+  }).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('credentials'), content: z.object({
+    title: z.string().max(120),
+    items: z.array(z.object({
+      id: z.string().min(1),
+      imageMediaId: nullableString,
+      alt: z.string().max(200),
+      title: z.string().max(120),
+      organization: z.string().max(120),
+      year: z.string().refine(isCredentialYear, 'invalid_year'),
+    }).strict()).max(10),
+  }).strict() }).strict(),
+  z.object({ ...blockFields, type: z.literal('reviews'), content: z.object({
+    title: z.string().max(120),
+    showSummary: z.boolean(),
+    autoplay: z.boolean(),
   }).strict() }).strict(),
 ]);
 const sectionDesignSchema = z.object({
@@ -501,6 +523,12 @@ function validateKnownBlock(block: PublicPageDocument['sections'][number]['block
       ...(!item.title.trim() ? [`items.${index}.title is required`] : []),
       ...(!item.description.trim() ? [`items.${index}.description is required`] : []),
     ]);
+    case 'credentials': return block.content.items.flatMap((item, index) => [
+      ...(!item.title.trim() ? [`items.${index}.title is required`] : []),
+      ...(!item.imageMediaId ? [`items.${index}.imageMediaId is required`] : []),
+      ...(!item.alt.trim() ? [`items.${index}.alt is required`] : []),
+    ]);
+    case 'reviews': return [];
   }
 }
 

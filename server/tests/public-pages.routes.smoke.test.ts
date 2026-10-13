@@ -7,6 +7,7 @@ const resolveUserByAccessTokenMock = vi.hoisted(() => vi.fn());
 const trackServerErrorMock = vi.hoisted(() => vi.fn());
 const publicBooking = vi.hoisted(() => ({
   getPublicBookingOptions: vi.fn(),
+  getPublicReviewsBySlug: vi.fn(),
   bookPublicAppointment: vi.fn(),
   getPublicAppointmentStatus: vi.fn(),
 }));
@@ -226,6 +227,24 @@ describe('public pages routes', () => {
     const response = await fetch(`${baseUrl}/api/public-pages/by-slug/valid-page`);
     expect(response.status).toBe(200);
     expect(resolveUserByAccessTokenMock).not.toHaveBeenCalled();
+  });
+
+  it('serves public reviews without authentication and hides missing pages', async () => {
+    const payload = {
+      reviews: [{ id: 1, name: 'Anna', text: 'Great', rating: 5, reviewDate: '', screenshot: null }],
+      summary: { average: 5, count: 1 },
+    };
+    publicBooking.getPublicReviewsBySlug.mockResolvedValueOnce(payload);
+    const ok = await fetch(`${baseUrl}/api/public-pages/by-slug/valid-page/reviews`);
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get('cache-control')).toBe('no-store');
+    expect(await ok.json()).toEqual(payload);
+    expect(resolveUserByAccessTokenMock).not.toHaveBeenCalled();
+
+    publicBooking.getPublicReviewsBySlug.mockRejectedValueOnce(new PublicBookingServiceError('NOT_FOUND'));
+    const missing = await fetch(`${baseUrl}/api/public-pages/by-slug/missing-page/reviews`);
+    expect(missing.status).toBe(404);
+    expect(await missing.json()).toEqual({ code: 'not_found' });
   });
 
   it('serves booking options and creates a redacted guest appointment without authentication', async () => {

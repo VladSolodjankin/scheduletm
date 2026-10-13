@@ -1,8 +1,9 @@
 import { Alert, Link, Stack, TextField, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { apiClient } from '../shared/api/client';
+import { useNavigate, useParams } from 'react-router-dom';
+import { apiClient, authHeaders } from '../shared/api/client';
 import { resolveApiError } from '../shared/api/error';
+import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import type { AppointmentManagementDetails } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
@@ -14,6 +15,8 @@ import { AppSurface } from '../shared/ui/AppSurface';
 export function AppointmentManagePage() {
   const { token = '' } = useParams();
   const { t } = useI18n();
+  const navigate = useNavigate();
+  const { isAuthenticated, accessToken } = useAuth();
   const [details, setDetails] = useState<AppointmentManagementDetails | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -30,6 +33,7 @@ export function AppointmentManagePage() {
     try {
       const response = await apiClient.get<AppointmentManagementDetails>(
         `/api/public/appointment-management/${encodeURIComponent(token)}`,
+        isAuthenticated ? { headers: authHeaders(accessToken) } : undefined,
       );
       setDetails(response.data);
     } catch (requestError) {
@@ -102,6 +106,16 @@ export function AppointmentManagePage() {
               {details.meeting.meetingUrl ? (
                 <Link href={details.meeting.meetingUrl} target="_blank" rel="noreferrer">
                   {t('appointmentManage.openMeeting')}
+                </Link>
+              ) : null}
+
+              {details.canOpenInApp ? (
+                <Link component="button" onClick={() => navigate('/appointments')} sx={{ textAlign: 'left' }}>
+                  {t('appointmentManage.openInApp')}
+                </Link>
+              ) : !isAuthenticated ? (
+                <Link component="button" onClick={() => navigate('/login')} sx={{ textAlign: 'left' }}>
+                  {t('appointmentManage.login')}
                 </Link>
               ) : null}
 

@@ -1,3 +1,4 @@
+import { getPublicReviews } from './reviewService.js';
 import { timingSafeEqual } from 'node:crypto';
 import { normalizePublicPageSlug, isValidPublicPageSlug } from '../config/publicPageSchemas.js';
 import { findPublishedPublicPageBySlug } from '../repositories/publicPageRepository.js';
@@ -171,6 +172,10 @@ export async function getPublicBookingOptions(slug: string) {
       imageUrl: item.image_media_id ? publicMediaUrl(item.image_media_id) : null,
     })),
   };
+}
+
+export async function getPublicReviewsBySlug(slug: string) {
+  return getPublicReviews(await resolvePublishedAccount(slug));
 }
 
 const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;

@@ -43,6 +43,11 @@ export async function findPublishedMedia(id: string): Promise<PublicPageMediaRec
           .whereRaw('services.account_id = media.account_id')
           .whereRaw('services.image_media_id = media.id')
           .where('services.is_active', true);
+      }).orWhereExists(function publishedReviewReference() {
+        this.select(db.raw('1')).from('account_reviews as reviews')
+          .whereRaw('reviews.account_id = media.account_id')
+          .whereRaw('reviews.screenshot_media_id = media.id')
+          .where('reviews.status', 'published');
       });
     })
     .select('media.*').first()) ?? null;
@@ -56,7 +61,10 @@ export async function isMediaReferenced(accountId: number, id: string): Promise<
   if (row) return true;
 
   const service = await db('services').where({ account_id: accountId, image_media_id: id }).first('id');
-  return Boolean(service);
+  if (service) return true;
+
+  const review = await db('account_reviews').where({ account_id: accountId, screenshot_media_id: id }).first('id');
+  return Boolean(review);
 }
 
 export async function deleteAccountMedia(accountId: number, id: string): Promise<void> {

@@ -195,3 +195,18 @@ export const imageMediaApi = {
     { headers: authHeaders(accessToken) },
   ),
 };
+
+export const accountReviewsApi = {
+  list: <T>(accessToken: string) => apiClient.get<T>('/api/account-reviews', {
+    headers: authHeaders(accessToken),
+  }),
+  create: <T, P>(accessToken: string, payload: P) => apiClient.post<T>('/api/account-reviews', payload, {
+    headers: authHeaders(accessToken),
+  }),
+  update: <T, P>(accessToken: string, reviewId: number, payload: P) => apiClient.patch<T>(`/api/account-reviews/${reviewId}`, payload, {
+    headers: authHeaders(accessToken),
+  }),
+  delete: (accessToken: string, reviewId: number) => apiClient.delete(`/api/account-reviews/${reviewId}`, {
+    headers: authHeaders(accessToken),
+  }),
+};

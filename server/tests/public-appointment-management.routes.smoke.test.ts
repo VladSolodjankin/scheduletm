@@ -7,6 +7,8 @@ const cancelAppointmentByManagementTokenMock = vi.hoisted(() => vi.fn());
 const rescheduleAppointmentByManagementTokenMock = vi.hoisted(() => vi.fn());
 const findServiceMock = vi.hoisted(() => vi.fn());
 const findSpecialistByIdAnyAccountMock = vi.hoisted(() => vi.fn());
+const resolveUserByAccessTokenMock = vi.hoisted(() => vi.fn());
+const findWebUserByIdMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../src/services/appointmentManagementTokenService.js', async () => {
   const actual = await vi.importActual<typeof import('../src/services/appointmentManagementTokenService.js')>(
@@ -27,6 +29,26 @@ vi.mock('../src/repositories/serviceRepository.js', () => ({
 vi.mock('../src/repositories/specialistRepository.js', () => ({
   findSpecialistByIdAnyAccount: findSpecialistByIdAnyAccountMock,
 }));
+
+vi.mock('../src/services/authService.js', async () => {
+  const actual = await vi.importActual<typeof import('../src/services/authService.js')>(
+    '../src/services/authService.js',
+  );
+  return {
+    ...actual,
+    resolveUserByAccessToken: resolveUserByAccessTokenMock,
+  };
+});
+
+vi.mock('../src/repositories/webUserRepository.js', async () => {
+  const actual = await vi.importActual<typeof import('../src/repositories/webUserRepository.js')>(
+    '../src/repositories/webUserRepository.js',
+  );
+  return {
+    ...actual,
+    findWebUserById: findWebUserByIdMock,
+  };
+});
 
 const futureAppointment = {
   id: 41,
@@ -77,9 +99,12 @@ describe('public appointment management routes (mocked service layer)', () => {
     rescheduleAppointmentByManagementTokenMock.mockReset();
     findServiceMock.mockReset();
     findSpecialistByIdAnyAccountMock.mockReset();
+    resolveUserByAccessTokenMock.mockReset();
+    findWebUserByIdMock.mockReset();
 
     findServiceMock.mockResolvedValue({ name: 'Consultation' });
     findSpecialistByIdAnyAccountMock.mockResolvedValue({ name: 'Dr. Smith' });
+    resolveUserByAccessTokenMock.mockResolvedValue(null);
   });
 
   it('GET /:token returns appointment details with manage capabilities', async () => {
@@ -95,8 +120,49 @@ describe('public appointment management routes (mocked service layer)', () => {
       specialist: 'Dr. Smith',
       canCancel: true,
       canReschedule: true,
+      canOpenInApp: false,
       meeting: { provider: 'zoom', meetingUrl: 'https://zoom.us/j/123' },
     });
+  });
+
+  it('GET /:token sets canOpenInApp when the bearer token belongs to the owning client', async () => {
+    resolveAppointmentByManagementTokenMock.mockResolvedValue({ accountId: 1, appointment: futureAppointment });
+    resolveUserByAccessTokenMock.mockResolvedValue({ id: '20', accountId: 1, role: 'client' });
+    findWebUserByIdMock.mockResolvedValue({ client_id: 20 });
+
+    const response = await fetch(`${baseUrl}/api/public/appointment-management/valid-token`, {
+      headers: { authorization: 'Bearer client-session-token' },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.canOpenInApp).toBe(true);
+    expect(resolveUserByAccessTokenMock).toHaveBeenCalledWith('client-session-token');
+  });
+
+  it('GET /:token keeps canOpenInApp false for a client from a different account', async () => {
+    resolveAppointmentByManagementTokenMock.mockResolvedValue({ accountId: 1, appointment: futureAppointment });
+    resolveUserByAccessTokenMock.mockResolvedValue({ id: '20', accountId: 2, role: 'client' });
+
+    const response = await fetch(`${baseUrl}/api/public/appointment-management/valid-token`, {
+      headers: { authorization: 'Bearer other-account-token' },
+    });
+    const body = await response.json();
+
+    expect(body.canOpenInApp).toBe(false);
+    expect(findWebUserByIdMock).not.toHaveBeenCalled();
+  });
+
+  it('GET /:token keeps canOpenInApp false for a non-client role in the same account', async () => {
+    resolveAppointmentByManagementTokenMock.mockResolvedValue({ accountId: 1, appointment: futureAppointment });
+    resolveUserByAccessTokenMock.mockResolvedValue({ id: '5', accountId: 1, role: 'owner' });
+
+    const response = await fetch(`${baseUrl}/api/public/appointment-management/valid-token`, {
+      headers: { authorization: 'Bearer owner-token' },
+    });
+    const body = await response.json();
+
+    expect(body.canOpenInApp).toBe(false);
   });
 
   it('GET /:token returns 404 for an invalid or expired token', async () => {

@@ -111,7 +111,8 @@ function blockFocusTarget(
   if (relativePath === 'content' || relativePath.startsWith('content.')) {
     const hasEditableMedia = location.block.type === 'avatar'
       || location.block.type === 'image'
-      || location.block.type === 'gallery';
+      || location.block.type === 'gallery'
+      || location.block.type === 'credentials';
     const marker = hasEditableMedia && /(?:^|\.)(?:imageMediaId|images(?:\.|$)|imageAlt|alt)(?:\.|$)/.test(relativePath)
       ? 'block.content.media'
       : 'block.content';
@@ -154,6 +155,10 @@ function mediaOwnerFocusTarget(
         return { type: 'block-dialog', sectionId: section.id, blockId: block.id, tab: 'design', marker: field === 'alt' ? altMarker : 'block.design.backgroundMediaId' };
       }
       if ((block.type === 'avatar' || block.type === 'image') && block.content.imageMediaId === mediaId) {
+        return { type: 'block-dialog', sectionId: section.id, blockId: block.id, tab: 'content', marker: field === 'alt' ? altMarker : 'block.content.media' };
+      }
+      if (block.type === 'credentials' && Array.isArray(block.content.items)
+        && block.content.items.some((item) => isRecord(item) && item.imageMediaId === mediaId)) {
         return { type: 'block-dialog', sectionId: section.id, blockId: block.id, tab: 'content', marker: field === 'alt' ? altMarker : 'block.content.media' };
       }
       if (block.type === 'gallery' && Array.isArray(block.content.images)

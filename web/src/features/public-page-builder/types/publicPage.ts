@@ -161,7 +161,9 @@ export type KnownBlockType =
   | 'social-button'
   | 'map'
   | 'divider'
-  | 'faq';
+  | 'faq'
+  | 'credentials'
+  | 'reviews';
 
 export type BlockType = KnownBlockType | (string & {});
 

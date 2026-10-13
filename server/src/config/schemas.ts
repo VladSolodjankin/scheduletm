@@ -407,3 +407,27 @@ export const appointmentUpdateSchema = z.object({
 export const appointmentRescheduleSchema = z.object({
   scheduledAt: z.string().datetime(v.appointmentRescheduleInvalid),
 });
+
+const reviewFieldsSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  text: z.string().trim().min(1).max(1500),
+  rating: z.number().int().min(1).max(5),
+  reviewDate: z.string().trim().max(40),
+  screenshotMediaId: z.string().uuid().nullable(),
+  screenshotAlt: z.string().trim().max(200),
+  status: z.enum(['published', 'hidden']),
+}).strict();
+
+export const reviewCreateSchema = reviewFieldsSchema
+  .partial({ screenshotMediaId: true, screenshotAlt: true, reviewDate: true, status: true })
+  .extend({
+    reviewDate: reviewFieldsSchema.shape.reviewDate.default(''),
+    status: reviewFieldsSchema.shape.status.default('published'),
+  })
+  .refine((value) => !value.screenshotMediaId || Boolean(value.screenshotAlt), {
+    path: ['screenshotAlt'],
+    message: 'Screenshot alt is required',
+  });
+
+export const reviewUpdateSchema = reviewFieldsSchema.partial()
+  .refine((value) => Object.keys(value).length > 0, { message: v.atLeastOneFieldToUpdate });

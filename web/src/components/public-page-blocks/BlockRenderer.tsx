@@ -5,7 +5,7 @@ import { getBlockDefinition } from '../../features/public-page-builder/model/blo
 import { BlockErrorBoundary } from './BlockErrorBoundary';
 import { BlockRenderErrorFallback } from './BlockRenderErrorFallback';
 import { UnknownBlockFallback } from './UnknownBlockFallback';
-import type { PublicBookingService } from '../../shared/types/api';
+import type { PublicBookingService, PublicReviewsData } from '../../shared/types/api';
 
 type BlockRendererProps = {
   block: PageBlock;
@@ -14,6 +14,7 @@ type BlockRendererProps = {
   themeBorderRadius?: number;
   roundingStyle?: PageTheme['roundingStyle'];
   services?: readonly PublicBookingService[];
+  reviews?: PublicReviewsData | null;
   publicPageSlug?: string;
 };
 
@@ -29,7 +30,7 @@ export function blockSurfaceRadius(borderRadius: number | null, style: PageTheme
   return borderRadius !== null ? `${borderRadius}px` : sectionThemeRadius(style, roundedRadius);
 }
 
-export function BlockRenderer({ block, mediaUrlFor, editor = false, themeBorderRadius = 40, roundingStyle = 'rounded', services, publicPageSlug }: BlockRendererProps) {
+export function BlockRenderer({ block, mediaUrlFor, editor = false, themeBorderRadius = 40, roundingStyle = 'rounded', services, reviews, publicPageSlug }: BlockRendererProps) {
   if (!block.visible && !editor) {
     return null;
   }
@@ -79,7 +80,7 @@ export function BlockRenderer({ block, mediaUrlFor, editor = false, themeBorderR
       backgroundSize: block.design.backgroundFit, backgroundPosition: block.design.backgroundPosition, backgroundRepeat: 'no-repeat' } : {}),
   }}>
     <BlockErrorBoundary blockId={block.id} fallback={<BlockRenderErrorFallback />}>
-      <Renderer block={block} mediaUrlFor={mediaUrlFor} editor={editor} services={services} publicPageSlug={publicPageSlug} />
+      <Renderer block={block} mediaUrlFor={mediaUrlFor} editor={editor} services={services} reviews={reviews} publicPageSlug={publicPageSlug} />
     </BlockErrorBoundary>
   </Box>;
 }

@@ -320,6 +320,7 @@ export type AppointmentManagementDetails = {
   };
   canCancel: boolean;
   canReschedule: boolean;
+  canOpenInApp: boolean;
 };
 
 export type ManagedUserDeleteImpact = {
@@ -378,4 +379,55 @@ export type ErrorLogItem = {
 
 export type ErrorLogsResponse = {
   items: ErrorLogItem[];
+};
+
+export type PublicReviewScreenshot = {
+  url: string;
+  alt: string;
+  width: number;
+  height: number;
+};
+
+export type PublicReview = {
+  id: number | string;
+  name: string;
+  text: string;
+  rating: number;
+  reviewDate: string;
+  screenshot: PublicReviewScreenshot | null;
+};
+
+export type PublicReviewsData = {
+  reviews: PublicReview[];
+  summary: { average: number | null; count: number };
+};
+
+export type AccountReviewStatus = 'published' | 'hidden';
+
+export type AccountReview = {
+  id: number;
+  name: string;
+  text: string;
+  rating: number;
+  reviewDate: string;
+  screenshot: { mediaId: string; url: string; alt: string; width: number; height: number } | null;
+  status: AccountReviewStatus;
+  source: 'manual' | 'client';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AccountReviewsResponse = {
+  reviews: AccountReview[];
+  limit: number;
+};
+
+export type AccountReviewPayload = {
+  name: string;
+  text: string;
+  rating: number;
+  reviewDate: string;
+  screenshotMediaId: string | null;
+  screenshotAlt: string;
+  status: AccountReviewStatus;
 };
