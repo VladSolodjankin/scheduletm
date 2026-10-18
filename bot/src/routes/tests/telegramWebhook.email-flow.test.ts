@@ -98,10 +98,6 @@ vi.mock('../../utils/calendar-links', () => ({
   buildCalendarLink: vi.fn(),
   buildMicrosoftCalendarLink: vi.fn(),
 }));
-vi.mock('../../services/calendar-sync.service', () => ({
-  syncAppointmentRescheduledInExternalCalendars: vi.fn(),
-  syncAppointmentsToExternalCalendars: vi.fn(),
-}));
 vi.mock('../../repositories/processed-update.repository', () => ({
   acquireTelegramUserLease: acquireTelegramUserLeaseMock,
   beginProcessingUpdate: beginProcessingUpdateMock,

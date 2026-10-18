@@ -39,6 +39,8 @@ type SettingsCardProps = {
   canSelfDeleteUser: boolean;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
+  isGoogleGrantingAccess: boolean;
+  isGoogleWriteSaving: boolean;
   isZoomConnecting: boolean;
   isYandexConnecting: boolean;
   isYandexDisconnecting: boolean;
@@ -70,6 +72,8 @@ type SettingsCardProps = {
   onConnectYandex: () => void;
   onDisconnectYandex: () => void;
   onDisconnectGoogle: () => void;
+  onGrantGoogleCalendarAccess: () => void;
+  onToggleGoogleCalendarWrite: (enabled: boolean) => void;
   onCurrentPasswordChange: (value: string) => void;
   onNewPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
@@ -106,6 +110,8 @@ export function SettingsCard({
   canSelfDeleteUser,
   isGoogleConnecting,
   isGoogleDisconnecting,
+  isGoogleGrantingAccess,
+  isGoogleWriteSaving,
   isZoomConnecting,
   isYandexConnecting,
   isYandexDisconnecting,
@@ -136,7 +142,9 @@ export function SettingsCard({
   onConnectZoom,
   onConnectYandex,
   onDisconnectYandex,
-  onDisconnectGoogle
+  onDisconnectGoogle,
+  onGrantGoogleCalendarAccess,
+  onToggleGoogleCalendarWrite
   ,onCurrentPasswordChange
   ,onNewPasswordChange
   ,onConfirmPasswordChange
@@ -245,6 +253,8 @@ export function SettingsCard({
           isSaving={isSavingUser}
           isGoogleConnecting={isGoogleConnecting}
           isGoogleDisconnecting={isGoogleDisconnecting}
+          isGoogleGrantingAccess={isGoogleGrantingAccess}
+          isGoogleWriteSaving={isGoogleWriteSaving}
           isZoomConnecting={isZoomConnecting}
           isYandexConnecting={isYandexConnecting}
           isYandexDisconnecting={isYandexDisconnecting}
@@ -255,6 +265,8 @@ export function SettingsCard({
           onConnectYandex={onConnectYandex}
           onDisconnectYandex={onDisconnectYandex}
           onDisconnectGoogle={onDisconnectGoogle}
+          onGrantGoogleCalendarAccess={onGrantGoogleCalendarAccess}
+          onToggleGoogleCalendarWrite={onToggleGoogleCalendarWrite}
         />
       )}
       {resolvedTab === 'password' && (

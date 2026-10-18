@@ -71,6 +71,12 @@ export type SettingsCardCopy = {
   connectZoomHelpDescription: string;
   connectGoogleHelpTitle: string;
   connectGoogleHelpDescription: string;
+  googleCalendarWriteLabel: string;
+  googleCalendarWriteHelper: string;
+  googleCalendarWriteConnectFirst: string;
+  googleCalendarWriteGrantHint: string;
+  googleCalendarWriteGrantAccess: string;
+  googleCalendarWriteGrantingAccess: string;
   zoomConnected: string;
   connectYandex: string;
   connectingYandex: string;

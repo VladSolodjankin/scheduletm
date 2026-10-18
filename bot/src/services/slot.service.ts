@@ -2,7 +2,6 @@ import { findBusyAppointmentsByDate } from '../repositories/appointment.reposito
 import { getAppSettings } from '../repositories/app-settings.repository';
 import { findServiceById } from '../repositories/service.repository';
 import { findSpecialistScheduleSettings } from '../repositories/specialist.repository';
-import { getBusyIntervalsFromExternalCalendars } from './calendar-sync.service';
 
 const MINUTES_IN_DAY = 24 * 60;
 
@@ -63,13 +62,8 @@ export async function getAvailableSlots(params: {
     params.specialistId,
     settings.timezone,
   );
-  const googleBusyAppointments = await getBusyIntervalsFromExternalCalendars({
-    accountId: params.accountId,
-    specialistId: params.specialistId,
-    date: params.date,
-    timezone: settings.timezone,
-  });
-  const mergedBusyAppointments = [...busyAppointments, ...googleBusyAppointments];
+  // The bot performs no Google I/O: busy times from Google Calendar are not merged into bot slot listing.
+  const mergedBusyAppointments = busyAppointments;
 
   const busyIntervals = mergedBusyAppointments.map((appointment) => {
     const dayOffset = getDateOffsetInDays(appointment.date, params.date);

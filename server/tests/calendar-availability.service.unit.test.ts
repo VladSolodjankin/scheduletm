@@ -23,7 +23,7 @@ describe('calendarAvailabilityService', () => {
   beforeEach(() => {
     specialistRepository.findSpecialistsCalendarCredentials.mockReset();
     googleOAuthService.refreshGoogleAccessToken.mockReset();
-    vi.mocked(axios.get).mockReset();
+    vi.mocked(axios.post).mockReset();
     vi.mocked(axios.isAxiosError).mockReset().mockReturnValue(false);
   });
 
@@ -36,7 +36,7 @@ describe('calendarAvailabilityService', () => {
       { ...baseCredential, googleTokenExpiresAt: new Date(0), googleRefreshToken: null },
       { ...baseCredential, specialistId: 2, webUserId: 11 },
     ]);
-    vi.mocked(axios.get).mockResolvedValue({ data: { items: [] } });
+    vi.mocked(axios.post).mockResolvedValue({ data: { calendars: { primary: { busy: [] } } } });
 
     const result = await listExternalBusySlots({
       accountId: 1,
@@ -47,7 +47,7 @@ describe('calendarAvailabilityService', () => {
 
     expect(result).toEqual([]);
     expect(googleOAuthService.refreshGoogleAccessToken).not.toHaveBeenCalled();
-    expect(axios.get).toHaveBeenCalledTimes(1);
+    expect(axios.post).toHaveBeenCalledTimes(1);
   });
 
   it('skips a specialist whose refresh fails (revoked access), without failing other specialists', async () => {
@@ -56,16 +56,9 @@ describe('calendarAvailabilityService', () => {
       { ...baseCredential, specialistId: 2, webUserId: 11 },
     ]);
     googleOAuthService.refreshGoogleAccessToken.mockResolvedValue(null);
-    vi.mocked(axios.get).mockResolvedValue({
+    vi.mocked(axios.post).mockResolvedValue({
       data: {
-        items: [
-          {
-            status: 'confirmed',
-            summary: 'Busy',
-            start: { dateTime: '2026-01-01T10:00:00Z' },
-            end: { dateTime: '2026-01-01T10:30:00Z' },
-          },
-        ],
+        calendars: { primary: { busy: [{ start: '2026-01-01T10:00:00Z', end: '2026-01-01T10:30:00Z' }] } },
       },
     });
 
@@ -78,7 +71,7 @@ describe('calendarAvailabilityService', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].specialistId).toBe(2);
-    expect(axios.get).toHaveBeenCalledTimes(1);
+    expect(axios.post).toHaveBeenCalledTimes(1);
   });
 
   it('skips a specialist whose calendar API call fails, without throwing for the whole batch', async () => {
@@ -87,9 +80,9 @@ describe('calendarAvailabilityService', () => {
       { ...baseCredential, specialistId: 2, webUserId: 11 },
     ]);
     vi.mocked(axios.isAxiosError).mockReturnValue(true);
-    vi.mocked(axios.get)
+    vi.mocked(axios.post)
       .mockRejectedValueOnce({ response: { data: { error: { message: 'invalid_grant' } } }, message: 'Request failed' })
-      .mockResolvedValueOnce({ data: { items: [] } });
+      .mockResolvedValueOnce({ data: { calendars: { primary: { busy: [] } } } });
 
     const result = await listExternalBusySlots({
       accountId: 1,
@@ -103,7 +96,7 @@ describe('calendarAvailabilityService', () => {
 
   it('reuses the cached token without refreshing when it is not close to expiry', async () => {
     specialistRepository.findSpecialistsCalendarCredentials.mockResolvedValue([{ ...baseCredential }]);
-    vi.mocked(axios.get).mockResolvedValue({ data: { items: [] } });
+    vi.mocked(axios.post).mockResolvedValue({ data: { calendars: { primary: { busy: [] } } } });
 
     await listExternalBusySlots({
       accountId: 1,
@@ -113,9 +106,77 @@ describe('calendarAvailabilityService', () => {
     });
 
     expect(googleOAuthService.refreshGoogleAccessToken).not.toHaveBeenCalled();
-    expect(axios.get).toHaveBeenCalledWith(
-      expect.any(String),
+    expect(axios.post).toHaveBeenCalledWith(
+      'https://www.googleapis.com/calendar/v3/freeBusy',
+      expect.anything(),
       expect.objectContaining({ headers: { Authorization: 'Bearer valid-token' } }),
     );
   });
+
+  it('queries freeBusy for the primary calendar only and maps busy intervals without event details', async () => {
+    specialistRepository.findSpecialistsCalendarCredentials.mockResolvedValue([{ ...baseCredential, googleCalendarId: 'other@example.com' }]);
+    vi.mocked(axios.post).mockResolvedValue({
+      data: {
+        calendars: {
+          primary: {
+            busy: [
+              { start: '2026-01-01T10:00:00Z', end: '2026-01-01T11:30:00Z' },
+              { start: '2026-01-01T12:00:00Z', end: '2026-01-01T12:00:00Z' },
+            ],
+          },
+        },
+      },
+    });
+    const from = new Date('2026-01-01T00:00:00Z');
+    const to = new Date('2026-01-02T00:00:00Z');
+
+    const result = await listExternalBusySlots({ accountId: 1, specialistIds: [1], from, to });
+
+    expect(axios.post).toHaveBeenCalledWith(
+      'https://www.googleapis.com/calendar/v3/freeBusy',
+      { timeMin: from.toISOString(), timeMax: to.toISOString(), items: [{ id: 'primary' }] },
+      expect.anything(),
+    );
+    expect(result).toEqual([
+      { specialistId: 1, scheduledAt: '2026-01-01T10:00:00.000Z', durationMin: 90, source: 'google' },
+    ]);
+  });
+
+  it('skips a specialist when freeBusy reports calendar errors', async () => {
+    specialistRepository.findSpecialistsCalendarCredentials.mockResolvedValue([{ ...baseCredential }]);
+    vi.mocked(axios.post).mockResolvedValue({
+      data: { calendars: { primary: { busy: [], errors: [{ domain: 'global', reason: 'notFound' }] } } },
+    });
+
+    const result = await listExternalBusySlots({ accountId: 1, specialistIds: [1], from: new Date(), to: new Date(Date.now() + 3600_000) });
+
+    expect(result).toEqual([]);
+  });
+
+  it('uses the single calendars entry when Google does not key it as primary', async () => {
+    specialistRepository.findSpecialistsCalendarCredentials.mockResolvedValue([{ ...baseCredential }]);
+    vi.mocked(axios.post).mockResolvedValue({
+      data: { calendars: { 'owner@example.com': { busy: [{ start: '2026-01-01T10:00:00Z', end: '2026-01-01T11:00:00Z' }] } } },
+    });
+
+    const result = await listExternalBusySlots({ accountId: 1, specialistIds: [1], from: new Date(), to: new Date(Date.now() + 3600_000) });
+
+    expect(result).toEqual([
+      { specialistId: 1, scheduledAt: '2026-01-01T10:00:00.000Z', durationMin: 60, source: 'google' },
+    ]);
+  });
+
+  it.each([[{}], [undefined], [{ a: { busy: [] }, b: { busy: [] } }]])(
+    'warns and skips the specialist when calendars has no usable entry (%j)',
+    async (calendars) => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      specialistRepository.findSpecialistsCalendarCredentials.mockResolvedValue([{ ...baseCredential }]);
+      vi.mocked(axios.post).mockResolvedValue({ data: { calendars } });
+
+      const result = await listExternalBusySlots({ accountId: 1, specialistIds: [1], from: new Date(), to: new Date(Date.now() + 3600_000) });
+
+      expect(result).toEqual([]);
+      expect(spy).toHaveBeenCalledWith(expect.stringContaining('no usable calendar entry'));
+    },
+  );
 });

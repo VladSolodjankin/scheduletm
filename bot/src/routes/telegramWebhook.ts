@@ -64,10 +64,6 @@ import {
   buildMicrosoftCalendarLink,
 } from '../utils/calendar-links';
 import {
-  syncAppointmentRescheduledInExternalCalendars,
-  syncAppointmentsToExternalCalendars,
-} from '../services/calendar-sync.service';
-import {
   acquireTelegramUserLease,
   beginProcessingUpdate,
   cleanupProcessedUpdates,
@@ -634,14 +630,6 @@ telegramWebhookRouter.post(
               reminderComment: user.reminder_comment,
             });
 
-            await syncAppointmentRescheduledInExternalCalendars({
-              accountId: user.account_id,
-              specialistId: rescheduled.calendarSyncContext.specialistId,
-              appointmentId: payload.editingAppointmentId,
-              appointmentAt: rescheduled.calendarSyncContext.appointmentAtIso,
-              durationMin: rescheduled.calendarSyncContext.durationMin,
-            });
-
             await editMessageText(
               chatId,
               messageId,
@@ -935,21 +923,6 @@ telegramWebhookRouter.post(
               }),
             ),
           );
-
-          await syncAppointmentsToExternalCalendars({
-            accountId: user.account_id,
-            specialistId: payload.specialistId!,
-            appointments: appointmentResult.appointments.map((appointment) => ({
-              id: appointment.id,
-              appointment_at: appointment.appointment_at,
-              duration_min: appointment.duration_min,
-            })),
-            serviceName,
-            specialistName: confirmData.specialistName,
-            clientName: payload.enteredName || user.first_name || undefined,
-            clientPhone: payload.enteredPhone || user.phone || undefined,
-            clientEmail: payload.enteredEmail || user.email || undefined,
-          });
 
           return res.status(200).json({ ok: true });
         }

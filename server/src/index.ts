@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const [{ createApp }, { env }, { startNotificationDefaultsJob }, { startAppointmentNotificationsJob }, { startAppointmentAutoCancelUnpaidJob }, { startAppointmentAuditRetentionJob }, { startUserManagementAuditRetentionJob }, { startDeletionCleanupJob }] = await Promise.all([
+const [{ createApp }, { env }, { startNotificationDefaultsJob }, { startAppointmentNotificationsJob }, { startAppointmentAutoCancelUnpaidJob }, { startAppointmentAuditRetentionJob }, { startUserManagementAuditRetentionJob }, { startDeletionCleanupJob }, { startGoogleCalendarSyncJob }] = await Promise.all([
   import('./app.js'),
   import('./config/env.js'),
   import('./jobs/notificationDefaults.job.js'),
@@ -11,6 +11,7 @@ const [{ createApp }, { env }, { startNotificationDefaultsJob }, { startAppointm
   import('./jobs/appointmentAuditRetention.job.js'),
   import('./jobs/userManagementAuditRetention.job.js'),
   import('./jobs/deletionCleanup.job.js'),
+  import('./jobs/googleCalendarSync.job.js'),
 ]);
 const { trackServerError } = await import('./services/errorTrackingService.js');
 const jobTimers: NodeJS.Timeout[] = [];
@@ -90,6 +91,7 @@ server = app.listen(env.PORT, () => {
   jobTimers.push(startAppointmentAuditRetentionJob());
   jobTimers.push(startUserManagementAuditRetentionJob());
   jobTimers.push(startDeletionCleanupJob());
+  jobTimers.push(startGoogleCalendarSyncJob());
   console.log(`server listening on http://localhost:${env.PORT}`);
 });
 

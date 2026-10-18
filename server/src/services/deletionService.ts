@@ -2,6 +2,7 @@ import type { Knex } from 'knex';
 import { db } from '../db/knex.js';
 import { deleteAccountById, listAccountsDueForDeletion } from '../repositories/accountRepository.js';
 import { listWebUsersDueForDeletion } from '../repositories/webUserRepository.js';
+import { deleteGoogleEventsBeforeDeletion } from './googleCalendarEventService.js';
 
 async function deleteAppointmentsForSpecialists(trx: Knex.Transaction, accountId: number, specialistIds: number[]) {
   if (specialistIds.length === 0) {
@@ -85,6 +86,15 @@ async function deleteClientDataForUser(trx: Knex.Transaction, accountId: number,
 }
 
 async function purgeWebUser(accountId: number, webUserId: number, clientId: number | null) {
+  // Google events must be removed while the owner's tokens still exist; failures never block deletion.
+  const specialistIds = (await db('specialists')
+    .where({ account_id: accountId, user_id: webUserId })
+    .select<Array<{ id: number }>>('id')).map((item) => item.id);
+  await deleteGoogleEventsBeforeDeletion({ accountId, specialistIds });
+  if (clientId) {
+    await deleteGoogleEventsBeforeDeletion({ accountId, clientId });
+  }
+
   await db.transaction(async (trx) => {
     await deleteSpecialistDataForUser(trx, accountId, webUserId);
     await deleteClientDataForUser(trx, accountId, clientId);
@@ -115,6 +125,7 @@ export async function purgeDueDeletions(): Promise<void> {
   }
 
   for (const dueAccount of dueAccounts) {
+    await deleteGoogleEventsBeforeDeletion({ accountId: dueAccount.id });
     await deleteAccountById(dueAccount.id);
   }
 }

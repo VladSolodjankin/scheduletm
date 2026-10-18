@@ -22,6 +22,8 @@ import { env } from '../src/config/env.js';
 import {
   findWebUserIntegrationByWebUserId,
   updateWebUserGoogleCredentials,
+  clearWebUserGoogleCredentials,
+  updateWebUserGoogleCalendarWriteEnabled,
   updateWebUserYandexIntegration,
   clearWebUserYandexCredentials,
 } from '../src/repositories/webUserIntegrationRepository.js';
@@ -60,6 +62,32 @@ describe('web user integration secret repository mapping', () => {
     const inserted = queryMock.insert.mock.calls[0]?.[0];
     expect(inserted).not.toHaveProperty('google_api_key');
     expect(inserted).not.toHaveProperty('google_refresh_token');
+  });
+
+  it('stores granted scopes and resets write settings on Google disconnect', async () => {
+    await updateWebUserGoogleCredentials({
+      accountId: 7,
+      webUserId: 42,
+      googleApiKey: 'a',
+      googleGrantedScopes: 'openid https://www.googleapis.com/auth/calendar.freebusy',
+    });
+    expect(queryMock.insert).toHaveBeenLastCalledWith(expect.objectContaining({
+      google_granted_scopes: 'openid https://www.googleapis.com/auth/calendar.freebusy',
+    }));
+
+    await updateWebUserGoogleCalendarWriteEnabled(7, 42, true);
+    expect(queryMock.insert).toHaveBeenLastCalledWith(expect.objectContaining({
+      account_id: 7,
+      web_user_id: 42,
+      google_calendar_write_enabled: true,
+    }));
+
+    await clearWebUserGoogleCredentials(7, 42);
+    expect(queryMock.insert).toHaveBeenLastCalledWith(expect.objectContaining({
+      google_access_token_encrypted: null,
+      google_calendar_write_enabled: false,
+      google_granted_scopes: null,
+    }));
   });
 
   it('decrypts stored values from the encrypted columns only (no plaintext columns remain)', async () => {

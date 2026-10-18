@@ -3,7 +3,12 @@ import { randomBytes } from 'node:crypto';
 import { URLSearchParams } from 'node:url';
 import { env } from '../config/env.js';
 import { createGoogleOAuthState, consumeGoogleOAuthState } from '../repositories/googleOAuthStateRepository.js';
-import { clearWebUserGoogleCredentials, updateWebUserGoogleCredentials } from '../repositories/webUserIntegrationRepository.js';
+import { hasGoogleCalendarWriteScope } from '../utils/googleScopes.js';
+import {
+  clearWebUserGoogleCredentials,
+  updateWebUserGoogleCalendarWriteEnabled,
+  updateWebUserGoogleCredentials,
+} from '../repositories/webUserIntegrationRepository.js';
 
 type GoogleTokenResponse = {
   access_token: string;
@@ -25,8 +30,11 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_DEFAULT_SCOPES = [
   'openid',
   'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/calendar.readonly'
+  'https://www.googleapis.com/auth/calendar.freebusy'
 ];
+
+export type GoogleOAuthAccess = 'write';
+
 
 const resolveTokenExpiresAt = (expiresIn: number) => {
   return new Date(Date.now() + expiresIn * 1000);
@@ -60,7 +68,19 @@ const isGoogleOAuthConfigured = () => {
   );
 };
 
-export const createGoogleOAuthUrl = async (userId: string, accountId: number) => {
+const resolveRequestedScopes = (access?: GoogleOAuthAccess) => {
+  const scopes = (env.GOOGLE_OAUTH_SCOPES || GOOGLE_DEFAULT_SCOPES.join(' '))
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (access === 'write' && env.GOOGLE_OAUTH_WRITE_SCOPE && !scopes.includes(env.GOOGLE_OAUTH_WRITE_SCOPE)) {
+    scopes.push(env.GOOGLE_OAUTH_WRITE_SCOPE);
+  }
+
+  return scopes.join(' ');
+};
+
+export const createGoogleOAuthUrl = async (userId: string, accountId: number, access?: GoogleOAuthAccess) => {
   if (!isGoogleOAuthConfigured()) {
     return null;
   }
@@ -77,6 +97,7 @@ export const createGoogleOAuthUrl = async (userId: string, accountId: number) =>
     webUserId,
     stateToken: state,
     expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    requestedAccess: access ?? null,
   });
 
   const params = new URLSearchParams({
@@ -85,7 +106,7 @@ export const createGoogleOAuthUrl = async (userId: string, accountId: number) =>
     response_type: 'code',
     access_type: 'offline',
     include_granted_scopes: 'true',
-    scope: env.GOOGLE_OAUTH_SCOPES || GOOGLE_DEFAULT_SCOPES.join(' '),
+    scope: resolveRequestedScopes(access),
     state,
     prompt: 'consent'
   });
@@ -130,10 +151,20 @@ export const completeGoogleOAuth = async (state: string, code: string) => {
       googleApiKey: tokenResponse.data.access_token,
       googleRefreshToken: tokenResponse.data.refresh_token,
       googleTokenExpiresAt: resolveTokenExpiresAt(tokenResponse.data.expires_in),
+      // Google returns the full granted set (include_granted_scopes=true), so replace rather than append.
+      googleGrantedScopes: tokenResponse.data.scope ?? undefined,
     });
+
+    const writeScopeGranted = hasGoogleCalendarWriteScope(tokenResponse.data.scope);
+    if (!writeScopeGranted) {
+      // A (re)connect without the write scope must not leave a stale opt-in flag behind.
+      await updateWebUserGoogleCalendarWriteEnabled(accountId, pending.web_user_id, false);
+    }
 
     return {
       ok: true as const,
+      requestedAccess: pending.requested_access === 'write' ? ('write' as const) : null,
+      writeScopeGranted,
       userId: String(pending.web_user_id),
       connectedAt: new Date().toISOString(),
       tokenMeta: {
@@ -175,6 +206,7 @@ export const refreshGoogleAccessToken = async (input: RefreshGoogleAccessTokenIn
       googleApiKey: tokenResponse.data.access_token,
       googleRefreshToken: tokenResponse.data.refresh_token,
       googleTokenExpiresAt,
+      googleGrantedScopes: tokenResponse.data.scope ?? undefined,
     });
 
     return {

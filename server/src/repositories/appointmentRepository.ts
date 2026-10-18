@@ -1,4 +1,5 @@
 import { db } from '../db/knex.js';
+import { enqueueGoogleCalendarSync, enqueueGoogleCalendarUpserts } from './googleCalendarSyncRepository.js';
 
 export type AppointmentStatus = 'new' | 'confirmed' | 'cancelled';
 export type AppointmentAuditAction = 'cancel' | 'reschedule' | 'mark-paid' | 'notify';
@@ -21,6 +22,8 @@ export type AppointmentRecord = {
   user_id: number;
   service_id: number;
   group_id?: number | null;
+  google_event_id?: string | null;
+  google_event_web_user_id?: number | null;
   created_at: Date;
   updated_at: Date;
   client_first_name?: string | null;
@@ -217,6 +220,15 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
       })
       .returning<AppointmentRecord[]>('*');
 
+    if (row.status !== 'cancelled') {
+      await enqueueGoogleCalendarSync({
+        accountId: row.account_id,
+        appointmentId: row.id,
+        action: 'upsert',
+        specialistId: row.specialist_id,
+      });
+    }
+
     return row;
   } catch (error) {
     if (isSlotConflict(error)) throw new AppointmentRepositoryError('SLOT_CONFLICT');
@@ -258,6 +270,14 @@ export async function createAppointmentSeries(input: CreateAppointmentInput & {
           is_paid: false,
         })),
       ).returning<AppointmentRecord[]>('*');
+
+      if (input.status !== 'cancelled') {
+        await enqueueGoogleCalendarUpserts({
+          accountId: input.accountId,
+          specialistId: input.specialistId,
+          appointmentIds: appointments.map((appointment) => appointment.id),
+        }, trx);
+      }
 
       return { groupId: group.id, appointments };
     });
@@ -321,6 +341,23 @@ export async function updateAppointment(input: UpdateAppointmentInput): Promise<
     .update(payload)
     .returning<AppointmentRecord[]>('*');
 
+  const changesCalendarEvent = input.scheduledAt !== undefined
+    || input.status !== undefined
+    || input.durationMin !== undefined
+    || input.meetingProvider !== undefined
+    || Object.prototype.hasOwnProperty.call(input, 'meetingLink')
+    || Object.prototype.hasOwnProperty.call(input, 'locationAddress');
+  if (row && changesCalendarEvent) {
+    await enqueueGoogleCalendarSync({
+      accountId: row.account_id,
+      appointmentId: row.id,
+      action: row.status === 'cancelled' ? 'delete' : 'upsert',
+      specialistId: row.specialist_id,
+      googleEventId: row.google_event_id ?? null,
+      webUserId: row.google_event_web_user_id ?? null,
+    });
+  }
+
   return row ?? null;
 }
 
@@ -336,6 +373,17 @@ export async function autoCancelUnpaidAppointment(input: {
       updated_at: db.fn.now(),
     })
     .returning<AppointmentRecord[]>('*');
+
+  if (row) {
+    await enqueueGoogleCalendarSync({
+      accountId: row.account_id,
+      appointmentId: row.id,
+      action: 'delete',
+      specialistId: row.specialist_id,
+      googleEventId: row.google_event_id ?? null,
+      webUserId: row.google_event_web_user_id ?? null,
+    });
+  }
 
   return row ?? null;
 }

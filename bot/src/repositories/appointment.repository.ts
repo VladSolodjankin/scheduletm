@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import { db } from '../db/knex';
+import { enqueueGoogleCalendarSync } from './google-calendar-sync-queue.repository';
 import { getUtcRangeForTimezoneDate, toDateTimeFromUtc } from '../utils/timezone';
 
 type AppointmentRow = {
@@ -104,6 +105,13 @@ export async function createAppointment(input: CreateAppointmentInput) {
     })
     .returning('*');
 
+  await enqueueGoogleCalendarSync({
+    accountId: input.accountId,
+    appointmentId: appointment.id,
+    action: 'upsert',
+    specialistId: input.specialistId,
+  });
+
   return appointment;
 }
 
@@ -127,6 +135,13 @@ async function insertAppointments(conn: Knex | Knex.Transaction, input: CreateAp
         is_paid: item.isPaid ?? false,
       })
       .returning('*');
+
+    await enqueueGoogleCalendarSync({
+      accountId: item.accountId,
+      appointmentId: appointment.id,
+      action: 'upsert',
+      specialistId: item.specialistId,
+    }, conn);
 
     created.push(appointment);
   }
@@ -248,6 +263,15 @@ export async function updateAppointmentDateTime(
       ['*'],
     );
 
+  if (appointment) {
+    await enqueueGoogleCalendarSync({
+      accountId: appointment.account_id,
+      appointmentId: appointment.id,
+      action: 'upsert',
+      specialistId: appointment.specialist_id,
+    });
+  }
+
   return appointment;
 }
 
@@ -271,6 +295,17 @@ export async function cancelAppointmentById(
       },
       ['*'],
     );
+
+  if (appointment) {
+    await enqueueGoogleCalendarSync({
+      accountId: appointment.account_id,
+      appointmentId: appointment.id,
+      action: 'delete',
+      specialistId: appointment.specialist_id,
+      googleEventId: appointment.google_event_id ?? null,
+      webUserId: appointment.google_event_web_user_id ?? null,
+    });
+  }
 
   return appointment ?? null;
 }

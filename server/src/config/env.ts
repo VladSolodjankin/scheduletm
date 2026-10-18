@@ -17,6 +17,7 @@ const envSchema = z.object({
   GOOGLE_OAUTH_CLIENT_SECRET: z.string().default(''),
   GOOGLE_OAUTH_REDIRECT_URI: z.string().url().default('http://localhost:3003/api/integrations/google/oauth/callback'),
   GOOGLE_OAUTH_SCOPES: z.string().default(''),
+  GOOGLE_OAUTH_WRITE_SCOPE: z.string().default('https://www.googleapis.com/auth/calendar.events.owned'),
   ZOOM_OAUTH_CLIENT_ID: z.string().default(''),
   ZOOM_OAUTH_CLIENT_SECRET: z.string().default(''),
   ZOOM_OAUTH_REDIRECT_URI: z.string().url().default('http://localhost:3003/api/integrations/zoom/oauth/callback'),

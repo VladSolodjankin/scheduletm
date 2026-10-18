@@ -6,7 +6,6 @@ import {
   Stack,
   ToggleButton,
   ToggleButtonGroup,
-  Tooltip,
   Typography,
   alpha,
   useTheme,
@@ -69,23 +68,6 @@ export function AppointmentsCalendar({
   const [blockedCellKey, setBlockedCellKey] = useState<string | null>(null);
   const todayKey = toDateKeyInTimezone(new Date(), displayTimeZone);
   const isPastDay = (dayKey: string) => dayKey < todayKey;
-
-  const getGoogleSlotTitle = (slot: AppointmentListResponse['busySlots'][number]) => {
-    if (slot.title) {
-      return slot.title;
-    }
-
-    return slot.organizerEmail || slot.creatorEmail || 'Busy (Google)';
-  };
-
-  const getGoogleSlotTooltip = (slot: AppointmentListResponse['busySlots'][number]) =>
-    [
-      slot.title ? `Title: ${slot.title}` : '',
-      slot.organizerEmail ? `Organizer: ${slot.organizerEmail}` : '',
-      slot.creatorEmail ? `Creator: ${slot.creatorEmail}` : '',
-    ]
-      .filter(Boolean)
-      .join(' - ');
 
   const getMeetingProviderLabel = (provider: AppointmentItem['meetingProvider']) => (
     provider === 'zoom'
@@ -406,15 +388,12 @@ export function AppointmentsCalendar({
 
                         <Stack spacing={0.5}>
                           {externalBusy.map((slot) => (
-                            <Tooltip
+                            <AppStatusBadge
                               key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}
-                              title={getGoogleSlotTooltip(slot)}
-                              placement="top"
-                              arrow
-                              disableHoverListener={!getGoogleSlotTooltip(slot)}
-                            >
-                              <AppStatusBadge label={getGoogleSlotTitle(slot)} tone="warning" variant="outlined" />
-                            </Tooltip>
+                              label={t('appointments.externalBusyBadge')}
+                              tone="warning"
+                              variant="outlined"
+                            />
                           ))}
 
                           {items.map((item) => (

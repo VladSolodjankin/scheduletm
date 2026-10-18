@@ -26,11 +26,10 @@ function decryptText(value: string, secret: string): string | null {
 
 export function decryptIntegrationSecret(
   encryptedValue: string | null | undefined,
-  plaintextFallback: string | null | undefined,
   secretName: string,
 ): string | null {
   if (encryptedValue === null || encryptedValue === undefined) {
-    return plaintextFallback ?? null;
+    return null;
   }
 
   if (!env.appEncryptionKey) {

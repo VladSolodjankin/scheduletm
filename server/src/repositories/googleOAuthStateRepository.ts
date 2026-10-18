@@ -5,6 +5,7 @@ export type GoogleOAuthStateRecord = {
   account_id: number;
   web_user_id: number;
   state_token: string;
+  requested_access: string | null;
   created_at: Date;
   expires_at: Date;
 };
@@ -14,12 +15,14 @@ export async function createGoogleOAuthState(input: {
   webUserId: number;
   stateToken: string;
   expiresAt: Date;
+  requestedAccess?: 'write' | null;
 }): Promise<void> {
   await db('google_oauth_states').insert({
     account_id: input.accountId,
     web_user_id: input.webUserId,
     state_token: input.stateToken,
     expires_at: input.expiresAt,
+    requested_access: input.requestedAccess ?? null,
   });
 }
 

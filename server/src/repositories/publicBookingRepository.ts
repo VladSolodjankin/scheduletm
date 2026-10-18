@@ -1,3 +1,4 @@
+import { enqueueGoogleCalendarSync } from './googleCalendarSyncRepository.js';
 import { randomBytes } from 'node:crypto';
 import { db } from '../db/knex.js';
 
@@ -218,6 +219,12 @@ export async function createPublicGuestAppointment(input: {
       }).returning<Array<{ id: number; status: 'new'; appointment_at: Date; duration_min: number; public_access_code: string }>>(
         ['id', 'status', 'appointment_at', 'duration_min', 'public_access_code'],
       );
+      await enqueueGoogleCalendarSync({
+        accountId: input.accountId,
+        appointmentId: appointment.id,
+        action: 'upsert',
+        specialistId: input.specialistId,
+      }, trx);
       return { ...appointment, client_id: client.id };
     } catch (error) {
       if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23P01') {
