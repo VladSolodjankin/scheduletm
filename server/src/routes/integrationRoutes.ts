@@ -14,6 +14,8 @@ import {
   verifyZoomWebhookSignature,
   type ZoomWebhookPayload,
 } from '../services/zoomWebhookService.js';
+import { createYandexTelemostMeeting } from '../services/yandexService.js';
+import { completeYandexOAuth, createYandexOAuthUrl, disconnectYandexOAuth } from '../services/yandexOAuthService.js';
 import { formatZodError } from '../utils/validation.js';
 import { trackServerError } from '../services/errorTrackingService.js';
 
@@ -26,6 +28,8 @@ const zoomCreateMeetingSchema = z.object({
   duration: z.number().int().min(15).max(480),
   timezone: z.string().trim().min(1).max(100),
 });
+
+const yandexCreateMeetingSchema = zoomCreateMeetingSchema.partial();
 
 integrationRoutes.post('/google/oauth/start', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
@@ -165,6 +169,94 @@ integrationRoutes.post('/zoom/meetings', requireAccessToken, async (req, res) =>
     }
 
     return res.status(502).json({ message: t(req, 'zoomMeetingCreateFailed') });
+  }
+
+  return res.status(201).json(result.meeting);
+});
+
+integrationRoutes.post('/yandex/oauth/start', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const oauthInit = await createYandexOAuthUrl(user.id, user.accountId);
+
+  if (!oauthInit) {
+    return res.status(503).json({
+      message: t(req, 'yandexOAuthNotConfigured'),
+      requiredEnv: [
+        'YANDEX_OAUTH_CLIENT_ID',
+        'YANDEX_OAUTH_CLIENT_SECRET',
+        'YANDEX_OAUTH_REDIRECT_URI'
+      ]
+    });
+  }
+
+  return res.json({
+    provider: 'yandex_telemost',
+    authorizeUrl: oauthInit.url,
+    state: oauthInit.state
+  });
+});
+
+integrationRoutes.get('/yandex/oauth/callback', async (req, res) => {
+  const state = String(req.query.state ?? '');
+  const code = String(req.query.code ?? '');
+
+  if (!state || !code) {
+    return res.redirect(`${env.APP_URL}/settings?yandex_oauth=error&reason=missing_code_or_state`);
+  }
+
+  const result = await completeYandexOAuth(state, code);
+
+  if (!result.ok) {
+    return res.redirect(`${env.APP_URL}/settings?yandex_oauth=error&reason=${result.reason}`);
+  }
+
+  return res.redirect(`${env.APP_URL}/settings?yandex_oauth=success`);
+});
+
+integrationRoutes.post('/yandex/disconnect', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const ok = await disconnectYandexOAuth(user.id, user.accountId);
+  if (!ok) {
+    return res.status(400).json({ message: t(req, 'invalidUserId') });
+  }
+
+  return res.json({
+    provider: 'yandex_telemost',
+    connected: false,
+  });
+});
+
+integrationRoutes.post('/yandex/meetings', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  // Telemost conferences take no title/time; the body is accepted in Zoom's shape for client symmetry
+  // but only validated, not forwarded.
+  const parsed = yandexCreateMeetingSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return res.status(400).json(formatZodError(parsed.error));
+  }
+
+  const result = await createYandexTelemostMeeting({
+    accountId: user.accountId,
+    userId: user.id,
+  });
+
+  if (!result.ok) {
+    if (result.reason === 'yandex_not_configured') {
+      return res.status(503).json({
+        message: t(req, 'yandexOAuthNotConfigured'),
+        requiredEnv: ['YANDEX_OAUTH_CLIENT_ID', 'YANDEX_OAUTH_CLIENT_SECRET', 'YANDEX_OAUTH_REDIRECT_URI'],
+      });
+    }
+
+    if (result.reason === 'yandex_not_connected' || result.reason === 'yandex_auth_failed') {
+      return res.status(401).json({ message: t(req, 'yandexNotConnected') });
+    }
+
+    if (result.reason === 'invalid_user') {
+      return res.status(400).json({ message: t(req, 'invalidUserId') });
+    }
+
+    return res.status(502).json({ message: t(req, 'yandexMeetingCreateFailed') });
   }
 
   return res.status(201).json(result.meeting);

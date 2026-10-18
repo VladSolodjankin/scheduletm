@@ -40,6 +40,8 @@ type SettingsCardProps = {
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
   isZoomConnecting: boolean;
+  isYandexConnecting: boolean;
+  isYandexDisconnecting: boolean;
   isSavingSystem?: boolean;
   isSavingAccount?: boolean;
   isSavingUser?: boolean;
@@ -65,6 +67,8 @@ type SettingsCardProps = {
   onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
   onConnectZoom: () => void;
+  onConnectYandex: () => void;
+  onDisconnectYandex: () => void;
   onDisconnectGoogle: () => void;
   onCurrentPasswordChange: (value: string) => void;
   onNewPasswordChange: (value: string) => void;
@@ -103,6 +107,8 @@ export function SettingsCard({
   isGoogleConnecting,
   isGoogleDisconnecting,
   isZoomConnecting,
+  isYandexConnecting,
+  isYandexDisconnecting,
   isSavingSystem = false,
   isSavingAccount = false,
   isSavingUser = false,
@@ -128,6 +134,8 @@ export function SettingsCard({
   onClearTelegramBotToken,
   onConnectGoogle,
   onConnectZoom,
+  onConnectYandex,
+  onDisconnectYandex,
   onDisconnectGoogle
   ,onCurrentPasswordChange
   ,onNewPasswordChange
@@ -208,7 +216,7 @@ export function SettingsCard({
 
       {resolvedTab === 'system' && <SystemSettingsTab copy={copy} control={systemControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingSystem} onSubmit={handleSystemSubmit(onSaveSystem)} />}
       {resolvedTab === 'account' && <AccountSettingsTab copy={copy} control={accountControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingAccount} onSubmit={handleAccountSubmit(onSaveAccount)} onRequestAccountDeletion={onRequestAccountDeletion} onCancelAccountDeletion={onCancelAccountDeletion} />}
-      {resolvedTab === 'specialistPolicy' && <SpecialistPolicyTab copy={copy} control={specialistPolicyControl} isSaving={isSavingSpecialistBookingPolicy} onSubmit={handleSpecialistPolicySubmit(onSaveSpecialistBookingPolicy)} />}
+      {resolvedTab === 'specialistPolicy' && <SpecialistPolicyTab copy={copy} userSettings={userSettings} control={specialistPolicyControl} isSaving={isSavingSpecialistBookingPolicy} onSubmit={handleSpecialistPolicySubmit(onSaveSpecialistBookingPolicy)} />}
       {resolvedTab === 'scheduleExceptions' && (
         <ScheduleExceptionsTab
           copy={copy.scheduleExceptions}
@@ -238,10 +246,14 @@ export function SettingsCard({
           isGoogleConnecting={isGoogleConnecting}
           isGoogleDisconnecting={isGoogleDisconnecting}
           isZoomConnecting={isZoomConnecting}
+          isYandexConnecting={isYandexConnecting}
+          isYandexDisconnecting={isYandexDisconnecting}
           onSubmit={handleUserSubmit(onSaveUser)}
           onClearTelegramBotToken={onClearTelegramBotToken}
           onConnectGoogle={onConnectGoogle}
           onConnectZoom={onConnectZoom}
+          onConnectYandex={onConnectYandex}
+          onDisconnectYandex={onDisconnectYandex}
           onDisconnectGoogle={onDisconnectGoogle}
         />
       )}

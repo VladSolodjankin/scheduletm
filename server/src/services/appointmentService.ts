@@ -39,6 +39,7 @@ import { WebUserRole } from '../types/webUserRole.js';
 import { assertClientEditableFields, canCreateAppointments, canManageAllAppointments, canMarkPaidAndNotify, isClientRole } from '../policies/rolePermissions.js';
 import { sendAppointmentNotificationByType } from './appointmentNotificationService.js';
 import { enqueueTrackedAppointmentNotification } from './notificationDeliveryService.js';
+import { createYandexTelemostMeeting } from './yandexService.js';
 import { createZoomMeeting } from './zoomService.js';
 
 type AppointmentClientDto = {
@@ -57,7 +58,7 @@ type AppointmentDto = {
   durationMin: number;
   status: AppointmentStatus;
   paymentStatus: 'paid' | 'unpaid';
-  meetingProvider: 'manual' | 'zoom' | 'offline';
+  meetingProvider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   meetingLink: string;
   locationAddress: string;
   notes: string;
@@ -102,7 +103,7 @@ type CreateAppointmentPayload = {
   appointmentEndAt: string;
   status?: AppointmentStatus;
   meetingLink?: string;
-  meetingProvider?: 'manual' | 'zoom' | 'offline';
+  meetingProvider?: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   locationAddress?: string;
   saveClientMeetingPreference?: boolean;
   notes?: string;
@@ -132,7 +133,7 @@ type UpdateAppointmentPayload = {
   durationMin?: number;
   status?: AppointmentStatus;
   meetingLink?: string;
-  meetingProvider?: 'manual' | 'zoom' | 'offline';
+  meetingProvider?: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   locationAddress?: string;
   notes?: string;
 } & AppointmentClientPayload;
@@ -433,6 +434,11 @@ export async function getAppointments(
   };
 }
 
+type MeetingProvider = 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
+const MEETING_PROVIDERS: readonly MeetingProvider[] = ['manual', 'zoom', 'yandex_telemost', 'offline'];
+const isMeetingProvider = (item: string): item is MeetingProvider =>
+  (MEETING_PROVIDERS as readonly string[]).includes(item);
+
 export async function createAppointmentForActor(
   actor: User,
   payload: CreateAppointmentPayload,
@@ -471,21 +477,21 @@ export async function createAppointmentForActor(
   const allowedProviders = (specialistPolicy?.allowed_meeting_providers ?? 'offline,zoom,manual')
     .split(',')
     .map((item) => item.trim())
-    .filter((item): item is 'manual' | 'zoom' | 'offline' => item === 'manual' || item === 'zoom' || item === 'offline');
+    .filter(isMeetingProvider);
   const priorityProviders = (specialistPolicy?.meeting_providers_priority ?? 'offline,zoom,manual')
     .split(',')
     .map((item) => item.trim())
-    .filter((item): item is 'manual' | 'zoom' | 'offline' => item === 'manual' || item === 'zoom' || item === 'offline')
+    .filter(isMeetingProvider)
     .filter((item, index, list) => list.indexOf(item) === index);
   const candidateProviders = [
     payload.meetingProvider,
     preferred && allowedProviders.includes(preferred) ? preferred : undefined,
     ...priorityProviders.filter((provider) => allowedProviders.includes(provider)),
-  ].filter((provider, index, list): provider is 'manual' | 'zoom' | 'offline' => Boolean(provider) && list.indexOf(provider) === index);
+  ].filter((provider, index, list): provider is 'manual' | 'zoom' | 'yandex_telemost' | 'offline' => Boolean(provider) && list.indexOf(provider) === index);
 
   let meetingLink = payload.meetingLink?.trim() ?? '';
   let zoomMeetingId: string | null = null;
-  let meetingProvider: 'manual' | 'zoom' | 'offline' = candidateProviders[0] ?? (meetingLink ? 'manual' : 'offline');
+  let meetingProvider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline' = candidateProviders[0] ?? (meetingLink ? 'manual' : 'offline');
   if (!payload.meetingProvider && !preferred && meetingLink && meetingProvider !== 'manual' && allowedProviders.includes('manual')) {
     meetingProvider = 'manual';
   }
@@ -496,9 +502,13 @@ export async function createAppointmentForActor(
 
   for (const provider of candidateProviders) {
     if (provider === 'zoom' && !meetingLink) {
+      // Meetings are created with the specialist's own Zoom account, not the booking actor's.
+      if (specialist.user_id == null) {
+        continue;
+      }
       const zoom = await createZoomMeeting({
-        accountId,
-        userId: actor.id,
+        accountId: specialist.account_id ?? accountId,
+        userId: String(specialist.user_id),
         topic: 'Appointment',
         startTime: payload.appointmentAt,
         duration: resolveDurationFromRange(payload.appointmentAt, payload.appointmentEndAt),
@@ -514,6 +524,30 @@ export async function createAppointmentForActor(
       if (zoom.reason === 'zoom_auth_failed') {
         console.error(
           `[appointmentService] specialist ${payload.specialistId}: Zoom token refresh failed, likely revoked access — falling back to next meeting provider until they reconnect Zoom`,
+        );
+      }
+
+      continue;
+    }
+
+    if (provider === 'yandex_telemost' && !meetingLink) {
+      // Same rule as Zoom: the specialist's own Yandex account creates the meeting.
+      if (specialist.user_id == null) {
+        continue;
+      }
+      const telemost = await createYandexTelemostMeeting({
+        accountId: specialist.account_id ?? accountId,
+        userId: String(specialist.user_id),
+      });
+      if (telemost.ok) {
+        meetingLink = telemost.meeting.joinUrl;
+        meetingProvider = 'yandex_telemost';
+        break;
+      }
+
+      if (telemost.reason === 'yandex_auth_failed') {
+        console.error(
+          `[appointmentService] specialist ${payload.specialistId}: Yandex token refresh failed, likely revoked access — falling back to next meeting provider until they reconnect Yandex`,
         );
       }
 

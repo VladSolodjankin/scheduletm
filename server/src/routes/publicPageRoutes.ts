@@ -223,7 +223,7 @@ publicPageRoutes.post('/by-slug/:slug/appointments', publicBookingRateLimit, asy
     : undefined;
   if (
     requestedProvider !== undefined
-    && !['manual', 'zoom', 'offline'].includes(String(requestedProvider))
+    && !['manual', 'zoom', 'yandex_telemost', 'offline'].includes(String(requestedProvider))
   ) {
     return res.status(422).json({ code: 'invalid_selection' });
   }

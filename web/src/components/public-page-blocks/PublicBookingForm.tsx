@@ -15,7 +15,7 @@ type FormState = {
   lastName: string;
   email: string;
   phone: string;
-  meetingProvider: '' | 'manual' | 'zoom' | 'offline';
+  meetingProvider: '' | 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
 };
 
 function todayDateInputValue(): string {
@@ -217,6 +217,7 @@ export function PublicBookingForm({ slug, initialServiceId, initialSpecialistId,
           <MenuItem value="">{t('publicBooking.providerAutomatic')}</MenuItem>
           <MenuItem value="manual">{t('publicBooking.providerManual')}</MenuItem>
           <MenuItem value="zoom">{t('publicBooking.providerZoom')}</MenuItem>
+          <MenuItem value="yandex_telemost">{t('publicBooking.providerYandexTelemost')}</MenuItem>
           <MenuItem value="offline">{t('publicBooking.providerOffline')}</MenuItem>
         </Select>
       </FormControl>

@@ -251,7 +251,7 @@ export type SendAppointmentNotificationEmailInput = {
   serviceName?: string;
   durationMin?: number;
   meetingLink?: string;
-  meetingProvider?: 'manual' | 'zoom' | 'offline';
+  meetingProvider?: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   locationAddress?: string;
 };
 

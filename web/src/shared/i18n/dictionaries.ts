@@ -175,6 +175,15 @@ export const dictionaries = {
       connectGoogleHelpDescription: 'Connect Google Calendar to sync your busy slots and avoid double bookings.',
       googleConnected: 'Google connected',
       zoomConnected: 'Zoom connected',
+      connectYandex: 'Connect Yandex Telemost',
+      connectingYandex: 'Redirecting to Yandex...',
+      disconnectYandex: 'Disconnect Yandex Telemost',
+      disconnectingYandex: 'Disconnecting...',
+      yandexConnected: 'Yandex Telemost connected',
+      connectYandexHelpTitle: 'Yandex Telemost integration',
+      connectYandexHelpDescription: 'Use Yandex Telemost to automatically create meeting links for appointments when Yandex Telemost is selected as provider.',
+      meetingProvidersHint: 'The chosen providers decide where meetings take place and which service generates the meeting link for new appointments.',
+      meetingProviderNotConnected: 'not connected',
       telegramBotToken: 'Telegram Bot Token',
       telegramBotConnected: 'Telegram bot connected',
       telegramBotNotConnected: 'Telegram bot is not connected',
@@ -203,6 +212,7 @@ export const dictionaries = {
       },
       googleConnectedSuccessfully: 'Google Calendar connected successfully.',
       zoomConnectedSuccessfully: 'Zoom connected successfully.',
+      yandexConnectedSuccessfully: 'Yandex Telemost connected successfully.',
       specialists: {
         title: 'Specialists',
         add: 'Add specialist',
@@ -277,6 +287,9 @@ export const dictionaries = {
         connectGoogle: 'Unable to connect Google.',
         disconnectGoogle: 'Unable to disconnect Google.',
         connectZoom: 'Unable to connect Zoom.',
+        connectYandex: 'Unable to connect Yandex Telemost.',
+        disconnectYandex: 'Unable to disconnect Yandex Telemost.',
+        yandexNotConfigured: 'Yandex Telemost integration is not configured on the server.',
         saveSpecialist: 'Unable to save specialist.',
         deleteSpecialist: 'Unable to delete specialist.'
       }
@@ -635,6 +648,7 @@ export const dictionaries = {
       eventNotify: 'Manual notification sent',
       meetingProviderManual: 'Manual link',
       meetingProviderZoom: 'Zoom',
+      meetingProviderYandexTelemost: 'Yandex Telemost',
       meetingProviderOffline: 'Offline',
       recurrence: 'Repeat', recurrenceNone: 'Does not repeat', recurrenceDaily: 'Daily',
       recurrenceWeekly: 'Weekly', recurrenceOccurrences: 'Occurrences',
@@ -650,6 +664,7 @@ export const dictionaries = {
         markPaid: 'Unable to confirm payment.',
         notify: 'Unable to send notification.',
         generateMeetingLink: 'Unable to generate meeting link.',
+        yandexNotConnected: 'Yandex Telemost is not connected. Connect it in Settings > Integrations.',
         createSpecialistFirst: 'Create at least one specialist first.',
       },
       fields: {
@@ -675,7 +690,7 @@ export const dictionaries = {
       firstName: 'First name', lastName: 'Last name',
       email: 'Email', phone: 'Phone', contactHint: 'Provide at least an email or phone number.',
       provider: 'Meeting format', providerAutomatic: 'Automatic', providerManual: 'Online link',
-      providerZoom: 'Zoom', providerOffline: 'In person', submit: 'Book', successTitle: 'Appointment booked',
+      providerZoom: 'Zoom', providerYandexTelemost: 'Yandex Telemost', providerOffline: 'In person', submit: 'Book', successTitle: 'Appointment booked',
       successMessage: 'Your appointment number is {id}.',
       accessCodeLabel: 'Access code', accessCodeHint: 'Save this code — you\'ll need it with your appointment number to check its status later.',
       errors: { load: 'Could not load booking options.', slots: 'Could not load available times.', required: 'Complete required fields and provide a contact.', submit: 'Could not book the appointment.' }
@@ -1001,6 +1016,15 @@ export const dictionaries = {
       connectGoogleHelpDescription: 'Подключите Google Calendar для синхронизации занятых слотов и предотвращения двойных бронирований.',
       googleConnected: 'Google подключен',
       zoomConnected: 'Zoom подключен',
+      connectYandex: 'Подключить Яндекс Телемост',
+      connectingYandex: 'Перенаправляем в Яндекс...',
+      disconnectYandex: 'Отключить Яндекс Телемост',
+      disconnectingYandex: 'Отключаем...',
+      yandexConnected: 'Яндекс Телемост подключен',
+      connectYandexHelpTitle: 'Интеграция Яндекс Телемост',
+      connectYandexHelpDescription: 'Используйте Яндекс Телемост для автоматического создания ссылок на встречи при записи, если выбран Яндекс Телемост как провайдер.',
+      meetingProvidersHint: 'Выбранные провайдеры определяют, где проходят встречи и какой сервис создаёт ссылку на встречу для новых записей.',
+      meetingProviderNotConnected: 'не подключен',
       telegramBotToken: 'Telegram Bot Token',
       telegramBotConnected: 'Telegram-бот подключен',
       telegramBotNotConnected: 'Telegram-бот не подключен',
@@ -1029,6 +1053,7 @@ export const dictionaries = {
       },
       googleConnectedSuccessfully: 'Google Calendar успешно подключен.',
       zoomConnectedSuccessfully: 'Zoom успешно подключен.',
+      yandexConnectedSuccessfully: 'Яндекс Телемост успешно подключен.',
       specialists: {
         title: 'Специалисты',
         add: 'Добавить специалиста',
@@ -1103,6 +1128,9 @@ export const dictionaries = {
         connectGoogle: 'Не удалось подключить Google.',
         disconnectGoogle: 'Не удалось отключить Google.',
         connectZoom: 'Не удалось подключить Zoom.',
+        connectYandex: 'Не удалось подключить Яндекс Телемост.',
+        disconnectYandex: 'Не удалось отключить Яндекс Телемост.',
+        yandexNotConfigured: 'Интеграция с Яндекс Телемост не настроена на сервере.',
         saveSpecialist: 'Не удалось сохранить специалиста.',
         deleteSpecialist: 'Не удалось удалить специалиста.'
       }
@@ -1461,6 +1489,7 @@ export const dictionaries = {
       eventNotify: 'Ручное уведомление отправлено',
       meetingProviderManual: 'Ручная ссылка',
       meetingProviderZoom: 'Zoom',
+      meetingProviderYandexTelemost: 'Яндекс Телемост',
       meetingProviderOffline: 'Офлайн',
       recurrence: 'Повтор', recurrenceNone: 'Не повторять', recurrenceDaily: 'Каждый день',
       recurrenceWeekly: 'Каждую неделю', recurrenceOccurrences: 'Количество встреч',
@@ -1476,6 +1505,7 @@ export const dictionaries = {
         markPaid: 'Не удалось подтвердить оплату.',
         notify: 'Не удалось отправить уведомление.',
         generateMeetingLink: 'Не удалось сгенерировать ссылку на встречу.',
+        yandexNotConnected: 'Яндекс Телемост не подключен. Подключите его в Настройки > Интеграции.',
         createSpecialistFirst: 'Сначала создайте хотя бы одного специалиста.',
       },
       fields: {
@@ -1501,7 +1531,7 @@ export const dictionaries = {
       firstName: 'Имя', lastName: 'Фамилия',
       email: 'Email', phone: 'Телефон', contactHint: 'Укажите хотя бы email или телефон.',
       provider: 'Формат встречи', providerAutomatic: 'Автоматически', providerManual: 'Онлайн-ссылка',
-      providerZoom: 'Zoom', providerOffline: 'Лично', submit: 'Записаться', successTitle: 'Встреча забронирована',
+      providerZoom: 'Zoom', providerYandexTelemost: 'Яндекс Телемост', providerOffline: 'Лично', submit: 'Записаться', successTitle: 'Встреча забронирована',
       successMessage: 'Номер вашей встречи: {id}.',
       accessCodeLabel: 'Код доступа', accessCodeHint: 'Сохраните этот код — он понадобится вместе с номером встречи, чтобы проверить её статус позже.',
       errors: { load: 'Не удалось загрузить варианты записи.', slots: 'Не удалось загрузить доступное время.', required: 'Заполните обязательные поля и укажите контакт.', submit: 'Не удалось забронировать встречу.' }
@@ -1844,6 +1874,19 @@ export type TranslationKey =
   | 'settings.connectingZoom'
   | 'settings.googleConnected'
   | 'settings.zoomConnected'
+  | 'settings.connectYandex'
+  | 'settings.connectingYandex'
+  | 'settings.disconnectYandex'
+  | 'settings.disconnectingYandex'
+  | 'settings.yandexConnected'
+  | 'settings.connectYandexHelpTitle'
+  | 'settings.connectYandexHelpDescription'
+  | 'settings.meetingProvidersHint'
+  | 'settings.meetingProviderNotConnected'
+  | 'settings.yandexConnectedSuccessfully'
+  | 'settings.errors.connectYandex'
+  | 'settings.errors.disconnectYandex'
+  | 'settings.errors.yandexNotConfigured'
   | 'settings.telegramBotToken'
   | 'settings.telegramBotConnected'
   | 'settings.telegramBotNotConnected'
@@ -2044,6 +2087,8 @@ export type TranslationKey =
   | 'appointments.meetingProviderManual'
   | 'appointments.meetingProviderZoom'
   | 'appointments.meetingProviderOffline'
+  | 'appointments.meetingProviderYandexTelemost'
+  | 'appointments.errors.yandexNotConnected'
   | 'appointments.recurrence'
   | 'appointments.recurrenceNone'
   | 'appointments.recurrenceDaily'

@@ -11,7 +11,7 @@ export type AppointmentRecord = {
   status: AppointmentStatus;
   comment: string | null;
   meeting_link: string | null;
-  meeting_provider: 'manual' | 'zoom' | 'offline';
+  meeting_provider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   location_address: string | null;
   zoom_meeting_id: string | null;
   zoom_meeting_started_at: Date | null;
@@ -68,7 +68,7 @@ type CreateAppointmentInput = {
   status: AppointmentStatus;
   notes: string | null;
   meetingLink?: string | null;
-  meetingProvider?: 'manual' | 'zoom' | 'offline';
+  meetingProvider?: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   locationAddress?: string | null;
   zoomMeetingId?: string | null;
   userId: number;
@@ -93,7 +93,7 @@ type UpdateAppointmentInput = {
   status?: AppointmentStatus;
   notes?: string | null;
   meetingLink?: string | null;
-  meetingProvider?: 'manual' | 'zoom' | 'offline';
+  meetingProvider?: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   locationAddress?: string | null;
   durationMin?: number;
   isPaid?: boolean;

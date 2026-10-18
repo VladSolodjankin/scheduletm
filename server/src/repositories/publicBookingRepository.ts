@@ -43,7 +43,7 @@ export type PublicAppointmentStatusRecord = {
   status: 'new' | 'confirmed' | 'cancelled';
   appointment_at: Date;
   duration_min: number;
-  meeting_provider: 'manual' | 'zoom' | 'offline';
+  meeting_provider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   meeting_link: string | null;
   location_address: string | null;
   specialist_name: string;
@@ -162,7 +162,7 @@ export async function createPublicGuestAppointment(input: {
   phone?: string;
   telegramUsername?: string;
   timezone: string;
-  meetingProvider: 'manual' | 'zoom' | 'offline';
+  meetingProvider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
 }): Promise<{ id: number; status: 'new'; appointment_at: Date; duration_min: number; public_access_code: string; client_id: number }> {
   return db.transaction(async (trx) => {
     const endAt = new Date(input.startAt.getTime() + input.durationMin * 60_000);

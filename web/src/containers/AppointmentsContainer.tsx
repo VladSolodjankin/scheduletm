@@ -344,7 +344,7 @@ export function AppointmentsContainer() {
     appointmentAt: string;
     appointmentEndAt: string;
     status: AppointmentItem['status'];
-    meetingProvider: 'manual' | 'zoom' | 'offline';
+    meetingProvider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
     meetingLink: string;
     locationAddress: string;
     notes: string;

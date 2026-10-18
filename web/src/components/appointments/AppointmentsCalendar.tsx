@@ -90,9 +90,11 @@ export function AppointmentsCalendar({
   const getMeetingProviderLabel = (provider: AppointmentItem['meetingProvider']) => (
     provider === 'zoom'
       ? t('appointments.meetingProviderZoom')
-      : provider === 'offline'
-        ? t('appointments.meetingProviderOffline')
-        : t('appointments.meetingProviderManual')
+      : provider === 'yandex_telemost'
+        ? t('appointments.meetingProviderYandexTelemost')
+        : provider === 'offline'
+          ? t('appointments.meetingProviderOffline')
+          : t('appointments.meetingProviderManual')
   );
 
   return (

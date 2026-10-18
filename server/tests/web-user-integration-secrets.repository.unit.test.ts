@@ -6,6 +6,7 @@ const queryMock = vi.hoisted(() => ({
   merge: vi.fn(),
   where: vi.fn(),
   first: vi.fn(),
+  update: vi.fn(),
 }));
 
 const dbMock = vi.hoisted(() => Object.assign(
@@ -21,6 +22,8 @@ import { env } from '../src/config/env.js';
 import {
   findWebUserIntegrationByWebUserId,
   updateWebUserGoogleCredentials,
+  updateWebUserYandexIntegration,
+  clearWebUserYandexCredentials,
 } from '../src/repositories/webUserIntegrationRepository.js';
 import { down as rollbackEncryptedSecretColumns } from '../src/db/migrations/20260730150000_add_encrypted_web_user_integration_secrets.js';
 import type { Knex } from 'knex';
@@ -33,6 +36,7 @@ describe('web user integration secret repository mapping', () => {
     queryMock.onConflict.mockReturnValue(queryMock);
     queryMock.merge.mockResolvedValue(undefined);
     queryMock.where.mockReturnValue(queryMock);
+    queryMock.update.mockResolvedValue(1);
   });
 
   afterEach(() => {
@@ -143,6 +147,53 @@ describe('web user integration secret repository mapping', () => {
       webUserId: 42,
       googleApiKey: 'secret',
     })).rejects.toThrow('APP_ENCRYPTION_KEY is required to write encrypted Google access token');
+    expect(queryMock.insert).not.toHaveBeenCalled();
+  });
+
+  it('writes Yandex tokens only to encrypted columns', async () => {
+    await updateWebUserYandexIntegration({
+      accountId: 7,
+      webUserId: 42,
+      yandexAccessToken: 'yandex-access-secret',
+      yandexRefreshToken: 'yandex-refresh-secret',
+    });
+
+    const inserted = queryMock.insert.mock.calls[0]?.[0];
+    expect(inserted).toEqual(expect.objectContaining({
+      account_id: 7,
+      web_user_id: 42,
+      yandex_access_token_encrypted: expect.not.stringContaining('yandex-access-secret'),
+      yandex_refresh_token_encrypted: expect.not.stringContaining('yandex-refresh-secret'),
+    }));
+    expect(inserted).not.toHaveProperty('yandex_access_token');
+    expect(inserted).not.toHaveProperty('yandex_refresh_token');
+
+    queryMock.first.mockResolvedValue({
+      account_id: 7,
+      web_user_id: 42,
+      google_access_token_encrypted: null,
+      google_refresh_token_encrypted: null,
+      telegram_bot_token_encrypted: null,
+      zoom_access_token_encrypted: null,
+      zoom_refresh_token_encrypted: null,
+      yandex_access_token_encrypted: inserted.yandex_access_token_encrypted,
+      yandex_refresh_token_encrypted: inserted.yandex_refresh_token_encrypted,
+    });
+    const result = await findWebUserIntegrationByWebUserId(7, 42);
+    expect(result?.yandex_access_token).toBe('yandex-access-secret');
+    expect(result?.yandex_refresh_token).toBe('yandex-refresh-secret');
+    expect(result).not.toHaveProperty('yandex_access_token_encrypted');
+  });
+
+  it('clears Yandex credentials with an account-scoped update and never inserts a row', async () => {
+    await clearWebUserYandexCredentials(7, 42);
+
+    expect(queryMock.where).toHaveBeenCalledWith({ account_id: 7, web_user_id: 42 });
+    expect(queryMock.update).toHaveBeenCalledWith(expect.objectContaining({
+      yandex_access_token_encrypted: null,
+      yandex_refresh_token_encrypted: null,
+      yandex_token_expires_at: null,
+    }));
     expect(queryMock.insert).not.toHaveBeenCalled();
   });
 

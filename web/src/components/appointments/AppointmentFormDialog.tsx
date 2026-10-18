@@ -12,6 +12,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { isAxiosError } from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { AppointmentItem, AppointmentStatus, ClientItem, SpecialistItem } from '../../shared/types/api';
@@ -73,7 +74,7 @@ type Props = {
   onSubmit: (payload: {
     specialistId: number;
     status: AppointmentStatus;
-    meetingProvider: 'manual' | 'zoom' | 'offline';
+    meetingProvider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
     meetingLink: string;
     locationAddress: string;
     notes: string;
@@ -292,7 +293,7 @@ export function AppointmentFormDialog({
       return;
     }
 
-    if (provider !== 'zoom') {
+    if (provider !== 'zoom' && provider !== 'yandex_telemost') {
       return;
     }
 
@@ -303,7 +304,10 @@ export function AppointmentFormDialog({
 
     setIsGeneratingMeetingLink(true);
     try {
-      const response = await apiClient.post('/api/integrations/zoom/meetings', {
+      const endpoint = provider === 'yandex_telemost'
+        ? '/api/integrations/yandex/meetings'
+        : '/api/integrations/zoom/meetings';
+      const response = await apiClient.post(endpoint, {
         topic: editingItem ? t('appointments.editTitle') : t('appointments.createTitle'),
         startTime: startAtIso,
         duration: durationMin,
@@ -314,7 +318,11 @@ export function AppointmentFormDialog({
 
       setValue('meetingLink', String(response.data?.joinUrl ?? ''), { shouldDirty: true });
     } catch (error) {
-      setGenerateMeetingLinkError(resolveApiError(error, { fallbackMessage: t('appointments.errors.generateMeetingLink') }).message ?? '');
+      if (provider === 'yandex_telemost' && isAxiosError(error) && error.response?.status === 401) {
+        setGenerateMeetingLinkError(t('appointments.errors.yandexNotConnected'));
+      } else {
+        setGenerateMeetingLinkError(resolveApiError(error, { fallbackMessage: t('appointments.errors.generateMeetingLink') }).message ?? '');
+      }
     } finally {
       setIsGeneratingMeetingLink(false);
     }
@@ -540,16 +548,17 @@ export function AppointmentFormDialog({
                     label={t('appointments.fields.meetingProvider')}
                     value={field.value}
                     disabled={isClientRestricted}
-                    onChange={(event) => field.onChange(event.target.value as 'manual' | 'zoom' | 'offline')}
+                    onChange={(event) => field.onChange(event.target.value as 'manual' | 'zoom' | 'yandex_telemost' | 'offline')}
                   >
                     <MenuItem value="manual">{t('appointments.meetingProviderManual')}</MenuItem>
                     <MenuItem value="zoom">{t('appointments.meetingProviderZoom')}</MenuItem>
+                    <MenuItem value="yandex_telemost">{t('appointments.meetingProviderYandexTelemost')}</MenuItem>
                     <MenuItem value="offline">{t('appointments.meetingProviderOffline')}</MenuItem>
                   </Select>
                 </FormControl>
               )}
             />
-            {meetingProviderValue === 'zoom' && !isClientRestricted && (
+            {(meetingProviderValue === 'zoom' || meetingProviderValue === 'yandex_telemost') && !isClientRestricted && (
               <Box sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}>
                 <AppButton
                   onClick={handleGenerateMeetingLink}

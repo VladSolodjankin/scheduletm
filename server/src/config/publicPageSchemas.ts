@@ -415,7 +415,7 @@ export const publicBookingSchema = z.object({
   serviceId: z.number().int().positive(),
   startAt: z.iso.datetime({ offset: true }),
   timezone: z.string().trim().min(1).max(100).refine(isIanaTimezone).optional(),
-  meetingProvider: z.enum(['manual', 'zoom', 'offline']).optional(),
+  meetingProvider: z.enum(['manual', 'zoom', 'yandex_telemost', 'offline']).optional(),
 }).strict().superRefine((value, ctx) => {
   if (!value.email?.trim() && !value.phone?.trim()) {
     ctx.addIssue({ code: 'custom', path: ['email'], message: 'email_or_phone_required' });

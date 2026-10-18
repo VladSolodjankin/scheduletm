@@ -82,6 +82,7 @@ export type UserSettings = {
   uiPaletteVariantId: string;
   googleConnected: boolean;
   zoomConnected: boolean;
+  yandexConnected: boolean;
   telegramBotConnected: boolean;
   telegramBotName: string | null;
   telegramBotUsername: string | null;
@@ -168,6 +169,17 @@ export type ZoomOAuthStartResponse = {
   state: string;
 };
 
+export type YandexOAuthStartResponse = {
+  provider: 'yandex_telemost';
+  authorizeUrl: string;
+  state: string;
+};
+
+export type YandexOAuthDisconnectResponse = {
+  provider: 'yandex_telemost';
+  connected: false;
+};
+
 export type GoogleOAuthDisconnectResponse = {
   provider: 'google';
   connected: boolean;
@@ -189,7 +201,7 @@ export type AppointmentItem = {
   durationMin: number;
   status: AppointmentStatus;
   paymentStatus: 'paid' | 'unpaid';
-  meetingProvider: 'manual' | 'zoom' | 'offline';
+  meetingProvider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   meetingLink: string;
   locationAddress: string;
   notes: string;
@@ -301,7 +313,7 @@ export type PublicAppointmentMeetingStatus = {
   service: string;
   specialist: string;
   meeting: {
-    provider: 'manual' | 'zoom' | 'offline';
+    provider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
     meetingUrl?: string;
     location?: string;
   };
@@ -314,7 +326,7 @@ export type AppointmentManagementDetails = {
   service: string;
   specialist: string;
   meeting: {
-    provider: 'manual' | 'zoom' | 'offline';
+    provider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
     meetingUrl?: string;
     location?: string;
   };

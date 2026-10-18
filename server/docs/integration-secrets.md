@@ -1,9 +1,9 @@
-# Хранение секретов интеграций (Google/Zoom/Telegram)
+# Хранение секретов интеграций (Google/Zoom/Yandex Telemost/Telegram)
 
 ## Где хранится ключ шифрования
 
 Все OAuth-токены и bot-токены в таблице `web_user_integrations` (Google access/refresh token,
-Zoom access/refresh token, Telegram bot token) шифруются на уровне приложения AES-256-GCM
+Zoom access/refresh token, Yandex access/refresh token, Telegram bot token) шифруются на уровне приложения AES-256-GCM
 (`server/src/utils/crypto.ts`) перед записью в БД — см. `server/src/repositories/integrationSecretCrypto.ts`.
 
 Ключ шифрования — переменная окружения `APP_ENCRYPTION_KEY` (`server/src/config/env.ts`). Она задаётся
@@ -16,6 +16,18 @@ Zoom access/refresh token, Telegram bot token) шифруются на уров�
 `zoom_access_token`, `zoom_refresh_token`) удалены из `web_user_integrations` миграциями
 `20260915130000_backfill_encrypt_web_user_integration_secrets` (докодирует оставшиеся незашифрованные
 значения перед удалением) и `20260915140000_drop_plaintext_web_user_integration_secrets`.
+
+## Yandex Telemost
+
+- Колонки `web_user_integrations.yandex_access_token_encrypted` и `yandex_refresh_token_encrypted` шифруются тем же
+  `integrationSecretCrypto` (AES-256-GCM, `APP_ENCRYPTION_KEY`); plaintext-колонок нет. Остальные поля:
+  `yandex_token_expires_at`, `yandex_connected_at`, `yandex_last_meeting_id`, `yandex_last_join_url`.
+- Env: `YANDEX_OAUTH_CLIENT_ID`, `YANDEX_OAUTH_CLIENT_SECRET` (secret-хранилище деплоя),
+  `YANDEX_OAUTH_REDIRECT_URI` (`<API_BASE_URL>/api/integrations/yandex/oauth/callback`),
+  `YANDEX_OAUTH_SCOPES` (по умолчанию `telemost-api:conferences.create`).
+- OAuth state хранится в таблице `yandex_oauth_states` (одноразовый, TTL 10 минут).
+- Отключение (`POST /api/integrations/yandex/disconnect`) очищает токены UPDATE-ом существующей строки и не создаёт новых.
+- При смене ключа шифрования строки с Yandex-токенами нужно перешифровать так же, как остальные `*_encrypted` колонки.
 
 ## Ротация ключа
 

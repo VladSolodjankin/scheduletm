@@ -291,7 +291,7 @@ export const serviceAssignmentUpdateSchema = z.object({
 });
 
 const appointmentStatusSchema = z.enum(['new', 'confirmed', 'cancelled']);
-const appointmentMeetingProviderSchema = z.enum(['manual', 'zoom', 'offline']);
+const appointmentMeetingProviderSchema = z.enum(['manual', 'zoom', 'yandex_telemost', 'offline']);
 
 const appointmentClientSchema = z.object({
   clientId: z.coerce.number().int().positive().optional(),

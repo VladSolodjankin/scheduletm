@@ -20,6 +20,12 @@ export type WebUserIntegrationRecord = {
   zoom_last_meeting_id: string | null;
   zoom_last_join_url: string | null;
   zoom_last_start_url: string | null;
+  yandex_access_token: string | null;
+  yandex_refresh_token: string | null;
+  yandex_token_expires_at: Date | null;
+  yandex_connected_at: Date | null;
+  yandex_last_meeting_id: string | null;
+  yandex_last_join_url: string | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -27,12 +33,15 @@ export type WebUserIntegrationRecord = {
 type WebUserIntegrationStorageRecord = Omit<
   WebUserIntegrationRecord,
   'google_api_key' | 'google_refresh_token' | 'telegram_bot_token' | 'zoom_access_token' | 'zoom_refresh_token'
+  | 'yandex_access_token' | 'yandex_refresh_token'
 > & {
   google_access_token_encrypted: string | null;
   google_refresh_token_encrypted: string | null;
   telegram_bot_token_encrypted: string | null;
   zoom_access_token_encrypted: string | null;
   zoom_refresh_token_encrypted: string | null;
+  yandex_access_token_encrypted: string | null;
+  yandex_refresh_token_encrypted: string | null;
 };
 
 type UpdateWebUserGoogleCredentialsInput = {
@@ -64,6 +73,17 @@ type UpdateWebUserZoomIntegrationInput = {
   zoomLastStartUrl?: string | null;
 };
 
+type UpdateWebUserYandexIntegrationInput = {
+  accountId: number;
+  webUserId: number;
+  yandexAccessToken?: string | null;
+  yandexRefreshToken?: string | null;
+  yandexTokenExpiresAt?: Date | null;
+  yandexConnectedAt?: Date | null;
+  yandexLastMeetingId?: string | null;
+  yandexLastJoinUrl?: string | null;
+};
+
 async function upsertPatch(
   accountId: number,
   webUserId: number,
@@ -91,6 +111,8 @@ function mapIntegrationRecord(row: WebUserIntegrationStorageRecord): WebUserInte
     telegram_bot_token_encrypted: telegramBotTokenEncrypted,
     zoom_access_token_encrypted: zoomAccessTokenEncrypted,
     zoom_refresh_token_encrypted: zoomRefreshTokenEncrypted,
+    yandex_access_token_encrypted: yandexAccessTokenEncrypted,
+    yandex_refresh_token_encrypted: yandexRefreshTokenEncrypted,
     ...record
   } = row;
 
@@ -101,6 +123,8 @@ function mapIntegrationRecord(row: WebUserIntegrationStorageRecord): WebUserInte
     telegram_bot_token: decryptIntegrationSecret(telegramBotTokenEncrypted, 'Telegram bot token'),
     zoom_access_token: decryptIntegrationSecret(zoomAccessTokenEncrypted, 'Zoom access token'),
     zoom_refresh_token: decryptIntegrationSecret(zoomRefreshTokenEncrypted, 'Zoom refresh token'),
+    yandex_access_token: decryptIntegrationSecret(yandexAccessTokenEncrypted, 'Yandex access token'),
+    yandex_refresh_token: decryptIntegrationSecret(yandexRefreshTokenEncrypted, 'Yandex refresh token'),
   };
 }
 
@@ -225,6 +249,56 @@ export async function updateWebUserZoomIntegration(input: UpdateWebUserZoomInteg
   }
   if (input.zoomLastStartUrl !== undefined) {
     patch.zoom_last_start_url = input.zoomLastStartUrl;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return;
+  }
+
+  await upsertPatch(input.accountId, input.webUserId, patch);
+}
+
+// Update-only on purpose (unlike the upsert-based clears above): disconnecting must never create an empty row.
+export async function clearWebUserYandexCredentials(accountId: number, webUserId: number): Promise<void> {
+  await db('web_user_integrations')
+    .where({ account_id: accountId, web_user_id: webUserId })
+    .update({
+      yandex_access_token_encrypted: null,
+      yandex_refresh_token_encrypted: null,
+      yandex_token_expires_at: null,
+      yandex_connected_at: null,
+      yandex_last_meeting_id: null,
+      yandex_last_join_url: null,
+      updated_at: db.fn.now(),
+    });
+}
+
+export async function updateWebUserYandexIntegration(input: UpdateWebUserYandexIntegrationInput): Promise<void> {
+  const patch: Record<string, unknown> = {};
+
+  if (input.yandexAccessToken !== undefined) {
+    patch.yandex_access_token_encrypted = encryptIntegrationSecret(
+      input.yandexAccessToken,
+      'Yandex access token',
+    );
+  }
+  if (input.yandexRefreshToken !== undefined) {
+    patch.yandex_refresh_token_encrypted = encryptIntegrationSecret(
+      input.yandexRefreshToken,
+      'Yandex refresh token',
+    );
+  }
+  if (input.yandexTokenExpiresAt !== undefined) {
+    patch.yandex_token_expires_at = input.yandexTokenExpiresAt;
+  }
+  if (input.yandexConnectedAt !== undefined) {
+    patch.yandex_connected_at = input.yandexConnectedAt;
+  }
+  if (input.yandexLastMeetingId !== undefined) {
+    patch.yandex_last_meeting_id = input.yandexLastMeetingId;
+  }
+  if (input.yandexLastJoinUrl !== undefined) {
+    patch.yandex_last_join_url = input.yandexLastJoinUrl;
   }
 
   if (Object.keys(patch).length === 0) {

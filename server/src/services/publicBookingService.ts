@@ -249,7 +249,7 @@ export async function bookPublicAppointment(slug: string, input: {
   serviceId: number;
   startAt: string;
   timezone?: string;
-  meetingProvider?: 'manual' | 'zoom' | 'offline';
+  meetingProvider?: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
 }) {
   const accountId = await resolvePublishedAccount(slug);
   const [specialist, service] = await Promise.all([
@@ -341,7 +341,7 @@ function accessCodeMatches(expected: string | null, provided: string): boolean {
 }
 
 function meetingInfo(
-  provider: 'manual' | 'zoom' | 'offline',
+  provider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline',
   meetingUrl: string | null,
   location: string | null,
   businessAddress: string | null,

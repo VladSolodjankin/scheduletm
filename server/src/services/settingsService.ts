@@ -78,6 +78,7 @@ export type UserSettings = {
   uiPaletteVariantId: string;
   googleConnected: boolean;
   zoomConnected: boolean;
+  yandexConnected: boolean;
   telegramBotConnected: boolean;
   telegramBotName: string | null;
   telegramBotUsername: string | null;
@@ -319,6 +320,7 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
       uiPaletteVariantId: 'default',
       googleConnected: false,
       zoomConnected: false,
+      yandexConnected: false,
       telegramBotConnected: false,
       telegramBotName: null,
       telegramBotUsername: null,
@@ -347,6 +349,11 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
       legacyIntegration?.zoom_access_token
       && legacyIntegration?.zoom_token_expires_at
       && new Date(legacyIntegration.zoom_token_expires_at).getTime() > Date.now(),
+    ),
+    yandexConnected: Boolean(
+      legacyIntegration?.yandex_access_token
+      && legacyIntegration?.yandex_token_expires_at
+      && new Date(legacyIntegration.yandex_token_expires_at).getTime() > Date.now(),
     ),
     telegramBotConnected: Boolean(integration?.telegram_bot_token ?? legacyIntegration?.telegram_bot_token),
     telegramBotName: integration?.telegram_bot_name ?? legacyIntegration?.telegram_bot_name ?? null,

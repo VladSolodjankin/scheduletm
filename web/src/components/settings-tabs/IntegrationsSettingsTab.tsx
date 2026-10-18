@@ -20,10 +20,14 @@ type Props = {
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
   isZoomConnecting: boolean;
+  isYandexConnecting: boolean;
+  isYandexDisconnecting: boolean;
   onSubmit: () => void;
   onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
   onConnectZoom: () => void;
+  onConnectYandex: () => void;
+  onDisconnectYandex: () => void;
   onDisconnectGoogle: () => void;
 };
 
@@ -138,6 +142,18 @@ function GoogleGIcon() {
   );
 }
 
+function YandexIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="10" fill="#FC3F1D" />
+      <path
+        fill="#FFFFFF"
+        d="M13.3 18.5h1.9V5.5h-2.7c-2.6 0-4 1.4-4 3.4 0 1.6.8 2.6 2.1 3.5l-2.4 6.1h2.1l2.2-5.7-.7-.5c-1-.7-1.5-1.3-1.5-2.4 0-1.1.7-1.9 2.1-1.9h.9v10.5Z"
+      />
+    </svg>
+  );
+}
+
 function ZoomIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -157,18 +173,22 @@ export function IntegrationsSettingsTab({
   isGoogleConnecting,
   isGoogleDisconnecting,
   isZoomConnecting,
+  isYandexConnecting,
+  isYandexDisconnecting,
   onSubmit,
   onClearTelegramBotToken,
   onConnectGoogle,
   onConnectZoom,
+  onConnectYandex,
+  onDisconnectYandex,
   onDisconnectGoogle,
 }: Props) {
   const [isEditingTelegramToken, setIsEditingTelegramToken] = useState(false);
   const [helpAnchorEl, setHelpAnchorEl] = useState<HTMLElement | null>(null);
-  const [openHelpKey, setOpenHelpKey] = useState<'zoom' | 'google' | null>(null);
+  const [openHelpKey, setOpenHelpKey] = useState<'zoom' | 'yandex' | 'google' | null>(null);
   const shouldShowTelegramTokenField = !userSettings.telegramBotConnected || isEditingTelegramToken;
 
-  const handleOpenHelp = (event: MouseEvent<HTMLElement>, key: 'zoom' | 'google') => {
+  const handleOpenHelp = (event: MouseEvent<HTMLElement>, key: 'zoom' | 'yandex' | 'google') => {
     setHelpAnchorEl(event.currentTarget);
     setOpenHelpKey(key);
   };
@@ -181,6 +201,8 @@ export function IntegrationsSettingsTab({
   const helpCopy =
     openHelpKey === 'zoom'
       ? { title: copy.connectZoomHelpTitle, description: copy.connectZoomHelpDescription }
+      : openHelpKey === 'yandex'
+        ? { title: copy.connectYandexHelpTitle, description: copy.connectYandexHelpDescription }
       : openHelpKey === 'google'
         ? { title: copy.connectGoogleHelpTitle, description: copy.connectGoogleHelpDescription }
         : null;
@@ -310,6 +332,60 @@ export function IntegrationsSettingsTab({
                   <AppIcons.info fontSize="small" />
                 </IconButton>
               </Stack>
+            </Stack>
+          )}
+        />
+
+        <IntegrationPanel
+          accentColor="#FC3F1D"
+          icon={<YandexIcon />}
+          statusLabel={userSettings.yandexConnected ? 'Connected' : 'Available'}
+          isConnected={userSettings.yandexConnected}
+          title={copy.connectYandexHelpTitle}
+          description={copy.connectYandexHelpDescription}
+          actions={(
+            <Stack spacing={1.5}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                <AppButton
+                  variant="outlined"
+                  onClick={onConnectYandex}
+                  isLoading={isYandexConnecting}
+                  disabled={userSettings.yandexConnected || isYandexDisconnecting}
+                  startIcon={!isYandexConnecting ? <YandexIcon /> : undefined}
+                  sx={{
+                    minWidth: 164,
+                    textTransform: 'none',
+                    borderColor: '#FC3F1D',
+                    color: '#FC3F1D',
+                    backgroundColor: '#FFFFFF',
+                    boxShadow: `0 ${rem(8)} ${rem(18)} ${alpha('#FC3F1D', 0.12)}`,
+                    '&:hover': {
+                      borderColor: '#D8310F',
+                      backgroundColor: '#FFF5F3',
+                    },
+                  }}
+                >
+                  {isYandexConnecting
+                    ? copy.connectingYandex
+                    : (userSettings.yandexConnected ? copy.yandexConnected : copy.connectYandex)}
+                </AppButton>
+                <IconButton size="small" aria-label={copy.connectYandexHelpTitle} onClick={(event) => handleOpenHelp(event, 'yandex')}>
+                  <AppIcons.info fontSize="small" />
+                </IconButton>
+              </Stack>
+
+              {userSettings.yandexConnected && (
+                <AppButton
+                  variant="outlined"
+                  color="error"
+                  onClick={onDisconnectYandex}
+                  isLoading={isYandexDisconnecting}
+                  disabled={isYandexConnecting}
+                  sx={{ alignSelf: 'flex-start', minWidth: 164, backgroundColor: '#FFFFFF' }}
+                >
+                  {isYandexDisconnecting ? copy.disconnectingYandex : copy.disconnectYandex}
+                </AppButton>
+              )}
             </Stack>
           )}
         />

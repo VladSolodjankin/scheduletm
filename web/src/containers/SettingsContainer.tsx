@@ -1,4 +1,5 @@
 import { Box, FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
+import { isAxiosError } from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
@@ -20,6 +21,8 @@ import type {
   SettingsScopeOptionsResponse,
   SettingsScopeSpecialist,
   ZoomOAuthStartResponse,
+  YandexOAuthStartResponse,
+  YandexOAuthDisconnectResponse,
   SpecialistBookingPolicy,
   SystemSettings,
   UserSettings,
@@ -58,6 +61,7 @@ const defaultUserSettings: UserSettings = {
   uiPaletteVariantId: 'default',
   googleConnected: false,
   zoomConnected: false,
+  yandexConnected: false,
   telegramBotConnected: false,
   telegramBotName: null,
   telegramBotUsername: null,
@@ -93,6 +97,8 @@ export function SettingsContainer() {
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
   const [isGoogleDisconnecting, setIsGoogleDisconnecting] = useState(false);
   const [isZoomConnecting, setIsZoomConnecting] = useState(false);
+  const [isYandexConnecting, setIsYandexConnecting] = useState(false);
+  const [isYandexDisconnecting, setIsYandexDisconnecting] = useState(false);
   const [isSavingSystem, setIsSavingSystem] = useState(false);
   const [isSavingAccount, setIsSavingAccount] = useState(false);
   const [isSavingUser, setIsSavingUser] = useState(false);
@@ -121,6 +127,8 @@ export function SettingsContainer() {
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const zoomOauthStatus = useMemo(() => searchParams.get('zoom_oauth'), [searchParams]);
+  const yandexOauthStatus = useMemo(() => searchParams.get('yandex_oauth'), [searchParams]);
+  const yandexOauthReason = useMemo(() => searchParams.get('reason'), [searchParams]);
   const canManageSystemSettings = user?.role === 'product_admin';
   const canManageAccountSettings = user?.role === 'owner';
   const canManageSpecialistBookingPolicy =
@@ -166,7 +174,7 @@ export function SettingsContainer() {
   };
 
   useEffect(() => {
-    if (!googleOauthStatus && !zoomOauthStatus) {
+    if (!googleOauthStatus && !zoomOauthStatus && !yandexOauthStatus) {
       return;
     }
 
@@ -193,15 +201,31 @@ export function SettingsContainer() {
         setSuccess('');
       }
 
+      if (yandexOauthStatus === 'success') {
+        setSuccess(t('settings.yandexConnectedSuccessfully'));
+        setUserSettings((prev) => ({ ...prev, yandexConnected: true }));
+        setError('');
+      }
+
+      if (yandexOauthStatus === 'error') {
+        setError(
+          yandexOauthReason === 'yandex_oauth_not_configured'
+            ? t('settings.errors.yandexNotConfigured')
+            : t('settings.errors.connectYandex')
+        );
+        setSuccess('');
+      }
+
       const nextParams = new URLSearchParams(searchParams);
       nextParams.delete('google_oauth');
       nextParams.delete('zoom_oauth');
+      nextParams.delete('yandex_oauth');
       nextParams.delete('reason');
       setSearchParams(nextParams, { replace: true });
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [googleOauthStatus, searchParams, setSearchParams, t, zoomOauthStatus]);
+  }, [googleOauthStatus, searchParams, setSearchParams, t, yandexOauthReason, yandexOauthStatus, zoomOauthStatus]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -606,6 +630,56 @@ export function SettingsContainer() {
     }
   };
 
+  const connectYandex = async () => {
+    if (!accessToken || isYandexConnecting) {
+      return;
+    }
+
+    setIsYandexConnecting(true);
+
+    try {
+      const response = await apiClient.post<YandexOAuthStartResponse>(
+        '/api/integrations/yandex/oauth/start',
+        {},
+        { headers: authHeaders(accessToken) }
+      );
+
+      window.location.assign(response.data.authorizeUrl);
+    } catch (err) {
+      const status = isAxiosError(err) ? err.response?.status : undefined;
+      setError(
+        status === 503
+          ? t('settings.errors.yandexNotConfigured')
+          : resolveError(err, t('settings.errors.connectYandex')).message
+      );
+      setSuccess('');
+      setIsYandexConnecting(false);
+    }
+  };
+
+  const disconnectYandex = async () => {
+    if (!accessToken || isYandexDisconnecting) {
+      return;
+    }
+
+    setIsYandexDisconnecting(true);
+
+    try {
+      await apiClient.post<YandexOAuthDisconnectResponse>(
+        '/api/integrations/yandex/disconnect',
+        {},
+        { headers: authHeaders(accessToken) }
+      );
+      setUserSettings((prev) => ({ ...prev, yandexConnected: false }));
+      setError('');
+      setSuccess('');
+    } catch (err) {
+      setError(resolveError(err, t('settings.errors.disconnectYandex')).message);
+      setSuccess('');
+    } finally {
+      setIsYandexDisconnecting(false);
+    }
+  };
 
   const requestPasswordOtp = async () => {
     if (!accessToken || !currentPassword.trim() || newPassword.length < 10 || newPassword !== confirmPassword) {
@@ -843,6 +917,21 @@ export function SettingsContainer() {
               connectZoom: t('settings.connectZoom'),
               connectingZoom: t('settings.connectingZoom'),
               zoomConnected: t('settings.zoomConnected'),
+              connectYandex: t('settings.connectYandex'),
+              connectingYandex: t('settings.connectingYandex'),
+              disconnectYandex: t('settings.disconnectYandex'),
+              disconnectingYandex: t('settings.disconnectingYandex'),
+              yandexConnected: t('settings.yandexConnected'),
+              connectYandexHelpTitle: t('settings.connectYandexHelpTitle'),
+              connectYandexHelpDescription: t('settings.connectYandexHelpDescription'),
+              meetingProvidersHint: t('settings.meetingProvidersHint'),
+              meetingProviderNotConnected: t('settings.meetingProviderNotConnected'),
+              providerLabels: {
+                offline: t('appointments.meetingProviderOffline'),
+                zoom: t('appointments.meetingProviderZoom'),
+                yandex_telemost: t('appointments.meetingProviderYandexTelemost'),
+                manual: t('appointments.meetingProviderManual'),
+              },
               telegramBotToken: t('settings.telegramBotToken'),
               telegramBotConnected: t('settings.telegramBotConnected'),
               telegramBotNotConnected: t('settings.telegramBotNotConnected'),
@@ -907,6 +996,8 @@ export function SettingsContainer() {
             isGoogleConnecting={isGoogleConnecting}
             isGoogleDisconnecting={isGoogleDisconnecting}
             isZoomConnecting={isZoomConnecting}
+            isYandexConnecting={isYandexConnecting}
+            isYandexDisconnecting={isYandexDisconnecting}
             isSavingSystem={isSavingSystem}
             isSavingAccount={isSavingAccount}
             isSavingUser={isSavingUser}
@@ -932,6 +1023,8 @@ export function SettingsContainer() {
             onClearTelegramBotToken={clearTelegramBotToken}
             onConnectGoogle={connectGoogle}
             onConnectZoom={connectZoom}
+            onConnectYandex={connectYandex}
+            onDisconnectYandex={disconnectYandex}
             onDisconnectGoogle={disconnectGoogle}
             onCurrentPasswordChange={setCurrentPassword}
             onNewPasswordChange={setNewPassword}

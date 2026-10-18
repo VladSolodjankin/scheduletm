@@ -72,6 +72,16 @@ export type SettingsCardCopy = {
   connectGoogleHelpTitle: string;
   connectGoogleHelpDescription: string;
   zoomConnected: string;
+  connectYandex: string;
+  connectingYandex: string;
+  disconnectYandex: string;
+  disconnectingYandex: string;
+  yandexConnected: string;
+  connectYandexHelpTitle: string;
+  connectYandexHelpDescription: string;
+  meetingProvidersHint: string;
+  meetingProviderNotConnected: string;
+  providerLabels: Record<'offline' | 'zoom' | 'yandex_telemost' | 'manual', string>;
   telegramBotToken: string;
   telegramBotConnected: string;
   telegramBotNotConnected: string;

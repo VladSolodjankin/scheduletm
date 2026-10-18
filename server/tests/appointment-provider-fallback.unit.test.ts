@@ -10,6 +10,7 @@ const updateClientPreferredMeetingProviderMock = vi.hoisted(() => vi.fn());
 const findSpecialistByIdMock = vi.hoisted(() => vi.fn());
 const findSpecialistBookingPolicyMock = vi.hoisted(() => vi.fn());
 const createZoomMeetingMock = vi.hoisted(() => vi.fn());
+const createYandexTelemostMeetingMock = vi.hoisted(() => vi.fn());
 const sendAppointmentNotificationByTypeMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../src/repositories/appointmentRepository.js', async () => {
@@ -47,6 +48,10 @@ vi.mock('../src/services/zoomService.js', () => ({
   createZoomMeeting: createZoomMeetingMock,
 }));
 
+vi.mock('../src/services/yandexService.js', () => ({
+  createYandexTelemostMeeting: createYandexTelemostMeetingMock,
+}));
+
 vi.mock('../src/services/appointmentNotificationService.js', () => ({
   sendAppointmentNotificationByType: sendAppointmentNotificationByTypeMock,
 }));
@@ -61,10 +66,11 @@ describe('appointment provider fallback unit', () => {
     findSpecialistByIdMock.mockReset();
     findSpecialistBookingPolicyMock.mockReset();
     createZoomMeetingMock.mockReset();
+    createYandexTelemostMeetingMock.mockReset();
     sendAppointmentNotificationByTypeMock.mockReset();
 
     ensureFallbackServiceForAccountMock.mockResolvedValue(77);
-    findSpecialistByIdMock.mockResolvedValue({ id: 10, timezone: 'UTC' });
+    findSpecialistByIdMock.mockResolvedValue({ id: 10, account_id: 1, user_id: 55, timezone: 'UTC' });
     findClientByIdMock.mockResolvedValue({ id: 20, preferred_meeting_provider: null });
     findSpecialistBookingPolicyMock.mockResolvedValue({
       allowed_meeting_providers: 'offline,zoom,manual',
@@ -134,6 +140,8 @@ describe('appointment provider fallback unit', () => {
   it('uses the specialist default meeting link after Zoom generation fails', async () => {
     findSpecialistByIdMock.mockResolvedValue({
       id: 10,
+      account_id: 1,
+      user_id: 55,
       timezone: 'UTC',
       default_meeting_link: 'https://meet.example.com/default',
     });
@@ -158,6 +166,8 @@ describe('appointment provider fallback unit', () => {
   it('keeps a successfully generated Zoom link ahead of the specialist default link', async () => {
     findSpecialistByIdMock.mockResolvedValue({
       id: 10,
+      account_id: 1,
+      user_id: 55,
       timezone: 'UTC',
       default_meeting_link: 'https://meet.example.com/default',
     });
@@ -185,6 +195,8 @@ describe('appointment provider fallback unit', () => {
   it('does not apply the specialist default link to an explicitly offline appointment', async () => {
     findSpecialistByIdMock.mockResolvedValue({
       id: 10,
+      account_id: 1,
+      user_id: 55,
       timezone: 'UTC',
       default_meeting_link: 'https://meet.example.com/default',
     });
@@ -205,5 +217,136 @@ describe('appointment provider fallback unit', () => {
       meetingProvider: 'offline',
       locationAddress: 'Main st. 1',
     }));
+  });
+
+  it('creates the Zoom meeting with the specialist web user credentials, not the booking admin', async () => {
+    createZoomMeetingMock.mockResolvedValue({ ok: true, meeting: { joinUrl: 'https://zoom.us/j/1', zoomMeetingId: '1' } });
+
+    await createAppointmentForActor(
+      { id: '100', accountId: 1, role: WebUserRole.Owner, email: 'owner@example.com' } as any,
+      {
+        specialistId: 10,
+        clientId: 20,
+        appointmentAt: '2026-05-02T10:00:00.000Z',
+        appointmentEndAt: '2026-05-02T11:00:00.000Z',
+        meetingProvider: 'zoom',
+      },
+    );
+
+    expect(createZoomMeetingMock).toHaveBeenCalledWith(expect.objectContaining({ accountId: 1, userId: '55' }));
+    expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({
+      meetingProvider: 'zoom',
+      zoomMeetingId: '1',
+    }));
+  });
+
+  it('falls through without calling Zoom when the specialist has no web user', async () => {
+    findSpecialistByIdMock.mockResolvedValue({ id: 10, account_id: 1, user_id: null, timezone: 'UTC' });
+
+    await createAppointmentForActor(
+      { id: '100', accountId: 1, role: WebUserRole.Owner, email: 'owner@example.com' } as any,
+      {
+        specialistId: 10,
+        clientId: 20,
+        appointmentAt: '2026-05-02T10:00:00.000Z',
+        appointmentEndAt: '2026-05-02T11:00:00.000Z',
+        meetingProvider: 'zoom',
+      },
+    );
+
+    expect(createZoomMeetingMock).not.toHaveBeenCalled();
+    expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({ meetingProvider: 'offline' }));
+  });
+
+  it('falls through when the specialist has not connected Zoom', async () => {
+    createZoomMeetingMock.mockResolvedValue({ ok: false, reason: 'zoom_not_connected' });
+
+    await createAppointmentForActor(
+      { id: '100', accountId: 1, role: WebUserRole.Owner, email: 'owner@example.com' } as any,
+      {
+        specialistId: 10,
+        clientId: 20,
+        appointmentAt: '2026-05-02T10:00:00.000Z',
+        appointmentEndAt: '2026-05-02T11:00:00.000Z',
+        meetingProvider: 'zoom',
+      },
+    );
+
+    expect(createZoomMeetingMock).toHaveBeenCalledWith(expect.objectContaining({ userId: '55' }));
+    expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({ meetingProvider: 'offline' }));
+  });
+
+  it('uses Yandex Telemost with the specialist credentials when it is the first candidate', async () => {
+    findSpecialistBookingPolicyMock.mockResolvedValue({
+      allowed_meeting_providers: 'offline,zoom,manual,yandex_telemost',
+      meeting_providers_priority: 'yandex_telemost,zoom,offline',
+    });
+    createYandexTelemostMeetingMock.mockResolvedValue({
+      ok: true,
+      meeting: { yandexMeetingId: 'abc', joinUrl: 'https://telemost.yandex.ru/j/123' },
+    });
+
+    await createAppointmentForActor(
+      { id: '100', accountId: 1, role: WebUserRole.Owner, email: 'owner@example.com' } as any,
+      {
+        specialistId: 10,
+        clientId: 20,
+        appointmentAt: '2026-05-02T10:00:00.000Z',
+        appointmentEndAt: '2026-05-02T11:00:00.000Z',
+      },
+    );
+
+    expect(createYandexTelemostMeetingMock).toHaveBeenCalledWith({ accountId: 1, userId: '55' });
+    expect(createZoomMeetingMock).not.toHaveBeenCalled();
+    expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({
+      meetingProvider: 'yandex_telemost',
+      meetingLink: 'https://telemost.yandex.ru/j/123',
+    }));
+  });
+
+  it('falls through from a failed Telemost to the next provider', async () => {
+    findSpecialistBookingPolicyMock.mockResolvedValue({
+      allowed_meeting_providers: 'offline,zoom,manual,yandex_telemost',
+      meeting_providers_priority: 'yandex_telemost,zoom,offline',
+    });
+    createYandexTelemostMeetingMock.mockResolvedValue({ ok: false, reason: 'yandex_create_failed' });
+    createZoomMeetingMock.mockResolvedValue({ ok: true, meeting: { joinUrl: 'https://zoom.us/j/2', zoomMeetingId: '2' } });
+
+    await createAppointmentForActor(
+      { id: '100', accountId: 1, role: WebUserRole.Owner, email: 'owner@example.com' } as any,
+      {
+        specialistId: 10,
+        clientId: 20,
+        appointmentAt: '2026-05-02T10:00:00.000Z',
+        appointmentEndAt: '2026-05-02T11:00:00.000Z',
+      },
+    );
+
+    expect(createYandexTelemostMeetingMock).toHaveBeenCalledTimes(1);
+    expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({
+      meetingProvider: 'zoom',
+      meetingLink: 'https://zoom.us/j/2',
+    }));
+  });
+
+  it('ignores unknown provider ids in the policy and keeps explicit offline offline', async () => {
+    findSpecialistBookingPolicyMock.mockResolvedValue({
+      allowed_meeting_providers: 'offline,bogus,yandex_telemost',
+      meeting_providers_priority: 'bogus,yandex_telemost,offline',
+    });
+
+    await createAppointmentForActor(
+      { id: '100', accountId: 1, role: WebUserRole.Owner, email: 'owner@example.com' } as any,
+      {
+        specialistId: 10,
+        clientId: 20,
+        appointmentAt: '2026-05-02T10:00:00.000Z',
+        appointmentEndAt: '2026-05-02T11:00:00.000Z',
+        meetingProvider: 'offline',
+      },
+    );
+
+    expect(createYandexTelemostMeetingMock).not.toHaveBeenCalled();
+    expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({ meetingProvider: 'offline' }));
   });
 });

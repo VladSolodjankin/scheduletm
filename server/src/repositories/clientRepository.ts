@@ -10,7 +10,7 @@ export type ClientRecord = {
   phone: string | null;
   email: string | null;
   timezone: string;
-  preferred_meeting_provider: 'manual' | 'zoom' | 'offline' | null;
+  preferred_meeting_provider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline' | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -18,7 +18,7 @@ export type ClientRecord = {
 export async function updateClientPreferredMeetingProvider(
   accountId: number,
   id: number,
-  preferredMeetingProvider: 'manual' | 'zoom' | 'offline',
+  preferredMeetingProvider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline',
 ): Promise<void> {
   await db('clients')
     .where({ account_id: accountId, id })
