@@ -297,6 +297,12 @@ export async function processGoogleCalendarSyncItem(item: GoogleCalendarSyncItem
     }
     return await syncUpsert(item, appointment);
   } catch (error) {
+    // Only the error class and code (e.g. Postgres 42703) are logged — never the message, which may carry data.
+    const details = error as { name?: string; code?: string };
+    console.error(
+      `[googleCalendarSync] error appointment=${item.appointment_id} action=${item.action} `
+      + `name=${details?.name ?? 'unknown'} code=${details?.code ?? 'none'} account=${item.account_id}`,
+    );
     return {
       kind: 'error',
       errorStatus: axios.isAxiosError?.(error) ? 'network' : 'internal',

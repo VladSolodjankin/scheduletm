@@ -330,6 +330,9 @@ export async function findGoogleCalendarSyncAppointment(
     .join('specialists as s', function joinSpecialist() {
       this.on('s.id', '=', 'a.specialist_id').andOn('s.account_id', '=', 'a.account_id');
     })
+    .leftJoin('web_users as wu', function joinSpecialistUser() {
+      this.on('wu.id', '=', 's.user_id').andOn('wu.account_id', '=', 's.account_id');
+    })
     .leftJoin('services as sv', function joinService() {
       this.on('sv.id', '=', 'a.service_id').andOn('sv.account_id', '=', 'a.account_id');
     })
@@ -339,7 +342,8 @@ export async function findGoogleCalendarSyncAppointment(
       'a.id', 'a.account_id', 'a.specialist_id', 'a.appointment_at', 'a.duration_min', 'a.status',
       'a.meeting_link', 'a.meeting_provider', 'a.location_address',
       'a.google_event_id', 'a.google_event_web_user_id',
-      's.timezone as specialist_timezone', 's.user_id as specialist_user_id',
+      db.raw("COALESCE(wu.timezone, 'UTC') as specialist_timezone"),
+      's.user_id as specialist_user_id',
       'sv.name_en as service_name_en', 'sv.name_ru as service_name_ru',
       'aset.business_address',
     );
