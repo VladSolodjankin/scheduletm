@@ -42,7 +42,6 @@ npm run -w bot verify
 - `APP_URL`
 - `DATABASE_URL` / `DATABASE_PUBLIC_URL`
 - `APP_ENCRYPTION_KEY` (тот же secret, что использует server для integration credentials)
-- `AUTO_SET_WEBHOOK`
 
 ## Документация
 

@@ -72,7 +72,7 @@ async function bootstrap() {
   const server = app.listen(env.port, async () => {
     logInfo('app.started', { port: env.port, node_env: env.nodeEnv });
 
-    if (env.isProduction && env.autoSetWebhook) {
+    if (env.isProduction) {
       try {
         const result = await setWebhook();
         logInfo('telegram.webhook_set', { result: sanitizeLogValue(result) });
@@ -88,9 +88,8 @@ async function bootstrap() {
     }
 
     logInfo('telegram.webhook_autoset_skipped', {
-      reason: 'AUTO_SET_WEBHOOK is enabled only in production',
+      reason: 'webhook is set automatically only in production',
       node_env: env.nodeEnv,
-      auto_set_webhook: env.autoSetWebhook,
     });
   });
 

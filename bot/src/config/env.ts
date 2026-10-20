@@ -38,7 +38,6 @@ export const env = {
   brevoApiKey: process.env.BREVO_API_KEY ?? '',
   emailFromAddress: process.env.EMAIL_FROM_ADDRESS ?? 'no-reply@meetli.cc',
   emailFromName: process.env.EMAIL_FROM_NAME ?? 'Meetli',
-  autoSetWebhook: process.env.AUTO_SET_WEBHOOK === '1' || process.env.AUTO_SET_WEBHOOK === 'true',
   notificationPollMs: Number(process.env.NOTIFICATION_POLL_MS || 60000),
   alertPollMs: Number(process.env.ALERT_POLL_MS || 60000),
   alertNoUpdatesThresholdMs: Number(process.env.ALERT_NO_UPDATES_THRESHOLD_MS || 15 * 60 * 1000),
