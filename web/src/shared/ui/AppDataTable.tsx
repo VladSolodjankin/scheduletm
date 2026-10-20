@@ -38,6 +38,7 @@ type AppTableIconActionProps = {
   label: string;
   icon: ReactNode;
   color?: 'default' | 'primary' | 'error';
+  disabled?: boolean;
   onClick: () => void;
 };
 
@@ -132,18 +133,21 @@ export function AppTableActions({ children }: { children: ReactNode }) {
   return <Box className="app-table-actions">{children}</Box>;
 }
 
-export function AppTableIconAction({ label, icon, color = 'default', onClick }: AppTableIconActionProps) {
+export function AppTableIconAction({ label, icon, color = 'default', disabled = false, onClick }: AppTableIconActionProps) {
   return (
     <Tooltip title={label}>
-      <IconButton
-        size="small"
-        color={color}
-        aria-label={label}
-        onClick={onClick}
-        className={`app-table-icon-action${color === 'error' ? ' app-table-icon-action--danger' : ''}`}
-      >
-        {icon}
-      </IconButton>
+      <span>
+        <IconButton
+          size="small"
+          color={color}
+          aria-label={label}
+          disabled={disabled}
+          onClick={onClick}
+          className={`app-table-icon-action${color === 'error' ? ' app-table-icon-action--danger' : ''}`}
+        >
+          {icon}
+        </IconButton>
+      </span>
     </Tooltip>
   );
 }

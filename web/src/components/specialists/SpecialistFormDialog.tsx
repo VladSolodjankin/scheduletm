@@ -1,18 +1,23 @@
 import type { ChangeEvent } from "react";
 import {
+  Box,
   FormControl,
   FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
   Switch,
+  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import type { SpecialistManagementItem } from "../../shared/types/api";
 import { AppButton } from "../../shared/ui/AppButton";
+import { useI18n } from "../../shared/i18n/I18nContext";
 import { AppDialog } from "../../shared/ui/AppDialog";
+import { AppSurface } from "../../shared/ui/AppSurface";
 import { AppTextField } from "../../shared/ui/AppTextField";
 import { FormContainer } from "../../shared/ui/FormContainer";
+import "./specialists.css";
 
 type SpecialistFormDialogProps = {
   open: boolean;
@@ -71,6 +76,7 @@ export function SpecialistFormDialog({
   onClose,
   onSubmit,
 }: SpecialistFormDialogProps) {
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState<number>(0);
@@ -160,12 +166,30 @@ export function SpecialistFormDialog({
     );
   };
 
+  const numberField = (
+    label: string,
+    value: number,
+    onChange: (value: number) => void,
+    helper?: string,
+  ) => (
+    <AppTextField
+      margin="none"
+      fullWidth
+      label={label}
+      type="number"
+      value={value}
+      helperText={helper}
+      onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(Number(event.target.value))}
+    />
+  );
+
   return (
     <AppDialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth="md"
       title={title}
+      description={t('settings.specialistSettings.formDescription')}
       actions={(
         <>
           <AppButton variant="text" onClick={onClose}>
@@ -181,29 +205,27 @@ export function SpecialistFormDialog({
         </>
       )}
     >
-        <FormContainer>
+      <FormContainer>
+        <AppSurface
+          title={t('settings.specialistSettings.profileTitle')}
+          description={t('settings.specialistSettings.profileDescription')}
+        >
           {editingSpecialist ? (
             <AppTextField
               margin="none"
               fullWidth
               label={nameLabel}
               value={name}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                setName(event.target.value)
-              }
+              onChange={(event: ChangeEvent<HTMLInputElement>) => setName(event.target.value)}
             />
           ) : (
             <FormControl margin="none" fullWidth>
-              <InputLabel id="specialist-user-select-label">
-                {nameLabel}
-              </InputLabel>
+              <InputLabel id="specialist-user-select-label">{nameLabel}</InputLabel>
               <Select
                 labelId="specialist-user-select-label"
                 label={nameLabel}
                 value={selectedUserId}
-                onChange={(event) =>
-                  setSelectedUserId(Number(event.target.value))
-                }
+                onChange={(event) => setSelectedUserId(Number(event.target.value))}
               >
                 {availableWebUsers.map((item) => (
                   <MenuItem key={item.id} value={item.id}>
@@ -213,90 +235,70 @@ export function SpecialistFormDialog({
               </Select>
             </FormControl>
           )}
-          <FormControlLabel
-            sx={{ mt: 0 }}
-            control={
-              <Switch
-                checked={isActive}
-                disabled={!editingSpecialist}
-                onChange={(event) => setIsActive(event.target.checked)}
-              />
-            }
-            label={activeLabel}
-          />
-          <AppTextField
-            margin="none"
-            fullWidth
-            label={baseSessionPriceLabel}
-            type="number"
-            value={baseSessionPrice}
-            onChange={(e) => setBaseSessionPrice(Number(e.target.value))}
-          />
-          <AppTextField
-            margin="none"
-            fullWidth
-            label={baseHourPriceLabel}
-            type="number"
-            value={baseHourPrice}
-            onChange={(e) => setBaseHourPrice(Number(e.target.value))}
-          />
-          <AppTextField
-            margin="none"
-            fullWidth
-            label={workStartHourLabel}
-            type="number"
-            value={workStartHour}
-            onChange={(e) => setWorkStartHour(Number(e.target.value))}
-          />
-          <AppTextField
-            margin="none"
-            fullWidth
-            label={workEndHourLabel}
-            type="number"
-            value={workEndHour}
-            onChange={(e) => setWorkEndHour(Number(e.target.value))}
-          />
-          <AppTextField
-            margin="none"
-            fullWidth
-            label={slotDurationMinLabel}
-            type="number"
-            value={slotDurationMin}
-            onChange={(e) => setSlotDurationMin(Number(e.target.value))}
-          />
-          <AppTextField
-            margin="none"
-            fullWidth
-            label={slotStepMinLabel}
-            type="number"
-            value={slotStepMin}
-            onChange={(e) => setSlotStepMin(Number(e.target.value))}
-          />
-          <AppTextField
-            margin="none"
-            fullWidth
-            label={defaultSessionContinuationMinLabel}
-            type="number"
-            value={defaultSessionContinuationMin}
-            onChange={(e) =>
-              setDefaultSessionContinuationMin(Number(e.target.value))
-            }
-          />
-          {editingSpecialist ? (
+          <Box className="specialist-form__toggle">
+            <FormControlLabel
+              control={(
+                <Switch
+                  checked={isActive}
+                  disabled={!editingSpecialist}
+                  onChange={(event) => setIsActive(event.target.checked)}
+                />
+              )}
+              label={activeLabel}
+            />
+            <Typography variant="body2" color="text.secondary">
+              {t('settings.specialistSettings.activeHelper')}
+            </Typography>
+          </Box>
+        </AppSurface>
+
+        <AppSurface
+          title={t('settings.specialistSettings.pricingTitle')}
+          description={t('settings.specialistSettings.pricingDescription')}
+        >
+          <Box className="specialist-form__grid">
+            {numberField(baseSessionPriceLabel, baseSessionPrice, setBaseSessionPrice)}
+            {numberField(baseHourPriceLabel, baseHourPrice, setBaseHourPrice)}
+          </Box>
+        </AppSurface>
+
+        <AppSurface
+          title={t('settings.specialistSettings.scheduleTitle')}
+          description={t('settings.specialistSettings.scheduleDescription')}
+        >
+          <Box className="specialist-form__grid">
+            {numberField(workStartHourLabel, workStartHour, setWorkStartHour, t('settings.specialistSettings.hoursHelper'))}
+            {numberField(workEndHourLabel, workEndHour, setWorkEndHour, t('settings.specialistSettings.hoursHelper'))}
+            {numberField(slotDurationMinLabel, slotDurationMin, setSlotDurationMin, t('settings.specialistSettings.minutesHelper'))}
+            {numberField(slotStepMinLabel, slotStepMin, setSlotStepMin, t('settings.specialistSettings.minutesHelper'))}
+            {numberField(
+              defaultSessionContinuationMinLabel,
+              defaultSessionContinuationMin,
+              setDefaultSessionContinuationMin,
+              t('settings.specialistSettings.minutesHelper'),
+            )}
+          </Box>
+        </AppSurface>
+
+        {editingSpecialist ? (
+          <AppSurface
+            title={t('settings.specialistSettings.meetingTitle')}
+            description={t('settings.specialistSettings.meetingDescription')}
+          >
             <AppTextField
               margin="none"
               fullWidth
               label={defaultMeetingLinkLabel}
               type="url"
+              placeholder="https://"
               value={defaultMeetingLink}
               error={!isDefaultMeetingLinkValid}
               helperText={!isDefaultMeetingLinkValid ? defaultMeetingLinkInvalidText : undefined}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                setDefaultMeetingLink(event.target.value)
-              }
+              onChange={(event: ChangeEvent<HTMLInputElement>) => setDefaultMeetingLink(event.target.value)}
             />
-          ) : null}
-        </FormContainer>
+          </AppSurface>
+        ) : null}
+      </FormContainer>
     </AppDialog>
   );
 }

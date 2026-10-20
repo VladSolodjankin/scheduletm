@@ -110,15 +110,24 @@ export async function updateSpecialistById(
     .update(nextPayload);
 }
 
-export async function deactivateSpecialistById(accountId: number, specialistId: number): Promise<boolean> {
-  const updated = await db('specialists')
-    .where({ account_id: accountId, id: specialistId })
-    .update({
-      is_active: false,
-      updated_at: db.fn.now(),
-    });
+export async function countSpecialistsByAccount(accountId: number, options: { activeOnly?: boolean } = {}): Promise<number> {
+  const query = db('specialists').where({ account_id: accountId });
 
-  return updated > 0;
+  if (options.activeOnly) {
+    query.andWhere({ is_active: true });
+  }
+
+  const row = await query.count<{ count: string }>({ count: '*' }).first();
+
+  return Number(row?.count ?? 0);
+}
+
+export async function deleteSpecialistById(accountId: number, specialistId: number): Promise<boolean> {
+  const deleted = await db('specialists')
+    .where({ account_id: accountId, id: specialistId })
+    .delete();
+
+  return deleted > 0;
 }
 
 export async function deactivateSpecialistByWebUserId(accountId: number, webUserId: number): Promise<void> {

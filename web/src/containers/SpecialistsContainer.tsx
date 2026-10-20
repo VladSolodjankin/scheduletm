@@ -9,6 +9,7 @@ import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { AppPage } from '../shared/ui/AppPage';
 import { AppButton } from '../shared/ui/AppButton';
+import { AppConfirmDialog } from '../shared/ui/AppDialog';
 import { AppIcons } from '../shared/ui/AppIcons';
 import { AppEmptyState, AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 import type { SpecialistsListResponse, SpecialistManagementItem } from '../shared/types/api';
@@ -26,6 +27,8 @@ export function SpecialistsContainer() {
   const [isSpecialistDialogOpen, setIsSpecialistDialogOpen] = useState(false);
   const [editingSpecialist, setEditingSpecialist] = useState<SpecialistManagementItem | null>(null);
   const [isSavingSpecialist, setIsSavingSpecialist] = useState(false);
+  const [deletingSpecialist, setDeletingSpecialist] = useState<SpecialistManagementItem | null>(null);
+  const [isDeletingSpecialist, setIsDeletingSpecialist] = useState(false);
 
   const canManageSpecialists = user?.role === 'product_admin' || user?.role === 'owner';
   const canManageSpecialistSettings = canManageSpecialists || user?.role === 'specialist';
@@ -156,13 +159,13 @@ export function SpecialistsContainer() {
     }
   };
 
-  const deleteSpecialist = async (specialist: SpecialistManagementItem) => {
+  const toggleSpecialistActive = async (specialist: SpecialistManagementItem, isActive: boolean) => {
     if (!accessToken) {
       return;
     }
 
     try {
-      const response = await apiClient.delete<SpecialistManagementItem>(`/api/specialists/${specialist.id}`, {
+      const response = await apiClient.patch<SpecialistManagementItem>(`/api/specialists/${specialist.id}`, { isActive }, {
         headers: authHeaders(accessToken),
       });
 
@@ -170,8 +173,33 @@ export function SpecialistsContainer() {
       setError('');
       setSuccess('');
     } catch (err) {
+      setError(resolveError(err, t('settings.errors.saveSpecialist')).message);
+      setSuccess('');
+    }
+  };
+
+  const deleteSpecialist = async (specialist: SpecialistManagementItem) => {
+    if (!accessToken) {
+      return;
+    }
+
+    setIsDeletingSpecialist(true);
+
+    try {
+      await apiClient.delete(`/api/specialists/${specialist.id}`, {
+        headers: authHeaders(accessToken),
+      });
+
+      setSpecialists((prev) => prev.filter((item) => item.id !== specialist.id));
+      setDeletingSpecialist(null);
+      setError('');
+      setSuccess('');
+    } catch (err) {
+      setDeletingSpecialist(null);
       setError(resolveError(err, t('settings.errors.deleteSpecialist')).message);
       setSuccess('');
+    } finally {
+      setIsDeletingSpecialist(false);
     }
   };
 
@@ -202,7 +230,9 @@ export function SpecialistsContainer() {
                 timezoneLabel={t('settings.specialists.columns.timezone')}
                 specialists={specialists}
                 onEdit={openEditSpecialistDialog}
-                onDelete={(item) => void deleteSpecialist(item)}
+                onDelete={setDeletingSpecialist}
+                onToggleActive={(item, isActive) => void toggleSpecialistActive(item, isActive)}
+                toggleActiveLabel={t('settings.specialists.toggleActive')}
                 canDelete={canManageSpecialists}
               />
             )}
@@ -231,6 +261,24 @@ export function SpecialistsContainer() {
         availableWebUsers={availableWebUsers}
         onClose={closeSpecialistDialog}
         onSubmit={saveSpecialist}
+      />
+
+      <AppConfirmDialog
+        open={Boolean(deletingSpecialist)}
+        onClose={() => setDeletingSpecialist(null)}
+        maxWidth="xs"
+        title={t('settings.specialists.deleteConfirmTitle')}
+        description={t('settings.specialists.deleteConfirmDescription')}
+        cancelLabel={t('common.cancel')}
+        confirmLabel={t('settings.specialists.delete')}
+        confirmColor="error"
+        isLoading={isDeletingSpecialist}
+        onCancel={() => setDeletingSpecialist(null)}
+        onConfirm={() => {
+          if (deletingSpecialist) {
+            void deleteSpecialist(deletingSpecialist);
+          }
+        }}
       />
     </AppPage>
   );

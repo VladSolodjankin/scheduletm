@@ -219,6 +219,9 @@ export const dictionaries = {
         add: 'Add specialist',
         edit: 'Edit specialist',
         delete: 'Delete specialist',
+        deleteConfirmTitle: 'Delete specialist?',
+        deleteConfirmDescription: 'The specialist will be deleted permanently. This cannot be undone. If you only want to hide them from booking, use the Active switch instead.',
+        toggleActive: 'Active',
         empty: 'No specialists yet.',
         addDialogTitle: 'Add specialist',
         editDialogTitle: 'Edit specialist',
@@ -238,7 +241,19 @@ export const dictionaries = {
         slotStepMin: 'Slot step (min)',
         defaultSessionContinuationMin: 'Default session continuation (min)',
         defaultMeetingLink: 'Default meeting link',
-        defaultMeetingLinkInvalid: 'Enter a valid http:// or https:// URL.'
+        defaultMeetingLinkInvalid: 'Enter a valid http:// or https:// URL.',
+        formDescription: 'Profile, pricing and booking rules for this specialist.',
+        profileTitle: 'Profile',
+        profileDescription: 'Who the specialist is and whether clients can book them.',
+        activeHelper: 'Inactive specialists are hidden from booking.',
+        pricingTitle: 'Pricing',
+        pricingDescription: 'Default prices used when a service has no own price.',
+        scheduleTitle: 'Working hours and slots',
+        scheduleDescription: 'When the specialist works and how slots are generated.',
+        hoursHelper: 'Hour of the day, 0–24',
+        minutesHelper: 'In minutes',
+        meetingTitle: 'Online meetings',
+        meetingDescription: 'Link added to appointments by default.'
       },
       scheduleExceptions: {
         title: 'Schedule exceptions',
@@ -399,7 +414,7 @@ export const dictionaries = {
       copyLink: 'Copy link',
       openLink: 'Open in Telegram',
       linkCopied: 'Link copied.',
-      linkNotConfigured: 'The bot username is not configured on the server, so the link cannot be built yet.',
+      linkNotConfigured: 'Add the Telegram bot token in your profile settings to get the link and QR code.',
       unsavedLink: 'Save the changes to update the link and QR code.',
       qrTitle: 'QR code',
       qrHint: 'Clients can scan it to open the bot and start booking.',
@@ -1106,6 +1121,9 @@ export const dictionaries = {
         add: 'Добавить специалиста',
         edit: 'Редактировать специалиста',
         delete: 'Удалить специалиста',
+        deleteConfirmTitle: 'Удалить специалиста?',
+        deleteConfirmDescription: 'Специалист будет удалён безвозвратно. Если нужно только скрыть его из записи, используйте переключатель «Активен».',
+        toggleActive: 'Активен',
         empty: 'Специалисты пока не добавлены.',
         addDialogTitle: 'Добавить специалиста',
         editDialogTitle: 'Редактировать специалиста',
@@ -1125,7 +1143,19 @@ export const dictionaries = {
         slotStepMin: 'Шаг слота (мин)',
         defaultSessionContinuationMin: 'Продление сессии по умолчанию (мин)',
         defaultMeetingLink: 'Ссылка на встречу по умолчанию',
-        defaultMeetingLinkInvalid: 'Введите корректный URL с http:// или https://.'
+        defaultMeetingLinkInvalid: 'Введите корректный URL с http:// или https://.',
+        formDescription: 'Профиль, цены и правила записи для этого специалиста.',
+        profileTitle: 'Профиль',
+        profileDescription: 'Кто это и доступен ли специалист для записи.',
+        activeHelper: 'Неактивные специалисты скрыты из онлайн-записи.',
+        pricingTitle: 'Цены',
+        pricingDescription: 'Используются, если у услуги нет собственной цены.',
+        scheduleTitle: 'Рабочие часы и слоты',
+        scheduleDescription: 'Когда специалист работает и как формируются слоты.',
+        hoursHelper: 'Час дня, 0–24',
+        minutesHelper: 'В минутах',
+        meetingTitle: 'Онлайн-встречи',
+        meetingDescription: 'Ссылка, которая добавляется к записям по умолчанию.'
       },
       scheduleExceptions: {
         title: 'Исключения в расписании',
@@ -1286,7 +1316,7 @@ export const dictionaries = {
       copyLink: 'Скопировать ссылку',
       openLink: 'Открыть в Telegram',
       linkCopied: 'Ссылка скопирована.',
-      linkNotConfigured: 'На сервере не задано имя бота, поэтому ссылку пока нельзя собрать.',
+      linkNotConfigured: 'Добавьте токен Telegram-бота в настройках профиля, чтобы получить ссылку и QR-код.',
       unsavedLink: 'Сохраните изменения, чтобы обновить ссылку и QR-код.',
       qrTitle: 'QR-код',
       qrHint: 'Клиенты могут отсканировать его, открыть бота и начать запись.',
@@ -2030,6 +2060,9 @@ export type TranslationKey =
   | 'settings.specialists.add'
   | 'settings.specialists.edit'
   | 'settings.specialists.delete'
+  | 'settings.specialists.deleteConfirmTitle'
+  | 'settings.specialists.deleteConfirmDescription'
+  | 'settings.specialists.toggleActive'
   | 'settings.specialists.empty'
   | 'settings.specialists.addDialogTitle'
   | 'settings.specialists.editDialogTitle'
@@ -2048,6 +2081,18 @@ export type TranslationKey =
   | 'settings.specialistSettings.defaultSessionContinuationMin'
   | 'settings.specialistSettings.defaultMeetingLink'
   | 'settings.specialistSettings.defaultMeetingLinkInvalid'
+  | 'settings.specialistSettings.formDescription'
+  | 'settings.specialistSettings.profileTitle'
+  | 'settings.specialistSettings.profileDescription'
+  | 'settings.specialistSettings.activeHelper'
+  | 'settings.specialistSettings.pricingTitle'
+  | 'settings.specialistSettings.pricingDescription'
+  | 'settings.specialistSettings.scheduleTitle'
+  | 'settings.specialistSettings.scheduleDescription'
+  | 'settings.specialistSettings.hoursHelper'
+  | 'settings.specialistSettings.minutesHelper'
+  | 'settings.specialistSettings.meetingTitle'
+  | 'settings.specialistSettings.meetingDescription'
   | 'settings.scheduleExceptions.title'
   | 'settings.scheduleExceptions.addButton'
   | 'settings.scheduleExceptions.deleteLabel'

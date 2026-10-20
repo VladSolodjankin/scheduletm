@@ -1,4 +1,4 @@
-import { Box, ButtonBase, Stack, Typography, alpha, useTheme } from '@mui/material';
+import { Box, ButtonBase, Stack, Switch, Typography, alpha, useTheme } from '@mui/material';
 import type { SpecialistManagementItem } from '../../shared/types/api';
 import { AppSurface } from '../../shared/ui/AppSurface';
 import {
@@ -15,6 +15,8 @@ type SpecialistsTableProps = {
   specialists: SpecialistManagementItem[];
   onEdit: (item: SpecialistManagementItem) => void;
   onDelete: (item: SpecialistManagementItem) => void;
+  onToggleActive: (item: SpecialistManagementItem, isActive: boolean) => void;
+  toggleActiveLabel: string;
   canDelete: boolean;
 };
 
@@ -25,9 +27,12 @@ export function SpecialistsTable({
   specialists,
   onEdit,
   onDelete,
+  onToggleActive,
+  toggleActiveLabel,
   canDelete,
 }: SpecialistsTableProps) {
   const theme = useTheme();
+  const activeCount = specialists.filter((item) => item.isActive).length;
 
   return (
     <AppSurface sx={{ p: 0 }} contentSx={{ spacing: 0 }}>
@@ -111,9 +116,16 @@ export function SpecialistsTable({
 
               {canDelete ? (
                 <AppTableActions>
+                  <Switch
+                    checked={item.isActive}
+                    disabled={item.isActive && activeCount <= 1}
+                    onChange={(event) => onToggleActive(item, event.target.checked)}
+                    slotProps={{ input: { 'aria-label': toggleActiveLabel } }}
+                  />
                   <AppTableIconAction
                     label={deleteLabel}
                     color="error"
+                    disabled={specialists.length <= 1}
                     icon={<AppIcons.delete fontSize="small" />}
                     onClick={() => onDelete(item)}
                   />

@@ -28,7 +28,6 @@ const envSchema = z.object({
   YANDEX_OAUTH_SCOPES: z.string().default(''),
   ZOOM_WEBHOOK_SECRET_TOKEN: z.string().default(''),
   APP_ENCRYPTION_KEY: z.string().default(''),
-  TELEGRAM_BOT_USERNAME: z.string().default(''),
   AWS_ENDPOINT_URL: z.string().default(''),
   AWS_ACCESS_KEY_ID: z.string().default(''),
   AWS_SECRET_ACCESS_KEY: z.string().default(''),

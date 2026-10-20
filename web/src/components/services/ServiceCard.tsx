@@ -109,7 +109,6 @@ function AssignmentEditor({
             className="service-card__assignment-switch"
             control={(
               <Switch
-                size="small"
                 checked={isActive}
                 disabled={!canEdit || isSaving}
                 onChange={(event) => setIsActive(event.target.checked)}

@@ -84,6 +84,10 @@ specialistRoutes.patch('/:id', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenUpdateSpecialist') });
     }
 
+    if (message === 'LAST_ACTIVE_SPECIALIST') {
+      return res.status(409).json({ message: t(req, 'lastActiveSpecialist') });
+    }
+
     void trackServerError({ actor, method: req.method, path: req.path, error });
     res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'specialistUpdateFailed') });
@@ -112,6 +116,13 @@ specialistRoutes.delete('/:id', async (req, res) => {
       return res.status(403).json({ message: t(req, 'forbiddenDeleteSpecialist') });
     }
 
+    if (message === 'LAST_SPECIALIST') {
+      return res.status(409).json({ message: t(req, 'lastSpecialist') });
+    }
+
+    if (message === 'SPECIALIST_HAS_APPOINTMENTS') {
+      return res.status(409).json({ message: t(req, 'specialistHasAppointments') });
+    }
 
     void trackServerError({ actor, method: req.method, path: req.path, error });
     res.locals.errorTracked = true;

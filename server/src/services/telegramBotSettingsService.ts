@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
-import { env } from '../config/env.js';
 import { telegramBotSettingsSchema } from '../config/schemas.js';
+import { getDefaultAccountId } from '../repositories/accountRepository.js';
+import { findSharedTelegramBotUsername } from '../repositories/webUserIntegrationRepository.js';
 import {
   findTelegramBotSettingsByAccountId,
   isBotSlugConflictError,
@@ -29,9 +30,9 @@ function generateSlug(): string {
   return Array.from(bytes, (byte) => SLUG_ALPHABET[byte % SLUG_ALPHABET.length]).join('');
 }
 
-function buildBotLink(slug: string): string | null {
-  const username = env.TELEGRAM_BOT_USERNAME.trim().replace(/^@/, '');
-  return username ? `https://t.me/${username}?start=${slug}` : null;
+async function buildBotLink(slug: string): Promise<string | null> {
+  const username = await findSharedTelegramBotUsername(await getDefaultAccountId());
+  return username ? `https://t.me/${username.replace(/^@/, '')}?start=${slug}` : null;
 }
 
 /** The slug is created lazily on first read so account creation flows stay untouched. */
@@ -62,7 +63,7 @@ async function mapSettings(accountId: number): Promise<TelegramBotSettings> {
     enabled: row?.telegram_bot_enabled ?? true,
     slug,
     welcomeMessage: row?.bot_welcome_message ?? '',
-    botLink: buildBotLink(slug),
+    botLink: await buildBotLink(slug),
   };
 }
 

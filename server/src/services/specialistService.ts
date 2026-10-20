@@ -1,6 +1,7 @@
 import {
+  countSpecialistsByAccount,
   createSpecialist,
-  deactivateSpecialistById,
+  deleteSpecialistById,
   findSpecialistById,
   findSpecialistByIdAnyAccount,
   listSpecialistsAllAccounts,
@@ -171,6 +172,12 @@ export async function updateSpecialistForActor(
     throw new Error('FORBIDDEN');
   }
 
+  if (isManager && payload.isActive === false && existing.is_active) {
+    if ((await countSpecialistsByAccount(accountId, { activeOnly: true })) <= 1) {
+      throw new Error('LAST_ACTIVE_SPECIALIST');
+    }
+  }
+
   if (isManager) {
     await updateSpecialistById(accountId, specialistId, {
       name: payload.name,
@@ -213,12 +220,19 @@ export async function deleteSpecialistForActor(actor: User, specialistId: number
     return null;
   }
 
-  await deactivateSpecialistById(accountId, specialistId);
-
-  const updated = await findSpecialistById(accountId, specialistId);
-  if (!updated) {
-    return null;
+  if ((await countSpecialistsByAccount(accountId)) <= 1) {
+    throw new Error('LAST_SPECIALIST');
   }
 
-  return mapSpecialist(updated);
+  try {
+    await deleteSpecialistById(accountId, specialistId);
+  } catch (error) {
+    // Postgres foreign_key_violation: appointments still reference the specialist.
+    if ((error as { code?: string }).code === '23503') {
+      throw new Error('SPECIALIST_HAS_APPOINTMENTS');
+    }
+    throw error;
+  }
+
+  return mapSpecialist(existing);
 }

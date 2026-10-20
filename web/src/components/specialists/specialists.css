@@ -1,0 +1,18 @@
+.specialist-form__grid {
+  display: grid;
+  gap: var(--app-space-m);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.specialist-form__toggle {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-xs) var(--app-space-m);
+}
+
+@media (max-width: 37.499rem) {
+  .specialist-form__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
