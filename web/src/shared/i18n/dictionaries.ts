@@ -380,6 +380,43 @@ export const dictionaries = {
       }
     },
 
+    telegramBot: {
+      menu: 'Telegram bot',
+      title: 'Telegram bot',
+      subtitle: 'Let clients book through the Meetli Telegram bot using your personal link.',
+      loadFailed: 'Could not load the Telegram bot settings.',
+      saveFailed: 'Could not save the Telegram bot settings.',
+      saved: 'Settings saved.',
+      save: 'Save',
+      statusTitle: 'Bot status',
+      enabledLabel: 'Accept bookings through the bot',
+      enabledHint: 'When turned off, clients cannot create new bookings in Telegram. Existing appointments, reminders and cancellations keep working.',
+      linkTitle: 'Bot link',
+      slugLabel: 'Link name',
+      slugHelper: 'Latin letters, digits, "-" and "_", 3-40 characters. Changing it invalidates the previous link and QR code.',
+      slugInvalid: 'Use 3-40 Latin letters, digits, "-" or "_".',
+      linkLabel: 'Link for clients',
+      copyLink: 'Copy link',
+      openLink: 'Open in Telegram',
+      linkCopied: 'Link copied.',
+      linkNotConfigured: 'The bot username is not configured on the server, so the link cannot be built yet.',
+      unsavedLink: 'Save the changes to update the link and QR code.',
+      qrTitle: 'QR code',
+      qrHint: 'Clients can scan it to open the bot and start booking.',
+      qrAlt: 'QR code with the Telegram bot link',
+      downloadPng: 'Download PNG',
+      downloadSvg: 'Download SVG',
+      copyImage: 'Copy image',
+      copySvg: 'Copy SVG',
+      imageCopied: 'Image copied.',
+      svgCopied: 'SVG copied.',
+      copyFailed: 'Could not copy to the clipboard.',
+      qrFailed: 'Could not generate the QR code.',
+      welcomeTitle: 'Welcome message',
+      welcomeLabel: 'Welcome message',
+      welcomeHelper: 'Shown when a client opens your link. Leave empty to use the standard greeting in the client\'s language.',
+      welcomeCounter: '{count} / {max}'
+    },
     accountReviews: {
       pageTitle: 'Reviews',
       pageSubtitle: 'Add client reviews to show on your public page. Changes appear on the public page immediately.',
@@ -1230,6 +1267,43 @@ export const dictionaries = {
       }
     },
 
+    telegramBot: {
+      menu: 'Telegram-бот',
+      title: 'Telegram-бот',
+      subtitle: 'Клиенты записываются через Telegram-бота Meetli по вашей персональной ссылке.',
+      loadFailed: 'Не удалось загрузить настройки Telegram-бота.',
+      saveFailed: 'Не удалось сохранить настройки Telegram-бота.',
+      saved: 'Настройки сохранены.',
+      save: 'Сохранить',
+      statusTitle: 'Статус бота',
+      enabledLabel: 'Принимать записи через бота',
+      enabledHint: 'Если выключить, клиенты не смогут создавать новые записи в Telegram. Существующие записи, напоминания и отмены продолжают работать.',
+      linkTitle: 'Ссылка на бота',
+      slugLabel: 'Название ссылки',
+      slugHelper: 'Латинские буквы, цифры, «-» и «_», от 3 до 40 символов. При смене предыдущая ссылка и QR-код перестанут работать.',
+      slugInvalid: 'Используйте от 3 до 40 латинских букв, цифр, «-» или «_».',
+      linkLabel: 'Ссылка для клиентов',
+      copyLink: 'Скопировать ссылку',
+      openLink: 'Открыть в Telegram',
+      linkCopied: 'Ссылка скопирована.',
+      linkNotConfigured: 'На сервере не задано имя бота, поэтому ссылку пока нельзя собрать.',
+      unsavedLink: 'Сохраните изменения, чтобы обновить ссылку и QR-код.',
+      qrTitle: 'QR-код',
+      qrHint: 'Клиенты могут отсканировать его, открыть бота и начать запись.',
+      qrAlt: 'QR-код со ссылкой на Telegram-бота',
+      downloadPng: 'Скачать PNG',
+      downloadSvg: 'Скачать SVG',
+      copyImage: 'Копировать изображение',
+      copySvg: 'Копировать SVG',
+      imageCopied: 'Изображение скопировано.',
+      svgCopied: 'SVG скопирован.',
+      copyFailed: 'Не удалось скопировать в буфер обмена.',
+      qrFailed: 'Не удалось создать QR-код.',
+      welcomeTitle: 'Приветствие',
+      welcomeLabel: 'Текст приветствия',
+      welcomeHelper: 'Показывается, когда клиент открывает вашу ссылку. Оставьте пустым, чтобы использовать стандартное приветствие на языке клиента.',
+      welcomeCounter: '{count} / {max}'
+    },
     accountReviews: {
       pageTitle: 'Отзывы',
       pageSubtitle: 'Добавляйте отзывы клиентов для публичной страницы. Изменения сразу видны на публичной странице.',
@@ -1714,6 +1788,7 @@ type ServicesTranslationKey = `services.${Exclude<keyof typeof dictionaries.en.s
   | `services.errors.${keyof typeof dictionaries.en.services.errors}`;
 type AccountReviewsTranslationKey = `accountReviews.${Exclude<keyof typeof dictionaries.en.accountReviews, 'errors'>}`
   | `accountReviews.errors.${keyof typeof dictionaries.en.accountReviews.errors}`;
+type TelegramBotTranslationKey = `telegramBot.${keyof typeof dictionaries.en.telegramBot}`;
 type OnboardingStepTranslationKey = `onboarding.steps.${keyof typeof dictionaries.en.onboarding.steps}.${'title' | 'description'}`;
 type OnboardingTranslationKey = `onboarding.${Exclude<keyof typeof dictionaries.en.onboarding, 'steps' | 'errors'>}`
   | `onboarding.errors.${keyof typeof dictionaries.en.onboarding.errors}`
@@ -1726,6 +1801,7 @@ export type TranslationKey =
   | AppointmentManageTranslationKey
   | ServicesTranslationKey
   | AccountReviewsTranslationKey
+  | TelegramBotTranslationKey
   | OnboardingTranslationKey
   | 'publicPageBuilder.unknownBlockTitle'
   | 'publicPageBuilder.unknownBlockDescription'

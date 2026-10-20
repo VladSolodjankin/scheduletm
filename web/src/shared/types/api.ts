@@ -442,3 +442,16 @@ export type AccountReviewPayload = {
   screenshotAlt: string;
   status: AccountReviewStatus;
 };
+
+export type TelegramBotSettings = {
+  enabled: boolean;
+  slug: string;
+  welcomeMessage: string;
+  botLink: string | null;
+};
+
+export type TelegramBotSettingsPayload = {
+  enabled: boolean;
+  slug: string;
+  welcomeMessage: string;
+};

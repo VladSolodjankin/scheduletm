@@ -69,6 +69,7 @@ export function MainLayout() {
       ? [
         { to: '/specialists', label: t('common.specialists'), icon: 'specialists' as const },
         { to: '/public-pages', label: t('publicPageBuilder.pages'), icon: 'publicPages' as const },
+        { to: '/telegram-bot', label: t('telegramBot.menu'), icon: 'telegramBot' as const },
         { to: '/account-reviews', label: t('common.accountReviews'), icon: 'reviews' as const },
       ]
       : []),

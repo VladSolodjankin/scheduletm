@@ -21,18 +21,11 @@ vi.mock('../../repositories/user-session.repository', () => {
   };
 });
 
-vi.mock('../../repositories/account.repository', () => {
-  return {
-    getDefaultAccountId: vi.fn(),
-  };
-});
-
 import {
   createUser,
   findUserByTelegramId,
   updateUserByTelegramId,
 } from '../../repositories/user.repository';
-import { getDefaultAccountId } from '../../repositories/account.repository';
 import { getDefaultTimezone } from '../../repositories/app-settings.repository';
 import { getOrCreateSession } from '../../repositories/user-session.repository';
 import { findOrCreateTelegramUser } from '../user.service';
@@ -43,7 +36,6 @@ describe('findOrCreateTelegramUser', () => {
   });
 
   it('creates a new user (normalizes language) and creates session', async () => {
-    vi.mocked(getDefaultAccountId).mockResolvedValue(7);
     vi.mocked(findUserByTelegramId).mockResolvedValue(null as any);
     vi.mocked(getDefaultTimezone).mockResolvedValue('Europe/Moscow');
     vi.mocked(createUser).mockResolvedValue({
@@ -55,7 +47,7 @@ describe('findOrCreateTelegramUser', () => {
       email: 'new@example.com',
       language_code: 'en',
     } as any);
-    const out = await findOrCreateTelegramUser({
+    const out = await findOrCreateTelegramUser(7, {
       telegramId: 123,
       languageCode: 'en-US',
     });
@@ -73,7 +65,6 @@ describe('findOrCreateTelegramUser', () => {
   });
 
   it('updates existing user profile fields without overwriting chosen language', async () => {
-    vi.mocked(getDefaultAccountId).mockResolvedValue(7);
     vi.mocked(findUserByTelegramId).mockResolvedValue({
       id: 9,
       account_id: 7,
@@ -93,7 +84,7 @@ describe('findOrCreateTelegramUser', () => {
       email: 'old@example.com',
       language_code: 'ru',
     } as any);
-    const out = await findOrCreateTelegramUser({
+    const out = await findOrCreateTelegramUser(7, {
       telegramId: 123,
       username: 'new',
       firstName: 'NewName',
@@ -116,7 +107,6 @@ describe('findOrCreateTelegramUser', () => {
   });
 
   it('uses existing username/first_name when telegram profile fields are missing', async () => {
-    vi.mocked(getDefaultAccountId).mockResolvedValue(7);
     vi.mocked(findUserByTelegramId).mockResolvedValue({
       id: 9,
       account_id: 7,
@@ -137,7 +127,7 @@ describe('findOrCreateTelegramUser', () => {
       language_code: 'ru',
     } as any);
 
-    await findOrCreateTelegramUser({
+    await findOrCreateTelegramUser(7, {
       telegramId: 123,
       // no username/firstName
     });

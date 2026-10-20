@@ -13,6 +13,11 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'start.welcomeBack': 'С возвращением, {{name}}!',
     'start.sessionReset': 'Сессия сброшена. Начинаем заново.',
     'start.chooseAction': 'Я могу помочь записаться к специалисту или показать ваши записи.',
+    'start.unbound':
+      'Запись доступна по персональной ссылке вашего специалиста. Откройте ссылку, которую он вам прислал. Подробнее: {{url}}',
+    'start.invalidLink':
+      'Эта ссылка недействительна. Попросите у специалиста актуальную ссылку. Подробнее: {{url}}',
+    'bot.disabled': 'Онлайн-запись через бота сейчас недоступна. Обратитесь к специалисту напрямую.',
     'start.webSignupHint':
       'Чтобы управлять записями в веб-кабинете, зарегистрируйтесь: {{url}}',
 
@@ -108,6 +113,11 @@ export const dictionaries: Record<SupportedLanguage, Dictionary> = {
     'start.welcomeBack': 'Welcome back, {{name}}!',
     'start.sessionReset': 'Session reset. Let’s start over.',
     'start.chooseAction': 'I can help you book a session or manage your appointments',
+    'start.unbound':
+      'Booking is available through your specialist\'s personal link. Open the link they sent you. More info: {{url}}',
+    'start.invalidLink':
+      'This link is not valid. Ask your specialist for a current link. More info: {{url}}',
+    'bot.disabled': 'Online booking through the bot is currently unavailable. Please contact your specialist directly.',
     'start.webSignupHint':
       'To manage appointments in the web app, sign up here: {{url}}',
 

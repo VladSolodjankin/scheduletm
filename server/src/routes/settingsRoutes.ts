@@ -35,6 +35,11 @@ import {
   undoAccountDeletion,
   undoUserDeletion,
 } from '../services/settingsService.js';
+import {
+  BotSlugTakenError,
+  getTelegramBotSettings,
+  updateTelegramBotSettings,
+} from '../services/telegramBotSettingsService.js';
 
 export const settingsRoutes = Router();
 const PASSWORD_OTP_TTL_MS = 10 * 60 * 1000;
@@ -108,6 +113,36 @@ settingsRoutes.put('/account', requireAccessToken, async (req, res) => {
   }
 
   return res.json(updated);
+});
+
+settingsRoutes.get('/telegram-bot', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageAccountSettings(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
+  }
+
+  return res.json(await getTelegramBotSettings(user.accountId));
+});
+
+settingsRoutes.put('/telegram-bot', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageAccountSettings(user.role)) {
+    return res.status(403).json({ message: t(req, 'forbiddenAccountSettings') });
+  }
+
+  try {
+    const updated = await updateTelegramBotSettings(user.accountId, req.body);
+    if (!updated) {
+      return res.status(400).json({ message: t(req, 'invalidPayloadTelegramBotSettings') });
+    }
+
+    return res.json(updated);
+  } catch (error) {
+    if (error instanceof BotSlugTakenError) {
+      return res.status(409).json({ message: t(req, 'telegramBotSlugTaken') });
+    }
+    throw error;
+  }
 });
 
 settingsRoutes.post('/account/delete', requireAccessToken, async (req, res) => {

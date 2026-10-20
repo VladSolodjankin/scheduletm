@@ -20,6 +20,7 @@ import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import RateReviewRounded from '@mui/icons-material/RateReviewRounded';
 import SaveRounded from '@mui/icons-material/SaveRounded';
+import SendRounded from '@mui/icons-material/SendRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import TuneRounded from '@mui/icons-material/TuneRounded';
 import WebRounded from '@mui/icons-material/WebRounded';
@@ -49,5 +50,6 @@ export const AppIcons = {
   reviews: RateReviewRounded,
   users: PeopleAltRounded,
   save: SaveRounded,
+  telegramBot: SendRounded,
   settings: SettingsRounded
 };

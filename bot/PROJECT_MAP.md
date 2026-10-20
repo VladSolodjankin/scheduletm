@@ -18,6 +18,7 @@
 ## Основные потоки
 
 1. Получение Telegram update через `POST /telegram/webhook/:secret`.
+   Аккаунт определяется в `services/bot-access.service.ts`: `/start <slug>` -> `telegram_account_bindings`.
 2. Чтение/обновление сессии пользователя в `telegram_user_sessions`.
 3. Подбор слотов и создание/обновление `appointments`.
 4. Планирование и отправка `notifications`.
@@ -32,6 +33,8 @@
 - `telegram_user_sessions`
 - `notifications`
 - `app_settings`
+- `account_settings` (`bot_slug`, `telegram_bot_enabled`, `bot_welcome_message`)
+- `telegram_account_bindings`
 
 ## Интеграции
 

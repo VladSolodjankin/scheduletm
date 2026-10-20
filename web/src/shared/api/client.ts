@@ -210,3 +210,12 @@ export const accountReviewsApi = {
     headers: authHeaders(accessToken),
   }),
 };
+
+export const telegramBotApi = {
+  get: <T>(accessToken: string) => apiClient.get<T>('/api/settings/telegram-bot', {
+    headers: authHeaders(accessToken),
+  }),
+  update: <T, P>(accessToken: string, payload: P) => apiClient.put<T>('/api/settings/telegram-bot', payload, {
+    headers: authHeaders(accessToken),
+  }),
+};

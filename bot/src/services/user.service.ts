@@ -5,7 +5,6 @@ import {
 } from '../repositories/user.repository';
 import { getOrCreateSession } from '../repositories/user-session.repository';
 import { normalizeLanguageCode } from '../i18n';
-import { getDefaultAccountId } from '../repositories/account.repository';
 import { getDefaultTimezone } from '../repositories/app-settings.repository';
 
 type TelegramProfile = {
@@ -15,9 +14,8 @@ type TelegramProfile = {
   languageCode?: string;
 };
 
-export async function findOrCreateTelegramUser(profile: TelegramProfile) {
+export async function findOrCreateTelegramUser(accountId: number, profile: TelegramProfile) {
   const languageCode = normalizeLanguageCode(profile.languageCode);
-  const accountId = await getDefaultAccountId();
   const existing = await findUserByTelegramId(accountId, profile.telegramId);
 
   if (!existing) {

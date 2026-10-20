@@ -18,6 +18,7 @@ const ServicesPage = lazy(() => import('../pages/ServicesPage').then((module) =>
 const UsersPage = lazy(() => import('../pages/UsersPage').then((module) => ({ default: module.UsersPage })));
 const NotificationLogsPage = lazy(() => import('../pages/NotificationLogsPage').then((module) => ({ default: module.NotificationLogsPage })));
 const ErrorLogsPage = lazy(() => import('../pages/ErrorLogsPage').then((module) => ({ default: module.ErrorLogsPage })));
+const TelegramBotPage = lazy(() => import('../pages/TelegramBotPage').then((module) => ({ default: module.TelegramBotPage })));
 const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage').then((module) => ({ default: module.PrivacyPolicyPage })));
 const SecurityPolicyPage = lazy(() => import('../pages/SecurityPolicyPage').then((module) => ({ default: module.SecurityPolicyPage })));
 const TermsOfUsePage = lazy(() => import('../pages/TermsOfUsePage').then((module) => ({ default: module.TermsOfUsePage })));
@@ -183,6 +184,7 @@ export const router = createBrowserRouter([
           { path: '/public-pages', element: <RoleRoute><PublicPagesPage /></RoleRoute> },
           { path: '/public-pages/new', element: <RoleRoute><PublicPageEditorPage /></RoleRoute> },
           { path: '/public-pages/:profileId/edit', element: <RoleRoute><PublicPageEditorPage /></RoleRoute> },
+          { path: '/telegram-bot', element: <RoleRoute><TelegramBotPage /></RoleRoute> },
         ]
       },
     ]

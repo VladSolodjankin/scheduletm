@@ -141,6 +141,15 @@ export const accountSettingsSchema = z.object({
   specialistsSeeAllAppointments: z.boolean(),
 }).partial();
 
+export const BOT_SLUG_PATTERN = /^[a-z0-9_-]{3,40}$/;
+export const BOT_WELCOME_MESSAGE_MAX_LENGTH = 500;
+
+export const telegramBotSettingsSchema = z.object({
+  enabled: z.boolean(),
+  slug: z.string().trim().toLowerCase().regex(BOT_SLUG_PATTERN),
+  welcomeMessage: z.string().max(BOT_WELCOME_MESSAGE_MAX_LENGTH),
+}).partial();
+
 export const userSettingsSchema = z.object({
   timezone: timezoneSchema,
   locale: z.string().min(2, v.localeRequired).max(16, v.localeTooLong),

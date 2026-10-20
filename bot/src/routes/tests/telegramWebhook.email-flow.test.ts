@@ -2,7 +2,7 @@ import express from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const sendMessageMock = vi.hoisted(() => vi.fn());
-const findOrCreateTelegramUserMock = vi.hoisted(() => vi.fn());
+const resolveBotAccessMock = vi.hoisted(() => vi.fn());
 const findSessionByUserIdMock = vi.hoisted(() => vi.fn());
 const findUserByPhoneOrEmailMock = vi.hoisted(() => vi.fn());
 const updateUserByTelegramIdMock = vi.hoisted(() => vi.fn());
@@ -29,8 +29,9 @@ vi.mock('../../bot/bot', () => ({
   editMessageText: vi.fn(),
 }));
 
-vi.mock('../../services/user.service', () => ({
-  findOrCreateTelegramUser: findOrCreateTelegramUserMock,
+vi.mock('../../services/bot-access.service', () => ({
+  resolveBotAccess: resolveBotAccessMock,
+  parseStartCommand: (text?: string) => ({ isStart: text === '/start', slug: null }),
 }));
 
 vi.mock('../../i18n', () => ({
@@ -142,15 +143,20 @@ describe('telegramWebhook ENTERING_EMAIL flow', () => {
     markProcessedUpdateMock.mockResolvedValue(true);
     releaseProcessingUpdateMock.mockResolvedValue(true);
     releaseTelegramUserLeaseMock.mockResolvedValue(true);
-    findOrCreateTelegramUserMock.mockResolvedValue({
-      isNew: false,
-      user: {
-        id: 10,
-        account_id: 1,
-        first_name: 'Ivan',
-        username: 'ivan',
-        language_code: 'ru',
-        timezone: 'UTC',
+    resolveBotAccessMock.mockResolvedValue({
+      status: 'ok',
+      enabled: true,
+      welcomeMessage: null,
+      userResult: {
+        isNew: false,
+        user: {
+          id: 10,
+          account_id: 1,
+          first_name: 'Ivan',
+          username: 'ivan',
+          language_code: 'ru',
+          timezone: 'UTC',
+        },
       },
     });
     findSessionByUserIdMock.mockResolvedValue({ state: UserSessionState.ENTERING_EMAIL });
@@ -255,7 +261,7 @@ describe('telegramWebhook ENTERING_EMAIL flow', () => {
 
     expect(response.status).toBe(503);
     expect(markProcessedUpdateMock).not.toHaveBeenCalled();
-    expect(findOrCreateTelegramUserMock).not.toHaveBeenCalled();
+    expect(resolveBotAccessMock).not.toHaveBeenCalled();
   });
 
   it('returns 503 for an actively processing update without treating it as processed', async () => {
@@ -293,7 +299,7 @@ describe('telegramWebhook ENTERING_EMAIL flow', () => {
   });
 
   it('releases owned update and user leases before sending a retryable 500', async () => {
-    findOrCreateTelegramUserMock.mockRejectedValueOnce(new Error('processing failed'));
+    resolveBotAccessMock.mockRejectedValueOnce(new Error('processing failed'));
     let resolveUpdateRelease!: (value: boolean) => void;
     releaseProcessingUpdateMock.mockImplementationOnce(
       () => new Promise<boolean>((resolve) => {

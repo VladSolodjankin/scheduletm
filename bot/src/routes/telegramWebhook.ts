@@ -7,7 +7,7 @@ import {
   sendMessage,
   TelegramUpdate,
 } from '../bot/bot';
-import { findOrCreateTelegramUser } from '../services/user.service';
+import { parseStartCommand, resolveBotAccess } from '../services/bot-access.service';
 import { normalizeLanguageCode, t } from '../i18n';
 import {
   getAppointmentCancelConfirmInlineKeyboard,
@@ -305,17 +305,39 @@ telegramWebhookRouter.post(
           return res.status(200).json({ ok: true });
         }
 
-        const userResult = await findOrCreateTelegramUser({
-          telegramId: callback.from.id,
-          username: callback.from.username,
-          firstName: callback.from.first_name,
-          languageCode: callback.from.language_code,
+        const access = await resolveBotAccess({
+          profile: {
+            telegramId: callback.from.id,
+            username: callback.from.username,
+            firstName: callback.from.first_name,
+            languageCode: callback.from.language_code,
+          },
+          startSlug: null,
         });
 
-        const user = userResult.user;
+        if (access.status !== 'ok') {
+          await answerCallbackQuery(callback.id);
+          await sendMessage(
+            chatId,
+            t(normalizeLanguageCode(callback.from.language_code), 'start.unbound', { url: env.appUrl }),
+          );
+          return res.status(200).json({ ok: true });
+        }
+
+        const user = access.userResult.user;
         accountId = user.account_id;
         internalUserId = user.id;
         const lang = normalizeLanguageCode(user.language_code);
+
+        const isNewBookingCallback = data.startsWith('service:')
+          || data === 'back:services'
+          || data === 'confirm:edit'
+          || data === 'confirm:yes';
+        if (!access.enabled && isNewBookingCallback) {
+          await answerCallbackQuery(callback.id);
+          await sendMessage(chatId, t(lang, 'bot.disabled'), getMainMenuKeyboard(lang));
+          return res.status(200).json({ ok: true });
+        }
         const timezone = user.timezone || await getDefaultTimezone(user.account_id);
 
         const existingSession = await findSessionByUserId(user.account_id, user.id);
@@ -1038,13 +1060,27 @@ telegramWebhookRouter.post(
 
       const chatId = message.chat.id;
 
-      const userResult = await findOrCreateTelegramUser({
-        telegramId: message.from.id,
-        username: message.from.username,
-        firstName: message.from.first_name,
-        languageCode: message.from.language_code,
+      const startCommand = parseStartCommand(text);
+      const access = await resolveBotAccess({
+        profile: {
+          telegramId: message.from.id,
+          username: message.from.username,
+          firstName: message.from.first_name,
+          languageCode: message.from.language_code,
+        },
+        startSlug: startCommand.slug,
       });
 
+      if (access.status !== 'ok') {
+        const key = access.status === 'invalid_link' ? 'start.invalidLink' : 'start.unbound';
+        await sendMessage(
+          chatId,
+          t(normalizeLanguageCode(message.from.language_code), key, { url: env.appUrl }),
+        );
+        return res.status(200).json({ ok: true });
+      }
+
+      const userResult = access.userResult;
       const user = userResult.user;
       accountId = user.account_id;
       internalUserId = user.id;
@@ -1152,13 +1188,18 @@ telegramWebhookRouter.post(
         return res.status(200).json({ ok: true });
       }
 
-      if (text === '/start') {
+      if (startCommand.isStart) {
         await updateSessionState(user.account_id, user.id, UserSessionState.IDLE, {});
-        const greeting = userResult.isNew
-          ? t(lang, 'start.welcomeNew', { name: firstName })
-          : t(lang, 'start.welcomeBack', { name: firstName });
+        const greeting = access.welcomeMessage
+          ?? (userResult.isNew
+            ? t(lang, 'start.welcomeNew', { name: firstName })
+            : t(lang, 'start.welcomeBack', { name: firstName }));
 
         await sendMessage(chatId, greeting, getMainMenuKeyboard(lang));
+        if (!access.enabled) {
+          await sendMessage(chatId, t(lang, 'bot.disabled'));
+          return res.status(200).json({ ok: true });
+        }
         if (userResult.isNew) {
           await sendMessage(chatId, t(lang, 'start.webSignupHint', { url: env.appUrl }));
         }
@@ -1203,6 +1244,11 @@ telegramWebhookRouter.post(
       }
 
       if (text === t(lang, 'common.book')) {
+        if (!access.enabled) {
+          await sendMessage(chatId, t(lang, 'bot.disabled'), getMainMenuKeyboard(lang));
+          return res.status(200).json({ ok: true });
+        }
+
         const services = await startBooking(user.account_id, user.id);
 
         if (!services.length) {
