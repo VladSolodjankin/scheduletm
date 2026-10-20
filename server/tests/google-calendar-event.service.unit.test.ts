@@ -85,7 +85,7 @@ describe('googleCalendarEventService', () => {
 
     const outcome = await processGoogleCalendarSyncItem(item());
 
-    expect(outcome).toEqual({ kind: 'done', detail: 'synced' });
+    expect(outcome).toEqual({ kind: 'done', detail: 'synced', event: 'created' });
     const request = vi.mocked(axios.request).mock.calls[0][0];
     expect(request.method).toBe('POST');
     expect(request.params).toEqual({ sendUpdates: 'none' });
@@ -115,11 +115,11 @@ describe('googleCalendarEventService', () => {
       .mockResolvedValueOnce({ status: 404, data: {} })
       .mockResolvedValueOnce({ status: 200, data: { id: 'evt2' } });
 
-    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'synced' });
+    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'synced', event: 'updated' });
     expect(vi.mocked(axios.request).mock.calls[0][0]).toMatchObject({ method: 'PATCH' });
     expect(String(vi.mocked(axios.request).mock.calls[0][0].url)).toMatch(/events\/evt1$/);
 
-    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'synced' });
+    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'synced', event: 'created' });
     expect(vi.mocked(axios.request).mock.calls[2][0]).toMatchObject({ method: 'POST' });
     expect(syncRepo.setAppointmentGoogleEvent).toHaveBeenLastCalledWith(expect.objectContaining({ googleEventId: 'evt2' }));
   });
@@ -143,7 +143,7 @@ describe('googleCalendarEventService', () => {
       .mockResolvedValueOnce({ status: 409, data: {} })
       .mockResolvedValueOnce({ status: 200, data: {} });
 
-    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'synced' });
+    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'synced', event: 'updated' });
 
     const eventId = buildGoogleEventId(5, 9);
     expect(vi.mocked(axios.request).mock.calls[1][0]).toMatchObject({ method: 'PATCH' });
@@ -160,7 +160,7 @@ describe('googleCalendarEventService', () => {
       .mockResolvedValueOnce({ status: 200, data: {} });
 
     expect(await processGoogleCalendarSyncItem(item())).toMatchObject({ kind: 'error', retryable: true });
-    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'synced' });
+    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'synced', event: 'updated' });
 
     const calls = vi.mocked(axios.request).mock.calls.map(([config]) => config);
     expect((calls[0].data as { id: string }).id).toBe((calls[1].data as { id: string }).id);
@@ -204,7 +204,7 @@ describe('googleCalendarEventService', () => {
     );
     vi.mocked(axios.request).mockResolvedValue({ status, data: undefined });
 
-    expect(await processGoogleCalendarSyncItem(item({ action: 'delete' }))).toEqual({ kind: 'done', detail: 'synced' });
+    expect(await processGoogleCalendarSyncItem(item({ action: 'delete' }))).toEqual({ kind: 'done', detail: 'synced', event: 'deleted' });
     expect(vi.mocked(axios.request).mock.calls[0][0]).toMatchObject({ method: 'DELETE' });
     expect(syncRepo.setAppointmentGoogleEvent).toHaveBeenCalledWith({
       accountId: 5, appointmentId: 9, googleEventId: null, webUserId: null,
@@ -231,7 +231,7 @@ describe('googleCalendarEventService', () => {
       .mockResolvedValueOnce({ status: 401, data: {} })
       .mockResolvedValueOnce({ status: 200, data: { id: 'evt1' } });
 
-    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'synced' });
+    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'synced', event: 'created' });
     expect(availability.resolveUsableGoogleAccessToken.mock.calls[1][0]).toMatchObject({ forceRefresh: true });
     expect(vi.mocked(axios.request).mock.calls[1][0].headers).toEqual({ Authorization: 'Bearer fresh' });
   });
@@ -247,12 +247,12 @@ describe('googleCalendarEventService', () => {
     syncRepo.findGoogleCalendarSyncAppointment.mockResolvedValue(appointment());
 
     integrationRepo.findWebUserIntegrationByWebUserId.mockResolvedValue(integration({ google_api_key: null }));
-    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'skipped' });
+    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'skipped', reason: 'no_access_token' });
 
     integrationRepo.findWebUserIntegrationByWebUserId.mockResolvedValue(
       integration({ google_granted_scopes: 'https://www.googleapis.com/auth/calendar.freebusy' }),
     );
-    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'skipped' });
+    expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'skipped', reason: 'write_scope_missing' });
     expect(axios.request).not.toHaveBeenCalled();
   });
 

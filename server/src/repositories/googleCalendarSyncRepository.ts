@@ -71,6 +71,29 @@ export async function isGoogleCalendarWriteAvailableForSpecialist(
   return Boolean(row) && hasGoogleCalendarWriteScope(row?.google_granted_scopes);
 }
 
+/** Runs only after the gate said no: names the first failing condition. Diagnostic; never throws. */
+async function describeGateSkip(accountId: number, specialistId: number, executor: Executor): Promise<string> {
+  try {
+    const row = await executor('specialists as s')
+      .leftJoin('web_user_integrations as wui', function joinIntegrations() {
+        this.on('wui.web_user_id', '=', 's.user_id').andOn('wui.account_id', '=', 's.account_id');
+      })
+      .where({ 's.account_id': accountId, 's.id': specialistId })
+      .first<{ user_id: number | null; web_user_id: number | null; has_token: boolean } | undefined>(
+        's.user_id',
+        'wui.web_user_id',
+        executor.raw('(wui.google_access_token_encrypted IS NOT NULL) as has_token'),
+      );
+    if (!row) return 'no_specialist';
+    if (!row.user_id) return 'specialist_has_no_web_user';
+    if (!row.web_user_id) return 'no_integration_row';
+    if (!row.has_token) return 'no_access_token';
+    return 'write_scope_missing';
+  } catch {
+    return 'diagnostic_failed';
+  }
+}
+
 async function insertCoalesced(input: EnqueueGoogleCalendarSyncInput, executor: Executor): Promise<void> {
   // One pending row per appointment: a delete supersedes everything, a later upsert refreshes the older one.
   await executor.raw(
@@ -128,8 +151,15 @@ export async function enqueueGoogleCalendarSync(
     const hasKnownEvent = input.action === 'delete' && Boolean(input.googleEventId);
     const run = async (exec: Executor): Promise<boolean> => {
       if (!hasKnownEvent) {
-        if (input.specialistId === undefined
-          || !(await isGoogleCalendarWriteAvailableForSpecialist(input.accountId, input.specialistId, exec))) {
+        const reason = input.specialistId === undefined
+          ? 'no_specialist_id'
+          : (await isGoogleCalendarWriteAvailableForSpecialist(input.accountId, input.specialistId, exec))
+            ? null
+            : await describeGateSkip(input.accountId, input.specialistId, exec);
+        if (reason) {
+          console.log(
+            `[googleCalendarSync] not queued appointment=${input.appointmentId} account=${input.accountId} action=${input.action} skip=${reason}`,
+          );
           return false;
         }
       }
@@ -141,6 +171,7 @@ export async function enqueueGoogleCalendarSync(
       ? await (executor as Knex.Transaction).transaction(async (savepoint) => run(savepoint))
       : await run(executor);
     if (enqueued) {
+      console.log(`[googleCalendarSync] queued appointment=${input.appointmentId} action=${input.action}`);
       scheduleKick();
     }
     return enqueued;
@@ -166,6 +197,10 @@ export async function enqueueGoogleCalendarUpserts(
   try {
     const run = async (exec: Executor): Promise<number> => {
       if (!(await isGoogleCalendarWriteAvailableForSpecialist(input.accountId, input.specialistId, exec))) {
+        const reason = await describeGateSkip(input.accountId, input.specialistId, exec);
+        console.log(
+          `[googleCalendarSync] not queued appointments=${input.appointmentIds.slice(0, 20).join(',')} account=${input.accountId} action=upsert skip=${reason}`,
+        );
         return 0;
       }
       for (const appointmentId of input.appointmentIds) {
@@ -178,6 +213,7 @@ export async function enqueueGoogleCalendarUpserts(
       ? await (executor as Knex.Transaction).transaction(async (savepoint) => run(savepoint))
       : await run(executor);
     if (count > 0) {
+      console.log(`[googleCalendarSync] queued appointments=${input.appointmentIds.slice(0, 20).join(',')} action=upsert`);
       scheduleKick();
     }
     return count;

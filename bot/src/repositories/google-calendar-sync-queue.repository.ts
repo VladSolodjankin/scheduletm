@@ -48,6 +48,9 @@ export async function enqueueGoogleCalendarSync(
     const run = async (exec: Executor) => {
       const hasKnownEvent = input.action === 'delete' && Boolean(input.googleEventId);
       if (!hasKnownEvent && !(await hasGoogleCalendarConnection(input.accountId, input.specialistId, exec))) {
+        console.log(
+          `[googleCalendarSync][bot] not queued appointment=${input.appointmentId} account=${input.accountId} action=${input.action} skip=no_google_connection`,
+        );
         return false;
       }
 
@@ -65,6 +68,7 @@ export async function enqueueGoogleCalendarSync(
            updated_at = now()`,
         [input.accountId, input.appointmentId, input.action, input.googleEventId ?? null, input.webUserId ?? null],
       );
+      console.log(`[googleCalendarSync][bot] queued appointment=${input.appointmentId} action=${input.action}`);
       return true;
     };
 

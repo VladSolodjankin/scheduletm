@@ -27,10 +27,54 @@ function mockGate(row: { google_granted_scopes: string | null } | undefined) {
   dbMock.mockReturnValue(chain);
 }
 
+function mockGateDenied(diagnostic: unknown) {
+  const chain: Record<string, unknown> = {};
+  chain.join = vi.fn(() => chain);
+  chain.leftJoin = vi.fn(() => chain);
+  chain.where = vi.fn(() => chain);
+  chain.whereNotNull = vi.fn(() => chain);
+  chain.first = vi.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce(diagnostic);
+  dbMock.mockReset();
+  dbMock.mockReturnValue(chain);
+}
+
 describe('google calendar sync outbox', () => {
   beforeEach(() => {
     dbMock.raw.mockReset().mockResolvedValue(undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  });
+
+  it.each([
+    [undefined, 'no_specialist'],
+    [{ user_id: null, web_user_id: null, has_token: false }, 'specialist_has_no_web_user'],
+    [{ user_id: 8, web_user_id: null, has_token: false }, 'no_integration_row'],
+    [{ user_id: 8, web_user_id: 8, has_token: false }, 'no_access_token'],
+    [{ user_id: 8, web_user_id: 8, has_token: true }, 'write_scope_missing'],
+  ])('logs the precise skip reason for %j', async (diagnostic, reason) => {
+    mockGateDenied(diagnostic);
+    expect(await enqueueGoogleCalendarSync({ accountId: 1, appointmentId: 2, action: 'upsert', specialistId: 3 })).toBe(false);
+    expect(console.log).toHaveBeenCalledTimes(1);
+    expect(console.log).toHaveBeenCalledWith(
+      `[googleCalendarSync] not queued appointment=2 account=1 action=upsert skip=${reason}`,
+    );
+  });
+
+  it('logs no_specialist_id without any query and logs queued on success', async () => {
+    expect(await enqueueGoogleCalendarSync({ accountId: 1, appointmentId: 2, action: 'upsert' })).toBe(false);
+    expect(console.log).toHaveBeenLastCalledWith(expect.stringContaining('skip=no_specialist_id'));
+
+    mockGate({ google_granted_scopes: WRITE_SCOPE });
+    expect(await enqueueGoogleCalendarSync({ accountId: 1, appointmentId: 2, action: 'upsert', specialistId: 3 })).toBe(true);
+    expect(console.log).toHaveBeenLastCalledWith('[googleCalendarSync] queued appointment=2 action=upsert');
+  });
+
+  it('logs the series skip reason', async () => {
+    mockGateDenied({ user_id: 8, web_user_id: 8, has_token: true });
+    expect(await enqueueGoogleCalendarUpserts({ accountId: 1, specialistId: 3, appointmentIds: [10, 11] })).toBe(0);
+    expect(console.log).toHaveBeenCalledWith(
+      '[googleCalendarSync] not queued appointments=10,11 account=1 action=upsert skip=write_scope_missing',
+    );
   });
 
   it('writes no row when the specialist did not opt in', async () => {

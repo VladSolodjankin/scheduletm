@@ -103,6 +103,27 @@ Zoom access/refresh token, Yandex access/refresh token, Telegram bot token) ши
 - Бот не обращается к Google: он только ставит строки в `google_calendar_sync_queue`. Слоты в боте не учитывают занятость из
   Google Calendar (публичное веб-бронирование учитывает её через freeBusy).
 
+### Диагностика
+
+Все строки лога синхронизации начинаются с префикса `[googleCalendarSync]` (бот — `[googleCalendarSync][bot]`) и
+содержат только id, действие, HTTP-статус и фиксированный код причины (без названий, email, токенов, тел ответов).
+Проход без работы ничего не пишет.
+
+- `job started intervalMs=<n>` — job зарегистрирован при старте сервера.
+- `not queued appointment=<id> account=<id> action=<a> skip=<код>` — строка в очередь не поставлена. Коды:
+  `no_specialist_id`, `no_specialist`, `specialist_has_no_web_user`, `no_integration_row`, `no_access_token`,
+  `write_scope_missing` (бот: `no_google_connection`).
+- `queued appointment=<id> action=<upsert|delete>` — строка поставлена в очередь.
+- `done appointment=<id> action=<a> event=created|updated|deleted` — событие в Google синхронизировано.
+- `skipped appointment=<id> action=<a> reason=<код>` — обработка пропущена без обращения к Google. Коды:
+  `appointment_missing`, `specialist_has_no_web_user`, `no_integration_row`, `no_access_token`,
+  `write_scope_missing`, `no_event_reference`.
+- `retry|failed appointment=<id> action=<a> status=<HTTP-код или причина> attempt=<n>` — ошибка; `retry` — будет
+  повтор, `failed` — строка закрыта.
+
+Если при создании приёма нет ни `queued`, ни `not queued`, постановка в очередь вообще не вызывалась (или запрос упал
+с `enqueue failed`).
+
 ## Ротация ключа
 
 Формальной автоматизированной процедуры ротации `APP_ENCRYPTION_KEY` пока нет. Ручная процедура:

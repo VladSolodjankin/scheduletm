@@ -23,7 +23,8 @@ export function computeGoogleSyncBackoffMs(attempts: number): number {
 }
 
 export type GoogleSyncOutcome =
-  | { kind: 'done'; detail: 'synced' | 'skipped' }
+  | { kind: 'done'; detail: 'synced'; event: 'created' | 'updated' | 'deleted' }
+  | { kind: 'done'; detail: 'skipped'; reason: string }
   | { kind: 'error'; errorStatus: string; retryable: boolean };
 
 type WriteCredentials = {
@@ -37,14 +38,19 @@ type WriteCredentials = {
 type GoogleResponse = { status: number; data: { id?: unknown } | undefined };
 
 /** The granted write scope is re-validated at processing time; null means Google must not be called. */
-async function loadWriteCredentials(accountId: number, webUserId: number): Promise<WriteCredentials | null> {
+async function loadWriteCredentials(
+  accountId: number,
+  webUserId: number,
+): Promise<WriteCredentials | { skipReason: string }> {
   const integration = await findWebUserIntegrationByWebUserId(accountId, webUserId);
-  if (
-    !integration
-    || !integration.google_api_key
-    || !hasGoogleCalendarWriteScope(integration.google_granted_scopes)
-  ) {
-    return null;
+  if (!integration) {
+    return { skipReason: 'no_integration_row' };
+  }
+  if (!integration.google_api_key) {
+    return { skipReason: 'no_access_token' };
+  }
+  if (!hasGoogleCalendarWriteScope(integration.google_granted_scopes)) {
+    return { skipReason: 'write_scope_missing' };
   }
 
   return {
@@ -138,8 +144,8 @@ export async function deleteGoogleEvent(input: {
   googleEventId: string;
 }): Promise<GoogleSyncOutcome> {
   const credentials = await loadWriteCredentials(input.accountId, input.webUserId);
-  if (!credentials) {
-    return { kind: 'done', detail: 'skipped' };
+  if ('skipReason' in credentials) {
+    return { kind: 'done', detail: 'skipped', reason: credentials.skipReason };
   }
 
   let result: Awaited<ReturnType<typeof send>>;
@@ -150,7 +156,7 @@ export async function deleteGoogleEvent(input: {
   }
 
   if (!('authError' in result) && (result.status < 300 || result.status === 404 || result.status === 410)) {
-    return { kind: 'done', detail: 'synced' };
+    return { kind: 'done', detail: 'synced', event: 'deleted' };
   }
   return toError(result);
 }
@@ -183,6 +189,7 @@ async function storeEventId(
   appointment: GoogleCalendarSyncAppointment,
   credentials: WriteCredentials,
   googleEventId: string,
+  event: 'created' | 'updated',
 ): Promise<GoogleSyncOutcome> {
   await setAppointmentGoogleEvent({
     accountId: appointment.account_id,
@@ -190,7 +197,7 @@ async function storeEventId(
     googleEventId,
     webUserId: credentials.webUserId,
   });
-  return { kind: 'done', detail: 'synced' };
+  return { kind: 'done', detail: 'synced', event };
 }
 
 async function createEvent(
@@ -208,21 +215,21 @@ async function createEvent(
     if ('authError' in patched || patched.status >= 300) {
       return toError(patched);
     }
-    return storeEventId(appointment, credentials, eventId);
+    return storeEventId(appointment, credentials, eventId, 'updated');
   }
   if ('authError' in result || result.status >= 300) {
     return toError(result);
   }
 
   const createdId = typeof result.data?.id === 'string' ? result.data.id : eventId;
-  return storeEventId(appointment, credentials, createdId);
+  return storeEventId(appointment, credentials, createdId, 'created');
 }
 
 async function syncDelete(item: GoogleCalendarSyncItem, appointment: GoogleCalendarSyncAppointment | null): Promise<GoogleSyncOutcome> {
   const googleEventId = appointment?.google_event_id ?? item.google_event_id;
   const webUserId = appointment?.google_event_web_user_id ?? item.web_user_id;
   if (!googleEventId || !webUserId) {
-    return { kind: 'done', detail: 'skipped' };
+    return { kind: 'done', detail: 'skipped', reason: 'no_event_reference' };
   }
 
   const outcome = await deleteGoogleEvent({ accountId: item.account_id, webUserId, googleEventId });
@@ -239,7 +246,7 @@ async function syncUpsert(item: GoogleCalendarSyncItem, appointment: GoogleCalen
 
   const targetWebUserId = appointment.specialist_user_id;
   if (!targetWebUserId) {
-    return { kind: 'done', detail: 'skipped' };
+    return { kind: 'done', detail: 'skipped', reason: 'specialist_has_no_web_user' };
   }
 
   let existingEventId = appointment.google_event_id;
@@ -258,8 +265,8 @@ async function syncUpsert(item: GoogleCalendarSyncItem, appointment: GoogleCalen
   }
 
   const credentials = await loadWriteCredentials(item.account_id, targetWebUserId);
-  if (!credentials) {
-    return { kind: 'done', detail: 'skipped' };
+  if ('skipReason' in credentials) {
+    return { kind: 'done', detail: 'skipped', reason: credentials.skipReason };
   }
 
   if (!existingEventId) {
@@ -268,7 +275,7 @@ async function syncUpsert(item: GoogleCalendarSyncItem, appointment: GoogleCalen
 
   const result = await send(credentials, 'PATCH', existingEventId, buildGoogleEventBody(appointment));
   if (!('authError' in result) && result.status < 300) {
-    return { kind: 'done', detail: 'synced' };
+    return { kind: 'done', detail: 'synced', event: 'updated' };
   }
   if (!('authError' in result) && (result.status === 404 || result.status === 410)) {
     // Event was removed in Google; recreate it.
@@ -286,7 +293,7 @@ export async function processGoogleCalendarSyncItem(item: GoogleCalendarSyncItem
       return await syncDelete(item, appointment);
     }
     if (!appointment) {
-      return { kind: 'done', detail: 'skipped' };
+      return { kind: 'done', detail: 'skipped', reason: 'appointment_missing' };
     }
     return await syncUpsert(item, appointment);
   } catch (error) {

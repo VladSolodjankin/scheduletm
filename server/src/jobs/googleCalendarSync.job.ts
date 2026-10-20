@@ -62,6 +62,7 @@ export function kickGoogleCalendarSync(): void {
 
 export function startGoogleCalendarSyncJob(intervalMs = DEFAULT_INTERVAL_MS): NodeJS.Timeout {
   setGoogleCalendarSyncKickHandler(kickGoogleCalendarSync);
+  console.log(`[googleCalendarSync] job started intervalMs=${intervalMs}`);
   return setInterval(runPass, intervalMs);
 }
 
@@ -77,14 +78,24 @@ export async function runGoogleCalendarSyncJob(throttleMs = THROTTLE_MS): Promis
     const outcome = await processGoogleCalendarSyncItem(item);
     if (outcome.kind === 'done') {
       await markGoogleCalendarSyncDone(item.id, item.locked_until);
+      const ids = `appointment=${item.appointment_id} action=${item.action}`;
+      console.log(
+        outcome.detail === 'synced'
+          ? `[googleCalendarSync] done ${ids} event=${outcome.event} account=${item.account_id}`
+          : `[googleCalendarSync] skipped ${ids} reason=${outcome.reason} account=${item.account_id}`,
+      );
       continue;
     }
 
     const attempts = item.attempts + 1;
-    console.error(
-      `[googleCalendarSync] account=${item.account_id} appointment=${item.appointment_id} action=${item.action} status=${outcome.errorStatus} attempt=${attempts}`,
-    );
-    if (outcome.retryable && attempts < GOOGLE_SYNC_MAX_ATTEMPTS) {
+    const willRetry = outcome.retryable && attempts < GOOGLE_SYNC_MAX_ATTEMPTS;
+    const line = `appointment=${item.appointment_id} action=${item.action} status=${outcome.errorStatus} attempt=${attempts} account=${item.account_id}`;
+    if (willRetry) {
+      console.warn(`[googleCalendarSync] retry ${line}`);
+    } else {
+      console.error(`[googleCalendarSync] failed ${line}`);
+    }
+    if (willRetry) {
       await markGoogleCalendarSyncRetry({
         id: item.id,
         attempts,

@@ -28,11 +28,48 @@ describe('googleCalendarSync job', () => {
     vi.resetAllMocks();
     eventService.computeGoogleSyncBackoffMs.mockReturnValue(60_000);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  });
+
+  const allOutput = () => [console.log, console.warn, console.error]
+    .flatMap((fn) => vi.mocked(fn).mock.calls.map((call) => call.join(' ')))
+    .join(' | ');
+
+  it('logs one line per processed row and never any content', async () => {
+    repo.claimDueGoogleCalendarSyncItems.mockResolvedValue([row(1), row(2), row(3, 4), row(4)]);
+    eventService.processGoogleCalendarSyncItem
+      .mockResolvedValueOnce({ kind: 'done', detail: 'synced', event: 'created' })
+      .mockResolvedValueOnce({ kind: 'done', detail: 'skipped', reason: 'write_scope_missing' })
+      .mockResolvedValueOnce({ kind: 'error', errorStatus: '503', retryable: true })
+      .mockResolvedValueOnce({ kind: 'error', errorStatus: '503', retryable: true });
+
+    await runGoogleCalendarSyncJob(0);
+
+    expect(console.log).toHaveBeenCalledWith('[googleCalendarSync] done appointment=101 action=upsert event=created account=1');
+    expect(console.log).toHaveBeenCalledWith('[googleCalendarSync] skipped appointment=102 action=upsert reason=write_scope_missing account=1');
+    expect(console.error).toHaveBeenCalledWith('[googleCalendarSync] failed appointment=103 action=upsert status=503 attempt=5 account=1');
+    expect(console.warn).toHaveBeenCalledWith('[googleCalendarSync] retry appointment=104 action=upsert status=503 attempt=1 account=1');
+    const output = allOutput();
+    for (const secret of ['Haircut', 'client@example.com', 'ya29.token', 'Ivan Petrov']) {
+      expect(output).not.toContain(secret);
+    }
+  });
+
+  it('logs the startup line with the interval', () => {
+    vi.useFakeTimers();
+    try {
+      const timer = startGoogleCalendarSyncJob(1234);
+      expect(console.log).toHaveBeenCalledWith('[googleCalendarSync] job started intervalMs=1234');
+      clearInterval(timer);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('marks successful rows done and processes rows sequentially', async () => {
     repo.claimDueGoogleCalendarSyncItems.mockResolvedValue([row(1), row(2)]);
-    eventService.processGoogleCalendarSyncItem.mockResolvedValue({ kind: 'done', detail: 'synced' });
+    eventService.processGoogleCalendarSyncItem.mockResolvedValue({ kind: 'done', detail: 'synced', event: 'created' });
 
     expect(await runGoogleCalendarSyncJob(0)).toBe(2);
     expect(repo.markGoogleCalendarSyncDone.mock.calls).toEqual([[1, LEASE], [2, LEASE]]);
@@ -56,6 +93,12 @@ describe('googleCalendarSync job', () => {
     repo.claimDueGoogleCalendarSyncItems.mockResolvedValue([]);
     expect(await runGoogleCalendarSyncJob(0)).toBe(0);
     expect(repo.purgeFinishedGoogleCalendarSyncItems).toHaveBeenCalledOnce();
+  });
+
+  it('logs nothing on an idle pass', async () => {
+    repo.claimDueGoogleCalendarSyncItems.mockResolvedValue([]);
+    await runGoogleCalendarSyncJob(0);
+    expect(allOutput()).toBe('');
   });
 
   it('serializes kicks: a kick during a pass causes exactly one follow-up pass', async () => {
