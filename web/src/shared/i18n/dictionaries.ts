@@ -670,6 +670,11 @@ export const dictionaries = {
         generateMeetingLink: 'Unable to generate meeting link.',
         yandexNotConnected: 'Yandex Telemost is not connected. Connect it in Settings > Integrations.',
         createSpecialistFirst: 'Create at least one specialist first.',
+        checkForm: 'Please check the highlighted fields.',
+        firstNameRequired: 'Enter the client first name',
+        lastNameRequired: 'Enter the client last name',
+        contactRequired: 'Enter a Telegram username, phone or email',
+        invalidPhone: 'Invalid phone number',
       },
       fields: {
         scheduledAt: 'Date and time',
@@ -1515,6 +1520,11 @@ export const dictionaries = {
         generateMeetingLink: 'Не удалось сгенерировать ссылку на встречу.',
         yandexNotConnected: 'Яндекс Телемост не подключен. Подключите его в Настройки > Интеграции.',
         createSpecialistFirst: 'Сначала создайте хотя бы одного специалиста.',
+        checkForm: 'Проверьте выделенные поля.',
+        firstNameRequired: 'Укажите имя клиента',
+        lastNameRequired: 'Укажите фамилию клиента',
+        contactRequired: 'Укажите Telegram username, телефон или email',
+        invalidPhone: 'Некорректный номер телефона',
       },
       fields: {
         scheduledAt: 'Дата и время',
@@ -2118,6 +2128,11 @@ export type TranslationKey =
   | 'appointments.errors.notify'
   | 'appointments.errors.generateMeetingLink'
   | 'appointments.errors.createSpecialistFirst'
+  | 'appointments.errors.checkForm'
+  | 'appointments.errors.firstNameRequired'
+  | 'appointments.errors.lastNameRequired'
+  | 'appointments.errors.contactRequired'
+  | 'appointments.errors.invalidPhone'
   | 'appointments.fields.scheduledAt'
   | 'appointments.fields.status'
   | 'appointments.fields.meetingProvider'

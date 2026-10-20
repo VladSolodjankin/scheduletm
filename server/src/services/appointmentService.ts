@@ -83,7 +83,7 @@ type AppointmentEventDto = {
 
 type AppointmentListResult = {
   appointments: AppointmentDto[];
-  specialists: Array<{ id: number; name: string; timezone: string; slotStepMin: number }>;
+  specialists: Array<{ id: number; name: string; timezone: string; slotStepMin: number; isActive: boolean }>;
   clients: AppointmentClientDto[];
   busySlots: ExternalBusySlot[];
 };
@@ -243,6 +243,7 @@ function mapSpecialistsForUi(rows: SpecialistRecord[]) {
     name: item.name,
     timezone: item.timezone || 'UTC',
     slotStepMin: item.slot_step_min ?? 30,
+    isActive: item.is_active,
   }));
 }
 

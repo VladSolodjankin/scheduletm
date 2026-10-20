@@ -161,7 +161,7 @@ integrationRoutes.post('/zoom/meetings', requireAccessToken, async (req, res) =>
     }
 
     if (result.reason === 'zoom_not_connected' || result.reason === 'zoom_auth_failed') {
-      return res.status(401).json({ message: t(req, 'zoomNotConnected') });
+      return res.status(409).json({ message: t(req, 'zoomNotConnected') });
     }
 
     if (result.reason === 'invalid_user') {
@@ -249,7 +249,7 @@ integrationRoutes.post('/yandex/meetings', requireAccessToken, async (req, res) 
     }
 
     if (result.reason === 'yandex_not_connected' || result.reason === 'yandex_auth_failed') {
-      return res.status(401).json({ message: t(req, 'yandexNotConnected') });
+      return res.status(409).json({ message: t(req, 'yandexNotConnected') });
     }
 
     if (result.reason === 'invalid_user') {

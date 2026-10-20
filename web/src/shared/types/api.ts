@@ -192,6 +192,7 @@ export type SpecialistItem = {
   name: string;
   timezone: string;
   slotStepMin: number;
+  isActive?: boolean;
 };
 
 export type AppointmentItem = {

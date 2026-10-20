@@ -350,13 +350,23 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
     googleConnected: Boolean(legacyIntegration?.google_api_key),
     zoomConnected: Boolean(
       legacyIntegration?.zoom_access_token
-      && legacyIntegration?.zoom_token_expires_at
-      && new Date(legacyIntegration.zoom_token_expires_at).getTime() > Date.now(),
+      && (
+        legacyIntegration?.zoom_refresh_token
+        || (
+          legacyIntegration?.zoom_token_expires_at
+          && new Date(legacyIntegration.zoom_token_expires_at).getTime() > Date.now()
+        )
+      ),
     ),
     yandexConnected: Boolean(
       legacyIntegration?.yandex_access_token
-      && legacyIntegration?.yandex_token_expires_at
-      && new Date(legacyIntegration.yandex_token_expires_at).getTime() > Date.now(),
+      && (
+        legacyIntegration?.yandex_refresh_token
+        || (
+          legacyIntegration?.yandex_token_expires_at
+          && new Date(legacyIntegration.yandex_token_expires_at).getTime() > Date.now()
+        )
+      ),
     ),
     telegramBotConnected: Boolean(integration?.telegram_bot_token ?? legacyIntegration?.telegram_bot_token),
     telegramBotName: integration?.telegram_bot_name ?? legacyIntegration?.telegram_bot_name ?? null,

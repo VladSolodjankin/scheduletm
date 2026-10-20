@@ -1,4 +1,5 @@
 import {
+  Alert,
   Avatar,
   Box,
   Collapse,
@@ -56,6 +57,7 @@ type Props = {
   open: boolean;
   editingItem: AppointmentItem | null;
   specialists: SpecialistItem[];
+  connectedProviders: { zoom: boolean; yandexTelemost: boolean };
   clients: ClientItem[];
   selectedSpecialistId: number | 'all';
   selectedSlotStepMin: number;
@@ -63,6 +65,8 @@ type Props = {
   isSubmittingForm: boolean;
   accessToken: string;
   isClient?: boolean;
+  submitError?: string;
+  serverFieldErrors?: Record<string, string>;
   isCancellingAppointment: boolean;
   isMarkingPaid: boolean;
   isNotifyingClient: boolean;
@@ -121,6 +125,7 @@ export function AppointmentFormDialog({
   open,
   editingItem,
   specialists,
+  connectedProviders,
   clients,
   selectedSpecialistId,
   selectedSlotStepMin,
@@ -128,6 +133,8 @@ export function AppointmentFormDialog({
   isSubmittingForm,
   accessToken,
   isClient = false,
+  submitError = '',
+  serverFieldErrors,
   isCancellingAppointment,
   isMarkingPaid,
   isNotifyingClient,
@@ -147,7 +154,9 @@ export function AppointmentFormDialog({
   const isClientRestricted = isClient && Boolean(editingItem);
 
   const initialValues = useMemo(() => {
-    const defaultSpecialistId = selectedSpecialistId === 'all' ? specialists[0]?.id : selectedSpecialistId;
+    const defaultSpecialistId = selectedSpecialistId === 'all'
+      ? (specialists.find((specialist) => specialist.isActive !== false) ?? specialists[0])?.id
+      : selectedSpecialistId;
 
     if (editingItem) {
       const times = createFormValuesFromAppointmentAt(
@@ -204,9 +213,27 @@ export function AppointmentFormDialog({
     } satisfies AppointmentFormState;
   }, [editingItem, initialScheduledAtIso, selectedSlotStepMin, selectedSpecialistId, specialists]);
 
-  const { control, handleSubmit, reset, setValue } = useForm<AppointmentFormState>({
+  const { control, handleSubmit, reset, setValue, setError, getValues, formState: { errors } } = useForm<AppointmentFormState>({
     defaultValues: EMPTY_FORM,
   });
+  const hasInvalidFields = Object.keys(errors).length > 0;
+
+  useEffect(() => {
+    if (!serverFieldErrors) {
+      return;
+    }
+
+    const fieldAliases: Record<string, keyof AppointmentFormState> = {
+      appointmentAt: 'startTime',
+      appointmentEndAt: 'endTime',
+    };
+    Object.entries(serverFieldErrors).forEach(([key, message]) => {
+      const name = (fieldAliases[key] ?? key) as keyof AppointmentFormState;
+      if (name in EMPTY_FORM) {
+        setError(name, { type: 'server', message });
+      }
+    });
+  }, [serverFieldErrors, setError]);
 
   useEffect(() => {
     if (!open) {
@@ -284,6 +311,11 @@ export function AppointmentFormDialog({
     });
   });
 
+  const requiresClientDetails = !editingItem;
+  const hasContact = (form: AppointmentFormState) => Boolean(
+    form.clientId || form.username.trim() || form.phone.trim() || form.email.trim(),
+  );
+
   const handleGenerateMeetingLink = async () => {
     setGenerateMeetingLinkError('');
     const provider = meetingProviderValue;
@@ -318,7 +350,7 @@ export function AppointmentFormDialog({
 
       setValue('meetingLink', String(response.data?.joinUrl ?? ''), { shouldDirty: true });
     } catch (error) {
-      if (provider === 'yandex_telemost' && isAxiosError(error) && error.response?.status === 401) {
+      if (provider === 'yandex_telemost' && isAxiosError(error) && error.response?.status === 409) {
         setGenerateMeetingLinkError(t('appointments.errors.yandexNotConnected'));
       } else {
         setGenerateMeetingLinkError(resolveApiError(error, { fallbackMessage: t('appointments.errors.generateMeetingLink') }).message ?? '');
@@ -362,6 +394,9 @@ export function AppointmentFormDialog({
       )}
     >
         <Stack spacing={2} sx={{ mt: 1 }}>
+          {(submitError || hasInvalidFields) && (
+            <Alert severity="error">{submitError || t('appointments.errors.checkForm')}</Alert>
+          )}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <AppButton
               variant="text"
@@ -410,7 +445,9 @@ export function AppointmentFormDialog({
                     }}
                     onChange={(event) => field.onChange(String(event.target.value))}
                   >
-                    {specialists.map((specialist) => (
+                    {specialists
+                      .filter((specialist) => specialist.isActive !== false || specialist.id === editingItem?.specialistId)
+                      .map((specialist) => (
                       <MenuItem key={specialist.id} value={String(specialist.id)}>
                         <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                           <Avatar className="app-avatar--xs">{toInitials(specialist.name)}</Avatar>
@@ -508,12 +545,30 @@ export function AppointmentFormDialog({
             <Controller
               name="startTime"
               control={control}
-              render={({ field }: any) => <AppRhfTextField field={field} label="Start time" type="time" minutesStep={selectedSlotStepMin} />}
+              render={({ field, fieldState }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label="Start time"
+                  type="time"
+                  minutesStep={selectedSlotStepMin}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
             />
             <Controller
               name="endTime"
               control={control}
-              render={({ field }: any) => <AppRhfTextField field={field} label="End time" type="time" minutesStep={selectedSlotStepMin} />}
+              render={({ field, fieldState }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label="End time"
+                  type="time"
+                  minutesStep={selectedSlotStepMin}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
             />
           </Box>
           <Box sx={createResponsiveFieldGridSx(2)}>
@@ -551,8 +606,12 @@ export function AppointmentFormDialog({
                     onChange={(event) => field.onChange(event.target.value as 'manual' | 'zoom' | 'yandex_telemost' | 'offline')}
                   >
                     <MenuItem value="manual">{t('appointments.meetingProviderManual')}</MenuItem>
-                    <MenuItem value="zoom">{t('appointments.meetingProviderZoom')}</MenuItem>
-                    <MenuItem value="yandex_telemost">{t('appointments.meetingProviderYandexTelemost')}</MenuItem>
+                    {(connectedProviders.zoom || field.value === 'zoom') && (
+                      <MenuItem value="zoom">{t('appointments.meetingProviderZoom')}</MenuItem>
+                    )}
+                    {(connectedProviders.yandexTelemost || field.value === 'yandex_telemost') && (
+                      <MenuItem value="yandex_telemost">{t('appointments.meetingProviderYandexTelemost')}</MenuItem>
+                    )}
                     <MenuItem value="offline">{t('appointments.meetingProviderOffline')}</MenuItem>
                   </Select>
                 </FormControl>
@@ -578,9 +637,11 @@ export function AppointmentFormDialog({
             <Controller
               name="meetingLink"
               control={control}
-              render={({ field }: any) => (
+              render={({ field, fieldState }: any) => (
                 <AppRhfTextField
                   field={field}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
                   label={t('appointments.fields.meetingLink')}
                   sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}
                   slotProps={{
@@ -631,13 +692,39 @@ export function AppointmentFormDialog({
                 )}
               />
             )}
-            <Controller name="firstName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.clientFirstName')} />} />
-            <Controller name="lastName" control={control} render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.clientLastName')} />} />
+            <Controller
+              name="firstName"
+              control={control}
+              rules={{ validate: (value) => !requiresClientDetails || Boolean(value.trim()) || t('appointments.errors.firstNameRequired') }}
+              render={({ field, fieldState }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={t('appointments.fields.clientFirstName')}
+                  required={requiresClientDetails}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+            />
+            <Controller
+              name="lastName"
+              control={control}
+              rules={{ validate: (value) => !requiresClientDetails || Boolean(value.trim()) || t('appointments.errors.lastNameRequired') }}
+              render={({ field, fieldState }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={t('appointments.fields.clientLastName')}
+                  required={requiresClientDetails}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+            />
             <Controller
               name="phone"
               control={control}
               rules={{
-                validate: (value) => isValidPhoneValue(value) || 'Invalid phone number',
+                validate: (value) => isValidPhoneValue(value) || t('appointments.errors.invalidPhone'),
               }}
               render={({ field, fieldState }) => (
                 <AppRhfPhoneField
@@ -649,11 +736,30 @@ export function AppointmentFormDialog({
                 />
               )}
             />
-            <Controller name="email" control={control} render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.clientEmail')} />} />
+            <Controller
+              name="email"
+              control={control}
+              render={({ field, fieldState }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={t('appointments.fields.clientEmail')}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
+            />
             <Controller
               name="username"
               control={control}
-              render={({ field }: any) => <AppRhfTextField field={field} label={t('appointments.fields.clientTelegramUsername')} />}
+              rules={{ validate: () => !requiresClientDetails || hasContact(getValues()) || t('appointments.errors.contactRequired') }}
+              render={({ field, fieldState }: any) => (
+                <AppRhfTextField
+                  field={field}
+                  label={t('appointments.fields.clientTelegramUsername')}
+                  error={Boolean(fieldState.error)}
+                  helperText={fieldState.error?.message}
+                />
+              )}
             />
             <Controller
               name="notes"

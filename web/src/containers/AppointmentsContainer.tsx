@@ -52,6 +52,7 @@ export function AppointmentsContainer() {
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistItem[]>([]);
+  const [connectedProviders, setConnectedProviders] = useState({ zoom: false, yandexTelemost: false });
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [busySlots, setBusySlots] = useState<AppointmentListResponse['busySlots']>([]);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | 'all'>('all');
@@ -66,6 +67,8 @@ export function AppointmentsContainer() {
   const [viewMode, setViewMode] = useState<CalendarViewMode>('week');
 
   const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
+  const [formFieldErrors, setFormFieldErrors] = useState<Record<string, string> | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [isSubmittingForm, setIsSubmittingForm] = useState(false);
@@ -227,6 +230,30 @@ export function AppointmentsContainer() {
     };
   }
 
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+
+    let isActive = true;
+    apiClient.get<{ zoomConnected?: boolean; yandexConnected?: boolean }>('/api/settings/user', {
+      headers: authHeaders(accessToken),
+    }).then((response) => {
+      if (isActive) {
+        setConnectedProviders({
+          zoom: Boolean(response.data.zoomConnected),
+          yandexTelemost: Boolean(response.data.yandexConnected),
+        });
+      }
+    }).catch(() => {
+      // Providers stay hidden when the connection status cannot be loaded.
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [accessToken]);
+
   const loadAppointments = async (nextSpecialistId: number | 'all' = selectedSpecialistId) => {
     if (!accessToken) {
       return;
@@ -273,7 +300,7 @@ export function AppointmentsContainer() {
     }
 
     const specialistId = selectedSpecialistId === 'all'
-      ? specialists[0]?.id
+      ? specialists.find((item) => item.isActive !== false)?.id
       : selectedSpecialistId;
 
     if (!specialistId) {
@@ -287,12 +314,16 @@ export function AppointmentsContainer() {
     );
     setEditingItem(null);
     setCreateInitialScheduledAtIso(slotIso);
+    setFormError('');
+    setFormFieldErrors(undefined);
     setIsCreateOpen(true);
   };
 
   const openEdit = (item: AppointmentItem) => {
     setEditingItem(item);
     setCreateInitialScheduledAtIso(null);
+    setFormError('');
+    setFormFieldErrors(undefined);
     setIsCreateOpen(true);
   };
 
@@ -361,6 +392,8 @@ export function AppointmentsContainer() {
     }
 
     setIsSubmittingForm(true);
+    setFormError('');
+    setFormFieldErrors(undefined);
 
     try {
       if (new Date(payload.appointmentAt).getTime() < Date.now()) {
@@ -411,7 +444,9 @@ export function AppointmentsContainer() {
       setIsCreateOpen(false);
       await loadAppointments(selectedSpecialistId);
     } catch (err) {
-      setError(resolveError(err, t('appointments.errors.save')).message);
+      const resolved = resolveError(err, t('appointments.errors.save'));
+      setFormError(resolved.message);
+      setFormFieldErrors(Object.keys(resolved.fieldErrors).length > 0 ? resolved.fieldErrors : undefined);
     } finally {
       setIsSubmittingForm(false);
     }
@@ -719,9 +754,12 @@ export function AppointmentsContainer() {
         t={t}
         accessToken={accessToken}
         isClient={isClient}
+        submitError={formError}
+        serverFieldErrors={formFieldErrors}
         open={isCreateOpen}
         editingItem={editingItem}
         specialists={specialists}
+        connectedProviders={connectedProviders}
         clients={clients}
         selectedSpecialistId={selectedSpecialistId}
         selectedSlotStepMin={selectedSlotStepMin}
