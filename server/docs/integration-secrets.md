@@ -64,9 +64,11 @@ Zoom access/refresh token, Yandex access/refresh token, Telegram bot token) ши
   `google_granted_scopes`) и повторно сервером при обработке; без Google-подключения строки upsert в очереди не
   создаются. Исключение: delete с известным `google_event_id` обходит проверку при постановке в очередь, а при
   обработке пропускается без обращения к Google, если токена или scope уже нет.
-- Весь Google I/O выполняет только сервер (job `googleCalendarSync.job.ts`, интервал 30 с). Сервер и бот лишь
+- Весь Google I/O выполняет только сервер (job `googleCalendarSync.job.ts`). Сервер и бот лишь
   вставляют строку в таблицу `google_calendar_sync_queue` (бот пишет напрямую в общую БД, Google и OAuth-токенов
-  не касается). Постановка в очередь не бросает ошибок и не блокирует операцию с записью на приём.
+  не касается). После успешной постановки в очередь сервер через ~0,75 с (после коммита транзакции) запускает
+  проход job немедленно, поэтому событие появляется в Google Calendar через секунду-две после изменения приёма.
+  Интервальный job (10 с) — страховка для повторных попыток и приёмов, созданных ботом. Постановка в очередь не бросает ошибок и не блокирует операцию с записью на приём.
 - Очередь: `account_id`, `appointment_id` (без FK, чтобы delete пережил удаление приёма), `action` (`upsert|delete`),
   `status` (`pending|processing|done|failed`), снимок `google_event_id` + `web_user_id`, `attempts`,
   `next_attempt_at`, `locked_until` (lease для `FOR UPDATE SKIP LOCKED`), `last_error_status` (только HTTP-код/причина).

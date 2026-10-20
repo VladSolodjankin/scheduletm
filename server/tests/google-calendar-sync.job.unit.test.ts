@@ -6,6 +6,7 @@ const repo = vi.hoisted(() => ({
   markGoogleCalendarSyncRetry: vi.fn(),
   markGoogleCalendarSyncFailed: vi.fn(),
   purgeFinishedGoogleCalendarSyncItems: vi.fn(),
+  setGoogleCalendarSyncKickHandler: vi.fn(),
 }));
 const eventService = vi.hoisted(() => ({
   processGoogleCalendarSyncItem: vi.fn(),
@@ -17,7 +18,7 @@ vi.mock('../src/repositories/googleCalendarSyncRepository.js', () => repo);
 vi.mock('../src/services/googleCalendarEventService.js', () => eventService);
 vi.mock('../src/services/errorTrackingService.js', () => ({ trackServerError: vi.fn() }));
 
-const { runGoogleCalendarSyncJob } = await import('../src/jobs/googleCalendarSync.job.js');
+const { runGoogleCalendarSyncJob, kickGoogleCalendarSync, startGoogleCalendarSyncJob } = await import('../src/jobs/googleCalendarSync.job.js');
 
 const LEASE = new Date('2026-11-01T10:00:00.000Z');
 const row = (id: number, attempts = 0) => ({ id, account_id: 1, appointment_id: id + 100, action: 'upsert', attempts, locked_until: LEASE });
@@ -55,5 +56,43 @@ describe('googleCalendarSync job', () => {
     repo.claimDueGoogleCalendarSyncItems.mockResolvedValue([]);
     expect(await runGoogleCalendarSyncJob(0)).toBe(0);
     expect(repo.purgeFinishedGoogleCalendarSyncItems).toHaveBeenCalledOnce();
+  });
+
+  it('serializes kicks: a kick during a pass causes exactly one follow-up pass', async () => {
+    let release: (items: unknown[]) => void = () => undefined;
+    repo.claimDueGoogleCalendarSyncItems.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
+    repo.claimDueGoogleCalendarSyncItems.mockResolvedValue([]);
+
+    kickGoogleCalendarSync();
+    kickGoogleCalendarSync();
+    kickGoogleCalendarSync();
+    expect(repo.claimDueGoogleCalendarSyncItems).toHaveBeenCalledTimes(1);
+
+    release([]);
+    await vi.waitFor(() => expect(repo.claimDueGoogleCalendarSyncItems).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => { setTimeout(resolve, 10); });
+    expect(repo.claimDueGoogleCalendarSyncItems).toHaveBeenCalledTimes(2);
+  });
+
+  it('kick never throws when a pass fails', async () => {
+    repo.claimDueGoogleCalendarSyncItems.mockRejectedValue(new Error('db down'));
+    expect(() => kickGoogleCalendarSync()).not.toThrow();
+    await vi.waitFor(() => expect(repo.claimDueGoogleCalendarSyncItems).toHaveBeenCalled());
+  });
+
+  it('registers the kick handler and polls every 10 seconds', () => {
+    vi.useFakeTimers();
+    try {
+      repo.claimDueGoogleCalendarSyncItems.mockResolvedValue([]);
+      const timer = startGoogleCalendarSyncJob();
+      expect(repo.setGoogleCalendarSyncKickHandler).toHaveBeenCalledWith(kickGoogleCalendarSync);
+      vi.advanceTimersByTime(9_999);
+      expect(repo.claimDueGoogleCalendarSyncItems).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(repo.claimDueGoogleCalendarSyncItems).toHaveBeenCalledTimes(1);
+      clearInterval(timer);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

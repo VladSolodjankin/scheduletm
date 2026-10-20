@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const dbMock = vi.hoisted(() => Object.assign(vi.fn(), { raw: vi.fn(), fn: { now: vi.fn() }, transaction: vi.fn() }));
 vi.mock('../src/db/knex.js', () => ({ db: dbMock }));
@@ -10,6 +10,7 @@ const {
   markGoogleCalendarSyncDone,
   markGoogleCalendarSyncFailed,
   markGoogleCalendarSyncRetry,
+  setGoogleCalendarSyncKickHandler,
 } = await import(
   '../src/repositories/googleCalendarSyncRepository.js'
 );
@@ -125,6 +126,52 @@ describe('google calendar sync outbox', () => {
       await markGoogleCalendarSyncDone(7);
       expect(chain.where).toHaveBeenCalledWith({ id: 7, status: 'processing' });
       expect(chain.whereRaw).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('kick after enqueue', () => {
+    const kick = vi.fn();
+    beforeEach(() => {
+      vi.useFakeTimers();
+      kick.mockReset();
+      setGoogleCalendarSyncKickHandler(kick);
+    });
+    afterEach(() => {
+      setGoogleCalendarSyncKickHandler(null);
+      vi.useRealTimers();
+    });
+
+    it('kicks after a delay, not synchronously, once a row is enqueued', async () => {
+      mockGate({ google_granted_scopes: WRITE_SCOPE });
+      await enqueueGoogleCalendarSync({ accountId: 1, appointmentId: 2, action: 'upsert', specialistId: 3 });
+      expect(kick).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1_000);
+      expect(kick).toHaveBeenCalledTimes(1);
+    });
+
+    it('kicks after a batch enqueue', async () => {
+      mockGate({ google_granted_scopes: WRITE_SCOPE });
+      await enqueueGoogleCalendarUpserts({ accountId: 1, specialistId: 3, appointmentIds: [5, 6] });
+      vi.advanceTimersByTime(1_000);
+      expect(kick).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not kick when the gate skips the enqueue or the write fails', async () => {
+      mockGate({ google_granted_scopes: null });
+      await enqueueGoogleCalendarSync({ accountId: 1, appointmentId: 2, action: 'upsert', specialistId: 3 });
+      mockGate({ google_granted_scopes: WRITE_SCOPE });
+      dbMock.raw.mockRejectedValue(new Error('boom'));
+      await enqueueGoogleCalendarSync({ accountId: 1, appointmentId: 2, action: 'upsert', specialistId: 3 });
+      vi.advanceTimersByTime(5_000);
+      expect(kick).not.toHaveBeenCalled();
+    });
+
+    it('never propagates a kick failure', async () => {
+      mockGate({ google_granted_scopes: WRITE_SCOPE });
+      kick.mockImplementation(() => { throw new Error('x'); });
+      await expect(enqueueGoogleCalendarSync({ accountId: 1, appointmentId: 2, action: 'upsert', specialistId: 3 }))
+        .resolves.toBe(true);
+      expect(() => vi.advanceTimersByTime(1_000)).not.toThrow();
     });
   });
 });

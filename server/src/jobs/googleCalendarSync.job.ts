@@ -4,6 +4,7 @@ import {
   markGoogleCalendarSyncFailed,
   markGoogleCalendarSyncRetry,
   purgeFinishedGoogleCalendarSyncItems,
+  setGoogleCalendarSyncKickHandler,
 } from '../repositories/googleCalendarSyncRepository.js';
 import { trackServerError } from '../services/errorTrackingService.js';
 import {
@@ -12,34 +13,56 @@ import {
   processGoogleCalendarSyncItem,
 } from '../services/googleCalendarEventService.js';
 
-const DEFAULT_INTERVAL_MS = 30 * 1000;
+const DEFAULT_INTERVAL_MS = 10 * 1000;
 const BATCH_SIZE = 20;
 const LEASE_MS = 5 * 60 * 1000;
 const THROTTLE_MS = 150;
 const FINISHED_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
 
+const PURGE_EVERY_MS = 60 * 60 * 1000;
+
 let running = false;
+let rerun = false;
+let lastPurgeAt = 0;
 
 const sleep = (ms: number) => new Promise<void>((resolve) => { setTimeout(resolve, ms); });
 
-export function startGoogleCalendarSyncJob(intervalMs = DEFAULT_INTERVAL_MS): NodeJS.Timeout {
-  return setInterval(() => {
-    if (running) {
-      return;
-    }
-    running = true;
-    void runGoogleCalendarSyncJob()
-      .catch((error) => {
-        void trackServerError({
-          method: 'JOB',
-          path: '/jobs/google-calendar-sync',
-          error,
-        });
-      })
-      .finally(() => {
-        running = false;
+/** Runs one pass; passes never overlap in-process. A request made during a pass triggers exactly one follow-up pass. */
+function runPass(): void {
+  if (running) {
+    rerun = true;
+    return;
+  }
+  running = true;
+  void runGoogleCalendarSyncJob()
+    .catch((error) => {
+      void trackServerError({
+        method: 'JOB',
+        path: '/jobs/google-calendar-sync',
+        error,
       });
-  }, intervalMs);
+    })
+    .finally(() => {
+      running = false;
+      if (rerun) {
+        rerun = false;
+        runPass();
+      }
+    });
+}
+
+/** Non-blocking, never throws: runs a pass right away (or right after the current one). */
+export function kickGoogleCalendarSync(): void {
+  try {
+    runPass();
+  } catch {
+    // The interval job remains the safety net.
+  }
+}
+
+export function startGoogleCalendarSyncJob(intervalMs = DEFAULT_INTERVAL_MS): NodeJS.Timeout {
+  setGoogleCalendarSyncKickHandler(kickGoogleCalendarSync);
+  return setInterval(runPass, intervalMs);
 }
 
 /** Claims due outbox rows and syncs them sequentially. Returns the number of rows processed. */
@@ -79,7 +102,8 @@ export async function runGoogleCalendarSyncJob(throttleMs = THROTTLE_MS): Promis
     }
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && Date.now() - lastPurgeAt >= PURGE_EVERY_MS) {
+    lastPurgeAt = Date.now();
     await purgeFinishedGoogleCalendarSyncItems(new Date(Date.now() - FINISHED_RETENTION_MS));
   }
 

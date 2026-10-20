@@ -89,6 +89,32 @@ async function insertCoalesced(input: EnqueueGoogleCalendarSyncInput, executor: 
   );
 }
 
+const KICK_DELAY_MS = 750;
+let kickHandler: (() => void) | null = null;
+
+/** Registered by the sync job; lets a successful enqueue trigger a prompt pass instead of waiting for the interval. */
+export function setGoogleCalendarSyncKickHandler(handler: (() => void) | null): void {
+  kickHandler = handler;
+}
+
+/**
+ * Delayed so rows enqueued inside a caller's still-open transaction are committed (and visible to the claim
+ * query) before the pass runs. Never throws and never blocks the caller.
+ */
+function scheduleKick(): void {
+  if (!kickHandler) {
+    return;
+  }
+  const timer = setTimeout(() => {
+    try {
+      kickHandler?.();
+    } catch {
+      // The interval job remains the safety net.
+    }
+  }, KICK_DELAY_MS);
+  timer.unref();
+}
+
 /**
  * Cheap, never-throwing enqueue. Gates on the specialist's granted write scope (upserts, and deletes that have no
  * known Google event yet). A caller-supplied transaction is protected with a savepoint so an enqueue
@@ -111,10 +137,13 @@ export async function enqueueGoogleCalendarSync(
       return true;
     };
 
-    if ('isTransaction' in executor && executor.isTransaction) {
-      return await (executor as Knex.Transaction).transaction(async (savepoint) => run(savepoint));
+    const enqueued = 'isTransaction' in executor && executor.isTransaction
+      ? await (executor as Knex.Transaction).transaction(async (savepoint) => run(savepoint))
+      : await run(executor);
+    if (enqueued) {
+      scheduleKick();
     }
-    return await run(executor);
+    return enqueued;
   } catch (error) {
     console.error(
       `[googleCalendarSync] enqueue failed account=${input.accountId} appointment=${input.appointmentId} action=${input.action}: ${
@@ -145,10 +174,13 @@ export async function enqueueGoogleCalendarUpserts(
       return input.appointmentIds.length;
     };
 
-    if ('isTransaction' in executor && executor.isTransaction) {
-      return await (executor as Knex.Transaction).transaction(async (savepoint) => run(savepoint));
+    const count = 'isTransaction' in executor && executor.isTransaction
+      ? await (executor as Knex.Transaction).transaction(async (savepoint) => run(savepoint))
+      : await run(executor);
+    if (count > 0) {
+      scheduleKick();
     }
-    return await run(executor);
+    return count;
   } catch (error) {
     console.error(
       `[googleCalendarSync] batch enqueue failed account=${input.accountId}: ${error instanceof Error ? error.name : 'unknown'}`,
