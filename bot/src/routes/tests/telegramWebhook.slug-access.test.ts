@@ -33,6 +33,7 @@ vi.mock('../../bot/bot', () => ({
 
 vi.mock('../../services/bot-access.service', () => ({
   resolveBotAccess: resolveBotAccessMock,
+  getDefaultInfoUrl: vi.fn(async () => 'https://meetli.cc/demo'),
   parseStartCommand: (text?: string) => {
     const match = /^\/start(?:\s+(\S+))?$/.exec(text ?? '');
     return { isStart: Boolean(match), slug: match?.[1] ?? null };

@@ -1,3 +1,5 @@
+import { env } from '../config/env';
+import { findFirstPublishedPublicPageSlug } from '../repositories/public-page.repository';
 import {
   findAccountBotSettingsByAccountId,
   findAccountBotSettingsBySlug,
@@ -8,6 +10,14 @@ import {
 import { findOrCreateTelegramUser } from './user.service';
 
 const BOT_SLUG_PATTERN = /^[a-z0-9_-]{3,40}$/;
+
+/** "Learn more" link for users without a specialist link: the first public page, else the site root. */
+export async function getDefaultInfoUrl(): Promise<string> {
+  const base = env.webUrl.replace(/\/+$/, '');
+  const slug = await findFirstPublishedPublicPageSlug();
+  return slug ? `${base}/${encodeURIComponent(slug)}` : base;
+}
+
 const START_COMMAND_PATTERN = /^\/start(?:@\w+)?(?:\s+(\S+))?$/;
 
 type TelegramProfile = Parameters<typeof findOrCreateTelegramUser>[1];

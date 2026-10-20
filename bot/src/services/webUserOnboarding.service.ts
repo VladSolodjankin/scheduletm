@@ -110,7 +110,7 @@ export async function ensureClientWebUserInvite(input: EnsureClientWebUserInput)
         updated_at: db.fn.now(),
       });
 
-    const inviteLink = `${env.emailVerifyBaseUrl.replace(/\/+$/, '')}/invite/accept?email=${encodeURIComponent(email)}&token=${encodeURIComponent(inviteToken)}`;
+    const inviteLink = `${env.webUrl.replace(/\/+$/, '')}/invite/accept?email=${encodeURIComponent(email)}&token=${encodeURIComponent(inviteToken)}`;
     const invited = await sendManagedUserInviteEmail({ to: email, firstName, inviteLink });
     return { invited, skipped: false };
   }
@@ -143,7 +143,7 @@ export async function ensureClientWebUserInvite(input: EnsureClientWebUserInput)
       phone_verified_at: null,
     });
 
-  const inviteLink = `${env.emailVerifyBaseUrl.replace(/\/+$/, '')}/invite/accept?email=${encodeURIComponent(email)}&token=${encodeURIComponent(inviteToken)}`;
+  const inviteLink = `${env.webUrl.replace(/\/+$/, '')}/invite/accept?email=${encodeURIComponent(email)}&token=${encodeURIComponent(inviteToken)}`;
   const invited = await sendManagedUserInviteEmail({ to: email, firstName, inviteLink });
 
   return { invited, skipped: false };

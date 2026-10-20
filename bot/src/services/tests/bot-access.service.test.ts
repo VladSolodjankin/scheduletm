@@ -7,6 +7,10 @@ vi.mock('../../repositories/bot-access.repository', () => ({
   upsertAccountBinding: vi.fn(),
 }));
 
+vi.mock('../../repositories/public-page.repository', () => ({
+  findFirstPublishedPublicPageSlug: vi.fn(),
+}));
+
 vi.mock('../user.service', () => ({
   findOrCreateTelegramUser: vi.fn(),
 }));
@@ -17,12 +21,28 @@ import {
   findBoundAccountId,
   upsertAccountBinding,
 } from '../../repositories/bot-access.repository';
+import { findFirstPublishedPublicPageSlug } from '../../repositories/public-page.repository';
 import { findOrCreateTelegramUser } from '../user.service';
-import { parseStartCommand, resolveBotAccess } from '../bot-access.service';
+import { getDefaultInfoUrl, parseStartCommand, resolveBotAccess } from '../bot-access.service';
 
 const profile = { telegramId: 500, firstName: 'Ivan' };
 const userResult = { isNew: true, user: { id: 1, account_id: 7 } };
 const settings = { accountId: 7, enabled: true, welcomeMessage: 'Hello!' };
+
+describe('getDefaultInfoUrl', () => {
+  it('points to the first published public page', async () => {
+    vi.mocked(findFirstPublishedPublicPageSlug).mockResolvedValue('acme');
+    const url = await getDefaultInfoUrl();
+    expect(url.endsWith('/acme')).toBe(true);
+  });
+
+  it('falls back to the site root when no page is published', async () => {
+    vi.mocked(findFirstPublishedPublicPageSlug).mockResolvedValue(null);
+    const url = await getDefaultInfoUrl();
+    expect(url.endsWith('/')).toBe(false);
+    expect(new URL(url).pathname).toBe('/');
+  });
+});
 
 describe('parseStartCommand', () => {
   it('extracts the slug from /start <slug>', () => {

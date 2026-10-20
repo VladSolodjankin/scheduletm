@@ -7,7 +7,7 @@ import {
   sendMessage,
   TelegramUpdate,
 } from '../bot/bot';
-import { parseStartCommand, resolveBotAccess } from '../services/bot-access.service';
+import { getDefaultInfoUrl, parseStartCommand, resolveBotAccess } from '../services/bot-access.service';
 import { normalizeLanguageCode, t } from '../i18n';
 import {
   getAppointmentCancelConfirmInlineKeyboard,
@@ -319,7 +319,7 @@ telegramWebhookRouter.post(
           await answerCallbackQuery(callback.id);
           await sendMessage(
             chatId,
-            t(normalizeLanguageCode(callback.from.language_code), 'start.unbound', { url: env.appUrl }),
+            t(normalizeLanguageCode(callback.from.language_code), 'start.unbound', { url: await getDefaultInfoUrl() }),
           );
           return res.status(200).json({ ok: true });
         }
@@ -1075,7 +1075,7 @@ telegramWebhookRouter.post(
         const key = access.status === 'invalid_link' ? 'start.invalidLink' : 'start.unbound';
         await sendMessage(
           chatId,
-          t(normalizeLanguageCode(message.from.language_code), key, { url: env.appUrl }),
+          t(normalizeLanguageCode(message.from.language_code), key, { url: await getDefaultInfoUrl() }),
         );
         return res.status(200).json({ ok: true });
       }
@@ -1201,7 +1201,7 @@ telegramWebhookRouter.post(
           return res.status(200).json({ ok: true });
         }
         if (userResult.isNew) {
-          await sendMessage(chatId, t(lang, 'start.webSignupHint', { url: env.appUrl }));
+          await sendMessage(chatId, t(lang, 'start.webSignupHint', { url: env.webUrl }));
         }
         await sendMessage(chatId, t(lang, 'start.chooseAction'));
         return res.status(200).json({ ok: true });

@@ -34,7 +34,7 @@ export const env = {
   port: Number(process.env.PORT || 3002),
   webhookSecret: getEnv("WEBHOOK_SECRET"),
   appUrl: getEnv("APP_URL"),
-  emailVerifyBaseUrl: process.env.EMAIL_VERIFY_BASE_URL ?? getEnv("APP_URL"),
+  webUrl: process.env.EMAIL_VERIFY_BASE_URL ?? getEnv("APP_URL"),
   brevoApiKey: process.env.BREVO_API_KEY ?? '',
   emailFromAddress: process.env.EMAIL_FROM_ADDRESS ?? 'no-reply@meetli.cc',
   emailFromName: process.env.EMAIL_FROM_NAME ?? 'Meetli',
