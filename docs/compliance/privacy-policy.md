@@ -23,7 +23,7 @@ Depending on how the service is used, Meetli may process:
 - Account and user identity data, such as first name, last name, email address, phone number, Telegram username, timezone, locale, and role.
 - Client record data, such as contact details and client-to-specialist/account relationships.
 - Appointment data, such as service details, scheduled date and time, specialist, payment status, meeting provider, and meeting link.
-- Integration data, such as whether Google or Zoom is connected, token expiry metadata, and the most recent Zoom meeting identifiers and URLs created through the service.
+- Integration data, such as whether Google, Zoom, or Yandex Telemost is connected, the Google permissions granted, token expiry metadata, the most recent Zoom and Yandex Telemost meeting identifiers and URLs created through the service, and the identifiers of Google Calendar events created for appointments when the user has enabled that setting.
 - Notification data, such as delivery channel, recipient email or Telegram destination, delivery status, retry status, and message payload metadata.
 - Security and audit data, such as login attempts, session records, appointment event history, and error logs.
 - Technical request data, such as IP-based anti-abuse signals, request path, browser-origin data required for CORS validation, and security headers/cookies needed for authentication.
@@ -74,11 +74,36 @@ When a user connects Zoom:
 
 Meetli does not use Zoom integration data for advertising or unrelated profiling.
 
+### Google Calendar integration data
+
+When a user connects Google Calendar:
+
+- Meetli stores Google OAuth credentials, the list of Google permissions (scopes) that user granted, and related expiry metadata needed to access the connected calendar on that user's behalf.
+- **Reading availability.** Meetli asks Google only whether the connected calendar is busy during a time range (Google's free/busy information). Meetli does not read event titles, descriptions, attendees, or organizer or creator details. Busy times are used only to avoid offering booking slots that conflict with the user's own calendar and are not stored as a copy of the calendar.
+- **Writing events (optional, off by default).** Only if the user turns on the setting "Create appointments in my Google Calendar" and grants the additional Google permission, Meetli creates, updates, and deletes calendar events for that user's appointments. Each event contains the service name, start and end time, the appointment location or meeting link, and an internal appointment identifier. Meetli does not write client names, phone numbers, email addresses, notes, or Telegram usernames into events, and does not invite attendees or send Google notifications.
+- Meetli stores the identifier of each created Google event so that it can update or delete it when the appointment is rescheduled or cancelled.
+- Disconnecting Google clears the stored Google credentials and granted-permission information and turns the write setting off. Events already created in the user's Google Calendar are not removed by disconnecting or by turning the setting off; the user can delete them in Google Calendar. When a user, specialist, client, or account is permanently deleted, Meetli attempts to delete the corresponding events it created before removing the appointments.
+- Users can also revoke Meetli's access at any time in their Google Account permissions settings.
+
+Meetli's use and transfer to any other app of information received from Google APIs will adhere to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements. Meetli does not use Google user data for advertising, does not sell it, does not use it to train generalized artificial intelligence or machine learning models, and does not allow humans to read it except with the user's consent, for security purposes, to comply with law, or for internal operations with aggregated and anonymized data.
+
+### Yandex Telemost integration data
+
+When a user connects Yandex Telemost:
+
+- Meetli stores Yandex OAuth credentials and related expiry metadata needed to create Telemost meetings on behalf of that connected user, and the identifier and join link of the most recent meeting created.
+- Meetli uses this data only to create Telemost meetings requested through Meetli. Meeting links are created with open joining, so anyone who has a link can join the meeting.
+- Disconnecting Yandex Telemost clears the stored Yandex credentials and the most recent stored meeting linkage fields from the application database.
+
+Meetli does not use Yandex integration data for advertising or unrelated profiling.
+
 ## 7. Sharing and Subprocessors
 
 Meetli may share data with service providers and infrastructure vendors strictly as needed to deliver the service, including:
 
 - Zoom, when a customer user chooses to connect Zoom and create Zoom meetings.
+- Google, when a customer user chooses to connect Google Calendar (availability lookups and, if enabled by that user, calendar events).
+- Yandex, when a customer user chooses to connect Yandex Telemost and create Telemost meetings.
 - Email delivery providers used for verification and transactional notifications, including Brevo.
 - Mapping providers used for business location features, including Mapbox where enabled.
 - Hosting, database, networking, logging, and operational support providers used to run the service.

@@ -1,21 +1,23 @@
 # Google Verification Evidence Index
 
-Last updated: 2026-09-21
+Last updated: 2026-10-19
 
 | Control / requirement | Artifact | Status | Notes |
 |---|---|---|---|
-| Privacy policy | `../privacy-policy.md` | Ready for external review | Public-facing policy aligned to current product scope and integration workflow. |
+| Privacy policy | `../privacy-policy.md` | Ready for external review | Section 6 "Google Calendar integration data" covers what is read and written, the opt-in write setting, retention and deletion behavior, and the Google API Services User Data Policy Limited Use statement. The public copy lives in `web/src/content/legal/privacy-policy.md` and must stay identical. |
 | Security policy overview | `../security-policy.md` | Ready for external review | Public-facing overview with transparent control posture. |
-| OAuth scope minimality (Google) | `oauth-scope-review.md` | Reviewed, compliant | Only `openid`, `userinfo.email`, `calendar.readonly` requested; no broader Calendar/Gmail/Drive scope. |
-| Sensitive vs. restricted classification | `oauth-scope-review.md` | Reviewed | All three scopes are non-sensitive or sensitive-tier; none are restricted, so standard verification applies — CASA is not required. |
-| Token caching/refresh-before-expiry | `oauth-scope-review.md` | Reviewed, compliant | `calendarAvailabilityService.ts` reuses the cached token and refreshes ~30s before expiry; matches the pattern already reviewed for Zoom. |
-| Integration secret encryption at rest | `../../../server/docs/integration-secrets.md` | Completed 2026-09-15 | Google refresh/access tokens in `web_user_integrations` are AES-256-GCM encrypted (issue #228). |
+| OAuth scope minimality (Google) | `oauth-scope-review.md` | Reviewed, compliant | Base scopes `openid`, `userinfo.email`, `calendar.freebusy`; `calendar.events.owned` only on demand when the user enables event writing. No full `calendar`, Gmail, Drive, or People scope. |
+| Sensitive vs. restricted classification | `oauth-scope-review.md` | Reviewed — confirm in Cloud Console | Calendar scopes are sensitive-tier, none restricted, so standard verification applies and CASA is not required. The classification of `calendar.freebusy` and `calendar.events.owned` must be confirmed in the Cloud Console scope picker. |
+| Opt-in for event writing | `oauth-scope-review.md` | Implemented | "Create appointments in my Google Calendar" switch, off by default; enabling without the write scope returns 409 and offers reconnect; granular consent respected. |
+| Event content minimization | `oauth-scope-review.md` | Implemented | Service name, time, location or meeting link, internal appointment id only. No client PII, no attendees, `sendUpdates=none`. |
+| Token caching/refresh-before-expiry | `oauth-scope-review.md` | Reviewed, compliant | Shared helper reuses the cached token and refreshes ~30s before expiry. |
+| Integration secret encryption at rest | `../../../server/docs/integration-secrets.md` | Completed 2026-09-15 | Google tokens in `web_user_integrations` are AES-256-GCM encrypted (issue #228). Google scope, write-setting, and event-sync design are described in the same document. |
 
 ## Remaining before submission
 
-- OAuth consent screen branding (logo, app name, authorized domain) in Google Cloud Console.
-- Demo video of the Google Calendar connect flow.
-- Submit for standard verification (CASA not required per the scope classification above).
+- Cloud Console: confirm the two scopes and their classification, consent screen branding and links, authorized domain and Search Console verification, production redirect URI, publishing status "In production".
+- Record the demo video (script in `oauth-scope-review.md`).
+- Submit for standard verification (CASA not required) and respond to Google's reviewer.
 
 ## Definition of Done for External Sharing
 
