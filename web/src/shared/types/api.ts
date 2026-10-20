@@ -81,8 +81,6 @@ export type UserSettings = {
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
   googleConnected: boolean;
-  googleCalendarWriteEnabled: boolean;
-  googleCalendarWriteGranted: boolean;
   zoomConnected: boolean;
   yandexConnected: boolean;
   telegramBotConnected: boolean;
@@ -156,14 +154,6 @@ export type SettingsScopeSpecialist = {
 export type SettingsScopeOptionsResponse = {
   accounts: SettingsScopeAccount[];
   specialists: SettingsScopeSpecialist[];
-};
-
-export type GoogleOAuthStartPayload = {
-  access?: 'write';
-};
-
-export type GoogleCalendarWriteUpdatePayload = {
-  googleCalendarWriteEnabled: boolean;
 };
 
 export type GoogleOAuthStartResponse = {
@@ -240,6 +230,7 @@ export type AppointmentListResponse = {
     scheduledAt: string;
     durationMin: number;
     source: 'google';
+    title?: string;
   }>;
 };
 

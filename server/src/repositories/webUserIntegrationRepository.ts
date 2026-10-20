@@ -8,9 +8,7 @@ export type WebUserIntegrationRecord = {
   google_api_key: string | null;
   google_refresh_token: string | null;
   google_token_expires_at: Date | null;
-  google_calendar_id: string | null;
   google_connected_at: Date | null;
-  google_calendar_write_enabled: boolean;
   google_granted_scopes: string | null;
   telegram_bot_token: string | null;
   telegram_bot_username: string | null;
@@ -52,7 +50,6 @@ type UpdateWebUserGoogleCredentialsInput = {
   googleApiKey: string;
   googleRefreshToken?: string | null;
   googleTokenExpiresAt?: Date | null;
-  googleCalendarId?: string | null;
   googleGrantedScopes?: string | null;
 };
 
@@ -169,10 +166,6 @@ export async function updateWebUserGoogleCredentials(input: UpdateWebUserGoogleC
     patch.google_token_expires_at = input.googleTokenExpiresAt;
   }
 
-  if (input.googleCalendarId !== undefined) {
-    patch.google_calendar_id = input.googleCalendarId;
-  }
-
   if (input.googleGrantedScopes !== undefined) {
     patch.google_granted_scopes = input.googleGrantedScopes;
   }
@@ -180,22 +173,12 @@ export async function updateWebUserGoogleCredentials(input: UpdateWebUserGoogleC
   await upsertPatch(input.accountId, input.webUserId, patch);
 }
 
-export async function updateWebUserGoogleCalendarWriteEnabled(
-  accountId: number,
-  webUserId: number,
-  enabled: boolean,
-): Promise<void> {
-  await upsertPatch(accountId, webUserId, { google_calendar_write_enabled: enabled });
-}
-
 export async function clearWebUserGoogleCredentials(accountId: number, webUserId: number): Promise<void> {
   await upsertPatch(accountId, webUserId, {
     google_access_token_encrypted: null,
     google_refresh_token_encrypted: null,
     google_token_expires_at: null,
-    google_calendar_id: null,
     google_connected_at: null,
-    google_calendar_write_enabled: false,
     google_granted_scopes: null,
   });
 }

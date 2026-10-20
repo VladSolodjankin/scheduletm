@@ -13,9 +13,7 @@ import { AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 import type {
   AccountNotificationDefault,
   AccountSettings,
-  GoogleCalendarWriteUpdatePayload,
   GoogleOAuthDisconnectResponse,
-  GoogleOAuthStartPayload,
   GoogleOAuthStartResponse,
   ScheduleException,
   ScheduleExceptionCreatePayload,
@@ -62,8 +60,6 @@ const defaultUserSettings: UserSettings = {
   uiThemeMode: 'light',
   uiPaletteVariantId: 'default',
   googleConnected: false,
-  googleCalendarWriteEnabled: false,
-  googleCalendarWriteGranted: false,
   zoomConnected: false,
   yandexConnected: false,
   telegramBotConnected: false,
@@ -100,8 +96,6 @@ export function SettingsContainer() {
   const [success, setSuccess] = useState('');
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
   const [isGoogleDisconnecting, setIsGoogleDisconnecting] = useState(false);
-  const [isGoogleGrantingAccess, setIsGoogleGrantingAccess] = useState(false);
-  const [isGoogleWriteSaving, setIsGoogleWriteSaving] = useState(false);
   const [isZoomConnecting, setIsZoomConnecting] = useState(false);
   const [isYandexConnecting, setIsYandexConnecting] = useState(false);
   const [isYandexDisconnecting, setIsYandexDisconnecting] = useState(false);
@@ -132,10 +126,9 @@ export function SettingsContainer() {
   const [emailChangeStep, setEmailChangeStep] = useState<'email' | 'otp'>('email');
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
-  const googleScopeWrite = useMemo(() => searchParams.get('scope_write'), [searchParams]);
   const zoomOauthStatus = useMemo(() => searchParams.get('zoom_oauth'), [searchParams]);
   const yandexOauthStatus = useMemo(() => searchParams.get('yandex_oauth'), [searchParams]);
-  const yandexOauthReason = useMemo(() => searchParams.get('reason'), [searchParams]);
+  const oauthReason = useMemo(() => searchParams.get('reason'), [searchParams]);
   const canManageSystemSettings = user?.role === 'product_admin';
   const canManageAccountSettings = user?.role === 'owner';
   const canManageSpecialistBookingPolicy =
@@ -162,19 +155,28 @@ export function SettingsContainer() {
     'emailChange'
   ] as const), [canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, isClient]);
 
+  const isOauthReturn = Boolean(googleOauthStatus || zoomOauthStatus || yandexOauthStatus);
+
   const activeTab = useMemo(() => {
     if (!tab) {
-      return allowedTabs[0] ?? 'user';
+      return isOauthReturn ? 'integrations' : (allowedTabs[0] ?? 'user');
     }
 
     return allowedTabs.includes(tab as (typeof allowedTabs)[number]) ? tab : (allowedTabs[0] ?? 'user');
-  }, [allowedTabs, tab]);
+  }, [allowedTabs, isOauthReturn, tab]);
 
   useEffect(() => {
+    if (!tab && isOauthReturn) {
+      // Provider redirects land on /settings?<provider>_oauth=...; keep the params and show Integrations.
+      const search = searchParams.toString();
+      navigate({ pathname: '/settings/integrations', search: search ? `?${search}` : '' }, { replace: true });
+      return;
+    }
+
     if (!tab || !allowedTabs.includes(tab as (typeof allowedTabs)[number])) {
       navigate(`/settings/${allowedTabs[0] ?? 'user'}`, { replace: true });
     }
-  }, [allowedTabs, navigate, tab]);
+  }, [allowedTabs, isOauthReturn, navigate, searchParams, tab]);
 
   const handleTabChange = (nextTab: string) => {
     navigate(`/settings/${nextTab}`);
@@ -189,28 +191,12 @@ export function SettingsContainer() {
       if (googleOauthStatus === 'success') {
         setUserSettings((prev) => ({ ...prev, googleConnected: true }));
 
-        if (googleScopeWrite === 'granted') {
-          setSuccess(t('settings.googleCalendarWriteGrantedSuccessfully'));
-          setError('');
-        } else if (googleScopeWrite === 'missing') {
-          setError(t('settings.googleCalendarWriteMissing'));
-          setSuccess('');
-        } else {
-          setSuccess(t('settings.googleConnectedSuccessfully'));
-          setError('');
-        }
-
-        if (googleScopeWrite && accessToken) {
-          // Refresh so the granted flag reflects what Google actually granted.
-          apiClient
-            .get<UserSettings>('/api/settings/user', { headers: authHeaders(accessToken) })
-            .then((response) => setUserSettings(response.data))
-            .catch(() => undefined);
-        }
+        setSuccess(t('settings.googleConnectedSuccessfully'));
+        setError('');
       }
 
       if (googleOauthStatus === 'error') {
-        setError(t('settings.errors.connectGoogle'));
+        setError(oauthReason === 'calendar_write_required' ? t('settings.errors.googleCalendarWriteRequired') : t('settings.errors.connectGoogle'));
         setSuccess('');
       }
 
@@ -233,7 +219,7 @@ export function SettingsContainer() {
 
       if (yandexOauthStatus === 'error') {
         setError(
-          yandexOauthReason === 'yandex_oauth_not_configured'
+          oauthReason === 'yandex_oauth_not_configured'
             ? t('settings.errors.yandexNotConfigured')
             : t('settings.errors.connectYandex')
         );
@@ -242,7 +228,6 @@ export function SettingsContainer() {
 
       const nextParams = new URLSearchParams(searchParams);
       nextParams.delete('google_oauth');
-      nextParams.delete('scope_write');
       nextParams.delete('zoom_oauth');
       nextParams.delete('yandex_oauth');
       nextParams.delete('reason');
@@ -250,7 +235,7 @@ export function SettingsContainer() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [accessToken, googleOauthStatus, googleScopeWrite, searchParams, setSearchParams, t, yandexOauthReason, yandexOauthStatus, zoomOauthStatus]);
+  }, [accessToken, googleOauthStatus, searchParams, setSearchParams, t, oauthReason, yandexOauthStatus, zoomOauthStatus]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -487,9 +472,6 @@ export function SettingsContainer() {
       if (!payload.telegramBotToken) {
         delete payload.telegramBotToken;
       }
-      // Google Calendar write flags are managed by their own controls, never by the generic form save.
-      delete payload.googleCalendarWriteEnabled;
-      delete payload.googleCalendarWriteGranted;
 
       const response = await apiClient.put<UserSettings>('/api/settings/user', payload, {
         headers: authHeaders(accessToken)
@@ -614,21 +596,17 @@ export function SettingsContainer() {
     }
   };
 
-  const startGoogleOauth = async (
-    access: GoogleOAuthStartPayload['access'] | undefined,
-    setBusy: (value: boolean) => void,
-  ) => {
-    if (!accessToken) {
+  const connectGoogle = async () => {
+    if (!accessToken || isGoogleConnecting) {
       return;
     }
 
-    setBusy(true);
+    setIsGoogleConnecting(true);
 
     try {
-      const body: GoogleOAuthStartPayload = access ? { access } : {};
       const response = await apiClient.post<GoogleOAuthStartResponse>(
         '/api/integrations/google/oauth/start',
-        body,
+        {},
         { headers: authHeaders(accessToken) }
       );
 
@@ -641,59 +619,7 @@ export function SettingsContainer() {
           : resolveError(err, t('settings.errors.connectGoogle')).message
       );
       setSuccess('');
-      setBusy(false);
-    }
-  };
-
-  const connectGoogle = async () => {
-    if (isGoogleConnecting || isGoogleGrantingAccess) {
-      return;
-    }
-
-    await startGoogleOauth(undefined, setIsGoogleConnecting);
-  };
-
-  const grantGoogleCalendarAccess = async () => {
-    if (isGoogleConnecting || isGoogleGrantingAccess) {
-      return;
-    }
-
-    await startGoogleOauth('write', setIsGoogleGrantingAccess);
-  };
-
-  const toggleGoogleCalendarWrite = async (enabled: boolean) => {
-    if (!accessToken || isGoogleWriteSaving) {
-      return;
-    }
-
-    setIsGoogleWriteSaving(true);
-
-    try {
-      const payload: GoogleCalendarWriteUpdatePayload = { googleCalendarWriteEnabled: enabled };
-      const response = await apiClient.put<UserSettings>('/api/settings/user', payload, {
-        headers: authHeaders(accessToken)
-      });
-      setUserSettings(response.data);
-      setError('');
-      setSuccess(t(enabled ? 'settings.googleCalendarWriteEnabledSuccess' : 'settings.googleCalendarWriteDisabledSuccess'));
-    } catch (err) {
-      const responseData: unknown = isAxiosError(err) ? err.response?.data : undefined;
-      const errorData = (responseData && typeof responseData === 'object' ? responseData : {}) as { code?: unknown; message?: unknown };
-      const isScopeMissing = isAxiosError(err) && err.response?.status === 409 && errorData.code === 'google_write_scope_missing';
-
-      if (isScopeMissing) {
-        // The switch is controlled by server state, so it stays off; show the grant button instead.
-        setUserSettings((prev) => ({ ...prev, googleCalendarWriteEnabled: false, googleCalendarWriteGranted: false }));
-      }
-
-      setError(
-        isScopeMissing
-          ? (typeof errorData.message === 'string' && errorData.message) || t('settings.errors.googleWriteScopeMissing')
-          : resolveError(err, t('settings.errors.saveGoogleCalendarWrite')).message
-      );
-      setSuccess('');
-    } finally {
-      setIsGoogleWriteSaving(false);
+      setIsGoogleConnecting(false);
     }
   };
 
@@ -858,8 +784,6 @@ export function SettingsContainer() {
       setUserSettings((prev) => ({
         ...prev,
         googleConnected: false,
-        googleCalendarWriteEnabled: false,
-        googleCalendarWriteGranted: false,
       }));
       setError('');
       setSuccess('');
@@ -1086,17 +1010,10 @@ export function SettingsContainer() {
               connectZoomHelpDescription: t('settings.connectZoomHelpDescription'),
               connectGoogleHelpDescription: t('settings.connectGoogleHelpDescription'),
               connectGoogleHelpTitle: t('settings.connectGoogleHelpTitle'),
-              googleCalendarWriteLabel: t('settings.googleCalendarWriteLabel'),
-              googleCalendarWriteHelper: t('settings.googleCalendarWriteHelper'),
-              googleCalendarWriteConnectFirst: t('settings.googleCalendarWriteConnectFirst'),
-              googleCalendarWriteGrantHint: t('settings.googleCalendarWriteGrantHint'),
-              googleCalendarWriteGrantAccess: t('settings.googleCalendarWriteGrantAccess'),
-              googleCalendarWriteGrantingAccess: t('settings.googleCalendarWriteGrantingAccess'),
+              googleCalendarCaption: t('settings.googleCalendarCaption'),
             }}
             isGoogleConnecting={isGoogleConnecting}
             isGoogleDisconnecting={isGoogleDisconnecting}
-            isGoogleGrantingAccess={isGoogleGrantingAccess}
-            isGoogleWriteSaving={isGoogleWriteSaving}
             isZoomConnecting={isZoomConnecting}
             isYandexConnecting={isYandexConnecting}
             isYandexDisconnecting={isYandexDisconnecting}
@@ -1128,8 +1045,6 @@ export function SettingsContainer() {
             onConnectYandex={connectYandex}
             onDisconnectYandex={disconnectYandex}
             onDisconnectGoogle={disconnectGoogle}
-            onGrantGoogleCalendarAccess={grantGoogleCalendarAccess}
-            onToggleGoogleCalendarWrite={toggleGoogleCalendarWrite}
             onCurrentPasswordChange={setCurrentPassword}
             onNewPasswordChange={setNewPassword}
             onConfirmPasswordChange={setConfirmPassword}

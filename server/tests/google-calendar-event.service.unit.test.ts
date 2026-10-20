@@ -64,7 +64,6 @@ const appointment = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const integration = (overrides: Record<string, unknown> = {}) => ({
-  google_calendar_write_enabled: true,
   google_api_key: 'access',
   google_refresh_token: 'refresh',
   google_token_expires_at: new Date(Date.now() + 3600_000),
@@ -244,10 +243,10 @@ describe('googleCalendarEventService', () => {
     expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'error', errorStatus: String(status), retryable });
   });
 
-  it('skips without calling Google when the flag is off or the write scope is missing', async () => {
+  it('skips without calling Google when the write scope is missing or no token is stored', async () => {
     syncRepo.findGoogleCalendarSyncAppointment.mockResolvedValue(appointment());
 
-    integrationRepo.findWebUserIntegrationByWebUserId.mockResolvedValue(integration({ google_calendar_write_enabled: false }));
+    integrationRepo.findWebUserIntegrationByWebUserId.mockResolvedValue(integration({ google_api_key: null }));
     expect(await processGoogleCalendarSyncItem(item())).toEqual({ kind: 'done', detail: 'skipped' });
 
     integrationRepo.findWebUserIntegrationByWebUserId.mockResolvedValue(

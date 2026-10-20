@@ -15,11 +15,11 @@ export type GoogleCalendarSyncEnqueueInput = {
 };
 
 /**
- * Cheap opt-in gate. The bot never talks to Google; it only records the change in the shared outbox
- * (`google_calendar_sync_queue`). The server job re-validates the flag and the granted scope before any
- * Google call, so this gate only avoids writing rows for specialists that never enabled event writing.
+ * Cheap gate. The bot never talks to Google; it only records the change in the shared outbox
+ * (`google_calendar_sync_queue`). The server job re-validates the granted write scope before any
+ * Google call, so this gate only avoids writing rows for specialists without a Google connection.
  */
-async function isGoogleCalendarWriteEnabled(accountId: number, specialistId: number, executor: Executor) {
+async function hasGoogleCalendarConnection(accountId: number, specialistId: number, executor: Executor) {
   const row = await executor('specialists as sp')
     .join('web_user_integrations as wui', function joinIntegrations() {
       this.on('wui.web_user_id', '=', 'sp.user_id').andOn('wui.account_id', '=', 'sp.account_id');
@@ -27,7 +27,6 @@ async function isGoogleCalendarWriteEnabled(accountId: number, specialistId: num
     .where({
       'sp.account_id': accountId,
       'sp.id': specialistId,
-      'wui.google_calendar_write_enabled': true,
     })
     .whereNotNull('wui.google_access_token_encrypted')
     .whereNotNull('wui.google_granted_scopes')
@@ -48,7 +47,7 @@ export async function enqueueGoogleCalendarSync(
   try {
     const run = async (exec: Executor) => {
       const hasKnownEvent = input.action === 'delete' && Boolean(input.googleEventId);
-      if (!hasKnownEvent && !(await isGoogleCalendarWriteEnabled(input.accountId, input.specialistId, exec))) {
+      if (!hasKnownEvent && !(await hasGoogleCalendarConnection(input.accountId, input.specialistId, exec))) {
         return false;
       }
 

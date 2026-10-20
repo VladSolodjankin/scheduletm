@@ -29,35 +29,41 @@ Zoom access/refresh token, Yandex access/refresh token, Telegram bot token) ши
 - Отключение (`POST /api/integrations/yandex/disconnect`) очищает токены UPDATE-ом существующей строки и не создаёт новых.
 - При смене ключа шифрования строки с Yandex-токенами нужно перешифровать так же, как остальные `*_encrypted` колонки.
 
-## Google Calendar: scopes и запись событий
+## Google Calendar: scopes, запись событий и названия занятости
 
-- Чтение занятости: `POST https://www.googleapis.com/calendar/v3/freeBusy` (календарь `primary`), без названий и email
-  организаторов. Новые подключения запрашивают только `openid`, `userinfo.email`, `calendar.freebusy`
-  (`GOOGLE_OAUTH_SCOPES` переопределяет список). Старые токены со scope `calendar.readonly` продолжают работать.
-- Запись событий — opt-in. Код ЗАПРАШИВАЕТ только тот scope записи, что задан в `GOOGLE_OAUTH_WRITE_SCOPE`
-  (по умолчанию `calendar.events.owned`). Scope `calendar.events` и `calendar` лишь распознаются как уже выданные
-  scope записи (например, у ранее подключённых пользователей), но сами не запрашиваются. Если в Google Console
-  нет `calendar.events.owned`, запасной вариант — `GOOGLE_OAUTH_WRITE_SCOPE=https://www.googleapis.com/auth/calendar.events`.
-  Scope запрашивается только при `POST /api/integrations/google/oauth/start` с телом
-  `{ "access": "write" }` (инкрементальная авторизация, `include_granted_scopes=true`). Запрошенный access хранится
-  в `google_oauth_states.requested_access`.
-- `web_user_integrations.google_granted_scopes` — scope, фактически выданные Google (из ответа token/refresh;
-  при повторном согласии заменяется полным набором). `google_calendar_write_enabled` (по умолчанию `false`) —
-  пользовательский переключатель; включение через `PUT /api/settings/user` `{ googleCalendarWriteEnabled: true }`
-  возвращает 409 `google_write_scope_missing`, если Google не подключён или scope записи не выдан.
-- `POST /api/integrations/google/disconnect` сбрасывает токены, `google_granted_scopes` и `google_calendar_write_enabled`.
-- Callback добавляет `&scope_write=granted|missing` только если был запрошен `access=write`. Если после обмена кода
-  scope записи не выдан, `google_calendar_write_enabled` сбрасывается в `false`. Сервер не знает email Google-аккаунта,
-  поэтому при смене Google-аккаунта флаг не сбрасывается автоматически, пока новый аккаунт выдал scope записи
-  (переподключение с другим аккаунтом оставляет флаг включённым и события пойдут в календарь нового аккаунта).
+- Единое согласие «Подключить Google» (`POST /api/integrations/google/oauth/start`, тело не принимается) запрашивает
+  базовые scope `openid`, `userinfo.email`, `calendar.freebusy` (`GOOGLE_OAUTH_SCOPES` переопределяет список) И scope
+  записи `GOOGLE_OAUTH_WRITE_SCOPE` (по умолчанию `calendar.events.owned`), `include_granted_scopes=true`. Если в Google
+  Console нет `calendar.events.owned`, запасной вариант — `GOOGLE_OAUTH_WRITE_SCOPE=https://www.googleapis.com/auth/calendar.events`.
+  Scope `calendar.events` и `calendar` лишь распознаются как scope записи, но сами не запрашиваются.
+- Пользовательского переключателя записи нет. Запись событий в Google включается автоматически, если Google
+  фактически выдал scope записи (`web_user_integrations.google_granted_scopes`, из ответа token/refresh) и токен есть.
+  Синхронизируются приёмы в любом статусе; отменённый приём → удаление события.
+- Если при гранулярном согласии пользователь снял галочку записи, подключение считается неудачным: callback очищает
+  токены и `google_granted_scopes` (как `/disconnect`) и редиректит на `${APP_URL}/settings?google_oauth=error&reason=calendar_write_required`.
+  Успех — `${APP_URL}/settings?google_oauth=success`. Состояния «подключено без записи» нет.
+- `POST /api/integrations/google/disconnect` сбрасывает токены и `google_granted_scopes`.
+- Занятость: `POST https://www.googleapis.com/calendar/v3/freeBusy` (календарь `primary`) — для публичного бронирования,
+  расчёта слотов и всех, кроме владельца аккаунта; без названий и email организаторов.
+- Названия занятости только владельцу: в `GET /api/appointments` (календарь приёмов) каждый внешний слот `busySlots[]`
+  получает необязательное поле `title`, только если запрашивает веб-пользователь, чей Google-аккаунт подключён
+  (`specialists.user_id` = запрашивающий). Для владельца-админа, смотрящего чужих специалистов, админов, клиентов и
+  публичного бронирования `title` не отдаётся. Источник — `events.list` (`primary`, `singleEvents=true`) на видимый
+  диапазон, запрос выполняется вживую при каждом обращении; `calendar.events.owned` входит в список scope
+  `events.list` (документация Google), но покрывает только события, где пользователь — организатор. Кэша, хранения и
+  логирования названий нет. Исключаются события, созданные Meetli (`extendedProperties.private.appointmentId`),
+  `status=cancelled`, `transparency=transparent` и отклонённые пользователем; события на весь день (`start.date`)
+  превращаются в блок на сутки в часовом поясе пользователя. Если `events.list` не сработал, отдаются обычные блоки
+  freeBusy без `title` (в лог пишется только статус).
+
 
 ### Запись событий: outbox, содержимое, повторы
 
-- Запись включается только если у веб-пользователя специалиста `google_calendar_write_enabled = true` и в
-  `google_granted_scopes` есть scope записи. Проверка делается при постановке в очередь (один запрос) и повторно при
-  обработке; при выключенной настройке строки upsert в очереди не создаются. Исключение: delete с известным
-  `google_event_id` обходит проверку при постановке в очередь (иначе события не удалялись бы после выключения), а при
-  обработке пропускается без обращения к Google, если флаг или scope уже сняты.
+- Запись включается только если у веб-пользователя специалиста есть токен и в `google_granted_scopes` есть scope
+  записи. Проверка делается при постановке в очередь (один запрос; бот предфильтрует по непустым токену и
+  `google_granted_scopes`) и повторно сервером при обработке; без Google-подключения строки upsert в очереди не
+  создаются. Исключение: delete с известным `google_event_id` обходит проверку при постановке в очередь, а при
+  обработке пропускается без обращения к Google, если токена или scope уже нет.
 - Весь Google I/O выполняет только сервер (job `googleCalendarSync.job.ts`, интервал 30 с). Сервер и бот лишь
   вставляют строку в таблицу `google_calendar_sync_queue` (бот пишет напрямую в общую БД, Google и OAuth-токенов
   не касается). Постановка в очередь не бросает ошибок и не блокирует операцию с записью на приём.
@@ -68,7 +74,7 @@ Zoom access/refresh token, Yandex access/refresh token, Telegram bot token) ши
   существующую pending-строку, delete вытесняет upsert.
 - `appointments.google_event_id` / `google_event_web_user_id` — id события и чей календарь его содержит (PATCH/DELETE идут
   с правами владельца события, даже если специалист приёма потом сменился; тогда событие удаляется у прежнего владельца
-  и создаётся у нового). Календарь всегда `primary`, `google_calendar_id` игнорируется.
+  и создаётся у нового). Календарь всегда `primary`.
 - Поведение: создание → `POST events` с `extendedProperties.private.appointmentId`; перенос/изменение → `PATCH`
   (если событие удалено в Google, 404/410, создаётся заново); отмена, автоотмена неоплаченных, отмена клиентом,
   отмена из Zoom-вебхука и из бота → `DELETE` (404/410 считаются успехом). Серия «Repeat» — отдельная строка и
@@ -77,7 +83,7 @@ Zoom access/refresh token, Yandex access/refresh token, Telegram bot token) ши
   `timeZone` специалиста, `location` = адрес (если есть), `description` = ссылка на встречу (если есть). Не передаются
   имя клиента, телефон, email, заметки, Telegram username; участников нет, всегда `sendUpdates=none`.
 - Ретраи: 401 → один refresh токена и повтор; 403/408/429/5xx/сеть → повтор с экспоненциальной паузой
-  (1, 2, 4, 8 мин, максимум 1 ч), после 5 попыток строка получает `failed`; прочие 4xx → `failed` сразу. Если флаг или
+  (1, 2, 4, 8 мин, максимум 1 ч), после 5 попыток строка получает `failed`; прочие 4xx → `failed` сразу. Если токен или
   scope к моменту обработки сняты, строка закрывается без обращения к Google. Токены и содержимое событий не логируются
   (только account_id, appointment_id, action, HTTP-статус). Завершённые строки удаляются через 14 дней.
 - Создание идемпотентно: в `POST events` передаётся детерминированный `id` (`sm` + base32hex от account_id и
@@ -85,16 +91,15 @@ Zoom access/refresh token, Yandex access/refresh token, Telegram bot token) ши
   записи id в БД не плодит дубликаты. Если событие было удалено в Google, новое создаётся с id следующего «поколения».
   Завершение строки очереди (`done/retry/failed`) выполняется только пока строка в `processing` с тем же lease, поэтому
   воркер с истёкшим lease не перезаписывает заново взятую строку.
-- Выключение настройки и отключение Google (`/disconnect`) НЕ удаляют уже созданные события. Позже отменить их
+- Отключение Google (`/disconnect`) или неудачное подключение НЕ удаляют уже созданные события. Позже отменить их
   нельзя (нет валидных учётных данных), поэтому оставшееся событие продолжит отображаться занятым в freeBusy.
-  Включение флага не создаёт события для уже существующих будущих приёмов (backfill нет), только для новых/изменённых.
+  Подключение не создаёт события для уже существующих будущих приёмов (backfill нет), только для новых/изменённых.
 - Постановка в очередь при изменении приёма — best-effort и не атомарна с коммитом обновления (сверки/reconciliation
   нет): при сбое постановки событие может остаться неактуальным. Пропускная способность обработки ≈ 40 событий в минуту.
 - Удаление пользователя/специалиста/клиента/аккаунта (`deletionService`): до физического удаления приёмов сервер
   best-effort удаляет их события в Google (пока токены ещё есть); ошибки логируются и удаление не блокируют.
-- Бот больше не обращается к Google: ни запись, ни чтение занятости. Слоты в боте не учитывают занятость из Google
-  Calendar (публичное веб-бронирование учитывает её через freeBusy). Прежнее чтение через events.list в боте и так
-  было сломано: колонка `google_api_key` удалена миграцией 20260915140000, а токен использовался как API key.
+- Бот не обращается к Google: он только ставит строки в `google_calendar_sync_queue`. Слоты в боте не учитывают занятость из
+  Google Calendar (публичное веб-бронирование учитывает её через freeBusy).
 
 ## Ротация ключа
 

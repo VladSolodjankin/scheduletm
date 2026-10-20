@@ -1,5 +1,5 @@
 import { alpha } from '@mui/material/styles';
-import { Box, Card, CardContent, FormControlLabel, IconButton, Popover, Stack, Switch, Typography } from '@mui/material';
+import { Box, Card, CardContent, IconButton, Popover, Stack, Typography } from '@mui/material';
 import { MouseEvent, useState } from 'react';
 import { Control, Controller } from 'react-hook-form';
 
@@ -19,8 +19,6 @@ type Props = {
   isSaving: boolean;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
-  isGoogleGrantingAccess: boolean;
-  isGoogleWriteSaving: boolean;
   isZoomConnecting: boolean;
   isYandexConnecting: boolean;
   isYandexDisconnecting: boolean;
@@ -31,8 +29,6 @@ type Props = {
   onConnectYandex: () => void;
   onDisconnectYandex: () => void;
   onDisconnectGoogle: () => void;
-  onGrantGoogleCalendarAccess: () => void;
-  onToggleGoogleCalendarWrite: (enabled: boolean) => void;
 };
 
 type IntegrationPanelProps = {
@@ -176,8 +172,6 @@ export function IntegrationsSettingsTab({
   isSaving,
   isGoogleConnecting,
   isGoogleDisconnecting,
-  isGoogleGrantingAccess,
-  isGoogleWriteSaving,
   isZoomConnecting,
   isYandexConnecting,
   isYandexDisconnecting,
@@ -188,13 +182,10 @@ export function IntegrationsSettingsTab({
   onConnectYandex,
   onDisconnectYandex,
   onDisconnectGoogle,
-  onGrantGoogleCalendarAccess,
-  onToggleGoogleCalendarWrite,
 }: Props) {
   const [isEditingTelegramToken, setIsEditingTelegramToken] = useState(false);
   const [helpAnchorEl, setHelpAnchorEl] = useState<HTMLElement | null>(null);
   const [openHelpKey, setOpenHelpKey] = useState<'zoom' | 'yandex' | 'google' | null>(null);
-  const canToggleGoogleWrite = userSettings.googleConnected && userSettings.googleCalendarWriteGranted;
   const shouldShowTelegramTokenField = !userSettings.telegramBotConnected || isEditingTelegramToken;
 
   const handleOpenHelp = (event: MouseEvent<HTMLElement>, key: 'zoom' | 'yandex' | 'google') => {
@@ -412,7 +403,7 @@ export function IntegrationsSettingsTab({
                 <AppButton
                   variant="outlined"
                   onClick={onConnectGoogle}
-                  disabled={userSettings.googleConnected || isGoogleDisconnecting || isGoogleGrantingAccess}
+                  disabled={userSettings.googleConnected || isGoogleDisconnecting}
                   isLoading={isGoogleConnecting}
                   startIcon={!isGoogleConnecting ? <GoogleGIcon /> : undefined}
                   sx={{
@@ -441,50 +432,16 @@ export function IntegrationsSettingsTab({
                   color="error"
                   onClick={onDisconnectGoogle}
                   isLoading={isGoogleDisconnecting}
-                  disabled={isGoogleConnecting || isGoogleGrantingAccess || isGoogleWriteSaving}
+                  disabled={isGoogleConnecting}
                   sx={{ alignSelf: 'flex-start', minWidth: 164, backgroundColor: '#FFFFFF' }}
                 >
                   {isGoogleDisconnecting ? copy.disconnectingGoogle : copy.disconnectGoogle}
                 </AppButton>
               )}
 
-              <Stack spacing={0.75}>
-                <FormControlLabel
-                  sx={{ alignItems: 'flex-start', m: 0 }}
-                  control={(
-                    <Switch
-                      checked={canToggleGoogleWrite && userSettings.googleCalendarWriteEnabled}
-                      disabled={!canToggleGoogleWrite || isGoogleWriteSaving || isGoogleDisconnecting}
-                      onChange={(_, checked) => onToggleGoogleCalendarWrite(checked)}
-                    />
-                  )}
-                  label={<Typography variant="body2" sx={{ fontWeight: 600, pt: 0.75 }}>{copy.googleCalendarWriteLabel}</Typography>}
-                />
-                <Typography variant="caption" color="text.secondary">
-                  {copy.googleCalendarWriteHelper}
-                </Typography>
-                {!userSettings.googleConnected && (
-                  <Typography variant="caption" color="text.secondary">
-                    {copy.googleCalendarWriteConnectFirst}
-                  </Typography>
-                )}
-                {userSettings.googleConnected && !userSettings.googleCalendarWriteGranted && (
-                  <>
-                    <Typography variant="caption" color="text.secondary">
-                      {copy.googleCalendarWriteGrantHint}
-                    </Typography>
-                    <AppButton
-                      variant="outlined"
-                      onClick={onGrantGoogleCalendarAccess}
-                      isLoading={isGoogleGrantingAccess}
-                      disabled={isGoogleConnecting || isGoogleDisconnecting}
-                      sx={{ alignSelf: 'flex-start', minWidth: 164, textTransform: 'none', backgroundColor: '#FFFFFF' }}
-                    >
-                      {isGoogleGrantingAccess ? copy.googleCalendarWriteGrantingAccess : copy.googleCalendarWriteGrantAccess}
-                    </AppButton>
-                  </>
-                )}
-              </Stack>
+              <Typography variant="caption" color="text.secondary">
+                {copy.googleCalendarCaption}
+              </Typography>
             </Stack>
           )}
         />

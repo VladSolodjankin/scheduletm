@@ -36,12 +36,11 @@ type WriteCredentials = {
 
 type GoogleResponse = { status: number; data: { id?: unknown } | undefined };
 
-/** Opt-in + scope are re-validated at processing time; null means Google must not be called. */
+/** The granted write scope is re-validated at processing time; null means Google must not be called. */
 async function loadWriteCredentials(accountId: number, webUserId: number): Promise<WriteCredentials | null> {
   const integration = await findWebUserIntegrationByWebUserId(accountId, webUserId);
   if (
     !integration
-    || !integration.google_calendar_write_enabled
     || !integration.google_api_key
     || !hasGoogleCalendarWriteScope(integration.google_granted_scopes)
   ) {

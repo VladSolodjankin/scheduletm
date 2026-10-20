@@ -23,7 +23,6 @@ import {
   findWebUserIntegrationByWebUserId,
   updateWebUserGoogleCredentials,
   clearWebUserGoogleCredentials,
-  updateWebUserGoogleCalendarWriteEnabled,
   updateWebUserYandexIntegration,
   clearWebUserYandexCredentials,
 } from '../src/repositories/webUserIntegrationRepository.js';
@@ -64,7 +63,7 @@ describe('web user integration secret repository mapping', () => {
     expect(inserted).not.toHaveProperty('google_refresh_token');
   });
 
-  it('stores granted scopes and resets write settings on Google disconnect', async () => {
+  it('stores granted scopes and clears them on Google disconnect', async () => {
     await updateWebUserGoogleCredentials({
       accountId: 7,
       webUserId: 42,
@@ -75,17 +74,9 @@ describe('web user integration secret repository mapping', () => {
       google_granted_scopes: 'openid https://www.googleapis.com/auth/calendar.freebusy',
     }));
 
-    await updateWebUserGoogleCalendarWriteEnabled(7, 42, true);
-    expect(queryMock.insert).toHaveBeenLastCalledWith(expect.objectContaining({
-      account_id: 7,
-      web_user_id: 42,
-      google_calendar_write_enabled: true,
-    }));
-
     await clearWebUserGoogleCredentials(7, 42);
     expect(queryMock.insert).toHaveBeenLastCalledWith(expect.objectContaining({
       google_access_token_encrypted: null,
-      google_calendar_write_enabled: false,
       google_granted_scopes: null,
     }));
   });
@@ -106,7 +97,6 @@ describe('web user integration secret repository mapping', () => {
       google_access_token_encrypted: inserted.google_access_token_encrypted,
       google_refresh_token_encrypted: inserted.google_refresh_token_encrypted,
       google_token_expires_at: null,
-      google_calendar_id: null,
       google_connected_at: null,
       telegram_bot_token_encrypted: null,
       telegram_bot_username: null,

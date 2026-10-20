@@ -4,11 +4,6 @@ export type UserIntegrationRecord = {
   id: number;
   account_id: number;
   web_user_id: number;
-  google_api_key: string | null;
-  google_refresh_token: string | null;
-  google_token_expires_at: Date | null;
-  google_calendar_id: string | null;
-  google_connected_at: Date | null;
   telegram_bot_token: string | null;
   telegram_bot_username: string | null;
   telegram_bot_name: string | null;

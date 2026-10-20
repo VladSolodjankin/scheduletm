@@ -5,7 +5,6 @@ import { WebUserRole } from '../src/types/webUserRole.js';
 
 const resolveUserByAccessTokenMock = vi.hoisted(() => vi.fn());
 const findIntegrationMock = vi.hoisted(() => vi.fn());
-const updateWriteEnabledMock = vi.hoisted(() => vi.fn());
 const completeGoogleOAuthMock = vi.hoisted(() => vi.fn());
 const createGoogleOAuthUrlMock = vi.hoisted(() => vi.fn());
 
@@ -20,7 +19,6 @@ vi.mock('../src/repositories/webUserIntegrationRepository.js', async () => {
   return {
     ...actual,
     findWebUserIntegrationByWebUserId: findIntegrationMock,
-    updateWebUserGoogleCalendarWriteEnabled: updateWriteEnabledMock,
     updateWebUserTelegramIntegration: vi.fn(),
   };
 });
@@ -87,16 +85,9 @@ describe('google calendar write setting and oauth start', () => {
     findIntegrationMock.mockResolvedValue(null);
   });
 
-  const put = (body: unknown) => fetch(`${baseUrl}/api/settings/user`, {
-    method: 'PUT',
-    headers: { Authorization: 'Bearer t', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  it('returns the new fields from GET /user', async () => {
+  it('does not expose the removed write toggle fields in GET /user', async () => {
     findIntegrationMock.mockResolvedValue({
       google_api_key: 'token',
-      google_calendar_write_enabled: true,
       google_granted_scopes: `${FREEBUSY} ${WRITE}`,
     });
 
@@ -104,90 +95,33 @@ describe('google calendar write setting and oauth start', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body).toMatchObject({ googleCalendarWriteEnabled: true, googleCalendarWriteGranted: true });
+    expect(body).toMatchObject({ googleConnected: true });
+    expect(body).not.toHaveProperty('googleCalendarWriteEnabled');
+    expect(body).not.toHaveProperty('googleCalendarWriteGranted');
   });
 
-  it('defaults to disabled and not granted', async () => {
-    const res = await fetch(`${baseUrl}/api/settings/user`, { headers: { Authorization: 'Bearer t' } });
-
-    expect(await res.json()).toMatchObject({ googleCalendarWriteEnabled: false, googleCalendarWriteGranted: false });
-  });
-
-  it('rejects enabling when Google is not connected with 409 google_write_scope_missing', async () => {
-    const res = await put({ googleCalendarWriteEnabled: true });
-
-    expect(res.status).toBe(409);
-    expect(await res.json()).toEqual({ code: 'google_write_scope_missing', message: expect.any(String) });
-    expect(updateWriteEnabledMock).not.toHaveBeenCalled();
-  });
-
-  it('rejects enabling when only the freebusy scope is granted', async () => {
-    findIntegrationMock.mockResolvedValue({ google_api_key: 'token', google_granted_scopes: FREEBUSY });
-
-    const res = await put({ googleCalendarWriteEnabled: true });
-
-    expect(res.status).toBe(409);
-    expect(updateWriteEnabledMock).not.toHaveBeenCalled();
-  });
-
-  it('enables when the write scope is granted, scoped to the caller', async () => {
-    findIntegrationMock.mockResolvedValue({ google_api_key: 'token', google_granted_scopes: `${FREEBUSY} ${WRITE}` });
-
-    const res = await put({ googleCalendarWriteEnabled: true });
-
-    expect(res.status).toBe(200);
-    expect(updateWriteEnabledMock).toHaveBeenCalledWith(1, 101, true);
-  });
-
-  it('always allows disabling', async () => {
-    const res = await put({ googleCalendarWriteEnabled: false });
-
-    expect(res.status).toBe(200);
-    expect(updateWriteEnabledMock).toHaveBeenCalledWith(1, 101, false);
-  });
-
-  it('passes access=write to the oauth start and keeps the response shape', async () => {
+  it('starts oauth without a body and keeps the response shape', async () => {
     createGoogleOAuthUrlMock.mockResolvedValue({ url: 'https://accounts.google.com/x', state: 's' });
 
     const res = await fetch(`${baseUrl}/api/integrations/google/oauth/start`, {
       method: 'POST',
       headers: { Authorization: 'Bearer t', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ access: 'write' }),
     });
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ provider: 'google', authorizeUrl: 'https://accounts.google.com/x', state: 's' });
-    expect(createGoogleOAuthUrlMock).toHaveBeenCalledWith('101', 1, 'write');
+    expect(createGoogleOAuthUrlMock).toHaveBeenCalledWith('101', 1);
   });
 
-  it('keeps legacy behaviour without a body and rejects unknown access values', async () => {
-    createGoogleOAuthUrlMock.mockResolvedValue({ url: 'u', state: 's' });
-    const headers = { Authorization: 'Bearer t', 'Content-Type': 'application/json' };
-
-    const plain = await fetch(`${baseUrl}/api/integrations/google/oauth/start`, { method: 'POST', headers });
-    expect(plain.status).toBe(200);
-    expect(createGoogleOAuthUrlMock).toHaveBeenCalledWith('101', 1, undefined);
-
-    const bad = await fetch(`${baseUrl}/api/integrations/google/oauth/start`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ access: 'admin' }),
-    });
-    expect(bad.status).toBe(400);
-  });
-
-  it('adds scope_write to the callback redirect only when write access was requested', async () => {
+  it('redirects the callback with success, or with calendar_write_required when write was not granted', async () => {
     const call = async (result: unknown) => {
       completeGoogleOAuthMock.mockResolvedValueOnce(result);
       const res = await fetch(`${baseUrl}/api/integrations/google/oauth/callback?state=s&code=c`, { redirect: 'manual' });
       return res.headers.get('location') ?? '';
     };
 
-    expect(await call({ ok: true, requestedAccess: null, writeScopeGranted: true }))
-      .toMatch(/\/settings\?google_oauth=success$/);
-    expect(await call({ ok: true, requestedAccess: 'write', writeScopeGranted: true }))
-      .toMatch(/google_oauth=success&scope_write=granted$/);
-    expect(await call({ ok: true, requestedAccess: 'write', writeScopeGranted: false }))
-      .toMatch(/google_oauth=success&scope_write=missing$/);
+    expect(await call({ ok: true })).toMatch(/\/settings\?google_oauth=success$/);
+    expect(await call({ ok: false, reason: 'calendar_write_required' }))
+      .toMatch(/\/settings\?google_oauth=error&reason=calendar_write_required$/);
   });
 });

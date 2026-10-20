@@ -44,15 +44,15 @@ export type EnqueueGoogleCalendarSyncInput = {
   accountId: number;
   appointmentId: number;
   action: GoogleCalendarSyncAction;
-  /** Required for the cheap write-enabled gate on upserts. */
+  /** Required for the cheap write-scope gate on upserts. */
   specialistId?: number;
   /** Snapshot of an existing Google event (delete needs it after the appointment row may be gone). */
   googleEventId?: string | null;
   webUserId?: number | null;
 };
 
-/** True when the specialist's own web user opted in to event writing and granted the write scope. */
-export async function isGoogleCalendarWriteEnabledForSpecialist(
+/** True when the specialist's own web user is connected to Google and granted the calendar write scope. */
+export async function isGoogleCalendarWriteAvailableForSpecialist(
   accountId: number,
   specialistId: number,
   executor: Executor = db,
@@ -64,7 +64,6 @@ export async function isGoogleCalendarWriteEnabledForSpecialist(
     .where({
       's.account_id': accountId,
       's.id': specialistId,
-      'wui.google_calendar_write_enabled': true,
     })
     .whereNotNull('wui.google_access_token_encrypted')
     .first<{ google_granted_scopes: string | null } | undefined>('wui.google_granted_scopes');
@@ -91,7 +90,7 @@ async function insertCoalesced(input: EnqueueGoogleCalendarSyncInput, executor: 
 }
 
 /**
- * Cheap, never-throwing enqueue. Gates on the specialist's opt-in (upserts, and deletes that have no
+ * Cheap, never-throwing enqueue. Gates on the specialist's granted write scope (upserts, and deletes that have no
  * known Google event yet). A caller-supplied transaction is protected with a savepoint so an enqueue
  * failure cannot abort the appointment write.
  */
@@ -104,7 +103,7 @@ export async function enqueueGoogleCalendarSync(
     const run = async (exec: Executor): Promise<boolean> => {
       if (!hasKnownEvent) {
         if (input.specialistId === undefined
-          || !(await isGoogleCalendarWriteEnabledForSpecialist(input.accountId, input.specialistId, exec))) {
+          || !(await isGoogleCalendarWriteAvailableForSpecialist(input.accountId, input.specialistId, exec))) {
           return false;
         }
       }
@@ -126,7 +125,7 @@ export async function enqueueGoogleCalendarSync(
   }
 }
 
-/** Same gate and coalescing as enqueueGoogleCalendarSync, but checks the opt-in once for many appointments (series). */
+/** Same gate and coalescing as enqueueGoogleCalendarSync, but checks the write scope once for many appointments (series). */
 export async function enqueueGoogleCalendarUpserts(
   input: { accountId: number; specialistId: number; appointmentIds: number[] },
   executor: Executor = db,
@@ -137,7 +136,7 @@ export async function enqueueGoogleCalendarUpserts(
 
   try {
     const run = async (exec: Executor): Promise<number> => {
-      if (!(await isGoogleCalendarWriteEnabledForSpecialist(input.accountId, input.specialistId, exec))) {
+      if (!(await isGoogleCalendarWriteAvailableForSpecialist(input.accountId, input.specialistId, exec))) {
         return 0;
       }
       for (const appointmentId of input.appointmentIds) {

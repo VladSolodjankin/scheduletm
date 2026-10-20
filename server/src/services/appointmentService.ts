@@ -403,6 +403,7 @@ export async function getAppointments(
     specialistIds: busySpecialistIds,
     from: fromDate,
     to: toDate,
+    ownerWebUserId: Number.isInteger(Number(actor.id)) ? Number(actor.id) : undefined,
   });
   const appointmentsForUi = items.map(mapAppointment);
   const eventsByAppointmentId = mapEventsByAppointmentId(

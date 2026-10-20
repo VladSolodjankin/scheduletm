@@ -174,16 +174,7 @@ export const dictionaries = {
       connectGoogleHelpTitle: 'Google Calendar integration',
       connectGoogleHelpDescription: 'Connect Google Calendar to sync your busy slots and avoid double bookings.',
       googleConnected: 'Google connected',
-      googleCalendarWriteLabel: 'Create appointments in my Google Calendar',
-      googleCalendarWriteHelper: 'When on, each new appointment is added to your Google Calendar with the service name, time, and place or meeting link. Client contact details are never written. Off by default. Only appointments created or changed after you turn this on are added. Turning it off or disconnecting Google does not remove events already created in Google Calendar.',
-      googleCalendarWriteConnectFirst: 'Connect Google first to turn this on.',
-      googleCalendarWriteGrantHint: 'Google Calendar is connected, but event-creation access has not been granted yet.',
-      googleCalendarWriteGrantAccess: 'Grant calendar access',
-      googleCalendarWriteGrantingAccess: 'Redirecting to Google...',
-      googleCalendarWriteEnabledSuccess: 'Appointments will now be created in your Google Calendar.',
-      googleCalendarWriteDisabledSuccess: 'Appointments will no longer be created in your Google Calendar.',
-      googleCalendarWriteGrantedSuccessfully: 'Google Calendar connected with event-creation access. You can now turn on creating appointments in your calendar.',
-      googleCalendarWriteMissing: 'Google Calendar connected, but event-creation access was not granted (the permission was unticked), so appointments will not be created in your calendar.',
+      googleCalendarCaption: 'This integration adds your appointments to your Google Calendar and shows your busy time as unavailable to clients. You will also see the titles of your own Google events in the appointments calendar; nobody else sees them.',
       zoomConnected: 'Zoom connected',
       connectYandex: 'Connect Yandex Telemost',
       connectingYandex: 'Redirecting to Yandex...',
@@ -297,8 +288,7 @@ export const dictionaries = {
         connectGoogle: 'Unable to connect Google.',
         disconnectGoogle: 'Unable to disconnect Google.',
         googleNotConfigured: 'Google Calendar integration is not configured on the server.',
-        googleWriteScopeMissing: 'Google has not granted event-creation access. Grant calendar access first.',
-        saveGoogleCalendarWrite: 'Unable to update Google Calendar setting.',
+        googleCalendarWriteRequired: 'Google Calendar was not connected: please allow access to manage events on your calendar.',
         connectZoom: 'Unable to connect Zoom.',
         connectYandex: 'Unable to connect Yandex Telemost.',
         disconnectYandex: 'Unable to disconnect Yandex Telemost.',
@@ -1029,16 +1019,7 @@ export const dictionaries = {
       connectGoogleHelpTitle: 'Интеграция Google Calendar',
       connectGoogleHelpDescription: 'Подключите Google Calendar для синхронизации занятых слотов и предотвращения двойных бронирований.',
       googleConnected: 'Google подключен',
-      googleCalendarWriteLabel: 'Создавать записи в моём Google Calendar',
-      googleCalendarWriteHelper: 'Если включено, каждая новая запись добавляется в ваш Google Calendar с названием услуги, временем и местом или ссылкой на встречу. Контактные данные клиента не передаются. По умолчанию выключено. Добавляются только записи, созданные или изменённые после включения. Выключение опции или отключение Google не удаляет события, уже созданные в Google Calendar.',
-      googleCalendarWriteConnectFirst: 'Сначала подключите Google, чтобы включить эту опцию.',
-      googleCalendarWriteGrantHint: 'Google Calendar подключен, но доступ на создание событий ещё не предоставлен.',
-      googleCalendarWriteGrantAccess: 'Предоставить доступ к календарю',
-      googleCalendarWriteGrantingAccess: 'Переходим в Google...',
-      googleCalendarWriteEnabledSuccess: 'Теперь записи будут создаваться в вашем Google Calendar.',
-      googleCalendarWriteDisabledSuccess: 'Записи больше не будут создаваться в вашем Google Calendar.',
-      googleCalendarWriteGrantedSuccessfully: 'Google Calendar подключен с доступом на создание событий. Теперь можно включить создание записей в календаре.',
-      googleCalendarWriteMissing: 'Google Calendar подключен, но доступ на создание событий не предоставлен (разрешение было снято), поэтому записи в календаре создаваться не будут.',
+      googleCalendarCaption: 'Эта интеграция добавляет ваши записи в Google Calendar и показывает клиентам ваше занятое время как недоступное. Названия ваших событий из Google вы также увидите в календаре записей, больше никто их не увидит.',
       zoomConnected: 'Zoom подключен',
       connectYandex: 'Подключить Яндекс Телемост',
       connectingYandex: 'Перенаправляем в Яндекс...',
@@ -1152,8 +1133,7 @@ export const dictionaries = {
         connectGoogle: 'Не удалось подключить Google.',
         disconnectGoogle: 'Не удалось отключить Google.',
         googleNotConfigured: 'Интеграция с Google Calendar не настроена на сервере.',
-        googleWriteScopeMissing: 'Google не предоставил доступ на создание событий. Сначала предоставьте доступ к календарю.',
-        saveGoogleCalendarWrite: 'Не удалось обновить настройку Google Calendar.',
+        googleCalendarWriteRequired: 'Google Calendar не подключен: разрешите доступ к управлению событиями в вашем календаре.',
         connectZoom: 'Не удалось подключить Zoom.',
         connectYandex: 'Не удалось подключить Яндекс Телемост.',
         disconnectYandex: 'Не удалось отключить Яндекс Телемост.',
@@ -1901,16 +1881,7 @@ export type TranslationKey =
   | 'settings.connectZoom'
   | 'settings.connectingZoom'
   | 'settings.googleConnected'
-  | 'settings.googleCalendarWriteLabel'
-  | 'settings.googleCalendarWriteHelper'
-  | 'settings.googleCalendarWriteConnectFirst'
-  | 'settings.googleCalendarWriteGrantHint'
-  | 'settings.googleCalendarWriteGrantAccess'
-  | 'settings.googleCalendarWriteGrantingAccess'
-  | 'settings.googleCalendarWriteEnabledSuccess'
-  | 'settings.googleCalendarWriteDisabledSuccess'
-  | 'settings.googleCalendarWriteGrantedSuccessfully'
-  | 'settings.googleCalendarWriteMissing'
+  | 'settings.googleCalendarCaption'
   | 'settings.zoomConnected'
   | 'settings.connectYandex'
   | 'settings.connectingYandex'
@@ -2012,8 +1983,7 @@ export type TranslationKey =
   | 'settings.errors.connectGoogle'
   | 'settings.errors.disconnectGoogle'
   | 'settings.errors.googleNotConfigured'
-  | 'settings.errors.googleWriteScopeMissing'
-  | 'settings.errors.saveGoogleCalendarWrite'
+  | 'settings.errors.googleCalendarWriteRequired'
   | 'settings.errors.connectZoom'
   | 'settings.connectZoomHelpTitle'
   | 'settings.connectZoomHelpDescription'

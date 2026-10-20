@@ -22,13 +22,13 @@ describe('bot google calendar outbox', () => {
     dbMock.raw.mockReset().mockResolvedValue(undefined);
   });
 
-  it('writes nothing when the specialist did not enable event writing', async () => {
+  it('writes nothing when the specialist has no Google connection with granted scopes', async () => {
     mockGate(undefined);
     expect(await enqueueGoogleCalendarSync({ accountId: 1, appointmentId: 2, action: 'upsert', specialistId: 3 })).toBe(false);
     expect(dbMock.raw).not.toHaveBeenCalled();
   });
 
-  it('inserts with the shared coalescing contract when enabled', async () => {
+  it('inserts with the shared coalescing contract when connected with granted scopes', async () => {
     mockGate({ web_user_id: 9 });
     expect(await enqueueGoogleCalendarSync({ accountId: 1, appointmentId: 2, action: 'upsert', specialistId: 3 })).toBe(true);
     const [sql, bindings] = dbMock.raw.mock.calls[0];

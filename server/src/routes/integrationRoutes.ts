@@ -31,18 +31,9 @@ const zoomCreateMeetingSchema = z.object({
 
 const yandexCreateMeetingSchema = zoomCreateMeetingSchema.partial();
 
-const googleOAuthStartSchema = z.object({
-  access: z.literal('write').optional(),
-}).strict();
-
 integrationRoutes.post('/google/oauth/start', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  const parsedBody = googleOAuthStartSchema.safeParse(req.body ?? {});
-  if (!parsedBody.success) {
-    return res.status(400).json(formatZodError(parsedBody.error));
-  }
-
-  const oauthInit = await createGoogleOAuthUrl(user.id, user.accountId, parsedBody.data.access);
+  const oauthInit = await createGoogleOAuthUrl(user.id, user.accountId);
 
   if (!oauthInit) {
     return res.status(503).json({
@@ -76,11 +67,7 @@ integrationRoutes.get('/google/oauth/callback', async (req, res) => {
     return res.redirect(`${env.APP_URL}/settings?google_oauth=error&reason=${result.reason}`);
   }
 
-  const scopeWriteParam = result.requestedAccess === 'write'
-    ? `&scope_write=${result.writeScopeGranted ? 'granted' : 'missing'}`
-    : '';
-
-  return res.redirect(`${env.APP_URL}/settings?google_oauth=success${scopeWriteParam}`);
+  return res.redirect(`${env.APP_URL}/settings?google_oauth=success`);
 });
 
 integrationRoutes.post('/google/disconnect', requireAccessToken, async (req, res) => {

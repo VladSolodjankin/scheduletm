@@ -151,7 +151,6 @@ export const userSettingsSchema = z.object({
   uiThemeMode: z.enum(['light', 'dark']),
   uiPaletteVariantId: z.string().min(1, v.paletteIdRequired).max(64, v.paletteIdTooLong),
   telegramBotToken: z.string().trim().min(1, v.telegramBotTokenRequired).max(255, v.telegramBotTokenTooLong).optional().or(z.literal('')),
-  googleCalendarWriteEnabled: z.boolean().optional(),
 }).partial();
 
 export const specialistBookingPolicySchema = z.object({

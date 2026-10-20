@@ -14,7 +14,6 @@ import {
   getSystemSettings,
   getSpecialistBookingPolicy,
   getUserSettings,
-  GoogleWriteScopeMissingError,
   updateAccountSettings,
   updateSpecialistBookingPolicy,
   updateSystemSettings,
@@ -274,15 +273,7 @@ settingsRoutes.get('/user', requireAccessToken, async (req, res) => {
 
 settingsRoutes.put('/user', requireAccessToken, async (req, res) => {
   const user = (req as AuthedRequest).user;
-  let updated: Awaited<ReturnType<typeof updateUserSettings>>;
-  try {
-    updated = await updateUserSettings(user, req.body);
-  } catch (error) {
-    if (error instanceof GoogleWriteScopeMissingError) {
-      return res.status(409).json({ code: error.code, message: t(req, 'googleWriteScopeMissing') });
-    }
-    throw error;
-  }
+  const updated = await updateUserSettings(user, req.body);
   if (!updated) {
     return res.status(400).json({ message: t(req, 'invalidPayloadUserSettings') });
   }

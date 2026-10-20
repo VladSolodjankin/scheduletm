@@ -5,7 +5,6 @@ const createStateMock = vi.hoisted(() => vi.fn());
 const consumeStateMock = vi.hoisted(() => vi.fn());
 const updateCredentialsMock = vi.hoisted(() => vi.fn());
 const clearCredentialsMock = vi.hoisted(() => vi.fn());
-const setWriteEnabledMock = vi.hoisted(() => vi.fn());
 
 vi.mock('axios', async () => {
   const actual = await vi.importActual<typeof import('axios')>('axios');
@@ -20,7 +19,6 @@ vi.mock('../src/repositories/googleOAuthStateRepository.js', () => ({
 vi.mock('../src/repositories/webUserIntegrationRepository.js', () => ({
   updateWebUserGoogleCredentials: updateCredentialsMock,
   clearWebUserGoogleCredentials: clearCredentialsMock,
-  updateWebUserGoogleCalendarWriteEnabled: setWriteEnabledMock,
 }));
 
 import { env } from '../src/config/env.js';
@@ -45,38 +43,27 @@ describe('google oauth service scopes', () => {
     env.GOOGLE_OAUTH_WRITE_SCOPE = WRITE;
     createStateMock.mockResolvedValue(undefined);
     updateCredentialsMock.mockResolvedValue(undefined);
-    setWriteEnabledMock.mockResolvedValue(undefined);
+    clearCredentialsMock.mockResolvedValue(undefined);
   });
 
-  it('requests only identity and freebusy scopes by default', async () => {
-    const init = await createGoogleOAuthUrl('5', 1);
+  it('always requests identity, freebusy and write scopes in one consent', async () => {
+    const expected = ['openid', 'https://www.googleapis.com/auth/userinfo.email', FREEBUSY, WRITE];
 
-    expect(scopeOf(init!.url)).toEqual(['openid', 'https://www.googleapis.com/auth/userinfo.email', FREEBUSY]);
-    expect(new URL(init!.url).searchParams.get('include_granted_scopes')).toBe('true');
-    expect(createStateMock).toHaveBeenCalledWith(expect.objectContaining({ requestedAccess: null }));
-  });
-
-  it('adds the write scope and records the requested access when access=write', async () => {
-    const init = await createGoogleOAuthUrl('5', 1, 'write');
-
-    expect(scopeOf(init!.url)).toEqual([
-      'openid',
-      'https://www.googleapis.com/auth/userinfo.email',
-      FREEBUSY,
-      WRITE,
-    ]);
-    expect(createStateMock).toHaveBeenCalledWith(expect.objectContaining({ requestedAccess: 'write' }));
+    const plain = await createGoogleOAuthUrl('5', 1);
+    expect(scopeOf(plain!.url)).toEqual(expected);
+    expect(new URL(plain!.url).searchParams.get('include_granted_scopes')).toBe('true');
+    expect(createStateMock.mock.calls[0][0]).not.toHaveProperty('requestedAccess');
   });
 
   it('honours GOOGLE_OAUTH_SCOPES override without duplicating the write scope', async () => {
     env.GOOGLE_OAUTH_SCOPES = `openid ${WRITE}`;
-    const init = await createGoogleOAuthUrl('5', 1, 'write');
+    const init = await createGoogleOAuthUrl('5', 1);
 
     expect(scopeOf(init!.url)).toEqual(['openid', WRITE]);
   });
 
   it('persists the granted scopes returned by the token exchange', async () => {
-    consumeStateMock.mockResolvedValue({ account_id: 1, web_user_id: 5, requested_access: 'write' });
+    consumeStateMock.mockResolvedValue({ account_id: 1, web_user_id: 5 });
     postMock.mockResolvedValue({
       data: {
         access_token: 'a',
@@ -92,27 +79,25 @@ describe('google oauth service scopes', () => {
     expect(updateCredentialsMock).toHaveBeenCalledWith(expect.objectContaining({
       googleGrantedScopes: `openid ${FREEBUSY} ${WRITE}`,
     }));
-    expect(result).toMatchObject({ ok: true, requestedAccess: 'write', writeScopeGranted: true });
-    expect(setWriteEnabledMock).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ ok: true });
+    expect(clearCredentialsMock).not.toHaveBeenCalled();
   });
 
-  it('reports a missing write scope when the user unticked it (granular consent)', async () => {
-    consumeStateMock.mockResolvedValue({ account_id: 1, web_user_id: 5, requested_access: 'write' });
+  it('fails the connection and clears credentials when the user unticked the write scope', async () => {
+    consumeStateMock.mockResolvedValue({ account_id: 1, web_user_id: 5 });
     postMock.mockResolvedValue({
       data: { access_token: 'a', expires_in: 3600, token_type: 'Bearer', scope: `openid ${FREEBUSY}` },
     });
 
     const result = await completeGoogleOAuth('state', 'code');
 
-    expect(updateCredentialsMock).toHaveBeenCalledWith(expect.objectContaining({
-      googleGrantedScopes: `openid ${FREEBUSY}`,
-    }));
-    expect(result).toMatchObject({ ok: true, requestedAccess: 'write', writeScopeGranted: false });
-    expect(setWriteEnabledMock).toHaveBeenCalledWith(1, 5, false);
+    expect(result).toEqual({ ok: false, reason: 'calendar_write_required' });
+    expect(updateCredentialsMock).not.toHaveBeenCalled();
+    expect(clearCredentialsMock).toHaveBeenCalledWith(1, 5);
   });
 
-  it('replaces stored scopes with the full set on re-consent without a write request for plain connects', async () => {
-    consumeStateMock.mockResolvedValue({ account_id: 1, web_user_id: 5, requested_access: null });
+  it('replaces stored scopes with the full set on re-consent', async () => {
+    consumeStateMock.mockResolvedValue({ account_id: 1, web_user_id: 5 });
     postMock.mockResolvedValue({
       data: { access_token: 'a', expires_in: 3600, token_type: 'Bearer', scope: `${FREEBUSY} ${WRITE}` },
     });
@@ -122,8 +107,8 @@ describe('google oauth service scopes', () => {
     expect(updateCredentialsMock).toHaveBeenCalledWith(expect.objectContaining({
       googleGrantedScopes: `${FREEBUSY} ${WRITE}`,
     }));
-    expect(result).toMatchObject({ ok: true, requestedAccess: null });
-    expect(setWriteEnabledMock).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ ok: true });
+    expect(clearCredentialsMock).not.toHaveBeenCalled();
   });
 
   it('updates granted scopes when a token refresh returns scope', async () => {

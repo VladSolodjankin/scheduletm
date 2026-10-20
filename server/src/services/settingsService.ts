@@ -6,7 +6,6 @@ import {
 import { cancelWebUserDeletion, findWebUserById, scheduleWebUserDeletion, updateWebUserSettings } from '../repositories/webUserRepository.js';
 import {
   findWebUserIntegrationByWebUserId,
-  updateWebUserGoogleCalendarWriteEnabled,
   updateWebUserTelegramIntegration,
 } from '../repositories/webUserIntegrationRepository.js';
 import { findUserSettingsByWebUserId, updateUserSettingsByWebUserId } from '../repositories/userSettingsRepository.js';
@@ -32,7 +31,6 @@ import {
   userSettingsSchema,
 } from '../config/schemas.js';
 import { env } from '../config/env.js';
-import { hasGoogleCalendarWriteScope } from '../utils/googleScopes.js';
 import { decryptText, encryptText } from '../utils/crypto.js';
 import { verifyTelegramBotToken } from './telegramService.js';
 import { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
@@ -82,8 +80,6 @@ export type UserSettings = {
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
   googleConnected: boolean;
-  googleCalendarWriteEnabled: boolean;
-  googleCalendarWriteGranted: boolean;
   zoomConnected: boolean;
   yandexConnected: boolean;
   telegramBotConnected: boolean;
@@ -326,8 +322,6 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
       uiThemeMode: 'light',
       uiPaletteVariantId: 'default',
       googleConnected: false,
-      googleCalendarWriteEnabled: false,
-      googleCalendarWriteGranted: false,
       zoomConnected: false,
       yandexConnected: false,
       telegramBotConnected: false,
@@ -353,9 +347,7 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
     telegramUsername: user?.telegram_username ?? '',
     uiThemeMode: userSettings?.ui_theme_mode ?? user?.ui_theme_mode ?? 'light',
     uiPaletteVariantId: userSettings?.ui_palette_variant_id ?? user?.ui_palette_variant_id ?? 'default',
-    googleConnected: Boolean(integration?.google_api_key ?? legacyIntegration?.google_api_key),
-    googleCalendarWriteEnabled: legacyIntegration?.google_calendar_write_enabled ?? false,
-    googleCalendarWriteGranted: hasGoogleCalendarWriteScope(legacyIntegration?.google_granted_scopes),
+    googleConnected: Boolean(legacyIntegration?.google_api_key),
     zoomConnected: Boolean(
       legacyIntegration?.zoom_access_token
       && legacyIntegration?.zoom_token_expires_at
@@ -373,14 +365,6 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
   };
 };
 
-export class GoogleWriteScopeMissingError extends Error {
-  readonly code = 'google_write_scope_missing' as const;
-
-  constructor() {
-    super('google_write_scope_missing');
-  }
-}
-
 export const updateUserSettings = async (actor: User, payload: unknown): Promise<UserSettings | null> => {
   const parsed = userSettingsSchema.safeParse(payload);
   if (!parsed.success) {
@@ -390,13 +374,6 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
   const numericUserId = Number(actor.id);
   if (!Number.isInteger(numericUserId)) {
     return null;
-  }
-
-  if (parsed.data.googleCalendarWriteEnabled === true) {
-    const integration = await findWebUserIntegrationByWebUserId(actor.accountId, numericUserId);
-    if (!integration?.google_api_key || !hasGoogleCalendarWriteScope(integration.google_granted_scopes)) {
-      throw new GoogleWriteScopeMissingError();
-    }
   }
 
   let telegramBotTokenPatch: string | null | undefined;
@@ -447,14 +424,6 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
     telegramBotUsername: telegramBotUsernamePatch,
     telegramBotName: telegramBotNamePatch,
   });
-
-  if (parsed.data.googleCalendarWriteEnabled !== undefined) {
-    await updateWebUserGoogleCalendarWriteEnabled(
-      actor.accountId,
-      numericUserId,
-      parsed.data.googleCalendarWriteEnabled,
-    );
-  }
 
   await updateUserTelegramIntegration({
     accountId: actor.accountId,

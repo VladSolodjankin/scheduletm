@@ -135,7 +135,7 @@ export type SpecialistCalendarCredentials = {
   googleApiKey: string;
   googleRefreshToken: string | null;
   googleTokenExpiresAt: Date | null;
-  googleCalendarId: string | null;
+  timezone: string;
 };
 
 export async function findSpecialistById(accountId: number, specialistId: number): Promise<SpecialistRecord | null> {
@@ -283,7 +283,7 @@ export async function findSpecialistsCalendarCredentials(
       'wui.google_access_token_encrypted as googleAccessTokenEncrypted',
       'wui.google_refresh_token_encrypted as googleRefreshTokenEncrypted',
       'wui.google_token_expires_at as googleTokenExpiresAt',
-      'wui.google_calendar_id as googleCalendarId',
+      db.raw("COALESCE(wu.timezone, 'UTC') as timezone"),
     );
 
   return rows.map((row) => ({
@@ -298,6 +298,6 @@ export async function findSpecialistsCalendarCredentials(
       'Google refresh token',
     ),
     googleTokenExpiresAt: row.googleTokenExpiresAt,
-    googleCalendarId: row.googleCalendarId,
+    timezone: row.timezone,
   }));
 }
