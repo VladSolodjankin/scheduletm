@@ -41,7 +41,7 @@ npm run -w bot verify
 - `WEBHOOK_SECRET`
 - `APP_URL`
 - `DATABASE_URL` / `DATABASE_PUBLIC_URL`
-- `APP_ENCRYPTION_KEY` (тот же secret, что использует server для integration credentials)
+- `TELEGRAM_BOT_TOKEN` (токен общего бота из BotFather; shared-переменная вместе с server)
 
 ## Документация
 

@@ -4,7 +4,6 @@ import { sendAppointmentNotificationByType } from '../src/services/appointmentNo
 const getEffectiveNotificationSettingMock = vi.hoisted(() => vi.fn());
 const findSpecialistByIdMock = vi.hoisted(() => vi.fn());
 const sendAppointmentNotificationEmailMock = vi.hoisted(() => vi.fn());
-const findTelegramIntegrationByAccountIdMock = vi.hoisted(() => vi.fn());
 const sendTelegramBotMessageMock = vi.hoisted(() => vi.fn());
 const findServiceMock = vi.hoisted(() => vi.fn());
 const getOrCreateAppointmentManageUrlMock = vi.hoisted(() => vi.fn());
@@ -21,8 +20,8 @@ vi.mock('../src/services/emailDeliveryService.js', () => ({
   sendAppointmentNotificationEmail: sendAppointmentNotificationEmailMock,
 }));
 
-vi.mock('../src/repositories/webUserIntegrationRepository.js', () => ({
-  findTelegramIntegrationByAccountId: findTelegramIntegrationByAccountIdMock,
+vi.mock('../src/config/env.js', () => ({
+  env: { TELEGRAM_BOT_TOKEN: 'token' },
 }));
 
 vi.mock('../src/services/telegramService.js', () => ({
@@ -42,7 +41,6 @@ describe('appointment notification service unit', () => {
     getEffectiveNotificationSettingMock.mockReset();
     findSpecialistByIdMock.mockReset();
     sendAppointmentNotificationEmailMock.mockReset();
-    findTelegramIntegrationByAccountIdMock.mockReset();
     sendTelegramBotMessageMock.mockReset();
     findServiceMock.mockReset();
     getOrCreateAppointmentManageUrlMock.mockReset();
@@ -85,7 +83,6 @@ describe('appointment notification service unit', () => {
       { notificationType: 'appointment_reminder', preferredChannel: 'telegram', deliveryChannels: ['telegram', 'email'], enabled: true, sendTimings: ['24h'], frequency: 'immediate', deniedByClient: false },
     );
     findSpecialistByIdMock.mockResolvedValue({ name: 'Dr. Test' });
-    findTelegramIntegrationByAccountIdMock.mockResolvedValue({ telegram_bot_token: 'token' });
     sendTelegramBotMessageMock.mockResolvedValue(true);
 
     const result = await sendAppointmentNotificationByType({

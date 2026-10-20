@@ -42,7 +42,7 @@ export const env = {
   alertPollMs: Number(process.env.ALERT_POLL_MS || 60000),
   alertNoUpdatesThresholdMs: Number(process.env.ALERT_NO_UPDATES_THRESHOLD_MS || 15 * 60 * 1000),
   alertFailedGrowthThreshold: Number(process.env.ALERT_FAILED_GROWTH_THRESHOLD || 5),
-  appEncryptionKey: process.env.APP_ENCRYPTION_KEY ?? '',
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN ?? '',
   webhookRateLimit: getPositiveNumber('WEBHOOK_RATE_LIMIT', 60),
   webhookRateLimitWindowMs: getPositiveNumber('WEBHOOK_RATE_LIMIT_WINDOW_MS', 60_000),
   trustedProxyHops: getNonNegativeInteger('TRUSTED_PROXY_HOPS', 0),

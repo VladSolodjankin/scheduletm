@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { telegramBotSettingsSchema } from '../config/schemas.js';
-import { getDefaultAccountId } from '../repositories/accountRepository.js';
-import { findSharedTelegramBotUsername } from '../repositories/webUserIntegrationRepository.js';
+import { env } from '../config/env.js';
+import { verifyTelegramBotToken } from './telegramService.js';
 import {
   findTelegramBotSettingsByAccountId,
   isBotSlugConflictError,
@@ -30,9 +30,19 @@ function generateSlug(): string {
   return Array.from(bytes, (byte) => SLUG_ALPHABET[byte % SLUG_ALPHABET.length]).join('');
 }
 
+let cachedBotUsername: string | null = null;
+
+/** The shared bot's username comes from Telegram itself (getMe) and is cached once resolved. */
+async function getBotUsername(): Promise<string | null> {
+  if (!cachedBotUsername && env.TELEGRAM_BOT_TOKEN) {
+    cachedBotUsername = (await verifyTelegramBotToken(env.TELEGRAM_BOT_TOKEN))?.username ?? null;
+  }
+  return cachedBotUsername;
+}
+
 async function buildBotLink(slug: string): Promise<string | null> {
-  const username = await findSharedTelegramBotUsername(await getDefaultAccountId());
-  return username ? `https://t.me/${username.replace(/^@/, '')}?start=${slug}` : null;
+  const username = await getBotUsername();
+  return username ? `https://t.me/${username}?start=${slug}` : null;
 }
 
 /** The slug is created lazily on first read so account creation flows stay untouched. */

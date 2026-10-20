@@ -139,32 +139,6 @@ export async function findWebUserIntegrationByWebUserId(
   return row ? mapIntegrationRecord(row) : null;
 }
 
-export async function findTelegramIntegrationByAccountId(accountId: number): Promise<WebUserIntegrationRecord | null> {
-  const row = await db('web_user_integrations')
-    .where({ account_id: accountId })
-    .whereNotNull('telegram_bot_token_encrypted')
-    .orderBy('updated_at', 'desc')
-    .first<WebUserIntegrationStorageRecord>();
-
-  return row ? mapIntegrationRecord(row) : null;
-}
-
-/** Username of the shared bot: same token source as the bot service (default account, owner first). */
-export async function findSharedTelegramBotUsername(accountId: number): Promise<string | null> {
-  const row = await db('web_users as wu')
-    .join('web_user_integrations as wui', function joinWebUserIntegrations() {
-      this.on('wui.web_user_id', '=', 'wu.id').andOn('wui.account_id', '=', 'wu.account_id');
-    })
-    .where({ 'wu.account_id': accountId, 'wu.is_active': true })
-    .whereNotNull('wui.telegram_bot_token_encrypted')
-    .whereNotNull('wui.telegram_bot_username')
-    .orderByRaw("CASE wu.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 WHEN 'specialist' THEN 2 ELSE 3 END")
-    .orderBy('wui.updated_at', 'desc')
-    .first<{ telegram_bot_username: string }>('wui.telegram_bot_username as telegram_bot_username');
-
-  return row?.telegram_bot_username ?? null;
-}
-
 export async function updateWebUserGoogleCredentials(input: UpdateWebUserGoogleCredentialsInput): Promise<void> {
   const patch: Record<string, unknown> = {
     google_access_token_encrypted: encryptIntegrationSecret(input.googleApiKey, 'Google access token'),

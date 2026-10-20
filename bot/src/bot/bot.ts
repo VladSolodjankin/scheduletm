@@ -1,47 +1,24 @@
 import axios from 'axios';
 import { env } from '../config/env';
-import { getDefaultAccountId } from '../repositories/account.repository';
-import { findActiveTelegramBotTokenByAccountId } from '../repositories/web-user.repository';
 
 const TELEGRAM_API_TIMEOUT_MS = 10000;
-const TOKEN_CACHE_TTL_MS = 15000;
 
-let cachedToken: string | null = null;
-let cachedTokenExpiresAt = 0;
-let cachedTokenAccountId: number | null = null;
-
-async function getTelegramBotToken() {
-  const accountId = await getDefaultAccountId();
-  const now = Date.now();
-
-  if (
-    cachedToken &&
-    cachedTokenAccountId === accountId &&
-    now < cachedTokenExpiresAt
-  ) {
-    return cachedToken;
+function getTelegramBotToken() {
+  if (!env.telegramBotToken) {
+    throw new Error('TELEGRAM_BOT_TOKEN is not configured');
   }
-
-  const token = await findActiveTelegramBotTokenByAccountId(accountId);
-  if (!token) {
-    throw new Error('Telegram BOT_TOKEN is not configured in web user settings');
-  }
-
-  cachedToken = token;
-  cachedTokenAccountId = accountId;
-  cachedTokenExpiresAt = now + TOKEN_CACHE_TTL_MS;
-  return token;
+  return env.telegramBotToken;
 }
 
 async function telegramPost<TPayload extends Record<string, unknown>>(method: string, payload: TPayload) {
-  const token = await getTelegramBotToken();
+  const token = getTelegramBotToken();
   return axios.post(`https://api.telegram.org/bot${token}/${method}`, payload, {
     timeout: TELEGRAM_API_TIMEOUT_MS,
   });
 }
 
 async function telegramGet(method: string) {
-  const token = await getTelegramBotToken();
+  const token = getTelegramBotToken();
   return axios.get(`https://api.telegram.org/bot${token}/${method}`, {
     timeout: TELEGRAM_API_TIMEOUT_MS,
   });
@@ -137,15 +114,6 @@ export async function answerCallbackQuery(
 }
 
 export async function setWebhook() {
-  const accountId = await getDefaultAccountId();
-  const token = await findActiveTelegramBotTokenByAccountId(accountId);
-  if (!token) {
-    throw new Error('Telegram BOT_TOKEN is not configured in web user settings');
-  }
-
-  cachedToken = token;
-  cachedTokenAccountId = accountId;
-  cachedTokenExpiresAt = Date.now() + TOKEN_CACHE_TTL_MS;
   const webhookUrl = `${env.appUrl}/telegram/webhook/${env.webhookSecret}`;
   const response = await telegramPost('setWebhook', { url: webhookUrl });
   return response.data;

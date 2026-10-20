@@ -1,7 +1,7 @@
 import type { AppointmentRecord } from '../repositories/appointmentRepository.js';
 import { findSpecialistById } from '../repositories/specialistRepository.js';
 import { findService } from '../repositories/serviceRepository.js';
-import { findTelegramIntegrationByAccountId } from '../repositories/webUserIntegrationRepository.js';
+import { env } from '../config/env.js';
 import { sendAppointmentNotificationEmail } from './emailDeliveryService.js';
 import { sendTelegramBotMessage } from './telegramService.js';
 import { formatAppointmentDateTime } from '../utils/dateTimeFormat.js';
@@ -71,8 +71,7 @@ export async function sendAppointmentNotificationByType(input: {
         continue;
       }
 
-      const integration = await findTelegramIntegrationByAccountId(input.accountId);
-      const telegramToken = integration?.telegram_bot_token?.trim() ?? '';
+      const telegramToken = env.TELEGRAM_BOT_TOKEN.trim();
       if (!telegramToken) {
         continue;
       }
