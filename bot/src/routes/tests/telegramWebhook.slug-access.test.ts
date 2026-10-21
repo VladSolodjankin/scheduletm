@@ -16,6 +16,8 @@ const acquireTelegramUserLeaseMock = vi.hoisted(() => vi.fn());
 const markProcessedUpdateMock = vi.hoisted(() => vi.fn());
 const releaseProcessingUpdateMock = vi.hoisted(() => vi.fn());
 const releaseTelegramUserLeaseMock = vi.hoisted(() => vi.fn());
+const runWithBotTokenMock = vi.hoisted(() => vi.fn((_token: string, fn: () => Promise<unknown>) => fn()));
+const findCustomBotTokenByAccountIdMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../../config/env', () => ({
   env: {
@@ -29,6 +31,15 @@ vi.mock('../../bot/bot', () => ({
   sendMessage: sendMessageMock,
   answerCallbackQuery: answerCallbackQueryMock,
   editMessageText: vi.fn(),
+  runWithBotToken: runWithBotTokenMock,
+}));
+
+vi.mock('../../repositories/bot-access.repository', () => ({
+  findCustomBotTokenByAccountId: findCustomBotTokenByAccountIdMock,
+}));
+
+vi.mock('../../utils/webhook-secret', () => ({
+  customBotWebhookSecret: (accountId: number) => `own-secret-${accountId}`,
 }));
 
 vi.mock('../../services/bot-access.service', () => ({
@@ -139,6 +150,24 @@ async function postUpdate(payload: unknown) {
   return response;
 }
 
+async function postOwnBotUpdate(accountId: string, secretHeader: string | undefined, payload: unknown) {
+  const app = express();
+  app.use(express.json());
+  app.use(telegramWebhookRouter);
+  const server = app.listen(0);
+  const { port } = server.address() as { port: number };
+  const response = await fetch(`http://127.0.0.1:${port}/telegram/bot/${accountId}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...(secretHeader ? { 'x-telegram-bot-api-secret-token': secretHeader } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  server.close();
+  return response;
+}
+
 const okAccess = (overrides: Record<string, unknown> = {}) => ({
   status: 'ok',
   enabled: true,
@@ -237,5 +266,37 @@ describe('telegramWebhook slug access', () => {
 
     expect(sendMessageMock).toHaveBeenCalledWith(101, 'bot.disabled', undefined);
     expect(answerCallbackQueryMock).toHaveBeenCalledWith('cb1');
+  });
+
+  describe('account own bot', () => {
+    it.each([undefined, 'wrong-secret', 'own-secret-8'])('rejects a request with secret %s for another account', async (header) => {
+      findCustomBotTokenByAccountIdMock.mockResolvedValue('own-token');
+
+      const response = await postOwnBotUpdate('7', header, startMessage('/start'));
+
+      expect(response.status).toBe(403);
+      expect(runWithBotTokenMock).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 when the account has no own bot (anymore)', async () => {
+      findCustomBotTokenByAccountIdMock.mockResolvedValue(null);
+
+      const response = await postOwnBotUpdate('7', 'own-secret-7', startMessage('/start'));
+
+      expect(response.status).toBe(404);
+      expect(resolveBotAccessMock).not.toHaveBeenCalled();
+    });
+
+    it('serves the fixed account with the bot own token and namespaced update ids', async () => {
+      findCustomBotTokenByAccountIdMock.mockResolvedValue('own-token');
+      resolveBotAccessMock.mockResolvedValue(okAccess());
+
+      const response = await postOwnBotUpdate('7', 'own-secret-7', { update_id: 5, ...startMessage('/start') });
+
+      expect(response.status).toBe(200);
+      expect(runWithBotTokenMock).toHaveBeenCalledWith('own-token', expect.any(Function));
+      expect(resolveBotAccessMock).toHaveBeenCalledWith(expect.objectContaining({ ownBotAccountId: 7 }));
+      expect(beginProcessingUpdateMock).toHaveBeenCalledWith(7 * 2 ** 32 + 5);
+    });
   });
 });

@@ -38,7 +38,7 @@ Telegram-сервис использует собственный
 - [x] Публичное бронирование проверяет рабочие дни/часы, шаг слота, прошедшее время, внешний календарь и DB overlap.
 - [x] Публичный статус встречи защищён фамилией специалиста, rate limit и одинаковым `404`; персональные данные клиента не возвращаются.
 - [x] Простая recurrence `daily`/`weekly`, 2–52 встречи, атомарное создание через `appointment_groups`.
-- [x] `defaultMeetingLink` специалиста и приоритет explicit link → Zoom → default link → offline address.
+- [x] Приоритет meeting link: explicit link → Zoom → Telemost → offline address.
 - [x] Appointment audit поддерживает actor context, action/actor/date filters и bounded event limit.
 - [x] Appointment audit events хранятся 365 дней и автоматически очищаются раз в сутки.
 - [x] Notification retry/backoff, idempotency, token-fenced lease и heartbeat.

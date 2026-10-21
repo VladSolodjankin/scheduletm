@@ -6,16 +6,29 @@ import { WebUserRole } from '../src/types/webUserRole.js';
 const resolveUserByAccessToken = vi.hoisted(() => vi.fn());
 const findTelegramBotSettingsByAccountId = vi.hoisted(() => vi.fn());
 const upsertTelegramBotSettings = vi.hoisted(() => vi.fn());
+const setCustomBot = vi.hoisted(() => vi.fn());
+const findCustomBotTokenByAccountId = vi.hoisted(() => vi.fn());
+const verifyTelegramBotToken = vi.hoisted(() => vi.fn());
+const deleteTelegramWebhook = vi.hoisted(() => vi.fn());
 vi.mock('../src/services/authService.js', () => ({ resolveUserByAccessToken }));
 vi.mock('../src/repositories/telegramBotSettingsRepository.js', async (original) => ({
   ...await original<typeof import('../src/repositories/telegramBotSettingsRepository.js')>(),
   findTelegramBotSettingsByAccountId,
   upsertTelegramBotSettings,
+  setCustomBot,
+  findCustomBotTokenByAccountId,
+}));
+vi.mock('../src/services/telegramService.js', async (original) => ({
+  ...await original<typeof import('../src/services/telegramService.js')>(),
+  verifyTelegramBotToken,
+  deleteTelegramWebhook,
 }));
 
 const actor = { id: '5', accountId: 2, email: 'owner@test.dev', role: WebUserRole.Owner, passwordSalt: '', passwordHash: '', createdAt: '' };
 const headers = { authorization: 'Bearer token', 'content-type': 'application/json' };
-const stored = { bot_slug: 'acme-1', telegram_bot_enabled: true, bot_welcome_message: null };
+const stored = {
+  bot_slug: 'acme-1', telegram_bot_enabled: true, bot_welcome_message: null, custom_bot_username: null, custom_bot_name: null,
+};
 
 describe('telegram bot settings routes', () => {
   const app = createApp();
@@ -33,6 +46,7 @@ describe('telegram bot settings routes', () => {
   afterAll(() => new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve())));
   beforeEach(() => {
     vi.clearAllMocks();
+    upsertTelegramBotSettings.mockReset();
     resolveUserByAccessToken.mockResolvedValue(actor);
     findTelegramBotSettingsByAccountId.mockResolvedValue(stored);
   });
@@ -45,13 +59,17 @@ describe('telegram bot settings routes', () => {
     resolveUserByAccessToken.mockResolvedValue({ ...actor, role });
     expect((await get()).status).toBe(403);
     expect((await put({ enabled: false })).status).toBe(403);
+    expect((await put({ customBotToken: '123:abc' })).status).toBe(403);
     expect(upsertTelegramBotSettings).not.toHaveBeenCalled();
+    expect(setCustomBot).not.toHaveBeenCalled();
   });
 
   it('returns the settings of the actor account', async () => {
     const response = await get();
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ enabled: true, slug: 'acme-1', welcomeMessage: '', botLink: null });
+    expect(await response.json()).toEqual({
+      enabled: true, slug: 'acme-1', welcomeMessage: '', mode: 'shared', customBot: null, botLink: null,
+    });
     expect(findTelegramBotSettingsByAccountId).toHaveBeenCalledWith(2);
   });
 
@@ -99,5 +117,39 @@ describe('telegram bot settings routes', () => {
       Object.assign(new Error('duplicate'), { code: '23505', constraint: 'account_settings_bot_slug_unique' }),
     );
     expect((await put({ slug: 'taken-slug' })).status).toBe(409);
+  });
+
+  it('connects the account own bot after Telegram confirms the token', async () => {
+    verifyTelegramBotToken.mockResolvedValue({ username: 'anna_salon_bot', name: 'Anna Salon' });
+    const response = await put({ customBotToken: ' 123:abc ' });
+    expect(response.status).toBe(200);
+    expect(setCustomBot).toHaveBeenCalledWith(2, { token: '123:abc', username: 'anna_salon_bot', name: 'Anna Salon' });
+  });
+
+  it('answers 400 and stores nothing when Telegram rejects the token', async () => {
+    verifyTelegramBotToken.mockResolvedValue(null);
+    const response = await put({ customBotToken: '123:bad' });
+    expect(response.status).toBe(400);
+    expect(setCustomBot).not.toHaveBeenCalled();
+  });
+
+  it('disconnects the own bot and removes its webhook', async () => {
+    findCustomBotTokenByAccountId.mockResolvedValue('123:abc');
+    const response = await put({ customBotToken: '' });
+    expect(response.status).toBe(200);
+    expect(setCustomBot).toHaveBeenCalledWith(2, null);
+    expect(deleteTelegramWebhook).toHaveBeenCalledWith('123:abc');
+  });
+
+  it('reports custom mode with the bot own link and no slug-based link', async () => {
+    findTelegramBotSettingsByAccountId.mockResolvedValue({
+      ...stored, custom_bot_username: 'anna_salon_bot', custom_bot_name: 'Anna Salon',
+    });
+    const body = await (await get()).json();
+    expect(body).toMatchObject({
+      mode: 'custom',
+      customBot: { username: 'anna_salon_bot', name: 'Anna Salon' },
+      botLink: 'https://t.me/anna_salon_bot',
+    });
   });
 });

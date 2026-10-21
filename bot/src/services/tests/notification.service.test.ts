@@ -20,6 +20,13 @@ vi.mock('../../repositories/app-settings.repository', () => {
 vi.mock('../../bot/bot', () => {
   return {
     sendMessage: vi.fn(),
+    runWithBotToken: vi.fn((_token: string, fn: () => Promise<unknown>) => fn()),
+  };
+});
+
+vi.mock('../../repositories/bot-access.repository', () => {
+  return {
+    findCustomBotTokenByAccountId: vi.fn(),
   };
 });
 
@@ -42,7 +49,8 @@ vi.mock('../../config/env', () => {
 });
 
 import axios from 'axios';
-import { sendMessage } from '../../bot/bot';
+import { runWithBotToken, sendMessage } from '../../bot/bot';
+import { findCustomBotTokenByAccountId } from '../../repositories/bot-access.repository';
 import { getAppSettings } from '../../repositories/app-settings.repository';
 import {
   createNotification,
@@ -163,7 +171,31 @@ describe('notification.service', () => {
 
     expect(processed).toBe(1);
     expect(sendMessage).toHaveBeenCalledTimes(1);
+    expect(runWithBotToken).not.toHaveBeenCalled();
     expect(markNotificationSent).toHaveBeenCalledWith(99);
+  });
+
+  it('sends the reminder through the account own bot when it has one', async () => {
+    vi.mocked(findCustomBotTokenByAccountId).mockResolvedValue('own-token');
+    vi.mocked(findDueNotifications).mockResolvedValue([
+      {
+        id: 100,
+        accountId: 7,
+        attempts: 0,
+        maxAttempts: 3,
+        channel: 'telegram',
+        recipientChatId: 555,
+        recipientEmail: null,
+        recipientPhone: null,
+        payload: { serviceName: 'Test', specialistName: 'Spec', selectedDate: '2026-04-22', selectedTime: '10:00' },
+      },
+    ] as any);
+
+    await processDueNotifications();
+
+    expect(findCustomBotTokenByAccountId).toHaveBeenCalledWith(7);
+    expect(runWithBotToken).toHaveBeenCalledWith('own-token', expect.any(Function));
+    expect(sendMessage).toHaveBeenCalledTimes(1);
   });
 
   it('sends a real email via Brevo and marks the notification sent', async () => {

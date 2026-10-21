@@ -14,7 +14,6 @@ TypeScript npm-workspaces monorepo:
 - Locale/timezone являются пользовательскими настройками.
 - Appointments поддерживают audit events и атомарную recurrence `daily`/`weekly`.
 - Audit events автоматически очищаются через 365 дней.
-- Specialist settings содержат `defaultMeetingLink`.
 - Notifications используют retry/backoff, idempotency и token-fenced processing lease.
 - Public Page Builder хранит draft/published snapshots на server и использует revision concurrency.
 - Опубликованный Public Page slug является каноническим публичным идентификатором.

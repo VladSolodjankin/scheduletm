@@ -27,7 +27,6 @@ type SpecialistDto = {
   workEndHour: number;
   slotDurationMin: number;
   defaultSessionContinuationMin: number;
-  defaultMeetingLink: string;
 };
 
 type SpecialistCreatePayload = {
@@ -44,7 +43,6 @@ type SpecialistUpdatePayload = {
   slotDurationMin?: number;
   slotStepMin?: number;
   defaultSessionContinuationMin?: number;
-  defaultMeetingLink?: string;
 };
 
 export type SpecialistWebUserOptionDto = {
@@ -64,7 +62,6 @@ const mapSpecialist = (item: Awaited<ReturnType<typeof listSpecialistsByAccount>
   workEndHour: item.work_end_hour ?? 20,
   slotDurationMin: item.slot_duration_min ?? 90,
   defaultSessionContinuationMin: item.default_session_continuation_min ?? item.slot_duration_min ?? 90,
-  defaultMeetingLink: item.default_meeting_link ?? '',
 });
 
 const buildSpecialistCode = (name: string): string => {
@@ -195,7 +192,6 @@ export async function updateSpecialistForActor(
     slotDurationMin: payload.slotDurationMin,
     slotStepMin: payload.slotStepMin,
     defaultSessionContinuationMin: payload.defaultSessionContinuationMin,
-    defaultMeetingLink: payload.defaultMeetingLink?.trim() || null,
   });
 
   const updated = await findSpecialistById(accountId, specialistId);

@@ -4,12 +4,9 @@ import {
   updateAccountSettingsByAccountId,
 } from '../repositories/accountSettingsRepository.js';
 import { cancelWebUserDeletion, findWebUserById, scheduleWebUserDeletion, updateWebUserSettings } from '../repositories/webUserRepository.js';
-import {
-  findWebUserIntegrationByWebUserId,
-  updateWebUserTelegramIntegration,
-} from '../repositories/webUserIntegrationRepository.js';
+import { findWebUserIntegrationByWebUserId } from '../repositories/webUserIntegrationRepository.js';
 import { findUserSettingsByWebUserId, updateUserSettingsByWebUserId } from '../repositories/userSettingsRepository.js';
-import { findUserIntegrationByWebUserId, updateUserTelegramIntegration } from '../repositories/userIntegrationRepository.js';
+import { findUserIntegrationByWebUserId } from '../repositories/userIntegrationRepository.js';
 import { getSystemSettingsRecord, updateSystemSettingsRecord } from '../repositories/systemSettingsRepository.js';
 import {
   findSpecialistBookingPolicy,
@@ -32,7 +29,6 @@ import {
 } from '../config/schemas.js';
 import { env } from '../config/env.js';
 import { decryptText, encryptText } from '../utils/crypto.js';
-import { verifyTelegramBotToken } from './telegramService.js';
 import { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
 export { canManageAccountSettings, canManageSystemSettings } from '../policies/rolePermissions.js';
 import { cancelAccountDeletion, findAccountById, listActiveAccounts, scheduleAccountDeletion } from '../repositories/accountRepository.js';
@@ -82,9 +78,6 @@ export type UserSettings = {
   googleConnected: boolean;
   zoomConnected: boolean;
   yandexConnected: boolean;
-  telegramBotConnected: boolean;
-  telegramBotName: string | null;
-  telegramBotUsername: string | null;
   deleteScheduledAt: string | null;
 };
 
@@ -324,9 +317,6 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
       googleConnected: false,
       zoomConnected: false,
       yandexConnected: false,
-      telegramBotConnected: false,
-      telegramBotName: null,
-      telegramBotUsername: null,
       deleteScheduledAt: null,
     };
   }
@@ -368,9 +358,6 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
         )
       ),
     ),
-    telegramBotConnected: Boolean(integration?.telegram_bot_token ?? legacyIntegration?.telegram_bot_token),
-    telegramBotName: integration?.telegram_bot_name ?? legacyIntegration?.telegram_bot_name ?? null,
-    telegramBotUsername: integration?.telegram_bot_username ?? legacyIntegration?.telegram_bot_username ?? null,
     deleteScheduledAt: user?.delete_scheduled_at ? new Date(user.delete_scheduled_at).toISOString() : null,
   };
 };
@@ -384,25 +371,6 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
   const numericUserId = Number(actor.id);
   if (!Number.isInteger(numericUserId)) {
     return null;
-  }
-
-  let telegramBotTokenPatch: string | null | undefined;
-  let telegramBotUsernamePatch: string | null | undefined;
-  let telegramBotNamePatch: string | null | undefined;
-
-  if (parsed.data.telegramBotToken !== undefined) {
-    const trimmedToken = parsed.data.telegramBotToken.trim();
-
-    if (!trimmedToken) {
-      telegramBotTokenPatch = null;
-      telegramBotUsernamePatch = null;
-      telegramBotNamePatch = null;
-    } else {
-      telegramBotTokenPatch = trimmedToken;
-      const botInfo = await verifyTelegramBotToken(trimmedToken);
-      telegramBotUsernamePatch = botInfo?.username ?? null;
-      telegramBotNamePatch = botInfo?.name ?? null;
-    }
   }
 
   await updateWebUserSettings({
@@ -425,22 +393,6 @@ export const updateUserSettings = async (actor: User, payload: unknown): Promise
     locale: parsed.data.locale,
     uiThemeMode: parsed.data.uiThemeMode,
     uiPaletteVariantId: parsed.data.uiPaletteVariantId,
-  });
-
-  await updateWebUserTelegramIntegration({
-    accountId: actor.accountId,
-    webUserId: numericUserId,
-    telegramBotToken: telegramBotTokenPatch,
-    telegramBotUsername: telegramBotUsernamePatch,
-    telegramBotName: telegramBotNamePatch,
-  });
-
-  await updateUserTelegramIntegration({
-    accountId: actor.accountId,
-    webUserId: numericUserId,
-    telegramBotToken: telegramBotTokenPatch,
-    telegramBotUsername: telegramBotUsernamePatch,
-    telegramBotName: telegramBotNamePatch,
   });
 
   return getUserSettings(actor);

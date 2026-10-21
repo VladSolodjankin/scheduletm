@@ -83,11 +83,7 @@ export type UserSettings = {
   googleConnected: boolean;
   zoomConnected: boolean;
   yandexConnected: boolean;
-  telegramBotConnected: boolean;
-  telegramBotName: string | null;
-  telegramBotUsername: string | null;
   deleteScheduledAt: string | null;
-  telegramBotToken?: string;
 };
 
 export type SpecialistBookingPolicy = {
@@ -242,7 +238,6 @@ export type SpecialistManagementItem = {
   code: string;
   timezone: string;
   isActive: boolean;
-  defaultMeetingLink: string;
   slotStepMin: number;
   baseSessionPrice: number;
   baseHourPrice: number;
@@ -447,6 +442,9 @@ export type TelegramBotSettings = {
   enabled: boolean;
   slug: string;
   welcomeMessage: string;
+  /** `custom` when the account runs its own bot; the slug is then unused. */
+  mode: 'shared' | 'custom';
+  customBot: { username: string | null; name: string | null } | null;
   botLink: string | null;
 };
 
@@ -454,4 +452,9 @@ export type TelegramBotSettingsPayload = {
   enabled: boolean;
   slug: string;
   welcomeMessage: string;
+};
+
+/** Non-empty connects the account's own bot, an empty string disconnects it. */
+export type TelegramCustomBotPayload = {
+  customBotToken: string;
 };

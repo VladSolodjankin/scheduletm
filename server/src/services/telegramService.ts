@@ -69,3 +69,11 @@ export async function sendTelegramBotMessage(token: string, chatId: string, text
     return false;
   }
 }
+
+export async function deleteTelegramWebhook(token: string): Promise<void> {
+  try {
+    await axios.post(`https://api.telegram.org/bot${token.trim()}/deleteWebhook`, {}, { timeout: 8000 });
+  } catch {
+    // Best effort: the token is being discarded either way.
+  }
+}

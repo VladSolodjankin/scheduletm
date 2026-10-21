@@ -19,7 +19,6 @@ vi.mock('../src/repositories/webUserIntegrationRepository.js', async () => {
   return {
     ...actual,
     findWebUserIntegrationByWebUserId: findIntegrationMock,
-    updateWebUserTelegramIntegration: vi.fn(),
   };
 });
 
@@ -37,7 +36,6 @@ vi.mock('../src/repositories/userSettingsRepository.js', () => ({
 
 vi.mock('../src/repositories/userIntegrationRepository.js', () => ({
   findUserIntegrationByWebUserId: vi.fn().mockResolvedValue(null),
-  updateUserTelegramIntegration: vi.fn(),
 }));
 
 vi.mock('../src/services/googleOAuthService.js', async () => {

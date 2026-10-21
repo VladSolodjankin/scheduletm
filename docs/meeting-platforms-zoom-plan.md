@@ -11,7 +11,6 @@
 - Explicit link конкретной встречи имеет высший приоритет.
 - При выборе Zoom или Yandex Telemost backend создаёт встречу через OAuth integration **специалиста** (`specialists.user_id`), а не пользователя, создающего запись.
 - Если провайдер не подключён или создание не удалось, берётся следующий кандидат (preferred клиента → priority политики специалиста); явный `offline` остаётся offline.
-- Specialist settings содержат optional `defaultMeetingLink`.
 - Приоритет: explicit appointment link → успешный Zoom/Telemost link → specialist default link → offline address.
 - Явный `offline` не заменяется default link.
 - Meeting provider/link/location возвращаются appointment API и privacy-safe public status.

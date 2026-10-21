@@ -56,4 +56,16 @@ describe('web telegram bot settings contracts', () => {
     assert.ok(en.length > 10);
     assert.deepEqual(ru, en);
   });
+
+  it('connects the own bot through the telegram settings endpoint, not the profile', async () => {
+    const container = await read('src/containers/TelegramBotContainer.tsx');
+    const integrations = await read('src/components/settings-tabs/IntegrationsSettingsTab.tsx');
+    const settings = await read('src/containers/SettingsContainer.tsx');
+
+    assert.match(container, /\{ customBotToken \}/);
+    assert.match(container, /saved\.mode === 'custom'/);
+    assert.doesNotMatch(integrations, /telegramBot/i);
+    assert.doesNotMatch(settings, /telegramBotToken/);
+  });
 });
+

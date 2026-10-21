@@ -1,10 +1,12 @@
 import crypto from 'node:crypto';
 import { telegramBotSettingsSchema } from '../config/schemas.js';
 import { env } from '../config/env.js';
-import { verifyTelegramBotToken } from './telegramService.js';
+import { deleteTelegramWebhook, verifyTelegramBotToken } from './telegramService.js';
 import {
+  findCustomBotTokenByAccountId,
   findTelegramBotSettingsByAccountId,
   isBotSlugConflictError,
+  setCustomBot,
   upsertTelegramBotSettings,
 } from '../repositories/telegramBotSettingsRepository.js';
 
@@ -12,12 +14,21 @@ export type TelegramBotSettings = {
   enabled: boolean;
   slug: string;
   welcomeMessage: string;
+  /** `custom` when the account runs its own bot: no slug is involved and the link is the bot's own. */
+  mode: 'shared' | 'custom';
+  customBot: { username: string | null; name: string | null } | null;
   botLink: string | null;
 };
 
 export class BotSlugTakenError extends Error {
   constructor() {
     super('BOT_SLUG_TAKEN');
+  }
+}
+
+export class InvalidBotTokenError extends Error {
+  constructor() {
+    super('INVALID_BOT_TOKEN');
   }
 }
 
@@ -69,12 +80,34 @@ async function mapSettings(accountId: number): Promise<TelegramBotSettings> {
   const slug = await ensureSlug(accountId);
   const row = await findTelegramBotSettingsByAccountId(accountId);
 
+  const isCustom = Boolean(row?.custom_bot_username);
+
   return {
     enabled: row?.telegram_bot_enabled ?? true,
     slug,
     welcomeMessage: row?.bot_welcome_message ?? '',
-    botLink: await buildBotLink(slug),
+    mode: isCustom ? 'custom' : 'shared',
+    customBot: isCustom ? { username: row?.custom_bot_username ?? null, name: row?.custom_bot_name ?? null } : null,
+    botLink: isCustom ? `https://t.me/${row?.custom_bot_username}` : await buildBotLink(slug),
   };
+}
+
+async function applyCustomBotToken(accountId: number, token: string): Promise<void> {
+  if (!token) {
+    const previous = await findCustomBotTokenByAccountId(accountId);
+    await setCustomBot(accountId, null);
+    if (previous) {
+      await deleteTelegramWebhook(previous);
+    }
+    return;
+  }
+
+  const info = await verifyTelegramBotToken(token);
+  if (!info?.username) {
+    throw new InvalidBotTokenError();
+  }
+
+  await setCustomBot(accountId, { token, username: info.username, name: info.name });
 }
 
 export async function getTelegramBotSettings(accountId: number): Promise<TelegramBotSettings> {
@@ -91,6 +124,10 @@ export async function updateTelegramBotSettings(
   }
 
   await ensureSlug(accountId);
+
+  if (parsed.data.customBotToken !== undefined) {
+    await applyCustomBotToken(accountId, parsed.data.customBotToken);
+  }
 
   try {
     await upsertTelegramBotSettings({

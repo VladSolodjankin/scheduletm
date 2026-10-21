@@ -1,4 +1,5 @@
-import { sendMessage } from '../bot/bot';
+import { runWithBotToken, sendMessage } from '../bot/bot';
+import { findCustomBotTokenByAccountId } from '../repositories/bot-access.repository';
 import { t as translate } from '../i18n';
 import { sendBrevoEmail } from './email.service';
 import { getAppSettings } from '../repositories/app-settings.repository';
@@ -96,6 +97,7 @@ export async function processDueNotifications(limit = 100) {
   for (const notification of notifications) {
     try {
       await dispatchNotification(notification.channel, {
+        accountId: notification.accountId,
         recipientChatId: notification.recipientChatId,
         recipientEmail: notification.recipientEmail,
         recipientPhone: notification.recipientPhone,
@@ -129,6 +131,7 @@ async function sendReminderEmail(to: string, message: string, language: 'ru' | '
 }
 
 type DispatchInput = {
+  accountId: number;
   recipientChatId: number | null;
   recipientEmail: string | null;
   recipientPhone: string | null;
@@ -143,7 +146,10 @@ async function dispatchNotification(channel: NotificationChannel, input: Dispatc
       throw new Error('Missing Telegram chat id');
     }
 
-    await sendMessage(input.recipientChatId, message);
+    // An account with its own bot reminds its clients through that bot.
+    const ownBotToken = await findCustomBotTokenByAccountId(input.accountId);
+    const chatId = input.recipientChatId;
+    await (ownBotToken ? runWithBotToken(ownBotToken, () => sendMessage(chatId, message)) : sendMessage(chatId, message));
     return;
   }
 

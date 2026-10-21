@@ -137,68 +137,12 @@ describe('appointment provider fallback unit', () => {
     expect(updateClientPreferredMeetingProviderMock).toHaveBeenCalledWith(1, 20, 'offline');
   });
 
-  it('uses the specialist default meeting link after Zoom generation fails', async () => {
+  it('keeps an explicitly offline appointment without a meeting link', async () => {
     findSpecialistByIdMock.mockResolvedValue({
       id: 10,
       account_id: 1,
       user_id: 55,
       timezone: 'UTC',
-      default_meeting_link: 'https://meet.example.com/default',
-    });
-    createZoomMeetingMock.mockResolvedValue({ ok: false, reason: 'zoom_create_failed' });
-
-    await createAppointmentForActor(
-      { id: '100', accountId: 1, role: WebUserRole.Owner, email: 'owner@example.com' } as any,
-      {
-        specialistId: 10,
-        clientId: 20,
-        appointmentAt: '2026-05-02T10:00:00.000Z',
-        appointmentEndAt: '2026-05-02T11:00:00.000Z',
-      },
-    );
-
-    expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({
-      meetingProvider: 'manual',
-      meetingLink: 'https://meet.example.com/default',
-    }));
-  });
-
-  it('keeps a successfully generated Zoom link ahead of the specialist default link', async () => {
-    findSpecialistByIdMock.mockResolvedValue({
-      id: 10,
-      account_id: 1,
-      user_id: 55,
-      timezone: 'UTC',
-      default_meeting_link: 'https://meet.example.com/default',
-    });
-    createZoomMeetingMock.mockResolvedValue({
-      ok: true,
-      meeting: { joinUrl: 'https://zoom.us/j/generated' },
-    });
-
-    await createAppointmentForActor(
-      { id: '100', accountId: 1, role: WebUserRole.Owner, email: 'owner@example.com' } as any,
-      {
-        specialistId: 10,
-        clientId: 20,
-        appointmentAt: '2026-05-02T10:00:00.000Z',
-        appointmentEndAt: '2026-05-02T11:00:00.000Z',
-      },
-    );
-
-    expect(createAppointmentMock).toHaveBeenCalledWith(expect.objectContaining({
-      meetingProvider: 'zoom',
-      meetingLink: 'https://zoom.us/j/generated',
-    }));
-  });
-
-  it('does not apply the specialist default link to an explicitly offline appointment', async () => {
-    findSpecialistByIdMock.mockResolvedValue({
-      id: 10,
-      account_id: 1,
-      user_id: 55,
-      timezone: 'UTC',
-      default_meeting_link: 'https://meet.example.com/default',
     });
 
     await createAppointmentForActor(

@@ -9,14 +9,6 @@ export type UserIntegrationRecord = {
   telegram_bot_name: string | null;
 };
 
-type UpdateUserTelegramIntegrationInput = {
-  accountId: number;
-  webUserId: number;
-  telegramBotToken?: string | null;
-  telegramBotUsername?: string | null;
-  telegramBotName?: string | null;
-};
-
 async function upsertPatch(accountId: number, webUserId: number, patch: Record<string, unknown>): Promise<void> {
   await db('user_integrations')
     .insert({
@@ -42,28 +34,4 @@ export async function findUserIntegrationByWebUserId(
     .first<UserIntegrationRecord>();
 
   return row ?? null;
-}
-
-export async function updateUserTelegramIntegration(input: UpdateUserTelegramIntegrationInput): Promise<void> {
-  const patch: Record<string, unknown> = {};
-
-  if (input.telegramBotToken !== undefined) {
-    // Secrets are now stored only in encrypted web_user_integrations columns.
-    // Clear a legacy copy when this setting is explicitly changed.
-    patch.telegram_bot_token = null;
-  }
-
-  if (input.telegramBotUsername !== undefined) {
-    patch.telegram_bot_username = input.telegramBotUsername;
-  }
-
-  if (input.telegramBotName !== undefined) {
-    patch.telegram_bot_name = input.telegramBotName;
-  }
-
-  if (Object.keys(patch).length === 0) {
-    return;
-  }
-
-  await upsertPatch(input.accountId, input.webUserId, patch);
 }

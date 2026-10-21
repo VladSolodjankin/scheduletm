@@ -33,13 +33,3 @@ describe('specialist booking policy unit', () => {
     expect(canManageSpecialistBookingPolicies(WebUserRole.Client)).toBe(false);
   });
 });
-
-describe('specialist default meeting link schema', () => {
-  it('accepts an HTTPS default link and allows clearing it', async () => {
-    const { specialistUpdateSchema } = await import('../src/config/schemas.js');
-    expect(specialistUpdateSchema.safeParse({
-      defaultMeetingLink: 'https://meet.example.com/room',
-    }).success).toBe(true);
-    expect(specialistUpdateSchema.safeParse({ defaultMeetingLink: '' }).success).toBe(true);
-  });
-});

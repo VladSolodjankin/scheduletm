@@ -83,12 +83,6 @@ export type SettingsCardCopy = {
   meetingProvidersHint: string;
   meetingProviderNotConnected: string;
   providerLabels: Record<'offline' | 'zoom' | 'yandex_telemost' | 'manual', string>;
-  telegramBotToken: string;
-  telegramBotConnected: string;
-  telegramBotNotConnected: string;
-  editTelegramBotToken: string;
-  clearTelegramBotToken: string;
-  integrateTelegramBot: string;
   specialistPolicyTitle: string;
   cancelGracePeriodHours: string;
   refundOnLateCancel: string;

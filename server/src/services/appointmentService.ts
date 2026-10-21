@@ -560,17 +560,6 @@ export async function createAppointmentForActor(
     break;
   }
 
-  const defaultMeetingLink = specialist.default_meeting_link?.trim() ?? '';
-  if (
-    !meetingLink
-    && payload.meetingProvider !== 'offline'
-    && defaultMeetingLink
-    && allowedProviders.includes('manual')
-  ) {
-    meetingLink = defaultMeetingLink;
-    meetingProvider = 'manual';
-  }
-
   const appointmentInput = {
     accountId,
     specialistId: payload.specialistId,

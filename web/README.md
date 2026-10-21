@@ -10,7 +10,6 @@ React SPA для `product_admin`, tenant `owner`, `specialist` и `client`.
 - Users, specialists, settings, integrations и operational logs.
 - Locale/timezone только в User settings.
 - Client self notification settings.
-- Specialist `defaultMeetingLink`.
 - Public Page Builder с API persistence, templates, preview, autosave и publish conflict recovery.
 - Public `/:slug`.
 - Public booking `/:slug/booking`:

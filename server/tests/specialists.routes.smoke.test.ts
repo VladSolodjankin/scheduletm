@@ -109,7 +109,6 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
       workEndHour: 20,
       slotDurationMin: 90,
       defaultSessionContinuationMin: 60,
-      defaultMeetingLink: 'https://meet.example.com/default',
     });
 
     const response = await fetch(`${baseUrl}/api/specialists/2`, {
@@ -128,8 +127,7 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
         slotDurationMin: 90,
         slotStepMin: 30,
         defaultSessionContinuationMin: 60,
-        defaultMeetingLink: 'https://meet.example.com/default',
-      }),
+        }),
     });
 
     expect(response.status).toBe(200);
@@ -137,7 +135,7 @@ describe('specialists API route-smoke scenarios (mocked service layer)', () => {
     expect(updateSpecialistForActorMock).toHaveBeenCalledWith(
       authedUser,
       2,
-      expect.objectContaining({ defaultMeetingLink: 'https://meet.example.com/default' }),
+      expect.objectContaining({ name: 'Updated' }),
     );
   });
 

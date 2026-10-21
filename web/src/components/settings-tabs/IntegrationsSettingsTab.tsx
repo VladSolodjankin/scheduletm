@@ -1,7 +1,6 @@
 import { alpha } from '@mui/material/styles';
 import { Box, Card, CardContent, IconButton, Popover, Stack, Typography } from '@mui/material';
 import { MouseEvent, useState } from 'react';
-import { Control, Controller } from 'react-hook-form';
 
 import type { UserSettings } from '../../shared/types/api';
 import type { SettingsCardCopy } from '../SettingsCard.types';
@@ -9,21 +8,16 @@ import { rem } from '../../shared/theme/constants';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppForm } from '../../shared/ui/AppForm';
 import { AppIcons } from '../../shared/ui/AppIcons';
-import { AppRhfSecretKeyField } from '../../shared/ui/AppRhfSecretKeyField';
 import { AppStatusBadge } from '../../shared/ui/AppStatus';
 
 type Props = {
   copy: SettingsCardCopy;
-  control: Control<UserSettings>;
   userSettings: UserSettings;
-  isSaving: boolean;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
   isZoomConnecting: boolean;
   isYandexConnecting: boolean;
   isYandexDisconnecting: boolean;
-  onSubmit: () => void;
-  onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
   onConnectZoom: () => void;
   onConnectYandex: () => void;
@@ -40,17 +34,6 @@ type IntegrationPanelProps = {
   description: string;
   actions: React.ReactNode;
 };
-
-function TelegramIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path
-        fill="currentColor"
-        d="M21.4 4.6a1.1 1.1 0 0 0-1.12-.18L3.83 10.9a1.08 1.08 0 0 0 .1 2.05l4.21 1.32 1.62 5.04a1.08 1.08 0 0 0 1.96.2l2.27-3.08 4.46 3.26a1.08 1.08 0 0 0 1.7-.65l2.32-13.38a1.1 1.1 0 0 0-.37-1.06Zm-10.2 10.1-.46 3.18-.96-3-3.02-.95 11.35-4.61-6.91 5.38Z"
-      />
-    </svg>
-  );
-}
 
 function IntegrationPanel({ accentColor, icon, statusLabel, isConnected, title, description, actions }: IntegrationPanelProps) {
   return (
@@ -167,26 +150,20 @@ function ZoomIcon() {
 
 export function IntegrationsSettingsTab({
   copy,
-  control,
   userSettings,
-  isSaving,
   isGoogleConnecting,
   isGoogleDisconnecting,
   isZoomConnecting,
   isYandexConnecting,
   isYandexDisconnecting,
-  onSubmit,
-  onClearTelegramBotToken,
   onConnectGoogle,
   onConnectZoom,
   onConnectYandex,
   onDisconnectYandex,
   onDisconnectGoogle,
 }: Props) {
-  const [isEditingTelegramToken, setIsEditingTelegramToken] = useState(false);
   const [helpAnchorEl, setHelpAnchorEl] = useState<HTMLElement | null>(null);
   const [openHelpKey, setOpenHelpKey] = useState<'zoom' | 'yandex' | 'google' | null>(null);
-  const shouldShowTelegramTokenField = !userSettings.telegramBotConnected || isEditingTelegramToken;
 
   const handleOpenHelp = (event: MouseEvent<HTMLElement>, key: 'zoom' | 'yandex' | 'google') => {
     setHelpAnchorEl(event.currentTarget);
@@ -208,7 +185,7 @@ export function IntegrationsSettingsTab({
         : null;
 
   return (
-    <AppForm component="form" onSubmit={onSubmit}>
+    <AppForm>
       <Typography variant="h5">{copy.integrationsTitle}</Typography>
       <Typography color="text.secondary" variant="body2">
         {copy.integrationsSubtitle}
@@ -222,79 +199,6 @@ export function IntegrationsSettingsTab({
           alignItems: 'stretch',
         }}
       >
-        <IntegrationPanel
-          accentColor="#229ED9"
-          icon={<TelegramIcon />}
-          statusLabel={userSettings.telegramBotConnected ? 'Bot connected' : 'Setup needed'}
-          isConnected={userSettings.telegramBotConnected}
-          title={copy.channels.telegram}
-          description={
-            userSettings.telegramBotConnected
-              ? `${copy.telegramBotConnected}: ${userSettings.telegramBotName ?? '@unknown'}${userSettings.telegramBotUsername ? ` (@${userSettings.telegramBotUsername})` : ''}`
-              : copy.telegramBotNotConnected
-          }
-          actions={(
-            <Stack spacing={1.5}>
-              {shouldShowTelegramTokenField && (
-                <Stack spacing={1.5}>
-                  <Controller
-                    name="telegramBotToken"
-                    control={control}
-                    render={({ field }: any) => (
-                      <AppRhfSecretKeyField field={field} label={copy.telegramBotToken} autoComplete="off" />
-                    )}
-                  />
-                  <AppButton
-                    type="submit"
-                    isLoading={isSaving}
-                    sx={{
-                      alignSelf: 'flex-start',
-                      minWidth: 164,
-                      boxShadow: `0 ${rem(10)} ${rem(22)} ${alpha('#229ED9', 0.22)}`,
-                    }}
-                  >
-                    {userSettings.telegramBotConnected ? copy.saveSettings : copy.integrateTelegramBot}
-                  </AppButton>
-                </Stack>
-              )}
-
-              {userSettings.telegramBotConnected && !isEditingTelegramToken && (
-                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                  <AppButton
-                    type="button"
-                    variant="text"
-                    onClick={() => setIsEditingTelegramToken(true)}
-                    sx={{ px: 0, color: '#1E6D90' }}
-                  >
-                    {copy.editTelegramBotToken}
-                  </AppButton>
-                  <IconButton
-                    size="small"
-                    aria-label={copy.editTelegramBotToken}
-                    onClick={() => setIsEditingTelegramToken(true)}
-                    sx={{ color: '#1E6D90' }}
-                  >
-                    <AppIcons.edit fontSize="small" />
-                  </IconButton>
-                </Stack>
-              )}
-
-              {userSettings.telegramBotConnected && (
-                <AppButton
-                  type="button"
-                  variant="outlined"
-                  color="error"
-                  onClick={onClearTelegramBotToken}
-                  disabled={isSaving}
-                  sx={{ alignSelf: 'flex-start', minWidth: 164, backgroundColor: '#FFFFFF' }}
-                >
-                  {copy.clearTelegramBotToken}
-                </AppButton>
-              )}
-            </Stack>
-          )}
-        />
-
         <IntegrationPanel
           accentColor="#2D8CFF"
           icon={<ZoomIcon />}

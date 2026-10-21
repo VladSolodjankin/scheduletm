@@ -42,6 +42,7 @@ npm run -w bot verify
 - `APP_URL`
 - `DATABASE_URL` / `DATABASE_PUBLIC_URL`
 - `TELEGRAM_BOT_TOKEN` (токен общего бота из BotFather; shared-переменная вместе с server)
+- `APP_ENCRYPTION_KEY` (тот же ключ, что у server: нужен, чтобы расшифровать токены собственных ботов аккаунтов)
 
 ## Документация
 

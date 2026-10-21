@@ -185,12 +185,6 @@ export const dictionaries = {
       connectYandexHelpDescription: 'Use Yandex Telemost to automatically create meeting links for appointments when Yandex Telemost is selected as provider.',
       meetingProvidersHint: 'The chosen providers decide where meetings take place and which service generates the meeting link for new appointments.',
       meetingProviderNotConnected: 'not connected',
-      telegramBotToken: 'Telegram Bot Token',
-      telegramBotConnected: 'Telegram bot connected',
-      telegramBotNotConnected: 'Telegram bot is not connected',
-      editTelegramBotToken: 'Edit Telegram bot token',
-      clearTelegramBotToken: 'Disconnect Telegram bot',
-      integrateTelegramBot: 'Integrate',
       specialistPolicyTitle: 'Specialist booking policies',
       cancelGracePeriodHours: 'Cancel grace period (hours)',
       refundOnLateCancel: 'Refund on late cancel',
@@ -240,8 +234,6 @@ export const dictionaries = {
         slotDurationMin: 'Slot duration (min)',
         slotStepMin: 'Slot step (min)',
         defaultSessionContinuationMin: 'Default session continuation (min)',
-        defaultMeetingLink: 'Default meeting link',
-        defaultMeetingLinkInvalid: 'Enter a valid http:// or https:// URL.',
         formDescription: 'Profile, pricing and booking rules for this specialist.',
         profileTitle: 'Profile',
         profileDescription: 'Who the specialist is and whether clients can book them.',
@@ -252,8 +244,6 @@ export const dictionaries = {
         scheduleDescription: 'When the specialist works and how slots are generated.',
         hoursHelper: 'Hour of the day, 0–24',
         minutesHelper: 'In minutes',
-        meetingTitle: 'Online meetings',
-        meetingDescription: 'Link added to appointments by default.'
       },
       scheduleExceptions: {
         title: 'Schedule exceptions',
@@ -414,7 +404,7 @@ export const dictionaries = {
       copyLink: 'Copy link',
       openLink: 'Open in Telegram',
       linkCopied: 'Link copied.',
-      linkNotConfigured: 'Add the Telegram bot token in your profile settings to get the link and QR code.',
+      linkNotConfigured: 'The Meetli bot link is unavailable right now. Try again later or connect your own bot below.',
       unsavedLink: 'Save the changes to update the link and QR code.',
       qrTitle: 'QR code',
       qrHint: 'Clients can scan it to open the bot and start booking.',
@@ -430,7 +420,25 @@ export const dictionaries = {
       welcomeTitle: 'Welcome message',
       welcomeLabel: 'Welcome message',
       welcomeHelper: 'Shown when a client opens your link. Leave empty to use the standard greeting in the client\'s language.',
-      welcomeCounter: '{count} / {max}'
+      welcomeCounter: '{count} / {max}',
+      ownBotTitle: 'Your own bot',
+      ownBotOptional: 'Optional',
+      ownBotHint: 'Connect a bot from BotFather and clients will write to it directly, without a link name. The Meetli bot link stops working for your account.',
+      ownBotTokenLabel: 'Bot token',
+      ownBotTokenHelper: 'In BotFather open /mybots, choose your bot, then API Token. The token is stored encrypted and is never shown again.',
+      ownBotTokenRequired: 'Enter the bot token.',
+      ownBotConnect: 'Connect',
+      ownBotCancel: 'Cancel',
+      ownBotChangeToken: 'Change token',
+      ownBotDisconnect: 'Disconnect',
+      ownBotConnectedTitle: 'Your bot',
+      ownBotConnectedBadge: 'Connected',
+      ownBotNoSlugHint: 'A link name is not needed: everything clients write to this bot goes to your account.',
+      ownBotConnectedMessage: 'Your bot is connected.',
+      ownBotDisconnectedMessage: 'Your bot is disconnected.',
+      ownBotConnectFailed: 'Could not update your bot.',
+      ownBotDisconnectTitle: 'Disconnect your bot?',
+      ownBotDisconnectDescription: 'Clients will no longer be able to book through it. You can connect it again with the token, and the Meetli bot link will work for your account again.'
     },
     accountReviews: {
       pageTitle: 'Reviews',
@@ -1087,12 +1095,6 @@ export const dictionaries = {
       connectYandexHelpDescription: 'Используйте Яндекс Телемост для автоматического создания ссылок на встречи при записи, если выбран Яндекс Телемост как провайдер.',
       meetingProvidersHint: 'Выбранные провайдеры определяют, где проходят встречи и какой сервис создаёт ссылку на встречу для новых записей.',
       meetingProviderNotConnected: 'не подключен',
-      telegramBotToken: 'Telegram Bot Token',
-      telegramBotConnected: 'Telegram-бот подключен',
-      telegramBotNotConnected: 'Telegram-бот не подключен',
-      editTelegramBotToken: 'Редактировать токен Telegram-бота',
-      clearTelegramBotToken: 'Отключить Telegram-бота',
-      integrateTelegramBot: 'Подключить',
       specialistPolicyTitle: 'Правила бронирования специалиста',
       cancelGracePeriodHours: 'Окно отмены без штрафа (часы)',
       refundOnLateCancel: 'Возвращать оплату при поздней отмене',
@@ -1142,8 +1144,6 @@ export const dictionaries = {
         slotDurationMin: 'Длительность слота (мин)',
         slotStepMin: 'Шаг слота (мин)',
         defaultSessionContinuationMin: 'Продление сессии по умолчанию (мин)',
-        defaultMeetingLink: 'Ссылка на встречу по умолчанию',
-        defaultMeetingLinkInvalid: 'Введите корректный URL с http:// или https://.',
         formDescription: 'Профиль, цены и правила записи для этого специалиста.',
         profileTitle: 'Профиль',
         profileDescription: 'Кто это и доступен ли специалист для записи.',
@@ -1154,8 +1154,6 @@ export const dictionaries = {
         scheduleDescription: 'Когда специалист работает и как формируются слоты.',
         hoursHelper: 'Час дня, 0–24',
         minutesHelper: 'В минутах',
-        meetingTitle: 'Онлайн-встречи',
-        meetingDescription: 'Ссылка, которая добавляется к записям по умолчанию.'
       },
       scheduleExceptions: {
         title: 'Исключения в расписании',
@@ -1316,7 +1314,7 @@ export const dictionaries = {
       copyLink: 'Скопировать ссылку',
       openLink: 'Открыть в Telegram',
       linkCopied: 'Ссылка скопирована.',
-      linkNotConfigured: 'Добавьте токен Telegram-бота в настройках профиля, чтобы получить ссылку и QR-код.',
+      linkNotConfigured: 'Ссылка на бота Meetli сейчас недоступна. Попробуйте позже или подключите своего бота ниже.',
       unsavedLink: 'Сохраните изменения, чтобы обновить ссылку и QR-код.',
       qrTitle: 'QR-код',
       qrHint: 'Клиенты могут отсканировать его, открыть бота и начать запись.',
@@ -1332,7 +1330,25 @@ export const dictionaries = {
       welcomeTitle: 'Приветствие',
       welcomeLabel: 'Текст приветствия',
       welcomeHelper: 'Показывается, когда клиент открывает вашу ссылку. Оставьте пустым, чтобы использовать стандартное приветствие на языке клиента.',
-      welcomeCounter: '{count} / {max}'
+      welcomeCounter: '{count} / {max}',
+      ownBotTitle: 'Свой бот',
+      ownBotOptional: 'Необязательно',
+      ownBotHint: 'Подключите бота из BotFather, и клиенты будут писать прямо ему, без названия ссылки. Ссылка на бота Meetli для вашего аккаунта перестанет работать.',
+      ownBotTokenLabel: 'Токен бота',
+      ownBotTokenHelper: 'В BotFather откройте /mybots, выберите бота, затем API Token. Токен хранится в зашифрованном виде и больше не показывается.',
+      ownBotTokenRequired: 'Введите токен бота.',
+      ownBotConnect: 'Подключить',
+      ownBotCancel: 'Отмена',
+      ownBotChangeToken: 'Изменить токен',
+      ownBotDisconnect: 'Отключить',
+      ownBotConnectedTitle: 'Ваш бот',
+      ownBotConnectedBadge: 'Подключён',
+      ownBotNoSlugHint: 'Название ссылки не нужно: всё, что клиенты пишут этому боту, попадает в ваш аккаунт.',
+      ownBotConnectedMessage: 'Ваш бот подключён.',
+      ownBotDisconnectedMessage: 'Ваш бот отключён.',
+      ownBotConnectFailed: 'Не удалось обновить вашего бота.',
+      ownBotDisconnectTitle: 'Отключить вашего бота?',
+      ownBotDisconnectDescription: 'Клиенты больше не смогут записываться через него. Вы можете подключить его снова по токену, а ссылка на бота Meetli для вашего аккаунта снова заработает.'
     },
     accountReviews: {
       pageTitle: 'Отзывы',
@@ -2012,12 +2028,6 @@ export type TranslationKey =
   | 'settings.errors.connectYandex'
   | 'settings.errors.disconnectYandex'
   | 'settings.errors.yandexNotConfigured'
-  | 'settings.telegramBotToken'
-  | 'settings.telegramBotConnected'
-  | 'settings.telegramBotNotConnected'
-  | 'settings.editTelegramBotToken'
-  | 'settings.clearTelegramBotToken'
-  | 'settings.integrateTelegramBot'
   | 'settings.specialistPolicyTitle'
   | 'settings.cancelGracePeriodHours'
   | 'settings.refundOnLateCancel'
@@ -2079,8 +2089,6 @@ export type TranslationKey =
   | 'settings.specialistSettings.slotDurationMin'
   | 'settings.specialistSettings.slotStepMin'
   | 'settings.specialistSettings.defaultSessionContinuationMin'
-  | 'settings.specialistSettings.defaultMeetingLink'
-  | 'settings.specialistSettings.defaultMeetingLinkInvalid'
   | 'settings.specialistSettings.formDescription'
   | 'settings.specialistSettings.profileTitle'
   | 'settings.specialistSettings.profileDescription'
@@ -2091,8 +2099,6 @@ export type TranslationKey =
   | 'settings.specialistSettings.scheduleDescription'
   | 'settings.specialistSettings.hoursHelper'
   | 'settings.specialistSettings.minutesHelper'
-  | 'settings.specialistSettings.meetingTitle'
-  | 'settings.specialistSettings.meetingDescription'
   | 'settings.scheduleExceptions.title'
   | 'settings.scheduleExceptions.addButton'
   | 'settings.scheduleExceptions.deleteLabel'

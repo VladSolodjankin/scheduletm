@@ -64,7 +64,6 @@ type SettingsCardProps = {
   onSaveNotificationDefaults: (items: AccountNotificationDefault[]) => Promise<void> | void;
   onCreateScheduleException: (payload: ScheduleExceptionCreatePayload) => Promise<void> | void;
   onDeleteScheduleException: (id: number) => Promise<void> | void;
-  onClearTelegramBotToken: () => Promise<void> | void;
   onConnectGoogle: () => void;
   onConnectZoom: () => void;
   onConnectYandex: () => void;
@@ -131,7 +130,6 @@ export function SettingsCard({
   onSaveNotificationDefaults,
   onCreateScheduleException,
   onDeleteScheduleException,
-  onClearTelegramBotToken,
   onConnectGoogle,
   onConnectZoom,
   onConnectYandex,
@@ -176,7 +174,7 @@ export function SettingsCard({
 
   const { control: systemControl, handleSubmit: handleSystemSubmit, reset: resetSystem } = useForm<SystemSettings>({ defaultValues: systemSettings });
   const { control: accountControl, handleSubmit: handleAccountSubmit, reset: resetAccount } = useForm<AccountSettings>({ defaultValues: accountSettings });
-  const { control: userControl, handleSubmit: handleUserSubmit, reset: resetUser } = useForm<UserSettings>({ defaultValues: { ...userSettings, telegramBotToken: '' } });
+  const { control: userControl, handleSubmit: handleUserSubmit, reset: resetUser } = useForm<UserSettings>({ defaultValues: userSettings });
   const { control: specialistPolicyControl, handleSubmit: handleSpecialistPolicySubmit, reset: resetSpecialistPolicy } = useForm<SpecialistBookingPolicy>({ defaultValues: specialistBookingPolicy });
   const { control: notificationDefaultsControl, handleSubmit: handleNotificationDefaultsSubmit, reset: resetNotificationDefaults } = useForm<{
     channels: NotificationChannel[];
@@ -188,7 +186,7 @@ export function SettingsCard({
 
   useEffect(() => { resetSystem(systemSettings); }, [resetSystem, systemSettings]);
   useEffect(() => { resetAccount(accountSettings); }, [accountSettings, resetAccount]);
-  useEffect(() => { resetUser({ ...userSettings, telegramBotToken: '' }); }, [resetUser, userSettings]);
+  useEffect(() => { resetUser(userSettings); }, [resetUser, userSettings]);
   useEffect(() => { resetSpecialistPolicy(specialistBookingPolicy); }, [resetSpecialistPolicy, specialistBookingPolicy]);
   useEffect(() => {
     const defaultsByType = new Map(accountNotificationDefaults.map((item) => [item.notificationType, item]));
@@ -240,16 +238,12 @@ export function SettingsCard({
       {resolvedTab === 'integrations' && (
         <IntegrationsSettingsTab
           copy={copy}
-          control={userControl}
           userSettings={userSettings}
-          isSaving={isSavingUser}
           isGoogleConnecting={isGoogleConnecting}
           isGoogleDisconnecting={isGoogleDisconnecting}
           isZoomConnecting={isZoomConnecting}
           isYandexConnecting={isYandexConnecting}
           isYandexDisconnecting={isYandexDisconnecting}
-          onSubmit={handleUserSubmit(onSaveUser)}
-          onClearTelegramBotToken={onClearTelegramBotToken}
           onConnectGoogle={onConnectGoogle}
           onConnectZoom={onConnectZoom}
           onConnectYandex={onConnectYandex}

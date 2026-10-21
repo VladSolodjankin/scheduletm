@@ -11,7 +11,6 @@ Express/PostgreSQL API для Meetli web.
 - Users/specialists CRUD с tenant isolation.
 - System/account/user settings, integrations и notification settings.
 - Appointments lifecycle, audit filters, recurrence и specialist booking policy.
-- `defaultMeetingLink` хранится в specialist settings.
 - Public Pages draft/publish/archive API и public lookup по slug.
 - Public booking:
   - `GET /api/public-pages/by-slug/:slug/booking-options`;

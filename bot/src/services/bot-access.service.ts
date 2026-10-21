@@ -40,11 +40,18 @@ export function parseStartCommand(text: string | undefined): { isStart: boolean;
 async function resolveTarget(
   telegramId: number,
   startSlug: string | null,
+  ownBotAccountId?: number,
 ): Promise<AccountBotSettings | 'invalid_link' | 'unbound'> {
+  // An account's own bot: the account is fixed by the webhook, no slug and no binding involved.
+  if (ownBotAccountId !== undefined) {
+    return (await findAccountBotSettingsByAccountId(ownBotAccountId)) ?? 'unbound';
+  }
+
   if (startSlug !== null) {
     const slug = startSlug.toLowerCase();
     const target = BOT_SLUG_PATTERN.test(slug) ? await findAccountBotSettingsBySlug(slug) : null;
-    if (!target) {
+    // Accounts with their own bot are not reachable through the shared bot link.
+    if (!target || target.hasCustomBot) {
       return 'invalid_link';
     }
 
@@ -57,7 +64,8 @@ async function resolveTarget(
     return 'unbound';
   }
 
-  return (await findAccountBotSettingsByAccountId(boundAccountId)) ?? 'unbound';
+  const bound = await findAccountBotSettingsByAccountId(boundAccountId);
+  return bound && !bound.hasCustomBot ? bound : 'unbound';
 }
 
 /**
@@ -67,8 +75,10 @@ async function resolveTarget(
 export async function resolveBotAccess(input: {
   profile: TelegramProfile;
   startSlug: string | null;
+  /** Set when the update arrived through an account's own bot. */
+  ownBotAccountId?: number;
 }): Promise<BotAccess> {
-  const target = await resolveTarget(input.profile.telegramId, input.startSlug);
+  const target = await resolveTarget(input.profile.telegramId, input.startSlug, input.ownBotAccountId);
   if (target === 'invalid_link' || target === 'unbound') {
     return { status: target };
   }

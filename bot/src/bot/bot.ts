@@ -1,9 +1,21 @@
 import axios from 'axios';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { env } from '../config/env';
 
 const TELEGRAM_API_TIMEOUT_MS = 10000;
 
+const tokenContext = new AsyncLocalStorage<{ token: string }>();
+
+/** Runs `fn` so every Telegram call inside it uses `token` (an account's own bot) instead of the shared one. */
+export function runWithBotToken<T>(token: string, fn: () => Promise<T>): Promise<T> {
+  return tokenContext.run({ token }, fn);
+}
+
 function getTelegramBotToken() {
+  const scoped = tokenContext.getStore()?.token;
+  if (scoped) {
+    return scoped;
+  }
   if (!env.telegramBotToken) {
     throw new Error('TELEGRAM_BOT_TOKEN is not configured');
   }
@@ -116,6 +128,15 @@ export async function answerCallbackQuery(
 export async function setWebhook() {
   const webhookUrl = `${env.appUrl}/telegram/webhook/${env.webhookSecret}`;
   const response = await telegramPost('setWebhook', { url: webhookUrl });
+  return response.data;
+}
+
+/** Registers the webhook of an account's own bot; Telegram echoes `secretToken` in a header on every update. */
+export async function setCustomBotWebhook(token: string, accountId: number, secretToken: string) {
+  const response = await runWithBotToken(token, () => telegramPost('setWebhook', {
+    url: `${env.appUrl}/telegram/bot/${accountId}`,
+    secret_token: secretToken,
+  }));
   return response.data;
 }
 

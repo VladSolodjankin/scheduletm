@@ -148,6 +148,8 @@ export const telegramBotSettingsSchema = z.object({
   enabled: z.boolean(),
   slug: z.string().trim().toLowerCase().regex(BOT_SLUG_PATTERN),
   welcomeMessage: z.string().max(BOT_WELCOME_MESSAGE_MAX_LENGTH),
+  // Non-empty connects the account's own bot, an empty string disconnects it.
+  customBotToken: z.string().trim().max(255, v.telegramBotTokenTooLong),
 }).partial();
 
 export const userSettingsSchema = z.object({
@@ -159,7 +161,6 @@ export const userSettingsSchema = z.object({
   telegramUsername: z.string().trim().max(255, v.managedUserTelegramTooLong).optional().or(z.literal('')),
   uiThemeMode: z.enum(['light', 'dark']),
   uiPaletteVariantId: z.string().min(1, v.paletteIdRequired).max(64, v.paletteIdTooLong),
-  telegramBotToken: z.string().trim().min(1, v.telegramBotTokenRequired).max(255, v.telegramBotTokenTooLong).optional().or(z.literal('')),
 }).partial();
 
 export const specialistBookingPolicySchema = z.object({
@@ -266,7 +267,6 @@ export const specialistUpdateSchema = z.object({
   slotDurationMin: z.coerce.number().int().min(15).max(480).optional(),
   slotStepMin: z.coerce.number().int().min(5).max(240).optional(),
   defaultSessionContinuationMin: z.coerce.number().int().min(15).max(480).optional(),
-  defaultMeetingLink: z.string().trim().url(v.appointmentLinkInvalid).max(2048).optional().or(z.literal('')),
 }).refine((value) => Object.keys(value).length > 0, {
   message: v.atLeastOneFieldToUpdate,
 });

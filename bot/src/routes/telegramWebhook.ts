@@ -4,9 +4,12 @@ import { env } from '../config/env';
 import {
   answerCallbackQuery,
   editMessageText,
+  runWithBotToken,
   sendMessage,
   TelegramUpdate,
 } from '../bot/bot';
+import { findCustomBotTokenByAccountId } from '../repositories/bot-access.repository';
+import { customBotWebhookSecret } from '../utils/webhook-secret';
 import { getDefaultInfoUrl, parseStartCommand, resolveBotAccess } from '../services/bot-access.service';
 import { normalizeLanguageCode, t } from '../i18n';
 import {
@@ -210,23 +213,24 @@ function buildAppointmentDetailsText(
   ].join('\n');
 }
 
-telegramWebhookRouter.post(
-  '/telegram/webhook/:secret',
-  async (req: Request, res: Response) => {
-    const requestId = req.header('x-request-id') ?? randomUUID();
-    const secret = String(req.params.secret ?? '');
+type WebhookScope = {
+  requestId: string;
+  /** Set when the update came through an account's own bot instead of the shared one. */
+  ownBotAccountId?: number;
+};
 
-    const secretBuffer = Buffer.from(secret);
-    const expectedBuffer = Buffer.from(env.webhookSecret);
-    const isSecretValid = secretBuffer.length === expectedBuffer.length
-      && timingSafeEqual(secretBuffer, expectedBuffer);
-    if (!isSecretValid) {
-      logWarn('webhook.forbidden', { request_id: requestId });
-      return res.status(403).json({ ok: false, error: 'Forbidden' });
-    }
+function isSecretEqual(actual: string, expected: string): boolean {
+  const actualBuffer = Buffer.from(actual);
+  const expectedBuffer = Buffer.from(expected);
+  return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer);
+}
 
+async function handleTelegramUpdate(req: Request, res: Response, scope: WebhookScope) {
+    const { requestId, ownBotAccountId } = scope;
     const update = req.body as TelegramUpdate;
     const updateId = typeof update?.update_id === 'number' ? update.update_id : undefined;
+    // update_id sequences are per bot, so own bots are namespaced by account to avoid false duplicates.
+    const processingKey = (updateId ?? 0) + (ownBotAccountId ? ownBotAccountId * 2 ** 32 : 0);
     const telegramUserId = update.callback_query?.from.id ?? update.message?.from?.id;
     let updateProcessingToken: string | null = null;
     let userProcessingToken: string | null = null;
@@ -245,7 +249,7 @@ telegramWebhookRouter.post(
         const token = updateProcessingToken;
         updateProcessingToken = null;
         try {
-          await releaseProcessingUpdate(updateId, token);
+          await releaseProcessingUpdate(processingKey, token);
         } catch (error) {
           logError('webhook.update_lease_release_failed', { ...logFields(), error });
         }
@@ -267,7 +271,7 @@ telegramWebhookRouter.post(
     try {
       if (updateId !== undefined) {
         recordIncomingUpdate(updateId);
-        const updateClaim = await beginProcessingUpdate(updateId);
+        const updateClaim = await beginProcessingUpdate(processingKey);
 
         if (updateClaim.status === 'processed') {
           logInfo('webhook.duplicate_update_skipped', logFields());
@@ -313,6 +317,7 @@ telegramWebhookRouter.post(
             languageCode: callback.from.language_code,
           },
           startSlug: null,
+          ownBotAccountId,
         });
 
         if (access.status !== 'ok') {
@@ -1069,6 +1074,7 @@ telegramWebhookRouter.post(
           languageCode: message.from.language_code,
         },
         startSlug: startCommand.slug,
+        ownBotAccountId,
       });
 
       if (access.status !== 'ok') {
@@ -1307,9 +1313,9 @@ telegramWebhookRouter.post(
       if (updateId !== undefined && updateProcessingToken) {
         try {
           if (res.statusCode >= 500) {
-            await releaseProcessingUpdate(updateId, updateProcessingToken);
+            await releaseProcessingUpdate(processingKey, updateProcessingToken);
           } else {
-            await markProcessedUpdate(updateId, updateProcessingToken);
+            await markProcessedUpdate(processingKey, updateProcessingToken);
           }
         } catch (error) {
           logError('webhook.update_lease_finalize_failed', { ...logFields(), error });
@@ -1324,5 +1330,31 @@ telegramWebhookRouter.post(
         }
       }
     }
-  },
-);
+}
+
+telegramWebhookRouter.post('/telegram/webhook/:secret', async (req: Request, res: Response) => {
+  const requestId = req.header('x-request-id') ?? randomUUID();
+  if (!isSecretEqual(String(req.params.secret ?? ''), env.webhookSecret)) {
+    logWarn('webhook.forbidden', { request_id: requestId });
+    return res.status(403).json({ ok: false, error: 'Forbidden' });
+  }
+
+  return handleTelegramUpdate(req, res, { requestId });
+});
+
+telegramWebhookRouter.post('/telegram/bot/:secret', async (req: Request, res: Response) => {
+  const requestId = req.header('x-request-id') ?? randomUUID();
+  const accountId = Number(req.params.secret);
+  const secretHeader = req.header('x-telegram-bot-api-secret-token') ?? '';
+  if (!Number.isInteger(accountId) || !isSecretEqual(secretHeader, customBotWebhookSecret(accountId))) {
+    logWarn('webhook.forbidden', { request_id: requestId, account_id: accountId });
+    return res.status(403).json({ ok: false, error: 'Forbidden' });
+  }
+
+  const token = await findCustomBotTokenByAccountId(accountId);
+  if (!token) {
+    return res.status(404).json({ ok: false });
+  }
+
+  return runWithBotToken(token, () => handleTelegramUpdate(req, res, { requestId, ownBotAccountId: accountId }));
+});

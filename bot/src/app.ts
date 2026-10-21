@@ -2,6 +2,7 @@ import express from 'express';
 import { env } from './config/env';
 import { telegramWebhookRouter } from './routes/telegramWebhook';
 import { getWebhookInfo, setWebhook } from './bot/bot';
+import { startCustomBotWebhookJob } from './jobs/custom-bot-webhooks.job';
 import { startReminderJob } from './jobs/reminder.job';
 import { startAlertsJob } from './jobs/alerts.job';
 import { logError, logInfo } from './utils/logger';
@@ -40,6 +41,14 @@ async function bootstrap() {
       env.trustedProxyHops > 0,
     ),
   );
+  app.use(
+    '/telegram/bot/:secret',
+    createWebhookRateLimiter(
+      env.webhookRateLimit,
+      env.webhookRateLimitWindowMs,
+      env.trustedProxyHops > 0,
+    ),
+  );
   app.use(telegramWebhookRouter);
 
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
@@ -59,6 +68,8 @@ async function bootstrap() {
   });
 
   const stopReminderJob = startReminderJob(env.notificationPollMs);
+  // Webhooks of accounts' own bots are registered like the shared one: only in production.
+  const stopCustomBotWebhookJob = env.isProduction ? startCustomBotWebhookJob() : () => undefined;
   const stopAlertsJob = startAlertsJob(
     env.alertPollMs,
     env.alertNoUpdatesThresholdMs,
@@ -95,6 +106,7 @@ async function bootstrap() {
 
   const shutdown = () => {
     stopReminderJob();
+    stopCustomBotWebhookJob();
     stopAlertsJob();
     stopUserSessionCleanupJob();
     server.close(() => process.exit(0));

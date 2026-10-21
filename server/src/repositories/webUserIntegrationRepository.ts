@@ -53,14 +53,6 @@ type UpdateWebUserGoogleCredentialsInput = {
   googleGrantedScopes?: string | null;
 };
 
-type UpdateWebUserTelegramIntegrationInput = {
-  accountId: number;
-  webUserId: number;
-  telegramBotToken?: string | null;
-  telegramBotUsername?: string | null;
-  telegramBotName?: string | null;
-};
-
 type UpdateWebUserZoomIntegrationInput = {
   accountId: number;
   webUserId: number;
@@ -172,32 +164,6 @@ export async function clearWebUserGoogleCredentials(accountId: number, webUserId
     google_granted_scopes: null,
   });
 }
-
-export async function updateWebUserTelegramIntegration(input: UpdateWebUserTelegramIntegrationInput): Promise<void> {
-  const patch: Record<string, unknown> = {};
-
-  if (input.telegramBotToken !== undefined) {
-    patch.telegram_bot_token_encrypted = encryptIntegrationSecret(
-      input.telegramBotToken,
-      'Telegram bot token',
-    );
-  }
-
-  if (input.telegramBotUsername !== undefined) {
-    patch.telegram_bot_username = input.telegramBotUsername;
-  }
-
-  if (input.telegramBotName !== undefined) {
-    patch.telegram_bot_name = input.telegramBotName;
-  }
-
-  if (Object.keys(patch).length === 0) {
-    return;
-  }
-
-  await upsertPatch(input.accountId, input.webUserId, patch);
-}
-
 
 export async function clearWebUserZoomCredentials(accountId: number, webUserId: number): Promise<void> {
   await upsertPatch(accountId, webUserId, {

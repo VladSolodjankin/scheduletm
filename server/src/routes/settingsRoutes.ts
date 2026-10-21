@@ -37,6 +37,7 @@ import {
 } from '../services/settingsService.js';
 import {
   BotSlugTakenError,
+  InvalidBotTokenError,
   getTelegramBotSettings,
   updateTelegramBotSettings,
 } from '../services/telegramBotSettingsService.js';
@@ -140,6 +141,9 @@ settingsRoutes.put('/telegram-bot', requireAccessToken, async (req, res) => {
   } catch (error) {
     if (error instanceof BotSlugTakenError) {
       return res.status(409).json({ message: t(req, 'telegramBotSlugTaken') });
+    }
+    if (error instanceof InvalidBotTokenError) {
+      return res.status(400).json({ message: t(req, 'telegramBotTokenInvalid') });
     }
     throw error;
   }

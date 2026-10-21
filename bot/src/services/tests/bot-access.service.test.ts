@@ -27,7 +27,7 @@ import { getDefaultInfoUrl, parseStartCommand, resolveBotAccess } from '../bot-a
 
 const profile = { telegramId: 500, firstName: 'Ivan' };
 const userResult = { isNew: true, user: { id: 1, account_id: 7 } };
-const settings = { accountId: 7, enabled: true, welcomeMessage: 'Hello!' };
+const settings = { accountId: 7, enabled: true, welcomeMessage: 'Hello!', hasCustomBot: false };
 
 describe('getDefaultInfoUrl', () => {
   it('points to the first published public page', async () => {
@@ -129,5 +129,32 @@ describe('resolveBotAccess', () => {
 
     expect(upsertAccountBinding).toHaveBeenCalledWith(500, 9);
     expect(findOrCreateTelegramUser).toHaveBeenCalledWith(9, profile);
+  });
+
+  it('does not serve an account with its own bot through the shared slug link', async () => {
+    vi.mocked(findAccountBotSettingsBySlug).mockResolvedValue({ ...settings, hasCustomBot: true });
+
+    expect(await resolveBotAccess({ profile, startSlug: 'acme-1' })).toEqual({ status: 'invalid_link' });
+    expect(upsertAccountBinding).not.toHaveBeenCalled();
+  });
+
+  it('drops a shared-bot binding once the bound account switched to its own bot', async () => {
+    vi.mocked(findBoundAccountId).mockResolvedValue(7);
+    vi.mocked(findAccountBotSettingsByAccountId).mockResolvedValue({ ...settings, hasCustomBot: true });
+
+    expect(await resolveBotAccess({ profile, startSlug: null })).toEqual({ status: 'unbound' });
+  });
+
+  it('fixes the account for its own bot and ignores slug and bindings', async () => {
+    vi.mocked(findAccountBotSettingsByAccountId).mockResolvedValue({ ...settings, hasCustomBot: true });
+    vi.mocked(findOrCreateTelegramUser).mockResolvedValue(userResult as never);
+
+    const result = await resolveBotAccess({ profile, startSlug: 'whatever', ownBotAccountId: 7 });
+
+    expect(result).toMatchObject({ status: 'ok', enabled: true });
+    expect(findOrCreateTelegramUser).toHaveBeenCalledWith(7, profile);
+    expect(findBoundAccountId).not.toHaveBeenCalled();
+    expect(findAccountBotSettingsBySlug).not.toHaveBeenCalled();
+    expect(upsertAccountBinding).not.toHaveBeenCalled();
   });
 });

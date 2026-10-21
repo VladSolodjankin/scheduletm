@@ -50,7 +50,6 @@ const foreignSpecialist = {
   user_id: 99,
   timezone: 'UTC',
   slot_step_min: 30,
-  default_meeting_link: null,
 };
 
 describe('specialist management scope', () => {
@@ -64,7 +63,6 @@ describe('specialist management scope', () => {
   it('lets product owners update a specialist in the specialist account', async () => {
     await expect(updateSpecialistForActor(productAdmin, foreignSpecialist.id, {
       name: 'Updated specialist',
-      defaultMeetingLink: 'https://meet.example.com/default',
     })).resolves.toMatchObject({ id: foreignSpecialist.id });
 
     expect(findAnyAccountMock).toHaveBeenCalledWith(foreignSpecialist.id);

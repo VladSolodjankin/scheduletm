@@ -11,7 +11,6 @@ export type SpecialistSettingsRecord = {
   slot_duration_min: number;
   slot_step_min: number;
   default_session_continuation_min: number;
-  default_meeting_link: string | null;
 };
 
 type UpsertSpecialistSettingsInput = {
@@ -24,7 +23,6 @@ type UpsertSpecialistSettingsInput = {
   slotDurationMin?: number;
   slotStepMin?: number;
   defaultSessionContinuationMin?: number;
-  defaultMeetingLink?: string | null;
 };
 
 export async function findSpecialistSettingsBySpecialistId(
@@ -71,9 +69,6 @@ export async function upsertSpecialistSettingsBySpecialistId(input: UpsertSpecia
 
   if (input.defaultSessionContinuationMin !== undefined) {
     payload.default_session_continuation_min = input.defaultSessionContinuationMin;
-  }
-  if (input.defaultMeetingLink !== undefined) {
-    payload.default_meeting_link = input.defaultMeetingLink;
   }
 
   await db('specialist_settings')

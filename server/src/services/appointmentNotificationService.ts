@@ -2,6 +2,7 @@ import type { AppointmentRecord } from '../repositories/appointmentRepository.js
 import { findSpecialistById } from '../repositories/specialistRepository.js';
 import { findService } from '../repositories/serviceRepository.js';
 import { env } from '../config/env.js';
+import { findCustomBotTokenByAccountId } from '../repositories/telegramBotSettingsRepository.js';
 import { sendAppointmentNotificationEmail } from './emailDeliveryService.js';
 import { sendTelegramBotMessage } from './telegramService.js';
 import { formatAppointmentDateTime } from '../utils/dateTimeFormat.js';
@@ -71,7 +72,8 @@ export async function sendAppointmentNotificationByType(input: {
         continue;
       }
 
-      const telegramToken = env.TELEGRAM_BOT_TOKEN.trim();
+      // The account's own bot wins; otherwise the shared platform bot.
+      const telegramToken = (await findCustomBotTokenByAccountId(input.accountId))?.trim() || env.TELEGRAM_BOT_TOKEN.trim();
       if (!telegramToken) {
         continue;
       }

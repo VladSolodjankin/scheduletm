@@ -62,11 +62,7 @@ const defaultUserSettings: UserSettings = {
   googleConnected: false,
   zoomConnected: false,
   yandexConnected: false,
-  telegramBotConnected: false,
-  telegramBotName: null,
-  telegramBotUsername: null,
   deleteScheduledAt: null,
-  telegramBotToken: '',
 };
 
 const defaultSpecialistBookingPolicy: SpecialistBookingPolicy = {
@@ -468,38 +464,9 @@ export function SettingsContainer() {
     setIsSavingUser(true);
 
     try {
-      const payload: Partial<UserSettings> = { ...nextSettings };
-      if (!payload.telegramBotToken) {
-        delete payload.telegramBotToken;
-      }
-
-      const response = await apiClient.put<UserSettings>('/api/settings/user', payload, {
+      const response = await apiClient.put<UserSettings>('/api/settings/user', nextSettings, {
         headers: authHeaders(accessToken)
       });
-      setUserSettings(response.data);
-      setError('');
-      setSuccess('');
-    } catch (err) {
-      setError(resolveError(err, t('settings.errors.save')).message);
-      setSuccess('');
-    } finally {
-      setIsSavingUser(false);
-    }
-  };
-
-  const clearTelegramBotToken = async () => {
-    if (!accessToken) {
-      return;
-    }
-
-    setIsSavingUser(true);
-
-    try {
-      const response = await apiClient.put<UserSettings>(
-        '/api/settings/user',
-        { telegramBotToken: '' },
-        { headers: authHeaders(accessToken) }
-      );
       setUserSettings(response.data);
       setError('');
       setSuccess('');
@@ -950,12 +917,6 @@ export function SettingsContainer() {
                 yandex_telemost: t('appointments.meetingProviderYandexTelemost'),
                 manual: t('appointments.meetingProviderManual'),
               },
-              telegramBotToken: t('settings.telegramBotToken'),
-              telegramBotConnected: t('settings.telegramBotConnected'),
-              telegramBotNotConnected: t('settings.telegramBotNotConnected'),
-              editTelegramBotToken: t('settings.editTelegramBotToken'),
-              clearTelegramBotToken: t('settings.clearTelegramBotToken'),
-              integrateTelegramBot: t('settings.integrateTelegramBot'),
               specialistPolicyTitle: t('settings.specialistPolicyTitle'),
               cancelGracePeriodHours: t('settings.cancelGracePeriodHours'),
               refundOnLateCancel: t('settings.refundOnLateCancel'),
@@ -1039,7 +1000,6 @@ export function SettingsContainer() {
             onSaveNotificationDefaults={saveAccountNotificationDefaults}
             onCreateScheduleException={createScheduleException}
             onDeleteScheduleException={deleteScheduleException}
-            onClearTelegramBotToken={clearTelegramBotToken}
             onConnectGoogle={connectGoogle}
             onConnectZoom={connectZoom}
             onConnectYandex={connectYandex}
