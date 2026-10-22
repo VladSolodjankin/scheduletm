@@ -16,7 +16,7 @@ appointment paid) or the specialist marks it paid manually (`mark-paid` / `mark-
 | `stripe_oauth_states` | Single-use Stripe OAuth state, 10 minute TTL (copy of the Zoom pattern). |
 
 No backfill: existing accounts start with no method configured, so payment reminders pause until the owner configures
-one (Settings > Payment setup).
+one (main menu > Payments).
 
 ## Amount rule
 

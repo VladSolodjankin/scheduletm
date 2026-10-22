@@ -18,7 +18,7 @@ React 19 SPA на React Router, MUI, shared API/auth/i18n/theme и локаль�
 2. Role-aware cabinet для `product_admin`, `owner`, `specialist`, `client`.
 3. Appointments и create-only recurrence.
 4. Settings, integrations, client notifications и specialist default meeting link.
-5. Public Page management и public `/:slug`.
+4. Settings (tabs: Account, Online booking, Notifications, Integrations, Profile; System for product_admin), main-menu pages `/payments` (owner) and `/days-off` (owner, specialist), client notifications и specialist default meeting link.
 6. Public booking `/:slug/booking` и status `/:slug/appointment-status`.
 
 Backend contracts находятся под `/api/*`; Public Pages используют `/api/public-pages/*`.

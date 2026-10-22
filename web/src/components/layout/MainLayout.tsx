@@ -77,6 +77,12 @@ export function MainLayout() {
       ? [{ to: '/services', label: t('common.services'), icon: 'calendar' as const }]
       : []),
     ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Specialist
+      ? [{ to: '/days-off', label: t('common.daysOff'), icon: 'daysOff' as const }]
+      : []),
+    ...(user?.role === WebUserRole.Owner
+      ? [{ to: '/payments', label: t('common.payments'), icon: 'payments' as const }]
+      : []),
+    ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Specialist
       ? [{ to: '/users', label: t('common.users'), icon: 'users' as const }]
       : []),
     ...(user?.role === WebUserRole.Owner || user?.role === WebUserRole.Specialist

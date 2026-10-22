@@ -11,6 +11,8 @@ const RegisterPage = lazy(() => import('../pages/RegisterPage').then((module) =>
 const InviteAcceptPage = lazy(() => import('../pages/InviteAcceptPage').then((module) => ({ default: module.InviteAcceptPage })));
 const AppointmentsPage = lazy(() => import('../pages/AppointmentsPage').then((module) => ({ default: module.AppointmentsPage })));
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
+const PaymentsPage = lazy(() => import('../pages/PaymentsPage').then((module) => ({ default: module.PaymentsPage })));
+const ScheduleExceptionsPage = lazy(() => import('../pages/ScheduleExceptionsPage').then((module) => ({ default: module.ScheduleExceptionsPage })));
 const OnboardingPage = lazy(() => import('../pages/OnboardingPage').then((module) => ({ default: module.OnboardingPage })));
 const SpecialistsPage = lazy(() => import('../pages/SpecialistsPage').then((module) => ({ default: module.SpecialistsPage })));
 const AccountReviewsPage = lazy(() => import('../pages/AccountReviewsPage').then((module) => ({ default: module.AccountReviewsPage })));
@@ -145,6 +147,22 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            )
+          },
+          {
+            path: '/payments',
+            element: (
+              <ProtectedRoute>
+                <PaymentsPage />
+              </ProtectedRoute>
+            )
+          },
+          {
+            path: '/days-off',
+            element: (
+              <ProtectedRoute>
+                <ScheduleExceptionsPage />
               </ProtectedRoute>
             )
           },

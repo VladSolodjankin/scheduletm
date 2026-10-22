@@ -7,6 +7,8 @@ export const dictionaries = {
       saveSettings: 'Save settings',
       logout: 'Log out',
       settings: 'Settings',
+      daysOff: 'Days off',
+      payments: 'Payments',
       login: 'Login',
       back: 'Back',
       register: 'Register',
@@ -228,15 +230,11 @@ export const dictionaries = {
       pageSubtitle: 'Manage system and personal settings, integrations, and interface appearance.',
       tabs: {
         system: 'System settings',
-        account: 'Account settings',
-        specialistPolicy: 'Booking policies',
-        scheduleExceptions: 'Days off & time off',
+        account: 'Account',
+        specialistPolicy: 'Online booking',
         notifications: 'Notifications',
-        user: 'User settings',
         integrations: 'Integrations',
-        payments: 'Payment setup',
-        password: 'Password',
-        emailChange: 'Change email'
+        profile: 'Profile'
       },
       systemTitle: 'System settings',
       accountTitle: 'Account settings',
@@ -1028,6 +1026,8 @@ export const dictionaries = {
       saveSettings: 'Сохранить настройки',
       logout: 'Выйти',
       settings: 'Настройки',
+      daysOff: 'Выходные',
+      payments: 'Оплата',
       login: 'Вход',
       register: 'Регистрация',
       language: 'Язык',
@@ -1250,14 +1250,10 @@ export const dictionaries = {
       tabs: {
         system: 'Системные',
         account: 'Аккаунт',
-        specialistPolicy: 'Правила брони',
-        scheduleExceptions: 'Выходные и отпуска',
+        specialistPolicy: 'Онлайн-запись',
         notifications: 'Оповещения',
-        user: 'Пользовательские',
         integrations: 'Интеграции',
-        payments: 'Настройка оплаты',
-        password: 'Пароль',
-        emailChange: 'Смена email'
+        profile: 'Профиль'
       },
       systemTitle: 'Системные настройки',
       accountTitle: 'Настройки аккаунта',
@@ -2085,6 +2081,8 @@ export type TranslationKey =
   | 'common.saveSettings'
   | 'common.logout'
   | 'common.settings'
+  | 'common.daysOff'
+  | 'common.payments'
   | 'common.login'
   | 'common.back'
   | 'common.register'
@@ -2194,13 +2192,9 @@ export type TranslationKey =
   | 'settings.tabs.system'
   | 'settings.tabs.account'
   | 'settings.tabs.specialistPolicy'
-  | 'settings.tabs.scheduleExceptions'
   | 'settings.tabs.notifications'
-  | 'settings.tabs.user'
   | 'settings.tabs.integrations'
-  | 'settings.tabs.payments'
-  | 'settings.tabs.password'
-  | 'settings.tabs.emailChange'
+  | 'settings.tabs.profile'
   | 'settings.systemTitle'
   | 'settings.accountTitle'
   | 'settings.userTitle'

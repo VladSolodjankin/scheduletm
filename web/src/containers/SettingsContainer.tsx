@@ -3,7 +3,6 @@ import { isAxiosError } from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
-import { buildPaymentsCopy } from '../components/settings-tabs/paymentsCopy';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
@@ -16,8 +15,6 @@ import type {
   AccountSettings,
   GoogleOAuthDisconnectResponse,
   GoogleOAuthStartResponse,
-  ScheduleException,
-  ScheduleExceptionCreatePayload,
   SettingsScopeAccount,
   SettingsScopeOptionsResponse,
   SettingsScopeSpecialist,
@@ -78,6 +75,15 @@ const defaultSpecialistBookingPolicy: SpecialistBookingPolicy = {
 
 const defaultAccountNotificationDefaults: AccountNotificationDefault[] = [];
 
+// Tabs that moved: personal tabs merged into Profile, payments and days off became main-menu pages.
+const LEGACY_SETTINGS_TAB_ROUTES: Record<string, string> = {
+  user: '/settings/profile',
+  password: '/settings/profile',
+  emailChange: '/settings/profile',
+  payments: '/payments',
+  scheduleExceptions: '/days-off',
+};
+
 export function SettingsContainer() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,8 +107,6 @@ export function SettingsContainer() {
   const [isSavingSpecialistPolicy, setIsSavingSpecialistPolicy] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [specialistBookingPolicy, setSpecialistBookingPolicy] = useState<SpecialistBookingPolicy>(defaultSpecialistBookingPolicy);
-  const [scheduleExceptions, setScheduleExceptions] = useState<ScheduleException[]>([]);
-  const [isSavingScheduleException, setIsSavingScheduleException] = useState(false);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | null>(null);
   const [scopeAccounts, setScopeAccounts] = useState<SettingsScopeAccount[]>([]);
   const [scopeSpecialists, setScopeSpecialists] = useState<SettingsScopeSpecialist[]>([]);
@@ -134,8 +138,6 @@ export function SettingsContainer() {
   const isClient = user?.role === 'client';
   const canSelfDeleteUser = Boolean(user && !canManageAccountSettings);
 
-  const paymentsCopy = useMemo(() => buildPaymentsCopy(t), [t]);
-
   const filteredScopeSpecialists = useMemo(() => (
     selectedAccountId
       ? scopeSpecialists.filter((item) => item.accountId === selectedAccountId)
@@ -146,45 +148,54 @@ export function SettingsContainer() {
     ...(canManageSystemSettings ? ['system'] : []),
     ...(canManageAccountSettings ? ['account'] : []),
     ...(canManageSpecialistBookingPolicy ? ['specialistPolicy'] : []),
-    ...(canManageSpecialistBookingPolicy ? ['scheduleExceptions'] : []),
     ...(canManageAccountSettings || isClient ? ['notifications'] : []),
-    'user',
     'integrations',
-    ...(canManageAccountSettings ? ['payments'] : []),
-    'password',
-    'emailChange'
+    'profile'
   ] as const), [canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, isClient]);
 
-  const isOauthReturn = Boolean(googleOauthStatus || zoomOauthStatus || yandexOauthStatus || stripeOauthStatus);
-  const oauthReturnTab = stripeOauthStatus && canManageAccountSettings ? 'payments' : 'integrations';
+  const isOauthReturn = Boolean(googleOauthStatus || zoomOauthStatus || yandexOauthStatus);
 
   const activeTab = useMemo(() => {
     if (!tab) {
-      return isOauthReturn ? oauthReturnTab : (allowedTabs[0] ?? 'user');
+      return isOauthReturn ? 'integrations' : (allowedTabs[0] ?? 'profile');
     }
 
-    return allowedTabs.includes(tab as (typeof allowedTabs)[number]) ? tab : (allowedTabs[0] ?? 'user');
-  }, [allowedTabs, isOauthReturn, oauthReturnTab, tab]);
+    return allowedTabs.includes(tab as (typeof allowedTabs)[number]) ? tab : (allowedTabs[0] ?? 'profile');
+  }, [allowedTabs, isOauthReturn, tab]);
 
   useEffect(() => {
+    const search = searchParams.toString();
+    const withSearch = (pathname: string) => ({ pathname, search: search ? `?${search}` : '' });
+
+    // Stripe returns to /settings/payments (or /settings); payments now live on their own page.
+    if (stripeOauthStatus) {
+      navigate(withSearch('/payments'), { replace: true });
+      return;
+    }
+
     if (!tab && isOauthReturn) {
       // Provider redirects land on /settings?<provider>_oauth=...; keep the params and show Integrations.
-      const search = searchParams.toString();
-      navigate({ pathname: `/settings/${oauthReturnTab}`, search: search ? `?${search}` : '' }, { replace: true });
+      navigate(withSearch('/settings/integrations'), { replace: true });
+      return;
+    }
+
+    const legacyTarget = tab ? LEGACY_SETTINGS_TAB_ROUTES[tab] : undefined;
+    if (legacyTarget) {
+      navigate(withSearch(legacyTarget), { replace: true });
       return;
     }
 
     if (!tab || !allowedTabs.includes(tab as (typeof allowedTabs)[number])) {
-      navigate(`/settings/${allowedTabs[0] ?? 'user'}`, { replace: true });
+      navigate(`/settings/${allowedTabs[0] ?? 'profile'}`, { replace: true });
     }
-  }, [allowedTabs, isOauthReturn, navigate, oauthReturnTab, searchParams, tab]);
+  }, [allowedTabs, isOauthReturn, navigate, searchParams, stripeOauthStatus, tab]);
 
   const handleTabChange = (nextTab: string) => {
     navigate(`/settings/${nextTab}`);
   };
 
   useEffect(() => {
-    if (!googleOauthStatus && !zoomOauthStatus && !yandexOauthStatus && !stripeOauthStatus) {
+    if (!googleOauthStatus && !zoomOauthStatus && !yandexOauthStatus) {
       return;
     }
 
@@ -227,22 +238,7 @@ export function SettingsContainer() {
         setSuccess('');
       }
 
-      if (stripeOauthStatus === 'success') {
-        setSuccess(t('payments.stripeConnectedSuccess'));
-        setError('');
-      }
-
-      if (stripeOauthStatus === 'error') {
-        setError(
-          oauthReason === 'stripe_oauth_not_configured'
-            ? t('payments.stripeNotConfigured')
-            : t('payments.stripeConnectError')
-        );
-        setSuccess('');
-      }
-
       const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete('stripe_oauth');
       nextParams.delete('google_oauth');
       nextParams.delete('zoom_oauth');
       nextParams.delete('yandex_oauth');
@@ -251,7 +247,7 @@ export function SettingsContainer() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [accessToken, googleOauthStatus, searchParams, setSearchParams, t, oauthReason, stripeOauthStatus, yandexOauthStatus, zoomOauthStatus]);
+  }, [accessToken, googleOauthStatus, searchParams, setSearchParams, t, oauthReason, yandexOauthStatus, zoomOauthStatus]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -348,12 +344,6 @@ export function SettingsContainer() {
               params: scopeParams,
             });
             setSpecialistBookingPolicy(policyResponse.data);
-
-            const exceptionsResponse = await apiClient.get<ScheduleException[]>('/api/settings/specialist-schedule-exceptions', {
-              headers: authHeaders(accessToken),
-              params: scopeParams,
-            });
-            setScheduleExceptions(exceptionsResponse.data);
           }
         }
       } catch (err) {
@@ -529,59 +519,6 @@ export function SettingsContainer() {
     }
   };
 
-
-  const buildScheduleExceptionScopeParams = () => (
-    user?.role === 'specialist'
-      ? undefined
-      : selectedSpecialistId
-        ? {
-          ...(selectedAccountId ? { accountId: selectedAccountId } : {}),
-          specialistId: selectedSpecialistId,
-        }
-        : undefined
-  );
-
-  const createScheduleException = async (payload: ScheduleExceptionCreatePayload) => {
-    if (!accessToken || !canManageSpecialistBookingPolicy) {
-      return;
-    }
-
-    setIsSavingScheduleException(true);
-    try {
-      const response = await apiClient.post<ScheduleException>(
-        '/api/settings/specialist-schedule-exceptions',
-        payload,
-        { headers: authHeaders(accessToken), params: buildScheduleExceptionScopeParams() },
-      );
-      setScheduleExceptions((prev) => [...prev, response.data].sort((left, right) => left.date.localeCompare(right.date)));
-      setError('');
-      setSuccess('');
-    } catch (err) {
-      setError(resolveError(err, t('settings.errors.save')).message);
-      setSuccess('');
-    } finally {
-      setIsSavingScheduleException(false);
-    }
-  };
-
-  const deleteScheduleException = async (id: number) => {
-    if (!accessToken || !canManageSpecialistBookingPolicy) {
-      return;
-    }
-
-    try {
-      await apiClient.delete(`/api/settings/specialist-schedule-exceptions/${id}`, {
-        headers: authHeaders(accessToken),
-        params: buildScheduleExceptionScopeParams(),
-      });
-      setScheduleExceptions((prev) => prev.filter((item) => item.id !== id));
-      setError('');
-      setSuccess('');
-    } catch (err) {
-      setError(resolveError(err, t('settings.errors.save')).message);
-      setSuccess('');
-    }
-  };
 
   const connectGoogle = async () => {
     if (!accessToken || isGoogleConnecting) {
@@ -857,34 +794,18 @@ export function SettingsContainer() {
             accountSettings={accountSettings}
             userSettings={userSettings}
             specialistBookingPolicy={specialistBookingPolicy}
-            scheduleExceptions={scheduleExceptions}
             accountNotificationDefaults={accountNotificationDefaults}
             canManageSystemSettings={canManageSystemSettings}
             canManageAccountSettings={canManageAccountSettings}
             canManageClientNotifications={isClient}
             canManageSpecialistBookingPolicy={canManageSpecialistBookingPolicy}
             canSelfDeleteUser={canSelfDeleteUser}
-            accessToken={accessToken}
-            onPaymentsNotify={(notification) => {
-              if (notification.severity === 'success') {
-                setSuccess(notification.message);
-                setError('');
-              } else {
-                setError(notification.message);
-                setSuccess('');
-              }
-            }}
             copy={{
               systemTab: t('settings.tabs.system'),
               accountTab: t('settings.tabs.account'),
               specialistPolicyTab: t('settings.tabs.specialistPolicy'),
-              scheduleExceptionsTab: t('settings.tabs.scheduleExceptions'),
-              userTab: t('settings.tabs.user'),
+              profileTab: t('settings.tabs.profile'),
               integrationsTab: t('settings.tabs.integrations'),
-              paymentsTab: t('settings.tabs.payments'),
-              payments: paymentsCopy,
-              passwordTab: t('settings.tabs.password'),
-              emailChangeTab: t('settings.tabs.emailChange'),
               systemTitle: t('settings.systemTitle'),
               accountTitle: t('settings.accountTitle'),
               userTitle: t('settings.userTitle'),
@@ -956,28 +877,6 @@ export function SettingsContainer() {
               unpaidAutoCancelAfterHours: t('settings.unpaidAutoCancelAfterHours'),
               allowedMeetingProviders: t('settings.allowedMeetingProviders'),
               meetingProviderOverrideEnabled: t('settings.meetingProviderOverrideEnabled'),
-              scheduleExceptions: {
-                title: t('settings.scheduleExceptions.title'),
-                addButton: t('settings.scheduleExceptions.addButton'),
-                deleteLabel: t('settings.scheduleExceptions.deleteLabel'),
-                empty: t('settings.scheduleExceptions.empty'),
-                dialogTitle: t('settings.scheduleExceptions.dialogTitle'),
-                date: t('settings.scheduleExceptions.date'),
-                type: t('settings.scheduleExceptions.type'),
-                startsAt: t('settings.scheduleExceptions.startsAt'),
-                endsAt: t('settings.scheduleExceptions.endsAt'),
-                note: t('settings.scheduleExceptions.note'),
-                wholeDayHint: t('settings.scheduleExceptions.wholeDayHint'),
-                wholeDayLabel: t('settings.scheduleExceptions.wholeDayLabel'),
-                save: t('common.saveSettings'),
-                cancel: t('common.cancel'),
-                types: {
-                  day_off: t('settings.scheduleExceptions.types.dayOff'),
-                  vacation: t('settings.scheduleExceptions.types.vacation'),
-                  interval: t('settings.scheduleExceptions.types.interval'),
-                  break: t('settings.scheduleExceptions.types.break'),
-                },
-              },
               notificationsTab: t('settings.tabs.notifications'),
               notificationSettingsTitle: t('settings.notificationSettingsTitle'),
               reminderChannelsLabel: t('settings.reminderChannelsLabel'),
@@ -1014,7 +913,6 @@ export function SettingsContainer() {
             isSavingUser={isSavingUser}
             isSavingSpecialistBookingPolicy={isSavingSpecialistPolicy}
             isSavingNotificationDefaults={isSavingNotificationDefaults}
-            isSavingScheduleException={isSavingScheduleException}
             currentPassword={currentPassword}
             newPassword={newPassword}
             confirmPassword={confirmPassword}
@@ -1029,8 +927,6 @@ export function SettingsContainer() {
             onSaveUser={saveUserSettings}
             onSaveSpecialistBookingPolicy={saveSpecialistBookingPolicy}
             onSaveNotificationDefaults={saveAccountNotificationDefaults}
-            onCreateScheduleException={createScheduleException}
-            onDeleteScheduleException={deleteScheduleException}
             onConnectGoogle={connectGoogle}
             onConnectZoom={connectZoom}
             onConnectYandex={connectYandex}

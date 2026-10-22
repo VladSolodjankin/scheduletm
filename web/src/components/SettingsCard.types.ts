@@ -1,5 +1,4 @@
 import type { NotificationChannel, ScheduleExceptionType } from '../shared/types/api';
-import type { PaymentsCopy } from './settings-tabs/paymentsCopy';
 
 export type ScheduleExceptionsCopy = {
   title: string;
@@ -22,16 +21,10 @@ export type ScheduleExceptionsCopy = {
 export type SettingsCardCopy = {
   systemTab: string;
   accountTab: string;
-  userTab: string;
+  profileTab: string;
   integrationsTab: string;
-  paymentsTab: string;
-  payments: PaymentsCopy;
-  passwordTab: string;
-  emailChangeTab: string;
   specialistPolicyTab: string;
-  scheduleExceptionsTab: string;
   notificationsTab: string;
-  scheduleExceptions: ScheduleExceptionsCopy;
   systemTitle: string;
   accountTitle: string;
   userTitle: string;

@@ -7,6 +7,7 @@ import ContentCopyRounded from '@mui/icons-material/ContentCopyRounded';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import DeleteRounded from '@mui/icons-material/DeleteRounded';
 import EditRounded from '@mui/icons-material/EditRounded';
+import EventBusyRounded from '@mui/icons-material/EventBusyRounded';
 import EventRounded from '@mui/icons-material/EventRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import GroupRounded from '@mui/icons-material/GroupRounded';
@@ -18,6 +19,7 @@ import LogoutRounded from '@mui/icons-material/LogoutRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
 import NotificationsRounded from '@mui/icons-material/NotificationsRounded';
 import OpenInNewRounded from '@mui/icons-material/OpenInNewRounded';
+import PaymentsRounded from '@mui/icons-material/PaymentsRounded';
 import PaletteRounded from '@mui/icons-material/PaletteRounded';
 import PersonAddRounded from '@mui/icons-material/PersonAddRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
@@ -40,6 +42,8 @@ export const AppIcons = {
   delete: DeleteRounded,
   edit: EditRounded,
   calendar: EventRounded,
+  daysOff: EventBusyRounded,
+  payments: PaymentsRounded,
   errors: ErrorOutlineRounded,
   specialists: GroupRounded,
   info: InfoOutlined,

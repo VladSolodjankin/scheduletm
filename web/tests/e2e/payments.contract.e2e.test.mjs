@@ -15,17 +15,21 @@ function sectionKeys(dictionarySource, locale, section) {
 }
 
 describe('web payment setup contracts', () => {
-  it('adds the owner-only payments tab right after integrations', async () => {
+  it('serves payments from an owner-only main-menu page instead of a settings tab', async () => {
     const card = await read('src/components/SettingsCard.tsx');
     const container = await read('src/containers/SettingsContainer.tsx');
+    const payments = await read('src/containers/PaymentsContainer.tsx');
+    const router = await read('src/app/router.tsx');
+    const layout = await read('src/components/layout/MainLayout.tsx');
 
-    assert.match(
-      card,
-      /key: 'integrations'[\s\S]*?canManageAccountSettings \? \[\{ key: 'payments', label: copy\.paymentsTab \}\][\s\S]*?key: 'password'/,
-    );
-    assert.match(container, /'integrations',\s*\.\.\.\(canManageAccountSettings \? \['payments'\] : \[\]\),\s*'password'/);
-    assert.match(container, /searchParams\.get\('stripe_oauth'\)/);
-    assert.match(container, /nextParams\.delete\('stripe_oauth'\)/);
+    assert.doesNotMatch(card, /key: 'payments'/);
+    assert.match(router, /path: '\/payments'/);
+    assert.match(layout, /WebUserRole\.Owner\s*\?\s*\[\{ to: '\/payments'/);
+    assert.match(container, /payments: '\/payments'/);
+    assert.match(container, /if \(stripeOauthStatus\) \{[\s\S]*?withSearch\('\/payments'\)/);
+    assert.match(payments, /searchParams\.get\('stripe_oauth'\)/);
+    assert.match(payments, /nextParams\.delete\('stripe_oauth'\)/);
+    assert.match(payments, /user\?\.role !== 'owner'/);
   });
 
   it('keeps payments locale keys in sync between en and ru', async () => {
@@ -37,9 +41,9 @@ describe('web payment setup contracts', () => {
       assert.ok(en.length > 10, `${section} en keys exist`);
       assert.deepEqual(ru, en, `${section} keys match in en and ru`);
     }
-    assert.match(dictionaries, /payments: 'Payment setup'/);
-    assert.match(dictionaries, /payments: 'Настройка оплаты'/);
-    assert.match(dictionaries, /'settings\.tabs\.payments'/);
+    assert.match(dictionaries, /title: 'Payment setup'/);
+    assert.match(dictionaries, /title: 'Настройка оплаты'/);
+    assert.match(dictionaries, /'common\.payments'/);
   });
 
   it('uses the fixed payment API paths', async () => {

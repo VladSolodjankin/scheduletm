@@ -32,7 +32,7 @@ test.describe('web ui e2e: settings', () => {
       await expect(page).toHaveURL(/\/settings$/);
 
       const systemTab = page.getByRole('tab', { name: 'System settings' });
-      const accountTab = page.getByRole('tab', { name: 'Account settings' });
+      const accountTab = page.getByRole('tab', { name: 'Account' });
 
       if (scenario.systemTabVisible) {
         await expect(systemTab, `${scenario.label}: system tab must be visible`).toBeVisible();

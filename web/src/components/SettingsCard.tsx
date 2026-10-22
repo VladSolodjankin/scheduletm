@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -6,8 +6,6 @@ import type {
   AccountNotificationDefault,
   AccountSettings,
   NotificationChannel,
-  ScheduleException,
-  ScheduleExceptionCreatePayload,
   SpecialistBookingPolicy,
   SystemSettings,
   UserSettings,
@@ -18,11 +16,9 @@ import { AccountSettingsTab } from './settings-tabs/AccountSettingsTab';
 import { EmailChangeSettingsTab } from './settings-tabs/EmailChangeSettingsTab';
 import { NotificationSettingsTab } from './settings-tabs/NotificationSettingsTab';
 import { PasswordSettingsTab } from './settings-tabs/PasswordSettingsTab';
-import { ScheduleExceptionsTab } from './settings-tabs/ScheduleExceptionsTab';
 import { SpecialistPolicyTab } from './settings-tabs/SpecialistPolicyTab';
 import { SystemSettingsTab } from './settings-tabs/SystemSettingsTab';
 import { IntegrationsSettingsTab } from './settings-tabs/IntegrationsSettingsTab';
-import { PaymentsSettingsTab, type PaymentsNotification } from './settings-tabs/PaymentsSettingsTab';
 import { UserSettingsTab } from './settings-tabs/UserSettingsTab';
 
 type SettingsCardProps = {
@@ -31,15 +27,12 @@ type SettingsCardProps = {
   userSettings: UserSettings;
   specialistBookingPolicy: SpecialistBookingPolicy;
   accountNotificationDefaults: AccountNotificationDefault[];
-  scheduleExceptions: ScheduleException[];
   copy: SettingsCardCopy;
   canManageSystemSettings: boolean;
   canManageAccountSettings: boolean;
   canManageClientNotifications: boolean;
   canManageSpecialistBookingPolicy: boolean;
   canSelfDeleteUser: boolean;
-  accessToken: string;
-  onPaymentsNotify: (notification: PaymentsNotification) => void;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
   isZoomConnecting: boolean;
@@ -50,7 +43,6 @@ type SettingsCardProps = {
   isSavingUser?: boolean;
   isSavingSpecialistBookingPolicy?: boolean;
   isSavingNotificationDefaults?: boolean;
-  isSavingScheduleException?: boolean;
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
@@ -65,8 +57,6 @@ type SettingsCardProps = {
   onSaveUser: (next: UserSettings) => Promise<void> | void;
   onSaveSpecialistBookingPolicy: (next: SpecialistBookingPolicy) => Promise<void> | void;
   onSaveNotificationDefaults: (items: AccountNotificationDefault[]) => Promise<void> | void;
-  onCreateScheduleException: (payload: ScheduleExceptionCreatePayload) => Promise<void> | void;
-  onDeleteScheduleException: (id: number) => Promise<void> | void;
   onConnectGoogle: () => void;
   onConnectZoom: () => void;
   onConnectYandex: () => void;
@@ -99,15 +89,12 @@ export function SettingsCard({
   userSettings,
   specialistBookingPolicy,
   accountNotificationDefaults,
-  scheduleExceptions,
   copy,
   canManageSystemSettings,
   canManageAccountSettings,
   canManageClientNotifications,
   canManageSpecialistBookingPolicy,
   canSelfDeleteUser,
-  accessToken,
-  onPaymentsNotify,
   isGoogleConnecting,
   isGoogleDisconnecting,
   isZoomConnecting,
@@ -118,7 +105,6 @@ export function SettingsCard({
   isSavingUser = false,
   isSavingSpecialistBookingPolicy = false,
   isSavingNotificationDefaults = false,
-  isSavingScheduleException = false,
   currentPassword,
   newPassword,
   confirmPassword,
@@ -133,8 +119,6 @@ export function SettingsCard({
   onSaveUser,
   onSaveSpecialistBookingPolicy,
   onSaveNotificationDefaults,
-  onCreateScheduleException,
-  onDeleteScheduleException,
   onConnectGoogle,
   onConnectZoom,
   onConnectYandex,
@@ -164,16 +148,12 @@ export function SettingsCard({
     ...(canManageSystemSettings ? [{ key: 'system', label: copy.systemTab }] : []),
     ...(canManageAccountSettings ? [{ key: 'account', label: copy.accountTab }] : []),
     ...(canManageSpecialistBookingPolicy ? [{ key: 'specialistPolicy', label: copy.specialistPolicyTab }] : []),
-    ...(canManageSpecialistBookingPolicy ? [{ key: 'scheduleExceptions', label: copy.scheduleExceptionsTab }] : []),
     ...(canManageAccountSettings || canManageClientNotifications ? [{ key: 'notifications', label: copy.notificationsTab }] : []),
-    { key: 'user', label: copy.userTab },
     { key: 'integrations', label: copy.integrationsTab },
-    ...(canManageAccountSettings ? [{ key: 'payments', label: copy.paymentsTab }] : []),
-    { key: 'password', label: copy.passwordTab },
-    { key: 'emailChange', label: copy.emailChangeTab }
+    { key: 'profile', label: copy.profileTab }
   ] as const), [copy, canManageSystemSettings, canManageAccountSettings, canManageClientNotifications, canManageSpecialistBookingPolicy]);
 
-  const initialTab = tabs[0]?.key ?? 'user';
+  const initialTab = tabs[0]?.key ?? 'profile';
   const timingOptions = ['disabled', ...[1, 2, ...Array.from({ length: 12 }, (_, i) => 4 + i * 2)].map(h => `${h}h`)];
   const selectableChannels: NotificationChannel[] = ['email', 'telegram', 'viber', 'sms', 'whatsapp'];
   const meetingDurationOptions = Array.from({ length: 15 }, (_, i) => 30 + i * 5);
@@ -221,26 +201,6 @@ export function SettingsCard({
       {resolvedTab === 'system' && <SystemSettingsTab copy={copy} control={systemControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingSystem} onSubmit={handleSystemSubmit(onSaveSystem)} />}
       {resolvedTab === 'account' && <AccountSettingsTab copy={copy} control={accountControl} meetingDurationOptions={meetingDurationOptions} isSaving={isSavingAccount} onSubmit={handleAccountSubmit(onSaveAccount)} onRequestAccountDeletion={onRequestAccountDeletion} onCancelAccountDeletion={onCancelAccountDeletion} />}
       {resolvedTab === 'specialistPolicy' && <SpecialistPolicyTab copy={copy} userSettings={userSettings} control={specialistPolicyControl} isSaving={isSavingSpecialistBookingPolicy} onSubmit={handleSpecialistPolicySubmit(onSaveSpecialistBookingPolicy)} />}
-      {resolvedTab === 'scheduleExceptions' && (
-        <ScheduleExceptionsTab
-          copy={copy.scheduleExceptions}
-          items={scheduleExceptions}
-          isSaving={isSavingScheduleException}
-          onCreate={onCreateScheduleException}
-          onDelete={onDeleteScheduleException}
-        />
-      )}
-      {resolvedTab === 'user' && (
-        <UserSettingsTab
-          copy={copy}
-          control={userControl}
-          isSaving={isSavingUser}
-          canSelfDeleteUser={canSelfDeleteUser}
-          onSubmit={handleUserSubmit(onSaveUser)}
-          onRequestUserDeletion={onRequestUserDeletion}
-          onCancelUserDeletion={onCancelUserDeletion}
-        />
-      )}
       {resolvedTab === 'integrations' && (
         <IntegrationsSettingsTab
           copy={copy}
@@ -257,40 +217,46 @@ export function SettingsCard({
           onDisconnectGoogle={onDisconnectGoogle}
         />
       )}
-      {resolvedTab === 'payments' && canManageAccountSettings && (
-        <PaymentsSettingsTab copy={copy.payments} accessToken={accessToken} onNotify={onPaymentsNotify} />
-      )}
-      {resolvedTab === 'password' && (
-        <PasswordSettingsTab
-          copy={copy}
-          currentPassword={currentPassword}
-          newPassword={newPassword}
-          confirmPassword={confirmPassword}
-          otpCode={otpCode}
-          passwordStep={passwordStep}
-          onCurrentPasswordChange={onCurrentPasswordChange}
-          onNewPasswordChange={onNewPasswordChange}
-          onConfirmPasswordChange={onConfirmPasswordChange}
-          onOtpCodeChange={onOtpCodeChange}
-          onCancel={onCancelPasswordChange}
-          onRequestOtp={onRequestPasswordOtp}
-          onConfirmOtp={onConfirmPasswordOtp}
-        />
-      )}
-      {resolvedTab === 'emailChange' && (
-        <EmailChangeSettingsTab
-          copy={copy}
-          newEmail={newEmail}
-          password={emailChangePassword}
-          otpCode={emailOtpCode}
-          step={emailChangeStep}
-          onNewEmailChange={onNewEmailChange}
-          onPasswordChange={onEmailChangePasswordChange}
-          onOtpCodeChange={onEmailOtpCodeChange}
-          onCancel={onCancelEmailChange}
-          onRequestOtp={onRequestEmailChangeOtp}
-          onConfirmOtp={onConfirmEmailChangeOtp}
-        />
+      {resolvedTab === 'profile' && (
+        <Stack spacing={2.5}>
+          <UserSettingsTab
+            copy={copy}
+            control={userControl}
+            isSaving={isSavingUser}
+            canSelfDeleteUser={canSelfDeleteUser}
+            onSubmit={handleUserSubmit(onSaveUser)}
+            onRequestUserDeletion={onRequestUserDeletion}
+            onCancelUserDeletion={onCancelUserDeletion}
+          />
+          <PasswordSettingsTab
+            copy={copy}
+            currentPassword={currentPassword}
+            newPassword={newPassword}
+            confirmPassword={confirmPassword}
+            otpCode={otpCode}
+            passwordStep={passwordStep}
+            onCurrentPasswordChange={onCurrentPasswordChange}
+            onNewPasswordChange={onNewPasswordChange}
+            onConfirmPasswordChange={onConfirmPasswordChange}
+            onOtpCodeChange={onOtpCodeChange}
+            onCancel={onCancelPasswordChange}
+            onRequestOtp={onRequestPasswordOtp}
+            onConfirmOtp={onConfirmPasswordOtp}
+          />
+          <EmailChangeSettingsTab
+            copy={copy}
+            newEmail={newEmail}
+            password={emailChangePassword}
+            otpCode={emailOtpCode}
+            step={emailChangeStep}
+            onNewEmailChange={onNewEmailChange}
+            onPasswordChange={onEmailChangePasswordChange}
+            onOtpCodeChange={onEmailOtpCodeChange}
+            onCancel={onCancelEmailChange}
+            onRequestOtp={onRequestEmailChangeOtp}
+            onConfirmOtp={onConfirmEmailChangeOtp}
+          />
+        </Stack>
       )}
       {resolvedTab === 'notifications' && (
         <NotificationSettingsTab
