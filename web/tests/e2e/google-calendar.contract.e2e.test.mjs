@@ -65,7 +65,8 @@ describe('google calendar integration contracts', () => {
   it('lands on the Integrations tab after a provider OAuth redirect', async () => {
     const container = await read('src/containers/SettingsContainer.tsx');
 
-    assert.match(container, /const isOauthReturn = Boolean\(googleOauthStatus \|\| zoomOauthStatus \|\| yandexOauthStatus\);/);
-    assert.match(container, /if \(!tab && isOauthReturn\) \{[\s\S]*pathname: '\/settings\/integrations'/);
+    assert.match(container, /const isOauthReturn = Boolean\(googleOauthStatus \|\| zoomOauthStatus \|\| yandexOauthStatus \|\| stripeOauthStatus\);/);
+    assert.match(container, /: 'integrations';/);
+    assert.match(container, /if \(!tab && isOauthReturn\) \{[\s\S]*pathname: `\/settings\/\$\{oauthReturnTab\}`/);
   });
 });

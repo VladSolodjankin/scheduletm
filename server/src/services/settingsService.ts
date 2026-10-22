@@ -87,7 +87,6 @@ export type SpecialistBookingPolicy = {
   refundOnLateCancel: boolean;
   autoCancelUnpaidEnabled: boolean;
   unpaidAutoCancelAfterHours: number;
-  meetingProvidersPriority: string;
   allowedMeetingProviders: string;
   meetingProviderOverrideEnabled: boolean;
 };
@@ -484,7 +483,6 @@ export async function getSpecialistBookingPolicy(
     refundOnLateCancel: row?.refund_on_late_cancel ?? false,
     autoCancelUnpaidEnabled: row?.auto_cancel_unpaid_enabled ?? false,
     unpaidAutoCancelAfterHours: row?.unpaid_auto_cancel_after_hours ?? 72,
-    meetingProvidersPriority: row?.meeting_providers_priority ?? 'offline,zoom,manual',
     allowedMeetingProviders: row?.allowed_meeting_providers ?? 'offline,zoom,manual',
     meetingProviderOverrideEnabled: row?.meeting_provider_override_enabled ?? false,
   };
@@ -513,7 +511,6 @@ export async function updateSpecialistBookingPolicy(
     refundOnLateCancel: parsed.data.refundOnLateCancel,
     autoCancelUnpaidEnabled: parsed.data.autoCancelUnpaidEnabled,
     unpaidAutoCancelAfterHours: parsed.data.unpaidAutoCancelAfterHours,
-    meetingProvidersPriority: parsed.data.meetingProvidersPriority,
     allowedMeetingProviders: parsed.data.allowedMeetingProviders,
     meetingProviderOverrideEnabled: parsed.data.meetingProviderOverrideEnabled,
   });

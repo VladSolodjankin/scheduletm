@@ -21,4 +21,14 @@
 | Собственные записи специалиста | ✅ | ✅ | ✅ | ❌ |
 | Собственные записи клиента | ✅ | ✅ | ❌ | ✅ |
 
+## Оплата (Payment setup)
+
+- `GET/PUT /api/settings/payments*`, `POST /api/settings/payments/providers/:provider/disconnect`,
+  `POST /api/settings/payments/test-reminder`, `POST /api/integrations/stripe/oauth/start` — только
+  `canManageAccountSettings` (`owner`, `product_admin`), всегда в рамках `user.accountId`.
+- `POST /api/appointments/:id/mark-paid` и `POST /api/appointments/:id/mark-unpaid` — `canMarkPaidAndNotify`
+  (все, кроме `client`); специалист — только свои записи; аудит `mark-paid` / `mark-unpaid`.
+- Публичные (без авторизации, по токену, rate limit по IP): `GET /api/public/payments/:token`,
+  `POST /api/public/payments/:token/checkout`; вебхуки провайдеров — см. [`payment-webhooks.md`](./payment-webhooks.md).
+
 Self-registration создаёт новый аккаунт и пользователя `owner`. Существующие `owner` автоматически не преобразуются в `product_admin`; глобальная роль назначается только контролируемой операцией в БД.

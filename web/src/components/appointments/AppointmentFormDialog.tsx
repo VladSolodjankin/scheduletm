@@ -24,6 +24,8 @@ import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
 import { isValidPhoneValue } from '../../shared/ui/phoneUtils';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
 import { toInitials } from '../../shared/utils/initials';
+import { formatMoney } from '../../shared/utils/money';
+import { useI18n } from '../../shared/i18n/I18nContext';
 import {
   BROWSER_TIMEZONE,
   buildStartEndIso,
@@ -69,11 +71,13 @@ type Props = {
   serverFieldErrors?: Record<string, string>;
   isCancellingAppointment: boolean;
   isMarkingPaid: boolean;
+  isMarkingUnpaid: boolean;
   isNotifyingClient: boolean;
   cancelPolicyText: string;
   onClose: () => void;
   onCancel: () => Promise<void>;
   onMarkPaid: () => Promise<void>;
+  onMarkUnpaid: () => Promise<void>;
   onNotifyClient: () => Promise<void>;
   onSubmit: (payload: {
     specialistId: number;
@@ -137,14 +141,17 @@ export function AppointmentFormDialog({
   serverFieldErrors,
   isCancellingAppointment,
   isMarkingPaid,
+  isMarkingUnpaid,
   isNotifyingClient,
   cancelPolicyText,
   onClose,
   onCancel,
   onMarkPaid,
+  onMarkUnpaid,
   onNotifyClient,
   onSubmit,
 }: Props) {
+  const { locale } = useI18n();
   const [showTimezoneSelect, setShowTimezoneSelect] = useState(false);
   const [formTimeZone, setFormTimeZone] = useState(BROWSER_TIMEZONE);
   const [isGeneratingMeetingLink, setIsGeneratingMeetingLink] = useState(false);
@@ -377,6 +384,11 @@ export function AppointmentFormDialog({
           {editingItem && (
             <AppButton onClick={onMarkPaid} isLoading={isMarkingPaid}>
               {t('appointments.markPaidAction')}
+            </AppButton>
+          )}
+          {editingItem && editingItem.paymentStatus === 'paid' && (
+            <AppButton onClick={onMarkUnpaid} isLoading={isMarkingUnpaid}>
+              {t('appointments.markUnpaidAction')}
             </AppButton>
           )}
           {editingItem && (
@@ -785,6 +797,11 @@ export function AppointmentFormDialog({
                   ? t('appointments.paymentStatusPaid')
                   : t('appointments.paymentStatusUnpaid')}
               </Typography>
+              {typeof editingItem.price === 'number' && editingItem.price > 0 && editingItem.currency ? (
+                <Typography variant="body2" color="text.secondary">
+                  {t('appointments.priceLabel').replace('{amount}', formatMoney(editingItem.price, editingItem.currency, locale))}
+                </Typography>
+              ) : null}
               <Typography variant="subtitle2">{t('appointments.auditTitle')}</Typography>
               <Stack spacing={0.5}>
                 {(editingItem.events ?? []).slice(0, 6).map((event, index) => {
@@ -794,7 +811,11 @@ export function AppointmentFormDialog({
                       ? t('appointments.eventReschedule')
                       : event.action === 'mark-paid'
                         ? t('appointments.eventMarkPaid')
-                        : t('appointments.eventNotify');
+                        : event.action === 'mark-unpaid'
+                          ? t('appointments.eventMarkUnpaid')
+                          : event.action === 'payment-received'
+                            ? t('appointments.eventPaymentReceived')
+                            : t('appointments.eventNotify');
 
                   return (
                     <Typography key={`${event.createdAt}-${index}`} variant="caption" color="text.secondary">

@@ -92,7 +92,6 @@ export type SpecialistBookingPolicy = {
   refundOnLateCancel: boolean;
   autoCancelUnpaidEnabled: boolean;
   unpaidAutoCancelAfterHours: number;
-  meetingProvidersPriority: string;
   allowedMeetingProviders: string;
   meetingProviderOverrideEnabled: boolean;
 };
@@ -198,13 +197,15 @@ export type AppointmentItem = {
   durationMin: number;
   status: AppointmentStatus;
   paymentStatus: 'paid' | 'unpaid';
+  price?: number;
+  currency?: string;
   meetingProvider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   meetingLink: string;
   locationAddress: string;
   notes: string;
   client: ClientItem;
   events: Array<{
-    action: 'cancel' | 'reschedule' | 'mark-paid' | 'notify';
+    action: 'cancel' | 'reschedule' | 'mark-paid' | 'mark-unpaid' | 'payment-received' | 'notify';
     createdAt: string;
   }>;
 };
@@ -457,4 +458,57 @@ export type TelegramBotSettingsPayload = {
 /** Non-empty connects the account's own bot, an empty string disconnects it. */
 export type TelegramCustomBotPayload = {
   customBotToken: string;
+};
+
+export type PaymentProviderId = 'stripe' | 'yookassa' | 'bog';
+
+export type PaymentSettings = {
+  activeProvider: PaymentProviderId | null;
+  providers: {
+    stripe: { connected: boolean; accountId?: string; connectedAt?: string };
+    yookassa: { connected: boolean; shopId?: string; hasSecret: boolean; webhookUrl: string };
+    bog: { connected: boolean; clientId?: string; hasSecret: boolean; callbackUrl: string };
+  };
+  manual: PaymentManualSettings;
+  hasAnyMethod: boolean;
+};
+
+export type PaymentManualSettings = {
+  bankTransfer: { enabled: boolean; text: string };
+  customLink: { enabled: boolean; title: string; url: string };
+  cash: { enabled: boolean; comment: string };
+};
+
+export type PaymentProviderCredentialsPayload =
+  | { shopId: string; secretKey?: string }
+  | { clientId: string; clientSecret?: string };
+
+export type StripeOAuthStartResponse = {
+  provider: 'stripe';
+  authorizeUrl: string;
+  state: string;
+};
+
+export type PaymentTestReminderResponse = {
+  sentTo: string;
+};
+
+export type PublicPaymentDetails = {
+  appointment: {
+    serviceName: string;
+    scheduledAt: string;
+    amount: number;
+    currency: string;
+    isPaid: boolean;
+  };
+  canPayOnline: boolean;
+  manual: {
+    bankTransfer: { text: string } | null;
+    customLink: { title: string; url: string } | null;
+    cash: { comment: string } | null;
+  };
+};
+
+export type PublicPaymentCheckoutResponse = {
+  redirectUrl: string;
 };

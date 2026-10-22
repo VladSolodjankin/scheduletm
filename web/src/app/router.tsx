@@ -50,6 +50,7 @@ const PublicPageViewPage = lazy(async () => {
 });
 const PublicPageBookingPage = lazy(() => import('../pages/PublicPageBookingPage').then((module) => ({ default: module.PublicPageBookingPage })));
 const PublicAppointmentStatusPage = lazy(() => import('../pages/PublicAppointmentStatusPage').then((module) => ({ default: module.PublicAppointmentStatusPage })));
+const PublicPaymentPage = lazy(() => import('../pages/PublicPaymentPage').then((module) => ({ default: module.PublicPaymentPage })));
 const AppointmentManagePage = lazy(() => import('../pages/AppointmentManagePage').then((module) => ({ default: module.AppointmentManagePage })));
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
@@ -88,6 +89,7 @@ export const router = createBrowserRouter([
   {
     element: <MeetliThemeBoundary />,
     children: [
+      { path: '/pay/:token', element: <PublicPaymentPage /> },
       {
         path: '/',
         element: <MainLayout />,

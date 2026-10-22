@@ -32,6 +32,7 @@ import {
   type SpecialistRecord,
 } from '../repositories/specialistRepository.js';
 import { findWebUserById } from '../repositories/webUserRepository.js';
+import { findResolvedServicePrice } from '../repositories/accountPaymentRepository.js';
 import { findAccountSettingsByAccountId } from '../repositories/accountSettingsRepository.js';
 import { listExternalBusySlots, type ExternalBusySlot } from './calendarAvailabilityService.js';
 import type { User } from '../types/domain.js';
@@ -58,6 +59,8 @@ type AppointmentDto = {
   durationMin: number;
   status: AppointmentStatus;
   paymentStatus: 'paid' | 'unpaid';
+  price: number;
+  currency: string;
   meetingProvider: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   meetingLink: string;
   locationAddress: string;
@@ -157,6 +160,8 @@ function mapAppointment(row: AppointmentRecord): AppointmentDto {
     durationMin: row.duration_min,
     status: row.status,
     paymentStatus: row.is_paid ? 'paid' : 'unpaid',
+    price: row.price ?? 0,
+    currency: row.currency ?? 'RUB',
     meetingProvider: row.meeting_provider,
     notes: row.comment ?? '',
     meetingLink: row.meeting_link ?? '',
@@ -479,16 +484,13 @@ export async function createAppointmentForActor(
   const allowedProviders = (specialistPolicy?.allowed_meeting_providers ?? 'offline,zoom,manual')
     .split(',')
     .map((item) => item.trim())
-    .filter(isMeetingProvider);
-  const priorityProviders = (specialistPolicy?.meeting_providers_priority ?? 'offline,zoom,manual')
-    .split(',')
-    .map((item) => item.trim())
     .filter(isMeetingProvider)
     .filter((item, index, list) => list.indexOf(item) === index);
   const candidateProviders = [
     payload.meetingProvider,
     preferred && allowedProviders.includes(preferred) ? preferred : undefined,
-    ...priorityProviders.filter((provider) => allowedProviders.includes(provider)),
+    // The policy list is ordered: earlier providers are tried first.
+    ...allowedProviders,
   ].filter((provider, index, list): provider is 'manual' | 'zoom' | 'yandex_telemost' | 'offline' => Boolean(provider) && list.indexOf(provider) === index);
 
   let meetingLink = payload.meetingLink?.trim() ?? '';
@@ -560,7 +562,12 @@ export async function createAppointmentForActor(
     break;
   }
 
+  // Snapshot the price at creation (specialist override wins) so payment reminders/checkout stay stable
+  // if the catalog price changes later.
+  const servicePrice = await findResolvedServicePrice(accountId, serviceId, payload.specialistId);
   const appointmentInput = {
+    price: servicePrice?.price ?? 0,
+    currency: servicePrice?.currency ?? 'RUB',
     accountId,
     specialistId: payload.specialistId,
     status: payload.status ?? 'new',
@@ -790,6 +797,35 @@ export async function markPaidAppointmentForActor(actor: User, appointmentId: nu
   }
 
   await appendAuditEvent(accountId, appointmentId, actor, 'mark-paid');
+
+  const rows = await listAppointments({ accountId, specialistId: updated.specialist_id });
+  const hydrated = rows.find((item) => item.id === updated.id) ?? updated;
+
+  return mapAppointment(hydrated);
+}
+
+export async function markUnpaidAppointmentForActor(actor: User, appointmentId: number): Promise<AppointmentDto | null> {
+  if (!canMarkPaidAndNotify(actor.role)) {
+    throw new Error('FORBIDDEN_CLIENT');
+  }
+
+  const { accountId, existing } = await resolveManagedAppointment(actor, appointmentId);
+
+  if (!existing) {
+    return null;
+  }
+
+  const updated = await updateAppointment({
+    accountId,
+    id: appointmentId,
+    isPaid: false,
+  });
+
+  if (!updated) {
+    return null;
+  }
+
+  await appendAuditEvent(accountId, appointmentId, actor, 'mark-unpaid');
 
   const rows = await listAppointments({ accountId, specialistId: updated.specialist_id });
   const hydrated = rows.find((item) => item.id === updated.id) ?? updated;

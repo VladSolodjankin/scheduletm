@@ -124,6 +124,19 @@ Zoom access/refresh token, Yandex access/refresh token, Telegram bot token) ши
 Если при создании приёма нет ни `queued`, ни `not queued`, постановка в очередь вообще не вызывалась (или запрос упал
 с `enqueue failed`).
 
+## Платёжные секреты (Payment setup)
+
+- `account_payment_providers.secret_encrypted` хранит YooKassa secret key и BOG client secret; шифрование
+  `integrationSecretCrypto` (AES-256-GCM, `APP_ENCRYPTION_KEY`), plaintext-колонок нет. Секреты не возвращаются API
+  (только `hasSecret`), не логируются; пустой secret при повторном сохранении оставляет прежний.
+- Stripe (Standard connected account): токен подключённого аккаунта не хранится, в `config_json` лежит только
+  `accountId` (`acct_...`); платежи идут платформенным `STRIPE_SECRET_KEY` + заголовок `Stripe-Account`.
+  Платформенные env: `STRIPE_CLIENT_ID`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_OAUTH_REDIRECT_URI` (secret-хранилище деплоя).
+- Токены ссылок на оплату (`appointment_payment_tokens`) и per-account токены вебхуков (`webhook_token_hash`) хранятся
+  только как SHA-256. URL вебхука выводится детерминированно из `APP_ENCRYPTION_KEY` и id аккаунта; при ротации ключа
+  URL меняются (переподключите провайдера и обновите URL в кабинете провайдера).
+- При ротации `APP_ENCRYPTION_KEY` колонку `account_payment_providers.secret_encrypted` нужно перешифровать так же, как остальные `*_encrypted`.
+
 ## Ротация ключа
 
 Формальной автоматизированной процедуры ротации `APP_ENCRYPTION_KEY` пока нет. Ручная процедура:

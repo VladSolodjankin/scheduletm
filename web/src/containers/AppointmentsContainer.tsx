@@ -75,6 +75,7 @@ export function AppointmentsContainer() {
   const [isCancellingAppointment, setIsCancellingAppointment] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [isMarkingPaid, setIsMarkingPaid] = useState(false);
+  const [isMarkingUnpaid, setIsMarkingUnpaid] = useState(false);
   const [isNotifyingClient, setIsNotifyingClient] = useState(false);
   const [pastSlotToastOpen, setPastSlotToastOpen] = useState(false);
 
@@ -493,6 +494,25 @@ export function AppointmentsContainer() {
     }
   };
 
+  const markAppointmentUnpaid = async () => {
+    if (!editingItem || !accessToken) {
+      return;
+    }
+
+    setIsMarkingUnpaid(true);
+
+    try {
+      await apiClient.post(`/api/appointments/${editingItem.id}/mark-unpaid`, {}, {
+        headers: authHeaders(accessToken),
+      });
+      await loadAppointments(selectedSpecialistId);
+    } catch (err) {
+      setError(resolveError(err, t('appointments.errors.markUnpaid')).message);
+    } finally {
+      setIsMarkingUnpaid(false);
+    }
+  };
+
   const notifyClient = async () => {
     if (!editingItem || !accessToken) {
       return;
@@ -767,6 +787,7 @@ export function AppointmentsContainer() {
         isSubmittingForm={isSubmittingForm}
         isCancellingAppointment={isCancellingAppointment}
         isMarkingPaid={isMarkingPaid}
+        isMarkingUnpaid={isMarkingUnpaid}
         isNotifyingClient={isNotifyingClient}
         onClose={() => {
           setIsCreateOpen(false);
@@ -780,6 +801,7 @@ export function AppointmentsContainer() {
             : t('appointments.cancelPolicyRefund'))
           : ''}
         onMarkPaid={markAppointmentPaid}
+        onMarkUnpaid={markAppointmentUnpaid}
         onNotifyClient={notifyClient}
         onSubmit={(payload) => submitForm({
           specialistId: payload.specialistId,

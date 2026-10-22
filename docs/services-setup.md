@@ -25,7 +25,7 @@ criteria ниже. Канонический приоритет задачи на
 Минимальные поля услуги:
 - `name`
 - `description`
-- `base_price`
+- `price`
 - `base_duration_minutes`
 - `first_session_free` (boolean)
 - `image_url` (или media reference)
@@ -42,7 +42,7 @@ criteria ниже. Канонический приоритет задачи на
 
 ### Итоговая цена
 - если `specialist_services.price_override` заполнена — использовать её;
-- иначе использовать `services.base_price`.
+- иначе использовать `services.price`.
 
 ---
 
@@ -57,7 +57,7 @@ criteria ниже. Канонический приоритет задачи на
 ### Specialist
 - просмотр только своих назначенных услуг;
 - редактирование только своих параметров назначения (например, `price_override`),
-  без изменения глобальных полей услуги (`name`, `description`, `base_price` и т.д.).
+  без изменения глобальных полей услуги (`name`, `description`, `price` и т.д.).
 
 ---
 
@@ -121,7 +121,7 @@ criteria ниже. Канонический приоритет задачи на
 
 Цена на шаге выбора специалиста:
 - `price_override`, если есть;
-- иначе `base_price` услуги.
+- иначе `price` услуги.
 
 ---
 

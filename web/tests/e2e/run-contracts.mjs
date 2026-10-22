@@ -6,3 +6,5 @@ import './telegram-bot.contract.e2e.test.mjs';
 import './design-system.contract.e2e.test.mjs';
 
 import './google-calendar.contract.e2e.test.mjs';
+
+import './payments.contract.e2e.test.mjs';

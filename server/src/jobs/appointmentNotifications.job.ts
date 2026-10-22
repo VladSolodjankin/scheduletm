@@ -8,6 +8,7 @@ import { sendAppointmentNotificationByType } from '../services/appointmentNotifi
 import { attemptNotificationDelivery, deliverAndMarkNotification } from '../services/notificationDeliveryService.js';
 import { trackServerError } from '../services/errorTrackingService.js';
 import type { NotificationType } from '../services/notificationSettingsService.js';
+import { createCachedPaymentReminderGate } from '../services/paymentReminderService.js';
 
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
 const DEFAULT_WINDOW_MIN = 10;
@@ -142,10 +143,18 @@ async function executeAppointmentNotificationsJob(now: Date, windowMinutes: numb
   for (const timing of PAYMENT_TIMINGS) {
     const window = createWindow(now, timing.minutesAfterCreate, windowMinutes, 'past');
     const appointments = await listUnpaidAppointmentsCreatedBetweenAllAccounts(window.from, window.to);
+    const paymentGate = createCachedPaymentReminderGate();
 
     for (const appointment of appointments) {
       const email = appointment.client_email?.trim() ?? '';
       if (!email) {
+        continue;
+      }
+
+      // Gate BEFORE deliverAndMark: that call writes the (appointment,type,channel)-unique notifications row, so a
+      // reminder skipped after the row exists could never be sent again once a method is configured.
+      const eligibility = await paymentGate(appointment);
+      if (!eligibility.eligible) {
         continue;
       }
 

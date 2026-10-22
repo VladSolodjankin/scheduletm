@@ -22,6 +22,7 @@ import { ScheduleExceptionsTab } from './settings-tabs/ScheduleExceptionsTab';
 import { SpecialistPolicyTab } from './settings-tabs/SpecialistPolicyTab';
 import { SystemSettingsTab } from './settings-tabs/SystemSettingsTab';
 import { IntegrationsSettingsTab } from './settings-tabs/IntegrationsSettingsTab';
+import { PaymentsSettingsTab, type PaymentsNotification } from './settings-tabs/PaymentsSettingsTab';
 import { UserSettingsTab } from './settings-tabs/UserSettingsTab';
 
 type SettingsCardProps = {
@@ -37,6 +38,8 @@ type SettingsCardProps = {
   canManageClientNotifications: boolean;
   canManageSpecialistBookingPolicy: boolean;
   canSelfDeleteUser: boolean;
+  accessToken: string;
+  onPaymentsNotify: (notification: PaymentsNotification) => void;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
   isZoomConnecting: boolean;
@@ -103,6 +106,8 @@ export function SettingsCard({
   canManageClientNotifications,
   canManageSpecialistBookingPolicy,
   canSelfDeleteUser,
+  accessToken,
+  onPaymentsNotify,
   isGoogleConnecting,
   isGoogleDisconnecting,
   isZoomConnecting,
@@ -163,6 +168,7 @@ export function SettingsCard({
     ...(canManageAccountSettings || canManageClientNotifications ? [{ key: 'notifications', label: copy.notificationsTab }] : []),
     { key: 'user', label: copy.userTab },
     { key: 'integrations', label: copy.integrationsTab },
+    ...(canManageAccountSettings ? [{ key: 'payments', label: copy.paymentsTab }] : []),
     { key: 'password', label: copy.passwordTab },
     { key: 'emailChange', label: copy.emailChangeTab }
   ] as const), [copy, canManageSystemSettings, canManageAccountSettings, canManageClientNotifications, canManageSpecialistBookingPolicy]);
@@ -250,6 +256,9 @@ export function SettingsCard({
           onDisconnectYandex={onDisconnectYandex}
           onDisconnectGoogle={onDisconnectGoogle}
         />
+      )}
+      {resolvedTab === 'payments' && canManageAccountSettings && (
+        <PaymentsSettingsTab copy={copy.payments} accessToken={accessToken} onNotify={onPaymentsNotify} />
       )}
       {resolvedTab === 'password' && (
         <PasswordSettingsTab

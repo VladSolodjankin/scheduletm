@@ -168,7 +168,6 @@ export const specialistBookingPolicySchema = z.object({
   refundOnLateCancel: z.boolean(),
   autoCancelUnpaidEnabled: z.boolean(),
   unpaidAutoCancelAfterHours: z.coerce.number().int().min(1).max(720),
-  meetingProvidersPriority: z.string().trim().min(1).max(120),
   allowedMeetingProviders: z.string().trim().min(1).max(120),
   meetingProviderOverrideEnabled: z.boolean(),
 }).partial();
@@ -440,3 +439,53 @@ export const reviewCreateSchema = reviewFieldsSchema
 
 export const reviewUpdateSchema = reviewFieldsSchema.partial()
   .refine((value) => Object.keys(value).length > 0, { message: v.atLeastOneFieldToUpdate });
+
+// ---- Payment setup ----
+
+const httpsUrlSchema = z.string().trim().max(500, v.paymentFieldTooLong).refine((value) => {
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}, v.paymentUrlInvalid);
+
+export const paymentManualSettingsSchema = z.object({
+  bankTransfer: z.object({
+    enabled: z.boolean(),
+    text: z.string().trim().max(1000, v.paymentFieldTooLong),
+  }),
+  customLink: z.object({
+    enabled: z.boolean(),
+    title: z.string().trim().max(60, v.paymentFieldTooLong),
+    url: z.union([z.literal(''), httpsUrlSchema]),
+  }),
+  cash: z.object({
+    enabled: z.boolean(),
+    comment: z.string().trim().max(500, v.paymentFieldTooLong),
+  }),
+}).superRefine((value, ctx) => {
+  if (value.bankTransfer.enabled && !value.bankTransfer.text) {
+    ctx.addIssue({ code: 'custom', path: ['bankTransfer', 'text'], message: v.paymentTextRequired });
+  }
+  if (value.customLink.enabled && !value.customLink.title) {
+    ctx.addIssue({ code: 'custom', path: ['customLink', 'title'], message: v.paymentTextRequired });
+  }
+  if (value.customLink.enabled && !value.customLink.url) {
+    ctx.addIssue({ code: 'custom', path: ['customLink', 'url'], message: v.paymentTextRequired });
+  }
+});
+
+export const yookassaConnectSchema = z.object({
+  shopId: z.string().trim().min(1, v.paymentCredentialRequired).max(64, v.paymentFieldTooLong),
+  secretKey: z.string().trim().max(256, v.paymentFieldTooLong).optional(),
+});
+
+export const bogConnectSchema = z.object({
+  clientId: z.string().trim().min(1, v.paymentCredentialRequired).max(128, v.paymentFieldTooLong),
+  clientSecret: z.string().trim().max(256, v.paymentFieldTooLong).optional(),
+});
+
+export const paymentActiveProviderSchema = z.object({
+  provider: z.enum(['stripe', 'yookassa', 'bog']).nullable(),
+});

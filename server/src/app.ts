@@ -17,6 +17,9 @@ import { publicPageRoutes } from './routes/publicPageRoutes.js';
 import { publicAppointmentManagementRoutes } from './routes/publicAppointmentManagementRoutes.js';
 import { serviceRoutes } from './routes/serviceRoutes.js';
 import { reviewRoutes } from './routes/reviewRoutes.js';
+import { paymentSettingsRoutes } from './routes/paymentSettingsRoutes.js';
+import { publicPaymentRoutes } from './routes/publicPaymentRoutes.js';
+import { maskSensitivePath } from './utils/logMasking.js';
 import { trackServerError } from './services/errorTrackingService.js';
 
 const getBodyParserErrorStatus = (error: unknown): 400 | 413 | null => {
@@ -51,7 +54,7 @@ export const createApp = () => {
   app.use(helmet());
   morgan.token('safe-url', (req) => {
     const rawUrl = req.url ?? '/';
-    return new URL(rawUrl, 'http://localhost').pathname;
+    return maskSensitivePath(new URL(rawUrl, 'http://localhost').pathname);
   });
   app.use(morgan(':method :safe-url :status :response-time ms'));
   app.use(
@@ -76,7 +79,7 @@ export const createApp = () => {
       if (res.statusCode >= 500 && !res.locals.errorTracked) {
         void trackServerError({
           method: req.method,
-          path: new URL(req.originalUrl, 'http://localhost').pathname,
+          path: maskSensitivePath(new URL(req.originalUrl, 'http://localhost').pathname),
           error: new Error(`HTTP_${res.statusCode}`),
         });
       }
@@ -106,10 +109,28 @@ export const createApp = () => {
       },
     }),
   );
+  // Payment provider webhooks: signatures/re-fetch need the exact raw bytes (captured before JSON parsing).
+  for (const webhookPath of [
+    '/api/integrations/stripe/webhook',
+    '/api/integrations/yookassa/webhook',
+    '/api/integrations/bog/callback',
+  ]) {
+    app.use(
+      webhookPath,
+      express.json({
+        limit: '64kb',
+        type: () => true,
+        verify: (req, _res, buf) => {
+          (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
+        },
+      }),
+    );
+  }
   app.use(express.json({ limit: '32kb' }));
 
   app.use(healthRoutes);
   app.use('/api/auth', authRoutes);
+  app.use('/api/settings/payments', paymentSettingsRoutes);
   app.use('/api/settings', settingsRoutes);
   app.use('/api/onboarding', onboardingRoutes);
   app.use('/api/appointments', appointmentRoutes);
@@ -121,6 +142,7 @@ export const createApp = () => {
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/error-logs', errorLogRoutes);
   app.use('/api/public/appointment-management', publicAppointmentManagementRoutes);
+  app.use('/api/public/payments', publicPaymentRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({ code: 'not_found' });

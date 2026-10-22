@@ -18,8 +18,15 @@ import { createYandexTelemostMeeting } from '../services/yandexService.js';
 import { completeYandexOAuth, createYandexOAuthUrl, disconnectYandexOAuth } from '../services/yandexOAuthService.js';
 import { formatZodError } from '../utils/validation.js';
 import { trackServerError } from '../services/errorTrackingService.js';
+import { completeStripeOAuth, createStripeOAuthUrl } from '../services/stripeOAuthService.js';
+import { getMissingStripeEnv, isStripeWebhookConfigured } from '../services/payments/stripeAdapter.js';
+import { InvalidSignatureError } from '../services/payments/types.js';
+import { processPaymentWebhook } from '../services/paymentWebhookService.js';
+import type { PaymentProviderId } from '../repositories/accountPaymentRepository.js';
+import { canManageAccountSettings } from '../policies/rolePermissions.js';
 
 export const integrationRoutes = Router();
+const paymentWebhookRateLimit = createRequestRateLimit({ keyPrefix: 'payment-webhook', maxRequests: 300, windowMs: 60_000 });
 const zoomWebhookRateLimit = createRequestRateLimit({ keyPrefix: 'zoom-webhook', maxRequests: 120, windowMs: 60_000 });
 
 const zoomCreateMeetingSchema = z.object({
@@ -297,3 +304,97 @@ integrationRoutes.post('/zoom/webhook', zoomWebhookRateLimit, async (req, res) =
 
   return res.status(200).end();
 });
+
+// ---- Payments (Payment setup) ----
+
+integrationRoutes.post('/stripe/oauth/start', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  if (!canManageAccountSettings(user.role)) {
+    return res.status(403).json({ code: 'forbidden', message: t(req, 'forbiddenAccountSettings') });
+  }
+
+  const oauthInit = await createStripeOAuthUrl(user.id, user.accountId);
+  if (!oauthInit) {
+    return res.status(503).json({
+      message: t(req, 'stripeOAuthNotConfigured'),
+      requiredEnv: getMissingStripeEnv(),
+    });
+  }
+
+  return res.json({
+    provider: 'stripe',
+    authorizeUrl: oauthInit.url,
+    state: oauthInit.state,
+  });
+});
+
+integrationRoutes.get('/stripe/oauth/callback', async (req, res) => {
+  const state = String(req.query.state ?? '');
+  const code = String(req.query.code ?? '');
+  const base = `${env.APP_URL}/settings/payments`;
+
+  if (req.query.error) {
+    // The user declined on Stripe's consent screen (or Stripe reported an error).
+    return res.redirect(`${base}?stripe_oauth=error&reason=access_denied`);
+  }
+  if (!state || !code) {
+    return res.redirect(`${base}?stripe_oauth=error&reason=missing_code_or_state`);
+  }
+
+  const result = await completeStripeOAuth(state, code);
+  if (!result.ok) {
+    return res.redirect(`${base}?stripe_oauth=error&reason=${result.reason}`);
+  }
+
+  return res.redirect(`${base}?stripe_oauth=success`);
+});
+
+async function respondToPaymentWebhook(
+  provider: PaymentProviderId,
+  req: import('express').Request,
+  res: import('express').Response,
+  accountToken?: string,
+) {
+  const rawBody = (req as typeof req & { rawBody?: Buffer }).rawBody;
+  if (!rawBody) {
+    return res.status(400).end();
+  }
+
+  const headers: Record<string, string | undefined> = {};
+  for (const [name, value] of Object.entries(req.headers)) {
+    headers[name.toLowerCase()] = Array.isArray(value) ? value[0] : value;
+  }
+
+  try {
+    const outcome = await processPaymentWebhook({ provider, rawBody, headers, accountToken });
+    if (outcome.kind === 'unknown_account') {
+      return res.status(404).end();
+    }
+    if (outcome.kind === 'order_not_found') {
+      return res.status(404).end();
+    }
+    return res.status(200).end();
+  } catch (error) {
+    if (error instanceof InvalidSignatureError) {
+      return res.status(401).end();
+    }
+    // Never put the URL (it contains the account token) into the tracked path.
+    void trackServerError({ method: req.method, path: `/api/integrations/${provider}/webhook`, error });
+    res.locals.errorTracked = true;
+    // 5xx makes the provider retry; the event lease was released by the pipeline.
+    return res.status(500).end();
+  }
+}
+
+integrationRoutes.post('/stripe/webhook', paymentWebhookRateLimit, async (req, res) => {
+  if (!isStripeWebhookConfigured()) {
+    return res.status(404).end();
+  }
+  return respondToPaymentWebhook('stripe', req, res);
+});
+
+integrationRoutes.post('/yookassa/webhook/:accountToken', paymentWebhookRateLimit, async (req, res) =>
+  respondToPaymentWebhook('yookassa', req, res, String(req.params.accountToken)));
+
+integrationRoutes.post('/bog/callback/:accountToken', paymentWebhookRateLimit, async (req, res) =>
+  respondToPaymentWebhook('bog', req, res, String(req.params.accountToken)));

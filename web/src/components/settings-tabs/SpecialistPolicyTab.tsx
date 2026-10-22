@@ -18,11 +18,6 @@ type Props = {
 
 const providerIds = ['offline', 'zoom', 'yandex_telemost', 'manual'] as const;
 
-// Each preset puts one provider first and keeps the others in default order.
-const providerPriorityPresets = providerIds.map((first) => (
-  [first, ...providerIds.filter((id) => id !== first)].join(',')
-));
-
 export function SpecialistPolicyTab({ copy, userSettings, control, isSaving, onSubmit }: Props) {
   const providerLabelById: Record<string, string> = copy.providerLabels;
   const isProviderConnected = (id: string) => (
@@ -33,7 +28,6 @@ export function SpecialistPolicyTab({ copy, userSettings, control, isSaving, onS
       ? (providerLabelById[id] ?? id)
       : `${providerLabelById[id] ?? id} (${copy.meetingProviderNotConnected})`
   );
-  const priorityLabel = (value: string) => value.split(',').filter(Boolean).map((id) => providerLabelById[id] ?? id).join(' → ');
 
   return (
     <AppForm component="form" onSubmit={onSubmit}>
@@ -90,29 +84,6 @@ export function SpecialistPolicyTab({ copy, userSettings, control, isSaving, onS
       />
 
       <Controller
-        name="meetingProvidersPriority"
-        control={control}
-        render={({ field }: any) => {
-          // Keep previously saved orders selectable even if they are not one of the presets.
-          const priorityOptions = providerPriorityPresets.includes(field.value) || !field.value
-            ? providerPriorityPresets
-            : [field.value as string, ...providerPriorityPresets];
-
-          return (
-            <FormControl fullWidth>
-              <InputLabel>{copy.meetingProvidersPriority}</InputLabel>
-              <Select {...field} label={copy.meetingProvidersPriority}>
-                {priorityOptions.map((value) => (
-                  <MenuItem key={value} value={value}>{priorityLabel(value)}</MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>{copy.meetingProvidersHint}</FormHelperText>
-            </FormControl>
-          );
-        }}
-      />
-
-      <Controller
         name="allowedMeetingProviders"
         control={control}
         render={({ field }: any) => {
@@ -131,20 +102,20 @@ export function SpecialistPolicyTab({ copy, userSettings, control, isSaving, onS
                 }}
                 renderValue={(selected) => (selected as string[])
                   .map((id) => providerLabelById[id] ?? id)
-                  .join(', ')}
+                  .join(' → ')}
               >
                 {providerIds.map((providerId) => (
                   <MenuItem key={providerId} value={providerId}>{providerLabelWithHint(providerId)}</MenuItem>
                 ))}
               </Select>
-              {selectedProviders.some((id: string) => !isProviderConnected(id)) && (
-                <FormHelperText>
-                  {selectedProviders
+              <FormHelperText>
+                {[
+                  copy.meetingProvidersHint,
+                  ...selectedProviders
                     .filter((id: string) => !isProviderConnected(id))
-                    .map((id: string) => `${providerLabelById[id] ?? id} (${copy.meetingProviderNotConnected})`)
-                    .join(', ')}
-                </FormHelperText>
-              )}
+                    .map((id: string) => `${providerLabelById[id] ?? id} (${copy.meetingProviderNotConnected})`),
+                ].join(' ')}
+              </FormHelperText>
             </FormControl>
           );
         }}

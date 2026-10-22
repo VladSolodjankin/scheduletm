@@ -1,6 +1,8 @@
+import AccountBalanceRounded from '@mui/icons-material/AccountBalanceRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
 import BlockRounded from '@mui/icons-material/BlockRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
+import AttachMoneyRounded from '@mui/icons-material/AttachMoneyRounded';
 import ContentCopyRounded from '@mui/icons-material/ContentCopyRounded';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import DeleteRounded from '@mui/icons-material/DeleteRounded';
@@ -9,6 +11,7 @@ import EventRounded from '@mui/icons-material/EventRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import GroupRounded from '@mui/icons-material/GroupRounded';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import LinkRounded from '@mui/icons-material/LinkRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import LoginRounded from '@mui/icons-material/LoginRounded';
 import LogoutRounded from '@mui/icons-material/LogoutRounded';
@@ -26,6 +29,9 @@ import TuneRounded from '@mui/icons-material/TuneRounded';
 import WebRounded from '@mui/icons-material/WebRounded';
 
 export const AppIcons = {
+  bankTransfer: AccountBalanceRounded,
+  cash: AttachMoneyRounded,
+  paymentLink: LinkRounded,
   add: AddRounded,
   deactivate: BlockRounded,
   close: CloseRounded,

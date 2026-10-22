@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { env } from '../config/env.js';
+import { paymentCopy, type NotificationLocale } from '../i18n/paymentCopy.js';
 
 const BREVO_SEND_EMAIL_URL = 'https://api.brevo.com/v3/smtp/email';
 
@@ -57,7 +58,9 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function renderEmailTemplate(content: {
+export type EmailSection = { title: string; lines: Array<{ label?: string; value: string; href?: string }> };
+
+export function renderEmailTemplate(content: {
   title: string;
   body: string;
   locale?: 'ru' | 'en';
@@ -65,9 +68,22 @@ function renderEmailTemplate(content: {
   details?: Array<{ label: string; value: string; href?: string }>;
   ctaLabel?: string;
   ctaLink?: string;
+  /** Extra titled blocks rendered after the details (e.g. "Or pay another way"). */
+  sections?: EmailSection[];
+  /** Highlighted note above the body (e.g. "this is a test"). */
+  notice?: string;
   footer?: string;
 }): { htmlContent: string; textContent: string } {
-  const footer = content.footer ?? 'Вы получили это письмо, потому что пользуетесь Meetli.';
+  const isEnglish = content.locale === 'en';
+  const footer = content.footer ?? (isEnglish
+    ? 'You received this email because you use Meetli.'
+    : 'Вы получили это письмо, потому что пользуетесь Meetli.');
+  const fallbackLinkLabel = isEnglish ? 'If the button does not work, open this link:' : 'Если кнопка не работает, откройте ссылку:';
+  const sectionsHtml = (content.sections ?? []).map((section) => `<div style="margin-top:24px;border-top:1px solid #d5dce7;padding-top:16px;"><p style="margin:0 0 8px;color:#0f172a;font-size:16px;line-height:24px;font-weight:700;">${escapeHtml(section.title)}</p>${section.lines.map((line) => `<p style="margin:0 0 8px;font-size:14px;line-height:20px;color:#0f172a;white-space:pre-wrap;">${line.label ? `<span style="color:#526078;">${escapeHtml(line.label)}: </span>` : ''}${line.href ? `<a href="${escapeHtml(line.href)}" style="color:#2563eb;word-break:break-all;">${escapeHtml(line.value)}</a>` : escapeHtml(line.value)}</p>`).join('')}</div>`).join('');
+  const sectionsText = (content.sections ?? []).map((section) => `\n\n${section.title}\n${section.lines.map((line) => `${line.label ? `${line.label}: ` : ''}${line.value}`).join('\n')}`).join('');
+  const noticeHtml = content.notice
+    ? `<p style="margin:0 0 16px;padding:12px 16px;border-radius:8px;background:#fff7e0;color:#7a5200;font-size:14px;line-height:20px;">${escapeHtml(content.notice)}</p>`
+    : '';
   const detailsHtml = content.details?.length
     ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:24px;border-top:1px solid #d5dce7;padding-top:16px;">${content.details.map((row) => `<tr><td style="padding:4px 0;color:#526078;font-size:14px;line-height:20px;white-space:nowrap;vertical-align:top;">${escapeHtml(row.label)}</td><td style="padding:4px 0 4px 16px;color:#0f172a;font-size:14px;line-height:20px;font-weight:600;">${row.href ? `<a href="${escapeHtml(row.href)}" style="color:#2563eb;text-decoration:none;word-break:break-all;">${escapeHtml(row.value)}</a>` : escapeHtml(row.value)}</td></tr>`).join('')}</table>`
     : '';
@@ -76,7 +92,7 @@ function renderEmailTemplate(content: {
     : '';
   const ctaHtml = content.ctaLabel && content.ctaLink
     ? `<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0;"><tr><td bgcolor="#2563eb" style="border-radius:8px;text-align:center;"><a href="${escapeHtml(content.ctaLink)}" style="display:inline-block;padding:14px 24px;background:#2563eb;color:#ffffff;font-size:16px;font-weight:700;line-height:24px;text-decoration:none;border-radius:8px;">${escapeHtml(content.ctaLabel)}</a></td></tr></table>
-      <p style="margin:0 0 8px;font-size:12px;line-height:20px;">Если кнопка не работает, откройте ссылку:</p>
+      <p style="margin:0 0 8px;font-size:12px;line-height:20px;">${escapeHtml(fallbackLinkLabel)}</p>
       <p style="margin:0;font-size:12px;line-height:20px;word-break:break-all;overflow-wrap:anywhere;"><a href="${escapeHtml(content.ctaLink)}" style="color:#2563eb;">${escapeHtml(content.ctaLink)}</a></p>`
     : '';
 
@@ -104,10 +120,12 @@ function renderEmailTemplate(content: {
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#ffffff" style="max-width:560px;border:1px solid #d5dce7;border-top:4px solid #2563eb;border-radius:16px;table-layout:fixed;"><tr><td class="email-inner" style="padding:32px;overflow-wrap:anywhere;word-wrap:break-word;">
             <p style="margin:0 0 24px;padding-bottom:24px;border-bottom:1px solid #d5dce7;color:#2563eb;font-size:28px;line-height:36px;font-weight:700;">Meetli</p>
             <h1 style="margin:0 0 16px;color:#0f172a;font-size:28px;line-height:36px;font-weight:700;">${escapeHtml(content.title)}</h1>
+            ${noticeHtml}
             <p style="margin:0;font-size:16px;line-height:26px;">${escapeHtml(content.body)}</p>
             ${codeHtml}
             ${detailsHtml}
             ${ctaHtml}
+            ${sectionsHtml}
             <p style="margin:24px 0 0;padding-top:24px;border-top:1px solid #d5dce7;font-size:12px;line-height:20px;color:#526078;">${escapeHtml(footer)}</p>
           </td></tr></table>
           <!--[if mso]></td></tr></table><![endif]-->
@@ -115,7 +133,7 @@ function renderEmailTemplate(content: {
         </td></tr></table>
       </body></html>
     `.trim(),
-    textContent: `${content.title}\n\n${content.body}${content.code ? `\n\n${content.code.label}: ${content.code.value}` : ''}${detailsText}${ctaText}\n\n${footer}\n\nMeetli · meetli.cc`,
+    textContent: `${content.title}\n\n${content.notice ? `${content.notice}\n\n` : ''}${content.body}${content.code ? `\n\n${content.code.label}: ${content.code.value}` : ''}${detailsText}${ctaText}${sectionsText}\n\n${footer}\n\nMeetli · meetli.cc`,
   };
 }
 
@@ -241,80 +259,157 @@ export type AppointmentNotificationEmailType =
   | 'appointment_reminder'
   | 'payment_reminder';
 
+export type PaymentEmailContent = {
+  amountText: string;
+  payUrl: string | null;
+  bankTransferText: string | null;
+  customLink: { title: string; url: string } | null;
+  cashComment: string | null;
+  isTest?: boolean;
+};
+
 export type SendAppointmentNotificationEmailInput = {
   to: string;
   clientName: string;
   specialistName: string;
   scheduledAt: string;
   notificationType?: AppointmentNotificationEmailType;
+  locale?: NotificationLocale;
   manageUrl?: string;
   serviceName?: string;
   durationMin?: number;
   meetingLink?: string;
   meetingProvider?: 'manual' | 'zoom' | 'yandex_telemost' | 'offline';
   locationAddress?: string;
+  /** payment_reminder only: amount, Pay link and the manual payment methods. */
+  payment?: PaymentEmailContent;
 };
 
-const APPOINTMENT_EMAIL_COPY: Record<AppointmentNotificationEmailType, { subject: string; title: string; body: (input: SendAppointmentNotificationEmailInput) => string }> = {
-  appointment_created: {
-    subject: 'Meetli — запись подтверждена',
-    title: 'Запись подтверждена',
-    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} подтверждена.`,
+type AppointmentEmailCopy = { subject: string; title: string; body: (input: SendAppointmentNotificationEmailInput) => string };
+
+const APPOINTMENT_EMAIL_COPY: Record<NotificationLocale, Record<AppointmentNotificationEmailType, AppointmentEmailCopy>> = {
+  ru: {
+    appointment_created: {
+      subject: 'Meetli — запись подтверждена',
+      title: 'Запись подтверждена',
+      body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} подтверждена.`,
+    },
+    appointment_changed: {
+      subject: 'Meetli — запись перенесена',
+      title: 'Запись перенесена',
+      body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} перенесена.`,
+    },
+    appointment_cancelled: {
+      subject: 'Meetli — запись отменена',
+      title: 'Запись отменена',
+      body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} отменена.`,
+    },
+    appointment_reminder: {
+      subject: 'Meetli — напоминание о записи',
+      title: 'Напоминание о записи',
+      body: (input) => `${input.clientName}, напоминаем о записи к специалисту ${input.specialistName}.`,
+    },
+    payment_reminder: {
+      subject: paymentCopy.ru.subject,
+      title: paymentCopy.ru.title,
+      body: (input) => paymentCopy.ru.body(input.clientName, input.specialistName),
+    },
   },
-  appointment_changed: {
-    subject: 'Meetli — запись перенесена',
-    title: 'Запись перенесена',
-    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} перенесена.`,
-  },
-  appointment_cancelled: {
-    subject: 'Meetli — запись отменена',
-    title: 'Запись отменена',
-    body: (input) => `${input.clientName}, ваша запись к специалисту ${input.specialistName} отменена.`,
-  },
-  appointment_reminder: {
-    subject: 'Meetli — напоминание о записи',
-    title: 'Напоминание о записи',
-    body: (input) => `${input.clientName}, напоминаем о записи к специалисту ${input.specialistName}.`,
-  },
-  payment_reminder: {
-    subject: 'Meetli — напоминание об оплате',
-    title: 'Напоминание об оплате',
-    body: (input) => `${input.clientName}, напоминаем об оплате записи к специалисту ${input.specialistName}.`,
+  en: {
+    appointment_created: {
+      subject: 'Meetli - appointment confirmed',
+      title: 'Appointment confirmed',
+      body: (input) => `${input.clientName}, your appointment with ${input.specialistName} is confirmed.`,
+    },
+    appointment_changed: {
+      subject: 'Meetli - appointment rescheduled',
+      title: 'Appointment rescheduled',
+      body: (input) => `${input.clientName}, your appointment with ${input.specialistName} has been rescheduled.`,
+    },
+    appointment_cancelled: {
+      subject: 'Meetli - appointment cancelled',
+      title: 'Appointment cancelled',
+      body: (input) => `${input.clientName}, your appointment with ${input.specialistName} has been cancelled.`,
+    },
+    appointment_reminder: {
+      subject: 'Meetli - appointment reminder',
+      title: 'Appointment reminder',
+      body: (input) => `${input.clientName}, a reminder about your appointment with ${input.specialistName}.`,
+    },
+    payment_reminder: {
+      subject: paymentCopy.en.subject,
+      title: paymentCopy.en.title,
+      body: (input) => paymentCopy.en.body(input.clientName, input.specialistName),
+    },
   },
 };
+
+const DETAIL_LABELS = {
+  ru: { service: 'Услуга', dateTime: 'Дата и время', duration: 'Длительность', minutes: 'мин', address: 'Адрес', meeting: 'Встреча', manage: 'Управлять записью' },
+  en: { service: 'Service', dateTime: 'Date and time', duration: 'Duration', minutes: 'min', address: 'Address', meeting: 'Meeting', manage: 'Manage appointment' },
+} as const;
 
 function buildAppointmentDetailsRows(input: SendAppointmentNotificationEmailInput): Array<{ label: string; value: string; href?: string }> {
+  const labels = DETAIL_LABELS[input.locale ?? 'ru'];
   const rows: Array<{ label: string; value: string; href?: string }> = [];
 
   if (input.serviceName) {
-    rows.push({ label: 'Услуга', value: input.serviceName });
+    rows.push({ label: labels.service, value: input.serviceName });
   }
 
-  rows.push({ label: 'Дата и время', value: input.scheduledAt });
+  rows.push({ label: labels.dateTime, value: input.scheduledAt });
 
   if (input.durationMin) {
-    rows.push({ label: 'Длительность', value: `${input.durationMin} мин` });
+    rows.push({ label: labels.duration, value: `${input.durationMin} ${labels.minutes}` });
+  }
+
+  if (input.payment) {
+    rows.push({ label: paymentCopy[input.locale ?? 'ru'].amountLabel, value: input.payment.amountText });
   }
 
   if (input.notificationType !== 'appointment_cancelled') {
     if (input.meetingProvider === 'offline' && input.locationAddress) {
-      rows.push({ label: 'Адрес', value: input.locationAddress });
+      rows.push({ label: labels.address, value: input.locationAddress });
     } else if (input.meetingLink) {
-      rows.push({ label: 'Встреча', value: input.meetingLink, href: input.meetingLink });
+      rows.push({ label: labels.meeting, value: input.meetingLink, href: input.meetingLink });
     }
   }
 
   return rows;
 }
 
+function buildPaymentSections(input: SendAppointmentNotificationEmailInput): EmailSection[] {
+  const payment = input.payment;
+  if (!payment) {
+    return [];
+  }
+  const copy = paymentCopy[input.locale ?? 'ru'];
+  const lines: EmailSection['lines'] = [];
+  if (payment.bankTransferText) {
+    lines.push({ label: copy.bankTransferLabel, value: payment.bankTransferText });
+  }
+  if (payment.customLink) {
+    lines.push({ label: payment.customLink.title, value: payment.customLink.url, href: payment.customLink.url });
+  }
+  if (payment.cashComment !== null) {
+    lines.push(payment.cashComment ? { label: copy.cashLabel, value: payment.cashComment } : { value: copy.cashLabel });
+  }
+  return lines.length > 0 ? [{ title: copy.transferTitle, lines }] : [];
+}
+
 export async function sendAppointmentNotificationEmail(input: SendAppointmentNotificationEmailInput): Promise<boolean> {
-  const copy = APPOINTMENT_EMAIL_COPY[input.notificationType ?? 'appointment_reminder'];
+  const locale = input.locale ?? 'ru';
+  const copy = APPOINTMENT_EMAIL_COPY[locale][input.notificationType ?? 'appointment_reminder'];
+  const payUrl = input.payment?.payUrl ?? null;
   const template = renderEmailTemplate({
+    locale,
     title: copy.title,
     body: copy.body(input),
     details: buildAppointmentDetailsRows(input),
-    ctaLabel: input.manageUrl ? 'Управлять записью' : undefined,
-    ctaLink: input.manageUrl,
+    ctaLabel: payUrl ? paymentCopy[locale].payButton : input.manageUrl ? DETAIL_LABELS[locale].manage : undefined,
+    ctaLink: payUrl ?? input.manageUrl,
+    sections: buildPaymentSections(input),
+    notice: input.payment?.isTest ? paymentCopy[locale].testBanner : undefined,
   });
 
   return sendEmail({

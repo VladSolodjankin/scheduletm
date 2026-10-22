@@ -3,6 +3,7 @@ import { isAxiosError } from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { SettingsCard } from '../components/SettingsCard';
+import { buildPaymentsCopy } from '../components/settings-tabs/paymentsCopy';
 import { apiClient, authHeaders } from '../shared/api/client';
 import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
@@ -71,7 +72,6 @@ const defaultSpecialistBookingPolicy: SpecialistBookingPolicy = {
   refundOnLateCancel: false,
   autoCancelUnpaidEnabled: false,
   unpaidAutoCancelAfterHours: 72,
-  meetingProvidersPriority: 'offline,zoom,manual',
   allowedMeetingProviders: 'offline,zoom,manual',
   meetingProviderOverrideEnabled: false,
 };
@@ -124,6 +124,7 @@ export function SettingsContainer() {
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
   const zoomOauthStatus = useMemo(() => searchParams.get('zoom_oauth'), [searchParams]);
   const yandexOauthStatus = useMemo(() => searchParams.get('yandex_oauth'), [searchParams]);
+  const stripeOauthStatus = useMemo(() => searchParams.get('stripe_oauth'), [searchParams]);
   const oauthReason = useMemo(() => searchParams.get('reason'), [searchParams]);
   const canManageSystemSettings = user?.role === 'product_admin';
   const canManageAccountSettings = user?.role === 'owner';
@@ -132,6 +133,8 @@ export function SettingsContainer() {
   const isOwner = user?.role === 'owner';
   const isClient = user?.role === 'client';
   const canSelfDeleteUser = Boolean(user && !canManageAccountSettings);
+
+  const paymentsCopy = useMemo(() => buildPaymentsCopy(t), [t]);
 
   const filteredScopeSpecialists = useMemo(() => (
     selectedAccountId
@@ -147,39 +150,41 @@ export function SettingsContainer() {
     ...(canManageAccountSettings || isClient ? ['notifications'] : []),
     'user',
     'integrations',
+    ...(canManageAccountSettings ? ['payments'] : []),
     'password',
     'emailChange'
   ] as const), [canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, isClient]);
 
-  const isOauthReturn = Boolean(googleOauthStatus || zoomOauthStatus || yandexOauthStatus);
+  const isOauthReturn = Boolean(googleOauthStatus || zoomOauthStatus || yandexOauthStatus || stripeOauthStatus);
+  const oauthReturnTab = stripeOauthStatus && canManageAccountSettings ? 'payments' : 'integrations';
 
   const activeTab = useMemo(() => {
     if (!tab) {
-      return isOauthReturn ? 'integrations' : (allowedTabs[0] ?? 'user');
+      return isOauthReturn ? oauthReturnTab : (allowedTabs[0] ?? 'user');
     }
 
     return allowedTabs.includes(tab as (typeof allowedTabs)[number]) ? tab : (allowedTabs[0] ?? 'user');
-  }, [allowedTabs, isOauthReturn, tab]);
+  }, [allowedTabs, isOauthReturn, oauthReturnTab, tab]);
 
   useEffect(() => {
     if (!tab && isOauthReturn) {
       // Provider redirects land on /settings?<provider>_oauth=...; keep the params and show Integrations.
       const search = searchParams.toString();
-      navigate({ pathname: '/settings/integrations', search: search ? `?${search}` : '' }, { replace: true });
+      navigate({ pathname: `/settings/${oauthReturnTab}`, search: search ? `?${search}` : '' }, { replace: true });
       return;
     }
 
     if (!tab || !allowedTabs.includes(tab as (typeof allowedTabs)[number])) {
       navigate(`/settings/${allowedTabs[0] ?? 'user'}`, { replace: true });
     }
-  }, [allowedTabs, isOauthReturn, navigate, searchParams, tab]);
+  }, [allowedTabs, isOauthReturn, navigate, oauthReturnTab, searchParams, tab]);
 
   const handleTabChange = (nextTab: string) => {
     navigate(`/settings/${nextTab}`);
   };
 
   useEffect(() => {
-    if (!googleOauthStatus && !zoomOauthStatus && !yandexOauthStatus) {
+    if (!googleOauthStatus && !zoomOauthStatus && !yandexOauthStatus && !stripeOauthStatus) {
       return;
     }
 
@@ -222,7 +227,22 @@ export function SettingsContainer() {
         setSuccess('');
       }
 
+      if (stripeOauthStatus === 'success') {
+        setSuccess(t('payments.stripeConnectedSuccess'));
+        setError('');
+      }
+
+      if (stripeOauthStatus === 'error') {
+        setError(
+          oauthReason === 'stripe_oauth_not_configured'
+            ? t('payments.stripeNotConfigured')
+            : t('payments.stripeConnectError')
+        );
+        setSuccess('');
+      }
+
       const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('stripe_oauth');
       nextParams.delete('google_oauth');
       nextParams.delete('zoom_oauth');
       nextParams.delete('yandex_oauth');
@@ -231,7 +251,7 @@ export function SettingsContainer() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [accessToken, googleOauthStatus, searchParams, setSearchParams, t, oauthReason, yandexOauthStatus, zoomOauthStatus]);
+  }, [accessToken, googleOauthStatus, searchParams, setSearchParams, t, oauthReason, stripeOauthStatus, yandexOauthStatus, zoomOauthStatus]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -844,6 +864,16 @@ export function SettingsContainer() {
             canManageClientNotifications={isClient}
             canManageSpecialistBookingPolicy={canManageSpecialistBookingPolicy}
             canSelfDeleteUser={canSelfDeleteUser}
+            accessToken={accessToken}
+            onPaymentsNotify={(notification) => {
+              if (notification.severity === 'success') {
+                setSuccess(notification.message);
+                setError('');
+              } else {
+                setError(notification.message);
+                setSuccess('');
+              }
+            }}
             copy={{
               systemTab: t('settings.tabs.system'),
               accountTab: t('settings.tabs.account'),
@@ -851,6 +881,8 @@ export function SettingsContainer() {
               scheduleExceptionsTab: t('settings.tabs.scheduleExceptions'),
               userTab: t('settings.tabs.user'),
               integrationsTab: t('settings.tabs.integrations'),
+              paymentsTab: t('settings.tabs.payments'),
+              payments: paymentsCopy,
               passwordTab: t('settings.tabs.password'),
               emailChangeTab: t('settings.tabs.emailChange'),
               systemTitle: t('settings.systemTitle'),
@@ -922,7 +954,6 @@ export function SettingsContainer() {
               refundOnLateCancel: t('settings.refundOnLateCancel'),
               autoCancelUnpaidEnabled: t('settings.autoCancelUnpaidEnabled'),
               unpaidAutoCancelAfterHours: t('settings.unpaidAutoCancelAfterHours'),
-              meetingProvidersPriority: t('settings.meetingProvidersPriority'),
               allowedMeetingProviders: t('settings.allowedMeetingProviders'),
               meetingProviderOverrideEnabled: t('settings.meetingProviderOverrideEnabled'),
               scheduleExceptions: {

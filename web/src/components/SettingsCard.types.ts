@@ -1,4 +1,5 @@
 import type { NotificationChannel, ScheduleExceptionType } from '../shared/types/api';
+import type { PaymentsCopy } from './settings-tabs/paymentsCopy';
 
 export type ScheduleExceptionsCopy = {
   title: string;
@@ -23,6 +24,8 @@ export type SettingsCardCopy = {
   accountTab: string;
   userTab: string;
   integrationsTab: string;
+  paymentsTab: string;
+  payments: PaymentsCopy;
   passwordTab: string;
   emailChangeTab: string;
   specialistPolicyTab: string;
@@ -88,7 +91,6 @@ export type SettingsCardCopy = {
   refundOnLateCancel: string;
   autoCancelUnpaidEnabled: string;
   unpaidAutoCancelAfterHours: string;
-  meetingProvidersPriority: string;
   allowedMeetingProviders: string;
   meetingProviderOverrideEnabled: string;
   notificationSettingsTitle: string;

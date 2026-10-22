@@ -2,7 +2,7 @@ import { db } from '../db/knex.js';
 import { enqueueGoogleCalendarSync, enqueueGoogleCalendarUpserts } from './googleCalendarSyncRepository.js';
 
 export type AppointmentStatus = 'new' | 'confirmed' | 'cancelled';
-export type AppointmentAuditAction = 'cancel' | 'reschedule' | 'mark-paid' | 'notify';
+export type AppointmentAuditAction = 'cancel' | 'reschedule' | 'mark-paid' | 'mark-unpaid' | 'payment-received' | 'notify';
 
 export type AppointmentRecord = {
   id: number;
@@ -19,6 +19,8 @@ export type AppointmentRecord = {
   zoom_meeting_ended_at: Date | null;
   duration_min: number;
   is_paid: boolean;
+  price: number;
+  currency: string;
   user_id: number;
   service_id: number;
   group_id?: number | null;
@@ -77,6 +79,9 @@ type CreateAppointmentInput = {
   userId: number;
   serviceId: number;
   durationMin: number;
+  /** Price snapshot (whole units) copied from the service at creation time. */
+  price?: number;
+  currency?: string;
 };
 
 export class AppointmentRepositoryError extends Error {
@@ -214,8 +219,8 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
         service_id: input.serviceId,
         duration_min: input.durationMin,
         is_first_time: false,
-        price: 0,
-        currency: 'RUB',
+        price: input.price ?? 0,
+        currency: input.currency ?? 'RUB',
         is_paid: false,
       })
       .returning<AppointmentRecord[]>('*');
@@ -265,8 +270,8 @@ export async function createAppointmentSeries(input: CreateAppointmentInput & {
           group_id: group.id,
           duration_min: input.durationMin,
           is_first_time: false,
-          price: 0,
-          currency: 'RUB',
+          price: input.price ?? 0,
+          currency: input.currency ?? 'RUB',
           is_paid: false,
         })),
       ).returning<AppointmentRecord[]>('*');
@@ -336,10 +341,27 @@ export async function updateAppointment(input: UpdateAppointmentInput): Promise<
     payload.user_id = input.userId;
   }
 
-  const [row] = await db('appointments')
+  const applyUpdate = (executor: typeof db) => executor('appointments')
     .where({ account_id: input.accountId, id: input.id })
     .update(payload)
     .returning<AppointmentRecord[]>('*');
+
+  let row: AppointmentRecord | undefined;
+  if (input.isPaid === true) {
+    // Manual "paid": open online checkouts are cancelled in the same transaction, so a later payment on an
+    // old link is recorded as 'duplicate' (visible) instead of being silently accepted twice.
+    row = await db.transaction(async (trx) => {
+      const [updated] = await applyUpdate(trx as unknown as typeof db);
+      if (updated) {
+        await trx('payment_orders')
+          .where({ account_id: input.accountId, appointment_id: input.id, status: 'pending' })
+          .update({ status: 'cancelled' });
+      }
+      return updated;
+    });
+  } else {
+    [row] = await applyUpdate(db);
+  }
 
   const changesCalendarEvent = input.scheduledAt !== undefined
     || input.status !== undefined

@@ -11,6 +11,7 @@ const markNotificationSentMock = vi.hoisted(() => vi.fn());
 const markNotificationDeliveryFailureMock = vi.hoisted(() => vi.fn());
 const listDueImmediateNotificationsMock = vi.hoisted(() => vi.fn());
 const sendAppointmentNotificationByTypeMock = vi.hoisted(() => vi.fn());
+const paymentGateMock = vi.hoisted(() => vi.fn());
 
 vi.mock('../src/repositories/appointmentRepository.js', () => ({
   listAppointmentsAllAccounts: listAppointmentsAllAccountsMock,
@@ -31,6 +32,10 @@ vi.mock('../src/services/appointmentNotificationService.js', () => ({
   sendAppointmentNotificationByType: sendAppointmentNotificationByTypeMock,
 }));
 
+vi.mock('../src/services/paymentReminderService.js', () => ({
+  createCachedPaymentReminderGate: () => paymentGateMock,
+}));
+
 describe('appointment notifications job unit', () => {
   beforeEach(() => {
     listAppointmentsAllAccountsMock.mockReset();
@@ -43,6 +48,8 @@ describe('appointment notifications job unit', () => {
     markNotificationDeliveryFailureMock.mockReset();
     listDueImmediateNotificationsMock.mockReset();
     sendAppointmentNotificationByTypeMock.mockReset();
+    paymentGateMock.mockReset();
+    paymentGateMock.mockResolvedValue({ eligible: true, amount: 1500, currency: 'RUB', methods: {}, payOnline: true });
 
     listAppointmentsAllAccountsMock.mockResolvedValue([]);
     listUnpaidAppointmentsCreatedBetweenAllAccountsMock.mockResolvedValue([]);
@@ -250,5 +257,45 @@ describe('appointment notifications job unit', () => {
     await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
     expect(heartbeatNotificationProcessingMock).not.toHaveBeenCalled();
     vi.useRealTimers();
+  });
+  describe('payment reminders', () => {
+    const unpaid = {
+      id: 21,
+      account_id: 2,
+      specialist_id: 3,
+      appointment_at: new Date('2026-04-28T12:00:00.000Z'),
+      status: 'new',
+      comment: null,
+      duration_min: 30,
+      is_paid: false,
+      price: 1500,
+      currency: 'RUB',
+      user_id: 8,
+      service_id: 1,
+      created_at: new Date('2026-04-25T12:00:00.000Z'),
+      updated_at: new Date('2026-04-25T12:00:00.000Z'),
+      client_email: 'client@test.com',
+    };
+
+    it('sends the payment reminder when the gate allows it', async () => {
+      listUnpaidAppointmentsCreatedBetweenAllAccountsMock.mockResolvedValueOnce([unpaid]);
+
+      const delivered = await runAppointmentNotificationsJob(new Date('2026-04-26T12:00:00.000Z'));
+
+      expect(delivered).toBe(1);
+      expect(upsertNotificationJobMock).toHaveBeenCalledWith(expect.objectContaining({ type: 'payment_reminder:24h' }));
+      expect(sendAppointmentNotificationByTypeMock).toHaveBeenCalledWith(expect.objectContaining({ notificationType: 'payment_reminder' }));
+    });
+
+    it.each(['no_method', 'no_amount', 'paid'])('creates NO notifications row when the gate rejects (%s)', async (reason) => {
+      paymentGateMock.mockResolvedValue({ eligible: false, reason });
+      listUnpaidAppointmentsCreatedBetweenAllAccountsMock.mockResolvedValueOnce([unpaid]);
+
+      const delivered = await runAppointmentNotificationsJob(new Date('2026-04-26T12:00:00.000Z'));
+
+      expect(delivered).toBe(0);
+      expect(upsertNotificationJobMock).not.toHaveBeenCalled();
+      expect(sendAppointmentNotificationByTypeMock).not.toHaveBeenCalled();
+    });
   });
 });

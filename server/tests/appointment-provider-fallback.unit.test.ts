@@ -73,8 +73,7 @@ describe('appointment provider fallback unit', () => {
     findSpecialistByIdMock.mockResolvedValue({ id: 10, account_id: 1, user_id: 55, timezone: 'UTC' });
     findClientByIdMock.mockResolvedValue({ id: 20, preferred_meeting_provider: null });
     findSpecialistBookingPolicyMock.mockResolvedValue({
-      allowed_meeting_providers: 'offline,zoom,manual',
-      meeting_providers_priority: 'zoom,offline,manual',
+      allowed_meeting_providers: 'zoom,offline,manual',
     });
     updateClientPreferredMeetingProviderMock.mockResolvedValue(undefined);
     createAppointmentMock.mockResolvedValue({
@@ -222,8 +221,7 @@ describe('appointment provider fallback unit', () => {
 
   it('uses Yandex Telemost with the specialist credentials when it is the first candidate', async () => {
     findSpecialistBookingPolicyMock.mockResolvedValue({
-      allowed_meeting_providers: 'offline,zoom,manual,yandex_telemost',
-      meeting_providers_priority: 'yandex_telemost,zoom,offline',
+      allowed_meeting_providers: 'yandex_telemost,zoom,offline,manual',
     });
     createYandexTelemostMeetingMock.mockResolvedValue({
       ok: true,
@@ -250,8 +248,7 @@ describe('appointment provider fallback unit', () => {
 
   it('falls through from a failed Telemost to the next provider', async () => {
     findSpecialistBookingPolicyMock.mockResolvedValue({
-      allowed_meeting_providers: 'offline,zoom,manual,yandex_telemost',
-      meeting_providers_priority: 'yandex_telemost,zoom,offline',
+      allowed_meeting_providers: 'yandex_telemost,zoom,offline,manual',
     });
     createYandexTelemostMeetingMock.mockResolvedValue({ ok: false, reason: 'yandex_create_failed' });
     createZoomMeetingMock.mockResolvedValue({ ok: true, meeting: { joinUrl: 'https://zoom.us/j/2', zoomMeetingId: '2' } });
@@ -275,8 +272,7 @@ describe('appointment provider fallback unit', () => {
 
   it('ignores unknown provider ids in the policy and keeps explicit offline offline', async () => {
     findSpecialistBookingPolicyMock.mockResolvedValue({
-      allowed_meeting_providers: 'offline,bogus,yandex_telemost',
-      meeting_providers_priority: 'bogus,yandex_telemost,offline',
+      allowed_meeting_providers: 'bogus,yandex_telemost,offline',
     });
 
     await createAppointmentForActor(

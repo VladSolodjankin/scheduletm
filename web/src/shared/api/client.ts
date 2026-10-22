@@ -1,5 +1,16 @@
 import axios from 'axios';
 
+import type {
+  PaymentManualSettings,
+  PaymentProviderCredentialsPayload,
+  PaymentProviderId,
+  PaymentSettings,
+  PaymentTestReminderResponse,
+  PublicPaymentCheckoutResponse,
+  PublicPaymentDetails,
+  StripeOAuthStartResponse,
+} from '../types/api';
+
 const runtimeOrigin = typeof window === 'undefined' ? undefined : window.location.origin;
 
 function normalizeBaseUrl(rawBaseUrl?: string): string | undefined {
@@ -218,4 +229,48 @@ export const telegramBotApi = {
   update: <T, P>(accessToken: string, payload: P) => apiClient.put<T>('/api/settings/telegram-bot', payload, {
     headers: authHeaders(accessToken),
   }),
+};
+
+export const paymentsApi = {
+  get: (accessToken: string) => apiClient.get<PaymentSettings>('/api/settings/payments', {
+    headers: authHeaders(accessToken),
+  }),
+  updateManual: (accessToken: string, payload: PaymentManualSettings) => apiClient.put<PaymentSettings>(
+    '/api/settings/payments/manual',
+    payload,
+    { headers: authHeaders(accessToken) },
+  ),
+  saveProvider: (accessToken: string, provider: 'yookassa' | 'bog', payload: PaymentProviderCredentialsPayload) => apiClient.put<PaymentSettings>(
+    `/api/settings/payments/providers/${provider}`,
+    payload,
+    { headers: authHeaders(accessToken) },
+  ),
+  disconnectProvider: (accessToken: string, provider: PaymentProviderId) => apiClient.post<PaymentSettings>(
+    `/api/settings/payments/providers/${provider}/disconnect`,
+    {},
+    { headers: authHeaders(accessToken) },
+  ),
+  setActiveProvider: (accessToken: string, provider: PaymentProviderId | null) => apiClient.put<PaymentSettings>(
+    '/api/settings/payments/active-provider',
+    { provider },
+    { headers: authHeaders(accessToken) },
+  ),
+  startStripeOAuth: (accessToken: string) => apiClient.post<StripeOAuthStartResponse>(
+    '/api/integrations/stripe/oauth/start',
+    {},
+    { headers: authHeaders(accessToken) },
+  ),
+  sendTestReminder: (accessToken: string) => apiClient.post<PaymentTestReminderResponse>(
+    '/api/settings/payments/test-reminder',
+    {},
+    { headers: authHeaders(accessToken) },
+  ),
+};
+
+export const publicPaymentsApi = {
+  get: (token: string) => apiClient.get<PublicPaymentDetails>(`/api/public/payments/${encodeURIComponent(token)}`),
+  checkout: (token: string) => apiClient.post<PublicPaymentCheckoutResponse>(
+    `/api/public/payments/${encodeURIComponent(token)}/checkout`,
+    {},
+  ),
 };

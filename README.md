@@ -94,8 +94,11 @@ npm run -w @scheduletm/server migrate:latest
 - remaining browser E2E iteration-2 scope;
 - Public Page analytics/custom domains/scheduled publishing.
 
-Production MVP запускается без обязательной встроенной оплаты клиента. Актуальный
-порядок обязательных и отложенных бизнес-функций определён в [`TODO.md`](./TODO.md).
+Production MVP запускается без обязательной встроенной оплаты клиента: онлайн-оплата
+опциональна и настраивается на уровне аккаунта в Settings > Payment setup (Stripe,
+ЮKassa, Bank of Georgia, а также ручные способы: перевод, ссылка, наличные). Без
+настроенного способа напоминания об оплате не отправляются; депозиты и возвраты отложены.
+Актуальный порядок обязательных и отложенных бизнес-функций определён в [`TODO.md`](./TODO.md).
 
 Фактическая release readiness подтверждается только после закрытия code, CI,
 migration, secrets, backup/restore, staging/browser и observability gates из

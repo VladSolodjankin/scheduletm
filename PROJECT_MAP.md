@@ -29,6 +29,7 @@
 - Notification delivery/logs and error tracking/logs.
 - Public Pages builder and public `/:slug` rendering.
 - Public privacy/security routes and compliance documents.
+- Payments: per-account Payment setup (Stripe/YooKassa/BOG + manual methods), public `/pay/:token` checkout, payment webhooks, payment reminders ([`server/docs/payment-webhooks.md`](./server/docs/payment-webhooks.md)).
 
 ## Навигация по документации
 

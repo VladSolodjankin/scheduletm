@@ -11,6 +11,7 @@ import {
   createAppointmentForActor,
   getAppointments,
   markPaidAppointmentForActor,
+  markUnpaidAppointmentForActor,
   notifyAppointmentForActor,
   rescheduleAppointmentForActor,
   updateAppointmentForActor,
@@ -252,6 +253,36 @@ appointmentRoutes.post('/:id/mark-paid', async (req, res) => {
     void trackServerError({ actor, method: req.method, path: req.path, error });
     res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'appointmentMarkPaidFailed') });
+  }
+});
+
+appointmentRoutes.post('/:id/mark-unpaid', async (req, res) => {
+  const actor = (req as unknown as AuthedRequest).user;
+  const appointmentId = Number(req.params.id);
+
+  if (!Number.isInteger(appointmentId) || appointmentId <= 0) {
+    return res.status(400).json({ message: t(req, 'invalidAppointmentId') });
+  }
+
+  try {
+    const updated = await markUnpaidAppointmentForActor(actor, appointmentId);
+    if (!updated) {
+      return res.status(404).json({ message: t(req, 'appointmentNotFound') });
+    }
+
+    return res.json(updated);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'UNKNOWN';
+    if (message === 'FORBIDDEN_SPECIALIST') {
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
+    }
+    if (message === 'FORBIDDEN_CLIENT') {
+      return res.status(403).json({ message: t(req, 'forbiddenAppointmentScope') });
+    }
+
+    void trackServerError({ actor, method: req.method, path: req.path, error });
+    res.locals.errorTracked = true;
+    return res.status(500).json({ message: t(req, 'appointmentMarkUnpaidFailed') });
   }
 });
 
