@@ -38,6 +38,25 @@ export async function listScheduleExceptions(
     .select<ScheduleExceptionRecord[]>(...COLUMNS);
 }
 
+export async function listScheduleExceptionsInRange(
+  accountId: number,
+  specialistIds: number[],
+  fromDate: string,
+  toDate: string,
+): Promise<ScheduleExceptionRecord[]> {
+  if (specialistIds.length === 0) {
+    return [];
+  }
+
+  return db('specialist_schedule_exceptions')
+    .where({ account_id: accountId })
+    .whereIn('specialist_id', specialistIds)
+    .andWhere('exception_date', '>=', fromDate)
+    .andWhere('exception_date', '<=', toDate)
+    .orderBy('exception_date', 'asc')
+    .select<ScheduleExceptionRecord[]>(...COLUMNS);
+}
+
 export async function findScheduleExceptionsForDate(
   accountId: number,
   specialistId: number,

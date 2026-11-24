@@ -34,6 +34,7 @@ import { useI18n } from '../shared/i18n/I18nContext';
 import type {
   AppointmentItem,
   AppointmentListResponse,
+  AppointmentScheduleException,
   ClientItem,
   SpecialistBookingPolicy,
   SpecialistItem,
@@ -55,6 +56,7 @@ export function AppointmentsContainer() {
   const [connectedProviders, setConnectedProviders] = useState({ zoom: false, yandexTelemost: false });
   const [clients, setClients] = useState<ClientItem[]>([]);
   const [busySlots, setBusySlots] = useState<AppointmentListResponse['busySlots']>([]);
+  const [scheduleExceptions, setScheduleExceptions] = useState<AppointmentScheduleException[]>([]);
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<number | 'all'>('all');
   const [selectedClientId, setSelectedClientId] = useState<number | 'all'>('all');
   const [selectedStatus, setSelectedStatus] = useState<AppointmentItem['status'] | 'all'>('all');
@@ -181,6 +183,24 @@ export function AppointmentsContainer() {
     return map;
   }, [busySlots, displayTimeZone]);
 
+  const exceptionsByCell = useMemo(() => {
+    const map = new Map<string, AppointmentScheduleException>();
+    const stepMs = 30 * 60_000;
+
+    for (const item of scheduleExceptions) {
+      const endMs = new Date(item.endsAt).getTime();
+      for (let ms = Math.floor(new Date(item.startsAt).getTime() / stepMs) * stepMs; ms < endMs; ms += stepMs) {
+        const date = new Date(ms);
+        const key = `${toDateKeyInTimezone(date, displayTimeZone)}:${toTimeKeyInTimezone(date, displayTimeZone)}`;
+        if (!map.has(key)) {
+          map.set(key, item);
+        }
+      }
+    }
+
+    return map;
+  }, [scheduleExceptions, displayTimeZone]);
+
   const appointmentsByDay = useMemo(() => {
     const map = new Map<string, AppointmentItem[]>();
 
@@ -277,6 +297,7 @@ export function AppointmentsContainer() {
       setSpecialists(response.data.specialists);
       setClients(response.data.clients ?? []);
       setBusySlots(response.data.busySlots ?? []);
+      setScheduleExceptions(response.data.scheduleExceptions ?? []);
       setError('');
     } catch (err) {
       setError(resolveError(err, t('appointments.errors.load')).message);
@@ -740,6 +761,7 @@ export function AppointmentsContainer() {
             appointmentsByCell={appointmentsByCell}
             appointmentsByDay={appointmentsByDay}
             busySlotsByCell={busySlotsByCell}
+            exceptionsByCell={exceptionsByCell}
             movePeriod={movePeriod}
             onToday={() => setFocusDate(startOfDay(new Date()))}
             onSetViewMode={setViewMode}
@@ -783,6 +805,7 @@ export function AppointmentsContainer() {
         clients={clients}
         selectedSpecialistId={selectedSpecialistId}
         selectedSlotStepMin={selectedSlotStepMin}
+        scheduleExceptions={scheduleExceptions}
         initialScheduledAtIso={createInitialScheduledAtIso}
         isSubmittingForm={isSubmittingForm}
         isCancellingAppointment={isCancellingAppointment}

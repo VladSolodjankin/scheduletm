@@ -256,6 +256,17 @@ export type AppointmentListResponse = {
     source: 'google' | 'microsoft';
     title?: string;
   }>;
+  scheduleExceptions?: AppointmentScheduleException[];
+};
+
+export type AppointmentScheduleException = {
+  id: number;
+  specialistId: number;
+  type: ScheduleExceptionType;
+  startsAt: string;
+  endsAt: string;
+  wholeDay: boolean;
+  note: string | null;
 };
 
 

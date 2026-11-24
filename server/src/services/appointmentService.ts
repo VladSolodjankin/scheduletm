@@ -22,6 +22,8 @@ import {
   updateClientPreferredMeetingProvider,
   updateClientById,
 } from '../repositories/clientRepository.js';
+import { listScheduleExceptionsInRange } from '../repositories/specialistScheduleExceptionRepository.js';
+import { zonedTimeToUtc } from './publicBookingService.js';
 import { findSpecialistBookingPolicy } from '../repositories/specialistBookingPolicyRepository.js';
 import {
   findSpecialistById,
@@ -89,6 +91,15 @@ type AppointmentListResult = {
   specialists: Array<{ id: number; name: string; timezone: string; slotStepMin: number; isActive: boolean }>;
   clients: AppointmentClientDto[];
   busySlots: ExternalBusySlot[];
+  scheduleExceptions: Array<{
+    id: number;
+    specialistId: number;
+    type: string;
+    startsAt: string;
+    endsAt: string;
+    wholeDay: boolean;
+    note: string | null;
+  }>;
 };
 
 type AppointmentClientPayload = {
@@ -411,6 +422,30 @@ export async function getAppointments(
     to: toDate,
     ownerWebUserId: Number.isInteger(Number(actor.id)) ? Number(actor.id) : undefined,
   });
+  const dayMs = 24 * 60 * 60 * 1000;
+  const exceptionRecords = await listScheduleExceptionsInRange(
+    accountId,
+    busySpecialistIds,
+    new Date(fromDate.getTime() - dayMs).toISOString().slice(0, 10),
+    new Date(toDate.getTime() + dayMs).toISOString().slice(0, 10),
+  );
+  const timezoneBySpecialistId = new Map(allSpecialists.map((item) => [item.id, item.timezone]));
+  const scheduleExceptions = exceptionRecords.map((item) => {
+    const timezone = timezoneBySpecialistId.get(item.specialist_id) ?? 'UTC';
+    const [year, month, day] = item.exception_date.slice(0, 10).split('-').map(Number);
+    const wholeDay = item.starts_at_minute === null || item.ends_at_minute === null;
+    const startMinute = wholeDay ? 0 : (item.starts_at_minute as number);
+    const endMinute = wholeDay ? 24 * 60 : (item.ends_at_minute as number);
+    return {
+      id: item.id,
+      specialistId: item.specialist_id,
+      type: item.type,
+      startsAt: zonedTimeToUtc(year, month, day, Math.floor(startMinute / 60), startMinute % 60, timezone).toISOString(),
+      endsAt: zonedTimeToUtc(year, month, day, Math.floor(endMinute / 60), endMinute % 60, timezone).toISOString(),
+      wholeDay,
+      note: item.note,
+    };
+  });
   const appointmentsForUi = items.map(mapAppointment);
   const eventsByAppointmentId = mapEventsByAppointmentId(
     await listAppointmentEventsByAppointmentIds(
@@ -438,6 +473,7 @@ export async function getAppointments(
         .map(mapClient)
       : (await listClientsByAccount(accountId)).map(mapClient),
     busySlots: filterBusySlotsOverlappingAppointments(appointmentsForUi, busySlots),
+    scheduleExceptions,
   };
 }
 

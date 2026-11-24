@@ -11,7 +11,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { Fragment, useState } from 'react';
-import type { AppointmentItem, AppointmentListResponse } from '../../shared/types/api';
+import type { AppointmentItem, AppointmentListResponse, AppointmentScheduleException } from '../../shared/types/api';
 import type { TranslationKey } from '../../shared/i18n/dictionaries';
 import { APP_SIZING, APP_SPACING, rem } from '../../shared/theme/constants';
 import { AppButton } from '../../shared/ui/AppButton';
@@ -36,6 +36,7 @@ type Props = {
   appointmentsByCell: Map<string, AppointmentItem[]>;
   appointmentsByDay: Map<string, AppointmentItem[]>;
   busySlotsByCell: Map<string, AppointmentListResponse['busySlots']>;
+  exceptionsByCell: Map<string, AppointmentScheduleException>;
   movePeriod: (direction: -1 | 1) => void;
   onToday: () => void;
   onSetViewMode: (mode: CalendarViewMode) => void;
@@ -54,6 +55,7 @@ export function AppointmentsCalendar({
   appointmentsByCell,
   appointmentsByDay,
   busySlotsByCell,
+  exceptionsByCell,
   movePeriod,
   onToday,
   onSetViewMode,
@@ -68,6 +70,16 @@ export function AppointmentsCalendar({
   const [blockedCellKey, setBlockedCellKey] = useState<string | null>(null);
   const todayKey = toDateKeyInTimezone(new Date(), displayTimeZone);
   const isPastDay = (dayKey: string) => dayKey < todayKey;
+
+  const exceptionTypeLabel = (type: AppointmentScheduleException['type']) => t(
+    type === 'day_off'
+      ? 'settings.scheduleExceptions.types.dayOff'
+      : type === 'vacation'
+        ? 'settings.scheduleExceptions.types.vacation'
+        : type === 'interval'
+          ? 'settings.scheduleExceptions.types.interval'
+          : 'settings.scheduleExceptions.types.break',
+  );
 
   const getMeetingProviderLabel = (provider: AppointmentItem['meetingProvider']) => (
     provider === 'zoom'
@@ -153,6 +165,8 @@ export function AppointmentsCalendar({
             const items = appointmentsByDay.get(dayKey) ?? [];
             const isToday = dayKey === todayKey;
             const isPast = isPastDay(dayKey);
+            const dayOff = exceptionsByCell.get(`${dayKey}:00:00`);
+            const wholeDayOff = dayOff?.wholeDay ? dayOff : undefined;
 
             return (
               <Card
@@ -162,7 +176,11 @@ export function AppointmentsCalendar({
                 sx={{
                   borderRadius: 3,
                   borderColor: isToday ? 'primary.main' : alpha(theme.palette.primary.main, 0.12),
-                  bgcolor: isPast ? 'action.disabledBackground' : alpha(theme.palette.background.paper, 0.98),
+                  bgcolor: isPast
+                    ? 'action.disabledBackground'
+                    : wholeDayOff
+                      ? alpha(theme.palette.warning.main, 0.14)
+                      : alpha(theme.palette.background.paper, 0.98),
                   opacity: isPast ? 0.8 : 1,
                   cursor: 'pointer',
                   transition: 'background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease',
@@ -183,6 +201,7 @@ export function AppointmentsCalendar({
                         {formatLocalDate(day, { weekday: 'short', day: '2-digit', month: 'short' })}
                       </Typography>
                       {isToday ? <AppStatusBadge label={t('appointments.today')} tone="info" /> : null}
+                      {wholeDayOff ? <AppStatusBadge label={exceptionTypeLabel(wholeDayOff.type)} tone="warning" /> : null}
                     </Stack>
 
                     <Stack spacing={0.75}>
@@ -307,6 +326,10 @@ export function AppointmentsCalendar({
                     const items = appointmentsByCell.get(key) ?? [];
                     const externalBusy = busySlotsByCell.get(key) ?? [];
                     const isPastSlot = isSlotInPast(dayKey, hour, minute, displayTimeZone);
+                    const exception = exceptionsByCell.get(key);
+                    const previousTimeKey = `${String(Math.floor((totalMinute - 30) / 60)).padStart(2, '0')}:${String((totalMinute - 30) % 60).padStart(2, '0')}`;
+                    const isExceptionStart = Boolean(exception)
+                      && (totalMinute === 0 || exceptionsByCell.get(`${dayKey}:${previousTimeKey}`)?.id !== exception?.id);
 
                     return (
                       <Box
@@ -320,7 +343,9 @@ export function AppointmentsCalendar({
                           p: 0.5,
                           bgcolor: isPastSlot
                             ? 'action.disabledBackground'
-                            : alpha(theme.palette.background.paper, 0.92),
+                            : exception
+                              ? alpha(theme.palette.warning.main, 0.14)
+                              : alpha(theme.palette.background.paper, 0.92),
                           opacity: isPastSlot ? 0.82 : 1,
                           transition: 'background-color 0.15s ease',
                           '&:hover': {
@@ -387,6 +412,14 @@ export function AppointmentsCalendar({
                         ) : null}
 
                         <Stack spacing={0.5}>
+                          {exception && isExceptionStart ? (
+                            <AppStatusBadge
+                              label={exceptionTypeLabel(exception.type)}
+                              tone="warning"
+                              sx={{ maxWidth: '100%' }}
+                            />
+                          ) : null}
+
                           {externalBusy.map((slot) => (
                             <AppStatusBadge
                               key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}

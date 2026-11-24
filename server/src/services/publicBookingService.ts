@@ -86,7 +86,7 @@ function timezoneOffsetMinutes(instant: Date, timeZone: string): number {
   return (asUtc - instant.getTime()) / 60_000;
 }
 
-function zonedTimeToUtc(year: number, month: number, day: number, hour: number, minute: number, timeZone: string): Date {
+export function zonedTimeToUtc(year: number, month: number, day: number, hour: number, minute: number, timeZone: string): Date {
   const approximateUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
   const offsetMinutes = timezoneOffsetMinutes(new Date(approximateUtcMs), timeZone);
   return new Date(approximateUtcMs - offsetMinutes * 60_000);

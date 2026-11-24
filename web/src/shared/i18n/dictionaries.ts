@@ -825,6 +825,7 @@ export const dictionaries = {
       save: 'Save',
       close: 'Close',
       emptyDay: 'No appointments on this day.',
+      scheduleExceptionWarning: 'The specialist is unavailable at the selected time ({type}).',
       viewDay: 'Day',
       viewWeek: 'Week',
       viewMonth: 'Month',
@@ -1893,6 +1894,7 @@ export const dictionaries = {
       save: 'Сохранить',
       close: 'Закрыть',
       emptyDay: 'На этот день записей нет.',
+      scheduleExceptionWarning: 'Специалист недоступен в выбранное время ({type}).',
       viewDay: 'День',
       viewWeek: 'Неделя',
       viewMonth: 'Месяц',
@@ -2573,6 +2575,7 @@ export type TranslationKey =
   | 'appointments.save'
   | 'appointments.close'
   | 'appointments.emptyDay'
+  | 'appointments.scheduleExceptionWarning'
   | 'appointments.viewDay'
   | 'appointments.viewWeek'
   | 'appointments.viewMonth'

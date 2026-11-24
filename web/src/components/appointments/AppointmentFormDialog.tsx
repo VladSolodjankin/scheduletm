@@ -16,7 +16,7 @@ import {
 import { isAxiosError } from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import type { AppointmentItem, AppointmentStatus, ClientItem, SpecialistItem } from '../../shared/types/api';
+import type { AppointmentItem, AppointmentScheduleException, AppointmentStatus, ClientItem, SpecialistItem } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppDialog } from '../../shared/ui/AppDialog';
 import { AppIcons } from '../../shared/ui/AppIcons';
@@ -30,6 +30,7 @@ import {
   BROWSER_TIMEZONE,
   buildStartEndIso,
   composeFormDateTime,
+  fromDatetimeLocal,
   createFormValuesFromAppointmentAt,
   EditFormState,
   splitLocalDateTime,
@@ -63,6 +64,7 @@ type Props = {
   clients: ClientItem[];
   selectedSpecialistId: number | 'all';
   selectedSlotStepMin: number;
+  scheduleExceptions: AppointmentScheduleException[];
   initialScheduledAtIso: string | null;
   isSubmittingForm: boolean;
   accessToken: string;
@@ -133,6 +135,7 @@ export function AppointmentFormDialog({
   clients,
   selectedSpecialistId,
   selectedSlotStepMin,
+  scheduleExceptions,
   initialScheduledAtIso,
   isSubmittingForm,
   accessToken,
@@ -277,6 +280,25 @@ export function AppointmentFormDialog({
   const meetingProviderValue = useWatch({ control, name: 'meetingProvider' });
   const meetingLinkValue = useWatch({ control, name: 'meetingLink' });
   const recurrenceFrequency = useWatch({ control, name: 'recurrenceFrequency' });
+  const specialistIdValue = useWatch({ control, name: 'specialistId' });
+
+  const conflictingException = useMemo(() => {
+    if (!startDateValue || !startTimeValue || !endTimeValue) {
+      return null;
+    }
+
+    const startMs = new Date(fromDatetimeLocal(composeFormDateTime(startDateValue, startTimeValue), formTimeZone)).getTime();
+    const endMs = new Date(fromDatetimeLocal(composeFormDateTime(startDateValue, endTimeValue), formTimeZone)).getTime();
+    if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
+      return null;
+    }
+
+    return scheduleExceptions.find((item) => (
+      String(item.specialistId) === String(specialistIdValue)
+      && new Date(item.startsAt).getTime() < Math.max(endMs, startMs + 1)
+      && new Date(item.endsAt).getTime() > startMs
+    )) ?? null;
+  }, [endTimeValue, formTimeZone, scheduleExceptions, specialistIdValue, startDateValue, startTimeValue]);
 
   useEffect(() => {
     if (!open || editingItem || !startDateValue || !startTimeValue) {
@@ -583,6 +605,19 @@ export function AppointmentFormDialog({
               )}
             />
           </Box>
+          {conflictingException ? (
+            <Alert severity="warning">
+              {t('appointments.scheduleExceptionWarning').replace('{type}', t(
+                conflictingException.type === 'day_off'
+                  ? 'settings.scheduleExceptions.types.dayOff'
+                  : conflictingException.type === 'vacation'
+                    ? 'settings.scheduleExceptions.types.vacation'
+                    : conflictingException.type === 'interval'
+                      ? 'settings.scheduleExceptions.types.interval'
+                      : 'settings.scheduleExceptions.types.break',
+              ))}
+            </Alert>
+          ) : null}
           <Box sx={createResponsiveFieldGridSx(2)}>
             <Controller
               name="status"
