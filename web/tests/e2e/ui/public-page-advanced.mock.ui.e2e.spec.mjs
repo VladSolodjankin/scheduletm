@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { PUBLIC_PAGE_TEMPLATES } from '../../../src/features/public-page-builder/templates/index.ts';
+import { PUBLIC_PAGE_SCHEMA_VERSION } from '@scheduletm/shared/public-page';
 import { publicPageText } from '../../../src/components/public-page-builder/uiText.ts';
 
 const PAGE_ID = 'c93e91d7-7eb2-41cf-bdac-c8c9d251bb11';
@@ -17,15 +18,17 @@ async function mockPage(page, locale) {
   await page.addInitScript((locale) => {
     localStorage.setItem('ui-locale', locale);
     localStorage.setItem('scheduletm_access_token', 'mock-token');
-    localStorage.setItem('scheduletm_auth_user', JSON.stringify({ id: 'mock-admin', email: 'admin@example.test', role: 'admin', fullName: 'Test Admin' }));
+    localStorage.setItem('scheduletm_auth_user', JSON.stringify({ id: 'mock-admin', email: 'admin@example.test', role: 'owner', fullName: 'Test Admin' }));
   }, locale);
   await page.route(/^https?:\/\/[^/]+\/api(?:\/|$)/, async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     const method = request.method();
     const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+    if (method === 'POST' && url.pathname.endsWith('/events')) return route.fulfill({ status: 204 });
+    if (method === 'GET' && url.pathname === `/api/public-pages/${PAGE_ID}/domain`) return json({ domain: null });
     if (method === 'GET' && url.pathname === '/api/services') return json({ services: [], specialists: [] });
-    if (method === 'PUT' && url.pathname === '/api/settings/user') return json({});
+    if (url.pathname === '/api/settings/user') return json({});
     if (method === 'GET' && url.pathname === '/api/public-pages/slug-availability') return json({ slug: url.searchParams.get('slug'), available: true });
     if (method === 'GET' && url.pathname === `/api/public-pages/${PAGE_ID}`) return json(state.record);
     if (method === 'GET' && url.pathname === '/api/public-pages/by-slug/advanced-mock') return json(state.record.published);
@@ -33,7 +36,7 @@ async function mockPage(page, locale) {
     if (method === 'PUT' && url.pathname === `/api/public-pages/${PAGE_ID}/draft`) {
       const payload = request.postDataJSON();
       expect(payload.expectedRevision).toBe(state.record.revision);
-      expect(payload.document.schemaVersion).toBe(4);
+      expect(payload.document.schemaVersion).toBe(PUBLIC_PAGE_SCHEMA_VERSION);
       state.saves.push(payload);
       state.record = { ...state.record, draft: payload.document, revision: state.record.revision + 1 };
       return json(state.record);
@@ -84,12 +87,13 @@ for (const [width, locale] of [[1440, 'en'], [390, 'ru']]) {
     await expect(dialog.getByRole('switch', { name: t('openInNewTab'), exact: true })).toBeChecked();
     await expect(dialog.getByRole('button', { name: t('sunday'), exact: true })).toHaveAttribute('aria-pressed', 'true');
     await dialog.getByRole('button', { name: t('cancel'), exact: true }).click();
-    await page.locator('[data-editor-block-id="audit-button"]').focus();
+    await page.locator('[data-editor-block-id="audit-button"]').hover();
     await page.getByRole('button', { name: t('archiveBlock'), exact: true }).click();
     await page.getByRole('button', { name: t('undo'), exact: true }).click();
-    await page.locator('[data-editor-block-id="audit-button"]').focus();
+    await page.locator('[data-editor-block-id="audit-button"]').hover();
     await expect(page.getByRole('button', { name: t('archiveBlock'), exact: true })).toBeVisible();
     await page.getByRole('button', { name: t('archiveBlock'), exact: true }).click();
+    await page.getByRole('button', { name: t('addBlock'), exact: true }).click();
     await page.getByRole('button', { name: t('blockArchive'), exact: true }).click();
     const archive = page.getByRole('dialog', { name: t('blockArchive'), exact: true });
     await archive.getByRole('button', { name: t('restore'), exact: true }).click();
@@ -97,8 +101,8 @@ for (const [width, locale] of [[1440, 'en'], [390, 'ru']]) {
     await archive.getByRole('button', { name: t('close'), exact: true }).click();
     await page.getByRole('button', { name: t('save'), exact: true }).click();
     await expect.poll(() => state.record.draft.archivedBlocks.length).toBe(0);
-    await page.getByRole('button', { name: t('design'), exact: true }).click();
-    const design = page.getByRole('dialog', { name: t('design'), exact: true });
+    await page.getByRole('button', { name: t('settings'), exact: true }).click();
+    const design = page.getByRole('dialog', { name: t('settings'), exact: true });
     await expect(design.getByRole('tab', { name: t('simpleEditor'), exact: true })).toHaveAttribute('aria-selected', 'true');
     await expect(design.getByRole('button', { name: t('colorPalettes'), exact: true })).toHaveAttribute('aria-expanded', 'true');
     await design.getByRole('tab', { name: t('advancedEditor'), exact: true }).click();
@@ -113,8 +117,8 @@ for (const [width, locale] of [[1440, 'en'], [390, 'ru']]) {
     await page.getByRole('button', { name: t('save'), exact: true }).click();
     await expect.poll(() => state.record.draft.theme.styleDefaults.linkStyle.borderWidth).toBe(3);
     await page.reload();
-    await page.getByRole('button', { name: t('design'), exact: true }).click();
-    await page.getByRole('dialog', { name: t('design'), exact: true }).getByRole('tab', { name: t('advancedEditor'), exact: true }).click();
+    await page.getByRole('button', { name: t('settings'), exact: true }).click();
+    await page.getByRole('dialog', { name: t('settings'), exact: true }).getByRole('tab', { name: t('advancedEditor'), exact: true }).click();
     await page.locator('[data-public-page-advanced-design]').getByRole('button', { name: t('buttons'), exact: true }).click();
     await expect(page.locator('[data-public-page-advanced-design]').getByLabel(t('borderWidth'), { exact: true })).toHaveValue('3');
     expect(state.unexpected).toEqual([]);
@@ -149,6 +153,7 @@ test('public rich text uses page typography and explicit section overrides', asy
   ] } } };
   const override = structuredClone(section);
   override.id = 'explicit-section';
+  override.design.variant = 'custom';
   override.blocks[0].id = 'explicit-text';
   override.design.headingStyle = { ...override.design.headingStyle, fontSize: 28, fontWeight: 600, fontStyle: 'normal' };
   override.design.textStyle = { ...override.design.textStyle, fontSize: 18, fontWeight: 400, fontStyle: 'normal' };

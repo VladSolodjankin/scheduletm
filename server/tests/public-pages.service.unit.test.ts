@@ -66,7 +66,7 @@ describe('public page service', () => {
         ...validPublicPageDocument.sections[0]!.blocks[0],
         type: 'services',
         content: {
-          title: 'Services', serviceIds, autoplayIntervalSeconds: null, showBookingButton: true,
+          title: 'Services', serviceIds, autoplayIntervalSeconds: null, showBookingButton: true, layout: 'carousel',
         },
       }],
     }],

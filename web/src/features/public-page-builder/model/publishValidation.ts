@@ -1,7 +1,7 @@
 import type { CtaAction, PageBlock, PublicPageDocument } from '../types/publicPage';
 import { getBlockDefinition } from './blockRegistry';
 import { isSafeCtaAction } from './cta';
-import { validateDocument } from './validateDocument';
+import { publicPageDocumentSchema } from '@scheduletm/shared/public-page';
 import { collectReferencedMediaIds, validateMediaReference } from './media';
 import { validateSlug } from './slug';
 
@@ -34,12 +34,9 @@ export type PublishValidationResult = {
 };
 
 export type PageSettingsFocusMarker =
-  | 'profile.displayName'
-  | 'profile.description'
-  | 'profile.logoMediaId'
-  | 'profile.avatarMediaId'
   | 'seo.title'
   | 'seo.description'
+  | 'seo.imageMediaId'
   | 'slug';
 
 export type PublishIssueFocusTarget =
@@ -142,11 +139,8 @@ function mediaOwnerFocusTarget(
   if (!mediaId) {return { type: 'validation-alert' };}
   const altMarker = `media:${mediaId}:alt`;
 
-  if (document.profile.logoMediaId === mediaId) {
-    return { type: 'page-settings', marker: field === 'alt' ? altMarker : 'profile.logoMediaId' };
-  }
-  if (document.profile.avatarMediaId === mediaId) {
-    return { type: 'page-settings', marker: field === 'alt' ? altMarker : 'profile.avatarMediaId' };
+  if (document.seo.imageMediaId === mediaId) {
+    return { type: 'page-settings', marker: field === 'alt' ? altMarker : 'seo.imageMediaId' };
   }
 
   for (const section of document.sections) {
@@ -199,12 +193,9 @@ export function resolvePublishIssueFocusTarget(
   }
 
   const pageMarkers = new Set<PageSettingsFocusMarker>([
-    'profile.displayName',
-    'profile.description',
-    'profile.logoMediaId',
-    'profile.avatarMediaId',
     'seo.title',
     'seo.description',
+    'seo.imageMediaId',
     'slug',
   ]);
   if (pageMarkers.has(issue.path as PageSettingsFocusMarker)) {
@@ -316,10 +307,12 @@ function validateBlockContent(
 
 export function validateForPublish(document: PublicPageDocument): PublishValidationResult {
   const issues: PublishValidationIssue[] = [];
-  const structural = validateDocument(document);
-  structural.errors.forEach((error) => {
-    issues.push({ code: 'invalid_document', path: error.path, detail: error.code });
-  });
+  const structural = publicPageDocumentSchema.safeParse(document);
+  if (!structural.success) {
+    structural.error.issues.forEach((issue) => {
+      issues.push({ code: 'invalid_document', path: issue.path.join('.'), detail: issue.code });
+    });
+  }
 
   const slugError = validateSlug(document.slug);
   if (slugError) {issues.push({ code: 'invalid_slug', path: 'slug', detail: slugError });}
@@ -328,8 +321,6 @@ export function validateForPublish(document: PublicPageDocument): PublishValidat
     issues.push({ code: 'missing_seo_description', path: 'seo.description' });
   }
   for (const [path, mediaId] of [
-    ['profile.logoMediaId', document.profile.logoMediaId],
-    ['profile.avatarMediaId', document.profile.avatarMediaId],
     ['seo.imageMediaId', document.seo.imageMediaId],
   ] as const) {
     if (mediaId !== null && (typeof mediaId !== 'string' || !document.media.some((media) => media.id === mediaId))) {
@@ -345,7 +336,7 @@ export function validateForPublish(document: PublicPageDocument): PublishValidat
   }
 
   const archivedMedia = new Set(collectReferencedMediaIds(document.archivedBlocks));
-  const activeMedia = new Set(collectReferencedMediaIds({ profile: document.profile, theme: document.theme, seo: document.seo, sections: document.sections }));
+  const activeMedia = new Set(collectReferencedMediaIds({ theme: document.theme, seo: document.seo, sections: document.sections }));
   document.media.forEach((media, index) => {
     if (archivedMedia.has(media.id) && !activeMedia.has(media.id)) {return;}
     const mediaError = validateMediaReference(media);

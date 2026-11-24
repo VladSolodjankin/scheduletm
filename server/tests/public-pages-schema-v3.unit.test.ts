@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Knex } from 'knex';
-import { publicPageDocumentSchema } from '../src/config/publicPageSchemas.js';
+import { publicPageDocumentSchema } from '@scheduletm/shared/public-page';
 import { convertPublicPageDocumentToSchemaV3, down, up } from '../src/db/migrations/20260910160000_migrate_public_pages_to_schema_v3.js';
 import { convertPublicPageDocumentToSchemaV4 } from '../src/db/migrations/20260910180000_migrate_public_pages_to_schema_v4.js';
 import { convertPublicPageDocumentToSchemaV5 } from '../src/db/migrations/20261003193000_migrate_public_pages_to_schema_v5.js';
+import { convertPublicPageDocumentToSchemaV6 } from '../src/db/migrations/20261110090000_migrate_public_pages_to_schema_v6.js';
+import { convertPublicPageDocumentToSchemaV7 } from '../src/db/migrations/20261118090000_migrate_public_pages_to_schema_v7.js';
+import { convertPublicPageDocumentToSchemaV8 } from '../src/db/migrations/20261119090000_migrate_public_pages_to_schema_v8.js';
 import { publicSnapshotWithoutArchive } from '../src/utils/publicPageReferences.js';
-import { validPublicPageDocument } from './publicPageTestFixture.js';
+import { validPublicPageDocument, validSchemaV5Document } from './publicPageTestFixture.js';
 
 const withSchedule = (schedule: unknown) => ({ ...validPublicPageDocument, sections: [{
   ...validPublicPageDocument.sections[0], blocks: [{ ...validPublicPageDocument.sections[0]!.blocks[0], schedule }],
@@ -39,7 +42,7 @@ describe('public page v3 contract', () => {
   });
   it('strips archived content and archive-only media but retains shared media and scheduled blocks', () => {
     const source = publicPageDocumentSchema.parse({ ...validPublicPageDocument,
-      profile: { ...validPublicPageDocument.profile, logoMediaId: 'shared' },
+      seo: { ...validPublicPageDocument.seo, imageMediaId: 'shared' },
       media: ['archive-only', 'shared'].map((id) => ({ id, url: `https://example.org/${id}`, mimeType: 'image/png', alt: id, width: 1, height: 1 })),
       archivedBlocks: [{ sourceSectionId: 'removed-section', block: {
         ...validPublicPageDocument.sections[0]!.blocks[0], id: 'archived', type: 'gallery',
@@ -54,9 +57,9 @@ describe('public page v3 contract', () => {
     expect(source.media).toHaveLength(2);
   });
   it('converts v2 without changing IDs, media or numeric font units; moves active button colors only', () => {
-    const { timezone: _timezone, archivedBlocks: _archive, ...base } = validPublicPageDocument;
+    const { timezone: _timezone, archivedBlocks: _archive, ...base } = validSchemaV5Document;
     const { avatarPosition: _avatarPosition, ...profile } = base.profile;
-    const originalBlock = validPublicPageDocument.sections[0]!.blocks[0]!;
+    const originalBlock = validSchemaV5Document.sections[0]!.blocks[0]!;
     const { linkStyle: _link, animation: _animation, ...design } = originalBlock.design;
     const { schedule: _schedule, ...block } = originalBlock;
     const { linkTextAlign: _linkTextAlign, ...theme } = base.theme;
@@ -65,7 +68,7 @@ describe('public page v3 contract', () => {
         action: { type: 'url', url: 'https://example.org' } },
     }] }] };
     const result = convertPublicPageDocumentToSchemaV3(v2, 'Europe/Samara');
-    expect(publicPageDocumentSchema.safeParse(convertPublicPageDocumentToSchemaV5(convertPublicPageDocumentToSchemaV4(result))).success).toBe(true);
+    expect(publicPageDocumentSchema.safeParse(convertPublicPageDocumentToSchemaV8(convertPublicPageDocumentToSchemaV7(convertPublicPageDocumentToSchemaV6(convertPublicPageDocumentToSchemaV5(convertPublicPageDocumentToSchemaV4(result)))), 'ru-RU')).success).toBe(true);
     expect(result.timezone).toBe('Europe/Samara');
     expect(result.media).toEqual(v2.media);
     expect(result.theme).toEqual(v2.theme);
@@ -88,7 +91,7 @@ describe('public page v3 contract', () => {
   });
 
   it('migrates draft and published independently, preserves null publication and touches no record metadata', async () => {
-    const { timezone: _zone, archivedBlocks: _archive, ...base } = validPublicPageDocument;
+    const { timezone: _zone, archivedBlocks: _archive, ...base } = validSchemaV5Document;
     const { avatarPosition: _avatarPosition, ...profile } = base.profile;
     const { linkTextAlign: _linkTextAlign, ...theme } = base.theme;
     const v2 = { ...base, profile, theme, schemaVersion: 2, sections: base.sections.map((section) => ({ ...section,

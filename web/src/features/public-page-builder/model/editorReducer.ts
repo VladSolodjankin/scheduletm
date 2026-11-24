@@ -4,7 +4,7 @@ import type { PageBlock, PageSection, PublicPageDocument } from '../types/public
 import { normalizeSlug } from './slug';
 import { documentReferencesMedia } from './media';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from './socialPlatforms';
-import { createEmptyPageSection } from './normalizeDocument';
+import { createEmptyPageSection } from './emptySection';
 
 function socialPlatform(block: PageBlock): SocialPlatform | null {
   const platform = block.type === 'social-button' ? block.content.platform : null;
@@ -327,10 +327,10 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
   switch (action.type) {
     case 'document/replace':
       return createEditorState(action.document);
-    case 'profile/update':
-      return commit(state, { ...state.document, profile: { ...state.document.profile, ...action.changes } });
     case 'seo/update':
       return commit(state, { ...state.document, seo: { ...state.document.seo, ...action.changes } });
+    case 'locale/update':
+      return commit(state, { ...state.document, locale: action.locale });
     case 'slug/update':
       return commit(state, { ...state.document, slug: normalizeSlug(action.slug) });
     case 'theme/update':

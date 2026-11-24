@@ -1,4 +1,4 @@
-import { Add, Archive, ContentCopy, Delete, Edit, OpenInNew, RestoreFromTrash } from '@mui/icons-material';
+import { Add, Archive, ContentCopy, Delete, Edit, InsightsOutlined, OpenInNew, RestoreFromTrash } from '@mui/icons-material';
 import {
   Alert, Box, Button, ButtonBase, Card, CardActions, CardContent, Chip, CircularProgress, Container,
   Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Stack, TextField, Typography,
@@ -16,7 +16,8 @@ import {
 } from '../features/public-page-builder/repository/PublicPageRepository';
 import { createStableId } from '../features/public-page-builder/utils/createStableId';
 import type { PublicPageDocument } from '../features/public-page-builder/types/publicPage';
-import { getPublicPageTemplate, PUBLIC_PAGE_TEMPLATES } from '../features/public-page-builder/templates';
+import { getPublicPageTemplate, PUBLIC_PAGE_TEMPLATES, type PublicPageTemplate } from '../features/public-page-builder/templates';
+import type { Locale } from '../shared/i18n/dictionaries';
 import { PublicPageRenderer } from '../components/public-page-blocks/PublicPageRenderer';
 import { publicPageDisplayUrl, publicPageUrl } from '../features/public-page-builder/config/publicPageUrl';
 
@@ -62,6 +63,32 @@ function cloneDocument(document: PublicPageDocument): PublicPageDocument {
   };
 }
 
+const TEMPLATE_CARD_WIDTH = 140;
+/** Width the template is laid out at before it is scaled down into its thumbnail. */
+const TEMPLATE_THUMBNAIL_LAYOUT_WIDTH = 420;
+
+/** A template as a miniature of the page it creates, so a template can be picked by how it looks. */
+function TemplateCard({ template, locale, selected, onSelect }: { template: PublicPageTemplate; locale: Locale; selected: boolean; onSelect: () => void }) {
+  const document = useMemo(() => template.createDocument('template-thumbnail', '2026-01-01T00:00:00.000Z', locale), [template, locale]);
+  const name = template.names?.[locale] ?? template.name;
+  return (
+    <ButtonBase aria-pressed={selected} onClick={onSelect} sx={{
+      display: 'flex', flexDirection: 'column', alignItems: 'stretch', justifyContent: 'flex-start', gap: 'var(--app-space-s)', p: 'var(--app-space-s)', textAlign: 'left', width: TEMPLATE_CARD_WIDTH + 16,
+      border: 'var(--app-border-width) solid', borderColor: selected ? 'primary.main' : 'divider', borderRadius: 'var(--app-radius-m)',
+      bgcolor: selected ? 'action.selected' : 'background.paper', color: 'text.primary',
+      '&:hover': { bgcolor: selected ? 'action.selected' : 'action.hover' },
+      '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+    }}>
+      <Box inert aria-hidden sx={{ position: 'relative', width: TEMPLATE_CARD_WIDTH, height: TEMPLATE_CARD_WIDTH * 4 / 3, overflow: 'hidden', borderRadius: 'var(--app-radius-s)', bgcolor: 'background.default', pointerEvents: 'none' }}>
+        <Box sx={{ width: TEMPLATE_THUMBNAIL_LAYOUT_WIDTH, transformOrigin: 'top left', transform: `scale(${TEMPLATE_CARD_WIDTH / TEMPLATE_THUMBNAIL_LAYOUT_WIDTH})` }}>
+          <PublicPageRenderer document={document} />
+        </Box>
+      </Box>
+      <Typography variant="body2" sx={{ fontWeight: selected ? 'fontWeightBold' : 'fontWeightMedium' }}>{name}</Typography>
+    </ButtonBase>
+  );
+}
+
 export function PublicPagesPage() {
   const { locale } = useI18n();
   const { accessToken } = useAuth();
@@ -76,8 +103,8 @@ export function PublicPagesPage() {
   const [mutationError, setMutationError] = useState<MutationError | null>(null);
   const [isMutating, setIsMutating] = useState(false);
   const templatePreview = useMemo(
-    () => getPublicPageTemplate(templateId)?.createDocument('template-preview', '2026-01-01T00:00:00.000Z'),
-    [templateId],
+    () => getPublicPageTemplate(templateId)?.createDocument('template-preview', '2026-01-01T00:00:00.000Z', locale),
+    [templateId, locale],
   );
 
   const load = useCallback(async () => {
@@ -93,7 +120,7 @@ export function PublicPagesPage() {
   }, [load]);
 
   const create = async () => {
-    const document = getPublicPageTemplate(templateId)?.createDocument(createStableId());
+    const document = getPublicPageTemplate(templateId)?.createDocument(createStableId(), undefined, locale);
     if (!document) {return;}
     setIsMutating(true);
     setMutationError(null);
@@ -216,6 +243,9 @@ export function PublicPagesPage() {
                             {record.status !== 'archived' ? (
                               <Button startIcon={<Edit />} onClick={() => navigate(`/public-pages/${record.id}/edit`)}>{publicPageText(locale, 'edit')}</Button>
                             ) : null}
+                            {record.published ? (
+                              <Button startIcon={<InsightsOutlined />} onClick={() => navigate(`/public-pages/${record.id}/analytics`)}>{publicPageText(locale, 'analytics')}</Button>
+                            ) : null}
                             <Button disabled={isMutating} startIcon={<ContentCopy />} onClick={() => void duplicate(record)}>{publicPageText(locale, 'duplicate')}</Button>
                             {record.status !== 'archived' ? (
                               <Button disabled={isMutating} startIcon={<Archive />} onClick={() => void archive(record)}>{publicPageText(locale, 'archive')}</Button>
@@ -251,26 +281,15 @@ export function PublicPagesPage() {
             <Stack spacing={2}>
               <TextField select fullWidth label={publicPageText(locale, 'template')} value={templateId}
                 onChange={(event) => setTemplateId(event.target.value)}>
-                {PUBLIC_PAGE_TEMPLATES.map((template) => <MenuItem key={template.id} value={template.id}>{template.name}</MenuItem>)}
+                {PUBLIC_PAGE_TEMPLATES.map((template) => <MenuItem key={template.id} value={template.id}>{template.names?.[locale] ?? template.name}</MenuItem>)}
               </TextField>
               <Typography id={templatesHeadingId} variant="subtitle2">
                 {publicPageText(locale, 'implementedTemplates').replace('{count}', String(PUBLIC_PAGE_TEMPLATES.length))}
               </Typography>
-              <Box role="group" aria-labelledby={templatesHeadingId} sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1 }}>
-                {PUBLIC_PAGE_TEMPLATES.map((template) => {
-                  const selected = template.id === templateId;
-                  return (
-                    <ButtonBase key={template.id} aria-pressed={selected} onClick={() => setTemplateId(template.id)} sx={{
-                      minHeight: 72, alignItems: 'flex-start', justifyContent: 'flex-start', textAlign: 'left', p: 1.5,
-                      border: 1, borderColor: selected ? 'primary.main' : 'divider', borderRadius: 2,
-                      bgcolor: selected ? 'action.selected' : 'background.paper', color: 'text.primary',
-                      '&:hover': { bgcolor: selected ? 'action.selected' : 'action.hover' },
-                      '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
-                    }}>
-                      <Typography variant="body2" sx={{ fontWeight: selected ? 'fontWeightBold' : 'fontWeightMedium' }}>{template.name}</Typography>
-                    </ButtonBase>
-                  );
-                })}
+              <Box role="group" aria-labelledby={templatesHeadingId} sx={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, ${TEMPLATE_CARD_WIDTH + 16}px)`, gap: 'var(--app-space-m)', justifyContent: 'start' }}>
+                {PUBLIC_PAGE_TEMPLATES.map((template) => (
+                  <TemplateCard key={template.id} template={template} locale={locale} selected={template.id === templateId} onSelect={() => setTemplateId(template.id)} />
+                ))}
               </Box>
             </Stack>
             {templatePreview ? (

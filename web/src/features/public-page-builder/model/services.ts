@@ -16,6 +16,7 @@ export function normalizeServicesContent(content: BlockContent): BlockContent {
     autoplayIntervalSeconds: Number.isInteger(interval) && Number(interval) >= 3 && Number(interval) <= 30
       ? Number(interval) : null,
     showBookingButton: typeof content.showBookingButton === 'boolean' ? content.showBookingButton : true,
+    layout: content.layout === 'grid' || content.layout === 'list' ? content.layout : 'carousel',
   };
   return normalized;
 }

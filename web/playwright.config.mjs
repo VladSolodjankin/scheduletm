@@ -13,6 +13,8 @@ export default defineConfig({
   reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL,
+    // Set to "chrome" to run against an installed Google Chrome instead of the downloaded Chromium.
+    channel: process.env.E2E_BROWSER_CHANNEL || undefined,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

@@ -8,6 +8,11 @@ import {
   DividerBlock,
   FaqBlock,
   GalleryBlock,
+  HoursBlock,
+  PriceListBlock,
+  StatsBlock,
+  StepsBlock,
+  VideoBlock,
   SpecializedBlockEditor,
   ImageBlock,
   LinksBlock,
@@ -19,6 +24,7 @@ import {
   TextBlock,
   validItems,
 } from '../../../components/public-page-blocks/blocks';
+import { parsePublicPageVideoUrl } from '@scheduletm/shared/public-page';
 import { getBlockDefinition, registerBlock, type BlockDefinition } from '../model/blockRegistry';
 import type { BlockContent } from '../types/publicPage';
 import { validateSocialPlatforms } from '../model/socialPlatforms';
@@ -48,7 +54,7 @@ const definitions: BlockDefinition[] = [
     validate: ({ content }) => hasRichTextContent(content.document) ? [] : ['document is required'] },
   { type: 'image', name: 'Image', ...localized('blockTypeImage'), createContent: () => ({ imageMediaId: null, alt: '' }), Renderer: ImageBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => required(content, 'imageMediaId', 'alt') },
   { type: 'gallery', name: 'Gallery', ...localized('blockTypeGallery'), createContent: () => ({ images: [] }), Renderer: GalleryBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'images', ['mediaId', 'alt']) },
-  { type: 'services', name: 'Services', ...localized('blockTypeServices'), createContent: (locale) => ({ title: publicPageText(locale, 'blockTypeServices'), serviceIds: [], autoplayIntervalSeconds: null, showBookingButton: true }), Renderer: ServicesBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validateServicesBlockContent(content) },
+  { type: 'services', name: 'Services', ...localized('blockTypeServices'), createContent: (locale) => ({ title: publicPageText(locale, 'blockTypeServices'), serviceIds: [], autoplayIntervalSeconds: null, showBookingButton: true, layout: 'carousel' }), Renderer: ServicesBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validateServicesBlockContent(content) },
   { type: 'contacts', name: 'Contacts', ...localized('blockTypeContacts'), createContent: (locale) => ({ title: publicPageText(locale, 'blockTypeContacts'), contacts: [{ id: 'contact-1', label: publicPageText(locale, 'defaultContactLabel'), action: { type: 'email', email: 'hello@example.com' } }] }), Renderer: ContactsBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validateContacts(content.contacts) },
   { type: 'social-button', name: 'Social button', ...localized('blockTypeSocialButton'), createContent: () => ({ platform: 'telegram', label: 'Telegram', url: 'https://t.me/' }), Renderer: SocialButtonBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => [...required(content, 'label', 'url'), ...validateSafeUrl(content, 'url'), ...validateSocialPlatforms(content)] },
   { type: 'map', name: 'Map', ...localized('blockTypeMap'), createContent: (locale) => ({ title: publicPageText(locale, 'defaultMapTitle'), address: '', label: publicPageText(locale, 'defaultMapLabel'), url: '' }), Renderer: MapBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => [...required(content, 'address', 'url'), ...validateSafeUrl(content, 'url')] },
@@ -56,6 +62,11 @@ const definitions: BlockDefinition[] = [
   { type: 'faq', name: 'FAQ', ...localized('blockTypeFaq'), createContent: (locale) => ({ title: publicPageText(locale, 'defaultFaqTitle'), items: [{ id: 'faq-1', title: publicPageText(locale, 'defaultFaqQuestion'), description: publicPageText(locale, 'defaultFaqAnswer') }] }), Renderer: FaqBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'items', ['title', 'description']) },
   { type: 'credentials', name: 'Credentials', ...localized('blockTypeCredentials'), createContent: (locale) => ({ title: publicPageText(locale, 'credentialsDefaultTitle'), items: [] }), Renderer: CredentialsBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validateCredentialsContent(content) },
   { type: 'reviews', name: 'Reviews', ...localized('blockTypeReviews'), createContent: (locale) => ({ title: publicPageText(locale, 'reviewsDefaultTitle'), showSummary: true, autoplay: false }), Renderer: ReviewsBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validateReviewsContent(content) },
+  { type: 'price-list', name: 'Price list', ...localized('blockTypePriceList'), createContent: (locale) => ({ title: publicPageText(locale, 'defaultPriceListTitle'), items: [{ id: 'price-1', title: publicPageText(locale, 'defaultPriceListItem'), description: '', price: '' }] }), Renderer: PriceListBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'items', ['title']) },
+  { type: 'steps', name: 'Steps', ...localized('blockTypeSteps'), createContent: (locale) => ({ title: publicPageText(locale, 'defaultStepsTitle'), items: [{ id: 'step-1', title: publicPageText(locale, 'defaultStepTitle'), description: publicPageText(locale, 'defaultStepDescription') }] }), Renderer: StepsBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'items', ['title']) },
+  { type: 'stats', name: 'Numbers', ...localized('blockTypeStats'), createContent: (locale) => ({ title: '', items: [{ id: 'stat-1', value: publicPageText(locale, 'defaultStatValue'), description: publicPageText(locale, 'defaultStatDescription') }] }), Renderer: StatsBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'items', ['value']) },
+  { type: 'hours', name: 'Working hours', ...localized('blockTypeHours'), createContent: (locale) => ({ title: publicPageText(locale, 'defaultHoursTitle'), items: [{ id: 'hours-1', days: publicPageText(locale, 'defaultHoursDays'), hours: publicPageText(locale, 'defaultHoursTime') }] }), Renderer: HoursBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => validItems(content, 'items', ['days', 'hours']) },
+  { type: 'video', name: 'Video', ...localized('blockTypeVideo'), createContent: () => ({ title: '', url: '' }), Renderer: VideoBlock, Editor: SpecializedBlockEditor, validate: ({ content }) => parsePublicPageVideoUrl(typeof content.url === 'string' ? content.url : '') ? [] : ['url is not a YouTube or Vimeo video'] },
 ];
 
 export function registerPublicPageBlocks(): void {

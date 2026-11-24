@@ -11,7 +11,7 @@ const runtime = vi.hoisted(() => ({
 
 vi.mock('@mui/material', () => ({
   Alert: () => null,
-  Box: () => null,
+  Box: ({ children }: { children?: unknown }) => children ?? null,
   Button: () => null,
   CircularProgress: () => null,
 }));
@@ -30,7 +30,7 @@ vi.mock('../../src/shared/i18n/I18nContext', () => ({
 
 import { applyPublicPageSeoMetadata, PublicPageViewPage } from '../../src/pages/PublicPageViewPage';
 import { publicPageUrl } from '../../src/features/public-page-builder/config/publicPageUrl';
-import { normalizeDocument } from '../../src/features/public-page-builder/model/normalizeDocument';
+import { normalizeDocument } from './support/normalizeDocument';
 import type { PublicPageDocument } from '../../src/features/public-page-builder/types/publicPage';
 import { ApiPublicPageRepository } from '../../src/features/public-page-builder/repository/ApiPublicPageRepository';
 import { apiClient } from '../../src/shared/api/client';

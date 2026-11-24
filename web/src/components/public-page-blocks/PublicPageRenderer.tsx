@@ -1,26 +1,27 @@
 import { Box, Chip, Container } from '@mui/material';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { isBlockScheduledVisible, nextScheduleVisibilityChange } from '../../features/public-page-builder/model/schedule';
 import type {
   PageSection,
   PageBlock,
   PublicPageDocument,
-  SectionLayout,
+  ItemSize,
+  PageWidth,
 } from '../../features/public-page-builder/types/publicPage';
+import { LocaleScope } from '../../shared/i18n/I18nContext';
 import { BlockRenderer, sectionSurfaceRadius } from './BlockRenderer';
+import { StickyBookButton } from './StickyBookButton';
 import { backgroundPresetCss } from '../../features/public-page-builder/config/backgroundPresets';
 import {
-  BLOCK_DRAG_HANDLE,
-  PUBLIC_PAGE_DND_DRAG_CLASS,
-  PUBLIC_PAGE_DND_GROUP,
-  SECTION_DRAG_HANDLE,
-  SMOOTH_DND_WRAPPER_CLASS,
-  isBuilderDragPayload,
-  useSmoothDndContainer,
+  BuilderDndProvider,
+  useBuilderDraggable,
+  useBuilderDroppable,
+  useDropIndicator,
   type BuilderDragPayload,
   type BuilderDropDestination,
+  type BuilderDropTarget,
   type SortableActivator,
-} from '../public-page-builder/BuilderSortable';
+} from '../public-page-builder/BuilderDnd';
 import { resolvePublicPageThemeVariables } from './publicPageThemeVariables';
 import { resolveLeadingAvatarSectionMarginTop } from './avatarPresentation';
 import { ordinaryPublicPageLinkSx } from './blocks';
@@ -28,16 +29,27 @@ import '../public-page-builder/publicPageDnd.css';
 import type { PublicBookingService, PublicReviewsData } from '../../shared/types/api';
 import { PublicPageStyleBoundary } from './PublicPageStyleBoundary';
 
-const columnsByLayout: Record<SectionLayout, string> = {
-  single: 'minmax(0, 1fr)',
-  'two-equal': 'repeat(2, minmax(0, 1fr))',
-  'one-third-two-thirds': 'minmax(0, 1fr) minmax(0, 2fr)',
-  'two-thirds-one-third': 'minmax(0, 2fr) minmax(0, 1fr)',
-  'three-equal': 'repeat(3, minmax(0, 1fr))',
-  stack: 'minmax(0, 1fr)',
-  'hero-overlay': 'minmax(0, 1fr)',
+const PAGE_WIDTH_PX: Record<PageWidth, number> = { narrow: 720, medium: 960, wide: 1200 };
+/** Half-width items sit side by side once their container is at least this wide; below it everything is full width. */
+const FLOW_TWO_COLUMN_QUERY = '@container (min-width: 600px)';
+const flowGridSx = { display: 'grid', gridTemplateColumns: 'repeat(12, minmax(0, 1fr))', gap: 'var(--theme-link-offset)', minWidth: 0 } as const;
+const flowItemSx = (size: ItemSize) => ({
+  gridColumn: 'span 12',
+  [FLOW_TWO_COLUMN_QUERY]: { gridColumn: size === 'half' ? 'span 6' : 'span 12' },
+  minWidth: 0,
+});
+const SECTION_HORIZONTAL_SPACING_PX = 26;
+/** Golden-ratio spacing scale (base 16px, step x1.618): 10 / 16 / 26 / 42 / 68. */
+const PAGE_SPACE_VARIABLES = {
+  '--page-space-1': '0.625rem', '--page-space-2': '1rem', '--page-space-3': '1.625rem', '--page-space-4': '2.625rem', '--page-space-5': '4.25rem',
+} as const;
+/** Extra space a new section needs on top of the regular block gap, so groups read as groups. */
+const SECTION_START_SPACE = 'max(0px, calc(var(--page-space-4) - var(--theme-link-offset)))';
+/** A lone heading belongs to what follows it, so it sits closer to it than the regular block gap. */
+const isHeadingOnlyBlock = (block: PageSection['blocks'][number]) => {
+  const paragraphs = (block.content.document as { paragraphs?: Array<{ size?: string }> } | undefined)?.paragraphs;
+  return block.type === 'text' && Array.isArray(paragraphs) && paragraphs.length === 1 && ['h1', 'h2', 'h3'].includes(paragraphs[0]?.size ?? '');
 };
-const SECTION_HORIZONTAL_SPACING_PX = 14;
 
 export type PublicPageEditorRenderProps = {
   scheduleStatusLabel?: (visible: boolean) => string;
@@ -51,28 +63,65 @@ export type PublicPageEditorRenderProps = {
   renderSectionResizeHandle?: (section: PageSection, sectionIndex: number) => ReactNode;
   onDropItem: (payload: BuilderDragPayload, destination: BuilderDropDestination) => void;
 };
+function DropIndicatorBar({ target }: { target: BuilderDropTarget }) {
+  const indicator = useDropIndicator(target);
+  return indicator ? <Box aria-hidden className="public-page-drop-indicator" data-axis={indicator.axis} data-side={indicator.side} /> : null;
+}
+
+type EditorItemProps = { editor: PublicPageEditorRenderProps; children: ReactNode; sx: Record<string, unknown> };
+
+type DndShellProps = {
+  nodeRef: (node: HTMLElement | null) => void;
+  className: string;
+  attributes: Record<string, string>;
+  sx: Record<string, unknown>;
+  dragging: boolean;
+  handle: ReactNode;
+  target: BuilderDropTarget;
+  children: ReactNode;
+};
+
+/**
+ * The visible shell of a draggable item. It is memoized: while something is dragged, every draggable's hook
+ * re-renders, but the shell (styles, content, handle) keeps identical props and is skipped, which keeps dragging smooth.
+ */
+const DndShell = memo(function DndShell({ nodeRef, className, attributes, sx, dragging, handle, target, children }: DndShellProps) {
+  return <Box ref={nodeRef} className={className} {...attributes} sx={{ position: 'relative', opacity: dragging ? 0.4 : 1, ...sx }}>
+    {children}
+    {handle}
+    <DropIndicatorBar target={target} />
+  </Box>;
+});
+
+function EditorBlockItem({ section, block, blockIndex, editor, children, sx }: EditorItemProps & { section: PageSection; block: PageBlock; blockIndex: number }) {
+  const target = useMemo<BuilderDropTarget>(() => ({ type: 'block', sectionId: section.id, blockId: block.id }), [section.id, block.id]);
+  const payload = useMemo<BuilderDragPayload>(() => ({ type: 'block', blockId: block.id, sourceSectionId: section.id }), [block.id, section.id]);
+  const drag = useBuilderDraggable(payload, block.name);
+  const setDropRef = useBuilderDroppable(target);
+  const { setNodeRef: setDragRef } = drag;
+  const nodeRef = useCallback((node: HTMLElement | null) => { setDragRef(node); setDropRef(node); }, [setDragRef, setDropRef]);
+  const handle = useMemo(() => editor.renderBlockDragHandle?.(section, blockIndex, drag.activator) ?? null, [editor, section, blockIndex, drag.activator]);
+  const context = section.design.variant === 'off' ? 'page' : 'section';
+  const attributes = useMemo(() => ({ 'data-public-page-sortable': 'block', 'data-block-id': block.id, 'data-public-page-dnd-context': context }), [block.id, context]);
+  return <DndShell nodeRef={nodeRef} className="public-page-dnd-wrapper public-page-dnd-block-shell" attributes={attributes}
+    sx={sx} dragging={drag.isDragging} handle={handle} target={target}>{children}</DndShell>;
+}
+
+function EditorSectionItem({ section, sectionIndex, editor, children }: Omit<EditorItemProps, 'sx'> & { section: PageSection; sectionIndex: number }) {
+  const target = useMemo<BuilderDropTarget>(() => ({ type: 'section', sectionId: section.id }), [section.id]);
+  const payload = useMemo<BuilderDragPayload>(() => ({ type: 'section', sectionId: section.id }), [section.id]);
+  const drag = useBuilderDraggable(payload, section.name);
+  const setDropRef = useBuilderDroppable(target);
+  const { setNodeRef: setDragRef } = drag;
+  const nodeRef = useCallback((node: HTMLElement | null) => { setDragRef(node); setDropRef(node); }, [setDragRef, setDropRef]);
+  const handle = useMemo(() => editor.renderSectionDragHandle?.(section, sectionIndex, drag.activator) ?? null, [editor, section, sectionIndex, drag.activator]);
+  const attributes = useMemo(() => ({ 'data-public-page-sortable': 'section', 'data-section-id': section.id, 'data-public-page-dnd-context': 'page' }), [section.id]);
+  const sx = useMemo(() => (section.design.variant === 'off' ? { display: 'contents' } : flowItemSx(section.size)), [section.design.variant, section.size]);
+  return <DndShell nodeRef={nodeRef} className="public-page-dnd-wrapper public-page-dnd-section-shell" attributes={attributes}
+    sx={sx} dragging={drag.isDragging} handle={handle} target={target}>{children}</DndShell>;
+}
+
 function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, reviews, publicPageSlug, timezone, now, editor }: { section: PageSection; sectionIndex: number; mediaUrlFor: (id: string) => string | undefined; theme: PublicPageDocument['theme']; services: readonly PublicBookingService[]; reviews: PublicReviewsData | null; publicPageSlug: string; timezone: string; now: number; editor?: PublicPageEditorRenderProps }) {
-  const blockContainerRef = useRef<HTMLDivElement>(null);
-  useSmoothDndContainer(blockContainerRef, {
-    behaviour: 'move',
-    groupName: PUBLIC_PAGE_DND_GROUP,
-    orientation: 'vertical',
-    dragHandleSelector: BLOCK_DRAG_HANDLE,
-    animationDuration: 180,
-    lockAxis: 'y',
-    dragClass: PUBLIC_PAGE_DND_DRAG_CLASS,
-    shouldAnimateDrop: () => false,
-    getChildPayload: (index) => {
-      const child = blockContainerRef.current!.children[index] as HTMLElement;
-      return { type: 'block', blockId: child.dataset.blockId!, sourceSectionId: section.id };
-    },
-    shouldAcceptDrop: (_source, payload) => isBuilderDragPayload(payload) && payload.type !== 'section',
-    onDrop: ({ addedIndex, payload }) => {
-      if (addedIndex !== null && isBuilderDragPayload(payload)) {
-        editor?.onDropItem(payload, { type: 'section', sectionId: section.id, index: addedIndex });
-      }
-    },
-  }, Boolean(editor));
   const serviceIds = new Set(services.map(({ id }) => id));
   const isRenderableBlock = (block: PageBlock) => {
     if (!block.visible) {return false;}
@@ -102,6 +151,7 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
   const headingSize = !isOff && section.design.headingStyle.fontSize !== null ? `${section.design.headingStyle.fontSize / 16}rem` : null;
   const blockThemeSx = {
     ...resolvePublicPageThemeVariables(theme, section),
+    ...PAGE_SPACE_VARIABLES,
     color: 'var(--page-section-text)',
     fontFamily: theme.fontFamily,
     '& h1, & h2, & h3, & h4, & h5, & h6': { fontFamily: heading.fontFamily, fontWeight: heading.fontWeight, fontStyle: heading.fontStyle, color: 'var(--theme-heading-color)' },
@@ -115,6 +165,8 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
   );
   const renderBlock = (block: PageSection['blocks'][number], blockIndex: number) => <Box
     key={block.id}
+    data-block-type={block.type}
+    data-track-block-id={editor ? undefined : block.id}
     data-editor-block-id={editor ? block.id : undefined}
     data-editor-section-id={editor ? section.id : undefined}
     data-public-page-leading-block={blockIndex === 0 ? 'true' : undefined}
@@ -125,9 +177,11 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
     onKeyDown={editor ? (event) => { if ((event.key === 'Enter' || event.key === ' ') && event.target === event.currentTarget) { event.preventDefault(); editor.onSelectBlock(section.id, block.id); } } : undefined}
     sx={{
       position: 'relative', minWidth: 0,
+      ...(editor ? {} : flowItemSx(block.size)),
       mt: editor ? 0 : `${resolveLeadingAvatarSectionMarginTop(block.type, blockIndex, section.design.paddingTop, isOff, block.content.layout)}px`,
+      ...(isHeadingOnlyBlock(block) ? { mb: 'calc(var(--page-space-1) - var(--theme-link-offset))' } : {}),
       ...(!editor ? { '--avatar-leading-section-radius': leadingAvatarSectionRadius(block, blockIndex) } : {}),
-      '&:hover .public-page-block-actions, &:focus-within .public-page-block-actions': { opacity: 1, pointerEvents: 'auto' },
+      '&:hover .public-page-block-actions, &:has(:focus-visible) .public-page-block-actions': { opacity: 1, pointerEvents: 'auto' },
     }}
   >
     {editor?.scheduleStatusLabel && (block.schedule.period || block.schedule.weekdays) ? <Chip size="small" sx={{ mb: 0.5 }} label={editor.scheduleStatusLabel(isBlockScheduledVisible(block.schedule, timezone, now))} /> : null}
@@ -165,14 +219,16 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
         width: section.design.width === 'contained'
           ? `min(calc(100% - ${sectionInlineMargin} - ${sectionInlineMargin}), 720px)`
           : 'auto',
+        mt: !isOff && sectionIndex > 0 ? SECTION_START_SPACE : undefined,
         ml: section.design.width === 'contained' ? 'auto' : sectionInlineMargin,
         mr: section.design.width === 'contained' ? 'auto' : sectionInlineMargin,
         '@media (max-width: 600px)': section.design.mobileVisible ? undefined : editor ? { opacity: 0.4 } : { display: 'none' },
-        display: 'grid',
-        gridTemplateColumns: editor ? 'minmax(0, 1fr)' : { xs: 'minmax(0, 1fr)', md: columnsByLayout[section.layout] },
-        gap: 'var(--theme-link-offset)',
+        ...(isOff
+          ? { display: 'contents' }
+          : editor
+            ? { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 'var(--theme-link-offset)', containerType: 'inline-size' }
+            : { ...flowGridSx, ...flowItemSx(section.size), containerType: 'inline-size' }),
         minHeight: editor ? 52 : undefined,
-        minWidth: 0,
         '& > *': { minWidth: 0 },
         position: 'relative',
         ...blockThemeSx,
@@ -187,29 +243,26 @@ function SectionRenderer({ section, sectionIndex, mediaUrlFor, theme, services, 
         },
       }}
     >
-      {editor ? editor.renderSectionActions(section, sectionIndex) : null}
-      {editor ? <Box ref={blockContainerRef} className="public-page-dnd-block-container" data-public-page-block-container={section.id}
+      {isOff && sectionIndex > 0 ? <Box aria-hidden="true" sx={{ gridColumn: '1 / -1', height: 'max(0px, calc(var(--page-space-4) - 2 * var(--theme-link-offset)))', minHeight: 0 }} /> : null}
+      {editor && !isOff ? editor.renderSectionActions(section, sectionIndex) : null}
+      {editor ? <Box className="public-page-dnd-block-container" data-public-page-block-container={section.id}
         data-public-page-dnd-context={isOff ? 'page' : 'section'}
         sx={{
+          ...(isOff ? { display: 'contents' } : flowGridSx),
           pt: isOff ? 0 : `${section.design.paddingTop}px`,
           pb: isOff ? 0 : `${section.design.paddingBottom}px`,
           pl: isOff ? 0 : `calc(${SECTION_HORIZONTAL_SPACING_PX}px + ${borderWidth}px)`,
           pr: isOff ? 0 : `calc(${SECTION_HORIZONTAL_SPACING_PX}px + ${borderWidth}px)`,
         }}>
-        {section.blocks.map((block, blockIndex) => <Box key={block.id}
-          className={`${SMOOTH_DND_WRAPPER_CLASS} public-page-dnd-wrapper public-page-dnd-block-wrapper`}
-          data-public-page-sortable="block" data-block-id={block.id}
-          data-public-page-dnd-context={isOff ? 'page' : 'section'}
+        {section.blocks.map((block, blockIndex) => <EditorBlockItem key={block.id} section={section} block={block} blockIndex={blockIndex} editor={editor}
           sx={{
+            ...flowItemSx(block.size),
             mt: `${resolveLeadingAvatarSectionMarginTop(block.type, blockIndex, section.design.paddingTop, isOff, block.content.layout)}px`,
             ...blockThemeSx,
             '--avatar-leading-section-radius': leadingAvatarSectionRadius(block, blockIndex),
           }}>
-          <Box className="public-page-dnd-block-shell">
-            {editor.renderBlockDragHandle?.(section, blockIndex, {})}
-            {renderBlock(block, blockIndex)}
-          </Box>
-        </Box>)}
+          {renderBlock(block, blockIndex)}
+        </EditorBlockItem>)}
       </Box> : section.blocks.map((block, blockIndex) => ({ block, blockIndex })).filter(({ block }) => isRenderableBlock(block))
         .map(({ block, blockIndex }) => renderBlock(block, blockIndex))}
       {editor && !isOff && section.blocks.length > 0 ? editor.renderSectionResizeHandle?.(section, sectionIndex) : null}
@@ -239,25 +292,7 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], reviews
       window.document.removeEventListener('visibilitychange', refresh);
     };
   }, [document, now]);
-  const mainContainerRef = useRef<HTMLDivElement>(null);
-  useSmoothDndContainer(mainContainerRef, {
-    behaviour: 'move', groupName: PUBLIC_PAGE_DND_GROUP, orientation: 'vertical',
-    dragHandleSelector: SECTION_DRAG_HANDLE,
-    animationDuration: 180, lockAxis: 'y', dragClass: PUBLIC_PAGE_DND_DRAG_CLASS,
-    shouldAnimateDrop: () => false,
-    getChildPayload: (index) => {
-      const child = mainContainerRef.current!.children[index] as HTMLElement;
-      return { type: 'section', sectionId: child.dataset.sectionId! };
-    },
-    shouldAcceptDrop: (_source, payload) => isBuilderDragPayload(payload),
-    onDrop: ({ addedIndex, payload }) => {
-      if (addedIndex !== null && isBuilderDragPayload(payload)) {
-        editor?.onDropItem(payload, { type: 'main', index: addedIndex });
-      }
-    },
-  }, Boolean(editor));
   const mediaUrlFor = (id: string) => mediaUrls?.get(id) ?? document.media.find((media) => media.id === id)?.url;
-  const mediaFor = (id: string) => document.media.find((media) => media.id === id);
   const pageBackground = document.theme.backgroundMediaId ? mediaUrlFor(document.theme.backgroundMediaId) : undefined;
   return (
     <Box
@@ -273,6 +308,7 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], reviews
       } : undefined}
       sx={{
         ...resolvePublicPageThemeVariables(document.theme),
+        ...PAGE_SPACE_VARIABLES,
         bgcolor: 'var(--page-background)',
         backgroundImage: pageBackground ? `url("${pageBackground}")` : backgroundPresetCss(document.theme.backgroundPreset),
         backgroundSize: document.theme.backgroundFit,
@@ -286,7 +322,7 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], reviews
         },
         borderRadius: editor ? '22px' : 0,
         '& h1': { fontFamily: 'var(--theme-h1-font-family)', fontSize: 'var(--theme-h1-fontsize)', fontWeight: 'var(--theme-h1-font-weight)', lineHeight: 'var(--theme-h1-lineheight)', letterSpacing: 'var(--theme-h1-letterspacing)', color: 'var(--theme-heading-color)' },
-        minHeight: '100%',
+        minHeight: editor ? '100%' : '100dvh',
         display: editor ? 'flex' : undefined,
         flexDirection: editor ? 'column' : undefined,
         overflowX: editor ? 'visible' : 'clip',
@@ -295,49 +331,40 @@ function PublicPageRendererContent({ document, mediaUrls, services = [], reviews
     >
       <Container
         maxWidth={false}
+        disableGutters
         sx={{
-          display: editor ? 'flex' : 'grid',
-          flexDirection: editor ? 'column' : undefined,
+          display: 'flex',
+          flexDirection: 'column',
           gap: 'var(--theme-link-offset)',
-          py: { xs: 3, md: 6 },
-          px: editor ? '14px' : { xs: 2, sm: 3 },
+          py: { xs: 'var(--page-space-3)', md: 'var(--page-space-4)' },
+          px: editor ? 'var(--page-space-4)' : { xs: 'var(--page-space-2)', sm: 'var(--page-space-3)' },
           minHeight: editor ? '100%' : undefined,
           flex: editor ? '1 0 auto' : undefined,
-          boxSizing: editor ? 'border-box' : undefined,
-          maxWidth: editor ? undefined : '720px',
+          boxSizing: 'border-box',
+          maxWidth: `${PAGE_WIDTH_PX[document.theme.pageWidth]}px`,
+          containerType: 'inline-size',
         }}
       >
-        {(document.profile.logoMediaId || document.profile.avatarMediaId) ? (
-          <PublicPageStyleBoundary>
-            <Box component="header" sx={{ textAlign: 'center', display: 'grid', justifyItems: 'center', gap: 1.5, minWidth: 0, width: '100%', maxWidth: 320, mx: 'auto' }}>
-              {document.profile.logoMediaId ? <Box component="img" src={mediaUrlFor(document.profile.logoMediaId)}
-                alt={mediaFor(document.profile.logoMediaId)?.alt ?? ''}
-                sx={{ maxWidth: 180, maxHeight: 64, objectFit: 'contain' }} /> : null}
-              {document.profile.avatarMediaId ? <Box component="img" src={mediaUrlFor(document.profile.avatarMediaId)}
-                alt={mediaFor(document.profile.avatarMediaId)?.alt || document.profile.displayName}
-                sx={{ width: 112, height: 112, borderRadius: '50%', objectFit: 'cover', objectPosition: document.profile.avatarPosition }} /> : null}
-            </Box>
-          </PublicPageStyleBoundary>
-        ) : null}
-        {editor ? <Box ref={mainContainerRef} className="public-page-dnd-main-container" data-public-page-main-container data-public-page-dnd-context="page">
-            {document.sections.map((section, sectionIndex) => (
-              <Box key={section.id}
-                className={`${SMOOTH_DND_WRAPPER_CLASS} public-page-dnd-wrapper public-page-dnd-section-wrapper`}
-                data-public-page-sortable="section" data-section-id={section.id} data-public-page-dnd-context="page">
-                <Box className="public-page-dnd-section-shell">
-                  {editor.renderSectionDragHandle?.(section, sectionIndex, {})}
+        <Box className="public-page-flow" data-public-page-main-container={editor ? '' : undefined} sx={flowGridSx}>
+          {editor
+            ? <BuilderDndProvider layout={document.sections.map((section) => ({ sectionId: section.id, blockIds: section.blocks.map((block) => block.id) }))}
+              onDrop={editor.onDropItem}>
+              {document.sections.map((section, sectionIndex) => (
+                <EditorSectionItem key={section.id} section={section} sectionIndex={sectionIndex} editor={editor}>
                   <SectionRenderer section={section} sectionIndex={sectionIndex} mediaUrlFor={mediaUrlFor} theme={document.theme}
                     services={services} reviews={reviews} publicPageSlug={document.slug} timezone={document.timezone} now={now} editor={editor} />
-                </Box>
-              </Box>
-            ))}
-          </Box> : document.sections.map((section, sectionIndex) => <SectionRenderer key={section.id} section={section} sectionIndex={sectionIndex}
-            mediaUrlFor={mediaUrlFor} theme={document.theme} services={services} reviews={reviews} publicPageSlug={document.slug} timezone={document.timezone} now={now} />)}
+                </EditorSectionItem>
+              ))}
+            </BuilderDndProvider>
+            : document.sections.map((section, sectionIndex) => <SectionRenderer key={section.id} section={section} sectionIndex={sectionIndex}
+              mediaUrlFor={mediaUrlFor} theme={document.theme} services={services} reviews={reviews} publicPageSlug={document.slug} timezone={document.timezone} now={now} />)}
+        </Box>
       </Container>
+      {editor || services.length === 0 ? null : <StickyBookButton />}
     </Box>
   );
 }
 
 export function PublicPageRenderer(props: PublicPageRendererProps) {
-  return <PublicPageRendererContent {...props} />;
+  return <LocaleScope locale={props.document.locale}><PublicPageRendererContent {...props} /></LocaleScope>;
 }

@@ -1,6 +1,6 @@
 import { getPublicReviews } from './reviewService.js';
 import { timingSafeEqual } from 'node:crypto';
-import { normalizePublicPageSlug, isValidPublicPageSlug } from '../config/publicPageSchemas.js';
+import { normalizePublicPageSlug, isValidPublicPageSlug } from '@scheduletm/shared/public-page';
 import { findPublishedPublicPageBySlug } from '../repositories/publicPageRepository.js';
 import {
   createPublicGuestAppointment,

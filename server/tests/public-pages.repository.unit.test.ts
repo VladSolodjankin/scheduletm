@@ -201,7 +201,7 @@ describe('public page repository', () => {
       blocks: [{
         ...validPublicPageDocument.sections[0]!.blocks[0],
         type: 'services' as const,
-        content: { title: 'Services', serviceIds, autoplayIntervalSeconds: null, showBookingButton: true },
+        content: { title: 'Services', serviceIds, autoplayIntervalSeconds: null, showBookingButton: true, layout: 'carousel' },
       }],
     }],
   });

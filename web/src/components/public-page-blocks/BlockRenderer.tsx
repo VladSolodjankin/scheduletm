@@ -5,6 +5,7 @@ import { getBlockDefinition } from '../../features/public-page-builder/model/blo
 import { BlockErrorBoundary } from './BlockErrorBoundary';
 import { BlockRenderErrorFallback } from './BlockRenderErrorFallback';
 import { UnknownBlockFallback } from './UnknownBlockFallback';
+import { linkAlignVariables, linkWidthVariable } from './publicPageThemeVariables';
 import type { PublicBookingService, PublicReviewsData } from '../../shared/types/api';
 
 type BlockRendererProps = {
@@ -65,6 +66,8 @@ export function BlockRenderer({ block, mediaUrlFor, editor = false, themeBorderR
     if (link.backgroundOpacity !== null) {linkVariables['--theme-link-background-opacity'] = `${link.backgroundOpacity * 100}%`;}
     if (link.borderColor !== null) {linkVariables['--theme-link-border-color'] = link.borderColor;}
     if (link.borderWidth !== null) {linkVariables['--theme-link-border-width'] = `${link.borderWidth}px`;}
+    if (link.width !== null) {Object.assign(linkVariables, linkWidthVariable(link.width));}
+    if (link.align !== null) {Object.assign(linkVariables, linkAlignVariables(link.align));}
     if (link.shadow !== null) {linkVariables['--theme-link-shadow-params'] = link.shadow ? '0 5px 17px rgb(23 32 51 / 15%)' : 'none';}
   }
   if (block.design.borderRadius !== null) {linkVariables['--theme-link-border-radius'] = `${block.design.borderRadius}px`;}

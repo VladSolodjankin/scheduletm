@@ -8,7 +8,6 @@ import type { PublicBookingService } from '../../shared/types/api';
 
 export const PUBLIC_PAGE_PREVIEW_GEOMETRY = {
   widths: { mobile: 375, tablet: 768, desktop: 1280 },
-  editorDragGutter: 64,
   frameBorder: 10,
   framedMobileOuterWidth: 395,
   frameRadius: 32,
@@ -16,7 +15,6 @@ export const PUBLIC_PAGE_PREVIEW_GEOMETRY = {
   shadow: 'rgba(0,0,0,.1) 0 7px 28px 7px',
 } as const satisfies {
   widths: Record<PreviewDevice, number>;
-  editorDragGutter: number;
   frameBorder: number;
   framedMobileOuterWidth: number;
   frameRadius: number;
@@ -63,7 +61,6 @@ export function ResponsivePreview({
   const showPhoneFrame = Boolean(editor) || framed;
   const virtualWidth = PUBLIC_PAGE_PREVIEW_GEOMETRY.widths[device];
   const editorOuterWidth = virtualWidth
-    + (compactEditor ? 0 : PUBLIC_PAGE_PREVIEW_GEOMETRY.editorDragGutter)
     + PUBLIC_PAGE_PREVIEW_GEOMETRY.frameBorder * 2;
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -117,7 +114,6 @@ export function ResponsivePreview({
                 : framed
                   ? `min(100%, ${PUBLIC_PAGE_PREVIEW_GEOMETRY.framedMobileOuterWidth}px)`
                   : `min(100%, ${virtualWidth}px)`,
-              pl: editor && !compactEditor ? `${PUBLIC_PAGE_PREVIEW_GEOMETRY.editorDragGutter}px` : 0,
               transform: editor ? `scale(${editorScale})` : undefined,
               transformOrigin: editor ? 'top left' : undefined,
               ...(!interactive ? { '& a, & button, & [role="button"]': { pointerEvents: 'none' } } : {}),
@@ -138,9 +134,6 @@ export function ResponsivePreview({
                 boxShadow: showPhoneFrame ? undefined : 'none',
                 overflow: editor ? 'visible' : 'hidden',
                 transition: theme.transitions.create('width'),
-                '& > * > .MuiContainer-root': editor ? {
-                  width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box',
-                } : undefined,
               })}
             >
               <PublicPageRenderer document={document} mediaUrls={mediaUrls} services={services} editor={editor} />

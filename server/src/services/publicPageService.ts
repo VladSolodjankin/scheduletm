@@ -7,7 +7,7 @@ import {
   type PublicPageDocument,
   type PublishIssue,
   validatePublicPageForPublish,
-} from '../config/publicPageSchemas.js';
+} from '@scheduletm/shared/public-page';
 import {
   archivePublicPage,
   createPublicPage,
@@ -23,6 +23,7 @@ import {
   PublicPageRepositoryError,
   savePublicPageDraft,
 } from '../repositories/publicPageRepository.js';
+import { env } from '../config/env.js';
 import { listServices } from '../repositories/serviceRepository.js';
 import { findAccountSettingsByAccountId } from '../repositories/accountSettingsRepository.js';
 import { publicPageBlocks, publicSnapshotWithoutArchive } from '../utils/publicPageReferences.js';
@@ -43,7 +44,7 @@ export type PublicPageDto = {
 
 export class PublicPageServiceError extends Error {
   constructor(
-    public readonly code: 'INVALID_DOCUMENT' | 'INVALID_SLUG' | 'UNSUPPORTED_VERSION' | 'PUBLISH_VALIDATION_FAILED',
+    public readonly code: 'INVALID_DOCUMENT' | 'INVALID_SLUG' | 'INVALID_DOMAIN' | 'UNSUPPORTED_VERSION' | 'PUBLISH_VALIDATION_FAILED',
     public readonly issues?: PublishIssue[],
   ) {
     super(code);
@@ -200,7 +201,7 @@ export async function publishPublicPageForAccount(
   const now = new Date().toISOString();
   const published = publicSnapshotWithoutArchive(serverDocument(parsed, 'published', iso(page.created_at), now));
   const issues = [
-    ...validatePublicPageForPublish(published),
+    ...validatePublicPageForPublish(published, env.API_BASE_URL),
     ...await validateOwnedServiceReferences(accountId, parsed),
   ];
   if (issues.length > 0) throw new PublicPageServiceError('PUBLISH_VALIDATION_FAILED', issues);

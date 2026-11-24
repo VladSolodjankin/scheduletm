@@ -83,7 +83,7 @@ async function installMockSessionAndApi(page) {
     window.localStorage.setItem(userKey, JSON.stringify({
       id: 'mock-admin',
       email: 'admin@example.test',
-      role: 'admin',
+      role: 'owner',
       fullName: 'Mock Admin',
     }));
   }, { tokenKey: AUTH_TOKEN_KEY, userKey: AUTH_USER_KEY });
@@ -98,7 +98,7 @@ async function installMockSessionAndApi(page) {
       body: JSON.stringify(body),
     });
 
-    if (method === 'PUT' && pathname === '/api/settings/user') {
+    if (pathname === '/api/settings/user') {
       await json(200, {});
       return;
     }
@@ -232,7 +232,7 @@ test('services CRUD form and specialist defaults use one consistent mock-backed 
   await expect(page.getByRole('heading', { name: 'Services', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Deep Tissue Massage', exact: true })).toBeVisible();
   await expect(page.getByText('Focused recovery session.', { exact: true })).toBeVisible();
-  await expect(page.locator('.app-filter-bar')).toHaveCSS('border-radius', '16px');
+  await expect(page.locator('.app-filter-bar')).toHaveCSS('border-radius', '8px');
   await expect(serviceCard(page, 'Deep Tissue Massage')).toHaveCSS('border-radius', '16px');
   await expect(serviceCard(page, 'Deep Tissue Massage').locator('.service-card__content')).toHaveCSS('padding', '24px');
   await expect(serviceCard(page, 'Deep Tissue Massage').locator('.service-card__actions')).toHaveCSS('padding-left', '24px');

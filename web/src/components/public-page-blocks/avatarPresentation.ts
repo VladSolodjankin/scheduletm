@@ -8,7 +8,7 @@ export const AVATAR_PREVIEW_REFERENCE = {
   deviceWidth: 395,
   screenWidth: 375,
   screenMargin: 10,
-  sectionPadding: 14,
+  sectionPadding: 26,
   contentWidth: 347,
   contentMarginBottom: 21,
   copyMarginTop: 7,

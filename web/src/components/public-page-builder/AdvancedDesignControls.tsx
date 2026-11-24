@@ -78,6 +78,9 @@ export function AdvancedDesignControls({ theme, locale, onChange }: { theme: Pag
       <SettingsRow label={publicPageText(locale, 'borderColor')}>
         <ColorControl variant="chip" label={publicPageText(locale, 'borderColor')} value={defaults.linkStyle.borderColor} onChange={(borderColor) => updateButtons({ borderColor: borderColor ?? resetButtons.styleDefaults.linkStyle.borderColor })} />
       </SettingsRow>
+      <SettingsRow label={publicPageText(locale, 'socialBrandColors')}>
+        <Switch checked={defaults.socialButtonColors !== 'theme'} onChange={(_, brand) => onChange({ ...theme, styleDefaults: { ...defaults, socialButtonColors: brand ? 'brand' : 'theme' } })} slotProps={{ input: { 'aria-label': publicPageText(locale, 'socialBrandColors') } }} />
+      </SettingsRow>
       <SettingsRow label={publicPageText(locale, 'shadow')}>
         <Switch checked={defaults.linkStyle.shadow} onChange={(_, shadow) => updateButtons({ shadow })} slotProps={{ input: { 'aria-label': publicPageText(locale, 'shadow') } }} />
       </SettingsRow>

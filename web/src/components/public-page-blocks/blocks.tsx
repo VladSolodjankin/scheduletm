@@ -1,3 +1,4 @@
+import { parsePublicPageVideoUrl, publicPageVideoEmbedUrl } from '@scheduletm/shared/public-page';
 import {
   Box,
   Button,
@@ -7,7 +8,6 @@ import {
   Divider,
   IconButton,
   MenuItem,
-  Link,
   Stack,
   TextField,
   Typography,
@@ -20,12 +20,14 @@ import Facebook from '@mui/icons-material/Facebook';
 import Instagram from '@mui/icons-material/Instagram';
 import LinkIcon from '@mui/icons-material/Link';
 import Pause from '@mui/icons-material/Pause';
+import PlaceOutlined from '@mui/icons-material/PlaceOutlined';
+import { PublicAvatarImage } from './PublicAvatarImage';
 import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
 import PlayArrow from '@mui/icons-material/PlayArrow';
 import Telegram from '@mui/icons-material/Telegram';
 import WhatsApp from '@mui/icons-material/WhatsApp';
 import { SvgIcon, type SvgIconProps } from '@mui/material';
-import { useCallback, useEffect, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import type {
   BlockContent,
@@ -37,7 +39,7 @@ import type {
   RichTextMarks,
   RichTextSize,
 } from '../../features/public-page-builder/types/publicPage';
-import { normalizeRichTextDocument } from '../../features/public-page-builder/model/normalizeDocument';
+import { normalizeRichTextDocument } from '../../features/public-page-builder/model/normalizeRichText';
 import {
   contactHref,
   ctaActionToHref,
@@ -104,6 +106,9 @@ export function normalizeSafeHref(value: unknown): string | null {
   return null;
 }
 
+/** A block title belongs to the content under it: it sits one scale step closer than the gap between items. */
+export const bindTitleSx = { '& > h2:first-of-type': { mb: 'calc(var(--page-space-1) - var(--app-space-m))' } } as const;
+
 export function Surface({ children }: { block: PageBlock; children: ReactNode }) {
   return (
     <Box
@@ -147,6 +152,12 @@ export const ordinaryPublicPageLinkSx = {
   },
 } as const;
 
+/** Button size and placement: the page, section or block decides how wide link buttons are and where they sit. */
+export const linkLayoutSx = {
+  display: 'flex', width: 'var(--theme-link-width)', maxWidth: '100%',
+  ml: 'var(--theme-link-margin-left)', mr: 'var(--theme-link-margin-right)',
+} as const;
+
 export function CtaButton({ label, action }: { label: string; action: unknown }) {
   const href = hrefFor(action);
   if (!href) {
@@ -160,19 +171,20 @@ export function CtaButton({ label, action }: { label: string; action: unknown })
       target={external ? '_blank' : undefined}
       rel={external ? 'noopener noreferrer' : undefined}
       variant="contained"
-      sx={{ ...ordinaryPublicPageLinkSx, minHeight: 44, textTransform: 'none' }}
+      sx={{ ...ordinaryPublicPageLinkSx, ...linkLayoutSx, minHeight: 'var(--app-control-l)', textTransform: 'none' }}
     >
       {label}
     </Button>
   );
 }
 
+/** Brand identities, tuned so the white label keeps at least 4.5:1 contrast on every colour of the button. */
 export const socialPlatformStyles: Record<SocialPlatform, { background: string; color: string; iconColor: string }> = {
-  'facebook-messenger': { background: 'linear-gradient(135deg, #00B2FF, #A033FF, #FF5280)', color: '#fff', iconColor: '#fff' },
-  vk: { background: '#0077FF', color: '#fff', iconColor: '#fff' }, whatsapp: { background: '#25D366', color: '#071B0D', iconColor: '#071B0D' },
-  viber: { background: '#7360F2', color: '#fff', iconColor: '#fff' }, telegram: { background: '#229ED9', color: '#fff', iconColor: '#fff' },
-  facebook: { background: '#1877F2', color: '#fff', iconColor: '#fff' }, threads: { background: '#000', color: '#fff', iconColor: '#fff' },
-  instagram: { background: 'linear-gradient(135deg, #833AB4, #FD1D1D, #FCAF45)', color: '#fff', iconColor: '#fff' },
+  'facebook-messenger': { background: 'linear-gradient(135deg, #0A66D6, #8F2BF0, #C8286B)', color: '#fff', iconColor: '#fff' },
+  vk: { background: '#0A64D6', color: '#fff', iconColor: '#fff' }, whatsapp: { background: '#25D366', color: '#071B0D', iconColor: '#071B0D' },
+  viber: { background: '#6A56E6', color: '#fff', iconColor: '#fff' }, telegram: { background: '#1778AD', color: '#fff', iconColor: '#fff' },
+  facebook: { background: '#166FE5', color: '#fff', iconColor: '#fff' }, threads: { background: '#000', color: '#fff', iconColor: '#fff' },
+  instagram: { background: 'linear-gradient(135deg, #833AB4, #C13584, #E0245E)', color: '#fff', iconColor: '#fff' },
   tiktok: { background: '#000', color: '#fff', iconColor: '#fff' },
 };
 
@@ -194,7 +206,7 @@ export function SocialPlatformIcon({ platform, ...props }: { platform: SocialPla
 const fieldKeys: Record<string, Parameters<typeof publicPageText>[1]> = {
   title: 'fieldTitle', heading: 'fieldHeadline', subtitle: 'fieldSubtitle', body: 'fieldBody', description: 'fieldDescription',
   label: 'fieldLabel', url: 'fieldUrl', alt: 'imageAlt', imageAlt: 'imageAlt',
-  address: 'fieldAddress', price: 'fieldPrice', platform: 'fieldPlatform',
+  address: 'fieldAddress', price: 'fieldPrice', platform: 'fieldPlatform', days: 'fieldDays', hours: 'fieldHours',
 };
 
 function Field({ field, value, onChange }: { field: string; value: unknown; onChange: (value: string) => void }) {
@@ -240,6 +252,11 @@ const editorShape: Record<string, { fields?: string[]; list?: { key: string; fie
   'social-button': { fields: ['label', 'url'] },
   map: { fields: ['title', 'address', 'label', 'url'] },
   faq: { fields: ['title'], list: { key: 'items', fields: ['title', 'description'] } }, divider: {},
+  'price-list': { fields: ['title'], list: { key: 'items', fields: ['title', 'description', 'price'] } },
+  steps: { fields: ['title'], list: { key: 'items', fields: ['title', 'description'] } },
+  stats: { fields: ['title'], list: { key: 'items', fields: ['value', 'description'] } },
+  hours: { fields: ['title'], list: { key: 'items', fields: ['days', 'hours'] } },
+  video: { fields: ['title', 'url'] },
 };
 
 export const avatarLayouts = AVATAR_LAYOUTS;
@@ -360,7 +377,7 @@ export function SpecializedBlockEditor({
           }) : {}),
           '&::after': { content: '""', position: 'absolute', zIndex: 2, inset: 'auto 0 0', height: 72, pointerEvents: 'none',
             background: (theme) => `linear-gradient(to bottom, transparent, ${theme.palette.background.paper})` } }}>
-          <Box data-avatar-preview-device sx={{ width: AVATAR_PREVIEW_REFERENCE.deviceWidth, maxWidth: '100%',
+          <FitToWidth width={AVATAR_PREVIEW_REFERENCE.deviceWidth}><Box data-avatar-preview-device sx={{ width: AVATAR_PREVIEW_REFERENCE.deviceWidth,
             bgcolor: '#fff', borderRadius: '33px 33px 0 0',
             boxShadow: '0 7px 28px 7px rgba(0,0,0,.1)', overflow: 'hidden' }}>
             <Box data-avatar-preview-screen sx={{ width: AVATAR_PREVIEW_REFERENCE.screenWidth,
@@ -372,7 +389,7 @@ export function SpecializedBlockEditor({
                 <AvatarBlock block={block} mediaUrlFor={mediaUrlFor} preview />
               </Box>
             </Box>
-          </Box>
+          </Box></FitToWidth>
         </Box>
         <Typography variant="subtitle2" id={`avatar-layout-${block.id}`}>{publicPageText(locale, 'fieldLayout')}</Typography>
         <Box role="radiogroup" aria-labelledby={`avatar-layout-${block.id}`} sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 1 }}>
@@ -452,6 +469,22 @@ export function SpecializedBlockEditor({
   );
 }
 
+/** Shrinks fixed-width content to fit a narrower container, so a device-sized preview is never cut off on a phone. */
+function FitToWidth({ width, children }: { width: number; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) {return undefined;}
+    const observer = new ResizeObserver(([entry]) => setScale(Math.min(1, entry.contentRect.width / width)));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [width]);
+  return <Box ref={ref} sx={{ width: '100%', minWidth: 0 }}>
+    <Box sx={{ width, mx: 'auto', transform: `scale(${scale})`, transformOrigin: 'top left' }}>{children}</Box>
+  </Box>;
+}
+
 export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: PageBlock; mediaUrlFor?: (mediaId: string) => string | undefined; preview?: boolean }) {
   const presentation = resolveAvatarPresentation(block.content.layout, block.content.avatarSize);
   const layout = presentation.renderLayout;
@@ -472,7 +505,7 @@ export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: Pa
       minWidth: 0, maxWidth: '100%', bgcolor: 'transparent' }}>
       <Box className="public-page-avatar-cover-bleed" role={imageUrl && imageAlt ? 'img' : undefined} aria-label={imageUrl && imageAlt ? imageAlt : undefined} sx={{
         width: `calc(100% + ${AVATAR_PREVIEW_REFERENCE.sectionPadding * 2}px)`,
-        height: AVATAR_HERO_REFERENCE.imageHeight,
+        aspectRatio: `${AVATAR_HERO_REFERENCE.imageWidth} / ${AVATAR_HERO_REFERENCE.imageHeight}`,
         borderRadius: 'var(--avatar-leading-section-radius) var(--avatar-leading-section-radius) 0 0',
         backgroundImage: imageUrl ? `url("${imageUrl}")` : undefined,
         backgroundSize: 'cover', backgroundPosition: '50% 50%', backgroundRepeat: 'no-repeat',
@@ -489,14 +522,14 @@ export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: Pa
     return <Box style={avatarVariables} sx={{ width: '100%', minWidth: 0, maxWidth: '100%',
       mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`, textAlign: 'center' }}>
       <Box sx={{ width: '100%', height: avatarSize, display: 'grid', placeItems: 'center' }}>
-        {imageUrl ? <Box component="img" src={imageUrl} alt={text(block.content.imageAlt)} sx={{ width: avatarSize, height: avatarSize, borderRadius: '50%', objectFit: 'cover' }} /> : null}
+        <PublicAvatarImage src={imageUrl} alt={text(block.content.imageAlt)} size={avatarSize} />
       </Box>
       <Box sx={{ width: '100%', mt: `${AVATAR_PREVIEW_REFERENCE.copyMarginTop}px` }}>{copy}</Box>
     </Box>;
   }
   const coverSx = {
     width: `calc(100% + ${AVATAR_PREVIEW_REFERENCE.sectionPadding * 2}px)`,
-    height: AVATAR_COVER_REFERENCE.height,
+    aspectRatio: `${AVATAR_COVER_REFERENCE.width} / ${AVATAR_COVER_REFERENCE.height}`,
     borderRadius: 'var(--avatar-leading-section-radius) var(--avatar-leading-section-radius) 0 0',
     bgcolor: text(block.content.coverColor) || 'var(--avatar-cover-background)',
     backgroundImage: coverBackground,
@@ -511,9 +544,8 @@ export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: Pa
     return <Box style={avatarVariables} sx={{ position: 'relative', width: '100%',
       mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`, minWidth: 0, maxWidth: '100%', bgcolor: 'transparent' }}>
       <Box className="public-page-avatar-cover-bleed" sx={coverSx}>
-        {imageUrl ? <Box component="img" src={imageUrl} alt={text(block.content.imageAlt)} sx={{ position: 'absolute', zIndex: 1,
-          top: geometry.avatarTop, left: 0, transform: `translate(${geometry.avatarTranslateX}px, ${geometry.avatarTranslateY}px)`,
-          width: avatarSize, height: avatarSize, borderRadius: '50%', objectFit: 'cover' }} /> : null}
+        <PublicAvatarImage src={imageUrl} alt={text(block.content.imageAlt)} size={avatarSize} sx={{ position: 'absolute', zIndex: 1,
+          bottom: 0, left: 0, transform: `translate(${geometry.avatarTranslateX}px, ${geometry.avatarTranslateY}px)` }} />
       </Box>
       <Box sx={{ width: `calc(100% - ${geometry.copyMarginLeft}px)`, mt: `${AVATAR_PREVIEW_REFERENCE.copyMarginTop}px`, ml: `${geometry.copyMarginLeft}px`, textAlign: 'left' }}>{copy}</Box>
     </Box>;
@@ -523,10 +555,9 @@ export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: Pa
     return <Box style={avatarVariables} sx={{ position: 'relative', width: '100%',
       mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`, minWidth: 0, maxWidth: '100%', textAlign: 'center' }}>
       <Box className="public-page-avatar-cover-bleed" sx={coverSx}>
-        {imageUrl ? <Box component="img" src={imageUrl} alt={text(block.content.imageAlt)} sx={{ position: 'absolute', zIndex: 1,
-          top: geometry.avatarTop, left: '50%',
-          transform: `translate(${geometry.avatarTranslateX}px, ${geometry.avatarTranslateY}px)`,
-          width: avatarSize, height: avatarSize, borderRadius: '50%', objectFit: 'cover' }} /> : null}
+        <PublicAvatarImage src={imageUrl} alt={text(block.content.imageAlt)} size={avatarSize} sx={{ position: 'absolute', zIndex: 1,
+          bottom: 0, left: '50%',
+          transform: `translate(${geometry.avatarTranslateX}px, ${geometry.avatarTranslateY}px)` }} />
       </Box>
       <Box sx={{ width: '100%', mt: `${AVATAR_PREVIEW_REFERENCE.copyMarginTop}px`, pt: `${geometry.copyPaddingTop}px` }}>{copy}</Box>
     </Box>;
@@ -543,9 +574,9 @@ export function ButtonBlock({ block }: { block: PageBlock }) {
   const subtitle = text(block.content.subtitle).trim();
   const animation = block.design.animation;
   return <Button component="a" href={href} target={external ? '_blank' : undefined} startIcon={icons[icon]}
-    rel={external ? 'noopener noreferrer' : undefined} variant="contained" fullWidth
+    rel={external ? 'noopener noreferrer' : undefined} variant="contained"
     data-meetli-animation={animation}
-    sx={{ ...ordinaryPublicPageLinkSx, minHeight: 48, textTransform: 'none',
+    sx={{ ...ordinaryPublicPageLinkSx, ...linkLayoutSx, minHeight: 'var(--app-control-l)', textTransform: 'none',
       '--meetli-motion-duration': '700ms', '--meetli-motion-lift': '-3px', '--meetli-motion-scale': 1.025,
       '@keyframes meetliPulse': { '0%, 100%': { transform: 'scale(1)' }, '50%': { transform: 'scale(var(--meetli-motion-scale))' } },
       '@keyframes meetliLift': { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(var(--meetli-motion-lift))' } },
@@ -560,7 +591,7 @@ export function ButtonBlock({ block }: { block: PageBlock }) {
 }
 
 export function LinksBlock({ block }: { block: PageBlock }) {
-  return <Surface block={block}><Stack spacing={1.5}>{items(block.content.links).map((item, index) =>
+  return <Surface block={block}><Stack sx={{ gap: 'var(--theme-link-offset)' }}>{items(block.content.links).map((item, index) =>
     <CtaButton key={text(item.id, String(index))} label={text(item.label)} action={item.action} />,
   )}</Stack></Surface>;
 }
@@ -587,13 +618,17 @@ function RichTextRun({ value }: { value: { text: string; marks?: RichTextMarks }
 }
 
 export function RichTextContent({ document }: { document: RichTextDocument }) {
-  return <Stack spacing={0.75} sx={{ maxWidth: '100%', minWidth: 0 }}>
+  return <Stack sx={{ gap: 'var(--page-space-2)', maxWidth: '100%', minWidth: 0 }}>
     {document.paragraphs.map((paragraph, paragraphIndex) => {
       const sizeStyle = richTextSizeVariables[paragraph.size];
       const heading = paragraph.size.startsWith('h');
+      // A heading or a bold lead-in line belongs to the paragraph after it, so it sits one scale step closer to it.
+      const binds = paragraphIndex < document.paragraphs.length - 1
+        && (heading || (paragraph.runs.length > 0 && paragraph.runs.every((run) => run.marks?.bold)));
       return <Box key={paragraphIndex} component="p" data-public-page-richtext-size={paragraph.size} sx={{
       ...wrappingTextSx,
       m: 0,
+      ...(binds ? { mb: 'calc(var(--page-space-1) - var(--page-space-2))' } : {}),
       textAlign: paragraph.alignment,
       fontFamily: paragraph.fontFamily ?? sizeStyle.fontFamily,
       fontSize: sizeStyle.fontSize,
@@ -617,25 +652,28 @@ export function ImageBlock({ block, mediaUrlFor }: { block: PageBlock; mediaUrlF
   const mediaId = text(block.content.imageMediaId);
   const url = mediaId ? mediaUrlFor?.(mediaId) : undefined;
   return <Surface block={block}>{url && <Box component="img" src={url} alt={text(block.content.alt)}
-    sx={{ display: 'block', width: '100%', height: 'auto', maxHeight: 560, objectFit: 'cover', borderRadius: 2 }} />}</Surface>;
+    sx={{ display: 'block', width: '100%', height: 'auto', maxHeight: 560, objectFit: 'cover', borderRadius: 'var(--block-border-radius)' }} />}</Surface>;
 }
 
 export function GalleryBlock({ block, mediaUrlFor }: { block: PageBlock; mediaUrlFor?: (mediaId: string) => string | undefined }) {
-  return <Surface block={block}><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,minmax(0,1fr))' }, gap: 1.5 }}>
+  return <Surface block={block}><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,minmax(0,1fr))' }, gap: 'var(--page-space-2)' }}>
     {items(block.content.images).flatMap((item, index) => {
       const mediaId = text(item.mediaId);
       const url = mediaId ? mediaUrlFor?.(mediaId) : undefined;
       return url ? [<Box key={mediaId || String(index)} component="img" src={url} alt={text(item.alt)} loading="lazy"
-        sx={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 2 }} />] : [];
+        sx={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 'var(--block-border-radius)' }} />] : [];
     })}
   </Box></Surface>;
 }
 
 function CardList({ block, field }: { block: PageBlock; field: string }) {
-  return <Surface block={block}><Stack spacing={1.5}>{text(block.content.title) &&
+  return <Surface block={block}><Stack sx={{ gap: 'var(--page-space-2)', ...bindTitleSx }}>{text(block.content.title) &&
     <Typography component="h2" variant="h5">{text(block.content.title)}</Typography>}
-    {items(block.content[field]).map((item, index) => <Card key={text(item.id, String(index))} variant="outlined">
-      <CardContent><Typography component="h3" variant="h6">{text(item.title, text(item.label))}</Typography>
+    {items(block.content[field]).map((item, index) => <Card key={text(item.id, String(index))} variant="outlined"
+      sx={{ bgcolor: 'var(--avatar-surface-background)', color: 'var(--page-text)',
+        borderColor: 'color-mix(in srgb, var(--page-text) 14%, transparent)', borderRadius: 'var(--block-border-radius)',
+        '--theme-text-color': 'var(--page-text)', '--theme-heading-color': 'var(--page-text)' }}>
+      <CardContent sx={{ display: 'grid', gap: 'var(--page-space-1)', p: 'var(--page-space-3)', '&:last-child': { pb: 'var(--page-space-3)' } }}><Typography component="h3" variant="h6">{text(item.title, text(item.label))}</Typography>
         {text(item.description) && <Typography>{text(item.description)}</Typography>}
         {text(item.price) && <Typography sx={{ fontWeight: 700 }}>{text(item.price)}</Typography>}
       </CardContent></Card>)}
@@ -739,34 +777,39 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
     return editor ? <Surface block={block}><Typography component="h2" variant="h5">{title}</Typography>
       <Typography color="text.secondary">{publicPageText(locale, 'servicesNoneSelected')}</Typography></Surface> : null;
   }
+  const layout = block.content.layout === 'grid' || block.content.layout === 'list' ? block.content.layout : 'carousel';
+  const carousel = layout === 'carousel' && selectedServices.length > 1;
+  const wideRow = layout !== 'grid';
   const slides = selectedServices.map((service, index) => {
     const imageUrl = safeServiceImageUrl(service.imageUrl);
-    const inactive = selectedServices.length > 1 && selectedIndex !== index;
+    const inactive = carousel && selectedIndex !== index;
     return <Box key={service.id} role="group" aria-roledescription={publicPageText(locale, 'carouselSlide')}
       inert={inactive ? true : undefined} aria-hidden={inactive ? true : undefined}
       aria-label={publicPageText(locale, 'serviceSlidePosition').replace('{current}', String(index + 1)).replace('{total}', String(selectedServices.length))}
       sx={{
-        flex: selectedServices.length === 1 ? '0 0 100%' : '0 0 88%',
+        ...(carousel ? {
+          flex: '0 0 88%',
+          '@container public-services (min-width: 600px)': { flex: '0 0 72%' },
+        } : {}),
         minWidth: 0,
         display: 'flex',
         opacity: inactive ? 0.56 : 1,
-        '@container public-services (min-width: 600px)': { flex: selectedServices.length === 1 ? '0 0 100%' : '0 0 72%' },
       }}>
       <Card variant="outlined" sx={{ width: '100%', minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden',
         bgcolor: 'var(--avatar-surface-background)', color: 'var(--page-text)', borderColor: 'color-mix(in srgb, var(--page-text) 14%, transparent)',
         borderRadius: 'var(--block-border-radius)',
-        boxShadow: selectedServices.length > 1 && !inactive
+        boxShadow: carousel && !inactive
           ? '-6px 4px 18px -4px color-mix(in srgb, var(--page-text) 9%, transparent), 6px 4px 18px -4px color-mix(in srgb, var(--page-text) 9%, transparent)'
           : 'none',
-        '@container public-services (min-width: 600px)': { flexDirection: 'row' } }}>
+        ...(wideRow ? { '@container public-services (min-width: 600px)': { flexDirection: 'row' } } : {}) }}>
         {imageUrl ? <Box component="img" src={imageUrl} alt="" loading="lazy" sx={{ width: '100%', height: 180, objectFit: 'cover',
-          '@container public-services (min-width: 600px)': { width: 144, height: 'auto', maxHeight: 240, alignSelf: 'stretch' } }} /> : null}
-        <CardContent sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1.25, p: 2.5, '&:last-child': { pb: 2.5 },
-          '@container public-services (min-width: 600px)': { flexDirection: 'row', alignItems: 'center', gap: 2.5 } }}>
-          <Stack spacing={1.25} sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
+          ...(wideRow ? { '@container public-services (min-width: 600px)': { width: 144, height: 'auto', maxHeight: 240, alignSelf: 'stretch' } } : {}) }} /> : null}
+        <CardContent sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 'var(--page-space-1)', p: 'var(--page-space-3)', '&:last-child': { pb: 'var(--page-space-3)' },
+          ...(wideRow ? { '@container public-services (min-width: 600px)': { flexDirection: 'row', alignItems: 'center', gap: 'var(--app-space-l)' } } : {}) }}>
+          <Stack sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere', gap: 'var(--page-space-1)' }}>
             <Typography component="h3" variant="h6">{service.name}</Typography>
             {service.description ? <Typography>{service.description}</Typography> : null}
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline', flexWrap: 'wrap', mt: 'auto' }}>
+            <Stack direction="row" sx={{ alignItems: 'baseline', flexWrap: 'wrap', gap: 'var(--page-space-1)', mt: 'auto' }}>
               <Typography sx={{ fontWeight: 700 }}>{formatServicePrice(service, locale)}</Typography>
               <Typography variant="body2">{service.durationMin} {publicPageText(locale, 'serviceMinutes')}</Typography>
             </Stack>
@@ -776,39 +819,40 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
           </Stack>
           {block.content.showBookingButton !== false && publicPageSlug ? <Button
             onClick={() => setBookingServiceId(service.id)} variant="contained"
-            sx={{ ...ordinaryPublicPageLinkSx, mt: 0.5, minHeight: 44, textTransform: 'none',
-              '@container public-services (min-width: 600px)': { mt: 0, flexShrink: 0, maxWidth: '40%' } }}>
+            sx={{ ...ordinaryPublicPageLinkSx, mt: 'var(--app-space-xs)', minHeight: 'var(--app-control-l)', textTransform: 'none',
+              ...(wideRow ? { '@container public-services (min-width: 600px)': { mt: 0, flexShrink: 0, maxWidth: '40%' } } : {}) }}>
             {publicPageText(locale, 'serviceBook')}
           </Button> : null}
         </CardContent>
       </Card>
     </Box>;
   });
-  return <Surface block={block}><Stack spacing={1.5} role="region" aria-label={title}
-    sx={{ containerType: 'inline-size', containerName: 'public-services', minWidth: 0 }}
+  return <Surface block={block}><Stack role="region" aria-label={title}
+    sx={{ gap: 'var(--page-space-2)', ...bindTitleSx, containerType: 'inline-size', containerName: 'public-services', minWidth: 0 }}
     onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
     onFocusCapture={() => setFocusWithin(true)} onBlurCapture={onBlur}>
     <Typography component="h2" variant="h5">{title}</Typography>
-    {selectedServices.length === 1 ? slides[0] : <>
-      <Box ref={emblaRef} sx={{ overflow: 'hidden', minWidth: 0, maxWidth: '100%', touchAction: 'pan-y pinch-zoom', py: '20px',
+    {selectedServices.length === 1 ? slides[0] : !carousel ? <Box sx={{ display: 'grid', gap: 'var(--page-space-2)', minWidth: 0,
+      gridTemplateColumns: layout === 'grid' ? 'repeat(auto-fill, minmax(min(100%, 240px), 1fr))' : 'minmax(0, 1fr)' }}>{slides}</Box> : <>
+      <Box ref={emblaRef} sx={{ overflow: 'hidden', minWidth: 0, maxWidth: '100%', touchAction: 'pan-y pinch-zoom', py: 'var(--page-space-3)',
         '--carousel-edge-width': '18px',
         maskImage: 'linear-gradient(to right, transparent, black var(--carousel-edge-width), black calc(100% - var(--carousel-edge-width)), transparent)',
         '@container public-services (min-width: 600px)': { '--carousel-edge-width': '80px' } }}>
-        <Box sx={{ display: 'flex', alignItems: 'stretch', gap: '10px', minWidth: 0,
-          '@container public-services (min-width: 600px)': { gap: '20px' } }}>{slides}</Box>
+        <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 'var(--page-space-2)', minWidth: 0,
+          '@container public-services (min-width: 600px)': { gap: 'var(--page-space-3)' } }}>{slides}</Box>
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', alignItems: 'center', rowGap: 0.5, minHeight: 34 }}>
-        <Stack direction="row" spacing={0.75} role="group" aria-label={publicPageText(locale, 'carouselNavigation')} sx={{ gridColumn: 2 }}>
+        <Stack direction="row" role="group" aria-label={publicPageText(locale, 'carouselNavigation')} sx={{ gridColumn: 2, gap: 'var(--page-space-1)' }}>
           {selectedServices.map((service, index) => <ButtonBase key={service.id} data-service-dot
             aria-label={publicPageText(locale, 'goToServiceSlide').replace('{number}', String(index + 1))}
             aria-current={selectedIndex === index ? 'true' : undefined} onClick={() => navigate(index)}
             onKeyDown={(event) => onNavigationKeyDown(event, index)}
-            sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: selectedIndex === index ? 'var(--theme-link-background)' : 'transparent',
-              border: '2px solid', borderColor: 'var(--theme-link-background)', '&:focus-visible': { outline: '2px solid var(--theme-link-border-color)', outlineOffset: 2 } }} />)}
+            sx={{ width: 'var(--app-space-m)', height: 'var(--app-space-m)', borderRadius: 'var(--app-radius-circle)', bgcolor: selectedIndex === index ? 'var(--theme-link-background)' : 'transparent',
+              border: 'calc(var(--app-border-width) * 2) solid', borderColor: 'var(--theme-link-background)', '&:focus-visible': { outline: 'calc(var(--app-border-width) * 2) solid var(--theme-link-border-color)', outlineOffset: 'calc(var(--app-border-width) * 2)' } }} />)}
         </Stack>
         {autoplayConfigured && !editor && !reducedMotion ? <IconButton size="small" aria-label={publicPageText(locale, autoplayPaused ? 'carouselPlay' : 'carouselPause')}
-          sx={{ gridColumn: 3, justifySelf: 'start', ml: 1,
-            '@container public-services (max-width: 300px)': { gridColumn: 2, gridRow: 2, justifySelf: 'center', ml: 0 } }}
+          sx={{ gridColumn: 3, justifySelf: 'start', ml: 'var(--page-space-1)',
+            '@container public-services (max-width: 420px)': { gridColumn: 2, gridRow: 2, justifySelf: 'center', ml: 0 } }}
           onClick={() => setAutoplayPaused((value) => !value)}>{autoplayPaused ? <PlayArrow /> : <Pause />}</IconButton> : null}
       </Box>
     </>}
@@ -819,6 +863,114 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
 
 export const FaqBlock = ({ block }: { block: PageBlock }) => <CardList block={block} field="items" />;
 
+const mutedBorder = '1px solid color-mix(in srgb, var(--page-text) 14%, transparent)';
+
+function ListTitle({ block }: { block: PageBlock }) {
+  return text(block.content.title) ? <Typography component="h2" variant="h5">{text(block.content.title)}</Typography> : null;
+}
+
+export const PriceListBlock = ({ block }: { block: PageBlock }) => <Surface block={block}>
+  <Stack sx={{ gap: 'var(--page-space-2)', ...bindTitleSx }}>
+    <ListTitle block={block} />
+    <Stack component="ul" sx={{ listStyle: 'none', m: 0, p: 0, gap: 'var(--page-space-2)' }}>
+      {items(block.content.items).map((item, index) => <Box component="li" key={text(item.id, String(index))}
+        sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', columnGap: 'var(--page-space-2)', rowGap: 'var(--page-space-1)',
+          alignItems: 'baseline', pb: 'var(--page-space-2)', borderBottom: mutedBorder, '&:last-child': { borderBottom: 0, pb: 0 } }}>
+        <Typography component="h3" variant="h6">{text(item.title)}</Typography>
+        {text(item.price) ? <Typography sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{text(item.price)}</Typography> : <span />}
+        {text(item.description) ? <Typography sx={{ gridColumn: '1 / -1', ...wrappingTextSx }}>{text(item.description)}</Typography> : null}
+      </Box>)}
+    </Stack>
+  </Stack>
+</Surface>;
+
+export const StepsBlock = ({ block }: { block: PageBlock }) => <Surface block={block}>
+  <Stack sx={{ gap: 'var(--page-space-2)', ...bindTitleSx }}>
+    <ListTitle block={block} />
+    <Stack component="ol" sx={{ listStyle: 'none', m: 0, p: 0, gap: 'var(--page-space-3)' }}>
+      {items(block.content.items).map((item, index) => <Box component="li" key={text(item.id, String(index))}
+        sx={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', columnGap: 'var(--page-space-2)', alignItems: 'start' }}>
+        <Box aria-hidden="true" sx={{ width: 'var(--app-control-m)', height: 'var(--app-control-m)', borderRadius: '50%', display: 'grid', placeItems: 'center',
+          fontWeight: 700, bgcolor: 'var(--theme-link-background)', color: 'var(--theme-link-title-color)' }}>{index + 1}</Box>
+        <Stack sx={{ gap: 'var(--page-space-1)', minWidth: 0 }}>
+          <Typography component="h3" variant="h6">{text(item.title)}</Typography>
+          {text(item.description) ? <Typography sx={wrappingTextSx}>{text(item.description)}</Typography> : null}
+        </Stack>
+      </Box>)}
+    </Stack>
+  </Stack>
+</Surface>;
+
+export const StatsBlock = ({ block }: { block: PageBlock }) => <Surface block={block}>
+  <Stack sx={{ gap: 'var(--page-space-2)', ...bindTitleSx }}>
+    <ListTitle block={block} />
+    <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(7.5rem, 1fr))', gap: 'var(--page-space-3)' }}>
+      {items(block.content.items).map((item, index) => <Box component="li" key={text(item.id, String(index))} sx={{ textAlign: 'center', minWidth: 0 }}>
+        <Typography component="div" sx={{ fontSize: 'var(--theme-h1-fontsize)', lineHeight: 'var(--theme-h1-lineheight)', fontWeight: 700, color: 'var(--theme-heading-color)' }}>{text(item.value)}</Typography>
+        {text(item.description) ? <Typography sx={wrappingTextSx}>{text(item.description)}</Typography> : null}
+      </Box>)}
+    </Box>
+  </Stack>
+</Surface>;
+
+export const HoursBlock = ({ block }: { block: PageBlock }) => <Surface block={block}>
+  <Stack sx={{ gap: 'var(--page-space-2)', ...bindTitleSx }}>
+    <ListTitle block={block} />
+    <Stack component="dl" sx={{ m: 0, gap: 'var(--page-space-1)' }}>
+      {items(block.content.items).map((item, index) => <Box key={text(item.id, String(index))}
+        sx={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--page-space-2)', pb: 'var(--page-space-1)', borderBottom: mutedBorder, '&:last-child': { borderBottom: 0, pb: 0 } }}>
+        <Typography component="dt" sx={{ color: 'var(--theme-text-color)', ...wrappingTextSx }}>{text(item.days)}</Typography>
+        <Typography component="dd" sx={{ m: 0, fontWeight: 700, textAlign: 'right', color: 'var(--theme-text-color)', ...wrappingTextSx }}>{text(item.hours)}</Typography>
+      </Box>)}
+    </Stack>
+  </Stack>
+</Surface>;
+
+export function VideoBlock({ block }: { block: PageBlock }) {
+  const { locale } = useI18n();
+  const video = parsePublicPageVideoUrl(text(block.content.url));
+  return <Surface block={block}>
+    <Stack sx={{ gap: 'var(--page-space-2)', ...bindTitleSx }}>
+      <ListTitle block={block} />
+      {video ? <Box sx={{ position: 'relative', aspectRatio: '16 / 9', borderRadius: 'var(--block-border-radius)', overflow: 'hidden', bgcolor: 'color-mix(in srgb, var(--page-text) 8%, transparent)' }}>
+        <Box component="iframe" src={publicPageVideoEmbedUrl(video)} title={text(block.content.title) || publicPageText(locale, 'blockTypeVideo')}
+          loading="lazy" allow="fullscreen; picture-in-picture; encrypted-media" allowFullScreen referrerPolicy="strict-origin-when-cross-origin"
+          sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+      </Box> : null}
+    </Stack>
+  </Surface>;
+}
+
+const SOCIAL_HOSTS: ReadonlyArray<[SocialPlatform, RegExp]> = [
+  ['telegram', /(^|\.)(t\.me|telegram\.me|telegram\.org)$/i], ['instagram', /(^|\.)instagram\.com$/i],
+  ['whatsapp', /(^|\.)(wa\.me|whatsapp\.com)$/i], ['viber', /(^|\.)viber\.com$/i], ['vk', /(^|\.)vk\.com$/i],
+  ['facebook-messenger', /(^|\.)m\.me$/i], ['facebook', /(^|\.)(facebook|fb)\.com$/i],
+  ['threads', /(^|\.)threads\.net$/i], ['tiktok', /(^|\.)tiktok\.com$/i],
+];
+
+/** Recognises well-known messengers and social networks by link host, so their contacts get a branded button. */
+function socialPlatformFromHref(href: string): SocialPlatform | null {
+  try {
+    const { hostname } = new URL(href);
+    return SOCIAL_HOSTS.find(([, pattern]) => pattern.test(hostname))?.[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Brand colors by default; the page theme can switch messenger buttons to its own button colors. */
+const socialBackground = (style: { background: string }) => `var(--social-button-background, ${style.background})`;
+const socialColor = (style: { color: string }) => `var(--social-button-color, ${style.color})`;
+
+const brandedButtonSx = (style: { background: string; color: string }) => ({
+  ...linkLayoutSx, position: 'relative', minHeight: 'var(--app-control-l)', px: 'var(--app-space-xl)', borderRadius: 'var(--theme-link-border-radius)',
+  textTransform: 'var(--theme-link-title-transform)', fontFamily: 'var(--theme-link-title-font-family)',
+  fontSize: 'var(--theme-link-title-fontsize)', lineHeight: 'var(--theme-link-title-lineheight)',
+  letterSpacing: 'var(--theme-link-title-letterspacing)', fontWeight: 'var(--theme-link-title-font-weight)',
+  boxShadow: 'var(--theme-link-shadow-params)', background: socialBackground(style), color: socialColor(style),
+  '&:hover': { background: socialBackground(style), filter: 'brightness(.94)' },
+}) as const;
+
 export function ContactsBlock({ block }: { block: PageBlock }) {
   const contacts = items(block.content.contacts).flatMap((item, index) => {
     const label = text(item.label).trim();
@@ -826,15 +978,25 @@ export function ContactsBlock({ block }: { block: PageBlock }) {
     return label && href ? [{ item, index, label, href }] : [];
   });
   if (contacts.length === 0) {return null;}
-  return <Surface block={block}><Stack spacing={1}>{text(block.content.title) &&
+  const actionIcons = { phone: <PhoneOutlined />, email: <EmailOutlined /> } as const;
+  return <Surface block={block}><Stack sx={{ gap: 'var(--page-space-2)', ...bindTitleSx }}>{text(block.content.title) &&
     <Typography component="h2" variant="h5">{text(block.content.title)}</Typography>}
-    {contacts.map(({ item, index, label, href }) => {
+    <Stack sx={{ gap: 'var(--theme-link-offset)' }}>{contacts.map(({ item, index, label, href }) => {
       const external = /^https?:\/\//i.test(href);
-      return <Link key={text(item.id, String(index))} href={href} target={external ? '_blank' : undefined}
-        rel={external ? 'noopener noreferrer' : undefined} sx={{ ...ordinaryPublicPageLinkSx, minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>
-        {label}
-      </Link>;
-    })}
+      const platform = external ? socialPlatformFromHref(href) : null;
+      const actionType = (item.action as { type?: string } | undefined)?.type;
+      const common = { key: text(item.id, String(index)), component: 'a', href, target: external ? '_blank' : undefined,
+        rel: external ? 'noopener noreferrer' : undefined } as const;
+      if (platform) {
+        const style = socialPlatformStyles[platform];
+        return <Button {...common} data-social-button={platform} sx={brandedButtonSx(style)}>
+          <SocialPlatformIcon platform={platform} aria-hidden="true" sx={{ position: 'absolute', left: 'var(--app-space-m)', width: 24, height: 24, color: `var(--social-button-color, ${style.iconColor})` }} />
+          <Box component="span" sx={{ width: '100%', textAlign: 'var(--theme-link-text-align)' }}>{label}</Box>
+        </Button>;
+      }
+      return <Button {...common} variant="contained" startIcon={actionIcons[actionType as keyof typeof actionIcons] ?? <LinkIcon />}
+        sx={{ ...ordinaryPublicPageLinkSx, ...linkLayoutSx, minHeight: 'var(--app-control-l)', textTransform: 'none' }}>{label}</Button>;
+    })}</Stack>
   </Stack></Surface>;
 }
 export function SocialButtonBlock({ block }: { block: PageBlock }) {
@@ -842,24 +1004,30 @@ export function SocialButtonBlock({ block }: { block: PageBlock }) {
   const href = normalizeSafeHref(block.content.url);
   if (!href || !SOCIAL_PLATFORMS.includes(platform)) {return null;}
   const style = socialPlatformStyles[platform];
-  return <Button component="a" href={href} target="_blank" rel="noopener noreferrer" fullWidth data-social-button={platform}
-    sx={{ position: 'relative', minHeight: 52, px: 6, width: '100%', borderRadius: 'var(--theme-link-border-radius)',
+  return <Button component="a" href={href} target="_blank" rel="noopener noreferrer" data-social-button={platform}
+    sx={{ ...linkLayoutSx, position: 'relative', minHeight: 'var(--app-control-l)', px: 'var(--app-space-xl)', borderRadius: 'var(--theme-link-border-radius)',
       textTransform: 'var(--theme-link-title-transform)', fontFamily: 'var(--theme-link-title-font-family)',
       fontSize: 'var(--theme-link-title-fontsize)', lineHeight: 'var(--theme-link-title-lineheight)',
       letterSpacing: 'var(--theme-link-title-letterspacing)', fontWeight: 'var(--theme-link-title-font-weight)',
       borderWidth: 'var(--theme-link-border-width)', boxShadow: 'var(--theme-link-shadow-params)',
-      background: style.background, color: style.color, '&:hover': { background: style.background, filter: 'brightness(.94)' } }}>
+      background: socialBackground(style), color: socialColor(style), '&:hover': { background: socialBackground(style), filter: 'brightness(.94)' } }}>
     <SocialPlatformIcon className="social-button__icon" platform={platform} aria-hidden="true"
-      sx={{ position: 'absolute', left: 18, width: 24, height: 24, color: style.iconColor }} />
+      sx={{ position: 'absolute', left: 'var(--app-space-m)', width: 24, height: 24, color: `var(--social-button-color, ${style.iconColor})` }} />
     <Box component="span" className="social-button__label" sx={{ width: '100%', textAlign: 'var(--theme-link-text-align)', paddingInlineStart: 'var(--theme-link-label-offset)' }}>{text(block.content.label)}</Box>
   </Button>;
 }
 
 export function MapBlock({ block }: { block: PageBlock }) {
   const url = normalizeSafeHref(block.content.url);
-  return <Surface block={block}><Typography component="h2" variant="h5">{text(block.content.title)}</Typography>
-    <Typography>{text(block.content.address)}</Typography>{url && <Link href={url} target="_blank" rel="noopener noreferrer"
-      sx={{ ...ordinaryPublicPageLinkSx, minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>{text(block.content.label, text(block.content.address))}</Link>}</Surface>;
+  const address = text(block.content.address).trim();
+  if (!address && !url) {return null;}
+  return <Surface block={block}><Stack sx={{ gap: 'var(--page-space-2)', ...bindTitleSx }}>
+    {text(block.content.title) ? <Typography component="h2" variant="h5">{text(block.content.title)}</Typography> : null}
+    {address ? <Typography>{address}</Typography> : null}
+    {url ? <Button component="a" href={url} target="_blank" rel="noopener noreferrer" variant="contained" startIcon={<PlaceOutlined />}
+      sx={{ ...ordinaryPublicPageLinkSx, ...linkLayoutSx, minHeight: 'var(--app-control-l)', textTransform: 'none' }}>
+      {text(block.content.label, address)}</Button> : null}
+  </Stack></Surface>;
 }
 
 export function DividerBlock({ block }: { block: PageBlock }) {

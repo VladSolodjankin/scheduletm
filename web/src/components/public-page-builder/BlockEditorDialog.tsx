@@ -7,12 +7,13 @@ import type { ApiPublicPageRepository } from '../../features/public-page-builder
 import { getBlockDefinition } from '../../features/public-page-builder/model/blockRegistry';
 import type { Locale } from '../../shared/i18n/dictionaries';
 import { ColorControl } from './ColorControl';
+import { blockIssueText } from './blockIssueText';
 import { publicPageText } from './uiText';
 import { ImageUploadControl } from './ImageUploadControl';
 import { reconcilePendingMediaCleanup } from '../../features/public-page-builder/model/media';
 import { applyAvatarCoverColor, isSameAvatarCoverColor, resolveAvatarCoverPalette, resolveSelectedAvatarCoverColor } from './avatarCoverPalette';
 import { RichTextEditor } from './RichTextEditor';
-import { normalizeRichTextDocument } from '../../features/public-page-builder/model/normalizeDocument';
+import { normalizeRichTextDocument } from '../../features/public-page-builder/model/normalizeRichText';
 import { resolvePublicPageThemeVariables } from '../public-page-blocks/publicPageThemeVariables';
 import { SectionDesignControls } from './SectionDesignControls';
 import { ServicesBlockEditor } from './ServicesBlockEditor';
@@ -466,7 +467,7 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
           </Stack> : null}
         </Stack>
       </DialogContent>
-      {blockValidationIssues.length > 0 ? <Alert severity="error" sx={{ mx: 3, mb: 1 }}>{publicPageText(locale, 'publishInvalidBlock')}</Alert> : null}
+      {blockValidationIssues.length > 0 ? <Alert severity="error" sx={{ mx: 3, mb: 1 }}>{blockIssueText(locale, blockValidationIssues)}</Alert> : null}
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
         <Button disabled={cleaning} onClick={cancel}>{publicPageText(locale, 'cancel')}</Button>
         <Button disabled={cleaning || cleanupError || !scheduleValid || blockValidationIssues.length > 0} variant="contained" onClick={() => onSave({ block: draft, sectionId: draftSectionId, section: sectionDraft, addedMedia: pending, updatedMedia, removedMediaIds: [

@@ -48,7 +48,7 @@ describe('avatar presentation compatibility', () => {
   it('uses the four measured avatar sizes and shared natural-height frame geometry', () => {
     expect(AVATAR_SIZES).toEqual([65, 95, 125, 150]);
     expect(AVATAR_PREVIEW_REFERENCE).toEqual({
-      deviceWidth: 395, screenWidth: 375, screenMargin: 10, sectionPadding: 14,
+      deviceWidth: 395, screenWidth: 375, screenMargin: 10, sectionPadding: 26,
       contentWidth: 347, contentMarginBottom: 21, copyMarginTop: 7,
     });
     expect(AVATAR_COVER_REFERENCE).toEqual({
@@ -80,9 +80,9 @@ describe('avatar presentation compatibility', () => {
   });
 
   it('aligns a leading avatar cover with the section top without double-applying its own bleed', () => {
-    expect(resolveLeadingAvatarSectionMarginTop('avatar', 0, 24, false, 'cover-centered')).toBe(-10);
-    expect(resolveLeadingAvatarSectionMarginTop('avatar', 0, 14, false, 'cover-centered')).toBe(0);
-    expect(resolveLeadingAvatarSectionMarginTop('avatar', 0, 0, false, 'cover-centered')).toBe(14);
+    expect(resolveLeadingAvatarSectionMarginTop('avatar', 0, 24, false, 'cover-centered')).toBe(2);
+    expect(resolveLeadingAvatarSectionMarginTop('avatar', 0, 26, false, 'cover-centered')).toBe(0);
+    expect(resolveLeadingAvatarSectionMarginTop('avatar', 0, 0, false, 'cover-centered')).toBe(26);
     expect(resolveLeadingAvatarSectionMarginTop('avatar', 0, 24, false, 'centered')).toBe(-24);
     expect(resolveLeadingAvatarSectionMarginTop('avatar', 1, 24)).toBe(0);
     expect(resolveLeadingAvatarSectionMarginTop('text', 0, 24)).toBe(0);

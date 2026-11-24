@@ -8,10 +8,13 @@ import {
   PublicPageSchemaV2MigrationError,
   up,
 } from '../src/db/migrations/20260826120000_migrate_public_pages_to_schema_v2.js';
-import { publicPageDocumentSchema } from '../src/config/publicPageSchemas.js';
+import { publicPageDocumentSchema } from '@scheduletm/shared/public-page';
 import { convertPublicPageDocumentToSchemaV3 } from '../src/db/migrations/20260910160000_migrate_public_pages_to_schema_v3.js';
 import { convertPublicPageDocumentToSchemaV4 } from '../src/db/migrations/20260910180000_migrate_public_pages_to_schema_v4.js';
 import { convertPublicPageDocumentToSchemaV5 } from '../src/db/migrations/20261003193000_migrate_public_pages_to_schema_v5.js';
+import { convertPublicPageDocumentToSchemaV6 } from '../src/db/migrations/20261110090000_migrate_public_pages_to_schema_v6.js';
+import { convertPublicPageDocumentToSchemaV7 } from '../src/db/migrations/20261118090000_migrate_public_pages_to_schema_v7.js';
+import { convertPublicPageDocumentToSchemaV8 } from '../src/db/migrations/20261119090000_migrate_public_pages_to_schema_v8.js';
 
 const design = { backgroundColor: null, textColor: null };
 const block = (id: string, type: string, content: Record<string, unknown>) => ({
@@ -95,7 +98,7 @@ describe('Public Page schema v2 migration', () => {
       title: 'Services', serviceIds: [7], autoplayIntervalSeconds: null, showBookingButton: true,
     });
     expect(publicPageDocumentSchema.safeParse(
-      convertPublicPageDocumentToSchemaV5(convertPublicPageDocumentToSchemaV4(convertPublicPageDocumentToSchemaV3(result.document, 'UTC'))),
+      convertPublicPageDocumentToSchemaV8(convertPublicPageDocumentToSchemaV7(convertPublicPageDocumentToSchemaV6(convertPublicPageDocumentToSchemaV5(convertPublicPageDocumentToSchemaV4(convertPublicPageDocumentToSchemaV3(result.document, 'UTC'))))), 'ru-RU'),
     ).success).toBe(true);
   });
 
@@ -311,7 +314,7 @@ describe('Public Page schema v2 migration', () => {
       titleStyle: { fontFamily: 'Inter, system-ui, sans-serif', color: '#111827' },
     });
     expect(publicPageDocumentSchema.safeParse(
-      convertPublicPageDocumentToSchemaV5(convertPublicPageDocumentToSchemaV4(convertPublicPageDocumentToSchemaV3(result.document, 'UTC'))),
+      convertPublicPageDocumentToSchemaV8(convertPublicPageDocumentToSchemaV7(convertPublicPageDocumentToSchemaV6(convertPublicPageDocumentToSchemaV5(convertPublicPageDocumentToSchemaV4(convertPublicPageDocumentToSchemaV3(result.document, 'UTC'))))), 'ru-RU'),
     ).success).toBe(true);
   });
 

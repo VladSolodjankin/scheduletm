@@ -2,9 +2,9 @@ import type {
   BlockDesign,
   MediaReference,
   PageBlock,
-  PageProfile,
   PageSection,
   PageSeo,
+  PublicPageLocale,
   PageTheme,
   PublicPageDocument,
 } from './publicPage';
@@ -17,8 +17,8 @@ export type BlockMediaChanges = {
 
 export type EditorAction =
   | { type: 'document/replace'; document: PublicPageDocument }
-  | { type: 'profile/update'; changes: Partial<PageProfile> }
   | { type: 'seo/update'; changes: Partial<PageSeo> }
+  | { type: 'locale/update'; locale: PublicPageLocale }
   | { type: 'slug/update'; slug: string }
   | { type: 'theme/update'; theme: PageTheme }
   | { type: 'media/add'; media: MediaReference }

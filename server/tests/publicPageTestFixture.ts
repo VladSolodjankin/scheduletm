@@ -15,16 +15,13 @@ const typographyToken = (fontSize: number, fontWeight: number) => ({
 });
 
 export const validPublicPageDocument = {
-  schemaVersion: 5 as const,
+  schemaVersion: 8 as const,
   timezone: 'UTC',
+  locale: 'ru' as const,
   archivedBlocks: [],
   id: 'page-1',
   slug: 'valid-page',
   status: 'draft' as const,
-  profile: {
-    displayName: 'Name', description: '', logoMediaId: null, avatarMediaId: null,
-    avatarPosition: '50% 50%',
-  },
   theme: {
     id: 'minimal',
     name: 'Minimal',
@@ -61,6 +58,7 @@ export const validPublicPageDocument = {
     backgroundPosition: '50% 50%',
     linkStylePreset: 'primary-fill' as const,
     linkTextAlign: 'center' as const,
+    pageWidth: 'narrow' as const,
     styleDefaults: {
       sectionBorderRadius: 0,
       blockBorderRadius: 24,
@@ -82,7 +80,7 @@ export const validPublicPageDocument = {
           fontStyle: 'normal' as const, color: '#fff',
         },
         backgroundColor: '#00f', backgroundOpacity: 1, borderWidth: 0,
-        borderColor: '#00f', shadow: false,
+        borderColor: '#00f', shadow: false, width: 'full' as const, align: 'center' as const,
       },
     },
   },
@@ -90,12 +88,13 @@ export const validPublicPageDocument = {
     id: 'section-1',
     name: '',
     visible: true,
-    layout: 'single' as const,
+    size: 'full' as const,
     blocks: [{
       id: 'block-1',
       type: 'text',
       name: '',
       visible: true,
+      size: 'full' as const,
       schedule: { period: null, weekdays: null },
       content: {
         document: {
@@ -142,6 +141,8 @@ export const validPublicPageDocument = {
         borderWidth: null,
         borderColor: null,
         shadow: null,
+        width: null,
+        align: null,
       },
     },
   }],
@@ -150,3 +151,27 @@ export const validPublicPageDocument = {
   createdAt: '2026-07-28T00:00:00.000Z',
   updatedAt: '2026-07-28T00:00:00.000Z',
 };
+
+/** The same document in the frozen schema v5 shape, used as the base of the historical migration tests. */
+export const validSchemaV5Document = (() => {
+  const { locale: _locale, ...document } = validPublicPageDocument;
+  const { pageWidth: _pageWidth, styleDefaults, ...theme } = validPublicPageDocument.theme;
+  const { width: _linkWidth, align: _linkAlign, ...linkStyle } = styleDefaults.linkStyle;
+  const [{ size: _sectionSize, blocks, design, ...section }] = validPublicPageDocument.sections;
+  const { width: _overrideWidth, align: _overrideAlign, ...sectionLinkStyle } = design.linkStyle;
+  return {
+    ...document,
+    schemaVersion: 5 as const,
+    profile: {
+      displayName: 'Name', description: '', logoMediaId: null, avatarMediaId: null,
+      avatarPosition: '50% 50%',
+    },
+    theme: { ...theme, styleDefaults: { ...styleDefaults, linkStyle } },
+    sections: [{
+      ...section,
+      layout: 'single' as const,
+      design: { ...design, linkStyle: sectionLinkStyle },
+      blocks: blocks.map(({ size: _blockSize, ...block }) => block),
+    }],
+  };
+})();

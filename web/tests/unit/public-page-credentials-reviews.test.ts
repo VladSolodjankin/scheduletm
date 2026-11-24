@@ -93,7 +93,7 @@ describe('createBlock with locale', () => {
 describe('credentials publish focus mapping', () => {
   it('points media issues to the credentials media control', () => {
     const document = {
-      profile: { logoMediaId: null, avatarMediaId: null }, theme: { backgroundMediaId: null },
+      seo: { imageMediaId: null }, theme: { backgroundMediaId: null },
       sections: [{ id: 's1', design: { backgroundMediaId: null }, blocks: [{
         id: 'b1', type: 'credentials', content: { title: '', items: [credential()] }, design: { backgroundMediaId: null },
       }] }],

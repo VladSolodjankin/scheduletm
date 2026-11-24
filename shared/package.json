@@ -1,0 +1,34 @@
+{
+  "name": "@scheduletm/shared",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./public-page": {
+      "types": "./dist/publicPage.d.ts",
+      "default": "./dist/publicPage.js"
+    },
+    "./public-page-analytics": {
+      "types": "./dist/publicPageAnalytics.d.ts",
+      "default": "./dist/publicPageAnalytics.js"
+    },
+    "./public-page-seo": {
+      "types": "./dist/publicPageSeo.d.ts",
+      "default": "./dist/publicPageSeo.js"
+    },
+    "./public-page-domain": {
+      "types": "./dist/publicPageDomain.d.ts",
+      "default": "./dist/publicPageDomain.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

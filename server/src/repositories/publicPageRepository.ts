@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import { z } from 'zod';
-import type { PublicPageDocument, PublishIssue } from '../config/publicPageSchemas.js';
+import type { PublicPageDocument, PublishIssue } from '@scheduletm/shared/public-page';
 import { db } from '../db/knex.js';
 import { publicPageMediaUrl } from '../utils/publicPageMediaUrl.js';
 import { publicPageBlocks } from '../utils/publicPageReferences.js';
@@ -28,7 +28,8 @@ export class PublicPageRepositoryError extends Error {
       | 'QUOTA_EXCEEDED'
       | 'PAGE_NOT_ARCHIVED'
       | 'MISSING_SERVICES'
-      | 'INVALID_MEDIA',
+      | 'INVALID_MEDIA'
+      | 'DOMAIN_CONFLICT',
     public readonly current?: PublicPageRecord,
     public readonly missingServiceIds?: number[],
     public readonly issues?: PublishIssue[],
@@ -167,6 +168,20 @@ export async function findPublishedPublicPageBySlug(slug: string): Promise<Publi
     .where('accounts.is_active', true)
     .select('pages.*')
     .first()) ?? null;
+}
+
+/** Slugs of every page visitors can open, for the sitemap. */
+export async function listPublishedPublicPageSlugs(): Promise<string[]> {
+  const rows = await db('public_page_slug_claims as claims')
+    .join('public_pages as pages', 'pages.id', 'claims.published_page_id')
+    .join('accounts', 'accounts.id', 'pages.account_id')
+    .where('pages.status', 'published')
+    .whereNull('pages.archived_at')
+    .whereNotNull('pages.published_document')
+    .where('accounts.is_active', true)
+    .orderBy('claims.slug')
+    .select<{ slug: string }[]>('claims.slug');
+  return rows.map(({ slug }) => slug);
 }
 
 export async function createPublicPage(input: {

@@ -17,27 +17,24 @@ import type { ReactNode } from 'react';
 import type { PageSection, PageTheme, TypographyStyle } from '../../features/public-page-builder/types/publicPage';
 import type { Locale } from '../../shared/i18n/dictionaries';
 import { ColorControl } from './ColorControl';
+import { PUBLIC_PAGE_FONT_OPTIONS, PUBLIC_PAGE_SPACING_SCALE } from '../../features/public-page-builder/config/designOptions';
 import { SelectChip, SettingsRow } from './SettingsRow';
 import { publicPageText } from './uiText';
 import { resolvePublicPageThemeVariables } from '../public-page-blocks/publicPageThemeVariables';
+import { LinkLayoutControls } from './LayoutControls';
 
-const SECTION_SPACING_STEP_PX = 14;
-const SECTION_SPACING_MAX_STEP = 5;
-const TYPOGRAPHY_FONT_OPTIONS = [
-  ['Inter', 'Inter, system-ui, sans-serif'],
-  ['Roboto', 'Roboto, sans-serif'],
-  ['Open Sans', '"Open Sans", sans-serif'],
-  ['Montserrat', 'Montserrat, sans-serif'],
-  ['Lato', 'Lato, sans-serif'],
-] as const;
+const SECTION_SPACING_MAX_STEP = PUBLIC_PAGE_SPACING_SCALE.length - 1;
+const TYPOGRAPHY_FONT_OPTIONS = PUBLIC_PAGE_FONT_OPTIONS;
 const TYPOGRAPHY_SIZE_OPTIONS = Array.from({ length: 45 }, (_, index) => 8 + index * 2);
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.max(minimum, Math.min(maximum, value));
 }
 
+/** Nearest step of the golden-ratio spacing scale for a stored padding in px. */
 function spacingStep(value: number): number {
-  return clamp(Math.round(value / SECTION_SPACING_STEP_PX), 0, SECTION_SPACING_MAX_STEP);
+  const distances = PUBLIC_PAGE_SPACING_SCALE.map((step) => Math.abs(step - value));
+  return clamp(distances.indexOf(Math.min(...distances)), 0, SECTION_SPACING_MAX_STEP);
 }
 
 function GroupHeading({ children }: { children: ReactNode }) {
@@ -175,9 +172,9 @@ export function SectionDesignControls({ locale, theme, section, backgroundImageC
       <Stack spacing={1.5} data-section-settings-group="general">
         <GroupHeading>{publicPageText(locale, 'general')}</GroupHeading>
         <SliderRow label={publicPageText(locale, 'paddingTop')} value={spacingStep(design.paddingTop)} minimum={0} maximum={5} step={1}
-          valueLabel={`${spacingStep(design.paddingTop)}x`} onChange={(value) => updateDesign({ paddingTop: value * SECTION_SPACING_STEP_PX })} />
+          valueLabel={`${spacingStep(design.paddingTop)}x`} onChange={(value) => updateDesign({ paddingTop: PUBLIC_PAGE_SPACING_SCALE[value] ?? 0 })} />
         <SliderRow label={publicPageText(locale, 'paddingBottom')} value={spacingStep(design.paddingBottom)} minimum={0} maximum={5} step={1}
-          valueLabel={`${spacingStep(design.paddingBottom)}x`} onChange={(value) => updateDesign({ paddingBottom: value * SECTION_SPACING_STEP_PX })} />
+          valueLabel={`${spacingStep(design.paddingBottom)}x`} onChange={(value) => updateDesign({ paddingBottom: PUBLIC_PAGE_SPACING_SCALE[value] ?? 0 })} />
         <FormControlLabel label={publicPageText(locale, 'horizontalMargin')} control={<Switch checked={design.horizontalMargin}
           onChange={(_, checked) => updateDesign({ horizontalMargin: checked })} />} />
         {!isOff ? <NumberStepper locale={locale} label={publicPageText(locale, 'borderRadius')} value={design.borderRadius}
@@ -210,6 +207,8 @@ export function SectionDesignControls({ locale, theme, section, backgroundImageC
 
       <Stack spacing={1.5} data-section-settings-group="links">
         <GroupHeading>{publicPageText(locale, 'linksStyle')}</GroupHeading>
+        <LinkLayoutControls locale={locale} inheritable width={design.linkStyle.width} align={design.linkStyle.align}
+          onWidthChange={(width) => updateLinkStyle({ width })} onAlignChange={(align) => updateLinkStyle({ align })} />
         <CompactTypographyControls locale={locale} label={publicPageText(locale, 'titleStyle')} value={design.linkStyle.titleStyle}
           resolvedValue={resolvedLinkTitleStyle}
           onChange={(titleStyle) => updateLinkStyle({ titleStyle })} />

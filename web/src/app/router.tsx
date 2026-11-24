@@ -10,6 +10,7 @@ const LoginPage = lazy(() => import('../pages/LoginPage').then((module) => ({ de
 const RegisterPage = lazy(() => import('../pages/RegisterPage').then((module) => ({ default: module.RegisterPage })));
 const InviteAcceptPage = lazy(() => import('../pages/InviteAcceptPage').then((module) => ({ default: module.InviteAcceptPage })));
 const AppointmentsPage = lazy(() => import('../pages/AppointmentsPage').then((module) => ({ default: module.AppointmentsPage })));
+const PublicPageAnalyticsPage = lazy(() => import('../pages/PublicPageAnalyticsPage').then((module) => ({ default: module.PublicPageAnalyticsPage })));
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
 const PaymentsPage = lazy(() => import('../pages/PaymentsPage').then((module) => ({ default: module.PaymentsPage })));
 const ScheduleExceptionsPage = lazy(() => import('../pages/ScheduleExceptionsPage').then((module) => ({ default: module.ScheduleExceptionsPage })));
@@ -87,7 +88,19 @@ function ServicesRoleRoute({ children }: { children: ReactElement }) {
     : <Navigate to="/appointments" replace />;
 }
 
-export const router = createBrowserRouter([
+const publicPageRoutes = [
+  { path: '/:slug/booking', element: <PublicPageBookingPage /> },
+  { path: '/:slug/appointment-status', element: <PublicAppointmentStatusPage /> },
+  { path: '/appointments/manage/:token', element: <AppointmentManagePage /> },
+];
+
+// On the owner's own domain the site is that single page: the root shows it and nothing of the app is reachable.
+const ownDomainSlug = window.__PUBLIC_PAGE_SLUG__;
+
+export const router = createBrowserRouter(ownDomainSlug ? [{
+  element: <PublicPageLayout />,
+  children: [{ path: '/', element: <PublicPageViewPage slug={ownDomainSlug} /> }, ...publicPageRoutes],
+}] : [
   {
     element: <MeetliThemeBoundary />,
     children: [
@@ -204,6 +217,7 @@ export const router = createBrowserRouter([
           { path: '/public-pages', element: <RoleRoute><PublicPagesPage /></RoleRoute> },
           { path: '/public-pages/new', element: <RoleRoute><PublicPageEditorPage /></RoleRoute> },
           { path: '/public-pages/:profileId/edit', element: <RoleRoute><PublicPageEditorPage /></RoleRoute> },
+          { path: '/public-pages/:pageId/analytics', element: <RoleRoute><PublicPageAnalyticsPage /></RoleRoute> },
           { path: '/telegram-bot', element: <RoleRoute><TelegramBotPage /></RoleRoute> },
         ]
       },
@@ -211,11 +225,6 @@ export const router = createBrowserRouter([
   },
   {
     element: <PublicPageLayout />,
-    children: [
-      { path: '/:slug/booking', element: <PublicPageBookingPage /> },
-      { path: '/:slug/appointment-status', element: <PublicAppointmentStatusPage /> },
-      { path: '/appointments/manage/:token', element: <AppointmentManagePage /> },
-      { path: '/:slug', element: <PublicPageViewPage /> },
-    ]
+    children: [...publicPageRoutes, { path: '/:slug', element: <PublicPageViewPage /> }]
   }
 ]);

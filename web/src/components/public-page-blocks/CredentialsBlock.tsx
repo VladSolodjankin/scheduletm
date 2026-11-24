@@ -26,21 +26,21 @@ export function CredentialsBlock({ block, mediaUrlFor, editor = false }: {
       <Typography color="text.secondary">{publicPageText(locale, 'credentialsEmpty')}</Typography></Surface> : null;
   }
   return <Surface block={block}>
-    <Box sx={{ display: 'grid', gap: 1.5 }}>
+    <Box sx={{ display: 'grid', gap: 'var(--app-space-m)' }}>
       {heading}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 'var(--app-space-m)' }}>
         {cards.map(({ item, url }, index) => {
           const meta = [item.organization.trim(), item.year.trim()].filter(Boolean).join(' · ');
           return <ButtonBase key={item.id} type="button"
             aria-label={publicPageText(locale, 'credentialsOpen').replace('{title}', item.title)}
             onClick={editor ? undefined : () => setOpenIndex(index)}
             sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', textAlign: 'left', minWidth: 0, overflow: 'hidden',
-              bgcolor: 'var(--avatar-surface-background)', color: 'var(--page-text)', border: '1px solid',
+              bgcolor: 'var(--avatar-surface-background)', color: 'var(--page-text)', border: 'var(--app-border-width) solid',
               borderColor: 'color-mix(in srgb, var(--page-text) 14%, transparent)', borderRadius: 'var(--block-border-radius)',
-              '&:focus-visible': { outline: '2px solid var(--theme-link-border-color)', outlineOffset: 2 } }}>
+              '&:focus-visible': { outline: 'calc(var(--app-border-width) * 2) solid var(--theme-link-border-color)', outlineOffset: 'calc(var(--app-border-width) * 2)' } }}>
             <Box component="img" src={url} alt={item.alt} loading="lazy"
               sx={{ display: 'block', width: '100%', aspectRatio: '4 / 3', objectFit: 'cover' }} />
-            <Box sx={{ p: 1.5, minWidth: 0 }}>
+            <Box sx={{ p: 'var(--app-space-m)', minWidth: 0 }}>
               <Typography component="h3" variant="subtitle1" sx={{ ...wrappingTextSx, fontWeight: 700 }}>{item.title}</Typography>
               {meta ? <Typography variant="body2" sx={{ ...wrappingTextSx, opacity: 0.75 }}>{meta}</Typography> : null}
             </Box>

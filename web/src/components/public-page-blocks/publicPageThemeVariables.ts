@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react';
 import type {
+  LinkAlign,
+  LinkWidth,
   PageSection,
   PageTheme,
   ResolvedTypographyStyle,
@@ -61,7 +63,18 @@ function linkRadius(theme: PageTheme): string {
   return `${theme.tokens.layout.linkRadius}px`;
 }
 
-function linkAlignVariables(theme: PageTheme): PublicPageThemeVariables {
+export function linkWidthVariable(width: LinkWidth): PublicPageThemeVariables {
+  return { '--theme-link-width': width === 'full' ? '100%' : 'fit-content' };
+}
+
+export function linkAlignVariables(align: LinkAlign): PublicPageThemeVariables {
+  return {
+    '--theme-link-margin-left': align === 'left' ? '0' : 'auto',
+    '--theme-link-margin-right': align === 'right' ? '0' : 'auto',
+  };
+}
+
+function linkTextAlignVariables(theme: PageTheme): PublicPageThemeVariables {
   const left = theme.linkTextAlign === 'left';
   return {
     '--theme-link-justify': left ? 'flex-start' : 'center',
@@ -146,8 +159,15 @@ export function resolvePublicPageThemeVariables(
     '--avatar-leading-section-radius': options.leadingSectionRadius ?? '0px',
     '--block-border-radius': `${theme.tokens.layout.blockRadius}px`,
     '--theme-link-offset': `${theme.tokens.layout.linkGap}px`,
+    '--page-star-color': '#F2B01E',
+    ...(theme.styleDefaults.socialButtonColors === 'theme' ? {
+      '--social-button-background': 'color-mix(in srgb, var(--theme-link-background) var(--theme-link-background-opacity), transparent)',
+      '--social-button-color': 'var(--theme-link-title-color)',
+    } : {}),
     '--theme-link-border-radius': linkRadius(theme),
-    ...linkAlignVariables(theme),
+    ...linkTextAlignVariables(theme),
+    ...linkWidthVariable(link?.width ?? linkDefault.width),
+    ...linkAlignVariables(link?.align ?? linkDefault.align),
     '--theme-link-background': linkBackground,
     '--theme-link-background-opacity': `${linkOpacity * 100}%`,
     '--theme-link-title-transform': 'none',

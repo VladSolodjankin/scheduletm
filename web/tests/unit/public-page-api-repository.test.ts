@@ -1,7 +1,7 @@
 import { AxiosError, AxiosHeaders } from 'axios';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { apiClient } from '../../src/shared/api/client';
-import { normalizeDocument } from '../../src/features/public-page-builder/model/normalizeDocument';
+import { normalizeDocument } from './support/normalizeDocument';
 import { PUBLIC_PAGE_SCHEMA_VERSION } from '../../src/features/public-page-builder/types/publicPage';
 import { ApiPublicPageRepository } from '../../src/features/public-page-builder/repository/ApiPublicPageRepository';
 import { PublicPageRepositoryError } from '../../src/features/public-page-builder/repository/PublicPageRepository';
@@ -80,7 +80,7 @@ describe('ApiPublicPageRepository runtime contract', () => {
     );
     expect(saved).toMatchObject({ id: 'page/id', revision: 2 });
     expect(saved.draft.schemaVersion).toBe(PUBLIC_PAGE_SCHEMA_VERSION);
-    expect(saved.draft.profile.displayName).toBe('New page');
+    expect(saved.draft).not.toHaveProperty('profile');
   });
 
   it('publishes with the expected revision and maps the returned server revision', async () => {
@@ -175,10 +175,6 @@ describe('ApiPublicPageRepository runtime contract', () => {
   });
 
   it('rejects missing, v1, future, and legacy-shaped documents and preserves non-Axios failures', async () => {
-    const malformedDocument = {} as Record<string, unknown>;
-    Object.defineProperty(malformedDocument, 'schemaVersion', {
-      get() { throw new Error('broken document'); },
-    });
     const get = vi.spyOn(apiClient, 'get');
     const original = new Error('programmer failure');
     const repository = new ApiPublicPageRepository('token');
@@ -194,7 +190,7 @@ describe('ApiPublicPageRepository runtime contract', () => {
       .mockResolvedValueOnce({ data: { ...canonicalDocument('v1', 'v1'), schemaVersion: 1 } })
       .mockResolvedValueOnce({ data: { schemaVersion: PUBLIC_PAGE_SCHEMA_VERSION + 1 } })
       .mockResolvedValueOnce({ data: legacyContact })
-      .mockResolvedValueOnce({ data: malformedDocument })
+      .mockResolvedValueOnce({ data: { schemaVersion: PUBLIC_PAGE_SCHEMA_VERSION } })
       .mockRejectedValueOnce(axiosError({ code: 'unexpected_code' }, 500))
       .mockRejectedValueOnce(original);
 

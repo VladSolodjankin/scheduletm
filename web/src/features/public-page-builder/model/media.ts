@@ -42,8 +42,7 @@ function containsMediaId(value: unknown, mediaId: string): boolean {
 }
 
 export function documentReferencesMedia(document: PublicPageDocument, mediaId: string): boolean {
-  return containsMediaId(document.profile, mediaId)
-    || containsMediaId(document.theme, mediaId)
+  return containsMediaId(document.theme, mediaId)
     || containsMediaId(document.seo, mediaId)
     || containsMediaId(document.sections, mediaId)
     || containsMediaId(document.archivedBlocks, mediaId);

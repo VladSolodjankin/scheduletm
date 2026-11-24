@@ -3,13 +3,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { PublicPageRenderer } from '../components/public-page-blocks/PublicPageRenderer';
 import { publicPageText } from '../components/public-page-builder/uiText';
-import { ApiPublicPageRepository } from '../features/public-page-builder/repository/ApiPublicPageRepository';
+import { ApiPublicPageRepository, trackPublicPageEvent } from '../features/public-page-builder/repository/ApiPublicPageRepository';
 import { PublicPageRepositoryError } from '../features/public-page-builder/repository/PublicPageRepository';
 import type { PublicPageDocument } from '../features/public-page-builder/types/publicPage';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { apiClient } from '../shared/api/client';
 import type { PublicBookingOptions, PublicBookingService, PublicReviewsData } from '../shared/types/api';
-import { publicPageUrl } from '../features/public-page-builder/config/publicPageUrl';
+import { publicPageHead } from '@scheduletm/shared/public-page-seo';
+import { publicPageCanonicalUrl } from '../features/public-page-builder/config/publicPageUrl';
 import { normalizeSlug } from '../features/public-page-builder/model/slug';
 
 const repository = new ApiPublicPageRepository('');
@@ -76,19 +77,10 @@ function restoreCanonicalLink(snapshot: CanonicalLinkSnapshot): void {
 
 export function applyPublicPageSeoMetadata(page: PublicPageDocument): () => void {
   const previousTitle = document.title;
-  const imageUrl = page.seo.imageMediaId
-    ? page.media.find((media) => media.id === page.seo.imageMediaId)?.url
-    : undefined;
-  const canonicalUrl = publicPageUrl(page.slug);
-  document.title = page.seo.title;
-  const snapshots = [
-    applyMetaTag('name', 'description', page.seo.description),
-    applyMetaTag('property', 'og:title', page.seo.title),
-    applyMetaTag('property', 'og:description', page.seo.description),
-    applyMetaTag('property', 'og:url', canonicalUrl),
-    ...(imageUrl ? [applyMetaTag('property', 'og:image', imageUrl)] : []),
-  ];
-  const canonicalSnapshot = applyCanonicalLink(canonicalUrl);
+  const head = publicPageHead(page, publicPageCanonicalUrl(page.slug));
+  document.title = head.title;
+  const snapshots = head.meta.map(({ attribute, key, content }) => applyMetaTag(attribute, key, content));
+  const canonicalSnapshot = applyCanonicalLink(head.canonical);
   return () => {
     document.title = previousTitle;
     snapshots.forEach(restoreMetaTag);
@@ -96,8 +88,9 @@ export function applyPublicPageSeoMetadata(page: PublicPageDocument): () => void
   };
 }
 
-export function PublicPageViewPage() {
-  const { slug = '' } = useParams();
+export function PublicPageViewPage({ slug: fixedSlug }: { slug?: string }) {
+  const { slug: routeSlug = '' } = useParams();
+  const slug = fixedSlug ?? routeSlug;
   const canonicalRouteSlug = useMemo(() => normalizeSlug(slug), [slug]);
   const { locale } = useI18n();
   const [page, setPage] = useState<PublicPageDocument | null>(null);
@@ -109,6 +102,10 @@ export function PublicPageViewPage() {
   const requestIdRef = useRef(0);
   const servicesRequestIdRef = useRef(0);
   const reviewsRequestIdRef = useRef(0);
+  const viewedSlug = page?.slug;
+  useEffect(() => {
+    if (viewedSlug) {trackPublicPageEvent(viewedSlug, { type: 'view', referrer: window.document.referrer });}
+  }, [viewedSlug]);
   const load = useCallback(async () => {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
@@ -209,6 +206,12 @@ export function PublicPageViewPage() {
     {reviewsError ? <Alert severity="warning" action={<Button onClick={() => void loadReviews()}>{publicPageText(locale, 'retry')}</Button>}>
       {publicPageText(locale, 'reviewsLoadError')}
     </Alert> : null}
-    <PublicPageRenderer document={page} services={services} reviews={reviews} />
+    <Box onClick={(event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const blockId = target?.closest('a, button') ? target.closest('[data-track-block-id]')?.getAttribute('data-track-block-id') : null;
+      if (blockId) {trackPublicPageEvent(page.slug, { type: 'click', blockId });}
+    }}>
+      <PublicPageRenderer document={page} services={services} reviews={reviews} />
+    </Box>
   </>;
 }

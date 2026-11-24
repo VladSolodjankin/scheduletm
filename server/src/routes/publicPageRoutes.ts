@@ -5,16 +5,16 @@ import {
   publicAvailableSlotsQuerySchema,
   publicBookingSchema,
   createPublicPageSchema,
-  isValidPublicPageSlug,
-  normalizePublicPageSlug,
   publicPageListStatusSchema,
   publicPageRevisionSchema,
   savePublicPageDraftSchema,
 } from '../config/publicPageSchemas.js';
+import { isValidPublicPageSlug, normalizePublicPageSlug } from '@scheduletm/shared/public-page';
+import { PUBLIC_PAGE_ANALYTICS_PERIODS, publicPageEventSchema } from '@scheduletm/shared/public-page-analytics';
 import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { canManageAccountSettings, canReadAccountMedia } from '../policies/rolePermissions.js';
-import { PublicPageRepositoryError } from '../repositories/publicPageRepository.js';
+import { listPublishedPublicPageSlugs, PublicPageRepositoryError } from '../repositories/publicPageRepository.js';
 import { PublicBookingRepositoryError } from '../repositories/publicBookingRepository.js';
 import {
   bookPublicAppointment,
@@ -38,6 +38,14 @@ import {
   restorePublicPageForAccount,
   toPublicPageDto,
 } from '../services/publicPageService.js';
+import {
+  getPublicPageDomain,
+  getPublishedPublicPageByDomain,
+  removePublicPageDomain,
+  setPublicPageDomain,
+  verifyPublicPageDomain,
+} from '../services/publicPageDomainService.js';
+import { getPublicPageAnalytics, recordPublicPageEvent } from '../services/publicPageAnalyticsService.js';
 import { publicPageMediaUrl } from '../utils/publicPageMediaUrl.js';
 import { trackServerError } from '../services/errorTrackingService.js';
 import {
@@ -67,6 +75,16 @@ const publicPageLookupRateLimit = createRequestRateLimit({
   maxRequests: 60,
   windowMs: 60_000,
 });
+const publicPageEventRateLimit = createRequestRateLimit({
+  keyPrefix: 'public-page-event',
+  maxRequests: 120,
+  windowMs: 60_000,
+});
+const analyticsQuerySchema = z.object({
+  days: z.coerce.number().pipe(z.union(PUBLIC_PAGE_ANALYTICS_PERIODS.map((period) => z.literal(period)) as [z.ZodLiteral<7>, z.ZodLiteral<30>, z.ZodLiteral<90>])),
+}).strict();
+const domainSchema = z.string().min(1).max(253);
+const domainBodySchema = z.object({ domain: z.string().min(1).max(253) }).strict();
 const publicPageMediaRateLimit = createRequestRateLimit({
   keyPrefix: 'public-page-media',
   maxRequests: 120,
@@ -121,6 +139,7 @@ function sendError(req: Request, res: Response, error: unknown) {
   if (error instanceof PublicPageServiceError) {
     if (error.code === 'UNSUPPORTED_VERSION') return res.status(400).json({ code: 'unsupported_version' });
     if (error.code === 'INVALID_SLUG') return res.status(400).json({ code: 'invalid_request' });
+    if (error.code === 'INVALID_DOMAIN') return res.status(400).json({ code: 'invalid_domain' });
     if (error.code === 'INVALID_DOCUMENT') return res.status(400).json({ code: 'invalid_document' });
     return res.status(422).json({ code: 'publish_validation_failed', issues: error.issues });
   }
@@ -135,6 +154,8 @@ function sendError(req: Request, res: Response, error: unknown) {
         });
       case 'SLUG_CONFLICT':
         return res.status(409).json({ code: 'slug_conflict' });
+      case 'DOMAIN_CONFLICT':
+        return res.status(409).json({ code: 'domain_conflict' });
       case 'PAGE_NOT_ARCHIVED':
         return res.status(409).json({ code: 'page_not_archived' });
       case 'QUOTA_EXCEEDED':
@@ -146,12 +167,43 @@ function sendError(req: Request, res: Response, error: unknown) {
   return res.status(500).json({ code: 'internal_error' });
 }
 
+publicPageRoutes.get('/sitemap', publicPageLookupRateLimit, async (req, res) => {
+  try {
+    return res.json({ slugs: await listPublishedPublicPageSlugs() });
+  } catch (error) {
+    return sendError(req, res, error);
+  }
+});
+
+publicPageRoutes.get('/by-domain/:domain', publicPageLookupRateLimit, async (req, res) => {
+  try {
+    const domain = domainSchema.safeParse(req.params.domain);
+    if (!domain.success) return res.status(404).json({ code: 'not_found' });
+    const document = await getPublishedPublicPageByDomain(domain.data);
+    return document ? res.json(document) : res.status(404).json({ code: 'not_found' });
+  } catch (error) {
+    return sendError(req, res, error);
+  }
+});
+
 publicPageRoutes.get('/by-slug/:slug', publicPageLookupRateLimit, async (req, res) => {
   try {
     const parsed = slugSchema.safeParse(req.params.slug);
     if (!parsed.success) return res.status(404).json({ code: 'not_found' });
     const document = await getPublishedPublicPage(parsed.data);
     return document ? res.json(document) : res.status(404).json({ code: 'not_found' });
+  } catch (error) {
+    return sendError(req, res, error);
+  }
+});
+
+publicPageRoutes.post('/by-slug/:slug/events', publicPageEventRateLimit, async (req, res) => {
+  try {
+    const slug = slugSchema.safeParse(req.params.slug);
+    const event = publicPageEventSchema.safeParse(req.body);
+    if (!slug.success || !event.success) return res.status(400).json({ code: 'invalid_request' });
+    await recordPublicPageEvent(normalizePublicPageSlug(slug.data), event.data, req.get('user-agent'));
+    return res.status(204).end();
   } catch (error) {
     return sendError(req, res, error);
   }
@@ -342,6 +394,59 @@ publicPageRoutes.get('/slug-availability', async (req, res) => {
       query.data.slug,
       query.data.pageId,
     ));
+  } catch (error) {
+    return sendError(req, res, error);
+  }
+});
+
+publicPageRoutes.get('/:pageId/domain', async (req, res) => {
+  try {
+    const pageId = pageIdSchema.safeParse(req.params.pageId);
+    if (!pageId.success) return res.status(400).json({ code: 'invalid_request' });
+    return res.json({ domain: await getPublicPageDomain((req as unknown as AuthedRequest).user.accountId, pageId.data) });
+  } catch (error) {
+    return sendError(req, res, error);
+  }
+});
+
+publicPageRoutes.put('/:pageId/domain', async (req, res) => {
+  try {
+    const pageId = pageIdSchema.safeParse(req.params.pageId);
+    const body = domainBodySchema.safeParse(req.body);
+    if (!pageId.success || !body.success) return res.status(400).json({ code: 'invalid_request' });
+    return res.json({ domain: await setPublicPageDomain((req as unknown as AuthedRequest).user.accountId, pageId.data, body.data.domain) });
+  } catch (error) {
+    return sendError(req, res, error);
+  }
+});
+
+publicPageRoutes.post('/:pageId/domain/verify', async (req, res) => {
+  try {
+    const pageId = pageIdSchema.safeParse(req.params.pageId);
+    if (!pageId.success) return res.status(400).json({ code: 'invalid_request' });
+    return res.json({ domain: await verifyPublicPageDomain((req as unknown as AuthedRequest).user.accountId, pageId.data) });
+  } catch (error) {
+    return sendError(req, res, error);
+  }
+});
+
+publicPageRoutes.delete('/:pageId/domain', async (req, res) => {
+  try {
+    const pageId = pageIdSchema.safeParse(req.params.pageId);
+    if (!pageId.success) return res.status(400).json({ code: 'invalid_request' });
+    await removePublicPageDomain((req as unknown as AuthedRequest).user.accountId, pageId.data);
+    return res.status(204).end();
+  } catch (error) {
+    return sendError(req, res, error);
+  }
+});
+
+publicPageRoutes.get('/:pageId/analytics', async (req, res) => {
+  try {
+    const pageId = pageIdSchema.safeParse(req.params.pageId);
+    const query = analyticsQuerySchema.safeParse(req.query);
+    if (!pageId.success || !query.success) return res.status(400).json({ code: 'invalid_request' });
+    return res.json(await getPublicPageAnalytics((req as unknown as AuthedRequest).user.accountId, pageId.data, query.data.days));
   } catch (error) {
     return sendError(req, res, error);
   }

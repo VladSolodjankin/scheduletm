@@ -3,13 +3,18 @@ import ArrowUpward from '@mui/icons-material/ArrowUpward';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import OpenInNew from '@mui/icons-material/OpenInNew';
+import GridView from '@mui/icons-material/GridView';
 import Refresh from '@mui/icons-material/Refresh';
+import ViewCarousel from '@mui/icons-material/ViewCarousel';
+import ViewList from '@mui/icons-material/ViewList';
 import {
   Alert,
   Button,
   Checkbox,
   Dialog,
   DialogActions,
+  ToggleButton,
+  ToggleButtonGroup,
   DialogContent,
   DialogTitle,
   FormControlLabel,
@@ -27,7 +32,7 @@ import {
 import { useMemo, useState } from 'react';
 import type { ServicesResponse } from '../services/types';
 import { isServiceSelectable, MAX_PUBLIC_PAGE_SERVICES } from '../../features/public-page-builder/model/services';
-import type { BlockContent, PageBlock } from '../../features/public-page-builder/types/publicPage';
+import type { BlockContent, PageBlock, ServicesLayout } from '../../features/public-page-builder/types/publicPage';
 import type { Locale } from '../../shared/i18n/dictionaries';
 import { publicPageText } from './uiText';
 
@@ -53,6 +58,7 @@ export function ServicesBlockEditor({ block, locale, catalog, loading, error, on
     return Number.isInteger(value) && Number(value) >= 3 && Number(value) <= 30 ? String(value) : '5';
   });
   const ids = selectedIds(block.content);
+  const servicesLayout: ServicesLayout = block.content.layout === 'grid' || block.content.layout === 'list' ? block.content.layout : 'carousel';
   const catalogById = useMemo(() => new Map((catalog?.services ?? []).map((service) => [service.id, service])), [catalog]);
   const openSelection = () => {
     setTemporaryIds(ids);
@@ -67,12 +73,7 @@ export function ServicesBlockEditor({ block, locale, catalog, loading, error, on
     update({ serviceIds: next });
   };
   const confirmSelection = () => {
-    onContentChange({
-      title: typeof block.content.title === 'string' ? block.content.title : '',
-      serviceIds: temporaryIds.slice(0, MAX_PUBLIC_PAGE_SERVICES),
-      autoplayIntervalSeconds: Number.isInteger(block.content.autoplayIntervalSeconds) ? block.content.autoplayIntervalSeconds : null,
-      showBookingButton: typeof block.content.showBookingButton === 'boolean' ? block.content.showBookingButton : true,
-    });
+    update({ serviceIds: temporaryIds.slice(0, MAX_PUBLIC_PAGE_SERVICES) });
     setSelectionOpen(false);
   };
   const commitAutoplaySeconds = () => {
@@ -122,6 +123,16 @@ export function ServicesBlockEditor({ block, locale, catalog, loading, error, on
         </Stack>;
       })}
     </Stack>
+    <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <Typography variant="body2">{publicPageText(locale, 'servicesLayout')}</Typography>
+      <ToggleButtonGroup exclusive size="small" aria-label={publicPageText(locale, 'servicesLayout')} value={servicesLayout}
+        onChange={(_event, next: ServicesLayout | null) => { if (next) {update({ layout: next });} }}>
+        <Tooltip title={publicPageText(locale, 'servicesLayoutCarousel')}><ToggleButton value="carousel" aria-label={publicPageText(locale, 'servicesLayoutCarousel')}><ViewCarousel fontSize="small" /></ToggleButton></Tooltip>
+        <Tooltip title={publicPageText(locale, 'servicesLayoutGrid')}><ToggleButton value="grid" aria-label={publicPageText(locale, 'servicesLayoutGrid')}><GridView fontSize="small" /></ToggleButton></Tooltip>
+        <Tooltip title={publicPageText(locale, 'servicesLayoutList')}><ToggleButton value="list" aria-label={publicPageText(locale, 'servicesLayoutList')}><ViewList fontSize="small" /></ToggleButton></Tooltip>
+      </ToggleButtonGroup>
+    </Stack>
+    {servicesLayout === 'carousel' ? <>
     <FormControlLabel control={<Switch checked={block.content.autoplayIntervalSeconds !== null && block.content.autoplayIntervalSeconds !== undefined}
       onChange={(_, checked) => {
         if (checked) {setAutoplaySecondsInput('5');}
@@ -131,6 +142,7 @@ export function ServicesBlockEditor({ block, locale, catalog, loading, error, on
       label={publicPageText(locale, 'servicesAutoplaySeconds')} value={autoplaySecondsInput}
       slotProps={{ htmlInput: { min: 3, max: 30, step: 1 } }}
       onChange={(event) => setAutoplaySecondsInput(event.target.value)} onBlur={commitAutoplaySeconds} /> : null}
+    </> : null}
     <FormControlLabel control={<Switch checked={block.content.showBookingButton !== false}
       onChange={(_, checked) => update({ showBookingButton: checked })} />} label={publicPageText(locale, 'showBookingButton')} />
     <Dialog open={selectionOpen} onClose={() => setSelectionOpen(false)} fullWidth maxWidth="sm">

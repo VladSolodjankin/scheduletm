@@ -1,8 +1,9 @@
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary, Box, FormControlLabel, MenuItem, Stack, Switch, Tab, Tabs, TextField, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, FormControlLabel, MenuItem, Stack, Switch, Tab, Tabs, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useEffect, useId, useRef, useState, type Dispatch, type SyntheticEvent } from 'react';
 import {
   applyPublicPageLinkStyle,
+  applyPublicPageLinkLayout,
   applyPublicPageLinkTextAlign,
   applyPublicPagePalette,
   applyPublicPageThemeFont,
@@ -22,14 +23,15 @@ import type { EditorAction } from '../../features/public-page-builder/types/acti
 import type { EditorState } from '../../features/public-page-builder/types/editor';
 import type { MediaReference, PageTheme } from '../../features/public-page-builder/types/publicPage';
 import type { Locale } from '../../shared/i18n/dictionaries';
+import { PUBLIC_PAGE_BLOCK_GAPS, PUBLIC_PAGE_FONT_OPTIONS } from '../../features/public-page-builder/config/designOptions';
 import { ImageUploadControl } from './ImageUploadControl';
+import { PageSettingsPanel } from './PageSettingsPanel';
+import type { SlugAvailabilityState } from '../../features/public-page-builder/model/slug';
 import { AdvancedDesignControls } from './AdvancedDesignControls';
+import { LinkLayoutControls, PageWidthControl } from './LayoutControls';
 import { publicPageText } from './uiText';
 
-const fonts = [
-  ['Inter', 'Inter, system-ui, sans-serif'], ['Roboto', 'Roboto, sans-serif'], ['Open Sans', '"Open Sans", sans-serif'],
-  ['Montserrat', 'Montserrat, sans-serif'], ['Lato', 'Lato, sans-serif'],
-] as const;
+const fonts = PUBLIC_PAGE_FONT_OPTIONS;
 
 const roundings: Array<{ id: PageTheme['roundingStyle']; radius: string }> = [
   { id: 'rounded', radius: '14px' }, { id: 'pill', radius: '999px' },
@@ -44,7 +46,7 @@ const linkStyles = [
 ] as const;
 
 type DesignTab = 'simple' | 'advanced';
-type SimpleDesignSection = 'colors' | 'fonts' | 'rounding' | 'links' | 'background';
+type SimpleDesignSection = 'colors' | 'fonts' | 'rounding' | 'links' | 'pageWidth' | 'spacing' | 'background' | 'page';
 
 const accordionSx = {
   border: '1px solid',
@@ -67,8 +69,8 @@ function CategoryTabs<T extends string>({ value, categories, labels, onChange, a
   </Tabs>;
 }
 
-export function DesignPanel({ state, locale, dispatch, repository, previewUrls, onMediaPreview, busy = false, onBusyChange, focusMarker = null }: {
-  state: EditorState; locale: Locale; dispatch: Dispatch<EditorAction>; repository: ApiPublicPageRepository;
+export function DesignPanel({ state, locale, dispatch, repository, slugAvailability, previewUrls, onMediaPreview, busy = false, onBusyChange, focusMarker = null }: {
+  state: EditorState; locale: Locale; dispatch: Dispatch<EditorAction>; repository: ApiPublicPageRepository; slugAvailability: SlugAvailabilityState;
   busy?: boolean; onBusyChange?: (busy: boolean) => void;
   focusMarker?: string | null;
   previewUrls: ReadonlyMap<string, string>; onMediaPreview: (media: MediaReference, objectUrl: string) => void;
@@ -77,7 +79,8 @@ export function DesignPanel({ state, locale, dispatch, repository, previewUrls, 
   const tabsId = useId();
   const backgroundFocusRequested = focusMarker === 'theme.backgroundMediaId' || focusMarker?.startsWith('media:') === true;
   const [activeTab, setActiveTab] = useState<DesignTab>('simple');
-  const [simpleExpanded, setSimpleExpanded] = useState<SimpleDesignSection | false>(backgroundFocusRequested ? 'background' : 'colors');
+  const pageFocusRequested = focusMarker === 'slug' || focusMarker?.startsWith('seo.') === true;
+  const [simpleExpanded, setSimpleExpanded] = useState<SimpleDesignSection | false>(backgroundFocusRequested ? 'background' : pageFocusRequested ? 'page' : 'colors');
   const [colorCategory, setColorCategory] = useState<PublicPageThemeCategory>('neutral');
   const [backgroundCategory, setBackgroundCategory] = useState<PublicPageBackgroundCategory>('neutral');
   const themeRef = useRef(theme);
@@ -151,6 +154,26 @@ export function DesignPanel({ state, locale, dispatch, repository, previewUrls, 
             <FormControlLabel sx={{ mt: 1.5, ml: 0 }} control={<Switch checked={theme.linkTextAlign === 'center'}
               onChange={(event) => update(applyPublicPageLinkTextAlign(theme, event.target.checked ? 'center' : 'left'))} />}
               label={publicPageText(locale, 'centeredText')} />
+            <Box sx={{ mt: 1.5 }}>
+              <LinkLayoutControls locale={locale} width={theme.styleDefaults.linkStyle.width} align={theme.styleDefaults.linkStyle.align}
+                onWidthChange={(width) => width && update(applyPublicPageLinkLayout(theme, { width }))}
+                onAlignChange={(align) => align && update(applyPublicPageLinkLayout(theme, { align }))} />
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+        <Accordion disableGutters expanded={simpleExpanded === 'pageWidth'} onChange={toggleSimple('pageWidth')} sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'pageWidth')}</Typography></AccordionSummary>
+          <AccordionDetails>
+            <PageWidthControl locale={locale} value={theme.pageWidth} onChange={(pageWidth) => update({ ...theme, pageWidth })} />
+          </AccordionDetails>
+        </Accordion>
+        <Accordion disableGutters expanded={simpleExpanded === 'spacing'} onChange={toggleSimple('spacing')} sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'blockSpacing')}</Typography></AccordionSummary>
+          <AccordionDetails>
+            <ToggleButtonGroup exclusive fullWidth size="small" aria-label={publicPageText(locale, 'blockSpacing')} value={theme.tokens.layout.linkGap}
+              onChange={(_event, next: number | null) => { if (next !== null) {update({ ...theme, tokens: { ...theme.tokens, layout: { ...theme.tokens.layout, linkGap: next } } });} }}>
+              {PUBLIC_PAGE_BLOCK_GAPS.map((gap, index) => <ToggleButton key={gap} value={gap}>{publicPageText(locale, (['spacingCompact', 'spacingComfortable', 'spacingAiry'] as const)[index])}</ToggleButton>)}
+            </ToggleButtonGroup>
           </AccordionDetails>
         </Accordion>
         <Accordion disableGutters expanded={simpleExpanded === 'background'} onChange={toggleSimple('background')} sx={accordionSx}>
@@ -202,6 +225,13 @@ export function DesignPanel({ state, locale, dispatch, repository, previewUrls, 
               </Stack> : null}
             </Box>
           </Stack></AccordionDetails>
+        </Accordion>
+        <Accordion disableGutters expanded={simpleExpanded === 'page'} onChange={toggleSimple('page')} sx={accordionSx}>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'addressAndSearch')}</Typography></AccordionSummary>
+          <AccordionDetails>
+            <PageSettingsPanel state={state} locale={locale} dispatch={dispatch} repository={repository} slugAvailability={slugAvailability}
+              previewUrls={previewUrls} onMediaPreview={onMediaPreview} busy={busy} onBusyChange={onBusyChange} />
+          </AccordionDetails>
         </Accordion>
       </Stack>
     </Box>

@@ -24,7 +24,7 @@ async function mockPublicPage(page, theme = PUBLIC_PAGE_THEMES[5], catalog = ser
   await page.addInitScript((language) => {
     localStorage.setItem('ui-locale', language);
     localStorage.setItem('scheduletm_access_token', 'mock-token');
-    localStorage.setItem('scheduletm_auth_user', JSON.stringify({ id: 'mock-admin', email: 'admin@example.test', role: 'admin', fullName: 'Test Admin' }));
+    localStorage.setItem('scheduletm_auth_user', JSON.stringify({ id: 'mock-admin', email: 'admin@example.test', role: 'owner', fullName: 'Test Admin' }));
   }, locale);
   await page.route(/^https?:\/\/[^/]+\/api(?:\/|$)/, async (route) => {
     const request = route.request();
@@ -32,7 +32,9 @@ async function mockPublicPage(page, theme = PUBLIC_PAGE_THEMES[5], catalog = ser
     const path = url.pathname;
     const method = request.method();
     const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
-    if (method === 'PUT' && path === '/api/settings/user') { return json({}); }
+    if (path === '/api/settings/user') { return json({}); }
+    if (method === 'POST' && path.endsWith('/events')) { return route.fulfill({ status: 204 }); }
+    if (method === 'GET' && path === `/api/public-pages/${PAGE_ID}/domain`) { return json({ domain: null }); }
     if (method === 'GET' && path === '/api/services') {
       return json({ specialists: [{ id: 1, name: 'Specialist', isActive: true }], services: catalog.map((service) => ({ ...service, basePrice: service.price, baseDurationMinutes: service.durationMin, isActive: true, imageMediaId: null, assignments: [{ specialistId: 1, specialistName: 'Specialist', isActive: true, priceOverride: null, durationOverrideMinutes: null }] })) });
     }
@@ -95,13 +97,13 @@ for (const width of [375, 1440]) {
         const lastDot = await dots.last().boundingBox();
         expect(Math.abs((firstDot.x + lastDot.x + lastDot.width) / 2 - bounds.x - bounds.width / 2)).toBeLessThan(2);
         if (width === 375) {
-          const book = await region.getByRole('link', { name: 'Book', exact: true }).boundingBox();
+          const book = await region.getByRole('button', { name: 'Book', exact: true }).boundingBox();
           expect(Math.abs(book.x + book.width / 2 - bounds.x - bounds.width / 2)).toBeLessThan(2);
         }
         if (index < count - 1) {
           const next = await cards.nth(index + 1).boundingBox();
           expect(next.x).toBeLessThan(bounds.x + bounds.width);
-          expect(next.x - card.x - card.width).toBeCloseTo(bounds.width >= 600 ? 20 : 10, 0);
+          expect(next.x - card.x - card.width).toBeCloseTo(bounds.width >= 600 ? 26 : 16, 0);
         }
         if (index > 0) {
           const previous = await cards.nth(index - 1).boundingBox();
@@ -238,10 +240,11 @@ test('desktop editor keeps theme changes, undo/redo, save and block cancellation
   await page.goto(`/public-pages/${PAGE_ID}/edit`);
   await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
   await screenshot(page, testInfo, 'editor-desktop');
-  await page.getByRole('button', { name: 'Design', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Design', exact: true });
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
   await expect(dialog.getByRole('button', { name: 'z106', exact: true })).toBeVisible();
   await screenshot(page, testInfo, 'design-dialog');
+  await dialog.getByRole('tab', { name: 'Bright', exact: true }).click();
   await dialog.getByRole('button', { name: 'z103', exact: true }).click();
   await dialog.getByRole('button', { name: 'Close', exact: true }).click();
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
@@ -268,7 +271,7 @@ test('compact editor keeps actions reachable and does not overflow at 390 and 32
     await page.setViewportSize({ width, height: 844 });
     await page.goto(`/public-pages/${PAGE_ID}/edit`);
     await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeEnabled();
-    for (const name of ['Save', 'Publish', 'Undo', 'Redo', 'Page settings', 'Design', 'Add block', 'Copy link']) {
+    for (const name of ['Save', 'Publish', 'Undo', 'Redo', 'Settings', 'Add block', 'Copy link']) {
       const button = page.getByRole('button', { name, exact: true });
       await button.scrollIntoViewIfNeeded();
       await expect(button).toBeInViewport();
@@ -288,8 +291,8 @@ test('compact editor keeps actions reachable and does not overflow at 390 and 32
     await expect(page.getByRole('button', { name: 'Mobile', exact: true })).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Mobile', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('link', { name: 'Open', exact: true })).toHaveAttribute('href', /design-preview/);
-    await page.getByRole('button', { name: 'Design', exact: true }).click();
-    const dialog = page.getByRole('dialog', { name: 'Design', exact: true });
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
     await expect(dialog).toBeVisible();
     await dialog.getByRole('button', { name: 'Close', exact: true }).click();
     await page.getByRole('button', { name: 'Save', exact: true }).scrollIntoViewIfNeeded();
@@ -302,8 +305,9 @@ test('dirty Russian status remains bounded at 320 pixels', async ({ page }) => {
   await mockPublicPage(page, PUBLIC_PAGE_THEMES[5], services, 'ru');
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto(`/public-pages/${PAGE_ID}/edit`);
-  await page.getByRole('button', { name: 'Дизайн', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Дизайн', exact: true });
+  await page.getByRole('button', { name: 'Настройки', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Настройки', exact: true });
+  await dialog.getByRole('tab', { name: 'Яркие', exact: true }).click();
   await dialog.getByRole('button', { name: 'z103', exact: true }).click();
   await dialog.getByRole('button', { name: 'Закрыть', exact: true }).click();
   const label = 'Есть несохранённые изменения';
@@ -334,10 +338,10 @@ test('published service cards preserve palettes, custom colors and carousel navi
     const secondDot = region.locator('[data-service-dot]').nth(1);
     await secondDot.click();
     await expect(secondDot).toHaveAttribute('aria-current', 'true');
-    await expect(region.getByRole('link', { name: 'Book', exact: true })).toHaveAttribute('href', '/design-preview/booking?service=102');
+    await expect(region.getByRole('button', { name: 'Book', exact: true })).toBeVisible();
     await secondDot.press('Home');
     await expect(region.locator('[data-service-dot]').first()).toHaveAttribute('aria-current', 'true');
-    await expect(region.getByRole('link', { name: 'Book', exact: true })).toHaveAttribute('href', '/design-preview/booking?service=101');
+    await expect(region.getByRole('button', { name: 'Book', exact: true })).toBeVisible();
     await expect.poll(async () => {
       const card = await region.locator('.MuiCard-root').first().boundingBox();
       const viewport = await region.boundingBox();
@@ -349,7 +353,7 @@ test('published service cards preserve palettes, custom colors and carousel navi
   const region = page.locator('[role="region"][aria-label="Services"]');
   await expect(region.locator('.MuiCardContent-root').first()).toHaveCSS('flex-direction', 'column');
   await region.locator('[data-service-dot]').nth(1).click();
-  await expect(region.getByRole('link', { name: 'Book', exact: true })).toHaveAttribute('href', '/design-preview/booking?service=102');
+  await expect(region.getByRole('button', { name: 'Book', exact: true })).toBeVisible();
   await screenshot(page, testInfo, 'published-mobile-custom');
   expect(state.unexpected).toEqual([]);
 });

@@ -4,7 +4,7 @@ import {
   applyPublicPageThemeColors,
   PUBLIC_PAGE_THEMES,
 } from '../../src/features/public-page-builder/config/themes';
-import { normalizeDocument } from '../../src/features/public-page-builder/model/normalizeDocument';
+import { normalizeDocument } from './support/normalizeDocument';
 import { sectionSurfaceRadius } from '../../src/components/public-page-blocks/BlockRenderer';
 import { resolvePublicPageThemeVariables } from '../../src/components/public-page-blocks/publicPageThemeVariables';
 import { PUBLIC_PAGE_PREVIEW_GEOMETRY } from '../../src/components/public-page-builder/ResponsivePreview';

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { archiveRestoreConflict, createEditorState, editorReducer } from '../../src/features/public-page-builder/model/editorReducer';
-import { normalizeDocument } from '../../src/features/public-page-builder/model/normalizeDocument';
-import { validateDocument } from '../../src/features/public-page-builder/model/validateDocument';
+import { normalizeDocument } from './support/normalizeDocument';
+import { documentIssues, isValidDocument } from './support/validity';
 import { documentReferencesMedia } from '../../src/features/public-page-builder/model/media';
 import { validateForPublish } from '../../src/features/public-page-builder/model/publishValidation';
 import { isBlockScheduledVisible, localScheduleTimeToUtc, nextScheduleVisibilityChange, utcScheduleTimeToLocal } from '../../src/features/public-page-builder/model/schedule';
@@ -102,19 +102,19 @@ describe('advanced theme persistence', () => {
     expect(resetSections.styleDefaults.linkStyle.titleStyle.color).toBe('#ff0044');
   });
   it('validates all new templates and rejects legacy, duplicate archive IDs and invalid schedules', () => {
-    for (const template of PUBLIC_PAGE_TEMPLATES) {expect(validateDocument(template.createDocument('page')).errors).toEqual([]);}
+    for (const template of PUBLIC_PAGE_TEMPLATES) {expect(documentIssues(template.createDocument('page'))).toEqual([]);}
     const document = PUBLIC_PAGE_TEMPLATES.find((template) => template.id === 'specialist')!.createDocument('page');
     const button = document.sections[1].blocks[0];
     document.archivedBlocks = [{ block: structuredClone(button), sourceSectionId: 'removed' }];
-    expect(validateDocument(document).errors.some((error) => error.code === 'duplicate_id')).toBe(true);
+    expect(documentIssues(document).some((issue) => issue.message === 'duplicate_id')).toBe(true);
     document.archivedBlocks = [];
     button.schedule = { period: null, weekdays: [] };
-    expect(validateDocument(document).valid).toBe(false);
+    expect(isValidDocument(document)).toBe(false);
     button.schedule = { period: { startAt: '2026-02-30T00:00:00Z', endAt: '2026-03-10T00:00:00Z' }, weekdays: null };
-    expect(validateDocument(document).valid).toBe(false);
+    expect(isValidDocument(document)).toBe(false);
     button.schedule = { period: null, weekdays: null };
     button.content.radius = 12;
-    expect(validateDocument(document).valid).toBe(false);
+    expect(isValidDocument(document)).toBe(false);
   });
   it('does not block publication on archive-only alt but still validates shared and orphan media', () => {
     const document = normalizeDocument({ archivedBlocks: [{ sourceSectionId: 'old', block: { type: 'image', content: { mediaId: 'image' } } }], media: [{ id: 'image', url: 'https://example.com/image.png', alt: '', mimeType: 'image/png', width: 100, height: 100 }] });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { hasRichTextContent, splitRichTextParagraph, updateRichTextSelection } from '../../src/features/public-page-builder/model/richText';
-import { normalizeDocument, normalizeRichTextDocument } from '../../src/features/public-page-builder/model/normalizeDocument';
+import { normalizeDocument } from './support/normalizeDocument';
+import { normalizeRichTextDocument } from '../../src/features/public-page-builder/model/normalizeRichText';
 
 describe('public page rich text', () => {
   it('does not reinterpret deprecated title/body fields as rich text', () => {

@@ -12,7 +12,9 @@ export type PublicPageRepositoryErrorCode =
   | 'storage_unavailable'
   | 'media_in_use'
   | 'quota_exceeded'
-  | 'page_not_archived';
+  | 'page_not_archived'
+  | 'invalid_domain'
+  | 'domain_conflict';
 
 export class PublicPageRepositoryError extends Error {
   public constructor(

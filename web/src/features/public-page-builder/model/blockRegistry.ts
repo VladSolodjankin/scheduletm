@@ -58,6 +58,7 @@ export function createBlock(type: string, locale: Locale): PageBlock | null {
     type: definition.type,
     name: definition.localizedName?.(locale) ?? definition.name,
     visible: true,
+    size: 'full',
     schedule: { period: null, weekdays: null },
     content: definition.createContent(locale),
     design: definition.createDesign?.() ?? {

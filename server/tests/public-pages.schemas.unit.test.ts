@@ -3,9 +3,13 @@ import {
   isValidPublicPageSlug,
   PUBLIC_PAGE_SCHEMA_VERSION,
   publicPageDocumentSchema,
-  validatePublicPageForPublish,
-} from '../src/config/publicPageSchemas.js';
+  validatePublicPageForPublish as validateForPublish,
+  type PublicPageDocument,
+} from '@scheduletm/shared/public-page';
+import { env } from '../src/config/env.js';
 import { validPublicPageDocument } from './publicPageTestFixture.js';
+
+const validatePublicPageForPublish = (document: PublicPageDocument) => validateForPublish(document, env.API_BASE_URL);
 
 const emptyTypographyOverride = () => ({
   fontFamily: null,
@@ -36,7 +40,7 @@ const defaultStyleDefaults = () => ({
       fontStyle: 'normal', color: '#111827',
     },
     backgroundColor: '#fff', backgroundOpacity: 1, borderWidth: 0,
-    borderColor: 'transparent', shadow: false,
+    borderColor: 'transparent', shadow: false, width: 'full', align: 'center',
   },
 });
 
@@ -48,27 +52,11 @@ function setPath(target: Record<string, any>, path: string, value: unknown): voi
 }
 
 describe('public page schemas', () => {
-  it.each(['0% 0%', '50% 50%', '100% 100%', '7% 93%'])(
-    'accepts canonical profile avatar position %s',
-    (avatarPosition) => {
-      expect(publicPageDocumentSchema.safeParse({
-        ...validPublicPageDocument,
-        profile: { ...validPublicPageDocument.profile, avatarPosition },
-      }).success).toBe(true);
-    },
-  );
-
-  it.each(['-1% 50%', '101% 50%', '50.5% 50%', '050% 50%', '50%  50%', 'center center'])
-    ('rejects non-canonical profile avatar position %s', (avatarPosition) => {
-      expect(publicPageDocumentSchema.safeParse({
-        ...validPublicPageDocument,
-        profile: { ...validPublicPageDocument.profile, avatarPosition },
-      }).success).toBe(false);
-    });
-
-  it('requires profile avatar position in strict schema v4', () => {
-    const { avatarPosition: _avatarPosition, ...profile } = validPublicPageDocument.profile;
-    expect(publicPageDocumentSchema.safeParse({ ...validPublicPageDocument, profile }).success).toBe(false);
+  it('rejects the removed page profile: everything on the page is a section or a block', () => {
+    expect(publicPageDocumentSchema.safeParse({
+      ...validPublicPageDocument,
+      profile: { displayName: 'Name', description: '', logoMediaId: null, avatarMediaId: null, avatarPosition: '50% 50%' },
+    }).success).toBe(false);
   });
 
   it('matches slug formatting and reserved rules', () => {
@@ -111,6 +99,7 @@ describe('public page schemas', () => {
             title: 'Services',
             serviceIds: [],
             autoplayIntervalSeconds: null,
+            layout: 'carousel',
             showBookingButton: true,
           },
         }],
@@ -136,6 +125,7 @@ describe('public page schemas', () => {
             title: 'Services',
             serviceIds: [3, 9],
             autoplayIntervalSeconds: 5,
+            layout: 'carousel',
             showBookingButton: false,
           },
         }],
@@ -166,7 +156,7 @@ describe('public page schemas', () => {
         blocks: [{
           ...validPublicPageDocument.sections[0]!.blocks[0],
           type: 'services',
-          content: { serviceIds, autoplayIntervalSeconds, showBookingButton },
+          content: { serviceIds, autoplayIntervalSeconds, showBookingButton, layout: 'carousel' },
         }],
       }],
     }).success).toBe(false);
@@ -710,14 +700,6 @@ describe('public page schemas', () => {
   });
 
   it.each([
-    ['profile.logoMediaId', {
-      ...validPublicPageDocument,
-      profile: { ...validPublicPageDocument.profile, logoMediaId: 'missing-media' },
-    }],
-    ['profile.avatarMediaId', {
-      ...validPublicPageDocument,
-      profile: { ...validPublicPageDocument.profile, avatarMediaId: 'missing-media' },
-    }],
     ['seo.imageMediaId', {
       ...validPublicPageDocument,
       seo: { ...validPublicPageDocument.seo, imageMediaId: 'missing-media' },
@@ -962,8 +944,8 @@ describe('public page schemas', () => {
     });
     const credentials = (items: unknown[], title = 'Credentials') => documentWith('credentials', { title, items });
 
-    it('keeps schema version 5 and accepts both blocks', () => {
-      expect(PUBLIC_PAGE_SCHEMA_VERSION).toBe(5);
+    it('keeps the current schema version and accepts both blocks', () => {
+      expect(PUBLIC_PAGE_SCHEMA_VERSION).toBe(8);
       const parsed = publicPageDocumentSchema.parse(credentials([item(), item({ id: 'c2', year: '' })]));
       expect(validatePublicPageForPublish(parsed)).toEqual([]);
       const reviews = publicPageDocumentSchema.parse(documentWith('reviews', { title: '', showSummary: true, autoplay: false }));

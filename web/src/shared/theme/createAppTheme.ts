@@ -11,6 +11,12 @@ const tokenVariables = {
   '--app-space-m': APP_TOKENS.space.m,
   '--app-space-l': APP_TOKENS.space.l,
   '--app-space-xl': APP_TOKENS.space.xl,
+  // Golden-ratio spacing scale (base 16px, step x1.618) used by public pages, also inside their dialogs.
+  '--page-space-1': '0.625rem',
+  '--page-space-2': '1rem',
+  '--page-space-3': '1.625rem',
+  '--page-space-4': '2.625rem',
+  '--page-space-5': '4.25rem',
   '--app-font-xs': APP_TOKENS.fontSize.xs,
   '--app-font-s': APP_TOKENS.fontSize.s,
   '--app-font-m': APP_TOKENS.fontSize.m,
@@ -593,5 +599,11 @@ export function createMeetliAppTheme(mode: ThemeMode, portalContainer?: HTMLElem
 
 /** Fixed light MUI profile used only by rendered Public Page content. */
 export function createPublicPageTheme() {
-  return createAppTheme('light');
+  // Fields are compact here as in the cabinet; the default size would misplace their floating labels.
+  return createTheme(createAppTheme('light'), {
+    components: {
+      MuiTextField: { defaultProps: { size: 'small' } },
+      MuiFormControl: { defaultProps: { size: 'small' } },
+    },
+  });
 }

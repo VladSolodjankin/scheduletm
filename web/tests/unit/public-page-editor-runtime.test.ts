@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePublicPageEditor } from '../../src/features/public-page-builder/hooks/usePublicPageEditor';
 import { getBlockDefinition, registerBlock } from '../../src/features/public-page-builder/model/blockRegistry';
-import { normalizeDocument } from '../../src/features/public-page-builder/model/normalizeDocument';
+import { normalizeDocument } from './support/normalizeDocument';
 import { validateForPublish } from '../../src/features/public-page-builder/model/publishValidation';
 import {
   PublicPageRepositoryError,

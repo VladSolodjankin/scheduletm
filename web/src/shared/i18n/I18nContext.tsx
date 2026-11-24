@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import {
   DEFAULT_LOCALE,
   dictionaries,
@@ -49,16 +49,28 @@ function getTranslation(locale: Locale, key: TranslationKey): string {
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() => getInitialLocale());
 
-  const setLocale = (nextLocale: Locale) => {
+  const setLocale = useCallback((nextLocale: Locale) => {
     setLocaleState(nextLocale);
     localStorage.setItem(STORAGE_KEY, nextLocale);
-  };
+  }, []);
 
   const value = useMemo<I18nContextValue>(() => ({
     locale,
     setLocale,
     t: (key: TranslationKey) => getTranslation(locale, key)
-  }), [locale]);
+  }), [locale, setLocale]);
+
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+}
+
+/** Renders its children in a fixed language (a public page speaks its own language, not the visitor's). */
+export function LocaleScope({ locale, children }: { locale: Locale; children: ReactNode }) {
+  const { setLocale } = useI18n();
+  const value = useMemo<I18nContextValue>(() => ({
+    locale,
+    setLocale,
+    t: (key: TranslationKey) => getTranslation(locale, key)
+  }), [locale, setLocale]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

@@ -7,10 +7,11 @@ import type { LinkStyle, PageBlock, PageSection, PageTheme } from '../../feature
 import type { Locale } from '../../shared/i18n/dictionaries';
 import { ColorControl } from './ColorControl';
 import { CompactTypographyControls } from './SectionDesignControls';
+import { LinkLayoutControls } from './LayoutControls';
 import { publicPageText } from './uiText';
 
 const inheritedTypography = () => ({ fontFamily: null, fontSize: null, fontWeight: null, fontStyle: null, color: null });
-const inheritedLink = (): LinkStyle => ({ titleStyle: inheritedTypography(), subtitleStyle: inheritedTypography(), backgroundColor: null, backgroundOpacity: null, borderWidth: null, borderColor: null, shadow: null });
+const inheritedLink = (): LinkStyle => ({ titleStyle: inheritedTypography(), subtitleStyle: inheritedTypography(), backgroundColor: null, backgroundOpacity: null, borderWidth: null, borderColor: null, shadow: null, width: null, align: null });
 
 export function ButtonDesignControls({ block, theme, section, locale, onChange }: {
   block: PageBlock; theme: PageTheme; section?: PageSection; locale: Locale; onChange: (block: PageBlock) => void;
@@ -27,6 +28,8 @@ export function ButtonDesignControls({ block, theme, section, locale, onChange }
   const update = (changes: Partial<PageBlock['design']>) => onChange({ ...block, design: { ...block.design, ...changes } });
   const updateLink = (changes: Partial<LinkStyle>) => update({ linkStyle: { ...(link ?? inheritedLink()), ...changes } });
   return <Stack spacing={2}>
+    <LinkLayoutControls locale={locale} inheritable width={link?.width ?? null} align={link?.align ?? null}
+      onWidthChange={(width) => updateLink({ width })} onAlignChange={(align) => updateLink({ align })} />
     <FormControlLabel label={publicPageText(locale, 'customButtonDesign')} control={<Switch checked={link !== null}
       onChange={(_, checked) => update({ linkStyle: checked ? inheritedLink() : null, ...(!checked ? { borderRadius: null } : {}) })} />} />
     <Typography color="text.secondary" variant="body2">{publicPageText(locale, link ? 'customValues' : 'buttonInheritance')}</Typography>

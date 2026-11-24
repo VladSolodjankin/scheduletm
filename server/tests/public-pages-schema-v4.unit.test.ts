@@ -1,19 +1,22 @@
 import { readFileSync } from 'node:fs';
 import type { Knex } from 'knex';
 import { describe, expect, it, vi } from 'vitest';
-import { publicPageDocumentSchema } from '../src/config/publicPageSchemas.js';
+import { publicPageDocumentSchema } from '@scheduletm/shared/public-page';
 import {
   convertPublicPageDocumentToSchemaV4,
   down,
   up,
 } from '../src/db/migrations/20260910180000_migrate_public_pages_to_schema_v4.js';
 import { convertPublicPageDocumentToSchemaV5 } from '../src/db/migrations/20261003193000_migrate_public_pages_to_schema_v5.js';
-import { validPublicPageDocument } from './publicPageTestFixture.js';
+import { convertPublicPageDocumentToSchemaV6 } from '../src/db/migrations/20261110090000_migrate_public_pages_to_schema_v6.js';
+import { convertPublicPageDocumentToSchemaV7 } from '../src/db/migrations/20261118090000_migrate_public_pages_to_schema_v7.js';
+import { convertPublicPageDocumentToSchemaV8 } from '../src/db/migrations/20261119090000_migrate_public_pages_to_schema_v8.js';
+import { validSchemaV5Document } from './publicPageTestFixture.js';
 
 const schemaV3Document = () => {
-  const { avatarPosition: _avatarPosition, ...profile } = validPublicPageDocument.profile;
-  const { linkTextAlign: _linkTextAlign, ...theme } = validPublicPageDocument.theme;
-  return { ...validPublicPageDocument, schemaVersion: 3, profile, theme };
+  const { avatarPosition: _avatarPosition, ...profile } = validSchemaV5Document.profile;
+  const { linkTextAlign: _linkTextAlign, ...theme } = validSchemaV5Document.theme;
+  return { ...validSchemaV5Document, schemaVersion: 3, profile, theme };
 };
 
 describe('Public Page schema v4 migration', () => {
@@ -21,7 +24,7 @@ describe('Public Page schema v4 migration', () => {
     const source = schemaV3Document();
     const result = convertPublicPageDocumentToSchemaV4(source);
 
-    expect(publicPageDocumentSchema.safeParse(convertPublicPageDocumentToSchemaV5(result)).success).toBe(true);
+    expect(publicPageDocumentSchema.safeParse(convertPublicPageDocumentToSchemaV8(convertPublicPageDocumentToSchemaV7(convertPublicPageDocumentToSchemaV6(convertPublicPageDocumentToSchemaV5(result))), 'ru-RU')).success).toBe(true);
     expect(result).toEqual({
       ...source,
       schemaVersion: 4,

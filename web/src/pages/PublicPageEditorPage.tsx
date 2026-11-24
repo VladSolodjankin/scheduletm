@@ -9,7 +9,6 @@ import DragIndicator from '@mui/icons-material/DragIndicator';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import Height from '@mui/icons-material/Height';
 import OpenInNew from '@mui/icons-material/OpenInNew';
-import PaletteOutlined from '@mui/icons-material/PaletteOutlined';
 import Settings from '@mui/icons-material/Settings';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -25,10 +24,10 @@ import { BuilderToolbar } from '../components/public-page-builder/BuilderToolbar
 import { EditorNavigationGuard } from '../components/public-page-builder/EditorNavigationGuard';
 import { publishIssueText } from '../components/public-page-builder/publishIssueText';
 import { DeviceSwitcher, type PreviewDevice } from '../components/public-page-builder/DeviceSwitcher';
-import { InspectorPanel } from '../components/public-page-builder/InspectorPanel';
 import { DesignPanel } from '../components/public-page-builder/DesignPanel';
-import { PUBLIC_PAGE_PREVIEW_GEOMETRY, ResponsivePreview } from '../components/public-page-builder/ResponsivePreview';
-import { type BuilderDragPayload, type BuilderDropDestination } from '../components/public-page-builder/BuilderSortable';
+import { ResponsivePreview } from '../components/public-page-builder/ResponsivePreview';
+import { type BuilderDragPayload, type BuilderDropDestination } from '../components/public-page-builder/BuilderDnd';
+import { ItemSizeToggle } from '../components/public-page-builder/LayoutControls';
 import { publicPageText } from '../components/public-page-builder/uiText';
 import { createBlankPublicPageDocument } from '../components/public-page-builder/createBlankDocument';
 import { usePublicPageEditor } from '../features/public-page-builder/hooks/usePublicPageEditor';
@@ -39,7 +38,7 @@ import { PublicPageRepositoryError, type PublicPageRecord } from '../features/pu
 import type { MediaReference, PageBlock, PageSection } from '../features/public-page-builder/types/publicPage';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from '../features/public-page-builder/model/socialPlatforms';
 import { createStableId } from '../features/public-page-builder/utils/createStableId';
-import { createEmptyPageSection } from '../features/public-page-builder/model/normalizeDocument';
+import { createEmptyPageSection } from '../features/public-page-builder/model/emptySection';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { servicesApi } from '../shared/api/client';
@@ -151,7 +150,6 @@ function Editor({
   const { locale } = useI18n();
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down('md'));
-  const pageSettingsTitleId = useId();
   const designTitleId = useId();
   const editor = usePublicPageEditor({
     document: record.draft,
@@ -173,11 +171,8 @@ function Editor({
   const [blockEditorOpen, setBlockEditorOpen] = useState(false);
   const [blockPreview, setBlockPreview] = useState<BlockEditorPreview | null>(null);
   const [sectionResizePreview, setSectionResizePreview] = useState<SectionResizePreview | null>(null);
-  const [pageSettingsOpen, setPageSettingsOpen] = useState(false);
-  const [pageSettingsBusy, setPageSettingsBusy] = useState(false);
   const [designOpen, setDesignOpen] = useState(false);
   const [designBusy, setDesignBusy] = useState(false);
-  const [pageSettingsFocusMarker, setPageSettingsFocusMarker] = useState<string | null>(null);
   const [designPanelFocusMarker, setDesignPanelFocusMarker] = useState<string | null>(null);
   const [blockEditorFocusRequest, setBlockEditorFocusRequest] = useState<BlockEditorFocusRequest | null>(null);
   const [reorderAnnouncement, setReorderAnnouncement] = useState({ nonce: 0, message: '' });
@@ -185,7 +180,6 @@ function Editor({
   const mediaUrlsRef = useRef(mediaUrls);
   const previewRootRef = useRef<HTMLDivElement>(null);
   const addBlockButtonRef = useRef<HTMLButtonElement>(null);
-  const pageSettingsContentRef = useRef<HTMLDivElement>(null);
   const designContentRef = useRef<HTMLDivElement>(null);
   const validationAlertRef = useRef<HTMLDivElement>(null);
   const reorderFocusRef = useRef<ReorderTarget | null>(null);
@@ -324,12 +318,12 @@ function Editor({
   const removeSection = (section: PageSection) => {
     const mediaIds = collectReferencedMediaIds(section);
     dispatch({ type: 'section/remove', sectionId: section.id });
-    removeDetachedMedia(mediaIds, [state.document.profile, state.document.theme, state.document.seo,
+    removeDetachedMedia(mediaIds, [state.document.theme, state.document.seo,
       state.document.sections.filter((candidate) => candidate.id !== section.id)]);
   };
   const removeBlock = (section: PageSection, block: PageBlock) => {
     dispatch({ type: 'block/remove', sectionId: section.id, blockId: block.id });
-    removeDetachedMedia(collectReferencedMediaIds(block), [state.document.profile, state.document.theme, state.document.seo,
+    removeDetachedMedia(collectReferencedMediaIds(block), [state.document.theme, state.document.seo,
       state.document.sections.map((candidate) => candidate.id === section.id
         ? { ...candidate, blocks: candidate.blocks.filter((item) => item.id !== block.id) }
         : candidate)]);
@@ -348,10 +342,8 @@ function Editor({
   const closeCompetingDialogs = useCallback(() => {
     setAddBlockOpen(false);
     setBlockEditorOpen(false);
-    setPageSettingsOpen(false);
     setDesignOpen(false);
     setBlockPreview(null);
-    setPageSettingsFocusMarker(null);
     setDesignPanelFocusMarker(null);
     setBlockEditorFocusRequest(null);
   }, []);
@@ -369,13 +361,7 @@ function Editor({
       });
       return;
     }
-    if (target.type === 'page-settings') {
-      dispatch({ type: 'selection/clear' });
-      setPageSettingsFocusMarker(target.marker);
-      window.requestAnimationFrame(() => setPageSettingsOpen(true));
-      return;
-    }
-    if (target.type === 'design-panel') {
+    if (target.type === 'page-settings' || target.type === 'design-panel') {
       dispatch({ type: 'selection/clear' });
       setDesignPanelFocusMarker(target.marker);
       window.requestAnimationFrame(() => setDesignOpen(true));
@@ -569,13 +555,11 @@ function Editor({
                 <Stack direction="row" spacing={isCompact ? 0 : 1} sx={{ alignItems: 'center', minWidth: 0 }}>
                   {isCompact ? (
                     <>
-                      <Tooltip title={publicPageText(locale, 'pageSettings')}><IconButton aria-label={publicPageText(locale, 'pageSettings')} onClick={() => { dispatch({ type: 'selection/clear' }); setPageSettingsFocusMarker(null); setPageSettingsOpen(true); }} sx={{ width: 40, height: 40 }}><Settings fontSize="small" /></IconButton></Tooltip>
-                      <Tooltip title={publicPageText(locale, 'design')}><IconButton aria-label={publicPageText(locale, 'design')} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }} sx={{ width: 40, height: 40 }}><PaletteOutlined fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title={publicPageText(locale, 'settings')}><IconButton aria-label={publicPageText(locale, 'settings')} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }} sx={{ width: 40, height: 40 }}><Settings fontSize="small" /></IconButton></Tooltip>
                     </>
                   ) : (
                     <>
-                      <Button variant="outlined" startIcon={<Settings />} onClick={() => { dispatch({ type: 'selection/clear' }); setPageSettingsFocusMarker(null); setPageSettingsOpen(true); }}>{publicPageText(locale, 'pageSettings')}</Button>
-                      <Button variant="outlined" startIcon={<PaletteOutlined />} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }}>{publicPageText(locale, 'design')}</Button>
+                      <Button variant="outlined" startIcon={<Settings />} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }}>{publicPageText(locale, 'settings')}</Button>
                     </>
                   )}
                   {editor.publishedSlug ? (
@@ -637,6 +621,9 @@ function Editor({
               const action = (label: string, icon: React.ReactElement, onClick: () => void, disabled = false) => <Tooltip title={label}><span><IconButton size="small" aria-label={label} disabled={disabled} onClick={(event) => { event.stopPropagation(); onClick(); }}>{icon}</IconButton></span></Tooltip>;
               return <>
                 {state.selection.sectionId === section.id && !state.selection.blockId ? action(publicPageText(locale, 'clearSelection'), <Close fontSize="small" />, () => dispatch({ type: 'selection/clear' })) : null}
+                {section.design.variant !== 'off' ? <Box onClick={(event) => event.stopPropagation()}>
+                  <ItemSizeToggle locale={locale} size={section.size} onChange={(size) => dispatch({ type: 'section/update', sectionId: section.id, changes: { size } })} />
+                </Box> : null}
                 {action(publicPageText(locale, 'moveUp'), <ArrowUpward fontSize="small" />, () => reorderEditorItem({ type: 'section', sectionId: section.id }, -1), sectionIndex === 0)}
                 {action(publicPageText(locale, 'moveDown'), <ArrowDownward fontSize="small" />, () => reorderEditorItem({ type: 'section', sectionId: section.id }, 1), sectionIndex === state.document.sections.length - 1)}
                 {action(publicPageText(locale, section.visible ? 'hide' : 'show'), section.visible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />, () => dispatch({ type: 'section/toggle', sectionId: section.id }))}
@@ -648,12 +635,15 @@ function Editor({
           renderBlockActions: (section, blockIndex) => {
             const block = section.blocks[blockIndex];
             const action = (label: string, icon: React.ReactElement, onClick: () => void, disabled = false) => <Tooltip title={label}><span><IconButton size="small" aria-label={label} disabled={disabled} onClick={(event) => { event.stopPropagation(); onClick(); }}>{icon}</IconButton></span></Tooltip>;
-            return <Stack className="public-page-block-actions" direction="row" sx={{ position: 'absolute', zIndex: 3, top: 6, right: 6, p: 0.25, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 3, opacity: { xs: state.selection.blockId === block.id ? 1 : 0, md: 0 }, pointerEvents: { xs: state.selection.blockId === block.id ? 'auto' : 'none', md: 'none' }, transition: 'opacity 120ms' }}>
+            return <Stack className="public-page-block-actions" direction="row" sx={{ position: 'absolute', zIndex: 4, top: 'calc(100% + var(--app-space-xs))', left: '50%', transform: 'translateX(-50%)', p: 0.25, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 3, opacity: { xs: state.selection.blockId === block.id ? 1 : 0, md: 0 }, pointerEvents: { xs: state.selection.blockId === block.id ? 'auto' : 'none', md: 'none' }, transition: 'opacity 120ms', '&::before': { content: '""', position: 'absolute', left: 0, right: 0, top: 'calc(var(--app-space-xs) * -1)', height: 'var(--app-space-xs)' } }}>
               {action(publicPageText(locale, 'edit'), <EditOutlined fontSize="small" />, () => {
                 setBlockEditorFocusRequest(null);
                 dispatch({ type: 'selection/set', sectionId: section.id, blockId: block.id });
                 setBlockEditorOpen(true);
               })}
+              <Box onClick={(event) => event.stopPropagation()}>
+                <ItemSizeToggle locale={locale} size={block.size} onChange={(size) => dispatch({ type: 'block/update', sectionId: section.id, blockId: block.id, changes: { size } })} />
+              </Box>
               {action(publicPageText(locale, 'moveUp'), <ArrowUpward fontSize="small" />, () => reorderEditorItem({ type: 'block', sectionId: section.id, blockId: block.id }, -1), blockIndex === 0)}
               {action(publicPageText(locale, 'moveDown'), <ArrowDownward fontSize="small" />, () => reorderEditorItem({ type: 'block', sectionId: section.id, blockId: block.id }, 1), blockIndex === section.blocks.length - 1)}
               {action(publicPageText(locale, block.visible ? 'hide' : 'show'), block.visible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />, () => dispatch({ type: 'block/toggle', sectionId: section.id, blockId: block.id }))}
@@ -744,7 +734,7 @@ function Editor({
         />
       </Box>}
       bottomNavigation={<Box data-public-page-add-block-shell sx={{ display: 'flex', width: 'min(13.5rem, calc(100% - 16px))', height: 52, boxSizing: 'border-box', p: 0.5, borderRadius: 2,
-        bgcolor: 'grey.900', boxShadow: 6, transform: isCompact ? 'none' : `translateX(${PUBLIC_PAGE_PREVIEW_GEOMETRY.editorDragGutter / 2}px)` }}>
+        bgcolor: 'grey.900', boxShadow: 6 }}>
         <Button ref={addBlockButtonRef} variant="contained" size="medium" startIcon={<Add />} onClick={() => setAddBlockOpen(true)} sx={{ width: '100%', minWidth: 0, minHeight: 44 }}>{publicPageText(locale, 'addBlock')}</Button>
       </Box>}
     />
@@ -782,30 +772,12 @@ function Editor({
         addedMedia.forEach(({ media, objectUrl }) => { dispatch({ type: 'media/add', media }); rememberMediaPreview(media, objectUrl); });
         updatedMedia.forEach((media) => dispatch({ type: 'media/add', media }));
         const sectionChanges = section
-          ? { name: section.name, visible: section.visible, layout: section.layout, design: section.design }
+          ? { name: section.name, visible: section.visible, size: section.size, design: section.design }
           : undefined;
         dispatch({ type: 'block/move-or-detach', fromSectionId: sourceSectionId, toSectionId: sectionId, block, sectionChanges });
         removedMediaIds.forEach((mediaId) => dispatch({ type: 'media/remove', mediaId }));
         setBlockPreview(null); setBlockEditorFocusRequest(null); setBlockEditorOpen(false);
       }} />
-    <Dialog open={pageSettingsOpen} aria-labelledby={pageSettingsTitleId} onClose={() => { if (pageSettingsBusy) {return;} setPageSettingsFocusMarker(null); setPageSettingsOpen(false); }} fullScreen={isCompact} fullWidth maxWidth="sm"
-      slotProps={{ paper: { sx: { borderRadius: isCompact ? 0 : 4 } }, transition: { onEntered: () => {
-        if (!pageSettingsFocusMarker) {return;}
-        window.requestAnimationFrame(() => {
-          const content = pageSettingsContentRef.current;
-          if (!content || !focusMarkedControl(content, pageSettingsFocusMarker)) {
-            setPageSettingsOpen(false);
-            focusValidationAlert();
-          }
-        });
-      } } }}>
-      <DialogTitle id={`${pageSettingsTitleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
-        <Typography id={pageSettingsTitleId} component="span" variant="h6" sx={{ flex: 1 }}>{publicPageText(locale, 'pageSettings')}</Typography>
-        <IconButton disabled={pageSettingsBusy} aria-label={publicPageText(locale, 'close')} onClick={() => { setPageSettingsFocusMarker(null); setPageSettingsOpen(false); }}><Close /></IconButton>
-      </DialogTitle>
-      <DialogContent ref={pageSettingsContentRef} dividers><InspectorPanel state={state} locale={locale} dispatch={dispatch} repository={repository}
-        busy={pageSettingsBusy} onBusyChange={setPageSettingsBusy} slugAvailability={editor.slugAvailability} previewUrls={mediaUrls} onMediaPreview={rememberMediaPreview} /></DialogContent>
-    </Dialog>
     <Dialog open={designOpen} aria-labelledby={designTitleId} onClose={() => { if (designBusy) {return;} setDesignPanelFocusMarker(null); setDesignOpen(false); }} fullScreen={isCompact} fullWidth maxWidth={false}
       slotProps={{ paper: { sx: { maxWidth: 1664, borderRadius: isCompact ? 0 : 4 } }, transition: { onEntered: () => {
         if (!designPanelFocusMarker) {return;}
@@ -818,7 +790,7 @@ function Editor({
         });
       } } }}>
       <DialogTitle id={`${designTitleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
-        <Typography id={designTitleId} component="span" variant="h6" sx={{ flex: 1 }}>{publicPageText(locale, 'design')}</Typography>
+        <Typography id={designTitleId} component="span" variant="h6" sx={{ flex: 1 }}>{publicPageText(locale, 'settings')}</Typography>
         <IconButton disabled={designBusy} aria-label={publicPageText(locale, 'close')} onClick={() => { setDesignPanelFocusMarker(null); setDesignOpen(false); }}><Close /></IconButton>
       </DialogTitle>
       <DialogContent ref={designContentRef} dividers sx={{ p: 0, overflow: { xs: 'auto', lg: 'hidden' } }}>
@@ -830,7 +802,7 @@ function Editor({
               ariaLabel={publicPageText(locale, 'preview')} />
           </Box>
           <Box sx={{ order: { xs: 0, lg: 1 }, minWidth: 0, minHeight: 0, overflow: { xs: 'visible', lg: 'auto' }, p: { xs: 2, sm: 3, lg: 4 } }}>
-            <DesignPanel key={designPanelFocusMarker ?? 'manual'} state={state} locale={locale} dispatch={dispatch} repository={repository}
+            <DesignPanel key={designPanelFocusMarker ?? 'manual'} state={state} locale={locale} dispatch={dispatch} repository={repository} slugAvailability={editor.slugAvailability}
               busy={designBusy} onBusyChange={setDesignBusy} focusMarker={designPanelFocusMarker}
               previewUrls={mediaUrls} onMediaPreview={rememberMediaPreview} />
           </Box>
@@ -890,13 +862,13 @@ export function PublicPageEditorPage() {
     creationStartedRef.current = true;
     setStatus('loading');
     try {
-      const created = await repository.create(createBlankPublicPageDocument());
+      const created = await repository.create(createBlankPublicPageDocument(locale));
       navigate(`/public-pages/${created.id}/edit`, { replace: true });
     } catch {
       creationStartedRef.current = false;
       setStatus('error');
     }
-  }, [navigate, repository]);
+  }, [locale, navigate, repository]);
   const load = useCallback(async () => {
     try {
       const item = await repository.get(profileId);

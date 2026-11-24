@@ -38,6 +38,7 @@ type ThemeRow = {
   category: PublicPageThemeCategory;
 };
 
+/** Type scale on the golden ratio from the 16px body: 13 / 16 / 20 / 26 / 42. */
 const typographyToken = (
   fontFamily: string,
   fontSize: number,
@@ -65,13 +66,13 @@ function createTokens(row: ThemeRow): PageThemeTokens {
       avatarTitle: typographyToken(ROBOTO, 16, 700, 1.2),
       avatarBio: typographyToken(ROBOTO, 16, 400, 1.2),
       linkTitle: typographyToken(ROBOTO, 16, 500, 1.2),
-      linkSubtitle: typographyToken(ROBOTO, 14, 500, 1.2),
-      h1: typographyToken(ROBOTO, 50, 800, 1.15),
-      h2: typographyToken(ROBOTO, 30, 800, 1.25, 2),
-      h3: typographyToken(ROBOTO, 24, 800, 1.4),
+      linkSubtitle: typographyToken(ROBOTO, 13, 500, 1.2),
+      h1: typographyToken(ROBOTO, 42, 800, 1.15),
+      h2: typographyToken(ROBOTO, 26, 800, 1.25),
+      h3: typographyToken(ROBOTO, 20, 800, 1.4),
       textLarge: typographyToken(ROBOTO, 20, 500, 1.45),
-      textMedium: typographyToken(ROBOTO, 17, 500, 1.45, 1),
-      textSmall: typographyToken(ROBOTO, 14, 500, 1.45),
+      textMedium: typographyToken(ROBOTO, 16, 500, 1.5),
+      textSmall: typographyToken(ROBOTO, 13, 500, 1.45),
     },
     layout: { blockRadius: 40, linkRadius: 40, linkGap: 10 },
   };
@@ -115,6 +116,8 @@ function createStyleDefaults(tokens: PageThemeTokens, colors: PageTheme['colors'
       borderWidth: 0,
       borderColor: tokens.colors.linkBorder,
       shadow: false,
+      width: 'full',
+      align: 'center',
     },
   };
 }
@@ -152,6 +155,7 @@ function createTheme(row: ThemeRow): PageTheme {
     roundingStyle: 'rounded',
     linkStylePreset: 'primary-fill',
     linkTextAlign: 'center',
+    pageWidth: 'narrow',
     backgroundMediaId: null,
     backgroundPreset: null,
     backgroundFit: 'cover',
@@ -318,6 +322,13 @@ export function applyPublicPageLinkStyle(
       },
     },
   };
+}
+
+export function applyPublicPageLinkLayout(
+  theme: PageTheme,
+  layout: Partial<Pick<PageTheme['styleDefaults']['linkStyle'], 'width' | 'align'>>,
+): PageTheme {
+  return { ...theme, styleDefaults: { ...theme.styleDefaults, linkStyle: { ...theme.styleDefaults.linkStyle, ...layout } } };
 }
 
 export function applyPublicPageLinkTextAlign(

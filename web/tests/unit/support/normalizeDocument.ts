@@ -1,59 +1,50 @@
+/* Test fixture: fills a partial document with defaults. Production code never accepts partial documents. */
 import {
   PUBLIC_PAGE_SCHEMA_VERSION,
   type BlockContent,
   type BlockDesign,
   type MediaReference,
   type PageBlock,
-  type PageProfile,
   type PageSection,
   type SectionDesign,
   type PageSeo,
   type PageTheme,
   type PublicPageDocument,
   type PublicPageStatus,
-  type SectionLayout,
+  type ItemSize,
+  type LinkAlign,
+  type LinkWidth,
+  type PageWidth,
   type TypographyStyle,
   type LinkStyle,
   type ResolvedTypographyStyle,
   type PageThemeTokens,
   type ThemeSwatches,
   type ThemeTypographyToken,
-  type RichTextAlignment,
-  type RichTextDocument,
-  type RichTextMarks,
-  type RichTextParagraph,
-  type RichTextSize,
-} from '../types/publicPage';
-import { createStableId } from '../utils/createStableId';
+} from '../../../src/features/public-page-builder/types/publicPage';
+import { normalizeRichTextDocument } from '../../../src/features/public-page-builder/model/normalizeRichText';
+import { createStableId } from '../../../src/features/public-page-builder/utils/createStableId';
 import {
   applyPublicPageThemeColors,
   applyPublicPageThemeFont,
   DEFAULT_PUBLIC_PAGE_THEME,
   findPublicPageTheme,
-} from '../config/themes';
-import { normalizeServicesContent } from './services';
-import { normalizeCredentialsContent } from './credentials';
-import { normalizeReviewsContent } from './reviews';
-import { isCtaAction } from './cta';
-import { normalizeAvatarPosition } from './avatarPosition';
+} from '../../../src/features/public-page-builder/config/themes';
+import { normalizeServicesContent } from '../../../src/features/public-page-builder/model/services';
+import { normalizeCredentialsContent } from '../../../src/features/public-page-builder/model/credentials';
+import { normalizeReviewsContent } from '../../../src/features/public-page-builder/model/reviews';
+import { isCtaAction } from '../../../src/features/public-page-builder/model/cta';
 
 const statuses = new Set<PublicPageStatus>(['draft', 'published', 'archived']);
-const layouts = new Set<SectionLayout>([
-  'single',
-  'two-equal',
-  'one-third-two-thirds',
-  'two-thirds-one-third',
-  'three-equal',
-  'stack',
-  'hero-overlay',
-]);
+const itemSizes = new Set<ItemSize>(['full', 'half']);
+const pageWidths = new Set<PageWidth>(['narrow', 'medium', 'wide']);
+const linkWidths = new Set<LinkWidth>(['full', 'auto']);
+const linkAligns = new Set<LinkAlign>(['left', 'center', 'right']);
 const imageMimeTypes = new Set<MediaReference['mimeType']>([
   'image/jpeg',
   'image/png',
   'image/webp',
 ]);
-const richTextSizes = new Set<RichTextSize>(['small', 'medium', 'large', 'h1', 'h2', 'h3']);
-const richTextAlignments = new Set<RichTextAlignment>(['left', 'center', 'right', 'justify']);
 const avatarLayouts = new Set(['centered', 'cover-centered', 'cover-left', 'image-cover']);
 const avatarSizes = [65, 95, 125, 150] as const;
 
@@ -75,18 +66,6 @@ function fitValue(value: unknown): 'cover' | 'contain' {
 
 function stableId(value: unknown): string {
   return typeof value === 'string' && value.length > 0 ? value : createStableId();
-}
-
-function normalizeProfile(value: unknown): PageProfile {
-  const profile = isRecord(value) ? value : {};
-
-  return {
-    displayName: stringValue(profile.displayName),
-    description: stringValue(profile.description),
-    logoMediaId: nullableString(profile.logoMediaId),
-    avatarMediaId: nullableString(profile.avatarMediaId),
-    avatarPosition: normalizeAvatarPosition(profile.avatarPosition),
-  };
 }
 
 function normalizeTheme(value: unknown): PageTheme {
@@ -117,6 +96,7 @@ function normalizeTheme(value: unknown): PageTheme {
     colors: normalizedColors,
     tokens,
     fontFamily,
+    pageWidth: pageWidths.has(theme.pageWidth as PageWidth) ? theme.pageWidth as PageWidth : 'narrow',
     roundingStyle: theme.roundingStyle === 'pill' || theme.roundingStyle === 'leaf' || theme.roundingStyle === 'square' ? theme.roundingStyle : 'rounded',
     linkStylePreset: normalizeLinkStylePreset(theme.linkStylePreset, styles.linkStyle, normalizedColors),
     linkTextAlign: theme.linkTextAlign === 'left' ? 'left' : 'center',
@@ -127,6 +107,7 @@ function normalizeTheme(value: unknown): PageTheme {
     styleDefaults: {
       sectionBorderRadius: boundedNumber(styles.sectionBorderRadius, tokens.layout.blockRadius, 100),
       blockBorderRadius: boundedNumber(styles.blockBorderRadius, tokens.layout.blockRadius, 100),
+      ...(styles.socialButtonColors === 'theme' ? { socialButtonColors: 'theme' as const } : {}),
       headingStyle: normalizeRequiredTypography(styles.headingStyle, { ...fallback.headingStyle, fontFamily, color: normalizedColors.text }),
       textStyle: normalizeRequiredTypography(styles.textStyle, { ...fallback.textStyle, fontFamily, color: normalizedColors.text }),
       linkStyle: normalizeRequiredLinkStyle(styles.linkStyle, fontFamily, normalizedColors, fallback.linkStyle),
@@ -246,7 +227,9 @@ function normalizeRequiredLinkStyle(value: unknown, fontFamily: string, colors: 
     subtitleStyle: normalizeRequiredTypography(style.subtitleStyle, { ...fallback.subtitleStyle, fontFamily, color: colors.text }),
     backgroundColor: stringValue(style.backgroundColor, colors.surface), backgroundOpacity: boundedNumber(style.backgroundOpacity, fallback.backgroundOpacity, 1),
     borderWidth: boundedNumber(style.borderWidth, fallback.borderWidth, 16), borderColor: stringValue(style.borderColor, colors.primary),
-    shadow: typeof style.shadow === 'boolean' ? style.shadow : fallback.shadow };
+    shadow: typeof style.shadow === 'boolean' ? style.shadow : fallback.shadow,
+    width: linkWidths.has(style.width as LinkWidth) ? style.width as LinkWidth : fallback.width,
+    align: linkAligns.has(style.align as LinkAlign) ? style.align as LinkAlign : fallback.align };
 }
 
 function boundedNumber(value: unknown, fallback: number, maximum: number, minimum = 0): number {
@@ -275,7 +258,9 @@ function normalizeLinkStyle(value: unknown): LinkStyle {
   return { titleStyle: normalizeTypography(style.titleStyle), subtitleStyle: normalizeTypography(style.subtitleStyle),
     backgroundColor: nullableString(style.backgroundColor), backgroundOpacity: nullableBoundedNumber(style.backgroundOpacity, 1),
     borderWidth: nullableBoundedNumber(style.borderWidth, 16), borderColor: nullableString(style.borderColor),
-    shadow: typeof style.shadow === 'boolean' ? style.shadow : null };
+    shadow: typeof style.shadow === 'boolean' ? style.shadow : null,
+    width: linkWidths.has(style.width as LinkWidth) ? style.width as LinkWidth : null,
+    align: linkAligns.has(style.align as LinkAlign) ? style.align as LinkAlign : null };
 }
 
 function normalizeSectionDesign(value: unknown): SectionDesign {
@@ -313,6 +298,7 @@ function normalizeBlock(value: unknown): PageBlock | null {
     type: value.type,
     name: stringValue(value.name),
     visible: typeof value.visible === 'boolean' ? value.visible : true,
+    size: normalizeItemSize(value.size),
     content: value.type === 'text' ? normalizeTextContent(rawContent)
       : value.type === 'avatar' ? normalizeAvatarContent(rawContent)
         : value.type === 'services' ? normalizeServicesContent(rawContent)
@@ -325,14 +311,15 @@ function normalizeBlock(value: unknown): PageBlock | null {
   };
 }
 
+function normalizeItemSize(value: unknown): ItemSize {
+  return itemSizes.has(value as ItemSize) ? value as ItemSize : 'full';
+}
+
 function normalizeSection(value: unknown): PageSection | null {
   if (!isRecord(value)) {
     return null;
   }
 
-  const layout = layouts.has(value.layout as SectionLayout)
-    ? value.layout as SectionLayout
-    : 'single';
   const blocks = Array.isArray(value.blocks)
     ? value.blocks.map(normalizeBlock).filter((block): block is PageBlock => block !== null)
     : [];
@@ -341,44 +328,10 @@ function normalizeSection(value: unknown): PageSection | null {
     id: stableId(value.id),
     name: stringValue(value.name),
     visible: typeof value.visible === 'boolean' ? value.visible : true,
-    layout,
+    size: normalizeItemSize(value.size),
     design: normalizeSectionDesign(value.design),
     blocks,
   };
-}
-
-function normalizeRichTextMarks(value: unknown): RichTextMarks | undefined {
-  const marks = isRecord(value) ? value : {};
-  const normalized: RichTextMarks = {};
-  if (marks.bold === true) {normalized.bold = true;}
-  if (marks.italic === true) {normalized.italic = true;}
-  if (marks.underline === true) {normalized.underline = true;}
-  if (marks.strike === true) {normalized.strike = true;}
-  if (typeof marks.color === 'string' && marks.color.trim()) {normalized.color = marks.color.trim();}
-  return Object.keys(normalized).length ? normalized : undefined;
-}
-
-function normalizeRichTextParagraph(value: unknown): RichTextParagraph | null {
-  if (!isRecord(value)) {return null;}
-  const runs = Array.isArray(value.runs) ? value.runs.flatMap((run) => {
-    if (!isRecord(run) || typeof run.text !== 'string') {return [];}
-    const marks = normalizeRichTextMarks(run.marks);
-    return [{ text: run.text, ...(marks ? { marks } : {}) }];
-  }) : [];
-  return {
-    size: richTextSizes.has(value.size as RichTextSize) ? value.size as RichTextSize : 'medium',
-    fontFamily: nullableString(value.fontFamily),
-    alignment: richTextAlignments.has(value.alignment as RichTextAlignment) ? value.alignment as RichTextAlignment : 'left',
-    runs: runs.length ? runs : [{ text: '' }],
-  };
-}
-
-export function normalizeRichTextDocument(value: unknown): RichTextDocument {
-  const document = isRecord(value) && value.type === 'rich-text-v1' ? value : {};
-  const paragraphs = Array.isArray(document.paragraphs)
-    ? document.paragraphs.map(normalizeRichTextParagraph).filter((item): item is RichTextParagraph => item !== null)
-    : [];
-  return { type: 'rich-text-v1', paragraphs: paragraphs.length ? paragraphs : [{ size: 'medium', fontFamily: null, alignment: 'left', runs: [{ text: '' }] }] };
 }
 
 function normalizeTextContent(content: Record<string, unknown>): BlockContent {
@@ -406,10 +359,6 @@ function normalizeContactsContent(content: Record<string, unknown>): BlockConten
     return [{ id: stableId(item.id), label: stringValue(item.label), action: structuredClone(item.action) }];
   }) : [];
   return { title: stringValue(content.title), contacts };
-}
-
-export function createEmptyPageSection(variant: SectionDesign['variant'] = 'off'): PageSection {
-  return normalizeSection({ design: { variant } })!;
 }
 
 function normalizeMedia(value: unknown): MediaReference | null {
@@ -449,13 +398,13 @@ export function normalizeDocument(input: unknown): PublicPageDocument {
     id: stableId(document.id),
     slug: stringValue(document.slug).trim().toLowerCase(),
     status,
+    locale: document.locale === 'ru' ? 'ru' : 'en',
     timezone: stringValue(document.timezone, 'UTC'),
     archivedBlocks: Array.isArray(document.archivedBlocks) ? document.archivedBlocks.flatMap((entry) => {
       if (!isRecord(entry)) {return [];}
       const block = normalizeBlock(entry.block);
       return block ? [{ block, sourceSectionId: stringValue(entry.sourceSectionId) }] : [];
     }) : [],
-    profile: normalizeProfile(document.profile),
     theme: normalizeTheme(document.theme),
     sections,
     seo: normalizeSeo(document.seo),

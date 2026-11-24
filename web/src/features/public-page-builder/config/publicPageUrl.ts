@@ -47,3 +47,12 @@ export function publicPageDisplayUrl(slug: string): string {
   const origin = new URL(PUBLIC_PAGE_ORIGIN);
   return `${origin.host}/${encodeURIComponent(slug)}`;
 }
+
+/**
+ * A page served from its own domain announces that domain (the server injects it); every other page lives under
+ * the Meetli origin.
+ */
+export function publicPageCanonicalUrl(slug: string): string {
+  const domain = typeof window === 'undefined' ? undefined : window.__PUBLIC_PAGE_DOMAIN__;
+  return domain ? `https://${domain}/` : publicPageUrl(slug);
+}

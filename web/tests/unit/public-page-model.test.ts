@@ -1,14 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { createEmptyPageSection, normalizeDocument, normalizeRichTextDocument } from '../../src/features/public-page-builder/model/normalizeDocument';
-import { validateDocument } from '../../src/features/public-page-builder/model/validateDocument';
+import { normalizeDocument } from './support/normalizeDocument';
+import { createEmptyPageSection } from '../../src/features/public-page-builder/model/emptySection';
+import { normalizeRichTextDocument } from '../../src/features/public-page-builder/model/normalizeRichText';
+import { documentIssues, isValidDocument } from './support/validity';
 import {
   createEditorState,
   editorReducer,
 } from '../../src/features/public-page-builder/model/editorReducer';
 import { PUBLIC_PAGE_SCHEMA_VERSION, type PublicPageDocument } from '../../src/features/public-page-builder/types/publicPage';
 import { getPublicPageTemplate, PUBLIC_PAGE_TEMPLATES } from '../../src/features/public-page-builder/templates';
+import { DESIGNED_TEMPLATES } from '../../src/features/public-page-builder/templates/designed';
 import { canDeleteMediaFromDocuments, collectReferencedMediaIds, reconcilePendingMediaCleanup } from '../../src/features/public-page-builder/model/media';
 import { validateSocialPlatforms } from '../../src/features/public-page-builder/model/socialPlatforms';
 import { applyPublicPageThemeRounding, PUBLIC_PAGE_THEMES } from '../../src/features/public-page-builder/config/themes';
@@ -109,7 +112,7 @@ describe('public page theme choices', () => {
     const document = structuredClone(getPublicPageTemplate('beauty')!.createDocument('blank-theme-value'));
     setNestedValue(document, path, '');
 
-    expect(validateDocument(document).errors).toContainEqual(expect.objectContaining({ path }));
+    expect(documentIssues(document)).toContainEqual(expect.objectContaining({ path }));
   });
 
   it('accepts nullable theme media and section style overrides', () => {
@@ -130,9 +133,11 @@ describe('public page theme choices', () => {
       borderWidth: null,
       borderColor: null,
       shadow: null,
+      width: null,
+      align: null,
     };
 
-    expect(validateDocument(document)).toMatchObject({ valid: true, errors: [] });
+    expect(isValidDocument(document)).toBe(true);
   });
 
   it('persists all eight link style presets as distinct valid states', () => {
@@ -231,19 +236,19 @@ describe('public page publish issue focus', () => {
     })).toEqual({ type: 'block-dialog', sectionId: section.id, blockId: block.id, tab: 'section', marker: 'section.design' });
   });
 
-  it('uses stable profile ownership before block media ownership', () => {
+  it('uses stable SEO image ownership before block media ownership', () => {
     const document = getPublicPageTemplate('beauty')!.createDocument('publish-focus-media');
     const section = document.sections[0];
     const block = section.blocks[0];
     const media = { id: 'focus-media', url: 'https://example.com/focus.png', mimeType: 'image/png' as const, alt: '', width: 20, height: 20 };
     document.media.unshift(media);
     block.design.backgroundMediaId = media.id;
-    document.profile.logoMediaId = media.id;
+    document.seo.imageMediaId = media.id;
 
     expect(resolvePublishIssueFocusTarget(document, { code: 'missing_alt', path: 'media.0.alt' }))
       .toEqual({ type: 'page-settings', marker: 'media:focus-media:alt' });
 
-    document.profile.logoMediaId = null;
+    document.seo.imageMediaId = null;
     expect(resolvePublishIssueFocusTarget(document, { code: 'invalid_media', path: 'media.0.url' }))
       .toEqual({ type: 'block-dialog', sectionId: section.id, blockId: block.id, tab: 'design', marker: 'block.design.backgroundMediaId' });
   });
@@ -384,29 +389,24 @@ describe('public page editor publish lifecycle', () => {
 });
 
 describe('public page document model', () => {
-  it('reports exact missing media paths for profile and SEO references', () => {
-    const document = getPublicPageTemplate('beauty')!.createDocument('missing-profile-media');
-    document.profile.logoMediaId = 'missing-logo';
-    document.profile.avatarMediaId = 'missing-avatar';
+  it('reports the exact missing media path for the SEO image', () => {
+    const document = getPublicPageTemplate('beauty')!.createDocument('missing-seo-media');
     document.seo.imageMediaId = 'missing-seo-image';
 
     expect(validateForPublish(document).issues.filter((issue) => issue.code === 'missing_media' &&
-      (issue.path.startsWith('profile.') || issue.path.startsWith('seo.'))).map((issue) => issue.path)).toEqual([
-      'profile.logoMediaId',
-      'profile.avatarMediaId',
-      'seo.imageMediaId',
-    ]);
+      issue.path.startsWith('seo.')).map((issue) => issue.path)).toEqual(['seo.imageMediaId']);
   });
 
   it('always normalizes services to the canonical catalog-selection shape', () => {
     const oldShape = { title: 'Services', services: [{ id: 'old', title: 'Consultation' }] };
     expect(normalizeServicesContent(oldShape)).toEqual({
-      title: 'Services', serviceIds: [], autoplayIntervalSeconds: null, showBookingButton: true,
+      title: 'Services', serviceIds: [], autoplayIntervalSeconds: null, showBookingButton: true, layout: 'carousel',
     });
 
     expect(normalizeServicesContent({ ...oldShape, serviceIds: [3, 3, -1, 7], autoplayIntervalSeconds: 2 })).toEqual({
-      title: 'Services', serviceIds: [3, 7], autoplayIntervalSeconds: null, showBookingButton: true,
+      title: 'Services', serviceIds: [3, 7], autoplayIntervalSeconds: null, showBookingButton: true, layout: 'carousel',
     });
+    expect(normalizeServicesContent({ serviceIds: [1], layout: 'grid' }).layout).toBe('grid');
     expect(validateServicesBlockContent({ serviceIds: [], autoplayIntervalSeconds: null, showBookingButton: true }))
       .toContain('serviceIds must contain at least one service');
   });
@@ -686,7 +686,7 @@ describe('public page document model', () => {
     document.sections[0].blocks.push({ ...document.sections[0].blocks[0], id: 'valid', type: 'social-button', content: { platform: 'vk', label: 'VK', url: 'https://vk.com' } });
     const normalized = normalizeDocument(document);
     expect(normalized.sections[0].blocks.map((block) => block.id)).toEqual(expect.arrayContaining(['unsupported', 'invalid', 'valid']));
-    expect(validateDocument(normalized).valid).toBe(false);
+    expect(isValidDocument(normalized)).toBe(false);
   });
 
   it('keeps save blocked through double cleanup failure and excludes the orphan after a successful replace retry', () => {
@@ -722,8 +722,22 @@ describe('public page document model', () => {
     expect(state.document.sections[0].blocks[0].design.backgroundMediaId).toBe('media-history-id');
     expect(canDeleteMediaFromDocuments([state.document, ...state.past, ...state.future], 'media-history-id')).toBe(false);
   });
+  it('creates the designed templates with a profile intro, several blocks per section group and no media', () => {
+    for (const locale of ['en', 'ru'] as const) {
+      for (const template of DESIGNED_TEMPLATES) {
+        const document = template.createDocument(`designed-${template.id}`, '2026-01-01T00:00:00.000Z', locale);
+        const blocks = document.sections.flatMap((section) => section.blocks);
+        const intro = blocks.find((pageBlock) => pageBlock.type === 'avatar');
+        expect(blocks.length, template.id).toBeGreaterThan(5);
+        expect(intro?.content.imageMediaId, template.id).toBeNull();
+        expect(intro?.content, template.id).not.toHaveProperty('imageUrl');
+        expect(document.media, template.id).toEqual([]);
+        expect(new Set(blocks.map((pageBlock) => pageBlock.id)).size, template.id).toBe(blocks.length);
+      }
+    }
+  });
   it('creates every non-blank template with canonical avatar content and no persisted placeholder URL', () => {
-    for (const template of PUBLIC_PAGE_TEMPLATES.filter(({ id }) => id !== 'blank')) {
+    for (const template of PUBLIC_PAGE_TEMPLATES.filter(({ id }) => id !== 'blank' && !DESIGNED_TEMPLATES.some((designed) => designed.id === id))) {
       const document = template.createDocument(`test-${template.id}`, '2026-01-01T00:00:00.000Z');
       const visibleBlocks = document.sections
         .filter((section) => section.visible)
@@ -769,7 +783,7 @@ describe('public page document model', () => {
       textStyle: { fontFamily: null, fontSize: null, fontWeight: null, fontStyle: null, color: null },
       linkStyle: { titleStyle: { fontFamily: null, fontSize: null, fontWeight: null, fontStyle: null, color: null },
         subtitleStyle: { fontFamily: null, fontSize: null, fontWeight: null, fontStyle: null, color: null },
-        backgroundColor: null, backgroundOpacity: null, borderWidth: null, borderColor: null, shadow: null },
+        backgroundColor: null, backgroundOpacity: null, borderWidth: null, borderColor: null, shadow: null, width: null, align: null },
     });
     expect(document.sections[0].blocks).toHaveLength(1);
   });
@@ -794,17 +808,17 @@ describe('public page document model', () => {
     expect(document.sections[0].design).toMatchObject({ borderRadius: 0, headingStyle: { fontSize: 96, fontWeight: 350 },
       linkStyle: { backgroundOpacity: 0, borderWidth: 16 } });
     expect(document.sections[0].blocks[0].design.borderRadius).toBe(0);
-    expect(validateDocument(document).valid).toBe(true);
+    expect(isValidDocument(document)).toBe(true);
   });
 
   it('uses only canonical avatar blocks in new templates', () => {
     for (const template of PUBLIC_PAGE_TEMPLATES.filter(({ id }) => id !== 'blank')) {
       const document = template.createDocument(`avatar-${template.id}`);
       expect(document.sections.flatMap((section) => section.blocks).some((block) => block.type === 'avatar')).toBe(true);
-      expect(validateDocument(document).valid).toBe(true);
-      expect(document.profile.displayName).toBe('');
+      expect(isValidDocument(document)).toBe(true);
+      expect(document).not.toHaveProperty('profile');
     }
-    expect(normalizeDocument({ profile: { displayName: 'Profile' } }).profile.displayName).toBe('Profile');
+    expect(normalizeDocument({ profile: { displayName: 'Profile' } })).not.toHaveProperty('profile');
   });
 
   it('normalizes damaged input into a safe current document', () => {
@@ -817,7 +831,7 @@ describe('public page document model', () => {
         null,
         {
           id: 'section-1',
-          layout: 'unsupported',
+          size: 'unsupported',
           blocks: [{ id: 'block-1', type: 'text', visible: 'yes', content: null }],
         },
       ],
@@ -828,7 +842,8 @@ describe('public page document model', () => {
     expect(document.slug).toBe('my-page');
     expect(document.status).toBe('draft');
     expect(document.sections).toHaveLength(1);
-    expect(document.sections[0]?.layout).toBe('single');
+    expect(document.sections[0]?.size).toBe('full');
+    expect(document.theme.pageWidth).toBe('narrow');
     expect(document.sections[0]?.blocks[0]).toMatchObject({
       id: 'block-1',
       type: 'text',
@@ -839,18 +854,16 @@ describe('public page document model', () => {
     expect(document.media[0]?.mimeType).toBe('image/jpeg');
   });
 
-  it('rejects non-v4, incomplete profile and removed block shapes at the document boundary', () => {
+  it('rejects other versions, the removed profile and removed block shapes at the document boundary', () => {
     const document = getPublicPageTemplate('specialist')!.createDocument('schema-v4-only');
-    expect(validateDocument({ ...document, schemaVersion: 1 }).valid).toBe(false);
-    expect(validateDocument({ ...document, schemaVersion: undefined }).valid).toBe(false);
-    const incompleteProfile: Record<string, unknown> = structuredClone(document.profile);
-    delete incompleteProfile.avatarPosition;
-    expect(validateDocument({ ...document, profile: incompleteProfile }).errors)
-      .toContainEqual({ code: 'invalid_value', path: 'profile.avatarPosition' });
-    expect(validateDocument({
+    expect(isValidDocument({ ...document, schemaVersion: 1 })).toBe(false);
+    expect(isValidDocument({ ...document, schemaVersion: undefined })).toBe(false);
+    expect(documentIssues({ ...document, profile: { displayName: '' } }))
+      .toContainEqual(expect.objectContaining({ code: 'unrecognized_keys' }));
+    expect(isValidDocument({
       ...document,
       sections: [{ ...document.sections[0], blocks: [{ ...document.sections[0].blocks[0], type: 'hero' }] }],
-    }).valid).toBe(false);
+    })).toBe(false);
   });
 
   it('undoes and redoes committed editor changes', () => {
@@ -999,6 +1012,7 @@ describe('public page document model', () => {
     const block = structuredClone(document.sections[0].blocks[0]);
     block.id = 'created-block';
     const section = { ...structuredClone(document.sections[0]), id: 'created-section', name: 'Section 9', blocks: [block] };
+    section.design.variant = 'custom';
     const created = editorReducer(createEditorState(document), {
       type: 'block/create-with-section', section, afterSectionId: document.sections[1].id,
     });
@@ -1016,6 +1030,7 @@ describe('public page document model', () => {
     const block = structuredClone(document.sections[0].blocks[0]);
     block.id = 'appended-block';
     const section = { ...structuredClone(document.sections[0]), id: 'appended-section', blocks: [block] };
+    section.design.variant = 'custom';
     const created = editorReducer(createEditorState(document), {
       type: 'block/create-with-section', section, afterSectionId: 'missing-section',
     });
@@ -1064,6 +1079,7 @@ describe('public page document model', () => {
     const source = document.sections[0];
     const block = source.blocks[0];
     const detachedSection = { ...structuredClone(source), id: 'detached', name: 'Section 7', blocks: [block] };
+    detachedSection.design.variant = 'custom';
     const detached = editorReducer(createEditorState(document), {
       type: 'block/move-or-detach', fromSectionId: source.id, block, newSection: detachedSection,
     });
@@ -1129,17 +1145,18 @@ describe('public page document model', () => {
     const initial = normalizeDocument({
       id: 'page-1',
       media: [{ id: 'shared-image', url: 'https://example.com/image.png', mimeType: 'image/png', alt: 'Portrait', width: 100, height: 100 }],
-      profile: { logoMediaId: 'shared-image', avatarMediaId: 'shared-image' },
+      seo: { imageMediaId: 'shared-image' },
+      theme: { backgroundMediaId: 'shared-image' },
     });
     const referenced = editorReducer(createEditorState(initial), { type: 'media/remove', mediaId: 'shared-image' });
     expect(referenced.document.media).toHaveLength(1);
 
-    const withoutLogo = editorReducer(referenced, { type: 'profile/update', changes: { logoMediaId: null } });
-    const stillShared = editorReducer(withoutLogo, { type: 'media/remove', mediaId: 'shared-image' });
+    const withoutSeoImage = editorReducer(referenced, { type: 'seo/update', changes: { imageMediaId: null } });
+    const stillShared = editorReducer(withoutSeoImage, { type: 'media/remove', mediaId: 'shared-image' });
     expect(stillShared.document.media).toHaveLength(1);
 
-    const withoutAvatar = editorReducer(stillShared, { type: 'profile/update', changes: { avatarMediaId: null } });
-    const removed = editorReducer(withoutAvatar, { type: 'media/remove', mediaId: 'shared-image' });
+    const withoutBackground = editorReducer(stillShared, { type: 'theme/update', theme: { ...stillShared.document.theme, backgroundMediaId: null } });
+    const removed = editorReducer(withoutBackground, { type: 'media/remove', mediaId: 'shared-image' });
     expect(removed.document.media).toHaveLength(0);
   });
 });

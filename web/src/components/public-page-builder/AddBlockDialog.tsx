@@ -5,6 +5,11 @@ import Close from '@mui/icons-material/Close';
 import CollectionsOutlined from '@mui/icons-material/CollectionsOutlined';
 import ContactPageOutlined from '@mui/icons-material/ContactPageOutlined';
 import DesignServicesOutlined from '@mui/icons-material/DesignServicesOutlined';
+import FormatListNumberedOutlined from '@mui/icons-material/FormatListNumberedOutlined';
+import InsightsOutlined from '@mui/icons-material/InsightsOutlined';
+import PlayCircleOutlined from '@mui/icons-material/PlayCircleOutlined';
+import ScheduleOutlined from '@mui/icons-material/ScheduleOutlined';
+import SellOutlined from '@mui/icons-material/SellOutlined';
 import HorizontalRuleOutlined from '@mui/icons-material/HorizontalRuleOutlined';
 import ImageOutlined from '@mui/icons-material/ImageOutlined';
 import LinkOutlined from '@mui/icons-material/LinkOutlined';
@@ -31,6 +36,7 @@ const blockLabelKeys = {
   avatar: 'blockTypeAvatar', button: 'blockTypeButton', links: 'blockTypeLinks', text: 'blockTypeText', image: 'blockTypeImage',
   gallery: 'blockTypeGallery', services: 'blockTypeServices', contacts: 'blockTypeContacts', map: 'blockTypeMap', divider: 'blockTypeDivider', faq: 'blockTypeFaq',
   credentials: 'blockTypeCredentials', reviews: 'blockTypeReviews',
+  'price-list': 'blockTypePriceList', steps: 'blockTypeSteps', stats: 'blockTypeStats', hours: 'blockTypeHours', video: 'blockTypeVideo',
 } as const;
 const categories = {
   messagingApps: ['facebook-messenger', 'vk', 'whatsapp', 'viber', 'telegram'],
@@ -52,6 +58,11 @@ const blockIcons = {
   faq: QuizOutlined,
   credentials: WorkspacePremiumOutlined,
   reviews: RateReviewOutlined,
+  'price-list': SellOutlined,
+  steps: FormatListNumberedOutlined,
+  stats: InsightsOutlined,
+  hours: ScheduleOutlined,
+  video: PlayCircleOutlined,
 } as const;
 const platformKeys: Record<SocialPlatform, Parameters<typeof publicPageText>[1]> = {
   'facebook-messenger': 'platformFacebookMessenger', vk: 'platformVk', whatsapp: 'platformWhatsapp', viber: 'platformViber',

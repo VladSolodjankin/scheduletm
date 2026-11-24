@@ -1,35 +1,9 @@
-.meetli-design-system .public-page-editor-preview-surface {
-  --public-page-editor-drag-gutter: 64px;
-}
-
 .meetli-design-system .public-page-editor-preview-surface--compact .public-page-block-drag-rail {
   display: none;
 }
 
-.meetli-design-system .public-page-dnd-wrapper {
-  --public-page-editor-drag-gutter: 64px;
-  min-width: 0;
-  overflow: visible;
-}
-
-.meetli-design-system .smooth-dnd-container.vertical > .smooth-dnd-draggable-wrapper.public-page-dnd-wrapper {
-  overflow: visible;
-}
-
-.meetli-design-system .public-page-dnd-main-container {
-  --public-page-main-drop-space: 24px;
-  display: grid;
-  flex: 0 0 auto;
-  align-content: start;
-  min-height: 52px;
-  /* Expose the main drop target before, between and after section containers. */
-  gap: max(var(--theme-link-offset), var(--public-page-main-drop-space));
-  padding-block: var(--public-page-main-drop-space);
-}
-
 .meetli-design-system .public-page-dnd-section-shell,
 .meetli-design-system .public-page-dnd-block-shell {
-  position: relative;
   min-width: 0;
 }
 
@@ -55,39 +29,12 @@
   pointer-events: none;
 }
 
-.meetli-design-system .public-page-dnd-block-container {
-  display: grid;
-  grid-column: 1 / -1;
-  align-content: start;
-  box-sizing: border-box;
-  min-height: 52px;
-  gap: var(--theme-link-offset);
-}
-
-.meetli-design-system .MuiIconButton-root.public-page-block-drag-rail {
-  position: absolute;
-  z-index: 5;
-  top: 50%;
-  left: calc(-1 * var(--public-page-editor-drag-gutter) - 35px);
-  width: 36px;
-  height: 100%;
-  transform: translateY(-50%);
-  border-radius: var(--app-radius-xs);
-  color: var(--app-color-text-muted);
-  background-color: var(--app-color-surface-muted);
-  box-shadow: var(--app-shadow-soft);
-}
-
-.meetli-design-system .public-page-dnd-wrapper[data-public-page-dnd-context='section'] .MuiIconButton-root.public-page-block-drag-rail {
-  left: calc(-1 * var(--public-page-editor-drag-gutter) - 49px);
-}
-
 .public-page-avatar-cover-bleed {
-  margin: 0 -14px;
+  margin: 0 -26px;
 }
 
 [data-public-page-leading-block='true'] .public-page-avatar-cover-bleed {
-  margin-top: -14px;
+  margin-top: -26px;
 }
 
 .meetli-design-system .MuiIconButton-root.public-page-block-drag-rail:hover,
@@ -158,4 +105,83 @@
     opacity: 1;
     pointer-events: auto;
   }
+}
+
+/* The block handle appears on hover, in the gutter next to the block. */
+.meetli-design-system .MuiIconButton-root.public-page-block-drag-rail {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: calc(var(--app-space-l) * -1);
+  width: var(--app-space-l);
+  height: var(--app-space-xl);
+  padding: 0;
+  transform: translateY(-50%);
+  border: var(--app-border-width) solid var(--app-color-border-strong);
+  border-radius: var(--app-radius-s);
+  color: var(--app-color-text-muted);
+  background-color: var(--app-color-surface);
+  box-shadow: var(--app-shadow-soft);
+  opacity: 0;
+  transition: opacity var(--app-motion-fast) var(--app-easing);
+  touch-action: none;
+  cursor: grab;
+}
+
+.meetli-design-system .public-page-dnd-block-shell:hover > .public-page-block-drag-rail,
+.meetli-design-system .public-page-dnd-block-shell:has(> .public-page-block-drag-rail:focus-visible) > .public-page-block-drag-rail,
+.meetli-design-system .public-page-dnd-dragging .public-page-block-drag-rail {
+  opacity: 1;
+}
+
+.meetli-design-system .MuiIconButton-root.public-page-section-drag-rail {
+  touch-action: none;
+  cursor: grab;
+}
+
+/* Where the dragged item will land: a bar on the leading or trailing edge of the target. */
+.public-page-drop-indicator {
+  position: absolute;
+  z-index: 6;
+  border-radius: 2px;
+  background-color: var(--app-color-primary);
+  pointer-events: none;
+}
+
+.public-page-drop-indicator[data-axis='x'] {
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+.public-page-drop-indicator[data-axis='x'][data-side='before'] {
+  left: -7px;
+}
+
+.public-page-drop-indicator[data-axis='x'][data-side='after'] {
+  right: -7px;
+}
+
+.public-page-drop-indicator[data-axis='y'] {
+  right: 0;
+  left: 0;
+  height: 4px;
+}
+
+.public-page-drop-indicator[data-axis='y'][data-side='before'] {
+  top: -7px;
+}
+
+.public-page-drop-indicator[data-axis='y'][data-side='after'] {
+  bottom: -7px;
+}
+
+.public-page-dnd-overlay {
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: var(--app-radius-m);
+  opacity: 0.92;
+  box-shadow: var(--app-shadow-surface);
+  cursor: grabbing;
+  pointer-events: none;
 }

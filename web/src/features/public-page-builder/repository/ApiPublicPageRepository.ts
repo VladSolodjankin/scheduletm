@@ -1,6 +1,8 @@
 import axios from 'axios';
+import type { PublicPageDomain } from '@scheduletm/shared/public-page-domain';
+import type { PublicPageAnalytics, PublicPageAnalyticsPeriod, PublicPageEvent } from '@scheduletm/shared/public-page-analytics';
 import { apiClient, authHeaders } from '../../../shared/api/client';
-import { isPublicPageDocument, validateDocument } from '../model/validateDocument';
+import { publicPageDocumentSchema } from '@scheduletm/shared/public-page';
 import { PUBLIC_PAGE_SCHEMA_VERSION } from '../types/publicPage';
 import type { PublishValidationIssue } from '../model/publishValidation';
 import type { MediaReference, PublicPageDocument, PublicPageStatus } from '../types/publicPage';
@@ -24,20 +26,15 @@ type ApiRecord = {
 };
 
 function readDocument(value: unknown): PublicPageDocument {
-  try {
-    if (isPublicPageDocument(value)) {return value;}
-    const validation = validateDocument(value);
-    const schemaVersion = value && typeof value === 'object' && !Array.isArray(value)
-      ? (value as Record<string, unknown>).schemaVersion : undefined;
-    const code = typeof schemaVersion === 'number' && schemaVersion !== PUBLIC_PAGE_SCHEMA_VERSION
-      ? 'unsupported_version' : 'invalid_document';
-    throw new PublicPageRepositoryError(code, undefined, {
-      cause: new Error(validation.errors.map(({ code: errorCode, path }) => `${path}:${errorCode}`).join(', ')),
-    });
-  } catch (error) {
-    if (error instanceof PublicPageRepositoryError) {throw error;}
-    throw new PublicPageRepositoryError('invalid_document', undefined, { cause: error });
-  }
+  const parsed = publicPageDocumentSchema.safeParse(value);
+  if (parsed.success) {return parsed.data;}
+  const schemaVersion = value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>).schemaVersion : undefined;
+  const code = typeof schemaVersion === 'number' && schemaVersion !== PUBLIC_PAGE_SCHEMA_VERSION
+    ? 'unsupported_version' : 'invalid_document';
+  throw new PublicPageRepositoryError(code, undefined, {
+    cause: new Error(parsed.error.issues.map((issue) => `${issue.path.join('.')}:${issue.code}`).join(', ')),
+  });
 }
 
 function readRecord(value: ApiRecord): PublicPageRecord {
@@ -116,6 +113,8 @@ function mapError(error: unknown): never {
     quota_exceeded: 'quota_exceeded',
     page_not_archived: 'page_not_archived',
     media_in_use: 'media_in_use',
+    invalid_domain: 'invalid_domain',
+    domain_conflict: 'domain_conflict',
   }[String(code)] as ConstructorParameters<typeof PublicPageRepositoryError>[0] | undefined;
   throw new PublicPageRepositoryError(mapped ?? 'storage_unavailable', undefined, { cause: error });
 }
@@ -145,6 +144,42 @@ export class ApiPublicPageRepository implements PublicPageRepository {
         headers: this.headers,
       });
       return readSlugAvailability(response.data);
+    } catch (error) { return mapError(error); }
+  }
+
+  public async getDomain(pageId: string): Promise<PublicPageDomain | null> {
+    try {
+      const response = await apiClient.get<{ domain: PublicPageDomain | null }>(`/api/public-pages/${encodeURIComponent(pageId)}/domain`, { headers: this.headers });
+      return response.data.domain;
+    } catch (error) { return mapError(error); }
+  }
+
+  public async setDomain(pageId: string, domain: string): Promise<PublicPageDomain> {
+    try {
+      const response = await apiClient.put<{ domain: PublicPageDomain }>(`/api/public-pages/${encodeURIComponent(pageId)}/domain`, { domain }, { headers: this.headers });
+      return response.data.domain;
+    } catch (error) { return mapError(error); }
+  }
+
+  public async verifyDomain(pageId: string): Promise<PublicPageDomain> {
+    try {
+      const response = await apiClient.post<{ domain: PublicPageDomain }>(`/api/public-pages/${encodeURIComponent(pageId)}/domain/verify`, undefined, { headers: this.headers });
+      return response.data.domain;
+    } catch (error) { return mapError(error); }
+  }
+
+  public async removeDomain(pageId: string): Promise<void> {
+    try {
+      await apiClient.delete(`/api/public-pages/${encodeURIComponent(pageId)}/domain`, { headers: this.headers });
+    } catch (error) { return mapError(error); }
+  }
+
+  public async getAnalytics(pageId: string, days: PublicPageAnalyticsPeriod): Promise<PublicPageAnalytics> {
+    try {
+      const response = await apiClient.get<PublicPageAnalytics>(`/api/public-pages/${encodeURIComponent(pageId)}/analytics`, {
+        headers: this.headers, params: { days },
+      });
+      return response.data;
     } catch (error) { return mapError(error); }
   }
 
@@ -249,4 +284,11 @@ export class ApiPublicPageRepository implements PublicPageRepository {
       await apiClient.delete(`/api/public-pages/media/${encodeURIComponent(mediaId)}`, { headers: this.headers });
     } catch (error) { return mapError(error); }
   }
+}
+
+/** Reports a view or a click to the page owner's statistics. Failures are irrelevant to the visitor, so they are not surfaced. */
+export function trackPublicPageEvent(slug: string, event: PublicPageEvent): void {
+  void fetch(apiClient.getUri({ url: `/api/public-pages/by-slug/${encodeURIComponent(slug)}/events` }), {
+    method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(event),
+  }).catch(() => undefined);
 }

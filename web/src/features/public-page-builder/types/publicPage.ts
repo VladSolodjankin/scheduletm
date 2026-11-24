@@ -1,16 +1,15 @@
-export const PUBLIC_PAGE_SCHEMA_VERSION = 5 as const;
+import { PUBLIC_PAGE_LOCALES, PUBLIC_PAGE_SCHEMA_VERSION } from '@scheduletm/shared/public-page';
 
-export const DEFAULT_AVATAR_POSITION = '50% 50%' as const;
+export { PUBLIC_PAGE_LOCALES, PUBLIC_PAGE_SCHEMA_VERSION };
+export type PublicPageLocale = (typeof PUBLIC_PAGE_LOCALES)[number];
 
 export type PublicPageStatus = 'draft' | 'published' | 'archived';
 
-export type PageProfile = {
-  displayName: string;
-  description: string;
-  logoMediaId: string | null;
-  avatarMediaId: string | null;
-  avatarPosition: string;
-};
+export type ItemSize = 'full' | 'half';
+export type PageWidth = 'narrow' | 'medium' | 'wide';
+export type LinkWidth = 'full' | 'auto';
+export type LinkAlign = 'left' | 'center' | 'right';
+export type ServicesLayout = 'carousel' | 'grid' | 'list';
 
 export type ThemeSwatches = readonly [string, string, string, string];
 
@@ -70,6 +69,7 @@ export type PageTheme = {
   roundingStyle: 'rounded' | 'pill' | 'leaf' | 'square';
   linkStylePreset: 'primary-fill' | 'primary-shadow' | 'primary-strong' | 'primary-outline' | 'surface-fill' | 'surface-outline' | 'surface-shadow' | 'surface-strong';
   linkTextAlign: 'center' | 'left';
+  pageWidth: PageWidth;
   backgroundMediaId: string | null;
   backgroundPreset: string | null;
   backgroundFit: 'cover' | 'contain';
@@ -93,6 +93,8 @@ export type LinkStyle = {
   borderWidth: number | null;
   borderColor: string | null;
   shadow: boolean | null;
+  width: LinkWidth | null;
+  align: LinkAlign | null;
 };
 
 export type ResolvedTypographyStyle = {
@@ -106,6 +108,7 @@ export type ResolvedTypographyStyle = {
 export type ThemeStyleDefaults = {
   sectionBorderRadius: number;
   blockBorderRadius: number;
+  socialButtonColors?: 'brand' | 'theme';
   headingStyle: ResolvedTypographyStyle;
   textStyle: ResolvedTypographyStyle;
   linkStyle: {
@@ -116,6 +119,8 @@ export type ThemeStyleDefaults = {
     borderWidth: number;
     borderColor: string;
     shadow: boolean;
+    width: LinkWidth;
+    align: LinkAlign;
   };
 };
 
@@ -140,15 +145,6 @@ export type CtaAction =
   | { type: 'email'; email: string }
   | { type: 'messenger'; url: string };
 
-export type SectionLayout =
-  | 'single'
-  | 'two-equal'
-  | 'one-third-two-thirds'
-  | 'two-thirds-one-third'
-  | 'three-equal'
-  | 'stack'
-  | 'hero-overlay';
-
 export type KnownBlockType =
   | 'avatar'
   | 'button'
@@ -163,7 +159,12 @@ export type KnownBlockType =
   | 'divider'
   | 'faq'
   | 'credentials'
-  | 'reviews';
+  | 'reviews'
+  | 'price-list'
+  | 'steps'
+  | 'stats'
+  | 'hours'
+  | 'video';
 
 export type BlockType = KnownBlockType | (string & {});
 
@@ -188,6 +189,7 @@ export type ServicesBlockContent = BlockContent & {
   serviceIds: number[];
   autoplayIntervalSeconds: number | null;
   showBookingButton: boolean;
+  layout: ServicesLayout;
 };
 
 export type RichTextSize = 'small' | 'medium' | 'large' | 'h1' | 'h2' | 'h3';
@@ -217,6 +219,7 @@ export type PageBlock<TContent extends BlockContent = BlockContent> = {
   type: BlockType;
   name: string;
   visible: boolean;
+  size: ItemSize;
   content: TContent;
   design: BlockDesign;
 };
@@ -225,7 +228,7 @@ export type PageSection = {
   id: string;
   name: string;
   visible: boolean;
-  layout: SectionLayout;
+  size: ItemSize;
   design: SectionDesign;
   blocks: PageBlock[];
 };
@@ -261,12 +264,12 @@ export type SectionDesign = {
 
 export type PublicPageDocument = {
   timezone: string;
+  locale: PublicPageLocale;
   archivedBlocks: ArchivedBlock[];
   schemaVersion: typeof PUBLIC_PAGE_SCHEMA_VERSION;
   id: string;
   slug: string;
   status: PublicPageStatus;
-  profile: PageProfile;
   theme: PageTheme;
   sections: PageSection[];
   seo: PageSeo;

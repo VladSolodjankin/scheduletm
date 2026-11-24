@@ -151,12 +151,12 @@ export function PublicBookingForm({ slug, initialServiceId, initialSpecialistId,
   };
 
   if (result) {
-    return <Stack spacing={2}>
+    return <Stack sx={{ gap: 'var(--page-space-2)' }}>
       <Alert severity="success">
         {t('publicBooking.successMessage').replace('{id}', String(result.id))}
       </Alert>
       <AppSurface>
-        <Stack spacing={1}>
+        <Stack sx={{ gap: 'var(--page-space-1)' }}>
           <Typography variant="overline" color="text.secondary">{t('publicBooking.accessCodeLabel')}</Typography>
           <Typography variant="h5" sx={{ fontFamily: 'monospace', letterSpacing: 2 }}>{result.accessCode}</Typography>
           <Typography variant="body2" color="text.secondary">{t('publicBooking.accessCodeHint')}</Typography>
@@ -166,30 +166,30 @@ export function PublicBookingForm({ slug, initialServiceId, initialSpecialistId,
   }
 
   return <Box component="form" onSubmit={submit}>
-    <Stack spacing={2}>
+    <Stack sx={{ gap: 'var(--page-space-2)' }}>
       {error ? <Alert severity="error">{error}</Alert> : null}
       {isLoading ? <Typography>{t('publicBooking.loading')}</Typography> : null}
       <FormControl fullWidth disabled={isLoading}>
-        <InputLabel>{t('publicBooking.specialist')}</InputLabel>
-        <Select value={form.specialistId} label={t('publicBooking.specialist')} onChange={(e) => update('specialistId', String(e.target.value))}>
+        <InputLabel id="booking-specialist-label">{t('publicBooking.specialist')}</InputLabel>
+        <Select labelId="booking-specialist-label" value={form.specialistId} label={t('publicBooking.specialist')} onChange={(e) => update('specialistId', String(e.target.value))}>
           {options?.specialists.map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.name}</MenuItem>)}
         </Select>
       </FormControl>
       <FormControl fullWidth disabled={isLoading}>
-        <InputLabel>{t('publicBooking.service')}</InputLabel>
-        <Select value={form.serviceId} label={t('publicBooking.service')} onChange={(e) => update('serviceId', String(e.target.value))}>
+        <InputLabel id="booking-service-label">{t('publicBooking.service')}</InputLabel>
+        <Select labelId="booking-service-label" value={form.serviceId} label={t('publicBooking.service')} onChange={(e) => update('serviceId', String(e.target.value))}>
           {options?.services.map((item) => <MenuItem key={item.id} value={String(item.id)}>{item.name}</MenuItem>)}
         </Select>
       </FormControl>
-      <TextField label={t('publicBooking.date')} type="date" value={form.date} onChange={(e) => update('date', e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
-      <Stack spacing={1}>
+      <TextField label={t('publicBooking.date')} type="date" value={form.date} onChange={(e) => update('date', e.target.value)} slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: todayDateInputValue() } }} />
+      <Stack sx={{ gap: 'var(--page-space-1)' }}>
         <Typography variant="subtitle2">{t('publicBooking.availableSlots')}</Typography>
         {isLoadingSlots ? <Typography variant="body2" color="text.secondary">{t('publicBooking.loadingSlots')}</Typography> : null}
         {slotsError ? <Alert severity="error">{slotsError}</Alert> : null}
         {!isLoadingSlots && !slotsError && form.specialistId && form.serviceId && slots.length === 0
           ? <Typography variant="body2" color="text.secondary">{t('publicBooking.noSlots')}</Typography>
           : null}
-        <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 'var(--page-space-1)' }}>
           {slots.map((slot) => (
             <Button
               key={slot}
@@ -202,18 +202,18 @@ export function PublicBookingForm({ slug, initialServiceId, initialSpecialistId,
           ))}
         </Stack>
       </Stack>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 'var(--page-space-2)' }}>
         <TextField fullWidth label={t('publicBooking.firstName')} value={form.firstName} onChange={(e) => update('firstName', e.target.value)} />
         <TextField fullWidth label={t('publicBooking.lastName')} value={form.lastName} onChange={(e) => update('lastName', e.target.value)} />
       </Stack>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 'var(--page-space-2)' }}>
         <TextField fullWidth label={t('publicBooking.email')} type="email" value={form.email} onChange={(e) => update('email', e.target.value)} />
         <TextField fullWidth label={t('publicBooking.phone')} value={form.phone} onChange={(e) => update('phone', e.target.value)} />
       </Stack>
       <Typography variant="caption" color="text.secondary">{t('publicBooking.contactHint')}</Typography>
       <FormControl fullWidth>
-        <InputLabel>{t('publicBooking.provider')}</InputLabel>
-        <Select value={form.meetingProvider} label={t('publicBooking.provider')} onChange={(e) => update('meetingProvider', String(e.target.value))}>
+        <InputLabel id="booking-provider-label">{t('publicBooking.provider')}</InputLabel>
+        <Select labelId="booking-provider-label" value={form.meetingProvider} label={t('publicBooking.provider')} onChange={(e) => update('meetingProvider', String(e.target.value))}>
           <MenuItem value="">{t('publicBooking.providerAutomatic')}</MenuItem>
           <MenuItem value="manual">{t('publicBooking.providerManual')}</MenuItem>
           <MenuItem value="zoom">{t('publicBooking.providerZoom')}</MenuItem>
