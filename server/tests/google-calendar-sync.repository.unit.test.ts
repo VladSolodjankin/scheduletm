@@ -93,9 +93,9 @@ describe('google calendar sync outbox', () => {
     mockGate({ google_granted_scopes: WRITE_SCOPE });
     expect(await enqueueGoogleCalendarSync({ accountId: 1, appointmentId: 2, action: 'upsert', specialistId: 3 })).toBe(true);
     const [sql, bindings] = dbMock.raw.mock.calls[0];
-    expect(sql).toContain("ON CONFLICT (appointment_id) WHERE status = 'pending'");
+    expect(sql).toContain("ON CONFLICT (appointment_id, provider) WHERE status = 'pending'");
     expect(sql).toContain("THEN 'delete'");
-    expect(bindings).toEqual([1, 2, 'upsert', null, null]);
+    expect(bindings).toEqual([1, 2, 'upsert', null, null, 'google', null]);
   });
 
   it('enqueues a delete for a known Google event without the opt-in lookup', async () => {
@@ -104,7 +104,7 @@ describe('google calendar sync outbox', () => {
       accountId: 1, appointmentId: 2, action: 'delete', googleEventId: 'evt', webUserId: 9,
     })).toBe(true);
     expect(dbMock).not.toHaveBeenCalled();
-    expect(dbMock.raw.mock.calls[0][1]).toEqual([1, 2, 'delete', 'evt', 9]);
+    expect(dbMock.raw.mock.calls[0][1]).toEqual([1, 2, 'delete', 'evt', 9, 'google', null]);
   });
 
   it('never throws when the queue write fails', async () => {

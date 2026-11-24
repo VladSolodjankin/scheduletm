@@ -26,6 +26,13 @@ export type WebUserIntegrationRecord = {
   yandex_connected_at: Date | null;
   yandex_last_meeting_id: string | null;
   yandex_last_join_url: string | null;
+  microsoft_access_token: string | null;
+  microsoft_refresh_token: string | null;
+  microsoft_token_expires_at: Date | null;
+  microsoft_connected_at: Date | null;
+  microsoft_granted_scopes: string | null;
+  calendar_feed_token_hash: string | null;
+  calendar_feed_created_at: Date | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -33,7 +40,7 @@ export type WebUserIntegrationRecord = {
 type WebUserIntegrationStorageRecord = Omit<
   WebUserIntegrationRecord,
   'google_api_key' | 'google_refresh_token' | 'telegram_bot_token' | 'zoom_access_token' | 'zoom_refresh_token'
-  | 'yandex_access_token' | 'yandex_refresh_token'
+  | 'yandex_access_token' | 'yandex_refresh_token' | 'microsoft_access_token' | 'microsoft_refresh_token'
 > & {
   google_access_token_encrypted: string | null;
   google_refresh_token_encrypted: string | null;
@@ -42,6 +49,8 @@ type WebUserIntegrationStorageRecord = Omit<
   zoom_refresh_token_encrypted: string | null;
   yandex_access_token_encrypted: string | null;
   yandex_refresh_token_encrypted: string | null;
+  microsoft_access_token_encrypted: string | null;
+  microsoft_refresh_token_encrypted: string | null;
 };
 
 type UpdateWebUserGoogleCredentialsInput = {
@@ -105,6 +114,8 @@ function mapIntegrationRecord(row: WebUserIntegrationStorageRecord): WebUserInte
     zoom_refresh_token_encrypted: zoomRefreshTokenEncrypted,
     yandex_access_token_encrypted: yandexAccessTokenEncrypted,
     yandex_refresh_token_encrypted: yandexRefreshTokenEncrypted,
+    microsoft_access_token_encrypted: microsoftAccessTokenEncrypted,
+    microsoft_refresh_token_encrypted: microsoftRefreshTokenEncrypted,
     ...record
   } = row;
 
@@ -117,6 +128,8 @@ function mapIntegrationRecord(row: WebUserIntegrationStorageRecord): WebUserInte
     zoom_refresh_token: decryptIntegrationSecret(zoomRefreshTokenEncrypted, 'Zoom refresh token'),
     yandex_access_token: decryptIntegrationSecret(yandexAccessTokenEncrypted, 'Yandex access token'),
     yandex_refresh_token: decryptIntegrationSecret(yandexRefreshTokenEncrypted, 'Yandex refresh token'),
+    microsoft_access_token: decryptIntegrationSecret(microsoftAccessTokenEncrypted, 'Microsoft access token'),
+    microsoft_refresh_token: decryptIntegrationSecret(microsoftRefreshTokenEncrypted, 'Microsoft refresh token'),
   };
 }
 
@@ -262,4 +275,134 @@ export async function updateWebUserYandexIntegration(input: UpdateWebUserYandexI
   }
 
   await upsertPatch(input.accountId, input.webUserId, patch);
+}
+
+export type MicrosoftTokenPatch = {
+  accessToken: string;
+  /** Microsoft rotates refresh tokens: when a response carries one it must replace the stored value. */
+  refreshToken?: string | null;
+  expiresAt: Date;
+  grantedScopes?: string | null;
+  connectedAt?: Date;
+};
+
+function buildMicrosoftTokenPatch(input: MicrosoftTokenPatch): Record<string, unknown> {
+  const patch: Record<string, unknown> = {
+    microsoft_access_token_encrypted: encryptIntegrationSecret(input.accessToken, 'Microsoft access token'),
+    microsoft_token_expires_at: input.expiresAt,
+  };
+  if (input.refreshToken !== undefined) {
+    patch.microsoft_refresh_token_encrypted = encryptIntegrationSecret(input.refreshToken, 'Microsoft refresh token');
+  }
+  if (input.grantedScopes !== undefined) {
+    patch.microsoft_granted_scopes = input.grantedScopes;
+  }
+  if (input.connectedAt !== undefined) {
+    patch.microsoft_connected_at = input.connectedAt;
+  }
+  return patch;
+}
+
+export async function updateWebUserMicrosoftCredentials(
+  input: MicrosoftTokenPatch & { accountId: number; webUserId: number },
+): Promise<void> {
+  await upsertPatch(input.accountId, input.webUserId, buildMicrosoftTokenPatch(input));
+}
+
+// Update-only on purpose (like Yandex): disconnecting must never create an empty row.
+export async function clearWebUserMicrosoftCredentials(accountId: number, webUserId: number): Promise<void> {
+  await db('web_user_integrations')
+    .where({ account_id: accountId, web_user_id: webUserId })
+    .update({
+      microsoft_access_token_encrypted: null,
+      microsoft_refresh_token_encrypted: null,
+      microsoft_token_expires_at: null,
+      microsoft_connected_at: null,
+      microsoft_granted_scopes: null,
+      updated_at: db.fn.now(),
+    });
+}
+
+/**
+ * Serialises token refreshes per web user: the integration row is locked (SELECT ... FOR UPDATE) while `work`
+ * runs, so two workers can never redeem the same rotating refresh token. `work` receives the freshest stored
+ * record and a `save` that persists rotated tokens inside the same transaction. The transaction is held for
+ * the duration of one bounded (10 s timeout) token request. Returns null when the row does not exist.
+ */
+export async function withLockedMicrosoftIntegration<T>(
+  accountId: number,
+  webUserId: number,
+  work: (record: WebUserIntegrationRecord, save: (tokens: MicrosoftTokenPatch) => Promise<void>) => Promise<T>,
+): Promise<T | null> {
+  return db.transaction(async (trx) => {
+    const row = await trx('web_user_integrations')
+      .where({ account_id: accountId, web_user_id: webUserId })
+      .forUpdate()
+      .first<WebUserIntegrationStorageRecord>();
+    if (!row) {
+      return null;
+    }
+
+    return work(mapIntegrationRecord(row), async (tokens) => {
+      await trx('web_user_integrations')
+        .where({ account_id: accountId, web_user_id: webUserId })
+        .update({ ...buildMicrosoftTokenPatch(tokens), updated_at: db.fn.now() });
+    });
+  });
+}
+
+/** Stores the SHA-256 hash of a new Apple Calendar feed token (create or rotate). */
+export async function setCalendarFeedTokenHash(accountId: number, webUserId: number, tokenHash: string): Promise<Date> {
+  const createdAt = new Date();
+  await upsertPatch(accountId, webUserId, {
+    calendar_feed_token_hash: tokenHash,
+    calendar_feed_created_at: createdAt,
+  });
+  return createdAt;
+}
+
+// Update-only: revoking must never create an empty row.
+export async function clearCalendarFeedToken(accountId: number, webUserId: number): Promise<void> {
+  await db('web_user_integrations')
+    .where({ account_id: accountId, web_user_id: webUserId })
+    .update({
+      calendar_feed_token_hash: null,
+      calendar_feed_created_at: null,
+      updated_at: db.fn.now(),
+    });
+}
+
+export type CalendarFeedOwner = {
+  accountId: number;
+  webUserId: number;
+  specialistId: number;
+  timezone: string;
+};
+
+/**
+ * Resolves a feed token hash to its specialist. Returns null for unknown/revoked tokens, inactive or deleted
+ * users, inactive accounts and web users without a specialist profile, so callers can answer one constant 404.
+ */
+export async function findCalendarFeedOwnerByTokenHash(tokenHash: string): Promise<CalendarFeedOwner | null> {
+  const row = await db('web_user_integrations as wui')
+    .join('web_users as wu', function joinWebUsers() {
+      this.on('wu.id', '=', 'wui.web_user_id').andOn('wu.account_id', '=', 'wui.account_id');
+    })
+    .join('accounts as acc', 'acc.id', 'wui.account_id')
+    .join('specialists as s', function joinSpecialists() {
+      this.on('s.user_id', '=', 'wu.id').andOn('s.account_id', '=', 'wu.account_id');
+    })
+    .where('wui.calendar_feed_token_hash', tokenHash)
+    .where('s.is_active', true)
+    .where('wu.is_active', true)
+    .where('wu.is_deleted', false)
+    .where('acc.is_active', true)
+    .first<{ accountId: number; webUserId: number; specialistId: number; timezone: string | null }>(
+      'wui.account_id as accountId',
+      'wu.id as webUserId',
+      's.id as specialistId',
+      'wu.timezone as timezone',
+    );
+
+  return row ? { ...row, timezone: row.timezone ?? 'UTC' } : null;
 }

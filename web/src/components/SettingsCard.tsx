@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import type {
   AccountNotificationDefault,
   AccountSettings,
+  AppleCalendarFeedCreateResponse,
   NotificationChannel,
   SpecialistBookingPolicy,
   SystemSettings,
@@ -35,6 +36,11 @@ type SettingsCardProps = {
   canSelfDeleteUser: boolean;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
+  isMicrosoftConnecting: boolean;
+  isMicrosoftDisconnecting: boolean;
+  isAppleFeedCreating: boolean;
+  isAppleFeedRevoking: boolean;
+  appleFeedLink: AppleCalendarFeedCreateResponse | null;
   isZoomConnecting: boolean;
   isYandexConnecting: boolean;
   isYandexDisconnecting: boolean;
@@ -62,6 +68,11 @@ type SettingsCardProps = {
   onConnectYandex: () => void;
   onDisconnectYandex: () => void;
   onDisconnectGoogle: () => void;
+  onConnectMicrosoft: () => void;
+  onDisconnectMicrosoft: () => void;
+  onCreateAppleFeed: () => void;
+  onRevokeAppleFeed: () => void;
+  onDismissAppleFeedLink: () => void;
   onCurrentPasswordChange: (value: string) => void;
   onNewPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
@@ -97,6 +108,11 @@ export function SettingsCard({
   canSelfDeleteUser,
   isGoogleConnecting,
   isGoogleDisconnecting,
+  isMicrosoftConnecting,
+  isMicrosoftDisconnecting,
+  isAppleFeedCreating,
+  isAppleFeedRevoking,
+  appleFeedLink,
   isZoomConnecting,
   isYandexConnecting,
   isYandexDisconnecting,
@@ -123,7 +139,12 @@ export function SettingsCard({
   onConnectZoom,
   onConnectYandex,
   onDisconnectYandex,
-  onDisconnectGoogle
+  onDisconnectGoogle,
+  onConnectMicrosoft,
+  onDisconnectMicrosoft,
+  onCreateAppleFeed,
+  onRevokeAppleFeed,
+  onDismissAppleFeedLink
   ,onCurrentPasswordChange
   ,onNewPasswordChange
   ,onConfirmPasswordChange
@@ -207,6 +228,11 @@ export function SettingsCard({
           userSettings={userSettings}
           isGoogleConnecting={isGoogleConnecting}
           isGoogleDisconnecting={isGoogleDisconnecting}
+          isMicrosoftConnecting={isMicrosoftConnecting}
+          isMicrosoftDisconnecting={isMicrosoftDisconnecting}
+          isAppleFeedCreating={isAppleFeedCreating}
+          isAppleFeedRevoking={isAppleFeedRevoking}
+          appleFeedLink={appleFeedLink}
           isZoomConnecting={isZoomConnecting}
           isYandexConnecting={isYandexConnecting}
           isYandexDisconnecting={isYandexDisconnecting}
@@ -215,6 +241,11 @@ export function SettingsCard({
           onConnectYandex={onConnectYandex}
           onDisconnectYandex={onDisconnectYandex}
           onDisconnectGoogle={onDisconnectGoogle}
+          onConnectMicrosoft={onConnectMicrosoft}
+          onDisconnectMicrosoft={onDisconnectMicrosoft}
+          onCreateAppleFeed={onCreateAppleFeed}
+          onRevokeAppleFeed={onRevokeAppleFeed}
+          onDismissAppleFeedLink={onDismissAppleFeedLink}
         />
       )}
       {resolvedTab === 'profile' && (

@@ -26,6 +26,8 @@ export type AppointmentRecord = {
   group_id?: number | null;
   google_event_id?: string | null;
   google_event_web_user_id?: number | null;
+  microsoft_event_id?: string | null;
+  microsoft_event_web_user_id?: number | null;
   created_at: Date;
   updated_at: Date;
   client_first_name?: string | null;
@@ -377,6 +379,8 @@ export async function updateAppointment(input: UpdateAppointmentInput): Promise<
       specialistId: row.specialist_id,
       googleEventId: row.google_event_id ?? null,
       webUserId: row.google_event_web_user_id ?? null,
+      microsoftEventId: row.microsoft_event_id ?? null,
+      microsoftWebUserId: row.microsoft_event_web_user_id ?? null,
     });
   }
 
@@ -404,6 +408,8 @@ export async function autoCancelUnpaidAppointment(input: {
       specialistId: row.specialist_id,
       googleEventId: row.google_event_id ?? null,
       webUserId: row.google_event_web_user_id ?? null,
+      microsoftEventId: row.microsoft_event_id ?? null,
+      microsoftWebUserId: row.microsoft_event_web_user_id ?? null,
     });
   }
 

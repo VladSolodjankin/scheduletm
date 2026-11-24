@@ -1,7 +1,9 @@
 import type { Knex } from 'knex';
 import { db } from '../db/knex.js';
 import { hasGoogleCalendarWriteScope } from '../utils/googleScopes.js';
+import { hasMicrosoftCalendarWriteScope } from '../utils/microsoftScopes.js';
 
+export type CalendarSyncProvider = 'google' | 'microsoft';
 export type GoogleCalendarSyncAction = 'upsert' | 'delete';
 export type GoogleCalendarSyncStatus = 'pending' | 'processing' | 'done' | 'failed';
 
@@ -11,7 +13,11 @@ export type GoogleCalendarSyncItem = {
   appointment_id: number;
   action: GoogleCalendarSyncAction;
   status: GoogleCalendarSyncStatus;
+  /** Defaults to 'google' for rows written by code that predates the provider column. */
+  provider?: CalendarSyncProvider;
   google_event_id: string | null;
+  /** Snapshot of the provider event to remove for non-Google providers. */
+  external_event_id?: string | null;
   web_user_id: number | null;
   attempts: number;
   next_attempt_at: Date;
@@ -31,6 +37,8 @@ export type GoogleCalendarSyncAppointment = {
   location_address: string | null;
   google_event_id: string | null;
   google_event_web_user_id: number | null;
+  microsoft_event_id?: string | null;
+  microsoft_event_web_user_id?: number | null;
   specialist_timezone: string | null;
   specialist_user_id: number | null;
   service_name_en: string | null;
@@ -49,14 +57,20 @@ export type EnqueueGoogleCalendarSyncInput = {
   /** Snapshot of an existing Google event (delete needs it after the appointment row may be gone). */
   googleEventId?: string | null;
   webUserId?: number | null;
+  /** Snapshot of an existing Microsoft event (same purpose as googleEventId). */
+  microsoftEventId?: string | null;
+  microsoftWebUserId?: number | null;
 };
 
-/** True when the specialist's own web user is connected to Google and granted the calendar write scope. */
-export async function isGoogleCalendarWriteAvailableForSpecialist(
+/**
+ * Providers the specialist's own web user is connected to with the calendar write scope granted.
+ * One query serves every provider; the processing job re-validates the scope before any API call.
+ */
+export async function getCalendarWriteProvidersForSpecialist(
   accountId: number,
   specialistId: number,
   executor: Executor = db,
-): Promise<boolean> {
+): Promise<CalendarSyncProvider[]> {
   const row = await executor('specialists as s')
     .join('web_user_integrations as wui', function joinIntegrations() {
       this.on('wui.web_user_id', '=', 's.user_id').andOn('wui.account_id', '=', 's.account_id');
@@ -65,10 +79,31 @@ export async function isGoogleCalendarWriteAvailableForSpecialist(
       's.account_id': accountId,
       's.id': specialistId,
     })
-    .whereNotNull('wui.google_access_token_encrypted')
-    .first<{ google_granted_scopes: string | null } | undefined>('wui.google_granted_scopes');
+    .where(function anyCalendarConnected() {
+      this.whereNotNull('wui.google_access_token_encrypted').orWhereNotNull('wui.microsoft_access_token_encrypted');
+    })
+    .first<{ google_granted_scopes?: string | null; microsoft_granted_scopes?: string | null } | undefined>(
+      'wui.google_granted_scopes',
+      'wui.microsoft_granted_scopes',
+    );
 
-  return Boolean(row) && hasGoogleCalendarWriteScope(row?.google_granted_scopes);
+  const providers: CalendarSyncProvider[] = [];
+  if (row && hasGoogleCalendarWriteScope(row.google_granted_scopes)) {
+    providers.push('google');
+  }
+  if (row && hasMicrosoftCalendarWriteScope(row.microsoft_granted_scopes)) {
+    providers.push('microsoft');
+  }
+  return providers;
+}
+
+/** True when the specialist's own web user is connected to Google and granted the calendar write scope. */
+export async function isGoogleCalendarWriteAvailableForSpecialist(
+  accountId: number,
+  specialistId: number,
+  executor: Executor = db,
+): Promise<boolean> {
+  return (await getCalendarWriteProvidersForSpecialist(accountId, specialistId, executor)).includes('google');
 }
 
 /** Runs only after the gate said no: names the first failing condition. Diagnostic; never throws. */
@@ -94,21 +129,42 @@ async function describeGateSkip(accountId: number, specialistId: number, executo
   }
 }
 
-async function insertCoalesced(input: EnqueueGoogleCalendarSyncInput, executor: Executor): Promise<void> {
-  // One pending row per appointment: a delete supersedes everything, a later upsert refreshes the older one.
+type CoalescedInsert = {
+  accountId: number;
+  appointmentId: number;
+  action: GoogleCalendarSyncAction;
+  provider: CalendarSyncProvider;
+  /** google_event_id snapshot (Google rows only). */
+  googleEventId?: string | null;
+  /** external_event_id snapshot (non-Google rows). */
+  externalEventId?: string | null;
+  webUserId?: number | null;
+};
+
+async function insertCoalesced(input: CoalescedInsert, executor: Executor): Promise<void> {
+  // One pending row per (appointment, provider): a delete supersedes everything, a later upsert refreshes the older one.
   await executor.raw(
     `INSERT INTO google_calendar_sync_queue
-       (account_id, appointment_id, action, status, google_event_id, web_user_id, attempts, next_attempt_at, created_at, updated_at)
-     VALUES (?, ?, ?, 'pending', ?, ?, 0, now(), now(), now())
-     ON CONFLICT (appointment_id) WHERE status = 'pending'
+       (account_id, appointment_id, action, status, google_event_id, web_user_id, provider, external_event_id, attempts, next_attempt_at, created_at, updated_at)
+     VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, 0, now(), now(), now())
+     ON CONFLICT (appointment_id, provider) WHERE status = 'pending'
      DO UPDATE SET
        action = CASE WHEN google_calendar_sync_queue.action = 'delete' OR EXCLUDED.action = 'delete' THEN 'delete' ELSE 'upsert' END,
        google_event_id = COALESCE(EXCLUDED.google_event_id, google_calendar_sync_queue.google_event_id),
+       external_event_id = COALESCE(EXCLUDED.external_event_id, google_calendar_sync_queue.external_event_id),
        web_user_id = COALESCE(EXCLUDED.web_user_id, google_calendar_sync_queue.web_user_id),
        attempts = 0,
        next_attempt_at = now(),
        updated_at = now()`,
-    [input.accountId, input.appointmentId, input.action, input.googleEventId ?? null, input.webUserId ?? null],
+    [
+      input.accountId,
+      input.appointmentId,
+      input.action,
+      input.googleEventId ?? null,
+      input.webUserId ?? null,
+      input.provider,
+      input.externalEventId ?? null,
+    ],
   );
 }
 
@@ -148,22 +204,58 @@ export async function enqueueGoogleCalendarSync(
   executor: Executor = db,
 ): Promise<boolean> {
   try {
-    const hasKnownEvent = input.action === 'delete' && Boolean(input.googleEventId);
+    // A delete that carries known event references needs no gate: one row per referenced provider.
+    const knownInserts: CoalescedInsert[] = [];
+    if (input.action === 'delete' && input.googleEventId) {
+      knownInserts.push({
+        accountId: input.accountId,
+        appointmentId: input.appointmentId,
+        action: input.action,
+        provider: 'google',
+        googleEventId: input.googleEventId,
+        webUserId: input.webUserId ?? null,
+      });
+    }
+    if (input.action === 'delete' && input.microsoftEventId) {
+      knownInserts.push({
+        accountId: input.accountId,
+        appointmentId: input.appointmentId,
+        action: input.action,
+        provider: 'microsoft',
+        externalEventId: input.microsoftEventId,
+        webUserId: input.microsoftWebUserId ?? null,
+      });
+    }
+
     const run = async (exec: Executor): Promise<boolean> => {
-      if (!hasKnownEvent) {
-        const reason = input.specialistId === undefined
-          ? 'no_specialist_id'
-          : (await isGoogleCalendarWriteAvailableForSpecialist(input.accountId, input.specialistId, exec))
-            ? null
-            : await describeGateSkip(input.accountId, input.specialistId, exec);
+      let inserts = knownInserts;
+      if (inserts.length === 0) {
+        let reason: string | null = null;
+        let providers: CalendarSyncProvider[] = [];
+        if (input.specialistId === undefined) {
+          reason = 'no_specialist_id';
+        } else {
+          providers = await getCalendarWriteProvidersForSpecialist(input.accountId, input.specialistId, exec);
+          if (providers.length === 0) {
+            reason = await describeGateSkip(input.accountId, input.specialistId, exec);
+          }
+        }
         if (reason) {
           console.log(
             `[googleCalendarSync] not queued appointment=${input.appointmentId} account=${input.accountId} action=${input.action} skip=${reason}`,
           );
           return false;
         }
+        inserts = providers.map((provider) => ({
+          accountId: input.accountId,
+          appointmentId: input.appointmentId,
+          action: input.action,
+          provider,
+        }));
       }
-      await insertCoalesced(input, exec);
+      for (const insert of inserts) {
+        await insertCoalesced(insert, exec);
+      }
       return true;
     };
 
@@ -196,7 +288,8 @@ export async function enqueueGoogleCalendarUpserts(
 
   try {
     const run = async (exec: Executor): Promise<number> => {
-      if (!(await isGoogleCalendarWriteAvailableForSpecialist(input.accountId, input.specialistId, exec))) {
+      const providers = await getCalendarWriteProvidersForSpecialist(input.accountId, input.specialistId, exec);
+      if (providers.length === 0) {
         const reason = await describeGateSkip(input.accountId, input.specialistId, exec);
         console.log(
           `[googleCalendarSync] not queued appointments=${input.appointmentIds.slice(0, 20).join(',')} account=${input.accountId} action=upsert skip=${reason}`,
@@ -204,7 +297,9 @@ export async function enqueueGoogleCalendarUpserts(
         return 0;
       }
       for (const appointmentId of input.appointmentIds) {
-        await insertCoalesced({ accountId: input.accountId, appointmentId, action: 'upsert' }, exec);
+        for (const provider of providers) {
+          await insertCoalesced({ accountId: input.accountId, appointmentId, action: 'upsert', provider }, exec);
+        }
       }
       return input.appointmentIds.length;
     };
@@ -342,6 +437,7 @@ export async function findGoogleCalendarSyncAppointment(
       'a.id', 'a.account_id', 'a.specialist_id', 'a.appointment_at', 'a.duration_min', 'a.status',
       'a.meeting_link', 'a.meeting_provider', 'a.location_address',
       'a.google_event_id', 'a.google_event_web_user_id',
+      'a.microsoft_event_id', 'a.microsoft_event_web_user_id',
       db.raw("COALESCE(wu.timezone, 'UTC') as specialist_timezone"),
       's.user_id as specialist_user_id',
       'sv.name_en as service_name_en', 'sv.name_ru as service_name_ru',
@@ -386,4 +482,41 @@ export async function listAppointmentsWithGoogleEvents(filter: {
   }
 
   return query.select('id', 'account_id', 'google_event_id', 'google_event_web_user_id');
+}
+
+export async function setAppointmentMicrosoftEvent(input: {
+  accountId: number;
+  appointmentId: number;
+  microsoftEventId: string | null;
+  webUserId: number | null;
+}): Promise<void> {
+  await db('appointments')
+    .where({ account_id: input.accountId, id: input.appointmentId })
+    .update({
+      microsoft_event_id: input.microsoftEventId,
+      microsoft_event_web_user_id: input.webUserId,
+    });
+}
+
+/** Appointments that currently own a Microsoft event, used to clean calendars before hard deletion. */
+export async function listAppointmentsWithMicrosoftEvents(filter: {
+  accountId?: number;
+  specialistIds?: number[];
+  clientId?: number | null;
+}): Promise<Array<{ id: number; account_id: number; microsoft_event_id: string; microsoft_event_web_user_id: number }>> {
+  const query = db('appointments')
+    .whereNotNull('microsoft_event_id')
+    .whereNotNull('microsoft_event_web_user_id');
+
+  if (filter.accountId !== undefined) {
+    query.where({ account_id: filter.accountId });
+  }
+  if (filter.specialistIds) {
+    query.whereIn('specialist_id', filter.specialistIds);
+  }
+  if (filter.clientId) {
+    query.where({ user_id: filter.clientId });
+  }
+
+  return query.select('id', 'account_id', 'microsoft_event_id', 'microsoft_event_web_user_id');
 }

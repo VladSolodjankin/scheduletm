@@ -1,13 +1,15 @@
 import axios from 'axios';
 import { findSpecialistsCalendarCredentials } from '../repositories/specialistRepository.js';
 import { refreshGoogleAccessToken } from './googleOAuthService.js';
+import { resolveUsableMicrosoftAccessToken } from './microsoftOAuthService.js';
+import { MICROSOFT_APPOINTMENT_PROPERTY_ID } from './calendarSync/types.js';
 
 export type ExternalBusySlot = {
   specialistId: number;
   scheduledAt: string;
   durationMin: number;
-  source: 'google';
-  /** Present only for the Google account owner viewing their own appointments calendar. */
+  source: 'google' | 'microsoft';
+  /** Present only for the calendar account owner viewing their own appointments calendar. */
   title?: string;
 };
 
@@ -270,7 +272,7 @@ async function fetchFreeBusySlots(
     }
 
     return (calendar.busy ?? [])
-      .map((interval) => {
+      .map((interval): ExternalBusySlot | null => {
         const durationMin = toDurationMin(interval.start, interval.end);
         if (!durationMin || !interval.start) {
           return null;
@@ -316,34 +318,224 @@ export async function listExternalBusySlots(input: {
   }
 
   const busySlots = await Promise.all(
-    credentials.map(async (item) => {
-      const token = await resolveUsableGoogleAccessToken({
-        accountId: input.accountId,
-        webUserId: item.webUserId,
-        googleApiKey: item.googleApiKey,
-        googleRefreshToken: item.googleRefreshToken,
-        googleTokenExpiresAt: item.googleTokenExpiresAt,
-      });
-
-      if (!token.ok) {
-        console.error(
-          token.reason === 'no_refresh_token'
-            ? `[calendarAvailability] specialist ${item.specialistId}: Google access token expired and no refresh token on file, skipping their Google calendar`
-            : `[calendarAvailability] specialist ${item.specialistId}: Google token refresh failed, likely revoked access — skipping their Google calendar until they reconnect`,
-        );
+    credentials.flatMap((item) => [
+      // One provider failing must never drop the other provider's slots.
+      listGoogleSlotsForItem(item, input).catch((): ExternalBusySlot[] => {
+        console.error(`[calendarAvailability] specialist ${item.specialistId}: Google calendar failed, skipping it`);
         return [];
-      }
-
-      if (input.ownerWebUserId !== undefined && input.ownerWebUserId === item.webUserId) {
-        const ownerSlots = await fetchOwnerEventSlots(item, token.accessToken, input.from, input.to);
-        if (ownerSlots) {
-          return ownerSlots;
-        }
-      }
-
-      return fetchFreeBusySlots(item, token.accessToken, input.from, input.to);
-    }),
+      }),
+      listMicrosoftSlotsForItem(item, input),
+    ]),
   );
 
   return busySlots.flat();
+}
+
+type BusyListInput = { accountId: number; from: Date; to: Date; ownerWebUserId?: number };
+
+async function listGoogleSlotsForItem(item: SpecialistCredentialsItem, input: BusyListInput): Promise<ExternalBusySlot[]> {
+  if (!item.googleApiKey) {
+    return [];
+  }
+
+  const token = await resolveUsableGoogleAccessToken({
+    accountId: input.accountId,
+    webUserId: item.webUserId,
+    googleApiKey: item.googleApiKey,
+    googleRefreshToken: item.googleRefreshToken,
+    googleTokenExpiresAt: item.googleTokenExpiresAt,
+  });
+
+  if (!token.ok) {
+    console.error(
+      token.reason === 'no_refresh_token'
+        ? `[calendarAvailability] specialist ${item.specialistId}: Google access token expired and no refresh token on file, skipping their Google calendar`
+        : `[calendarAvailability] specialist ${item.specialistId}: Google token refresh failed, likely revoked access — skipping their Google calendar until they reconnect`,
+    );
+    return [];
+  }
+
+  if (input.ownerWebUserId !== undefined && input.ownerWebUserId === item.webUserId) {
+    const ownerSlots = await fetchOwnerEventSlots(item, token.accessToken, input.from, input.to);
+    if (ownerSlots) {
+      return ownerSlots;
+    }
+  }
+
+  return fetchFreeBusySlots(item, token.accessToken, input.from, input.to);
+}
+
+type MicrosoftCalendarViewResponse = {
+  '@odata.nextLink'?: string;
+  value?: Array<{
+    subject?: string;
+    isAllDay?: boolean;
+    isCancelled?: boolean;
+    showAs?: string;
+    start?: { dateTime?: string; timeZone?: string };
+    end?: { dateTime?: string; timeZone?: string };
+    responseStatus?: { response?: string };
+    singleValueExtendedProperties?: Array<{ id?: string }>;
+  }>;
+};
+
+const GRAPH_CALENDAR_VIEW_URL = 'https://graph.microsoft.com/v1.0/me/calendarView';
+const GRAPH_HOST = 'graph.microsoft.com';
+const MICROSOFT_VIEW_MAX_PAGES = 6;
+const MICROSOFT_PAGE_SIZE = 100;
+// Only these free/busy states block a slot; free, workingElsewhere and unknown are ignored.
+const MICROSOFT_BLOCKING_SHOW_AS = new Set(['busy', 'oof', 'tentative']);
+const OWN_EVENT_PROPERTY_GUID = '6c1d4f0e-8a52-4b7d-9e3a-5f21c7b84d10';
+
+function parseGraphUtcDateTime(value: string | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+  // Graph returns "2026-01-01T10:00:00.0000000" in the requested (UTC) zone without an offset.
+  const normalized = /Z$|[+-]\d{2}:\d{2}$/i.test(value) ? value : `${value.replace(/\.\d+$/, '')}Z`;
+  const ms = new Date(normalized).getTime();
+  return Number.isNaN(ms) ? null : ms;
+}
+
+function buildCalendarViewUrl(from: Date, to: Date, includeTitles: boolean): string {
+  const query: Array<[string, string]> = [
+    ['startDateTime', from.toISOString()],
+    ['endDateTime', to.toISOString()],
+    ['$top', String(MICROSOFT_PAGE_SIZE)],
+    ['$select', `start,end,isAllDay,isCancelled,showAs,responseStatus${includeTitles ? ',subject' : ''}`],
+    ['$expand', `singleValueExtendedProperties($filter=id eq '${MICROSOFT_APPOINTMENT_PROPERTY_ID}')`],
+  ];
+  return `${GRAPH_CALENDAR_VIEW_URL}?${query.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join('&')}`;
+}
+
+/** Live calendarView of the specialist's primary Outlook calendar. Titles are returned only when requested. */
+async function fetchMicrosoftBusySlots(
+  item: SpecialistCredentialsItem,
+  accessToken: string,
+  from: Date,
+  to: Date,
+  includeTitles: boolean,
+): Promise<ExternalBusySlot[]> {
+  const slots: ExternalBusySlot[] = [];
+  let url: string | undefined = buildCalendarViewUrl(from, to, includeTitles);
+
+  for (let page = 0; page < MICROSOFT_VIEW_MAX_PAGES && url; page += 1) {
+    const response: { data: MicrosoftCalendarViewResponse } = await axios.get<MicrosoftCalendarViewResponse>(url, {
+      headers: { Authorization: `Bearer ${accessToken}`, Prefer: 'outlook.timezone="UTC"' },
+      timeout: 10_000,
+    });
+
+    for (const event of response.data.value ?? []) {
+      if (
+        event.isCancelled
+        || !MICROSOFT_BLOCKING_SHOW_AS.has((event.showAs ?? '').toLowerCase())
+        || event.responseStatus?.response === 'declined'
+        // Our own appointment events must not block the slot they represent.
+        || event.singleValueExtendedProperties?.some((property) => (property.id ?? '').toLowerCase().includes(OWN_EVENT_PROPERTY_GUID))
+      ) {
+        continue;
+      }
+
+      let startMs: number | null;
+      let endMs: number | null;
+      if (event.isAllDay) {
+        // All-day events are date-based: resolve the calendar days in the specialist's time zone (as for Google).
+        startMs = event.start?.dateTime ? startOfDateInTimeZone(event.start.dateTime.slice(0, 10), item.timezone) : null;
+        endMs = event.end?.dateTime ? startOfDateInTimeZone(event.end.dateTime.slice(0, 10), item.timezone) : null;
+        if (startMs !== null && (endMs === null || endMs <= startMs)) {
+          endMs = startMs + DAY_MS;
+        }
+      } else {
+        startMs = parseGraphUtcDateTime(event.start?.dateTime);
+        endMs = parseGraphUtcDateTime(event.end?.dateTime);
+      }
+      if (startMs === null || endMs === null) {
+        continue;
+      }
+      const durationMin = Math.round((endMs - startMs) / 60_000);
+      if (durationMin <= 0) {
+        continue;
+      }
+
+      const title = includeTitles ? event.subject?.trim() : undefined;
+      slots.push({
+        specialistId: item.specialistId,
+        scheduledAt: new Date(startMs).toISOString(),
+        durationMin,
+        source: 'microsoft',
+        ...(title ? { title } : {}),
+      });
+    }
+
+    const next: string | undefined = response.data['@odata.nextLink'];
+    if (!next) {
+      return slots;
+    }
+    // Never send the bearer token anywhere but Graph.
+    try {
+      const parsed = new URL(next);
+      url = parsed.protocol === 'https:' && parsed.hostname === GRAPH_HOST ? next : undefined;
+    } catch {
+      url = undefined;
+    }
+  }
+
+  if (url) {
+    console.warn(
+      `[calendarAvailability] specialist ${item.specialistId}: Microsoft calendarView exceeded page cap, using the first ${slots.length} events`,
+    );
+  }
+  return slots;
+}
+
+async function listMicrosoftSlotsForItem(item: SpecialistCredentialsItem, input: BusyListInput): Promise<ExternalBusySlot[]> {
+  const microsoft = item.microsoft;
+  if (!microsoft) {
+    return [];
+  }
+  const includeTitles = input.ownerWebUserId !== undefined && input.ownerWebUserId === item.webUserId;
+  const tokenInput = {
+    accountId: input.accountId,
+    webUserId: item.webUserId,
+    accessToken: microsoft.accessToken,
+    refreshToken: microsoft.refreshToken,
+    expiresAt: microsoft.tokenExpiresAt,
+  };
+
+  try {
+    const token = await resolveUsableMicrosoftAccessToken(tokenInput);
+    if (!token.ok) {
+      console.error(
+        `[calendarAvailability] specialist ${item.specialistId}: Microsoft token unavailable (${token.reason}), skipping their Microsoft calendar until they reconnect`,
+      );
+      return [];
+    }
+
+    try {
+      return await fetchMicrosoftBusySlots(item, token.accessToken, input.from, input.to, includeTitles);
+    } catch (error: unknown) {
+      if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+        throw error;
+      }
+      // Access token rejected: refresh once and retry.
+      const refreshed = await resolveUsableMicrosoftAccessToken({
+        ...tokenInput,
+        accessToken: token.accessToken,
+        forceRefresh: true,
+      });
+      if (!refreshed.ok) {
+        console.error(
+          `[calendarAvailability] specialist ${item.specialistId}: Microsoft token refresh failed (${refreshed.reason}), skipping their Microsoft calendar until they reconnect`,
+        );
+        return [];
+      }
+      return await fetchMicrosoftBusySlots(item, refreshed.accessToken, input.from, input.to, includeTitles);
+    }
+  } catch (error: unknown) {
+    const status = axios.isAxiosError(error) ? (error.response?.status ?? 'network') : 'internal';
+    console.error(
+      `[calendarAvailability] specialist ${item.specialistId}: Microsoft calendarView failed (status ${status}), skipping their Microsoft calendar`,
+    );
+    return [];
+  }
 }

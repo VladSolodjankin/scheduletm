@@ -280,6 +280,37 @@ export const dictionaries = {
       connectGoogleHelpDescription: 'Connect Google Calendar to sync your busy slots and avoid double bookings.',
       googleConnected: 'Google connected',
       googleCalendarCaption: 'This integration adds your appointments to your Google Calendar and shows your busy time as unavailable to clients. You will also see the titles of your own Google events in the appointments calendar; nobody else sees them.',
+      integrationStatusAvailable: 'Available',
+      integrationStatusConnected: 'Connected',
+      integrationStatusActive: 'Active',
+      connectMicrosoft: 'Connect Microsoft',
+      connectingMicrosoft: 'Redirecting to Microsoft...',
+      disconnectMicrosoft: 'Disconnect Microsoft',
+      disconnectingMicrosoft: 'Disconnecting...',
+      microsoftConnectedLabel: 'Microsoft connected',
+      connectMicrosoftHelpTitle: 'Microsoft Outlook Calendar integration',
+      connectMicrosoftHelpDescription: 'Connect Outlook Calendar to sync your busy slots and avoid double bookings.',
+      microsoftCalendarCaption: 'This integration adds your appointments to your Outlook calendar and shows your busy time as unavailable to clients. You will also see the titles of your own Outlook events in the appointments calendar; nobody else sees them.',
+      appleCalendarHelpTitle: 'Apple Calendar subscription',
+      appleCalendarHelpDescription: 'Subscribe to your appointments in Apple Calendar through a private read-only link. Changes in Apple Calendar are not sent back.',
+      appleCalendarCaption: 'Anyone with the link can see the times of your appointments, so keep it private. The link is shown only once, right after you create it.',
+      appleCalendarActiveHint: 'The subscription link is active. For security it cannot be shown again; create a new link if you need it.',
+      appleCalendarCreate: 'Create calendar link',
+      appleCalendarCreating: 'Creating link...',
+      appleCalendarRegenerate: 'Create new link',
+      appleCalendarRevoke: 'Revoke link',
+      appleCalendarRevoking: 'Revoking...',
+      appleCalendarLinkTitle: 'Your Apple Calendar link',
+      appleCalendarLinkWarning: 'Keep this link secret: it gives read access to the times of your appointments. It is shown only once; copy it now.',
+      appleCalendarLinkLabel: 'Subscription link',
+      appleCalendarOpen: 'Open in Apple Calendar',
+      appleCalendarDone: 'Done',
+      appleCalendarCopy: 'Copy',
+      appleCalendarCopied: 'Copied',
+      appleCalendarCopyFailed: 'Could not copy automatically. Select the link and copy it manually.',
+      appleCalendarRegenerateTitle: 'Create a new link?',
+      appleCalendarRegenerateDescription: 'The current link will stop working. Devices subscribed through it must be updated with the new link.',
+      appleCalendarRevoked: 'Apple Calendar link revoked.',
       zoomConnected: 'Zoom connected',
       connectYandex: 'Connect Yandex Telemost',
       connectingYandex: 'Redirecting to Yandex...',
@@ -310,6 +341,7 @@ export const dictionaries = {
         whatsapp: 'WhatsApp',
       },
       googleConnectedSuccessfully: 'Google Calendar connected successfully.',
+      microsoftConnectedSuccessfully: 'Microsoft Outlook Calendar connected successfully.',
       zoomConnectedSuccessfully: 'Zoom connected successfully.',
       yandexConnectedSuccessfully: 'Yandex Telemost connected successfully.',
       specialists: {
@@ -398,6 +430,18 @@ export const dictionaries = {
         disconnectGoogle: 'Unable to disconnect Google.',
         googleNotConfigured: 'Google Calendar integration is not configured on the server.',
         googleCalendarWriteRequired: 'Google Calendar was not connected: please allow access to manage events on your calendar.',
+        connectMicrosoft: 'Unable to connect Microsoft.',
+        disconnectMicrosoft: 'Unable to disconnect Microsoft.',
+        microsoftNotConfigured: 'Microsoft Outlook Calendar integration is not configured on the server.',
+        microsoftInvalidRequest: 'Microsoft sign-in could not be verified. Please try connecting again.',
+        microsoftTokenExchangeFailed: 'Microsoft did not complete the connection. Please try again.',
+        microsoftCalendarWriteRequired: 'Microsoft Calendar was not connected: please allow access to manage events on your calendar.',
+        microsoftAccessDenied: 'Microsoft access was denied. The calendar was not connected.',
+        microsoftAdminConsentRequired: 'Your Microsoft organization requires administrator approval to connect the calendar.',
+        microsoftProviderError: 'Microsoft returned an error. Please try again later.',
+        createAppleCalendarFeed: 'Unable to create the Apple Calendar link.',
+        revokeAppleCalendarFeed: 'Unable to revoke the Apple Calendar link.',
+        appleCalendarSpecialistRequired: 'Apple Calendar link is available only for users with a specialist profile.',
         connectZoom: 'Unable to connect Zoom.',
         connectYandex: 'Unable to connect Yandex Telemost.',
         disconnectYandex: 'Unable to disconnect Yandex Telemost.',
@@ -789,6 +833,7 @@ export const dictionaries = {
       dragHint: 'Drag and drop appointment to move it to another slot.',
       pastSlotError: 'Cannot create or move an appointment to a past date/time.',
       externalBusyBadge: 'Busy (Google)',
+      externalBusyBadgeMicrosoft: 'Busy (Microsoft)',
       cancelAction: 'Cancel appointment',
       cancelConfirmRefund: 'Cancel this appointment? Payment refund is allowed.',
       cancelConfirmNoRefund: 'Cancel this appointment? Late cancellation without refund.',
@@ -1303,6 +1348,37 @@ export const dictionaries = {
       connectGoogleHelpDescription: 'Подключите Google Calendar для синхронизации занятых слотов и предотвращения двойных бронирований.',
       googleConnected: 'Google подключен',
       googleCalendarCaption: 'Эта интеграция добавляет ваши записи в Google Calendar и показывает клиентам ваше занятое время как недоступное. Названия ваших событий из Google вы также увидите в календаре записей, больше никто их не увидит.',
+      integrationStatusAvailable: 'Доступно',
+      integrationStatusConnected: 'Подключено',
+      integrationStatusActive: 'Активно',
+      connectMicrosoft: 'Подключить Microsoft',
+      connectingMicrosoft: 'Переходим в Microsoft...',
+      disconnectMicrosoft: 'Отключить Microsoft',
+      disconnectingMicrosoft: 'Отключаем...',
+      microsoftConnectedLabel: 'Microsoft подключен',
+      connectMicrosoftHelpTitle: 'Интеграция Microsoft Outlook Calendar',
+      connectMicrosoftHelpDescription: 'Подключите Outlook Calendar для синхронизации занятых слотов и предотвращения двойных бронирований.',
+      microsoftCalendarCaption: 'Эта интеграция добавляет ваши записи в календарь Outlook и показывает клиентам ваше занятое время как недоступное. Названия ваших событий из Outlook вы также увидите в календаре записей, больше никто их не увидит.',
+      appleCalendarHelpTitle: 'Подписка Apple Calendar',
+      appleCalendarHelpDescription: 'Подпишитесь на ваши записи в Apple Calendar по приватной ссылке только для чтения. Изменения в Apple Calendar обратно не передаются.',
+      appleCalendarCaption: 'Любой, у кого есть ссылка, увидит время ваших записей, поэтому храните её в секрете. Ссылка показывается только один раз, сразу после создания.',
+      appleCalendarActiveHint: 'Ссылка для подписки активна. В целях безопасности её нельзя показать повторно; при необходимости создайте новую ссылку.',
+      appleCalendarCreate: 'Создать ссылку на календарь',
+      appleCalendarCreating: 'Создаём ссылку...',
+      appleCalendarRegenerate: 'Создать новую ссылку',
+      appleCalendarRevoke: 'Отозвать ссылку',
+      appleCalendarRevoking: 'Отзываем...',
+      appleCalendarLinkTitle: 'Ваша ссылка на Apple Calendar',
+      appleCalendarLinkWarning: 'Храните эту ссылку в секрете: она даёт доступ на чтение ко времени ваших записей. Ссылка показывается только один раз, скопируйте её сейчас.',
+      appleCalendarLinkLabel: 'Ссылка для подписки',
+      appleCalendarOpen: 'Открыть в Apple Calendar',
+      appleCalendarDone: 'Готово',
+      appleCalendarCopy: 'Копировать',
+      appleCalendarCopied: 'Скопировано',
+      appleCalendarCopyFailed: 'Не удалось скопировать автоматически. Выделите ссылку и скопируйте её вручную.',
+      appleCalendarRegenerateTitle: 'Создать новую ссылку?',
+      appleCalendarRegenerateDescription: 'Текущая ссылка перестанет работать. Устройства, подписанные по ней, нужно обновить новой ссылкой.',
+      appleCalendarRevoked: 'Ссылка Apple Calendar отозвана.',
       zoomConnected: 'Zoom подключен',
       connectYandex: 'Подключить Яндекс Телемост',
       connectingYandex: 'Перенаправляем в Яндекс...',
@@ -1333,6 +1409,7 @@ export const dictionaries = {
         whatsapp: 'WhatsApp',
       },
       googleConnectedSuccessfully: 'Google Calendar успешно подключен.',
+      microsoftConnectedSuccessfully: 'Microsoft Outlook Calendar успешно подключен.',
       zoomConnectedSuccessfully: 'Zoom успешно подключен.',
       yandexConnectedSuccessfully: 'Яндекс Телемост успешно подключен.',
       specialists: {
@@ -1421,6 +1498,18 @@ export const dictionaries = {
         disconnectGoogle: 'Не удалось отключить Google.',
         googleNotConfigured: 'Интеграция с Google Calendar не настроена на сервере.',
         googleCalendarWriteRequired: 'Google Calendar не подключен: разрешите доступ к управлению событиями в вашем календаре.',
+        connectMicrosoft: 'Не удалось подключить Microsoft.',
+        disconnectMicrosoft: 'Не удалось отключить Microsoft.',
+        microsoftNotConfigured: 'Интеграция с Microsoft Outlook Calendar не настроена на сервере.',
+        microsoftInvalidRequest: 'Не удалось проверить вход через Microsoft. Попробуйте подключить ещё раз.',
+        microsoftTokenExchangeFailed: 'Microsoft не завершил подключение. Попробуйте ещё раз.',
+        microsoftCalendarWriteRequired: 'Календарь Microsoft не подключен: разрешите доступ к управлению событиями в вашем календаре.',
+        microsoftAccessDenied: 'Доступ в Microsoft отклонён. Календарь не подключен.',
+        microsoftAdminConsentRequired: 'Для подключения календаря требуется одобрение администратора вашей организации Microsoft.',
+        microsoftProviderError: 'Microsoft вернул ошибку. Попробуйте позже.',
+        createAppleCalendarFeed: 'Не удалось создать ссылку на Apple Calendar.',
+        revokeAppleCalendarFeed: 'Не удалось отозвать ссылку на Apple Calendar.',
+        appleCalendarSpecialistRequired: 'Ссылка на Apple Calendar доступна только пользователям с профилем специалиста.',
         connectZoom: 'Не удалось подключить Zoom.',
         connectYandex: 'Не удалось подключить Яндекс Телемост.',
         disconnectYandex: 'Не удалось отключить Яндекс Телемост.',
@@ -1812,6 +1901,7 @@ export const dictionaries = {
       dragHint: 'Перетащите запись в другой слот, чтобы перенести её.',
       pastSlotError: 'Нельзя создать или перенести запись на прошедшие дату и время.',
       externalBusyBadge: 'Занято (Google)',
+      externalBusyBadgeMicrosoft: 'Занято (Microsoft)',
       cancelAction: 'Отменить запись',
       cancelConfirmRefund: 'Отменить запись? Возврат оплаты разрешён.',
       cancelConfirmNoRefund: 'Отменить запись? Поздняя отмена без возврата оплаты.',
@@ -2243,6 +2333,50 @@ export type TranslationKey =
   | 'settings.connectingZoom'
   | 'settings.googleConnected'
   | 'settings.googleCalendarCaption'
+  | 'settings.integrationStatusAvailable'
+  | 'settings.integrationStatusConnected'
+  | 'settings.integrationStatusActive'
+  | 'settings.connectMicrosoft'
+  | 'settings.connectingMicrosoft'
+  | 'settings.disconnectMicrosoft'
+  | 'settings.disconnectingMicrosoft'
+  | 'settings.microsoftConnectedLabel'
+  | 'settings.connectMicrosoftHelpTitle'
+  | 'settings.connectMicrosoftHelpDescription'
+  | 'settings.microsoftCalendarCaption'
+  | 'settings.microsoftConnectedSuccessfully'
+  | 'settings.appleCalendarHelpTitle'
+  | 'settings.appleCalendarHelpDescription'
+  | 'settings.appleCalendarCaption'
+  | 'settings.appleCalendarActiveHint'
+  | 'settings.appleCalendarCreate'
+  | 'settings.appleCalendarCreating'
+  | 'settings.appleCalendarRegenerate'
+  | 'settings.appleCalendarRevoke'
+  | 'settings.appleCalendarRevoking'
+  | 'settings.appleCalendarLinkTitle'
+  | 'settings.appleCalendarLinkWarning'
+  | 'settings.appleCalendarLinkLabel'
+  | 'settings.appleCalendarOpen'
+  | 'settings.appleCalendarDone'
+  | 'settings.appleCalendarCopy'
+  | 'settings.appleCalendarCopied'
+  | 'settings.appleCalendarCopyFailed'
+  | 'settings.appleCalendarRegenerateTitle'
+  | 'settings.appleCalendarRegenerateDescription'
+  | 'settings.appleCalendarRevoked'
+  | 'settings.errors.connectMicrosoft'
+  | 'settings.errors.disconnectMicrosoft'
+  | 'settings.errors.microsoftNotConfigured'
+  | 'settings.errors.microsoftInvalidRequest'
+  | 'settings.errors.microsoftTokenExchangeFailed'
+  | 'settings.errors.microsoftCalendarWriteRequired'
+  | 'settings.errors.microsoftAccessDenied'
+  | 'settings.errors.microsoftAdminConsentRequired'
+  | 'settings.errors.microsoftProviderError'
+  | 'settings.errors.createAppleCalendarFeed'
+  | 'settings.errors.revokeAppleCalendarFeed'
+  | 'settings.errors.appleCalendarSpecialistRequired'
   | 'settings.zoomConnected'
   | 'settings.connectYandex'
   | 'settings.connectingYandex'
@@ -2447,6 +2581,7 @@ export type TranslationKey =
   | 'appointments.dragHint'
   | 'appointments.pastSlotError'
   | 'appointments.externalBusyBadge'
+  | 'appointments.externalBusyBadgeMicrosoft'
   | 'appointments.cancelAction'
   | 'appointments.cancelConfirmRefund'
   | 'appointments.cancelConfirmNoRefund'

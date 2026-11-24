@@ -5,6 +5,19 @@ import { t } from '../i18n/index.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 import { completeGoogleOAuth, createGoogleOAuthUrl, disconnectGoogleOAuth } from '../services/googleOAuthService.js';
+import {
+  completeMicrosoftOAuth,
+  createMicrosoftOAuthUrl,
+  disconnectMicrosoftOAuth,
+  failMicrosoftOAuth,
+} from '../services/microsoftOAuthService.js';
+import {
+  createOrRotateCalendarFeed,
+  isWellFormedCalendarFeedToken,
+  renderCalendarFeed,
+  revokeCalendarFeed,
+} from '../services/calendarFeedService.js';
+import { createHash } from 'node:crypto';
 import { createZoomMeeting } from '../services/zoomService.js';
 import { completeZoomOAuth, createZoomOAuthUrl, disconnectZoomOAuth } from '../services/zoomOAuthService.js';
 import {
@@ -27,6 +40,8 @@ import { canManageAccountSettings } from '../policies/rolePermissions.js';
 
 export const integrationRoutes = Router();
 const paymentWebhookRateLimit = createRequestRateLimit({ keyPrefix: 'payment-webhook', maxRequests: 300, windowMs: 60_000 });
+const calendarFeedRateLimit = createRequestRateLimit({ keyPrefix: 'calendar-feed', maxRequests: 60, windowMs: 60_000 });
+const calendarFeedManageRateLimit = createRequestRateLimit({ keyPrefix: 'calendar-feed-manage', maxRequests: 10, windowMs: 60_000 });
 const zoomWebhookRateLimit = createRequestRateLimit({ keyPrefix: 'zoom-webhook', maxRequests: 120, windowMs: 60_000 });
 
 const zoomCreateMeetingSchema = z.object({
@@ -88,6 +103,133 @@ integrationRoutes.post('/google/disconnect', requireAccessToken, async (req, res
     provider: 'google',
     connected: false,
   });
+});
+
+
+integrationRoutes.post('/microsoft/oauth/start', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const oauthInit = await createMicrosoftOAuthUrl(user.id, user.accountId);
+
+  if (!oauthInit) {
+    return res.status(503).json({
+      message: t(req, 'microsoftOAuthNotConfigured'),
+      requiredEnv: [
+        'MICROSOFT_OAUTH_CLIENT_ID',
+        'MICROSOFT_OAUTH_CLIENT_SECRET',
+        'MICROSOFT_OAUTH_REDIRECT_URI'
+      ]
+    });
+  }
+
+  return res.json({
+    provider: 'microsoft',
+    authorizeUrl: oauthInit.url,
+    state: oauthInit.state
+  });
+});
+
+integrationRoutes.get('/microsoft/oauth/callback', async (req, res) => {
+  const state = String(req.query.state ?? '');
+  const code = String(req.query.code ?? '');
+  const base = `${env.APP_URL}/settings?microsoft_oauth=error&reason=`;
+
+  if (req.query.error) {
+    // Consent declined, admin approval required or another provider-side error (never echoed to the client).
+    const reason = await failMicrosoftOAuth(
+      state,
+      String(req.query.error),
+      String(req.query.error_description ?? ''),
+    );
+    return res.redirect(`${base}${reason}`);
+  }
+  if (!state || !code) {
+    return res.redirect(`${base}missing_code_or_state`);
+  }
+
+  const result = await completeMicrosoftOAuth(state, code);
+
+  if (!result.ok) {
+    return res.redirect(`${base}${result.reason}`);
+  }
+
+  return res.redirect(`${env.APP_URL}/settings?microsoft_oauth=success`);
+});
+
+integrationRoutes.post('/microsoft/disconnect', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const ok = await disconnectMicrosoftOAuth(user.id, user.accountId);
+  if (!ok) {
+    return res.status(400).json({ message: t(req, 'invalidUserId') });
+  }
+
+  return res.json({
+    provider: 'microsoft',
+    connected: false,
+  });
+});
+
+// ---- Apple Calendar: read-only ICS subscription feed ----
+
+integrationRoutes.post('/apple/feed', requireAccessToken, calendarFeedManageRateLimit, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const webUserId = Number(user.id);
+  if (!Number.isInteger(webUserId)) {
+    return res.status(400).json({ message: t(req, 'invalidUserId') });
+  }
+
+  const result = await createOrRotateCalendarFeed(user.accountId, webUserId);
+  if (!result.ok) {
+    return res.status(409).json({ code: 'specialist_required', message: t(req, 'calendarFeedSpecialistRequired') });
+  }
+
+  res.setHeader('Cache-Control', 'no-store');
+  return res.status(201).json({
+    provider: 'apple_feed',
+    feedUrl: result.feedUrl,
+    webcalUrl: result.webcalUrl,
+    createdAt: result.createdAt,
+  });
+});
+
+integrationRoutes.delete('/apple/feed', requireAccessToken, async (req, res) => {
+  const user = (req as AuthedRequest).user;
+  const webUserId = Number(user.id);
+  if (!Number.isInteger(webUserId)) {
+    return res.status(400).json({ message: t(req, 'invalidUserId') });
+  }
+
+  await revokeCalendarFeed(user.accountId, webUserId);
+  return res.json({ provider: 'apple_feed', enabled: false });
+});
+
+// Public bearer-token document. Every failure is the same empty 404; the token never reaches logs
+// (the access log and error tracking mask this path) and is never echoed back.
+integrationRoutes.get('/calendar-feed/:token.ics', calendarFeedRateLimit, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+
+  try {
+    const token = String(req.params.token ?? '');
+    const body = isWellFormedCalendarFeedToken(token) ? await renderCalendarFeed(token) : null;
+    if (body === null) {
+      return res.status(404).end();
+    }
+
+    const etag = `"${createHash('sha256').update(body).digest('hex').slice(0, 32)}"`;
+    res.setHeader('ETag', etag);
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    if (req.header('if-none-match') === etag) {
+      return res.status(304).end();
+    }
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', 'inline; filename="appointments.ics"');
+    return res.status(200).send(body);
+  } catch (error) {
+    void trackServerError({ method: req.method, path: '/api/integrations/calendar-feed/:token.ics', error });
+    res.locals.errorTracked = true;
+    return res.status(500).end();
+  }
 });
 
 

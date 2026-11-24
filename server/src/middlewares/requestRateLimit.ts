@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { t } from '../i18n/index.js';
 import { getRedisClient } from '../lib/redisClient.js';
 import { trackServerError } from '../services/errorTrackingService.js';
+import { maskSensitivePath } from '../utils/logMasking.js';
 
 type Bucket = { count: number; resetAt: number };
 
@@ -87,7 +88,7 @@ export function createRequestRateLimit(input: RateLimitInput) {
       // Redis outage degrades rate limiting rather than taking the API down.
       const normalized = error instanceof Error ? error : new Error(String(error));
       console.error('[rate-limit] redis error, failing open', normalized);
-      void trackServerError({ method: req.method, path: req.path, error: normalized });
+      void trackServerError({ method: req.method, path: maskSensitivePath(`${req.baseUrl ?? ''}${req.path}`), error: normalized });
       return next();
     }
   };

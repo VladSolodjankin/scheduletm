@@ -101,6 +101,7 @@ async function purgeWebUser(accountId: number, webUserId: number, clientId: numb
 
     await trx('zoom_oauth_states').where({ account_id: accountId, web_user_id: webUserId }).delete();
     await trx('yandex_oauth_states').where({ account_id: accountId, web_user_id: webUserId }).delete();
+    await trx('microsoft_oauth_states').where({ account_id: accountId, web_user_id: webUserId }).delete();
     await trx('google_oauth_states').where({ account_id: accountId, web_user_id: webUserId }).delete();
     await trx('web_user_sessions').where({ account_id: accountId, web_user_id: webUserId }).delete();
     await trx('user_settings').where({ account_id: accountId, web_user_id: webUserId }).delete();

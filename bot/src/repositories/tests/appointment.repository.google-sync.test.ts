@@ -66,6 +66,7 @@ describe('bot appointment repository Google outbox hooks', () => {
     await cancelAppointmentById(7, 1, 41);
     expect(enqueueMock).toHaveBeenCalledWith({
       accountId: 7, appointmentId: 41, action: 'delete', specialistId: 8, googleEventId: 'evt', webUserId: 5,
+      microsoftEventId: null, microsoftWebUserId: null,
     });
   });
 

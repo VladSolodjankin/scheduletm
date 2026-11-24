@@ -56,16 +56,17 @@ describe('google calendar integration contracts', () => {
     const dictionaries = await read('src/shared/i18n/dictionaries.ts');
     const calendar = await read('src/components/appointments/AppointmentsCalendar.tsx');
 
-    assert.match(types, /source: 'google';\s*title\?: string;/);
+    assert.match(types, /source: 'google' \| 'microsoft';\s*title\?: string;/);
     assert.equal((dictionaries.match(/^[ ]+externalBusyBadge:/gm) ?? []).length, 2);
-    assert.match(calendar, /label=\{slot\.title \?\? t\('appointments\.externalBusyBadge'\)\}/);
+    assert.equal((dictionaries.match(/^[ ]+externalBusyBadgeMicrosoft:/gm) ?? []).length, 2);
+    assert.match(calendar, /slot\.title \?\? t\(slot\.source === 'microsoft' \? 'appointments\.externalBusyBadgeMicrosoft' : 'appointments\.externalBusyBadge'\)/);
     assert.doesNotMatch(calendar, /Busy \(Google\)/);
   });
 
   it('lands on the Integrations tab after a provider OAuth redirect', async () => {
     const container = await read('src/containers/SettingsContainer.tsx');
 
-    assert.match(container, /const isOauthReturn = Boolean\(googleOauthStatus \|\| zoomOauthStatus \|\| yandexOauthStatus\);/);
+    assert.match(container, /const isOauthReturn = Boolean\(googleOauthStatus \|\| microsoftOauthStatus \|\| zoomOauthStatus \|\| yandexOauthStatus\);/);
     assert.match(container, /isOauthReturn \? 'integrations'/);
     assert.match(container, /if \(!tab && isOauthReturn\) \{[\s\S]*withSearch\('\/settings\/integrations'\)/);
   });

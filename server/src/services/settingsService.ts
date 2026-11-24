@@ -76,6 +76,8 @@ export type UserSettings = {
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
   googleConnected: boolean;
+  microsoftConnected: boolean;
+  appleCalendarFeedEnabled: boolean;
   zoomConnected: boolean;
   yandexConnected: boolean;
   deleteScheduledAt: string | null;
@@ -314,6 +316,8 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
       uiThemeMode: 'light',
       uiPaletteVariantId: 'default',
       googleConnected: false,
+      microsoftConnected: false,
+      appleCalendarFeedEnabled: false,
       zoomConnected: false,
       yandexConnected: false,
       deleteScheduledAt: null,
@@ -337,6 +341,8 @@ export const getUserSettings = async (actor: User): Promise<UserSettings> => {
     uiThemeMode: userSettings?.ui_theme_mode ?? user?.ui_theme_mode ?? 'light',
     uiPaletteVariantId: userSettings?.ui_palette_variant_id ?? user?.ui_palette_variant_id ?? 'default',
     googleConnected: Boolean(legacyIntegration?.google_api_key),
+    microsoftConnected: Boolean(legacyIntegration?.microsoft_access_token || legacyIntegration?.microsoft_refresh_token),
+    appleCalendarFeedEnabled: Boolean(legacyIntegration?.calendar_feed_token_hash),
     zoomConnected: Boolean(
       legacyIntegration?.zoom_access_token
       && (

@@ -2,6 +2,8 @@ const SENSITIVE_SEGMENTS: Array<[RegExp, string]> = [
   // Per-account webhook tokens (YooKassa / BOG) and client payment-link tokens must never reach the logs.
   [/^(\/api\/integrations\/(?:yookassa\/webhook|bog\/callback)\/)[^/]+/, '$1:token'],
   [/^(\/api\/public\/payments\/)[^/]+/, '$1:token'],
+  // Apple Calendar subscription feed: the path segment is a bearer secret.
+  [/^(\/api\/integrations\/calendar-feed\/)[^/]+/, '$1:token'],
 ];
 
 export function maskSensitivePath(pathname: string): string {

@@ -89,6 +89,21 @@ describe('googleCalendarSync job', () => {
     expect(repo.markGoogleCalendarSyncFailed).toHaveBeenCalledWith({ id: 3, attempts: 1, errorStatus: '400', lockedUntil: LEASE });
   });
 
+  it('uses Retry-After as a floor for the backoff and tags non-Google providers in logs', async () => {
+    repo.claimDueGoogleCalendarSyncItems.mockResolvedValue([{ ...row(1, 0), provider: 'microsoft' }]);
+    eventService.processGoogleCalendarSyncItem
+      .mockResolvedValueOnce({ kind: 'error', errorStatus: '429', retryable: true, retryAfterMs: 600_000 });
+
+    const before = Date.now();
+    await runGoogleCalendarSyncJob(0);
+
+    const { nextAttemptAt } = repo.markGoogleCalendarSyncRetry.mock.calls[0][0] as { nextAttemptAt: Date };
+    expect(nextAttemptAt.getTime() - before).toBeGreaterThanOrEqual(600_000);
+    expect(console.warn).toHaveBeenCalledWith(
+      '[googleCalendarSync] retry appointment=101 action=upsert provider=microsoft status=429 attempt=1 account=1',
+    );
+  });
+
   it('purges old finished rows when idle', async () => {
     repo.claimDueGoogleCalendarSyncItems.mockResolvedValue([]);
     expect(await runGoogleCalendarSyncJob(0)).toBe(0);

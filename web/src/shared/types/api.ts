@@ -81,6 +81,8 @@ export type UserSettings = {
   uiThemeMode: 'light' | 'dark';
   uiPaletteVariantId: string;
   googleConnected: boolean;
+  microsoftConnected: boolean;
+  appleCalendarFeedEnabled: boolean;
   zoomConnected: boolean;
   yandexConnected: boolean;
   deleteScheduledAt: string | null;
@@ -180,6 +182,30 @@ export type GoogleOAuthDisconnectResponse = {
   connected: boolean;
 };
 
+export type MicrosoftOAuthStartResponse = {
+  provider: 'microsoft';
+  authorizeUrl: string;
+  state: string;
+};
+
+export type MicrosoftOAuthDisconnectResponse = {
+  provider: 'microsoft';
+  connected: false;
+};
+
+/** The full feed URL is returned only by the create/regenerate call; the backend keeps a hash. */
+export type AppleCalendarFeedCreateResponse = {
+  provider: 'apple_feed';
+  feedUrl: string;
+  webcalUrl: string;
+  createdAt: string;
+};
+
+export type AppleCalendarFeedRevokeResponse = {
+  provider: 'apple_feed';
+  enabled: false;
+};
+
 export type AppointmentStatus = 'new' | 'confirmed' | 'cancelled';
 
 export type SpecialistItem = {
@@ -227,7 +253,7 @@ export type AppointmentListResponse = {
     specialistId: number;
     scheduledAt: string;
     durationMin: number;
-    source: 'google';
+    source: 'google' | 'microsoft';
     title?: string;
   }>;
 };

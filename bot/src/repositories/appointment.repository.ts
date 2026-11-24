@@ -304,6 +304,8 @@ export async function cancelAppointmentById(
       specialistId: appointment.specialist_id,
       googleEventId: appointment.google_event_id ?? null,
       webUserId: appointment.google_event_web_user_id ?? null,
+      microsoftEventId: appointment.microsoft_event_id ?? null,
+      microsoftWebUserId: appointment.microsoft_event_web_user_id ?? null,
     });
   }
 

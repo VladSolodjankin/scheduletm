@@ -140,9 +140,15 @@ export async function deactivateSpecialistByWebUserId(accountId: number, webUser
 export type SpecialistCalendarCredentials = {
   specialistId: number;
   webUserId: number;
-  googleApiKey: string;
+  /** Null when the web user has no Google connection (they may only have Microsoft). */
+  googleApiKey: string | null;
   googleRefreshToken: string | null;
   googleTokenExpiresAt: Date | null;
+  microsoft?: {
+    accessToken: string | null;
+    refreshToken: string | null;
+    tokenExpiresAt: Date | null;
+  } | null;
   timezone: string;
 };
 
@@ -280,13 +286,18 @@ export async function findSpecialistsCalendarCredentials(
     })
     .where('s.account_id', accountId)
     .whereIn('s.id', specialistIds)
-    .whereNotNull('wui.google_access_token_encrypted')
+    .where(function anyCalendarConnected() {
+      this.whereNotNull('wui.google_access_token_encrypted').orWhereNotNull('wui.microsoft_access_token_encrypted');
+    })
     .select(
       's.id as specialistId',
       'wu.id as webUserId',
       'wui.google_access_token_encrypted as googleAccessTokenEncrypted',
       'wui.google_refresh_token_encrypted as googleRefreshTokenEncrypted',
       'wui.google_token_expires_at as googleTokenExpiresAt',
+      'wui.microsoft_access_token_encrypted as microsoftAccessTokenEncrypted',
+      'wui.microsoft_refresh_token_encrypted as microsoftRefreshTokenEncrypted',
+      'wui.microsoft_token_expires_at as microsoftTokenExpiresAt',
       db.raw("COALESCE(wu.timezone, 'UTC') as timezone"),
     );
 
@@ -296,12 +307,19 @@ export async function findSpecialistsCalendarCredentials(
     googleApiKey: decryptIntegrationSecret(
       row.googleAccessTokenEncrypted,
       'Google access token',
-    ) as string,
+    ),
     googleRefreshToken: decryptIntegrationSecret(
       row.googleRefreshTokenEncrypted,
       'Google refresh token',
     ),
     googleTokenExpiresAt: row.googleTokenExpiresAt,
+    microsoft: row.microsoftAccessTokenEncrypted || row.microsoftRefreshTokenEncrypted
+      ? {
+        accessToken: decryptIntegrationSecret(row.microsoftAccessTokenEncrypted, 'Microsoft access token'),
+        refreshToken: decryptIntegrationSecret(row.microsoftRefreshTokenEncrypted, 'Microsoft refresh token'),
+        tokenExpiresAt: row.microsoftTokenExpiresAt,
+      }
+      : null,
     timezone: row.timezone,
   }));
 }

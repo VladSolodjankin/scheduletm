@@ -390,7 +390,7 @@ export function AppointmentsCalendar({
                           {externalBusy.map((slot) => (
                             <AppStatusBadge
                               key={`${slot.specialistId}-${slot.scheduledAt}-${slot.source}`}
-                              label={slot.title ?? t('appointments.externalBusyBadge')}
+                              label={slot.title ?? t(slot.source === 'microsoft' ? 'appointments.externalBusyBadgeMicrosoft' : 'appointments.externalBusyBadge')}
                               tone="warning"
                               variant="outlined"
                               sx={{ maxWidth: '100%' }}

@@ -13,8 +13,12 @@ import { AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 import type {
   AccountNotificationDefault,
   AccountSettings,
+  AppleCalendarFeedCreateResponse,
+  AppleCalendarFeedRevokeResponse,
   GoogleOAuthDisconnectResponse,
   GoogleOAuthStartResponse,
+  MicrosoftOAuthDisconnectResponse,
+  MicrosoftOAuthStartResponse,
   SettingsScopeAccount,
   SettingsScopeOptionsResponse,
   SettingsScopeSpecialist,
@@ -58,6 +62,8 @@ const defaultUserSettings: UserSettings = {
   uiThemeMode: 'light',
   uiPaletteVariantId: 'default',
   googleConnected: false,
+  microsoftConnected: false,
+  appleCalendarFeedEnabled: false,
   zoomConnected: false,
   yandexConnected: false,
   deleteScheduledAt: null,
@@ -84,6 +90,28 @@ const LEGACY_SETTINGS_TAB_ROUTES: Record<string, string> = {
   scheduleExceptions: '/days-off',
 };
 
+function resolveMicrosoftOauthError(t: ReturnType<typeof useI18n>['t'], reason: string | null): string {
+  switch (reason) {
+    case 'missing_code_or_state':
+    case 'invalid_state':
+      return t('settings.errors.microsoftInvalidRequest');
+    case 'microsoft_oauth_not_configured':
+      return t('settings.errors.microsoftNotConfigured');
+    case 'token_exchange_failed':
+      return t('settings.errors.microsoftTokenExchangeFailed');
+    case 'calendar_write_required':
+      return t('settings.errors.microsoftCalendarWriteRequired');
+    case 'access_denied':
+      return t('settings.errors.microsoftAccessDenied');
+    case 'admin_consent_required':
+      return t('settings.errors.microsoftAdminConsentRequired');
+    case 'provider_error':
+      return t('settings.errors.microsoftProviderError');
+    default:
+      return t('settings.errors.connectMicrosoft');
+  }
+}
+
 export function SettingsContainer() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -98,6 +126,12 @@ export function SettingsContainer() {
   const [success, setSuccess] = useState('');
   const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
   const [isGoogleDisconnecting, setIsGoogleDisconnecting] = useState(false);
+  const [isMicrosoftConnecting, setIsMicrosoftConnecting] = useState(false);
+  const [isMicrosoftDisconnecting, setIsMicrosoftDisconnecting] = useState(false);
+  const [isAppleFeedCreating, setIsAppleFeedCreating] = useState(false);
+  const [isAppleFeedRevoking, setIsAppleFeedRevoking] = useState(false);
+  // The full feed URL exists only in the create response, so it lives in memory until the dialog is dismissed.
+  const [appleFeedLink, setAppleFeedLink] = useState<AppleCalendarFeedCreateResponse | null>(null);
   const [isZoomConnecting, setIsZoomConnecting] = useState(false);
   const [isYandexConnecting, setIsYandexConnecting] = useState(false);
   const [isYandexDisconnecting, setIsYandexDisconnecting] = useState(false);
@@ -126,6 +160,7 @@ export function SettingsContainer() {
   const [emailChangeStep, setEmailChangeStep] = useState<'email' | 'otp'>('email');
 
   const googleOauthStatus = useMemo(() => searchParams.get('google_oauth'), [searchParams]);
+  const microsoftOauthStatus = useMemo(() => searchParams.get('microsoft_oauth'), [searchParams]);
   const zoomOauthStatus = useMemo(() => searchParams.get('zoom_oauth'), [searchParams]);
   const yandexOauthStatus = useMemo(() => searchParams.get('yandex_oauth'), [searchParams]);
   const stripeOauthStatus = useMemo(() => searchParams.get('stripe_oauth'), [searchParams]);
@@ -153,7 +188,7 @@ export function SettingsContainer() {
     'profile'
   ] as const), [canManageAccountSettings, canManageSpecialistBookingPolicy, canManageSystemSettings, isClient]);
 
-  const isOauthReturn = Boolean(googleOauthStatus || zoomOauthStatus || yandexOauthStatus);
+  const isOauthReturn = Boolean(googleOauthStatus || microsoftOauthStatus || zoomOauthStatus || yandexOauthStatus);
 
   const activeTab = useMemo(() => {
     if (!tab) {
@@ -195,7 +230,7 @@ export function SettingsContainer() {
   };
 
   useEffect(() => {
-    if (!googleOauthStatus && !zoomOauthStatus && !yandexOauthStatus) {
+    if (!googleOauthStatus && !microsoftOauthStatus && !zoomOauthStatus && !yandexOauthStatus) {
       return;
     }
 
@@ -209,6 +244,17 @@ export function SettingsContainer() {
 
       if (googleOauthStatus === 'error') {
         setError(oauthReason === 'calendar_write_required' ? t('settings.errors.googleCalendarWriteRequired') : t('settings.errors.connectGoogle'));
+        setSuccess('');
+      }
+
+      if (microsoftOauthStatus === 'success') {
+        setUserSettings((prev) => ({ ...prev, microsoftConnected: true }));
+        setSuccess(t('settings.microsoftConnectedSuccessfully'));
+        setError('');
+      }
+
+      if (microsoftOauthStatus === 'error') {
+        setError(resolveMicrosoftOauthError(t, oauthReason));
         setSuccess('');
       }
 
@@ -240,6 +286,7 @@ export function SettingsContainer() {
 
       const nextParams = new URLSearchParams(searchParams);
       nextParams.delete('google_oauth');
+      nextParams.delete('microsoft_oauth');
       nextParams.delete('zoom_oauth');
       nextParams.delete('yandex_oauth');
       nextParams.delete('reason');
@@ -247,7 +294,7 @@ export function SettingsContainer() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [accessToken, googleOauthStatus, searchParams, setSearchParams, t, oauthReason, yandexOauthStatus, zoomOauthStatus]);
+  }, [accessToken, googleOauthStatus, microsoftOauthStatus, searchParams, setSearchParams, t, oauthReason, yandexOauthStatus, zoomOauthStatus]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -544,6 +591,111 @@ export function SettingsContainer() {
       );
       setSuccess('');
       setIsGoogleConnecting(false);
+    }
+  };
+
+  const connectMicrosoft = async () => {
+    if (!accessToken || isMicrosoftConnecting) {
+      return;
+    }
+
+    setIsMicrosoftConnecting(true);
+
+    try {
+      const response = await apiClient.post<MicrosoftOAuthStartResponse>(
+        '/api/integrations/microsoft/oauth/start',
+        {},
+        { headers: authHeaders(accessToken) }
+      );
+
+      window.location.assign(response.data.authorizeUrl);
+    } catch (err) {
+      const status = isAxiosError(err) ? err.response?.status : undefined;
+      setError(
+        status === 503
+          ? t('settings.errors.microsoftNotConfigured')
+          : resolveError(err, t('settings.errors.connectMicrosoft')).message
+      );
+      setSuccess('');
+      setIsMicrosoftConnecting(false);
+    }
+  };
+
+  const disconnectMicrosoft = async () => {
+    if (!accessToken || isMicrosoftDisconnecting) {
+      return;
+    }
+
+    setIsMicrosoftDisconnecting(true);
+
+    try {
+      await apiClient.post<MicrosoftOAuthDisconnectResponse>(
+        '/api/integrations/microsoft/disconnect',
+        {},
+        { headers: authHeaders(accessToken) }
+      );
+      setUserSettings((prev) => ({ ...prev, microsoftConnected: false }));
+      setError('');
+      setSuccess('');
+    } catch (err) {
+      setError(resolveError(err, t('settings.errors.disconnectMicrosoft')).message);
+      setSuccess('');
+    } finally {
+      setIsMicrosoftDisconnecting(false);
+    }
+  };
+
+  const createAppleFeed = async () => {
+    if (!accessToken || isAppleFeedCreating) {
+      return;
+    }
+
+    setIsAppleFeedCreating(true);
+
+    try {
+      const response = await apiClient.post<AppleCalendarFeedCreateResponse>(
+        '/api/integrations/apple/feed',
+        {},
+        { headers: authHeaders(accessToken) }
+      );
+      setAppleFeedLink(response.data);
+      setUserSettings((prev) => ({ ...prev, appleCalendarFeedEnabled: true }));
+      setError('');
+      setSuccess('');
+    } catch (err) {
+      const code = isAxiosError(err) ? (err.response?.data as { code?: string } | undefined)?.code : undefined;
+      setError(
+        code === 'specialist_required'
+          ? t('settings.errors.appleCalendarSpecialistRequired')
+          : resolveError(err, t('settings.errors.createAppleCalendarFeed')).message
+      );
+      setSuccess('');
+    } finally {
+      setIsAppleFeedCreating(false);
+    }
+  };
+
+  const revokeAppleFeed = async () => {
+    if (!accessToken || isAppleFeedRevoking) {
+      return;
+    }
+
+    setIsAppleFeedRevoking(true);
+
+    try {
+      await apiClient.delete<AppleCalendarFeedRevokeResponse>(
+        '/api/integrations/apple/feed',
+        { headers: authHeaders(accessToken) }
+      );
+      setAppleFeedLink(null);
+      setUserSettings((prev) => ({ ...prev, appleCalendarFeedEnabled: false }));
+      setError('');
+      setSuccess(t('settings.appleCalendarRevoked'));
+    } catch (err) {
+      setError(resolveError(err, t('settings.errors.revokeAppleCalendarFeed')).message);
+      setSuccess('');
+    } finally {
+      setIsAppleFeedRevoking(false);
     }
   };
 
@@ -902,9 +1054,44 @@ export function SettingsContainer() {
               connectGoogleHelpDescription: t('settings.connectGoogleHelpDescription'),
               connectGoogleHelpTitle: t('settings.connectGoogleHelpTitle'),
               googleCalendarCaption: t('settings.googleCalendarCaption'),
+              integrationStatusAvailable: t('settings.integrationStatusAvailable'),
+              integrationStatusConnected: t('settings.integrationStatusConnected'),
+              integrationStatusActive: t('settings.integrationStatusActive'),
+              connectMicrosoft: t('settings.connectMicrosoft'),
+              connectingMicrosoft: t('settings.connectingMicrosoft'),
+              disconnectMicrosoft: t('settings.disconnectMicrosoft'),
+              disconnectingMicrosoft: t('settings.disconnectingMicrosoft'),
+              microsoftConnectedLabel: t('settings.microsoftConnectedLabel'),
+              connectMicrosoftHelpTitle: t('settings.connectMicrosoftHelpTitle'),
+              connectMicrosoftHelpDescription: t('settings.connectMicrosoftHelpDescription'),
+              microsoftCalendarCaption: t('settings.microsoftCalendarCaption'),
+              appleCalendarHelpTitle: t('settings.appleCalendarHelpTitle'),
+              appleCalendarHelpDescription: t('settings.appleCalendarHelpDescription'),
+              appleCalendarCaption: t('settings.appleCalendarCaption'),
+              appleCalendarActiveHint: t('settings.appleCalendarActiveHint'),
+              appleCalendarCreate: t('settings.appleCalendarCreate'),
+              appleCalendarCreating: t('settings.appleCalendarCreating'),
+              appleCalendarRegenerate: t('settings.appleCalendarRegenerate'),
+              appleCalendarRevoke: t('settings.appleCalendarRevoke'),
+              appleCalendarRevoking: t('settings.appleCalendarRevoking'),
+              appleCalendarLinkTitle: t('settings.appleCalendarLinkTitle'),
+              appleCalendarLinkWarning: t('settings.appleCalendarLinkWarning'),
+              appleCalendarLinkLabel: t('settings.appleCalendarLinkLabel'),
+              appleCalendarOpen: t('settings.appleCalendarOpen'),
+              appleCalendarDone: t('settings.appleCalendarDone'),
+              appleCalendarCopy: t('settings.appleCalendarCopy'),
+              appleCalendarCopied: t('settings.appleCalendarCopied'),
+              appleCalendarCopyFailed: t('settings.appleCalendarCopyFailed'),
+              appleCalendarRegenerateTitle: t('settings.appleCalendarRegenerateTitle'),
+              appleCalendarRegenerateDescription: t('settings.appleCalendarRegenerateDescription'),
             }}
             isGoogleConnecting={isGoogleConnecting}
             isGoogleDisconnecting={isGoogleDisconnecting}
+            isMicrosoftConnecting={isMicrosoftConnecting}
+            isMicrosoftDisconnecting={isMicrosoftDisconnecting}
+            isAppleFeedCreating={isAppleFeedCreating}
+            isAppleFeedRevoking={isAppleFeedRevoking}
+            appleFeedLink={appleFeedLink}
             isZoomConnecting={isZoomConnecting}
             isYandexConnecting={isYandexConnecting}
             isYandexDisconnecting={isYandexDisconnecting}
@@ -932,6 +1119,11 @@ export function SettingsContainer() {
             onConnectYandex={connectYandex}
             onDisconnectYandex={disconnectYandex}
             onDisconnectGoogle={disconnectGoogle}
+            onConnectMicrosoft={connectMicrosoft}
+            onDisconnectMicrosoft={disconnectMicrosoft}
+            onCreateAppleFeed={createAppleFeed}
+            onRevokeAppleFeed={revokeAppleFeed}
+            onDismissAppleFeedLink={() => setAppleFeedLink(null)}
             onCurrentPasswordChange={setCurrentPassword}
             onNewPasswordChange={setNewPassword}
             onConfirmPasswordChange={setConfirmPassword}

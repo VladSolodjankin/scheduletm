@@ -76,9 +76,11 @@ export async function runGoogleCalendarSyncJob(throttleMs = THROTTLE_MS): Promis
     }
 
     const outcome = await processGoogleCalendarSyncItem(item);
+    // Google lines keep their historical format; other providers are tagged.
+    const providerSuffix = item.provider && item.provider !== 'google' ? ` provider=${item.provider}` : '';
     if (outcome.kind === 'done') {
       await markGoogleCalendarSyncDone(item.id, item.locked_until);
-      const ids = `appointment=${item.appointment_id} action=${item.action}`;
+      const ids = `appointment=${item.appointment_id} action=${item.action}${providerSuffix}`;
       console.log(
         outcome.detail === 'synced'
           ? `[googleCalendarSync] done ${ids} event=${outcome.event} account=${item.account_id}`
@@ -89,7 +91,7 @@ export async function runGoogleCalendarSyncJob(throttleMs = THROTTLE_MS): Promis
 
     const attempts = item.attempts + 1;
     const willRetry = outcome.retryable && attempts < GOOGLE_SYNC_MAX_ATTEMPTS;
-    const line = `appointment=${item.appointment_id} action=${item.action} status=${outcome.errorStatus} attempt=${attempts} account=${item.account_id}`;
+    const line = `appointment=${item.appointment_id} action=${item.action}${providerSuffix} status=${outcome.errorStatus} attempt=${attempts} account=${item.account_id}`;
     if (willRetry) {
       console.warn(`[googleCalendarSync] retry ${line}`);
     } else {
@@ -99,7 +101,8 @@ export async function runGoogleCalendarSyncJob(throttleMs = THROTTLE_MS): Promis
       await markGoogleCalendarSyncRetry({
         id: item.id,
         attempts,
-        nextAttemptAt: new Date(Date.now() + computeGoogleSyncBackoffMs(attempts)),
+        // Retry-After (429/503) is a floor for the exponential backoff.
+        nextAttemptAt: new Date(Date.now() + Math.max(computeGoogleSyncBackoffMs(attempts), outcome.retryAfterMs ?? 0)),
         errorStatus: outcome.errorStatus,
         lockedUntil: item.locked_until,
       });

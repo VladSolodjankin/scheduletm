@@ -74,6 +74,7 @@ describe('appointment repository Google Calendar outbox hooks', () => {
     await updateAppointment({ accountId: 7, id: 41, status: 'cancelled' });
     expect(syncRepo.enqueueGoogleCalendarSync).toHaveBeenCalledWith({
       accountId: 7, appointmentId: 41, action: 'delete', specialistId: 8, googleEventId: 'evt', webUserId: 5,
+      microsoftEventId: null, microsoftWebUserId: null,
     });
   });
 

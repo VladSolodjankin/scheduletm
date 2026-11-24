@@ -1,11 +1,13 @@
 import { alpha } from '@mui/material/styles';
-import { Box, IconButton, Popover, Stack, Typography } from '@mui/material';
+import { Alert, Box, IconButton, Popover, Stack, Typography } from '@mui/material';
 import { MouseEvent, useState } from 'react';
 
-import type { UserSettings } from '../../shared/types/api';
+import type { AppleCalendarFeedCreateResponse, UserSettings } from '../../shared/types/api';
 import type { SettingsCardCopy } from '../SettingsCard.types';
 import { rem } from '../../shared/theme/constants';
 import { AppButton } from '../../shared/ui/AppButton';
+import { AppCopyableField } from '../../shared/ui/AppCopyableField';
+import { AppConfirmDialog, AppDialog } from '../../shared/ui/AppDialog';
 import { AppForm } from '../../shared/ui/AppForm';
 import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppIntegrationPanel } from '../../shared/ui/AppIntegrationPanel';
@@ -15,6 +17,11 @@ type Props = {
   userSettings: UserSettings;
   isGoogleConnecting: boolean;
   isGoogleDisconnecting: boolean;
+  isMicrosoftConnecting: boolean;
+  isMicrosoftDisconnecting: boolean;
+  isAppleFeedCreating: boolean;
+  isAppleFeedRevoking: boolean;
+  appleFeedLink: AppleCalendarFeedCreateResponse | null;
   isZoomConnecting: boolean;
   isYandexConnecting: boolean;
   isYandexDisconnecting: boolean;
@@ -23,7 +30,14 @@ type Props = {
   onConnectYandex: () => void;
   onDisconnectYandex: () => void;
   onDisconnectGoogle: () => void;
+  onConnectMicrosoft: () => void;
+  onDisconnectMicrosoft: () => void;
+  onCreateAppleFeed: () => void;
+  onRevokeAppleFeed: () => void;
+  onDismissAppleFeedLink: () => void;
 };
+
+type HelpKey = 'zoom' | 'yandex' | 'google' | 'microsoft' | 'apple';
 
 function GoogleGIcon() {
   return (
@@ -76,6 +90,11 @@ export function IntegrationsSettingsTab({
   userSettings,
   isGoogleConnecting,
   isGoogleDisconnecting,
+  isMicrosoftConnecting,
+  isMicrosoftDisconnecting,
+  isAppleFeedCreating,
+  isAppleFeedRevoking,
+  appleFeedLink,
   isZoomConnecting,
   isYandexConnecting,
   isYandexDisconnecting,
@@ -84,11 +103,17 @@ export function IntegrationsSettingsTab({
   onConnectYandex,
   onDisconnectYandex,
   onDisconnectGoogle,
+  onConnectMicrosoft,
+  onDisconnectMicrosoft,
+  onCreateAppleFeed,
+  onRevokeAppleFeed,
+  onDismissAppleFeedLink,
 }: Props) {
   const [helpAnchorEl, setHelpAnchorEl] = useState<HTMLElement | null>(null);
-  const [openHelpKey, setOpenHelpKey] = useState<'zoom' | 'yandex' | 'google' | null>(null);
+  const [openHelpKey, setOpenHelpKey] = useState<HelpKey | null>(null);
+  const [isRegenerateConfirmOpen, setIsRegenerateConfirmOpen] = useState(false);
 
-  const handleOpenHelp = (event: MouseEvent<HTMLElement>, key: 'zoom' | 'yandex' | 'google') => {
+  const handleOpenHelp = (event: MouseEvent<HTMLElement>, key: HelpKey) => {
     setHelpAnchorEl(event.currentTarget);
     setOpenHelpKey(key);
   };
@@ -105,7 +130,18 @@ export function IntegrationsSettingsTab({
         ? { title: copy.connectYandexHelpTitle, description: copy.connectYandexHelpDescription }
       : openHelpKey === 'google'
         ? { title: copy.connectGoogleHelpTitle, description: copy.connectGoogleHelpDescription }
+      : openHelpKey === 'microsoft'
+        ? { title: copy.connectMicrosoftHelpTitle, description: copy.connectMicrosoftHelpDescription }
+      : openHelpKey === 'apple'
+        ? { title: copy.appleCalendarHelpTitle, description: copy.appleCalendarHelpDescription }
         : null;
+
+  const isAppleFeedBusy = isAppleFeedCreating || isAppleFeedRevoking;
+
+  const handleConfirmRegenerate = () => {
+    setIsRegenerateConfirmOpen(false);
+    onCreateAppleFeed();
+  };
 
   return (
     <AppForm>
@@ -272,6 +308,126 @@ export function IntegrationsSettingsTab({
             </Stack>
           )}
         />
+
+        <AppIntegrationPanel
+          accentColor="#0078D4"
+          icon={<AppIcons.calendar />}
+          statusLabel={userSettings.microsoftConnected ? copy.integrationStatusConnected : copy.integrationStatusAvailable}
+          isConnected={userSettings.microsoftConnected}
+          title={copy.connectMicrosoftHelpTitle}
+          description={copy.connectMicrosoftHelpDescription}
+          actions={(
+            <Stack spacing={1.5}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                <AppButton
+                  variant="outlined"
+                  onClick={onConnectMicrosoft}
+                  disabled={userSettings.microsoftConnected || isMicrosoftDisconnecting}
+                  isLoading={isMicrosoftConnecting}
+                  startIcon={!isMicrosoftConnecting ? <AppIcons.calendar /> : undefined}
+                  sx={{
+                    minWidth: 164,
+                    textTransform: 'none',
+                    borderColor: '#0078D4',
+                    color: '#0078D4',
+                    backgroundColor: '#FFFFFF',
+                    boxShadow: `0 ${rem(8)} ${rem(18)} ${alpha('#0078D4', 0.12)}`,
+                    '&:hover': {
+                      borderColor: '#005A9E',
+                      backgroundColor: '#F3F9FD',
+                    },
+                  }}
+                >
+                  {isMicrosoftConnecting
+                    ? copy.connectingMicrosoft
+                    : (userSettings.microsoftConnected ? copy.microsoftConnectedLabel : copy.connectMicrosoft)}
+                </AppButton>
+                <IconButton size="small" aria-label={copy.connectMicrosoftHelpTitle} onClick={(event) => handleOpenHelp(event, 'microsoft')}>
+                  <AppIcons.info fontSize="small" />
+                </IconButton>
+              </Stack>
+
+              {userSettings.microsoftConnected && (
+                <AppButton
+                  variant="outlined"
+                  color="error"
+                  onClick={onDisconnectMicrosoft}
+                  isLoading={isMicrosoftDisconnecting}
+                  disabled={isMicrosoftConnecting}
+                  sx={{ alignSelf: 'flex-start', minWidth: 164, backgroundColor: '#FFFFFF' }}
+                >
+                  {isMicrosoftDisconnecting ? copy.disconnectingMicrosoft : copy.disconnectMicrosoft}
+                </AppButton>
+              )}
+
+              <Typography variant="caption" color="text.secondary">
+                {copy.microsoftCalendarCaption}
+              </Typography>
+            </Stack>
+          )}
+        />
+
+        <AppIntegrationPanel
+          accentColor="#555555"
+          icon={<AppIcons.calendar />}
+          statusLabel={userSettings.appleCalendarFeedEnabled ? copy.integrationStatusActive : copy.integrationStatusAvailable}
+          isConnected={userSettings.appleCalendarFeedEnabled}
+          title={copy.appleCalendarHelpTitle}
+          description={copy.appleCalendarHelpDescription}
+          actions={(
+            <Stack spacing={1.5}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+                {userSettings.appleCalendarFeedEnabled ? (
+                  <AppButton
+                    variant="outlined"
+                    onClick={() => setIsRegenerateConfirmOpen(true)}
+                    isLoading={isAppleFeedCreating}
+                    disabled={isAppleFeedBusy}
+                    sx={{ minWidth: 164, textTransform: 'none', backgroundColor: '#FFFFFF' }}
+                  >
+                    {isAppleFeedCreating ? copy.appleCalendarCreating : copy.appleCalendarRegenerate}
+                  </AppButton>
+                ) : (
+                  <AppButton
+                    variant="outlined"
+                    onClick={onCreateAppleFeed}
+                    isLoading={isAppleFeedCreating}
+                    disabled={isAppleFeedBusy}
+                    startIcon={!isAppleFeedCreating ? <AppIcons.calendar /> : undefined}
+                    sx={{ minWidth: 164, textTransform: 'none', backgroundColor: '#FFFFFF' }}
+                  >
+                    {isAppleFeedCreating ? copy.appleCalendarCreating : copy.appleCalendarCreate}
+                  </AppButton>
+                )}
+                <IconButton size="small" aria-label={copy.appleCalendarHelpTitle} onClick={(event) => handleOpenHelp(event, 'apple')}>
+                  <AppIcons.info fontSize="small" />
+                </IconButton>
+              </Stack>
+
+              {userSettings.appleCalendarFeedEnabled && (
+                <>
+                  <Typography variant="body2" color="text.secondary">
+                    {copy.appleCalendarActiveHint}
+                  </Typography>
+                  <AppButton
+                    variant="outlined"
+                    color="error"
+                    onClick={onRevokeAppleFeed}
+                    isLoading={isAppleFeedRevoking}
+                    disabled={isAppleFeedBusy}
+                    sx={{ alignSelf: 'flex-start', minWidth: 164, backgroundColor: '#FFFFFF' }}
+                  >
+                    {isAppleFeedRevoking ? copy.appleCalendarRevoking : copy.appleCalendarRevoke}
+                  </AppButton>
+                </>
+              )}
+
+              <Typography variant="caption" color="text.secondary">
+                {copy.appleCalendarCaption}
+              </Typography>
+            </Stack>
+          )}
+        />
       </Box>
 
       <Popover
@@ -288,6 +444,44 @@ export function IntegrationsSettingsTab({
           </Typography>
         </Stack>
       </Popover>
+
+      <AppDialog
+        open={Boolean(appleFeedLink)}
+        onClose={onDismissAppleFeedLink}
+        title={copy.appleCalendarLinkTitle}
+        maxWidth="sm"
+        actions={(
+          <>
+            <AppButton variant="outlined" component="a" href={appleFeedLink?.webcalUrl} sx={{ textTransform: 'none' }}>
+              {copy.appleCalendarOpen}
+            </AppButton>
+            <AppButton onClick={onDismissAppleFeedLink}>{copy.appleCalendarDone}</AppButton>
+          </>
+        )}
+      >
+        <Alert severity="warning" variant="outlined">{copy.appleCalendarLinkWarning}</Alert>
+        {appleFeedLink ? (
+          <AppCopyableField
+            label={copy.appleCalendarLinkLabel}
+            value={appleFeedLink.feedUrl}
+            copyLabel={copy.appleCalendarCopy}
+            copiedLabel={copy.appleCalendarCopied}
+            copyFailedLabel={copy.appleCalendarCopyFailed}
+          />
+        ) : null}
+      </AppDialog>
+
+      <AppConfirmDialog
+        open={isRegenerateConfirmOpen}
+        onClose={() => setIsRegenerateConfirmOpen(false)}
+        title={copy.appleCalendarRegenerateTitle}
+        description={copy.appleCalendarRegenerateDescription}
+        maxWidth="xs"
+        cancelLabel={copy.cancel}
+        confirmLabel={copy.appleCalendarRegenerate}
+        onCancel={() => setIsRegenerateConfirmOpen(false)}
+        onConfirm={handleConfirmRegenerate}
+      />
     </AppForm>
   );
 }

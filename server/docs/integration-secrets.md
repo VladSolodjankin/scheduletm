@@ -161,3 +161,16 @@ maintenance-скриптом с поддержкой double-key (старый+н
 всё ещё содержит plaintext-колонки `google_api_key`, `google_refresh_token`, `telegram_bot_token`. Код больше
 не пишет туда секреты в открытом виде (см. комментарий в `updateUserTelegramIntegration`), но исторические
 значения могли остаться. Эта таблица не входит в объём данной миграции — требует отдельного аудита/очистки.
+
+## Microsoft 365 / Outlook (календарь)
+
+- Колонки `web_user_integrations`: `microsoft_access_token_encrypted`, `microsoft_refresh_token_encrypted`
+  (шифруются через `integrationSecretCrypto`), `microsoft_token_expires_at`, `microsoft_connected_at`, `microsoft_granted_scopes`.
+- Env: `MICROSOFT_OAUTH_CLIENT_ID`, `MICROSOFT_OAUTH_CLIENT_SECRET`, `MICROSOFT_OAUTH_REDIRECT_URI`
+  (`<API_BASE_URL>/api/integrations/microsoft/oauth/callback`). Scopes зашиты в коде.
+- Refresh token ротируется при каждом обновлении и сохраняется сразу; обновление сериализуется блокировкой строки интеграции.
+- OAuth state хранится в `microsoft_oauth_states` (одноразовый, TTL 10 минут).
+
+## Apple Calendar (ICS-подписка)
+
+- В БД хранится только SHA-256 токена ленты (`calendar_feed_token_hash`); полный URL показывается один раз при создании/ротации.
