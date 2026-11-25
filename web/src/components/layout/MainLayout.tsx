@@ -10,6 +10,7 @@ import { DEFAULT_PALETTE_VARIANT_ID } from '../../shared/theme/constants';
 import { Header } from './Header';
 import { LeftMenu } from './LeftMenu';
 import { LegalFooter } from '../legal/LegalFooter';
+import { AgentAssistant } from '../agent/AgentAssistant';
 
 export function MainLayout() {
   const theme = useTheme();
@@ -19,6 +20,8 @@ export function MainLayout() {
   const { isAuthenticated, accessToken, user } = useAuth();
   const lastSyncedPreferencesRef = useRef('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Bumped when the setup assistant saves changes, so the open page remounts and reloads its data.
+  const [pageVersion, setPageVersion] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated || !accessToken) {
@@ -160,10 +163,13 @@ export function MainLayout() {
           />
         </Drawer>
         <Box component="main" className="app-layout__main">
-          <Outlet />
+          <Outlet key={pageVersion} />
         </Box>
       </Box>
 
+      {user && user.role !== WebUserRole.Client
+        ? <AgentAssistant onChangesApplied={() => setPageVersion((version) => version + 1)} />
+        : null}
       <LegalFooter />
     </Box>
   );

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { publicPageEventSchema } from '@scheduletm/shared/public-page-analytics';
+import { publicPageEventSchema } from '@meetli/shared/public-page-analytics';
 import { validPublicPageDocument } from './publicPageTestFixture.js';
 
 const repositories = vi.hoisted(() => ({

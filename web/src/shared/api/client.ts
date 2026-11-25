@@ -23,6 +23,12 @@ function normalizeBaseUrl(rawBaseUrl?: string): string | undefined {
 
 const baseURL = normalizeBaseUrl(import.meta.env.VITE_API_URL ?? runtimeOrigin ?? 'http://localhost:3003');
 
+/** Absolute URL of an `/api/...` path, for requests that cannot go through axios (streamed responses). */
+export function apiUrl(path: string): string {
+  const base = baseURL ?? '';
+  return base.endsWith('/api') ? `${base}${path.replace(/^\/api/, '')}` : `${base}${path}`;
+}
+
 export const apiClient = axios.create({
   baseURL,
   withCredentials: true
@@ -84,7 +90,7 @@ let refreshPromise: Promise<string | null> | null = null;
 async function refreshAccessToken(): Promise<string | null> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
-      const csrfToken = readAuthCsrfCookie() || readCookie('scheduletm_refresh_csrf') || readCookie('meetli_refresh_token_csrf');
+      const csrfToken = readAuthCsrfCookie() || readCookie('meetli_refresh_csrf') || readCookie('meetli_refresh_token_csrf');
       const response = await apiClient.post<{ accessToken: string }>(
         '/api/auth/refresh',
         {},

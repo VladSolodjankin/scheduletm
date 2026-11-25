@@ -24,7 +24,7 @@ import {
   TextBlock,
   validItems,
 } from '../../../components/public-page-blocks/blocks';
-import { parsePublicPageVideoUrl } from '@scheduletm/shared/public-page';
+import { parsePublicPageVideoUrl } from '@meetli/shared/public-page';
 import { getBlockDefinition, registerBlock, type BlockDefinition } from '../model/blockRegistry';
 import type { BlockContent } from '../types/publicPage';
 import { validateSocialPlatforms } from '../model/socialPlatforms';

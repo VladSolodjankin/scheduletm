@@ -1,4 +1,4 @@
-import type { PublicPageAnalytics, PublicPageAnalyticsPeriod, PublicPageEvent } from '@scheduletm/shared/public-page-analytics';
+import type { PublicPageAnalytics, PublicPageAnalyticsPeriod, PublicPageEvent } from '@meetli/shared/public-page-analytics';
 import { env } from '../config/env.js';
 import { findPublicPage, findPublishedPublicPageBySlug, PublicPageRepositoryError } from '../repositories/publicPageRepository.js';
 import { insertPublicPageEvent, readPublicPageAnalytics } from '../repositories/publicPageEventRepository.js';

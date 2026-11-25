@@ -4,7 +4,7 @@ import {
   publicPageDocumentSchema,
   publicPageVideoEmbedUrl,
   validatePublicPageForPublish,
-} from '@scheduletm/shared/public-page';
+} from '@meetli/shared/public-page';
 import { env } from '../src/config/env.js';
 import { validPublicPageDocument } from './publicPageTestFixture.js';
 

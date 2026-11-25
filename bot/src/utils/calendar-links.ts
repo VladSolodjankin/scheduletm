@@ -104,7 +104,7 @@ export function buildAppleCalendarIcs(
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//ScheduleTM//Booking//EN',
+    'PRODID:-//Meetli//Booking//EN',
     'BEGIN:VEVENT',
     `SUMMARY:${title.replace(/\n/g, ' ')}`,
     `DTSTART;TZID=${timezone}:${compactStartDate}T${compactStartTime}00`,

@@ -1,4 +1,4 @@
-# Server (`@scheduletm/server`)
+# Server (`@meetli/server`)
 
 Express/PostgreSQL API для Meetli web.
 
@@ -28,11 +28,11 @@ Appointment audit events автоматически удаляются чере�
 ## Команды
 
 ```bash
-npm run -w @scheduletm/server typecheck
-npm run -w @scheduletm/server test
-npm run -w @scheduletm/server build
-npm run -w @scheduletm/server migrate:latest
-npm run -w @scheduletm/server dev
+npm run -w @meetli/server typecheck
+npm run -w @meetli/server test
+npm run -w @meetli/server build
+npm run -w @meetli/server migrate:latest
+npm run -w @meetli/server dev
 ```
 
 `migrate:latest` изменяет настроенную PostgreSQL — не запускайте против production без обычной процедуры deployment/backup.

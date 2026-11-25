@@ -2,7 +2,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { Alert, Box, Card, CardContent, CircularProgress, IconButton, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { PUBLIC_PAGE_ANALYTICS_PERIODS, type PublicPageAnalytics, type PublicPageAnalyticsPeriod } from '@scheduletm/shared/public-page-analytics';
+import { PUBLIC_PAGE_ANALYTICS_PERIODS, type PublicPageAnalytics, type PublicPageAnalyticsPeriod } from '@meetli/shared/public-page-analytics';
 import { useI18n } from '../shared/i18n/I18nContext';
 import { publicPageText } from '../components/public-page-builder/uiText';
 import { ApiPublicPageRepository } from '../features/public-page-builder/repository/ApiPublicPageRepository';

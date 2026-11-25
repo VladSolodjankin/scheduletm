@@ -1,6 +1,6 @@
 import { Alert, Button, Chip, Stack, TextField, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import type { PublicPageDomain } from '@scheduletm/shared/public-page-domain';
+import type { PublicPageDomain } from '@meetli/shared/public-page-domain';
 import { PublicPageRepositoryError } from '../../features/public-page-builder/repository/PublicPageRepository';
 import type { ApiPublicPageRepository } from '../../features/public-page-builder/repository/ApiPublicPageRepository';
 import type { Locale } from '../../shared/i18n/dictionaries';

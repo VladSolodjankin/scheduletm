@@ -2,8 +2,8 @@ import { expect } from '@playwright/test';
 
 const APP_ORIGIN = new URL(process.env.E2E_BASE_URL || 'http://localhost:5173').origin;
 const E2E_API_URL = process.env.E2E_API_URL || process.env.VITE_API_URL || APP_ORIGIN;
-const AUTH_TOKEN_KEY = 'scheduletm_access_token';
-const AUTH_USER_KEY = 'scheduletm_auth_user';
+const AUTH_TOKEN_KEY = 'meetli_access_token';
+const AUTH_USER_KEY = 'meetli_auth_user';
 const AUTH_REDIRECT_RE = new RegExp('\/(appointments|settings)$');
 const authStateCache = new Map();
 

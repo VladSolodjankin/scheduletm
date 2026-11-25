@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { PUBLIC_PAGE_TEMPLATES } from '../../../src/features/public-page-builder/templates/index.ts';
-import { PUBLIC_PAGE_SCHEMA_VERSION } from '@scheduletm/shared/public-page';
+import { PUBLIC_PAGE_SCHEMA_VERSION } from '@meetli/shared/public-page';
 import { publicPageText } from '../../../src/components/public-page-builder/uiText.ts';
 
 const PAGE_ID = 'c93e91d7-7eb2-41cf-bdac-c8c9d251bb11';
@@ -17,8 +17,8 @@ async function mockPage(page, locale) {
     createdAt: draft.createdAt, updatedAt: draft.updatedAt, publishedAt: draft.createdAt, archivedAt: null }, saves: [], unexpected: [] };
   await page.addInitScript((locale) => {
     localStorage.setItem('ui-locale', locale);
-    localStorage.setItem('scheduletm_access_token', 'mock-token');
-    localStorage.setItem('scheduletm_auth_user', JSON.stringify({ id: 'mock-admin', email: 'admin@example.test', role: 'owner', fullName: 'Test Admin' }));
+    localStorage.setItem('meetli_access_token', 'mock-token');
+    localStorage.setItem('meetli_auth_user', JSON.stringify({ id: 'mock-admin', email: 'admin@example.test', role: 'owner', fullName: 'Test Admin' }));
   }, locale);
   await page.route(/^https?:\/\/[^/]+\/api(?:\/|$)/, async (route) => {
     const request = route.request();

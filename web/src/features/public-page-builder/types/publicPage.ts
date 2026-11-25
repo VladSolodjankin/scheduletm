@@ -1,4 +1,4 @@
-import { PUBLIC_PAGE_LOCALES, PUBLIC_PAGE_SCHEMA_VERSION } from '@scheduletm/shared/public-page';
+import { PUBLIC_PAGE_LOCALES, PUBLIC_PAGE_SCHEMA_VERSION } from '@meetli/shared/public-page';
 
 export { PUBLIC_PAGE_LOCALES, PUBLIC_PAGE_SCHEMA_VERSION };
 export type PublicPageLocale = (typeof PUBLIC_PAGE_LOCALES)[number];

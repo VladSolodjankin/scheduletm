@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-const AUTH_TOKEN_KEY = 'scheduletm_access_token';
-const AUTH_USER_KEY = 'scheduletm_auth_user';
+const AUTH_TOKEN_KEY = 'meetli_access_token';
+const AUTH_USER_KEY = 'meetli_auth_user';
 
 const SPECIALISTS = [
   { id: 11, name: 'Specialist One', isActive: true },

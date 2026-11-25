@@ -4,13 +4,13 @@
     {
       "name": "server",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "-w", "@scheduletm/server", "dev"],
+      "runtimeArgs": ["run", "-w", "@meetli/server", "dev"],
       "port": 3003
     },
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "-w", "@scheduletm/web", "dev"],
+      "runtimeArgs": ["run", "-w", "@meetli/web", "dev"],
       "port": 5173
     }
   ]

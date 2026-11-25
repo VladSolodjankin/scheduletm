@@ -1,5 +1,5 @@
 {
-  "name": "scheduletm",
+  "name": "meetli",
   "private": true,
   "version": "0.1.0",
   "description": "Meetli monorepo (bot, server, web)",
@@ -15,10 +15,10 @@
     "typecheck": "npm run -ws typecheck --if-present",
     "test": "npm run -ws test --if-present",
     "build": "npm run -ws build --if-present",
-    "qa:web": "npm run -w @scheduletm/web verify",
-    "qa:server": "npm run -w @scheduletm/server verify",
-    "qa:bot": "npm run -w @scheduletm/bot verify",
-    "prepare": "npm run -w @scheduletm/shared build"
+    "qa:web": "npm run -w @meetli/web verify",
+    "qa:server": "npm run -w @meetli/server verify",
+    "qa:bot": "npm run -w @meetli/bot verify",
+    "prepare": "npm run -w @meetli/shared build"
   },
   "engines": {
     "node": ">=20.0.0"

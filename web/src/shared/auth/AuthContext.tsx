@@ -20,8 +20,8 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const TOKEN_KEY = 'scheduletm_access_token';
-const USER_KEY = 'scheduletm_auth_user';
+const TOKEN_KEY = 'meetli_access_token';
+const USER_KEY = 'meetli_auth_user';
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [accessToken, setAccessTokenState] = useState<string>(() => localStorage.getItem(TOKEN_KEY) ?? '');

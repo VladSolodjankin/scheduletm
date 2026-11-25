@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { normalizePublicPageDomain } from '@scheduletm/shared/public-page-domain';
+import { normalizePublicPageDomain } from '@meetli/shared/public-page-domain';
 
 const mocks = vi.hoisted(() => ({
   findPublicPage: vi.fn(),

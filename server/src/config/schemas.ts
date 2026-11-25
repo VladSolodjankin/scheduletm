@@ -132,13 +132,14 @@ export const accountSettingsSchema = z.object({
     .number()
     .int(v.meetingDurationMustBeInteger)
     .min(15, v.meetingDurationMin)
-    .max(180, v.meetingDurationMax),
-  dailyDigestEnabled: z.boolean(),
-  weekStartsOnMonday: z.boolean(),
-  businessAddress: z.string().trim().max(512),
-  businessLat: z.coerce.number().min(-90).max(90).nullable(),
-  businessLng: z.coerce.number().min(-180).max(180).nullable(),
-  specialistsSeeAllAppointments: z.boolean(),
+    .max(180, v.meetingDurationMax)
+    .describe('Default appointment length in minutes'),
+  dailyDigestEnabled: z.boolean().describe('Send the daily email digest of upcoming appointments'),
+  weekStartsOnMonday: z.boolean().describe('Calendars start the week on Monday instead of Sunday'),
+  businessAddress: z.string().trim().max(512).describe('Address where clients come for offline appointments'),
+  businessLat: z.coerce.number().min(-90).max(90).nullable().describe('Latitude of the business address'),
+  businessLng: z.coerce.number().min(-180).max(180).nullable().describe('Longitude of the business address'),
+  specialistsSeeAllAppointments: z.boolean().describe('Specialists see every appointment of the account, not only their own'),
 }).partial();
 
 export const BOT_SLUG_PATTERN = /^[a-z0-9_-]{3,40}$/;
@@ -164,12 +165,15 @@ export const userSettingsSchema = z.object({
 }).partial();
 
 export const specialistBookingPolicySchema = z.object({
-  cancelGracePeriodHours: z.coerce.number().int().min(0).max(336),
-  refundOnLateCancel: z.boolean(),
-  autoCancelUnpaidEnabled: z.boolean(),
-  unpaidAutoCancelAfterHours: z.coerce.number().int().min(1).max(720),
-  allowedMeetingProviders: z.string().trim().min(1).max(120),
-  meetingProviderOverrideEnabled: z.boolean(),
+  cancelGracePeriodHours: z.coerce.number().int().min(0).max(336)
+    .describe('Clients can cancel free of charge until this many hours before the appointment'),
+  refundOnLateCancel: z.boolean().describe('Refund the payment when a client cancels later than the grace period'),
+  autoCancelUnpaidEnabled: z.boolean().describe('Cancel appointments that stay unpaid automatically'),
+  unpaidAutoCancelAfterHours: z.coerce.number().int().min(1).max(720)
+    .describe('Hours after booking after which an unpaid appointment is cancelled'),
+  allowedMeetingProviders: z.string().trim().min(1).max(120)
+    .describe('Comma-separated meeting formats clients can choose: offline, zoom, yandex_telemost, manual'),
+  meetingProviderOverrideEnabled: z.boolean().describe('Let the specialist change the meeting format of a single appointment'),
 }).partial();
 
 const WHOLE_DAY_EXCEPTION_TYPES = new Set(['day_off', 'vacation']);
@@ -202,11 +206,14 @@ const notificationChannelSchema = z.enum(['email', 'telegram', 'viber', 'whatsap
 const notificationFrequencySchema = z.enum(['immediate', 'daily']);
 
 export const specialistNotificationSettingsPatchSchema = z.object({
-  notificationType: notificationTypeSchema,
-  preferredChannel: notificationChannelSchema,
-  enabled: z.boolean(),
-  sendTimings: z.array(z.string().trim().min(1)).max(16),
-  frequency: notificationFrequencySchema,
+  notificationType: notificationTypeSchema.describe(
+    'appointment_created: confirmation right after booking; appointment_reminder: reminder before the visit; payment_reminder: reminder to pay',
+  ),
+  preferredChannel: notificationChannelSchema.describe('Channel used to deliver the notification'),
+  enabled: z.boolean().describe('Whether this notification is sent'),
+  sendTimings: z.array(z.string().trim().min(1)).max(16)
+    .describe('When to send: "immediate", or hours before the appointment such as "24h", "2h", "1h"'),
+  frequency: notificationFrequencySchema.describe('immediate: one message per event; daily: grouped into one daily message'),
 });
 
 export const specialistNotificationSettingsBatchSchema = z.object({
@@ -257,15 +264,19 @@ export const specialistCreateSchema = z.object({
 });
 
 export const specialistUpdateSchema = z.object({
-  name: z.string().trim().min(2, v.specialistNameMin).max(120, v.specialistNameMax).optional(),
-  isActive: z.boolean().optional(),
-  baseSessionPrice: z.coerce.number().int().min(0).max(10_000_000).optional(),
-  baseHourPrice: z.coerce.number().int().min(0).max(10_000_000).optional(),
-  workStartHour: z.coerce.number().int().min(0).max(23).optional(),
-  workEndHour: z.coerce.number().int().min(1).max(24).optional(),
-  slotDurationMin: z.coerce.number().int().min(15).max(480).optional(),
-  slotStepMin: z.coerce.number().int().min(5).max(240).optional(),
-  defaultSessionContinuationMin: z.coerce.number().int().min(15).max(480).optional(),
+  name: z.string().trim().min(2, v.specialistNameMin).max(120, v.specialistNameMax).optional()
+    .describe('Name shown to clients'),
+  isActive: z.boolean().optional().describe('Inactive specialists cannot be booked'),
+  baseSessionPrice: z.coerce.number().int().min(0).max(10_000_000).optional()
+    .describe('Default price of one session in whole currency units, e.g. 1500'),
+  baseHourPrice: z.coerce.number().int().min(0).max(10_000_000).optional()
+    .describe('Default price of one hour in whole currency units, e.g. 1500'),
+  workStartHour: z.coerce.number().int().min(0).max(23).optional().describe('Working day starts at this hour (0-23)'),
+  workEndHour: z.coerce.number().int().min(1).max(24).optional().describe('Working day ends at this hour (1-24)'),
+  slotDurationMin: z.coerce.number().int().min(15).max(480).optional().describe('Length of a bookable slot in minutes'),
+  slotStepMin: z.coerce.number().int().min(5).max(240).optional().describe('Minutes between possible slot start times'),
+  defaultSessionContinuationMin: z.coerce.number().int().min(15).max(480).optional()
+    .describe('Minutes added when a session is extended'),
 }).refine((value) => Object.keys(value).length > 0, {
   message: v.atLeastOneFieldToUpdate,
 });
@@ -273,14 +284,14 @@ export const specialistUpdateSchema = z.object({
 const specialistIdsSchema = z.array(z.coerce.number().int().positive()).max(500);
 
 const servicePayloadSchema = z.object({
-  name: z.string().trim().min(1).max(255),
-  description: z.string().trim().max(5000).nullable().optional(),
-  basePrice: z.coerce.number().int().min(0).max(10_000_000),
-  baseDurationMinutes: z.coerce.number().int().min(5).max(1440),
-  firstSessionFree: z.boolean().optional(),
+  name: z.string().trim().min(1).max(255).describe('Service name shown to clients'),
+  description: z.string().trim().max(5000).nullable().optional().describe('What the client gets'),
+  basePrice: z.coerce.number().int().min(0).max(10_000_000).describe('Price in whole currency units, e.g. 1500'),
+  baseDurationMinutes: z.coerce.number().int().min(5).max(1440).describe('Duration in minutes'),
+  firstSessionFree: z.boolean().optional().describe('The first session of a new client is free'),
   imageMediaId: z.string().uuid().nullable().optional(),
-  isActive: z.boolean().optional(),
-  specialistIds: specialistIdsSchema.optional(),
+  isActive: z.boolean().optional().describe('Inactive services cannot be booked'),
+  specialistIds: specialistIdsSchema.optional().describe('Specialists who provide this service'),
 }).strict();
 
 export const serviceCreateSchema = servicePayloadSchema;
@@ -291,9 +302,11 @@ export const serviceUpdateSchema = servicePayloadSchema.partial()
   });
 
 export const serviceAssignmentUpdateSchema = z.object({
-  priceOverride: z.coerce.number().int().min(0).max(10_000_000).nullable().optional(),
-  durationOverrideMinutes: z.coerce.number().int().min(5).max(1440).nullable().optional(),
-  isActive: z.boolean().optional(),
+  priceOverride: z.coerce.number().int().min(0).max(10_000_000).nullable().optional()
+    .describe('This specialist\'s own price in whole currency units, e.g. 1500; null uses the service price'),
+  durationOverrideMinutes: z.coerce.number().int().min(5).max(1440).nullable().optional()
+    .describe('This specialist\'s own duration in minutes; null uses the service duration'),
+  isActive: z.boolean().optional().describe('Whether this specialist currently provides the service'),
 }).strict().refine((value) => Object.keys(value).length > 0, {
   message: v.atLeastOneFieldToUpdate,
 });

@@ -9,7 +9,7 @@ import type { PublicPageDocument } from '../features/public-page-builder/types/p
 import { useI18n } from '../shared/i18n/I18nContext';
 import { apiClient } from '../shared/api/client';
 import type { PublicBookingOptions, PublicBookingService, PublicReviewsData } from '../shared/types/api';
-import { publicPageHead } from '@scheduletm/shared/public-page-seo';
+import { publicPageHead } from '@meetli/shared/public-page-seo';
 import { publicPageCanonicalUrl } from '../features/public-page-builder/config/publicPageUrl';
 import { normalizeSlug } from '../features/public-page-builder/model/slug';
 

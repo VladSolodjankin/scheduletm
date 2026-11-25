@@ -1,4 +1,4 @@
-# Web (`@scheduletm/web`)
+# Web (`@meetli/web`)
 
 React SPA для `product_admin`, tenant `owner`, `specialist` и `client`.
 
@@ -22,12 +22,12 @@ React SPA для `product_admin`, tenant `owner`, `specialist` и `client`.
 ## Команды
 
 ```bash
-npm run -w @scheduletm/web typecheck
-npm run -w @scheduletm/web lint
-npm run -w @scheduletm/web test:unit
-npm run -w @scheduletm/web test:e2e:contracts
-npm run -w @scheduletm/web build
-npm run -w @scheduletm/web dev
+npm run -w @meetli/web typecheck
+npm run -w @meetli/web lint
+npm run -w @meetli/web test:unit
+npm run -w @meetli/web test:e2e:contracts
+npm run -w @meetli/web build
+npm run -w @meetli/web dev
 ```
 
 ## Meetli Design System

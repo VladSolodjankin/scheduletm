@@ -1,8 +1,8 @@
 import axios from 'axios';
-import type { PublicPageDomain } from '@scheduletm/shared/public-page-domain';
-import type { PublicPageAnalytics, PublicPageAnalyticsPeriod, PublicPageEvent } from '@scheduletm/shared/public-page-analytics';
+import type { PublicPageDomain } from '@meetli/shared/public-page-domain';
+import type { PublicPageAnalytics, PublicPageAnalyticsPeriod, PublicPageEvent } from '@meetli/shared/public-page-analytics';
 import { apiClient, authHeaders } from '../../../shared/api/client';
-import { publicPageDocumentSchema } from '@scheduletm/shared/public-page';
+import { publicPageDocumentSchema } from '@meetli/shared/public-page';
 import { PUBLIC_PAGE_SCHEMA_VERSION } from '../types/publicPage';
 import type { PublishValidationIssue } from '../model/publishValidation';
 import type { MediaReference, PublicPageDocument, PublicPageStatus } from '../types/publicPage';

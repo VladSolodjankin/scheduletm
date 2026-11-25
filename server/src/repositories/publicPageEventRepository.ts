@@ -1,4 +1,4 @@
-import type { PublicPageAnalytics, PublicPageAnalyticsPeriod } from '@scheduletm/shared/public-page-analytics';
+import type { PublicPageAnalytics, PublicPageAnalyticsPeriod } from '@meetli/shared/public-page-analytics';
 import { db } from '../db/knex.js';
 
 export async function insertPublicPageEvent(event: {

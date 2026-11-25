@@ -5,8 +5,8 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { RESERVED_PUBLIC_PAGE_SLUGS } from '@scheduletm/shared/public-page';
-import { publicPageHead } from '@scheduletm/shared/public-page-seo';
+import { RESERVED_PUBLIC_PAGE_SLUGS } from '@meetli/shared/public-page';
+import { publicPageHead } from '@meetli/shared/public-page-seo';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), 'dist');
 const port = Number(process.env.PORT ?? 5173);

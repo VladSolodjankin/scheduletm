@@ -7,9 +7,9 @@
 - **Forward-only**: каждая новая migration добавляется как новая версия, без редактирования уже применённых migration-файлов.
 - `down` в migration-файлах сохраняется как **аварийный инструмент** для dev/stage и для controlled rollback, но основная стратегия релиза — новая компенсирующая migration.
 - Перед deploy:
-  1. `npm run -w @scheduletm/server migrate:latest` на staging.
+  1. `npm run -w @meetli/server migrate:latest` на staging.
   2. smoke-check API.
-  3. `npm run -w @scheduletm/server migrate:latest` на production.
+  3. `npm run -w @meetli/server migrate:latest` на production.
 - Если после deploy найден дефект схемы:
   - не переписывать старую migration;
   - выпускать новую migration-fix;

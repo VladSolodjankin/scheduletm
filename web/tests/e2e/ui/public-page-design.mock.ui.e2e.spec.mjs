@@ -23,8 +23,8 @@ async function mockPublicPage(page, theme = PUBLIC_PAGE_THEMES[5], catalog = ser
   };
   await page.addInitScript((language) => {
     localStorage.setItem('ui-locale', language);
-    localStorage.setItem('scheduletm_access_token', 'mock-token');
-    localStorage.setItem('scheduletm_auth_user', JSON.stringify({ id: 'mock-admin', email: 'admin@example.test', role: 'owner', fullName: 'Test Admin' }));
+    localStorage.setItem('meetli_access_token', 'mock-token');
+    localStorage.setItem('meetli_auth_user', JSON.stringify({ id: 'mock-admin', email: 'admin@example.test', role: 'owner', fullName: 'Test Admin' }));
   }, locale);
   await page.route(/^https?:\/\/[^/]+\/api(?:\/|$)/, async (route) => {
     const request = route.request();

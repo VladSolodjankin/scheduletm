@@ -9,8 +9,8 @@ import {
   publicPageRevisionSchema,
   savePublicPageDraftSchema,
 } from '../config/publicPageSchemas.js';
-import { isValidPublicPageSlug, normalizePublicPageSlug } from '@scheduletm/shared/public-page';
-import { PUBLIC_PAGE_ANALYTICS_PERIODS, publicPageEventSchema } from '@scheduletm/shared/public-page-analytics';
+import { isValidPublicPageSlug, normalizePublicPageSlug } from '@meetli/shared/public-page';
+import { PUBLIC_PAGE_ANALYTICS_PERIODS, publicPageEventSchema } from '@meetli/shared/public-page-analytics';
 import { createRequestRateLimit } from '../middlewares/requestRateLimit.js';
 import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddleware.js';
 import { canManageAccountSettings, canReadAccountMedia } from '../policies/rolePermissions.js';

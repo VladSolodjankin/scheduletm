@@ -1,4 +1,4 @@
-import type { PublicPageDocument } from '@scheduletm/shared/public-page';
+import type { PublicPageDocument } from '@meetli/shared/public-page';
 
 export function publicPageBlocks(document: PublicPageDocument) {
   return [...document.sections.flatMap((section) => section.blocks), ...document.archivedBlocks.map(({ block }) => block)];

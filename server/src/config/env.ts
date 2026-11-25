@@ -4,7 +4,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3003),
   APP_URL: z.string().url().default('http://localhost:5173'),
   API_BASE_URL: z.string().url().default('http://localhost:3003'),
-  SESSION_COOKIE_NAME: z.string().default('scheduletm_refresh'),
+  SESSION_COOKIE_NAME: z.string().default('meetli_refresh'),
   SESSION_COOKIE_DOMAIN: z.string().default(''),
   CORS_ALLOWED_ORIGINS: z.string().default('http://localhost:5173,https://meetli.cc,https://www.meetli.cc,https://dev.meetli.cc,https://apidev.meetli.cc'),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
@@ -42,6 +42,7 @@ const envSchema = z.object({
   AWS_S3_BUCKET_NAME: z.string().default(''),
   AWS_DEFAULT_REGION: z.string().default(''),
   REDIS_URL: z.string().default(''),
+  ANTHROPIC_API_KEY: z.string().default(''),
 });
 
 export const env = envSchema.parse(process.env);

@@ -1,4 +1,4 @@
-# Meetli / scheduletm
+# Meetli
 
 TypeScript npm-workspaces monorepo:
 
@@ -31,15 +31,15 @@ npm install
 Проверки:
 
 ```bash
-npm run -w @scheduletm/server typecheck
-npm run -w @scheduletm/server test
-npm run -w @scheduletm/server build
+npm run -w @meetli/server typecheck
+npm run -w @meetli/server test
+npm run -w @meetli/server build
 
-npm run -w @scheduletm/web typecheck
-npm run -w @scheduletm/web lint
-npm run -w @scheduletm/web test:unit
-npm run -w @scheduletm/web test:e2e:contracts
-npm run -w @scheduletm/web build
+npm run -w @meetli/web typecheck
+npm run -w @meetli/web lint
+npm run -w @meetli/web test:unit
+npm run -w @meetli/web test:e2e:contracts
+npm run -w @meetli/web build
 ```
 
 Сводные package-owned проверки:
@@ -58,8 +58,8 @@ PostgreSQL service database. Успешный workflow run является rele
 Локальная разработка:
 
 ```bash
-npm run -w @scheduletm/server dev
-npm run -w @scheduletm/web dev
+npm run -w @meetli/server dev
+npm run -w @meetli/web dev
 ```
 
 Перед запуском нужны локальные env-файлы по примерам `server/.env.example` и `web/.env.example`, а также доступная PostgreSQL.
@@ -67,7 +67,7 @@ npm run -w @scheduletm/web dev
 Миграции:
 
 ```bash
-npm run -w @scheduletm/server migrate:latest
+npm run -w @meetli/server migrate:latest
 ```
 
 Команда изменяет настроенную БД; применяйте её через обычную процедуру deployment/backup.

@@ -1,6 +1,6 @@
 import { promises as dns } from 'node:dns';
-import { normalizePublicPageDomain, type PublicPageDomain } from '@scheduletm/shared/public-page-domain';
-import type { PublicPageDocument } from '@scheduletm/shared/public-page';
+import { normalizePublicPageDomain, type PublicPageDomain } from '@meetli/shared/public-page-domain';
+import type { PublicPageDocument } from '@meetli/shared/public-page';
 import { env } from '../config/env.js';
 import {
   deletePublicPageDomain,

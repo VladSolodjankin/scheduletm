@@ -1,4 +1,4 @@
-import { parsePublicPageVideoUrl, publicPageVideoEmbedUrl } from '@scheduletm/shared/public-page';
+import { parsePublicPageVideoUrl, publicPageVideoEmbedUrl } from '@meetli/shared/public-page';
 import {
   Box,
   Button,

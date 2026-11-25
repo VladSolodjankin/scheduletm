@@ -1,5 +1,5 @@
 {
-  "name": "@scheduletm/web",
+  "name": "@meetli/web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -23,7 +23,7 @@
     "@mui/icons-material": "^9.0.0",
     "@mui/material": "^9.0.0",
     "@mui/x-date-pickers": "^9.0.4",
-    "@scheduletm/shared": "*",
+    "@meetli/shared": "*",
     "axios": "^1.20.0",
     "dayjs": "^1.11.20",
     "embla-carousel-react": "^8.6.0",

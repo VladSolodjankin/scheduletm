@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import { describe, expect, it, vi } from 'vitest';
-import { publicPageDocumentSchema } from '@scheduletm/shared/public-page';
+import { publicPageDocumentSchema } from '@meetli/shared/public-page';
 import { convertPublicPageDocumentToSchemaV6, down, up } from '../src/db/migrations/20261110090000_migrate_public_pages_to_schema_v6.js';
 import { convertPublicPageDocumentToSchemaV7 } from '../src/db/migrations/20261118090000_migrate_public_pages_to_schema_v7.js';
 import { convertPublicPageDocumentToSchemaV8 } from '../src/db/migrations/20261119090000_migrate_public_pages_to_schema_v8.js';

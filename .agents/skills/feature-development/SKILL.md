@@ -1,6 +1,6 @@
 ---
 name: feature-development
-description: Coordinate features and substantial fixes in the scheduletm monorepo with targeted subagents and user review before implementation. Excludes explanations, simple read-only diagnosis, tiny edits and agent-instruction configuration.
+description: Coordinate features and substantial fixes in the meetli monorepo with targeted subagents and user review before implementation. Excludes explanations, simple read-only diagnosis, tiny edits and agent-instruction configuration.
 ---
 
 # Feature development

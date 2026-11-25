@@ -21,9 +21,9 @@
 ## Verification
 
 - Run only checks relevant to changed modules and report commands and results.
-- Web: `npm run -w @scheduletm/web typecheck`, `npm run -w @scheduletm/web lint`, targeted `npm run -w @scheduletm/web test:e2e:contracts`; use UI E2E only for affected flows. `npm run -w @scheduletm/web build` is the production check.
-- Server: `npm run -w @scheduletm/server typecheck`, targeted `npm run -w @scheduletm/server test -- <test-file>`, then package test/build when risk warrants. `qa:server` runs migrations and needs a configured database; do not run it by default.
-- Bot: `npm run -w @scheduletm/bot typecheck`, targeted `npm run -w @scheduletm/bot test -- <test-file>`, then package test/build when warranted.
+- Web: `npm run -w @meetli/web typecheck`, `npm run -w @meetli/web lint`, targeted `npm run -w @meetli/web test:e2e:contracts`; use UI E2E only for affected flows. `npm run -w @meetli/web build` is the production check.
+- Server: `npm run -w @meetli/server typecheck`, targeted `npm run -w @meetli/server test -- <test-file>`, then package test/build when risk warrants. `qa:server` runs migrations and needs a configured database; do not run it by default.
+- Bot: `npm run -w @meetli/bot typecheck`, targeted `npm run -w @meetli/bot test -- <test-file>`, then package test/build when warranted.
 - Use root lint/typecheck/test/build only for cross-package or high-risk changes.
 
 ## Review guidelines

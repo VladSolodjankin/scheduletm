@@ -1,7 +1,7 @@
 import type { CtaAction, PageBlock, PublicPageDocument } from '../types/publicPage';
 import { getBlockDefinition } from './blockRegistry';
 import { isSafeCtaAction } from './cta';
-import { publicPageDocumentSchema } from '@scheduletm/shared/public-page';
+import { publicPageDocumentSchema } from '@meetli/shared/public-page';
 import { collectReferencedMediaIds, validateMediaReference } from './media';
 import { validateSlug } from './slug';
 

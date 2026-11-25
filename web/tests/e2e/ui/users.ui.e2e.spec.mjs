@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { creds, login } from './helpers/auth.mjs';
 
 const API_ORIGIN = process.env.E2E_API_URL || process.env.VITE_API_URL || process.env.E2E_BASE_URL || 'http://localhost:5173';
-const AUTH_TOKEN_KEY = 'scheduletm_access_token';
+const AUTH_TOKEN_KEY = 'meetli_access_token';
 
 test.describe('web ui e2e: users', () => {
   test('owner can create/edit/deactivate user via UI', async ({ page }) => {

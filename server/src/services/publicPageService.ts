@@ -7,7 +7,7 @@ import {
   type PublicPageDocument,
   type PublishIssue,
   validatePublicPageForPublish,
-} from '@scheduletm/shared/public-page';
+} from '@meetli/shared/public-page';
 import {
   archivePublicPage,
   createPublicPage,

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import type { Knex } from 'knex';
 import { describe, expect, it, vi } from 'vitest';
-import { publicPageDocumentSchema } from '@scheduletm/shared/public-page';
+import { publicPageDocumentSchema } from '@meetli/shared/public-page';
 import {
   convertPublicPageDocumentToSchemaV4,
   down,

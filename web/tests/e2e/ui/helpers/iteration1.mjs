@@ -1,8 +1,8 @@
 import { expect } from '@playwright/test';
 import { loggedInRole, login } from './auth.mjs';
 
-const AUTH_TOKEN_KEY = 'scheduletm_access_token';
-const AUTH_USER_KEY = 'scheduletm_auth_user';
+const AUTH_TOKEN_KEY = 'meetli_access_token';
+const AUTH_USER_KEY = 'meetli_auth_user';
 const API_ORIGIN = process.env.E2E_API_URL;
 
 export function requireAdminCredentials() {

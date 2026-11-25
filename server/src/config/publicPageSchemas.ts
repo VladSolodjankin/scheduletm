@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { isIanaTimezone } from '@scheduletm/shared/public-page';
+import { isIanaTimezone } from '@meetli/shared/public-page';
 
-/** HTTP request bodies and queries of the public page API; the page document itself lives in @scheduletm/shared. */
+/** HTTP request bodies and queries of the public page API; the page document itself lives in @meetli/shared. */
 export const savePublicPageDraftSchema = z.object({
   document: z.unknown(),
   expectedRevision: z.number().int().nonnegative(),

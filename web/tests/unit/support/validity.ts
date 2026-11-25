@@ -1,4 +1,4 @@
-import { publicPageDocumentSchema } from '@scheduletm/shared/public-page';
+import { publicPageDocumentSchema } from '@meetli/shared/public-page';
 
 /** Issues of the shared document schema as `{ path, message }`; empty when the document is valid. */
 export function documentIssues(document: unknown): { path: string; message: string; code: string }[] {

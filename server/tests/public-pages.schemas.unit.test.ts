@@ -5,7 +5,7 @@ import {
   publicPageDocumentSchema,
   validatePublicPageForPublish as validateForPublish,
   type PublicPageDocument,
-} from '@scheduletm/shared/public-page';
+} from '@meetli/shared/public-page';
 import { env } from '../src/config/env.js';
 import { validPublicPageDocument } from './publicPageTestFixture.js';
 

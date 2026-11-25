@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import { z } from 'zod';
-import type { PublicPageDocument, PublishIssue } from '@scheduletm/shared/public-page';
+import type { PublicPageDocument, PublishIssue } from '@meetli/shared/public-page';
 import { db } from '../db/knex.js';
 import { publicPageMediaUrl } from '../utils/publicPageMediaUrl.js';
 import { publicPageBlocks } from '../utils/publicPageReferences.js';

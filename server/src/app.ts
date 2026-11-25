@@ -17,6 +17,7 @@ import { publicPageRoutes } from './routes/publicPageRoutes.js';
 import { publicAppointmentManagementRoutes } from './routes/publicAppointmentManagementRoutes.js';
 import { serviceRoutes } from './routes/serviceRoutes.js';
 import { reviewRoutes } from './routes/reviewRoutes.js';
+import { agentRoutes } from './routes/agentRoutes.js';
 import { paymentSettingsRoutes } from './routes/paymentSettingsRoutes.js';
 import { publicPaymentRoutes } from './routes/publicPaymentRoutes.js';
 import { maskSensitivePath } from './utils/logMasking.js';
@@ -137,6 +138,7 @@ export const createApp = () => {
   app.use('/api/specialists', specialistRoutes);
   app.use('/api/services', serviceRoutes);
   app.use('/api/account-reviews', reviewRoutes);
+  app.use('/api/agent', agentRoutes);
   app.use('/api/users', userManagementRoutes);
   app.use('/api/integrations', integrationRoutes);
   app.use('/api/notifications', notificationRoutes);
