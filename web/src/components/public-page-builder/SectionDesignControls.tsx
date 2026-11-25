@@ -19,9 +19,9 @@ import type { Locale } from '../../shared/i18n/dictionaries';
 import { ColorControl } from './ColorControl';
 import { PUBLIC_PAGE_FONT_OPTIONS, PUBLIC_PAGE_SPACING_SCALE } from '../../features/public-page-builder/config/designOptions';
 import { SelectChip, SettingsRow } from './SettingsRow';
-import { publicPageText } from './uiText';
 import { resolvePublicPageThemeVariables } from '../public-page-blocks/publicPageThemeVariables';
 import { LinkLayoutControls } from './LayoutControls';
+import { translate } from '../../shared/i18n/translate';
 
 const SECTION_SPACING_MAX_STEP = PUBLIC_PAGE_SPACING_SCALE.length - 1;
 const TYPOGRAPHY_FONT_OPTIONS = PUBLIC_PAGE_FONT_OPTIONS;
@@ -77,11 +77,11 @@ function NumberStepper({ locale, label, value, inheritedValue, minimum = 0, maxi
       <TextField size="small" value={displayValue}
         aria-label={label} slotProps={{ htmlInput: { readOnly: true } }}
         sx={{ width: 92, '& input': { textAlign: 'right' } }} />
-      <Typography variant="caption" color="text.secondary" sx={{ mx: 0.75 }}>{publicPageText(locale, 'pixels')}</Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ mx: 0.75 }}>{translate(locale, 'publicPageBuilder.pixels')}</Typography>
       <IconButton size="small" aria-label={`${label}: -`} disabled={displayValue <= minimum} onClick={() => changeBy(-1)}><Remove fontSize="small" /></IconButton>
       <IconButton size="small" aria-label={`${label}: +`} disabled={displayValue >= maximum} onClick={() => changeBy(1)}><Add fontSize="small" /></IconButton>
-      {onReset ? <Tooltip title={publicPageText(locale, 'inherit')}><span><IconButton size="small"
-        aria-label={`${label}: ${publicPageText(locale, 'inherit')}`} disabled={value === null} onClick={onReset}>
+      {onReset ? <Tooltip title={translate(locale, 'publicPageBuilder.inherit')}><span><IconButton size="small"
+        aria-label={`${label}: ${translate(locale, 'publicPageBuilder.inherit')}`} disabled={value === null} onClick={onReset}>
         <RestartAlt fontSize="small" />
       </IconButton></span></Tooltip> : null}
     </Stack>
@@ -106,40 +106,40 @@ export function CompactTypographyControls({ locale, label, value, resolvedValue,
   const sizeOptions = [...new Set([effectiveSize, ...TYPOGRAPHY_SIZE_OPTIONS])].sort((first, second) => first - second);
   return <Stack spacing={0.5} role="group" aria-label={label} sx={{ minWidth: 0 }}>
     <Typography variant="subtitle2">{label}</Typography>
-    <SettingsRow label={publicPageText(locale, 'fontFamily')}>
-      <SelectChip ariaLabel={`${label}: ${publicPageText(locale, 'fontFamily')}`}
+    <SettingsRow label={translate(locale, 'publicPageBuilder.fontFamily')}>
+      <SelectChip ariaLabel={`${label}: ${translate(locale, 'publicPageBuilder.fontFamily')}`}
         value={effectiveFamily}
         options={fontOptions.map(([fontLabel, fontFamily]) => ({ value: fontFamily, label: fontLabel }))}
         onChange={(fontFamily) => onChange({ ...value, fontFamily: fontFamily || null })} />
     </SettingsRow>
-    <SettingsRow label={publicPageText(locale, 'fontSize')}>
-      <SelectChip ariaLabel={`${label}: ${publicPageText(locale, 'fontSize')}`}
+    <SettingsRow label={translate(locale, 'publicPageBuilder.fontSize')}>
+      <SelectChip ariaLabel={`${label}: ${translate(locale, 'publicPageBuilder.fontSize')}`}
         value={String(effectiveSize / 16)}
         options={sizeOptions.map((size) => ({ value: String(size / 16), label: `${size / 16}rem` }))}
         onChange={(next) => onChange({ ...value, fontSize: Number(next) * 16 })} />
     </SettingsRow>
-    <SettingsRow label={publicPageText(locale, 'fontWeight')}>
-      <SelectChip ariaLabel={`${label}: ${publicPageText(locale, 'fontWeight')}`}
+    <SettingsRow label={translate(locale, 'publicPageBuilder.fontWeight')}>
+      <SelectChip ariaLabel={`${label}: ${translate(locale, 'publicPageBuilder.fontWeight')}`}
         value={String(effectiveWeight)}
         options={[100, 200, 300, 400, 500, 600, 700, 800, 900].map((weight) => ({ value: String(weight), label: String(weight) }))}
         onChange={(next) => onChange({ ...value, fontWeight: Number(next) })} />
     </SettingsRow>
-    <SettingsRow label={publicPageText(locale, 'fontStyle')}>
-      <SelectChip ariaLabel={`${label}: ${publicPageText(locale, 'fontStyle')}`}
+    <SettingsRow label={translate(locale, 'publicPageBuilder.fontStyle')}>
+      <SelectChip ariaLabel={`${label}: ${translate(locale, 'publicPageBuilder.fontStyle')}`}
         value={effectiveStyle}
         options={[
-          { value: 'normal', label: publicPageText(locale, 'normal') },
-          { value: 'italic', label: publicPageText(locale, 'italic') },
+          { value: 'normal', label: translate(locale, 'publicPageBuilder.normal') },
+          { value: 'italic', label: translate(locale, 'publicPageBuilder.italic') },
         ]}
         onChange={(next) => onChange({ ...value, fontStyle: next as 'normal' | 'italic' })} />
     </SettingsRow>
-    <SettingsRow label={publicPageText(locale, 'textColor')}>
-      <ColorControl variant="chip" label={publicPageText(locale, 'textColor')} value={value.color}
+    <SettingsRow label={translate(locale, 'publicPageBuilder.textColor')}>
+      <ColorControl variant="chip" label={translate(locale, 'publicPageBuilder.textColor')} value={value.color}
         resolvedValue={resolvedValue.color} onChange={(color) => onChange({ ...value, color })} />
     </SettingsRow>
     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-      <Tooltip title={publicPageText(locale, 'inherit')}><span><IconButton size="small"
-        aria-label={`${label}: ${publicPageText(locale, 'inherit')}`}
+      <Tooltip title={translate(locale, 'publicPageBuilder.inherit')}><span><IconButton size="small"
+        aria-label={`${label}: ${translate(locale, 'publicPageBuilder.inherit')}`}
         disabled={Object.values(value).every((item) => item === null)}
         onClick={() => onChange({ fontFamily: null, fontSize: null, fontWeight: null, fontStyle: null, color: null })}>
         <RestartAlt fontSize="small" />
@@ -170,72 +170,72 @@ export function SectionDesignControls({ locale, theme, section, backgroundImageC
     sx={{ border: 0, m: 0, p: 0, minWidth: 0, opacity: isOff ? 0.5 : 1 }}>
     <Stack spacing={3}>
       <Stack spacing={1.5} data-section-settings-group="general">
-        <GroupHeading>{publicPageText(locale, 'general')}</GroupHeading>
-        <SliderRow label={publicPageText(locale, 'paddingTop')} value={spacingStep(design.paddingTop)} minimum={0} maximum={5} step={1}
+        <GroupHeading>{translate(locale, 'publicPageBuilder.general')}</GroupHeading>
+        <SliderRow label={translate(locale, 'publicPageBuilder.paddingTop')} value={spacingStep(design.paddingTop)} minimum={0} maximum={5} step={1}
           valueLabel={`${spacingStep(design.paddingTop)}x`} onChange={(value) => updateDesign({ paddingTop: PUBLIC_PAGE_SPACING_SCALE[value] ?? 0 })} />
-        <SliderRow label={publicPageText(locale, 'paddingBottom')} value={spacingStep(design.paddingBottom)} minimum={0} maximum={5} step={1}
+        <SliderRow label={translate(locale, 'publicPageBuilder.paddingBottom')} value={spacingStep(design.paddingBottom)} minimum={0} maximum={5} step={1}
           valueLabel={`${spacingStep(design.paddingBottom)}x`} onChange={(value) => updateDesign({ paddingBottom: PUBLIC_PAGE_SPACING_SCALE[value] ?? 0 })} />
-        <FormControlLabel label={publicPageText(locale, 'horizontalMargin')} control={<Switch checked={design.horizontalMargin}
+        <FormControlLabel label={translate(locale, 'publicPageBuilder.horizontalMargin')} control={<Switch checked={design.horizontalMargin}
           onChange={(_, checked) => updateDesign({ horizontalMargin: checked })} />} />
-        {!isOff ? <NumberStepper locale={locale} label={publicPageText(locale, 'borderRadius')} value={design.borderRadius}
+        {!isOff ? <NumberStepper locale={locale} label={translate(locale, 'publicPageBuilder.borderRadius')} value={design.borderRadius}
           inheritedValue={theme.styleDefaults.sectionBorderRadius} onChange={(borderRadius) => updateDesign({ borderRadius })}
           onReset={() => updateDesign({ borderRadius: null })} /> : null}
-        <NumberStepper locale={locale} label={publicPageText(locale, 'borderWidth')} value={design.borderWidth} maximum={16}
+        <NumberStepper locale={locale} label={translate(locale, 'publicPageBuilder.borderWidth')} value={design.borderWidth} maximum={16}
           onChange={(borderWidth) => updateDesign({ borderWidth })}
-          colorControl={<Box sx={{ width: 184 }}><ColorControl label={publicPageText(locale, 'borderColor')} value={design.borderColor}
+          colorControl={<Box sx={{ width: 184 }}><ColorControl label={translate(locale, 'publicPageBuilder.borderColor')} value={design.borderColor}
             resolvedValue="transparent"
             onChange={(borderColor) => updateDesign({ borderColor })} /></Box>} />
       </Stack>
 
       <Stack spacing={1.5} data-section-settings-group="background">
-        <GroupHeading>{publicPageText(locale, 'background')}</GroupHeading>
-        <ColorControl label={publicPageText(locale, 'background')} value={design.backgroundColor}
+        <GroupHeading>{translate(locale, 'publicPageBuilder.background')}</GroupHeading>
+        <ColorControl label={translate(locale, 'publicPageBuilder.background')} value={design.backgroundColor}
           resolvedValue={resolvedColor('--page-section-background')}
           onChange={(backgroundColor) => updateDesign({ backgroundColor })} />
         {backgroundImageControl}
       </Stack>
 
       <Stack spacing={1.5} data-section-settings-group="text">
-        <GroupHeading>{publicPageText(locale, 'fieldBody')}</GroupHeading>
-        <CompactTypographyControls locale={locale} label={publicPageText(locale, 'headingStyle')} value={design.headingStyle}
+        <GroupHeading>{translate(locale, 'publicPageBuilder.fieldBody')}</GroupHeading>
+        <CompactTypographyControls locale={locale} label={translate(locale, 'publicPageBuilder.headingStyle')} value={design.headingStyle}
           resolvedValue={resolvedHeadingStyle}
           onChange={(headingStyle) => updateDesign({ headingStyle })} />
-        <CompactTypographyControls locale={locale} label={publicPageText(locale, 'bodyStyle')} value={design.textStyle}
+        <CompactTypographyControls locale={locale} label={translate(locale, 'publicPageBuilder.bodyStyle')} value={design.textStyle}
           resolvedValue={resolvedTextStyle}
           onChange={(textStyle) => updateDesign({ textStyle })} />
       </Stack>
 
       <Stack spacing={1.5} data-section-settings-group="links">
-        <GroupHeading>{publicPageText(locale, 'linksStyle')}</GroupHeading>
+        <GroupHeading>{translate(locale, 'publicPageBuilder.linksStyle')}</GroupHeading>
         <LinkLayoutControls locale={locale} inheritable width={design.linkStyle.width} align={design.linkStyle.align}
           onWidthChange={(width) => updateLinkStyle({ width })} onAlignChange={(align) => updateLinkStyle({ align })} />
-        <CompactTypographyControls locale={locale} label={publicPageText(locale, 'titleStyle')} value={design.linkStyle.titleStyle}
+        <CompactTypographyControls locale={locale} label={translate(locale, 'publicPageBuilder.titleStyle')} value={design.linkStyle.titleStyle}
           resolvedValue={resolvedLinkTitleStyle}
           onChange={(titleStyle) => updateLinkStyle({ titleStyle })} />
-        <CompactTypographyControls locale={locale} label={publicPageText(locale, 'subtitleStyle')} value={design.linkStyle.subtitleStyle}
+        <CompactTypographyControls locale={locale} label={translate(locale, 'publicPageBuilder.subtitleStyle')} value={design.linkStyle.subtitleStyle}
           resolvedValue={resolvedLinkSubtitleStyle}
           onChange={(subtitleStyle) => updateLinkStyle({ subtitleStyle })} />
-        <ColorControl label={publicPageText(locale, 'background')} value={design.linkStyle.backgroundColor}
+        <ColorControl label={translate(locale, 'publicPageBuilder.background')} value={design.linkStyle.backgroundColor}
           resolvedValue={resolvedColor('--theme-link-background')}
           onChange={(backgroundColor) => updateLinkStyle({ backgroundColor })} />
-        <SliderRow label={publicPageText(locale, 'backgroundOpacity')}
+        <SliderRow label={translate(locale, 'publicPageBuilder.backgroundOpacity')}
           value={Math.round((design.linkStyle.backgroundOpacity ?? theme.styleDefaults.linkStyle.backgroundOpacity) * 100)}
           minimum={0} maximum={100} step={1}
           valueLabel={`${Math.round((design.linkStyle.backgroundOpacity ?? theme.styleDefaults.linkStyle.backgroundOpacity) * 100)}%`}
           onChange={(value) => updateLinkStyle({ backgroundOpacity: value / 100 })} />
-        <NumberStepper locale={locale} label={publicPageText(locale, 'borderWidth')} value={design.linkStyle.borderWidth}
+        <NumberStepper locale={locale} label={translate(locale, 'publicPageBuilder.borderWidth')} value={design.linkStyle.borderWidth}
           inheritedValue={theme.styleDefaults.linkStyle.borderWidth} maximum={16}
           onChange={(borderWidth) => updateLinkStyle({ borderWidth })}
           onReset={() => updateLinkStyle({ borderWidth: null })}
-          colorControl={<Box sx={{ width: 184 }}><ColorControl label={publicPageText(locale, 'borderColor')} value={design.linkStyle.borderColor}
+          colorControl={<Box sx={{ width: 184 }}><ColorControl label={translate(locale, 'publicPageBuilder.borderColor')} value={design.linkStyle.borderColor}
             resolvedValue={resolvedColor('--theme-link-border-color')}
             onChange={(borderColor) => updateLinkStyle({ borderColor })} /></Box>} />
-        <TextField size="small" select label={publicPageText(locale, 'shadow')}
+        <TextField size="small" select label={translate(locale, 'publicPageBuilder.shadow')}
           value={design.linkStyle.shadow === null ? '' : String(design.linkStyle.shadow)}
           onChange={(event) => updateLinkStyle({ shadow: event.target.value === '' ? null : event.target.value === 'true' })}>
-          <MenuItem value="">{publicPageText(locale, 'inherit')}</MenuItem>
-          <MenuItem value="true">{publicPageText(locale, 'show')}</MenuItem>
-          <MenuItem value="false">{publicPageText(locale, 'hide')}</MenuItem>
+          <MenuItem value="">{translate(locale, 'publicPageBuilder.inherit')}</MenuItem>
+          <MenuItem value="true">{translate(locale, 'publicPageBuilder.show')}</MenuItem>
+          <MenuItem value="false">{translate(locale, 'publicPageBuilder.hide')}</MenuItem>
         </TextField>
       </Stack>
     </Stack>

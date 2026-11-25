@@ -5,6 +5,7 @@ import { useI18n } from '../../shared/i18n/I18nContext';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppStatusMessage } from '../../shared/ui/AppStatus';
+import { useCopyToClipboard } from '../../shared/utils/useCopyToClipboard';
 
 type BotQrCodeProps = {
   link: string;
@@ -35,6 +36,7 @@ function downloadBlob(blob: Blob, fileName: string) {
 
 export function BotQrCode({ link }: BotQrCodeProps) {
   const { t } = useI18n();
+  const clipboard = useCopyToClipboard({ resetAfterMs: null });
   const [generated, setGenerated] = useState<QrAssets | null>(null);
   const [failedLink, setFailedLink] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ link: string; severity: 'success' | 'error'; message: string } | null>(null);
@@ -81,22 +83,17 @@ export function BotQrCode({ link }: BotQrCodeProps) {
   };
 
   const copyImage = async () => {
-    try {
-      const blob = await (await fetch(assets.png)).blob();
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      setFeedback({ link, severity: 'success', message: t('telegramBot.imageCopied') });
-    } catch {
-      setFeedback({ link, severity: 'error', message: t('telegramBot.copyFailed') });
-    }
+    const blob = await fetch(assets.png).then((response) => response.blob()).catch(() => null);
+    const copied = blob ? await clipboard.copyImage(blob, 'image/png') : false;
+    setFeedback(copied
+      ? { link, severity: 'success', message: t('telegramBot.imageCopied') }
+      : { link, severity: 'error', message: t('telegramBot.copyFailed') });
   };
 
   const copySvg = async () => {
-    try {
-      await navigator.clipboard.writeText(assets.svg);
-      setFeedback({ link, severity: 'success', message: t('telegramBot.svgCopied') });
-    } catch {
-      setFeedback({ link, severity: 'error', message: t('telegramBot.copyFailed') });
-    }
+    setFeedback(await clipboard.copyText(assets.svg)
+      ? { link, severity: 'success', message: t('telegramBot.svgCopied') }
+      : { link, severity: 'error', message: t('telegramBot.copyFailed') });
   };
 
   return (

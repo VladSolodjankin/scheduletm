@@ -1,10 +1,10 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import {
   DEFAULT_LOCALE,
-  dictionaries,
   type Locale,
   type TranslationKey
 } from './dictionaries';
+import { translate } from './translate';
 
 type I18nContextValue = {
   locale: Locale;
@@ -34,17 +34,6 @@ function getInitialLocale(): Locale {
   return matched.startsWith('ru') ? 'ru' : 'en';
 }
 
-function getTranslation(locale: Locale, key: TranslationKey): string {
-  const nestedValue = key
-    .split('.')
-    .reduce<unknown>((acc, part) => (acc as Record<string, unknown>)?.[part], dictionaries[locale]);
-
-  if (typeof nestedValue === 'string') {
-    return nestedValue;
-  }
-
-  return key;
-}
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() => getInitialLocale());
@@ -57,7 +46,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const value = useMemo<I18nContextValue>(() => ({
     locale,
     setLocale,
-    t: (key: TranslationKey) => getTranslation(locale, key)
+    t: (key: TranslationKey) => translate(locale, key)
   }), [locale, setLocale]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
@@ -69,7 +58,7 @@ export function LocaleScope({ locale, children }: { locale: Locale; children: Re
   const value = useMemo<I18nContextValue>(() => ({
     locale,
     setLocale,
-    t: (key: TranslationKey) => getTranslation(locale, key)
+    t: (key: TranslationKey) => translate(locale, key)
   }), [locale, setLocale]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

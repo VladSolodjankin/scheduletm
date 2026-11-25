@@ -2,7 +2,6 @@ import {
   Box,
   Checkbox,
   FormControlLabel,
-  FormGroup,
   Stack,
   Typography,
 } from '@mui/material';
@@ -10,16 +9,27 @@ import { useState, type FormEvent } from 'react';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppDialog } from '../../shared/ui/AppDialog';
 import { AppImageUpload } from '../../shared/ui/AppImageUpload';
+import { AppSectionHeader } from '../../shared/ui/AppSectionHeader';
 import { AppStatusMessage } from '../../shared/ui/AppStatus';
-import { AppSurface } from '../../shared/ui/AppSurface';
 import { AppTextField } from '../../shared/ui/AppTextField';
 import { FormContainer } from '../../shared/ui/FormContainer';
+import {
+  ServiceAssignmentsEditor,
+  createAssignmentDraft,
+  getChangedAssignmentDrafts,
+  hasInvalidAssignmentDrafts,
+  toAssignmentPayload,
+  type AssignmentDraft,
+} from './ServiceAssignmentsEditor';
 import type {
+  AssignmentChange,
   ServiceCatalogItem,
   ServiceImageMedia,
   ServicePayload,
   ServiceSpecialist,
 } from './types';
+import './services.css';
+import { useI18n } from '../../shared/i18n/I18nContext';
 
 const FORM_ID = 'service-form';
 const MAX_NAME_LENGTH = 255;
@@ -34,9 +44,8 @@ type Props = {
   specialists: ServiceSpecialist[];
   isSaving: boolean;
   saveError: string;
-  labels: Record<string, string>;
   onClose: () => void;
-  onSubmit: (payload: ServicePayload) => Promise<boolean>;
+  onSubmit: (payload: ServicePayload, assignmentChanges: AssignmentChange[]) => Promise<boolean>;
   onUploadImage: (file: File, onProgress: (percent: number) => void) => Promise<ServiceImageMedia>;
   onDeleteImage: (mediaId: string) => Promise<void>;
 };
@@ -52,12 +61,12 @@ export function ServiceFormDialog({
   specialists,
   isSaving,
   saveError,
-  labels,
   onClose,
   onSubmit,
   onUploadImage,
   onDeleteImage,
 }: Props) {
+  const { t } = useI18n();
   const [name, setName] = useState(service?.name ?? '');
   const [description, setDescription] = useState(service?.description ?? '');
   const [basePrice, setBasePrice] = useState(String(service?.basePrice ?? 0));
@@ -72,12 +81,21 @@ export function ServiceFormDialog({
   const [imageError, setImageError] = useState('');
   const [isCleaningImage, setIsCleaningImage] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [specialistIds, setSpecialistIds] = useState<number[]>(() => {
+  const [assignmentDrafts, setAssignmentDrafts] = useState<AssignmentDraft[]>(() => {
     const availableSpecialistIds = new Set(specialists.map((item) => item.id));
-    return service?.assignments
+    const activeIds = new Set(service?.assignments
       .filter((item) => item.isActive && availableSpecialistIds.has(item.specialistId))
-      .map((item) => item.specialistId) ?? [];
+      .map((item) => item.specialistId) ?? []);
+    return specialists.map((specialist) => createAssignmentDraft(
+      specialist.id,
+      specialist.name,
+      service?.assignments.find((item) => item.specialistId === specialist.id) ?? null,
+      activeIds.has(specialist.id),
+      true,
+    ));
   });
+  const specialistIds = assignmentDrafts.filter((draft) => draft.enabled).map((draft) => draft.specialistId);
+  const setAllSpecialists = (enabled: boolean) => setAssignmentDrafts((current) => current.map((draft) => ({ ...draft, enabled })));
 
   const parsedPrice = Number(basePrice);
   const parsedDuration = Number(baseDurationMinutes);
@@ -86,7 +104,8 @@ export function ServiceFormDialog({
   const priceInvalid = basePrice === '' || !Number.isInteger(parsedPrice) || parsedPrice < 0 || parsedPrice > MAX_PRICE;
   const durationInvalid = baseDurationMinutes === '' || !Number.isInteger(parsedDuration)
     || parsedDuration < MIN_DURATION || parsedDuration > MAX_DURATION;
-  const formInvalid = nameInvalid || descriptionInvalid || priceInvalid || durationInvalid;
+  const formInvalid = nameInvalid || descriptionInvalid || priceInvalid || durationInvalid
+    || hasInvalidAssignmentDrafts(assignmentDrafts);
 
   const cleanupPendingImage = async (image = pendingImage) => {
     if (!image) {
@@ -102,7 +121,7 @@ export function ServiceFormDialog({
       }
       return true;
     } catch {
-      setImageError(labels.imageCleanupError);
+      setImageError(t('services.errors.imageCleanup'));
       return false;
     } finally {
       setIsCleaningImage(false);
@@ -164,7 +183,10 @@ export function ServiceFormDialog({
       ...(!service || imageChanged ? { imageMediaId } : {}),
       isActive,
       specialistIds,
-    });
+    }, getChangedAssignmentDrafts(assignmentDrafts, { includeAvailability: false }).map((draft) => ({
+      specialistId: draft.specialistId,
+      ...toAssignmentPayload(draft),
+    })));
     if (saved) {
       if (pendingImage) {
         URL.revokeObjectURL(pendingImage.objectUrl);
@@ -182,12 +204,12 @@ export function ServiceFormDialog({
       open={open}
       onClose={isSaving || isImageBusy ? undefined : () => void handleClose()}
       maxWidth="md"
-      title={service ? labels.editTitle : labels.createTitle}
-      description={labels.formDescription}
+      title={service ? t('services.editTitle') : t('services.createTitle')}
+      description={t('services.formDescription')}
       actions={(
         <>
           <AppButton variant="text" onClick={() => void handleClose()} disabled={isSaving || isImageBusy}>
-            {labels.cancel}
+            {t('common.cancel')}
           </AppButton>
           <AppButton
             type="submit"
@@ -195,7 +217,7 @@ export function ServiceFormDialog({
             isLoading={isSaving}
             disabled={isImageBusy || !name.trim()}
           >
-            {labels.save}
+            {t('services.save')}
           </AppButton>
         </>
       )}
@@ -209,37 +231,37 @@ export function ServiceFormDialog({
             <Stack className="service-form__column">
               <AppTextField
                 required
-                label={labels.name}
+                label={t('services.name')}
                 value={name}
                 error={hasSubmitted && nameInvalid}
-                helperText={hasSubmitted && nameInvalid ? labels.nameError : `${name.length}/${MAX_NAME_LENGTH}`}
+                helperText={hasSubmitted && nameInvalid ? t('services.nameError') : `${name.length}/${MAX_NAME_LENGTH}`}
                 slotProps={{ htmlInput: { maxLength: MAX_NAME_LENGTH } }}
                 onChange={(event) => setName(event.target.value)}
               />
               <AppTextField
                 multiline
                 minRows={5}
-                label={labels.description}
+                label={t('services.description')}
                 value={description}
                 error={hasSubmitted && descriptionInvalid}
-                helperText={hasSubmitted && descriptionInvalid ? labels.descriptionError : `${description.length}/${MAX_DESCRIPTION_LENGTH}`}
+                helperText={hasSubmitted && descriptionInvalid ? t('services.descriptionError') : `${description.length}/${MAX_DESCRIPTION_LENGTH}`}
                 slotProps={{ htmlInput: { maxLength: MAX_DESCRIPTION_LENGTH } }}
                 onChange={(event) => setDescription(event.target.value)}
               />
               <AppImageUpload<ServiceImageMedia>
                 key={imageMediaId ?? imageUrl ?? 'empty'}
-                label={labels.image}
+                label={t('services.image')}
                 image={currentImage}
                 previewUrl={pendingImage?.objectUrl ?? imageUrl ?? undefined}
                 uploadImage={onUploadImage}
                 onUploaded={handleUploaded}
                 onRemoved={handleRemoveImage}
-                uploadLabel={labels.uploadImage}
-                replaceLabel={labels.replaceImage}
-                removeLabel={labels.removeImage}
-                invalidTypeText={labels.invalidImageType}
-                tooLargeText={labels.imageTooLarge}
-                uploadErrorText={labels.imageUploadError}
+                uploadLabel={t('services.uploadImage')}
+                replaceLabel={t('services.replaceImage')}
+                removeLabel={t('services.removeImage')}
+                invalidTypeText={t('services.invalidImageType')}
+                tooLargeText={t('services.imageTooLarge')}
+                uploadErrorText={t('services.errors.imageUpload')}
                 defaultAlt={name.trim()}
                 disabled={isSaving || isImageBusy}
                 onBusyChange={setIsUploadingImage}
@@ -250,75 +272,61 @@ export function ServiceFormDialog({
               <AppTextField
                 required
                 type="number"
-                label={labels.price}
+                label={t('services.price')}
                 value={basePrice}
                 error={hasSubmitted && priceInvalid}
-                helperText={hasSubmitted && priceInvalid ? labels.priceError : labels.priceHelper}
+                helperText={hasSubmitted && priceInvalid ? t('services.priceError') : t('services.priceHelper')}
                 slotProps={{ htmlInput: { min: 0, max: MAX_PRICE, step: 1 } }}
                 onChange={(event) => setBasePrice(event.target.value)}
               />
               <AppTextField
                 required
                 type="number"
-                label={labels.duration}
+                label={t('services.duration')}
                 value={baseDurationMinutes}
                 error={hasSubmitted && durationInvalid}
-                helperText={hasSubmitted && durationInvalid ? labels.durationError : labels.durationHelper}
+                helperText={hasSubmitted && durationInvalid ? t('services.durationError') : t('services.durationHelper')}
                 slotProps={{ htmlInput: { min: MIN_DURATION, max: MAX_DURATION, step: 1 } }}
                 onChange={(event) => setBaseDurationMinutes(event.target.value)}
               />
               <FormControlLabel
                 control={<Checkbox checked={firstSessionFree} onChange={(event) => setFirstSessionFree(event.target.checked)} />}
-                label={labels.firstSessionFree}
+                label={t('services.firstSessionFree')}
               />
               <FormControlLabel
                 control={<Checkbox checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />}
-                label={labels.active}
+                label={t('services.active')}
               />
             </Stack>
           </Box>
 
-          <AppSurface
-            title={labels.specialistsTitle}
-            description={labels.specialistsHelper}
-            action={specialists.length ? (
-              <Stack direction="row" className="service-form__selector-actions">
-                <AppButton
-                  size="small"
-                  variant="text"
-                  onClick={() => setSpecialistIds(specialists.map((specialist) => specialist.id))}
-                >
-                  {labels.selectAll}
-                </AppButton>
-                <AppButton size="small" variant="text" onClick={() => setSpecialistIds([])}>
-                  {labels.clear}
-                </AppButton>
-              </Stack>
-            ) : null}
-          >
+          <Stack className="service-form__specialists">
+            <AppSectionHeader
+              title={t('services.specialistsTitle')}
+              description={t('services.assignmentsHelper')}
+              action={specialists.length ? (
+                <Stack direction="row" className="service-form__selector-actions">
+                  <AppButton size="small" variant="text" onClick={() => setAllSpecialists(true)}>
+                    {t('services.selectAll')}
+                  </AppButton>
+                  <AppButton size="small" variant="text" onClick={() => setAllSpecialists(false)}>
+                    {t('services.clear')}
+                  </AppButton>
+                </Stack>
+              ) : null}
+            />
             {specialists.length ? (
-              <FormGroup>
-                <Box className="service-form__specialists-grid">
-                  {specialists.map((specialist) => (
-                    <FormControlLabel
-                      key={specialist.id}
-                      control={(
-                        <Checkbox
-                          checked={specialistIds.includes(specialist.id)}
-                          onChange={(event) => setSpecialistIds((current) => event.target.checked
-                            ? [...current, specialist.id]
-                            : current.filter((id) => id !== specialist.id))}
-                        />
-                      )}
-                      label={specialist.name}
-                    />
-                  ))}
-                </Box>
-              </FormGroup>
+              <ServiceAssignmentsEditor
+                drafts={assignmentDrafts}
+                basePrice={priceInvalid ? 0 : parsedPrice}
+                baseDurationMinutes={durationInvalid ? 60 : parsedDuration}
+                disabled={isSaving}
+                onChange={setAssignmentDrafts}
+              />
             ) : (
-              <Typography variant="body2" color="text.secondary">{labels.noSpecialists}</Typography>
+              <Typography variant="body2" color="text.secondary">{t('services.noSpecialists')}</Typography>
             )}
-          </AppSurface>
+          </Stack>
         </FormContainer>
       </Box>
     </AppDialog>

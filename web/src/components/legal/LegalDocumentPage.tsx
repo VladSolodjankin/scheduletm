@@ -26,7 +26,7 @@ export function LegalDocumentPage({ document }: LegalDocumentPageProps) {
   };
 
   return (
-    <AppPage title={document.title} subtitle={`Effective date: ${document.effectiveDate}`} maxWidth={960}>
+    <AppPage title={document.title} subtitle={`Effective date: ${document.effectiveDate}`} size="document">
       <AppSurface className="app-legal-document">
         <Stack className="app-legal-document__content">
           <Box>

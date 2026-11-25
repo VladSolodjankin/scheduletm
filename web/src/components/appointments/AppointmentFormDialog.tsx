@@ -43,6 +43,8 @@ import type { TranslationKey } from '../../shared/i18n/dictionaries';
 import { TimezoneSelect } from '../TimezoneSelect';
 import { apiClient, authHeaders } from '../../shared/api/client';
 import { resolveApiError } from '../../shared/api/error';
+import { formatDateTime } from '../../shared/utils/dateTime';
+import { useCopyToClipboard } from '../../shared/utils/useCopyToClipboard';
 
 type AppointmentFormState = EditFormState & {
   clientId: string;
@@ -159,7 +161,7 @@ export function AppointmentFormDialog({
   const [formTimeZone, setFormTimeZone] = useState(BROWSER_TIMEZONE);
   const [isGeneratingMeetingLink, setIsGeneratingMeetingLink] = useState(false);
   const [generateMeetingLinkError, setGenerateMeetingLinkError] = useState('');
-  const [isLinkCopied, setIsLinkCopied] = useState(false);
+  const linkCopy = useCopyToClipboard({ resetAfterMs: null });
 
   const isClientRestricted = isClient && Boolean(editingItem);
 
@@ -700,14 +702,7 @@ export function AppointmentFormDialog({
                             edge="end"
                             size="small"
                             aria-label={t('appointments.copyMeetingLink')}
-                            onClick={async () => {
-                              try {
-                                await navigator.clipboard.writeText(meetingLinkValue);
-                                setIsLinkCopied(true);
-                              } catch {
-                                // Clipboard access denied - ничего не делаем.
-                              }
-                            }}
+                            onClick={() => void linkCopy.copyText(meetingLinkValue)}
                           >
                             <AppIcons.copy fontSize="small" />
                           </IconButton>
@@ -854,7 +849,7 @@ export function AppointmentFormDialog({
 
                   return (
                     <Typography key={`${event.createdAt}-${index}`} variant="caption" color="text.secondary">
-                      {`${eventLabel} · ${new Date(event.createdAt).toLocaleString()}`}
+                      {`${eventLabel} · ${formatDateTime(event.createdAt, locale)}`}
                     </Typography>
                   );
                 })}
@@ -864,9 +859,9 @@ export function AppointmentFormDialog({
         </Stack>
     </AppDialog>
     <Snackbar
-      open={isLinkCopied}
+      open={linkCopy.status === 'copied'}
       autoHideDuration={2000}
-      onClose={() => setIsLinkCopied(false)}
+      onClose={linkCopy.reset}
       message={t('appointments.meetingLinkCopied')}
     />
     </>

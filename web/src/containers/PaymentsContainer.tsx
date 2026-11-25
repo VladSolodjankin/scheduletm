@@ -63,7 +63,7 @@ export function PaymentsContainer() {
   }
 
   return (
-    <AppPage title={t('common.payments')} maxWidth={900}>
+    <AppPage title={t('common.payments')} contentWidth="form">
       <Stack spacing={2.5}>
         {error ? <AppStatusMessage severity="error" message={error} /> : null}
         {success ? <AppStatusMessage severity="success" message={success} /> : null}

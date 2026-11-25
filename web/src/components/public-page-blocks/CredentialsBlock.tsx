@@ -3,8 +3,8 @@ import { lazy, Suspense, useState } from 'react';
 import { credentialItems } from '../../features/public-page-builder/model/credentials';
 import type { PageBlock } from '../../features/public-page-builder/types/publicPage';
 import { useI18n } from '../../shared/i18n/I18nContext';
-import { publicPageText } from '../public-page-builder/uiText';
 import { Surface, text, wrappingTextSx } from './blocks';
+import { translate } from '../../shared/i18n/translate';
 
 const ImageLightbox = lazy(() => import('./ImageLightbox'));
 
@@ -23,7 +23,7 @@ export function CredentialsBlock({ block, mediaUrlFor, editor = false }: {
   const heading = title ? <Typography component="h2" variant="h5" sx={wrappingTextSx}>{title}</Typography> : null;
   if (cards.length === 0) {
     return editor ? <Surface block={block}>{heading}
-      <Typography color="text.secondary">{publicPageText(locale, 'credentialsEmpty')}</Typography></Surface> : null;
+      <Typography color="text.secondary">{translate(locale, 'publicPageBuilder.credentialsEmpty')}</Typography></Surface> : null;
   }
   return <Surface block={block}>
     <Box sx={{ display: 'grid', gap: 'var(--app-space-m)' }}>
@@ -32,7 +32,7 @@ export function CredentialsBlock({ block, mediaUrlFor, editor = false }: {
         {cards.map(({ item, url }, index) => {
           const meta = [item.organization.trim(), item.year.trim()].filter(Boolean).join(' · ');
           return <ButtonBase key={item.id} type="button"
-            aria-label={publicPageText(locale, 'credentialsOpen').replace('{title}', item.title)}
+            aria-label={translate(locale, 'publicPageBuilder.credentialsOpen').replace('{title}', item.title)}
             onClick={editor ? undefined : () => setOpenIndex(index)}
             sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', textAlign: 'left', minWidth: 0, overflow: 'hidden',
               bgcolor: 'var(--avatar-surface-background)', color: 'var(--page-text)', border: 'var(--app-border-width) solid',

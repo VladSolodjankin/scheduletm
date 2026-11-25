@@ -29,7 +29,7 @@ import { PageSettingsPanel } from './PageSettingsPanel';
 import type { SlugAvailabilityState } from '../../features/public-page-builder/model/slug';
 import { AdvancedDesignControls } from './AdvancedDesignControls';
 import { LinkLayoutControls, PageWidthControl } from './LayoutControls';
-import { publicPageText } from './uiText';
+import { translate } from '../../shared/i18n/translate';
 
 const fonts = PUBLIC_PAGE_FONT_OPTIONS;
 
@@ -97,28 +97,28 @@ export function DesignPanel({ state, locale, dispatch, repository, slugAvailabil
   const cardSx = (active: boolean) => ({ minWidth: 0, minHeight: 82, p: { xs: 1, sm: 1.5 }, borderRadius: 2, border: '2px solid', borderColor: active ? 'primary.main' : 'divider',
     bgcolor: active ? 'action.selected' : 'background.paper', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
     '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } });
-  const uploadLabels = { uploadLabel: publicPageText(locale, 'uploadImage'), replaceLabel: publicPageText(locale, 'replaceImage'), removeLabel: publicPageText(locale, 'remove'),
-    altLabel: publicPageText(locale, 'imageAlt'), invalidTypeText: publicPageText(locale, 'invalidImageType'), tooLargeText: publicPageText(locale, 'imageTooLarge'), uploadErrorText: publicPageText(locale, 'imageUploadError') };
+  const uploadLabels = { uploadLabel: translate(locale, 'publicPageBuilder.uploadImage'), replaceLabel: translate(locale, 'publicPageBuilder.replaceImage'), removeLabel: translate(locale, 'publicPageBuilder.remove'),
+    altLabel: translate(locale, 'publicPageBuilder.imageAlt'), invalidTypeText: translate(locale, 'publicPageBuilder.invalidImageType'), tooLargeText: translate(locale, 'publicPageBuilder.imageTooLarge'), uploadErrorText: translate(locale, 'publicPageBuilder.imageUploadError') };
   const backgroundMedia = state.document.media.find((media) => media.id === theme.backgroundMediaId) ?? null;
   const activeBackgroundPreset = theme.backgroundPreset ?? 'none';
   const toggleSimple = (section: SimpleDesignSection) => (_event: SyntheticEvent, expanded: boolean) => setSimpleExpanded(expanded ? section : false);
-  const categoryLabels = { neutral: publicPageText(locale, 'categoryNeutral'), bright: publicPageText(locale, 'categoryBright'), dark: publicPageText(locale, 'categoryDark') };
+  const categoryLabels = { neutral: translate(locale, 'publicPageBuilder.categoryNeutral'), bright: translate(locale, 'publicPageBuilder.categoryBright'), dark: translate(locale, 'publicPageBuilder.categoryDark') };
   const visiblePalettes = PUBLIC_PAGE_THEMES.filter((palette) => PUBLIC_PAGE_THEME_CATEGORY[palette.id] === colorCategory);
   const visibleBackgroundPresets = PUBLIC_PAGE_BACKGROUND_PRESETS.filter((preset) => preset.category === null || preset.category === backgroundCategory);
   return <Box component="fieldset" disabled={busy} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}>
-    <Tabs value={activeTab} onChange={(_event, value: DesignTab) => setActiveTab(value)} aria-label={publicPageText(locale, 'designEditorMode')}
+    <Tabs value={activeTab} onChange={(_event, value: DesignTab) => setActiveTab(value)} aria-label={translate(locale, 'publicPageBuilder.designEditorMode')}
       variant="fullWidth" sx={{ mb: 2, minHeight: 40, bgcolor: 'action.hover', borderRadius: 2, p: 0.5,
         '& .MuiTab-root': { minHeight: 32, py: 0.5 }, '& .Mui-selected': { bgcolor: 'background.paper', borderRadius: 1.5, boxShadow: 1 },
         '& .MuiTabs-indicator': { display: 'none' } }}>
-      <Tab id={`${tabsId}-simple-tab`} aria-controls={`${tabsId}-simple-panel`} value="simple" label={publicPageText(locale, 'simpleEditor')} />
-      <Tab id={`${tabsId}-advanced-tab`} aria-controls={`${tabsId}-advanced-panel`} value="advanced" label={publicPageText(locale, 'advancedEditor')} />
+      <Tab id={`${tabsId}-simple-tab`} aria-controls={`${tabsId}-simple-panel`} value="simple" label={translate(locale, 'publicPageBuilder.simpleEditor')} />
+      <Tab id={`${tabsId}-advanced-tab`} aria-controls={`${tabsId}-advanced-panel`} value="advanced" label={translate(locale, 'publicPageBuilder.advancedEditor')} />
     </Tabs>
     <Box role="tabpanel" id={`${tabsId}-simple-panel`} aria-labelledby={`${tabsId}-simple-tab`} hidden={activeTab !== 'simple'}>
       <Stack spacing={1}>
         <Accordion disableGutters expanded={simpleExpanded === 'colors'} onChange={toggleSimple('colors')} sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'colorPalettes')}</Typography></AccordionSummary>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{translate(locale, 'publicPageBuilder.colorPalettes')}</Typography></AccordionSummary>
           <AccordionDetails>
-            <CategoryTabs value={colorCategory} categories={PUBLIC_PAGE_THEME_CATEGORIES} labels={categoryLabels} onChange={setColorCategory} ariaLabel={publicPageText(locale, 'colorPalettes')} />
+            <CategoryTabs value={colorCategory} categories={PUBLIC_PAGE_THEME_CATEGORIES} labels={categoryLabels} onChange={setColorCategory} ariaLabel={translate(locale, 'publicPageBuilder.colorPalettes')} />
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(5, minmax(0, 1fr))' }, gap: 1.5 }}>
         {visiblePalettes.map((palette) => <Box component="button" type="button" key={palette.id} aria-label={palette.name} aria-pressed={theme.id === palette.id} onClick={() => selectPalette(palette)} sx={cardSx(theme.id === palette.id)}>
           <Stack direction="row" spacing={-0.75}>{palette.swatches.map((color, index) => <Box key={`${color}-${index}`} sx={{ width: { xs: 24, xl: 30 }, height: { xs: 24, xl: 30 }, borderRadius: '50%', bgcolor: color, border: '1px solid', borderColor: 'divider' }} />)}</Stack>
@@ -127,33 +127,33 @@ export function DesignPanel({ state, locale, dispatch, repository, slugAvailabil
           </AccordionDetails>
         </Accordion>
         <Accordion disableGutters expanded={simpleExpanded === 'fonts'} onChange={toggleSimple('fonts')} sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'fonts')}</Typography></AccordionSummary>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{translate(locale, 'publicPageBuilder.fonts')}</Typography></AccordionSummary>
           <AccordionDetails>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(5, minmax(0, 1fr))' }, gap: 1.5 }}>
         {fonts.map(([label, value]) => <Box component="button" type="button" key={label} aria-pressed={theme.fontFamily === value} onClick={() => update(applyPublicPageThemeFont(theme, value))}
-          sx={{ ...cardSx(theme.fontFamily === value), fontFamily: value, flexDirection: 'column' }}><Typography sx={{ fontFamily: value, fontSize: 20 }}>{publicPageText(locale, 'fontPreview')}</Typography><Typography sx={{ fontFamily: value }}>{label}</Typography></Box>)}
+          sx={{ ...cardSx(theme.fontFamily === value), fontFamily: value, flexDirection: 'column' }}><Typography sx={{ fontFamily: value, fontSize: 20 }}>{translate(locale, 'publicPageBuilder.fontPreview')}</Typography><Typography sx={{ fontFamily: value }}>{label}</Typography></Box>)}
             </Box>
           </AccordionDetails>
         </Accordion>
         <Accordion disableGutters expanded={simpleExpanded === 'rounding'} onChange={toggleSimple('rounding')} sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'rounding')}</Typography></AccordionSummary>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{translate(locale, 'publicPageBuilder.rounding')}</Typography></AccordionSummary>
           <AccordionDetails>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>{roundings.map((item) => <Box component="button" type="button" aria-label={publicPageText(locale, item.id)} aria-pressed={theme.roundingStyle === item.id} key={item.id} onClick={() => update(applyPublicPageThemeRounding(theme, item.id))} sx={cardSx(theme.roundingStyle === item.id)}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>{roundings.map((item) => <Box component="button" type="button" aria-label={translate(locale, `publicPageBuilder.${item.id}`)} aria-pressed={theme.roundingStyle === item.id} key={item.id} onClick={() => update(applyPublicPageThemeRounding(theme, item.id))} sx={cardSx(theme.roundingStyle === item.id)}>
               <Box sx={{ width: 86, maxWidth: '100%', height: 36, bgcolor: 'text.secondary', borderRadius: item.radius }} /></Box>)}</Box>
           </AccordionDetails>
         </Accordion>
         <Accordion disableGutters expanded={simpleExpanded === 'links'} onChange={toggleSimple('links')} sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'linkStyles')}</Typography></AccordionSummary>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{translate(locale, 'publicPageBuilder.linkStyles')}</Typography></AccordionSummary>
           <AccordionDetails>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>{linkStyles.map((item, index) => {
         const bg = item.surface ? theme.colors.surface : theme.colors.primary; const borderWidth = item.outline ? 1 : 0;
         const active = theme.linkStylePreset === item.id;
-        return <Box component="button" type="button" aria-label={`${publicPageText(locale, 'linkStyle')} ${index + 1}`} aria-pressed={active} key={item.id} onClick={() => update(applyPublicPageLinkStyle(theme, item.id))} sx={cardSx(active)}>
+        return <Box component="button" type="button" aria-label={`${translate(locale, 'publicPageBuilder.linkStyle')} ${index + 1}`} aria-pressed={active} key={item.id} onClick={() => update(applyPublicPageLinkStyle(theme, item.id))} sx={cardSx(active)}>
           <Box sx={{ width: '75%', height: 34, bgcolor: bg, border: `${borderWidth}px solid ${theme.colors.primary}`, borderRadius: 1, boxShadow: item.shadow === 'strong' ? `0 4px 0 ${theme.colors.text}` : item.shadow ? 2 : 0 }} /></Box>;
             })}</Box>
             <FormControlLabel sx={{ mt: 1.5, ml: 0 }} control={<Switch checked={theme.linkTextAlign === 'center'}
               onChange={(event) => update(applyPublicPageLinkTextAlign(theme, event.target.checked ? 'center' : 'left'))} />}
-              label={publicPageText(locale, 'centeredText')} />
+              label={translate(locale, 'publicPageBuilder.centeredText')} />
             <Box sx={{ mt: 1.5 }}>
               <LinkLayoutControls locale={locale} width={theme.styleDefaults.linkStyle.width} align={theme.styleDefaults.linkStyle.align}
                 onWidthChange={(width) => width && update(applyPublicPageLinkLayout(theme, { width }))}
@@ -162,30 +162,30 @@ export function DesignPanel({ state, locale, dispatch, repository, slugAvailabil
           </AccordionDetails>
         </Accordion>
         <Accordion disableGutters expanded={simpleExpanded === 'pageWidth'} onChange={toggleSimple('pageWidth')} sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'pageWidth')}</Typography></AccordionSummary>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{translate(locale, 'publicPageBuilder.pageWidth')}</Typography></AccordionSummary>
           <AccordionDetails>
             <PageWidthControl locale={locale} value={theme.pageWidth} onChange={(pageWidth) => update({ ...theme, pageWidth })} />
           </AccordionDetails>
         </Accordion>
         <Accordion disableGutters expanded={simpleExpanded === 'spacing'} onChange={toggleSimple('spacing')} sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'blockSpacing')}</Typography></AccordionSummary>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{translate(locale, 'publicPageBuilder.blockSpacing')}</Typography></AccordionSummary>
           <AccordionDetails>
-            <ToggleButtonGroup exclusive fullWidth size="small" aria-label={publicPageText(locale, 'blockSpacing')} value={theme.tokens.layout.linkGap}
+            <ToggleButtonGroup exclusive fullWidth size="small" aria-label={translate(locale, 'publicPageBuilder.blockSpacing')} value={theme.tokens.layout.linkGap}
               onChange={(_event, next: number | null) => { if (next !== null) {update({ ...theme, tokens: { ...theme.tokens, layout: { ...theme.tokens.layout, linkGap: next } } });} }}>
-              {PUBLIC_PAGE_BLOCK_GAPS.map((gap, index) => <ToggleButton key={gap} value={gap}>{publicPageText(locale, (['spacingCompact', 'spacingComfortable', 'spacingAiry'] as const)[index])}</ToggleButton>)}
+              {PUBLIC_PAGE_BLOCK_GAPS.map((gap, index) => <ToggleButton key={gap} value={gap}>{translate(locale, `publicPageBuilder.${(['spacingCompact', 'spacingComfortable', 'spacingAiry'] as const)[index]}`)}</ToggleButton>)}
             </ToggleButtonGroup>
           </AccordionDetails>
         </Accordion>
         <Accordion disableGutters expanded={simpleExpanded === 'background'} onChange={toggleSimple('background')} sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'background')}</Typography></AccordionSummary>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{translate(locale, 'publicPageBuilder.background')}</Typography></AccordionSummary>
           <AccordionDetails><Stack spacing={3}>
-            <Box><Typography variant="subtitle2" sx={{ mb: 1.5 }}>{publicPageText(locale, 'backgroundPreset')}</Typography>
-              <CategoryTabs value={backgroundCategory} categories={PUBLIC_PAGE_BACKGROUND_CATEGORIES} labels={categoryLabels} onChange={setBackgroundCategory} ariaLabel={publicPageText(locale, 'backgroundPreset')} />
+            <Box><Typography variant="subtitle2" sx={{ mb: 1.5 }}>{translate(locale, 'publicPageBuilder.backgroundPreset')}</Typography>
+              <CategoryTabs value={backgroundCategory} categories={PUBLIC_PAGE_BACKGROUND_CATEGORIES} labels={categoryLabels} onChange={setBackgroundCategory} ariaLabel={translate(locale, 'publicPageBuilder.backgroundPreset')} />
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(88px, 1fr))', gap: 1 }}>
         {visibleBackgroundPresets.map((preset) => {
           const active = activeBackgroundPreset === preset.id;
-          const label = preset.id === 'none' ? publicPageText(locale, 'none') : preset.id;
-          return <Box component="button" type="button" key={preset.id} aria-label={`${publicPageText(locale, 'backgroundPreset')}: ${label}`}
+          const label = preset.id === 'none' ? translate(locale, 'publicPageBuilder.none') : preset.id;
+          return <Box component="button" type="button" key={preset.id} aria-label={`${translate(locale, 'publicPageBuilder.backgroundPreset')}: ${label}`}
             aria-pressed={active} onClick={() => update({ ...theme, backgroundPreset: preset.id === 'none' ? null : preset.id })}
             sx={{ ...cardSx(active), minHeight: 64, p: 0.75 }}>
             <Box aria-hidden sx={{ width: '100%', height: 46, borderRadius: 1.5, border: '1px solid', borderColor: 'divider',
@@ -197,10 +197,10 @@ export function DesignPanel({ state, locale, dispatch, repository, slugAvailabil
         })}
               </Box>
             </Box>
-            <Box><Typography variant="subtitle2" sx={{ mb: 1.5 }}>{publicPageText(locale, 'backgroundImage')}</Typography>
+            <Box><Typography variant="subtitle2" sx={{ mb: 1.5 }}>{translate(locale, 'publicPageBuilder.backgroundImage')}</Typography>
               <ImageUploadControl compact disabled={busy} onBusyChange={onBusyChange} focusMarker="theme.backgroundMediaId"
                 altFocusMarker={theme.backgroundMediaId ? `media:${theme.backgroundMediaId}:alt` : undefined}
-                label={publicPageText(locale, 'pageBackground')} media={backgroundMedia} previewUrl={theme.backgroundMediaId ? previewUrls.get(theme.backgroundMediaId) : undefined} repository={repository} {...uploadLabels}
+                label={translate(locale, 'publicPageBuilder.pageBackground')} media={backgroundMedia} previewUrl={theme.backgroundMediaId ? previewUrls.get(theme.backgroundMediaId) : undefined} repository={repository} {...uploadLabels}
                 onAltChange={(media) => dispatch({ type: 'media/add', media })}
                 onUploaded={async (media, url) => {
                   if (!mountedRef.current) {
@@ -215,19 +215,19 @@ export function DesignPanel({ state, locale, dispatch, repository, slugAvailabil
                 }}
                 onRemoved={() => { const previous = theme.backgroundMediaId; update({ ...theme, backgroundMediaId: null }); if (previous) {dispatch({ type: 'media/remove', mediaId: previous });} }} />
               {theme.backgroundMediaId ? <Stack spacing={1.5} sx={{ mt: 1.5 }}>
-                <TextField select size="small" label={publicPageText(locale, 'imageFit')} value={theme.backgroundFit}
+                <TextField select size="small" label={translate(locale, 'publicPageBuilder.imageFit')} value={theme.backgroundFit}
                   onChange={(event) => update({ ...theme, backgroundFit: event.target.value as 'cover' | 'contain' })}>
-                  <MenuItem value="cover">{publicPageText(locale, 'imageFitCover')}</MenuItem>
-                  <MenuItem value="contain">{publicPageText(locale, 'imageFitContain')}</MenuItem>
+                  <MenuItem value="cover">{translate(locale, 'publicPageBuilder.imageFitCover')}</MenuItem>
+                  <MenuItem value="contain">{translate(locale, 'publicPageBuilder.imageFitContain')}</MenuItem>
                 </TextField>
-                <TextField size="small" label={publicPageText(locale, 'focalPoint')} value={theme.backgroundPosition}
+                <TextField size="small" label={translate(locale, 'publicPageBuilder.focalPoint')} value={theme.backgroundPosition}
                   onChange={(event) => update({ ...theme, backgroundPosition: event.target.value })} />
               </Stack> : null}
             </Box>
           </Stack></AccordionDetails>
         </Accordion>
         <Accordion disableGutters expanded={simpleExpanded === 'page'} onChange={toggleSimple('page')} sx={accordionSx}>
-          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{publicPageText(locale, 'addressAndSearch')}</Typography></AccordionSummary>
+          <AccordionSummary expandIcon={<ExpandMore />}><Typography variant="subtitle1">{translate(locale, 'publicPageBuilder.addressAndSearch')}</Typography></AccordionSummary>
           <AccordionDetails>
             <PageSettingsPanel state={state} locale={locale} dispatch={dispatch} repository={repository} slugAvailability={slugAvailability}
               previewUrls={previewUrls} onMediaPreview={onMediaPreview} busy={busy} onBusyChange={onBusyChange} />

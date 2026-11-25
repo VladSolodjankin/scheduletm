@@ -10,8 +10,8 @@ import { lazy, Suspense, useCallback, useEffect, useState, type FocusEvent, type
 import type { PageBlock } from '../../features/public-page-builder/types/publicPage';
 import { useI18n } from '../../shared/i18n/I18nContext';
 import type { PublicReview, PublicReviewsData } from '../../shared/types/api';
-import { publicPageText } from '../public-page-builder/uiText';
 import { linkLayoutSx, ordinaryPublicPageLinkSx, Surface, text, useReducedMotion, wrappingTextSx } from './blocks';
+import { translate } from '../../shared/i18n/translate';
 
 const ImageLightbox = lazy(() => import('./ImageLightbox'));
 
@@ -78,20 +78,20 @@ export function ReviewsBlock({ block, reviews = null, editor = false }: {
   const onBlur = (event: FocusEvent<HTMLDivElement>) => {
     if (!event.currentTarget.contains(event.relatedTarget)) {setFocusWithin(false);}
   };
-  const title = text(block.content.title) || publicPageText(locale, 'blockTypeReviews');
+  const title = text(block.content.title) || translate(locale, 'publicPageBuilder.blockTypeReviews');
   if (editor) {
     return <Surface block={block}><Stack sx={{ gap: 'var(--app-space-m)' }}>
       <Typography component="h2" variant="h5" sx={wrappingTextSx}>{title}</Typography>
-      <Typography color="text.secondary">{publicPageText(locale, 'reviewsEditorHint')}</Typography>
+      <Typography color="text.secondary">{translate(locale, 'publicPageBuilder.reviewsEditorHint')}</Typography>
       <Button component="a" href="/account-reviews" target="_blank" rel="noopener noreferrer" variant="contained"
-        sx={{ ...ordinaryPublicPageLinkSx, ...linkLayoutSx, minHeight: 'var(--app-control-l)', textTransform: 'none' }}>{publicPageText(locale, 'reviewsManageLink')}</Button>
+        sx={{ ...ordinaryPublicPageLinkSx, ...linkLayoutSx, minHeight: 'var(--app-control-l)', textTransform: 'none' }}>{translate(locale, 'publicPageBuilder.reviewsManageLink')}</Button>
     </Stack></Surface>;
   }
   if (count === 0) {return null;}
   const average = reviews?.summary.average ?? null;
   const showSummary = block.content.showSummary !== false && (reviews?.summary.count ?? 0) > 0 && average !== null;
   const summaryText = showSummary
-    ? publicPageText(locale, reviews!.summary.count === 1 ? 'reviewsSummaryOne' : 'reviewsSummary')
+    ? translate(locale, `publicPageBuilder.${reviews!.summary.count === 1 ? 'reviewsSummaryOne' : 'reviewsSummary'}`)
       .replace('{average}', new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(average))
       .replace('{count}', String(reviews!.summary.count))
     : '';
@@ -99,22 +99,22 @@ export function ReviewsBlock({ block, reviews = null, editor = false }: {
   const slides = list.map((review, index) => {
     const inactive = count > 1 && selectedIndex !== index;
     const screenshotIndex = screenshots.findIndex((shot) => shot.reviewId === review.id);
-    return <Box key={review.id} role="group" aria-roledescription={publicPageText(locale, 'carouselSlide')}
+    return <Box key={review.id} role="group" aria-roledescription={translate(locale, 'publicPageBuilder.carouselSlide')}
       inert={inactive ? true : undefined} aria-hidden={inactive ? true : undefined}
-      aria-label={publicPageText(locale, 'reviewsSlidePosition').replace('{current}', String(index + 1)).replace('{total}', String(count))}
+      aria-label={translate(locale, 'publicPageBuilder.reviewsSlidePosition').replace('{current}', String(index + 1)).replace('{total}', String(count))}
       sx={{ flex: count === 1 ? '0 0 100%' : '0 0 88%', minWidth: 0, display: 'flex', opacity: inactive ? 0.56 : 1,
         '@container public-reviews (min-width: 600px)': { flex: count === 1 ? '0 0 100%' : '0 0 72%' } }}>
       <Card variant="outlined" sx={{ width: '100%', minWidth: 0, bgcolor: 'var(--avatar-surface-background)', color: 'var(--page-text)',
         borderColor: 'color-mix(in srgb, var(--page-text) 14%, transparent)', borderRadius: 'var(--block-border-radius)' }}>
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 'var(--page-space-1)', p: 'var(--page-space-3)', '&:last-child': { pb: 'var(--page-space-3)' } }}>
-          <Stars rating={review.rating} label={publicPageText(locale, 'reviewsRating').replace('{rating}', String(review.rating))} />
+          <Stars rating={review.rating} label={translate(locale, 'publicPageBuilder.reviewsRating').replace('{rating}', String(review.rating))} />
           <Stack direction="row" sx={{ alignItems: 'baseline', flexWrap: 'wrap', gap: 'var(--page-space-1)' }}>
             <Typography component="h3" variant="h6" sx={wrappingTextSx}>{review.name}</Typography>
             {review.reviewDate ? <Typography variant="body2" sx={{ ...wrappingTextSx, opacity: 0.75 }}>{review.reviewDate}</Typography> : null}
           </Stack>
           <Typography sx={wrappingTextSx}>{review.text}</Typography>
           {review.screenshot ? <ButtonBase type="button" onClick={() => setLightboxIndex(screenshotIndex)}
-            aria-label={publicPageText(locale, 'reviewsScreenshotOpen').replace('{name}', review.name)}
+            aria-label={translate(locale, 'publicPageBuilder.reviewsScreenshotOpen').replace('{name}', review.name)}
             sx={{ alignSelf: 'flex-start', mt: 'var(--app-space-xs)', borderRadius: 'var(--app-radius-s)', overflow: 'hidden', border: 'var(--app-border-width) solid',
               borderColor: 'color-mix(in srgb, var(--page-text) 14%, transparent)',
               '&:focus-visible': { outline: 'calc(var(--app-border-width) * 2) solid var(--theme-link-border-color)', outlineOffset: 'calc(var(--app-border-width) * 2)' } }}>
@@ -137,19 +137,19 @@ export function ReviewsBlock({ block, reviews = null, editor = false }: {
           '@container public-reviews (min-width: 600px)': { gap: 'var(--page-space-3)' } }}>{slides}</Box>
       </Box>
       <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'center', gap: 'var(--page-space-1)', minHeight: 'var(--app-control-s)' }}>
-        <IconButton size="small" aria-label={publicPageText(locale, 'reviewsPrevious')} disabled={selectedIndex === 0}
+        <IconButton size="small" aria-label={translate(locale, 'publicPageBuilder.reviewsPrevious')} disabled={selectedIndex === 0}
           onClick={() => navigate(selectedIndex - 1)}><ChevronLeftRounded /></IconButton>
-        <Stack direction="row" role="group" sx={{ gap: 'var(--page-space-1)' }} aria-label={publicPageText(locale, 'reviewsCarouselNavigation')}>
+        <Stack direction="row" role="group" sx={{ gap: 'var(--page-space-1)' }} aria-label={translate(locale, 'publicPageBuilder.reviewsCarouselNavigation')}>
           {list.map((review, index) => <ButtonBase key={review.id} data-review-dot
-            aria-label={publicPageText(locale, 'goToReviewSlide').replace('{number}', String(index + 1))}
+            aria-label={translate(locale, 'publicPageBuilder.goToReviewSlide').replace('{number}', String(index + 1))}
             aria-current={selectedIndex === index ? 'true' : undefined} onClick={() => navigate(index)}
             onKeyDown={(event) => onDotKeyDown(event, index)}
             sx={{ width: 'var(--app-space-m)', height: 'var(--app-space-m)', borderRadius: 'var(--app-radius-circle)', bgcolor: selectedIndex === index ? 'var(--theme-link-background)' : 'transparent',
               border: 'calc(var(--app-border-width) * 2) solid', borderColor: 'var(--theme-link-background)', '&:focus-visible': { outline: 'calc(var(--app-border-width) * 2) solid var(--theme-link-border-color)', outlineOffset: 'calc(var(--app-border-width) * 2)' } }} />)}
         </Stack>
-        <IconButton size="small" aria-label={publicPageText(locale, 'reviewsNext')} disabled={selectedIndex === count - 1}
+        <IconButton size="small" aria-label={translate(locale, 'publicPageBuilder.reviewsNext')} disabled={selectedIndex === count - 1}
           onClick={() => navigate(selectedIndex + 1)}><ChevronRightRounded /></IconButton>
-        {autoplayConfigured && !reducedMotion ? <IconButton size="small" aria-label={publicPageText(locale, autoplayPaused ? 'carouselPlay' : 'carouselPause')}
+        {autoplayConfigured && !reducedMotion ? <IconButton size="small" aria-label={translate(locale, `publicPageBuilder.${autoplayPaused ? 'carouselPlay' : 'carouselPause'}`)}
           onClick={() => setAutoplayPaused((value) => !value)}>{autoplayPaused ? <PlayArrow /> : <Pause />}</IconButton> : null}
       </Stack>
     </>}

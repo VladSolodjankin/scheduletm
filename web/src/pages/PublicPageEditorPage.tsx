@@ -28,7 +28,6 @@ import { DesignPanel } from '../components/public-page-builder/DesignPanel';
 import { ResponsivePreview } from '../components/public-page-builder/ResponsivePreview';
 import { type BuilderDragPayload, type BuilderDropDestination } from '../components/public-page-builder/BuilderDnd';
 import { ItemSizeToggle } from '../components/public-page-builder/LayoutControls';
-import { publicPageText } from '../components/public-page-builder/uiText';
 import { createBlankPublicPageDocument } from '../components/public-page-builder/createBlankDocument';
 import { usePublicPageEditor } from '../features/public-page-builder/hooks/usePublicPageEditor';
 import { selectCanRedo, selectCanUndo } from '../features/public-page-builder/model/selectors';
@@ -49,6 +48,8 @@ import { normalizeSlug } from '../features/public-page-builder/model/slug';
 import { resolvePublishIssueFocusTarget, type PublishIssueFocusTarget } from '../features/public-page-builder/model/publishValidation';
 import type { EditorAction } from '../features/public-page-builder/types/actions';
 import { publicPageDisplayUrl, publicPageUrl } from '../features/public-page-builder/config/publicPageUrl';
+import { translate } from '../shared/i18n/translate';
+import { useCopyToClipboard } from '../shared/utils/useCopyToClipboard';
 
 function cloneBlock(block: PageBlock): PageBlock {
   return { ...structuredClone(block), id: createStableId() };
@@ -165,7 +166,7 @@ function Editor({
     && canonicalSlug !== editor.publishedSlug;
   const [device, setDevice] = useState<PreviewDevice>(() => isCompact ? 'mobile' : 'desktop');
   const effectiveDevice: PreviewDevice = isCompact ? 'mobile' : device;
-  const [copied, setCopied] = useState(false);
+  const linkCopy = useCopyToClipboard({ resetAfterMs: null });
   const [addBlockOpen, setAddBlockOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [blockEditorOpen, setBlockEditorOpen] = useState(false);
@@ -333,8 +334,7 @@ function Editor({
     .map((block) => block.content.platform as SocialPlatform)), [state.document.sections]);
   const copyLink = async () => {
     if (!editor.publishedSlug) {return;}
-    await navigator.clipboard.writeText(publicPageUrl(editor.publishedSlug));
-    setCopied(true);
+    await linkCopy.copyText(publicPageUrl(editor.publishedSlug));
   };
   const focusValidationAlert = useCallback(() => {
     window.setTimeout(() => validationAlertRef.current?.focus(), 250);
@@ -400,7 +400,7 @@ function Editor({
     const resolution = resolveEditorReorder(state.document.sections, target, direction);
     if (resolution.status === 'missing') {return;}
     if (resolution.status === 'boundary') {
-      const message = interpolate(publicPageText(locale, resolution.edge === 'start' ? 'reorderAtStart' : 'reorderAtEnd'), {
+      const message = interpolate(translate(locale, `publicPageBuilder.${resolution.edge === 'start' ? 'reorderAtStart' : 'reorderAtEnd'}`), {
         name: resolution.name,
       });
       setReorderAnnouncement((current) => ({ nonce: current.nonce + 1, message }));
@@ -408,7 +408,7 @@ function Editor({
     }
     reorderFocusRef.current = target;
     dispatch(resolution.action);
-    const message = interpolate(publicPageText(locale, target.type === 'section' ? 'sectionMovedAnnouncement' : 'blockMovedAnnouncement'), {
+    const message = interpolate(translate(locale, `publicPageBuilder.${target.type === 'section' ? 'sectionMovedAnnouncement' : 'blockMovedAnnouncement'}`), {
       name: resolution.name,
       position: resolution.position,
       total: resolution.total,
@@ -539,7 +539,7 @@ function Editor({
             <BuilderToolbar
               locale={locale}
               compact={isCompact}
-              title={publicPageText(locale, 'editorWorkspaceTitle')}
+              title={translate(locale, 'publicPageBuilder.editorWorkspaceTitle')}
               saveStatus={state.saveStatus}
               dirty={state.dirty}
               isPublishing={editor.isPublishing}
@@ -551,21 +551,21 @@ function Editor({
               onUndo={() => dispatch({ type: 'history/undo' })}
               onRedo={() => dispatch({ type: 'history/redo' })}
               onPublish={() => void handlePublish()}
-              pageActions={<Stack component="nav" aria-label={publicPageText(locale, 'mobileNavigation')} direction="row" spacing={0} sx={{ alignItems: 'center', justifyContent: 'space-between', minWidth: 0 }}>
+              pageActions={<Stack component="nav" aria-label={translate(locale, 'publicPageBuilder.mobileNavigation')} direction="row" spacing={0} sx={{ alignItems: 'center', justifyContent: 'space-between', minWidth: 0 }}>
                 <Stack direction="row" spacing={isCompact ? 0 : 1} sx={{ alignItems: 'center', minWidth: 0 }}>
                   {isCompact ? (
                     <>
-                      <Tooltip title={publicPageText(locale, 'settings')}><IconButton aria-label={publicPageText(locale, 'settings')} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }} sx={{ width: 40, height: 40 }}><Settings fontSize="small" /></IconButton></Tooltip>
+                      <Tooltip title={translate(locale, 'publicPageBuilder.settings')}><IconButton aria-label={translate(locale, 'publicPageBuilder.settings')} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }} sx={{ width: 40, height: 40 }}><Settings fontSize="small" /></IconButton></Tooltip>
                     </>
                   ) : (
                     <>
-                      <Button variant="outlined" startIcon={<Settings />} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }}>{publicPageText(locale, 'settings')}</Button>
+                      <Button variant="outlined" startIcon={<Settings />} onClick={() => { dispatch({ type: 'selection/clear' }); setDesignPanelFocusMarker(null); setDesignOpen(true); }}>{translate(locale, 'publicPageBuilder.settings')}</Button>
                     </>
                   )}
                   {editor.publishedSlug ? (
                     <>
-                      <Tooltip title={publicPageText(locale, 'copyLink')}><IconButton aria-label={publicPageText(locale, 'copyLink')} onClick={() => void copyLink()} sx={isCompact ? { width: 40, height: 40 } : undefined}><ContentCopy fontSize={isCompact ? 'small' : 'medium'} /></IconButton></Tooltip>
-                      <Tooltip title={publicPageText(locale, 'open')}><IconButton aria-label={publicPageText(locale, 'open')} href={publicPageUrl(editor.publishedSlug)} target="_blank" rel="noopener noreferrer" sx={isCompact ? { width: 40, height: 40 } : undefined}><OpenInNew fontSize={isCompact ? 'small' : 'medium'} /></IconButton></Tooltip>
+                      <Tooltip title={translate(locale, 'publicPageBuilder.copyLink')}><IconButton aria-label={translate(locale, 'publicPageBuilder.copyLink')} onClick={() => void copyLink()} sx={isCompact ? { width: 40, height: 40 } : undefined}><ContentCopy fontSize={isCompact ? 'small' : 'medium'} /></IconButton></Tooltip>
+                      <Tooltip title={translate(locale, 'publicPageBuilder.open')}><IconButton aria-label={translate(locale, 'publicPageBuilder.open')} href={publicPageUrl(editor.publishedSlug)} target="_blank" rel="noopener noreferrer" sx={isCompact ? { width: 40, height: 40 } : undefined}><OpenInNew fontSize={isCompact ? 'small' : 'medium'} /></IconButton></Tooltip>
                     </>
                   ) : null}
                 </Stack>
@@ -573,26 +573,26 @@ function Editor({
               </Stack>}
             />
           {editor.hasConflict ? (
-            <Alert severity="error" action={<Button onClick={() => void editor.reloadLatest()}>{publicPageText(locale, 'reloadLatest')}</Button>}>
-              {publicPageText(locale, 'revisionConflict')}
+            <Alert severity="error" action={<Button onClick={() => void editor.reloadLatest()}>{translate(locale, 'publicPageBuilder.reloadLatest')}</Button>}>
+              {translate(locale, 'publicPageBuilder.revisionConflict')}
             </Alert>
           ) : state.saveStatus === 'error' ? (
-            <Alert severity="error" action={<Button disabled={isSlugUnavailable} onClick={() => void editor.save()}>{publicPageText(locale, 'retry')}</Button>}>
-              {publicPageText(locale, state.saveError === 'revision_conflict'
+            <Alert severity="error" action={<Button disabled={isSlugUnavailable} onClick={() => void editor.save()}>{translate(locale, 'publicPageBuilder.retry')}</Button>}>
+              {translate(locale, `publicPageBuilder.${state.saveError === 'revision_conflict'
                 ? 'revisionConflict'
                 : state.saveError === 'slug_conflict'
                   ? 'slugConflict'
-                  : 'saveError')}
+                  : 'saveError'}`)}
             </Alert>
           ) : null}
           {publishedSlugChanged && editor.publishedSlug ? (
             <Alert severity="info">
-              {publicPageText(locale, 'publishedSlugChangeWarning').replace('{url}', publicPageDisplayUrl(editor.publishedSlug))}
+              {translate(locale, 'publicPageBuilder.publishedSlugChangeWarning').replace('{url}', publicPageDisplayUrl(editor.publishedSlug))}
             </Alert>
           ) : null}
           {editor.publishIssues.length > 0 ? (
             <Alert ref={validationAlertRef} tabIndex={-1} severity="warning" data-public-page-validation-alert>
-              {publicPageText(locale, 'validation')}
+              {translate(locale, 'publicPageBuilder.validation')}
               <Box component="ul" sx={{ m: 0, pl: 3 }}>
                 {editor.publishIssues.map((issue, index) => (
                   <li key={`${issue.path}-${issue.code}-${index}`}>
@@ -606,11 +606,11 @@ function Editor({
       }
       preview={<Box ref={previewRootRef} sx={{ height: '100%', minHeight: 0, position: 'relative' }}>
         <ResponsivePreview document={previewDocument} device={effectiveDevice} mediaUrls={previewMediaUrls} services={previewServices} compactEditor={isCompact}
-          ariaLabel={publicPageText(locale, 'preview')} editor={{
+          ariaLabel={translate(locale, 'publicPageBuilder.preview')} editor={{
           onDropItem,
-          scheduleStatusLabel: (visible) => publicPageText(locale, visible ? 'scheduleActive' : 'scheduleInactive'),
+          scheduleStatusLabel: (visible) => translate(locale, `publicPageBuilder.${visible ? 'scheduleActive' : 'scheduleInactive'}`),
           selectedBlockId: state.selection.blockId,
-          blockAriaLabel: (name) => publicPageText(locale, 'blockEditorLabel').replace('{name}', name),
+          blockAriaLabel: (name) => translate(locale, 'publicPageBuilder.blockEditorLabel').replace('{name}', name),
           onSelectBlock: (sectionId, blockId) => {
             setBlockEditorFocusRequest(null);
             dispatch({ type: 'selection/set', sectionId, blockId });
@@ -620,15 +620,15 @@ function Editor({
             {(() => {
               const action = (label: string, icon: React.ReactElement, onClick: () => void, disabled = false) => <Tooltip title={label}><span><IconButton size="small" aria-label={label} disabled={disabled} onClick={(event) => { event.stopPropagation(); onClick(); }}>{icon}</IconButton></span></Tooltip>;
               return <>
-                {state.selection.sectionId === section.id && !state.selection.blockId ? action(publicPageText(locale, 'clearSelection'), <Close fontSize="small" />, () => dispatch({ type: 'selection/clear' })) : null}
+                {state.selection.sectionId === section.id && !state.selection.blockId ? action(translate(locale, 'publicPageBuilder.clearSelection'), <Close fontSize="small" />, () => dispatch({ type: 'selection/clear' })) : null}
                 {section.design.variant !== 'off' ? <Box onClick={(event) => event.stopPropagation()}>
                   <ItemSizeToggle locale={locale} size={section.size} onChange={(size) => dispatch({ type: 'section/update', sectionId: section.id, changes: { size } })} />
                 </Box> : null}
-                {action(publicPageText(locale, 'moveUp'), <ArrowUpward fontSize="small" />, () => reorderEditorItem({ type: 'section', sectionId: section.id }, -1), sectionIndex === 0)}
-                {action(publicPageText(locale, 'moveDown'), <ArrowDownward fontSize="small" />, () => reorderEditorItem({ type: 'section', sectionId: section.id }, 1), sectionIndex === state.document.sections.length - 1)}
-                {action(publicPageText(locale, section.visible ? 'hide' : 'show'), section.visible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />, () => dispatch({ type: 'section/toggle', sectionId: section.id }))}
-                {action(publicPageText(locale, 'duplicate'), <ContentCopyOutlined fontSize="small" />, () => dispatch({ type: 'section/add', index: sectionIndex + 1, section: { ...structuredClone(section), id: createStableId(), blocks: section.blocks.map(cloneBlock) } }), !canDuplicateBlocks(section.blocks))}
-                {action(publicPageText(locale, 'remove'), <DeleteOutlined fontSize="small" />, () => { if (window.confirm(publicPageText(locale, 'deleteSectionConfirm'))) { removeSection(section); } })}
+                {action(translate(locale, 'publicPageBuilder.moveUp'), <ArrowUpward fontSize="small" />, () => reorderEditorItem({ type: 'section', sectionId: section.id }, -1), sectionIndex === 0)}
+                {action(translate(locale, 'publicPageBuilder.moveDown'), <ArrowDownward fontSize="small" />, () => reorderEditorItem({ type: 'section', sectionId: section.id }, 1), sectionIndex === state.document.sections.length - 1)}
+                {action(translate(locale, `publicPageBuilder.${section.visible ? 'hide' : 'show'}`), section.visible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />, () => dispatch({ type: 'section/toggle', sectionId: section.id }))}
+                {action(translate(locale, 'publicPageBuilder.duplicate'), <ContentCopyOutlined fontSize="small" />, () => dispatch({ type: 'section/add', index: sectionIndex + 1, section: { ...structuredClone(section), id: createStableId(), blocks: section.blocks.map(cloneBlock) } }), !canDuplicateBlocks(section.blocks))}
+                {action(translate(locale, 'publicPageBuilder.remove'), <DeleteOutlined fontSize="small" />, () => { if (window.confirm(translate(locale, 'publicPageBuilder.deleteSectionConfirm'))) { removeSection(section); } })}
               </>;
             })()}
           </Stack>,
@@ -636,7 +636,7 @@ function Editor({
             const block = section.blocks[blockIndex];
             const action = (label: string, icon: React.ReactElement, onClick: () => void, disabled = false) => <Tooltip title={label}><span><IconButton size="small" aria-label={label} disabled={disabled} onClick={(event) => { event.stopPropagation(); onClick(); }}>{icon}</IconButton></span></Tooltip>;
             return <Stack className="public-page-block-actions" direction="row" sx={{ position: 'absolute', zIndex: 4, top: 'calc(100% + var(--app-space-xs))', left: '50%', transform: 'translateX(-50%)', p: 0.25, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 3, opacity: { xs: state.selection.blockId === block.id ? 1 : 0, md: 0 }, pointerEvents: { xs: state.selection.blockId === block.id ? 'auto' : 'none', md: 'none' }, transition: 'opacity 120ms', '&::before': { content: '""', position: 'absolute', left: 0, right: 0, top: 'calc(var(--app-space-xs) * -1)', height: 'var(--app-space-xs)' } }}>
-              {action(publicPageText(locale, 'edit'), <EditOutlined fontSize="small" />, () => {
+              {action(translate(locale, 'publicPageBuilder.edit'), <EditOutlined fontSize="small" />, () => {
                 setBlockEditorFocusRequest(null);
                 dispatch({ type: 'selection/set', sectionId: section.id, blockId: block.id });
                 setBlockEditorOpen(true);
@@ -644,21 +644,21 @@ function Editor({
               <Box onClick={(event) => event.stopPropagation()}>
                 <ItemSizeToggle locale={locale} size={block.size} onChange={(size) => dispatch({ type: 'block/update', sectionId: section.id, blockId: block.id, changes: { size } })} />
               </Box>
-              {action(publicPageText(locale, 'moveUp'), <ArrowUpward fontSize="small" />, () => reorderEditorItem({ type: 'block', sectionId: section.id, blockId: block.id }, -1), blockIndex === 0)}
-              {action(publicPageText(locale, 'moveDown'), <ArrowDownward fontSize="small" />, () => reorderEditorItem({ type: 'block', sectionId: section.id, blockId: block.id }, 1), blockIndex === section.blocks.length - 1)}
-              {action(publicPageText(locale, block.visible ? 'hide' : 'show'), block.visible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />, () => dispatch({ type: 'block/toggle', sectionId: section.id, blockId: block.id }))}
-              {action(publicPageText(locale, 'duplicate'), <ContentCopyOutlined fontSize="small" />, () => dispatch({ type: 'block/add', sectionId: section.id, block: cloneBlock(block), index: blockIndex + 1 }), !canDuplicateBlocks([block]))}
-              {action(publicPageText(locale, 'archiveBlock'), <ArchiveOutlined fontSize="small" />, () => dispatch({ type: 'block/archive', sectionId: section.id, blockId: block.id }))}
-              {action(publicPageText(locale, 'remove'), <DeleteOutlined fontSize="small" />, () => { if (window.confirm(publicPageText(locale, 'deleteBlockConfirm'))) { removeBlock(section, block); } })}
+              {action(translate(locale, 'publicPageBuilder.moveUp'), <ArrowUpward fontSize="small" />, () => reorderEditorItem({ type: 'block', sectionId: section.id, blockId: block.id }, -1), blockIndex === 0)}
+              {action(translate(locale, 'publicPageBuilder.moveDown'), <ArrowDownward fontSize="small" />, () => reorderEditorItem({ type: 'block', sectionId: section.id, blockId: block.id }, 1), blockIndex === section.blocks.length - 1)}
+              {action(translate(locale, `publicPageBuilder.${block.visible ? 'hide' : 'show'}`), block.visible ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />, () => dispatch({ type: 'block/toggle', sectionId: section.id, blockId: block.id }))}
+              {action(translate(locale, 'publicPageBuilder.duplicate'), <ContentCopyOutlined fontSize="small" />, () => dispatch({ type: 'block/add', sectionId: section.id, block: cloneBlock(block), index: blockIndex + 1 }), !canDuplicateBlocks([block]))}
+              {action(translate(locale, 'publicPageBuilder.archiveBlock'), <ArchiveOutlined fontSize="small" />, () => dispatch({ type: 'block/archive', sectionId: section.id, blockId: block.id }))}
+              {action(translate(locale, 'publicPageBuilder.remove'), <DeleteOutlined fontSize="small" />, () => { if (window.confirm(translate(locale, 'publicPageBuilder.deleteBlockConfirm'))) { removeBlock(section, block); } })}
             </Stack>;
           },
           renderSectionDragHandle: (section, sectionIndex, activator) => {
             if (section.design.variant === 'off') {return null;}
-            const hint = publicPageText(locale, 'reorderKeyboardHint');
-            const label = interpolate(publicPageText(locale, 'sectionReorderLabel'), {
+            const hint = translate(locale, 'publicPageBuilder.reorderKeyboardHint');
+            const label = interpolate(translate(locale, 'publicPageBuilder.sectionReorderLabel'), {
               name: section.name, position: sectionIndex + 1, total: state.document.sections.length, hint,
             });
-            return <IconButton {...(activator ?? {})} title={publicPageText(locale, 'drag')} aria-label={label} aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+            return <IconButton {...(activator ?? {})} title={translate(locale, 'publicPageBuilder.drag')} aria-label={label} aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
               onKeyDown={(event) => {
                 if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) {
                   activator?.onKeyDown?.(event);
@@ -674,7 +674,7 @@ function Editor({
           renderSectionResizeHandle: (section, sectionIndex) => {
             const currentBlockCount = section.blocks.length;
             const maximumBlockCount = sectionResizeMaximum(previewDocument.sections, sectionIndex);
-            const label = publicPageText(locale, 'resizeSection');
+            const label = translate(locale, 'publicPageBuilder.resizeSection');
             return <IconButton title={label} aria-label={`${label}: ${section.name}`} role="slider"
               aria-orientation="vertical" aria-valuemin={1} aria-valuemax={maximumBlockCount} aria-valuenow={currentBlockCount}
               className="public-page-section-resize-handle"
@@ -712,11 +712,11 @@ function Editor({
           },
           renderBlockDragHandle: (section, blockIndex, activator) => {
             const block = section.blocks[blockIndex];
-            const hint = publicPageText(locale, 'reorderKeyboardHint');
-            const label = interpolate(publicPageText(locale, 'blockReorderLabel'), {
+            const hint = translate(locale, 'publicPageBuilder.reorderKeyboardHint');
+            const label = interpolate(translate(locale, 'publicPageBuilder.blockReorderLabel'), {
               name: block.name, position: blockIndex + 1, total: section.blocks.length, hint,
             });
-            return <IconButton {...(activator ?? {})} title={publicPageText(locale, 'drag')} aria-label={label} aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+            return <IconButton {...(activator ?? {})} title={translate(locale, 'publicPageBuilder.drag')} aria-label={label} aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
               onKeyDown={(event) => {
                 if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) {
                   activator?.onKeyDown?.(event);
@@ -735,7 +735,7 @@ function Editor({
       </Box>}
       bottomNavigation={<Box data-public-page-add-block-shell sx={{ display: 'flex', width: 'min(13.5rem, calc(100% - 16px))', height: 52, boxSizing: 'border-box', p: 0.5, borderRadius: 2,
         bgcolor: 'grey.900', boxShadow: 6 }}>
-        <Button ref={addBlockButtonRef} variant="contained" size="medium" startIcon={<Add />} onClick={() => setAddBlockOpen(true)} sx={{ width: '100%', minWidth: 0, minHeight: 44 }}>{publicPageText(locale, 'addBlock')}</Button>
+        <Button ref={addBlockButtonRef} variant="contained" size="medium" startIcon={<Add />} onClick={() => setAddBlockOpen(true)} sx={{ width: '100%', minWidth: 0, minHeight: 44 }}>{translate(locale, 'publicPageBuilder.addBlock')}</Button>
       </Box>}
     />
     <Box role="status" aria-live="polite" aria-atomic="true" sx={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, p: 0, m: -1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0 }}>
@@ -790,8 +790,8 @@ function Editor({
         });
       } } }}>
       <DialogTitle id={`${designTitleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
-        <Typography id={designTitleId} component="span" variant="h6" sx={{ flex: 1 }}>{publicPageText(locale, 'settings')}</Typography>
-        <IconButton disabled={designBusy} aria-label={publicPageText(locale, 'close')} onClick={() => { setDesignPanelFocusMarker(null); setDesignOpen(false); }}><Close /></IconButton>
+        <Typography id={designTitleId} component="span" variant="h6" sx={{ flex: 1 }}>{translate(locale, 'publicPageBuilder.settings')}</Typography>
+        <IconButton disabled={designBusy} aria-label={translate(locale, 'publicPageBuilder.close')} onClick={() => { setDesignPanelFocusMarker(null); setDesignOpen(false); }}><Close /></IconButton>
       </DialogTitle>
       <DialogContent ref={designContentRef} dividers sx={{ p: 0, overflow: { xs: 'auto', lg: 'hidden' } }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(360px, 1fr) minmax(0, 2fr)' },
@@ -799,7 +799,7 @@ function Editor({
           <Box sx={{ order: { xs: 1, lg: 0 }, height: { xs: 360, lg: '100%' }, minWidth: 0, minHeight: 0, borderBottom: { xs: 1, lg: 0 },
             borderRight: { lg: 1 }, borderColor: 'divider' }}>
             <ResponsivePreview document={state.document} device="mobile" mediaUrls={mediaUrls} services={previewServices} framed interactive={false}
-              ariaLabel={publicPageText(locale, 'preview')} />
+              ariaLabel={translate(locale, 'publicPageBuilder.preview')} />
           </Box>
           <Box sx={{ order: { xs: 0, lg: 1 }, minWidth: 0, minHeight: 0, overflow: { xs: 'visible', lg: 'auto' }, p: { xs: 2, sm: 3, lg: 4 } }}>
             <DesignPanel key={designPanelFocusMarker ?? 'manual'} state={state} locale={locale} dispatch={dispatch} repository={repository} slugAvailability={editor.slugAvailability}
@@ -814,10 +814,10 @@ function Editor({
       dispatch({ type: 'block/restore', blockId }); return true;
     }} />
     <Snackbar
-      open={copied}
+      open={linkCopy.status === 'copied'}
       autoHideDuration={1800}
-      message={publicPageText(locale, 'linkCopied')}
-      onClose={() => setCopied(false)}
+      message={translate(locale, 'publicPageBuilder.linkCopied')}
+      onClose={linkCopy.reset}
     />
     </>
   );
@@ -889,7 +889,7 @@ export function PublicPageEditorPage() {
     if (status === 'loading') {return <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress /></Box>;}
     if (status === 'error' || !record) {
       const retry = profileId ? load : createNew;
-      return <Alert severity="error" action={<Button onClick={() => void retry()}>{publicPageText(locale, 'retry')}</Button>}>{publicPageText(locale, 'notFound')}</Alert>;
+      return <Alert severity="error" action={<Button onClick={() => void retry()}>{translate(locale, 'publicPageBuilder.retry')}</Button>}>{translate(locale, 'publicPageBuilder.notFound')}</Alert>;
     }
     return <Editor record={record} repository={repository} serviceCatalog={serviceCatalog} servicesLoading={servicesLoading}
       servicesError={servicesError} onRefreshServices={() => {void refreshServices();}} />;

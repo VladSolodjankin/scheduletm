@@ -1,33 +1,34 @@
 import { Box, Typography, type BoxProps } from '@mui/material';
-import type { CSSProperties, ReactNode } from 'react';
-import { rem } from '../theme/constants';
+import type { ReactNode } from 'react';
 
-type AppPageProps = BoxProps & {
+type AppPageProps = Omit<BoxProps, 'maxWidth' | 'width'> & {
   title: string;
   subtitle?: string;
-  maxWidth?: number;
+  /**
+   * Page column width. Every workspace page uses the shared `workspace` width so the layout never jumps
+   * between routes; `document` and `compact` are reserved for client-facing and legal pages.
+   */
+  size?: 'workspace' | 'document' | 'compact';
+  /** Limits the content (not the header) to a comfortable form width, aligned to the page's left edge. */
+  contentWidth?: 'full' | 'form';
   action?: ReactNode;
 };
-
-type AppPageStyle = CSSProperties & { '--app-page-custom-max'?: string };
 
 export function AppPage({
   title,
   subtitle,
   children,
-  maxWidth,
+  size = 'workspace',
+  contentWidth = 'full',
   action,
   className,
-  style,
   ...rest
 }: AppPageProps) {
-  const pageStyle: AppPageStyle = {
-    ...style,
-    ...(maxWidth ? { '--app-page-custom-max': rem(maxWidth) } : {}),
-  };
-
   return (
-    <Box className={['app-page', className].filter(Boolean).join(' ')} style={pageStyle} {...rest}>
+    <Box
+      className={['app-page', size === 'workspace' ? '' : `app-page--${size}`, className].filter(Boolean).join(' ')}
+      {...rest}
+    >
       <Box className="app-page__header">
         <Box className="app-page__heading">
           <Typography variant="h4" className="app-page__title">{title}</Typography>
@@ -39,7 +40,7 @@ export function AppPage({
         </Box>
         {action ? <Box className="app-page__action">{action}</Box> : null}
       </Box>
-      {children}
+      {contentWidth === 'form' ? <Box className="app-page__content--form">{children}</Box> : children}
     </Box>
   );
 }

@@ -48,13 +48,15 @@ test.describe('web ui e2e: users', () => {
       await page.getByRole('button', { name: 'Save' }).click();
       await expect(row.getByText('Client Updated', { exact: true })).toBeVisible();
 
-      await row.getByRole('button', { name: 'Deactivate user' }).click();
+      await row.getByRole('button', { name: 'More actions' }).click();
+      await page.getByRole('menuitem', { name: 'Deactivate user' }).click();
       const deactivateDialog = page.getByRole('dialog', { name: 'Deactivate user?' });
       await deactivateDialog.getByRole('button', { name: 'Deactivate', exact: true }).click();
       await expect(deactivateDialog).toBeHidden();
       await expect(row.getByText('Inactive', { exact: true })).toBeVisible();
 
-      await row.getByRole('button', { name: 'Delete user' }).click();
+      await row.getByRole('button', { name: 'More actions' }).click();
+      await page.getByRole('menuitem', { name: 'Delete user' }).click();
       const deleteDialog = page.getByRole('dialog', { name: 'Delete user?' });
       await expect(deleteDialog.getByText('Total linked appointments: 0')).toBeVisible();
       await deleteDialog.getByRole('button', { name: 'Delete user', exact: true }).click();

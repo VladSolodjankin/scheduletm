@@ -22,7 +22,7 @@ export function ZoomTestPlanPage() {
   };
 
   return (
-    <AppPage title={c.pageTitle} subtitle={c.effectiveDate} maxWidth={960}>
+    <AppPage title={c.pageTitle} subtitle={c.effectiveDate} size="document">
       <AppSurface className="app-legal-document">
         <Stack className="app-legal-document__content">
           <Box>

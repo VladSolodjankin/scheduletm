@@ -17,6 +17,7 @@ import { AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 import { AppPage } from '../shared/ui/AppPage';
 import { AppSurface } from '../shared/ui/AppSurface';
 import { AppTextField } from '../shared/ui/AppTextField';
+import { useCopyToClipboard } from '../shared/utils/useCopyToClipboard';
 
 const SLUG_PATTERN = /^[a-z0-9_-]{3,40}$/;
 const WELCOME_MAX_LENGTH = 500;
@@ -35,7 +36,8 @@ export function TelegramBotContainer() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [linkCopied, setLinkCopied] = useState(false);
+  const linkCopy = useCopyToClipboard({ resetAfterMs: null });
+  const linkCopied = linkCopy.status === 'copied';
   const [tokenInput, setTokenInput] = useState('');
   const [isTokenEditorOpen, setIsTokenEditorOpen] = useState(false);
   const [isUpdatingBot, setIsUpdatingBot] = useState(false);
@@ -72,7 +74,7 @@ export function TelegramBotContainer() {
 
   if (isLoading) {
     return (
-      <AppPage title={t('telegramBot.title')} subtitle={t('telegramBot.subtitle')} maxWidth={760}>
+      <AppPage title={t('telegramBot.title')} subtitle={t('telegramBot.subtitle')} contentWidth="form">
         <AppLoadingState />
       </AppPage>
     );
@@ -80,7 +82,7 @@ export function TelegramBotContainer() {
 
   if (!saved || !draft) {
     return (
-      <AppPage title={t('telegramBot.title')} subtitle={t('telegramBot.subtitle')} maxWidth={760}>
+      <AppPage title={t('telegramBot.title')} subtitle={t('telegramBot.subtitle')} contentWidth="form">
         {error && <AppStatusMessage severity="error" message={error} />}
       </AppPage>
     );
@@ -112,7 +114,7 @@ export function TelegramBotContainer() {
       setSaved(response.data);
       setDraft(toDraft(response.data));
       setSuccess(t('telegramBot.saved'));
-      setLinkCopied(false);
+      linkCopy.reset();
     } catch (caught) {
       setError(resolveError(caught, t('telegramBot.saveFailed')).message);
     } finally {
@@ -135,7 +137,7 @@ export function TelegramBotContainer() {
       setSaved(response.data);
       setTokenInput('');
       setIsTokenEditorOpen(false);
-      setLinkCopied(false);
+      linkCopy.reset();
       setSuccess(successMessage);
     } catch (caught) {
       setError(resolveError(caught, t('telegramBot.ownBotConnectFailed')).message);
@@ -158,10 +160,7 @@ export function TelegramBotContainer() {
     if (!saved.botLink) {
       return;
     }
-    try {
-      await navigator.clipboard.writeText(saved.botLink);
-      setLinkCopied(true);
-    } catch {
+    if (!(await linkCopy.copyText(saved.botLink))) {
       setError(t('telegramBot.copyFailed'));
     }
   };
@@ -212,7 +211,7 @@ export function TelegramBotContainer() {
   );
 
   return (
-    <AppPage title={t('telegramBot.title')} subtitle={t('telegramBot.subtitle')} maxWidth={760}>
+    <AppPage title={t('telegramBot.title')} subtitle={t('telegramBot.subtitle')} contentWidth="form">
       <Stack spacing={2}>
         {error && <AppStatusMessage severity="error" message={error} />}
         {success && <AppStatusMessage severity="success" message={success} />}

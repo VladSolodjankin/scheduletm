@@ -882,7 +882,7 @@ export function SettingsContainer() {
   };
 
   return (
-    <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')} maxWidth={900}>
+    <AppPage title={t('settings.pageTitle')} subtitle={t('settings.pageSubtitle')} contentWidth="form">
       <Stack spacing={2.5}>
         {isOwner && (
           <AppFilterBar

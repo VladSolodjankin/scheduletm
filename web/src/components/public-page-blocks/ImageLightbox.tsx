@@ -2,7 +2,7 @@ import Lightbox, { type LightboxProps } from 'yet-another-react-lightbox';
 import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import 'yet-another-react-lightbox/styles.css';
 import { useI18n } from '../../shared/i18n/I18nContext';
-import { publicPageText } from '../public-page-builder/uiText';
+import { translate } from '../../shared/i18n/translate';
 
 export type LightboxImage = { src: string; alt: string; width?: number; height?: number };
 
@@ -29,11 +29,11 @@ export default function ImageLightbox({ images, index, onClose }: {
     carousel={{ finite: true }}
     styles={{ root: rootStyle }}
     labels={{
-      Close: publicPageText(locale, 'lightboxClose'),
-      'Zoom in': publicPageText(locale, 'lightboxZoomIn'),
-      'Zoom out': publicPageText(locale, 'lightboxZoomOut'),
-      Previous: publicPageText(locale, 'lightboxPrevious'),
-      Next: publicPageText(locale, 'lightboxNext'),
+      Close: translate(locale, 'publicPageBuilder.lightboxClose'),
+      'Zoom in': translate(locale, 'publicPageBuilder.lightboxZoomIn'),
+      'Zoom out': translate(locale, 'publicPageBuilder.lightboxZoomOut'),
+      Previous: translate(locale, 'publicPageBuilder.lightboxPrevious'),
+      Next: translate(locale, 'publicPageBuilder.lightboxNext'),
     }}
   />;
 }

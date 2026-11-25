@@ -74,7 +74,7 @@ describe('web smoke (auth/settings/specialists/appointments/specialist booking p
     assert.match(specialistPolicyTab, /copy\.refundOnLateCancel/);
     assert.match(specialistPolicyTab, /copy\.autoCancelUnpaidEnabled/);
     assert.match(specialistPolicyTab, /copy\.unpaidAutoCancelAfterHours/);
-    assert.match(specialistsTable, /<ButtonBase[\s\S]*onClick=\{\(\) => onEdit\(item\)\}/);
+    assert.match(specialistsTable, /<AppListRow[\s\S]*onClick=\{\(\) => onEdit\(item\)\}/);
     assert.match(specialistsTable, /AppIcons\.delete/);
   });
 });

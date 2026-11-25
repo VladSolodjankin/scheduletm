@@ -1,7 +1,7 @@
 import { Button } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useI18n } from '../../shared/i18n/I18nContext';
-import { publicPageText } from '../public-page-builder/uiText';
+import { translate } from '../../shared/i18n/translate';
 
 const SERVICES_SELECTOR = '[data-block-type="services"]';
 
@@ -39,7 +39,7 @@ export function StickyBookButton() {
         '&:hover': { bgcolor: 'var(--theme-link-background)', filter: 'brightness(0.95)' },
       }}
     >
-      {publicPageText(locale, 'serviceBook')}
+      {translate(locale, 'publicPageBuilder.serviceBook')}
     </Button>
   );
 }

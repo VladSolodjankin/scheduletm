@@ -10,7 +10,7 @@ import type { Locale } from '../../shared/i18n/dictionaries';
 import { ImageUploadControl } from './ImageUploadControl';
 import { PageDomainSettings } from './PageDomainSettings';
 import { SettingsRow } from './SettingsRow';
-import { publicPageText } from './uiText';
+import { translate } from '../../shared/i18n/translate';
 
 /**
  * The few page settings that do not change how the page looks: its address and what search engines and
@@ -38,56 +38,56 @@ export function PageSettingsPanel({ state, locale, dispatch, repository, slugAva
   const shareMedia = media.find((item) => item.id === seo.imageMediaId) ?? null;
   const sharePreviewUrl = shareMedia ? previewUrls.get(shareMedia.id) ?? shareMedia.url : undefined;
   const uploadLabels = {
-    uploadLabel: publicPageText(locale, 'uploadImage'), replaceLabel: publicPageText(locale, 'replaceImage'),
-    removeLabel: publicPageText(locale, 'remove'), altLabel: publicPageText(locale, 'imageAlt'),
-    invalidTypeText: publicPageText(locale, 'invalidImageType'), tooLargeText: publicPageText(locale, 'imageTooLarge'),
-    uploadErrorText: publicPageText(locale, 'imageUploadError'),
+    uploadLabel: translate(locale, 'publicPageBuilder.uploadImage'), replaceLabel: translate(locale, 'publicPageBuilder.replaceImage'),
+    removeLabel: translate(locale, 'publicPageBuilder.remove'), altLabel: translate(locale, 'publicPageBuilder.imageAlt'),
+    invalidTypeText: translate(locale, 'publicPageBuilder.invalidImageType'), tooLargeText: translate(locale, 'publicPageBuilder.imageTooLarge'),
+    uploadErrorText: translate(locale, 'publicPageBuilder.imageUploadError'),
   };
   const slugError = validateSlug(slug);
   const canonicalSlug = normalizeSlug(slug);
   const slugStatus = slugAvailability.slug === canonicalSlug ? slugAvailability.status : 'idle';
   const slugProblem = Boolean(slugError) || slugStatus === 'unavailable';
   const slugHelperText = slugError
-    ? publicPageText(locale, 'invalidSlug')
+    ? translate(locale, 'publicPageBuilder.invalidSlug')
     : slugStatus === 'checking'
-      ? publicPageText(locale, 'slugChecking')
+      ? translate(locale, 'publicPageBuilder.slugChecking')
       : slugStatus === 'available'
-        ? `${publicPageText(locale, 'slugAvailable')} · ${publicPageDisplayUrl(canonicalSlug)}`
+        ? `${translate(locale, 'publicPageBuilder.slugAvailable')} · ${publicPageDisplayUrl(canonicalSlug)}`
         : slugStatus === 'unavailable'
-          ? publicPageText(locale, 'slugUnavailable')
+          ? translate(locale, 'publicPageBuilder.slugUnavailable')
           : slugStatus === 'error'
-            ? publicPageText(locale, 'slugCheckError')
+            ? translate(locale, 'publicPageBuilder.slugCheckError')
             : publicPageDisplayUrl(canonicalSlug);
   return (
     <Stack component="fieldset" disabled={busy} spacing={2} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}>
       <Stack spacing={0.5}>
-        <SettingsRow label={publicPageText(locale, 'slug')}>
+        <SettingsRow label={translate(locale, 'publicPageBuilder.slug')}>
           <TextField size="small" value={slug} sx={{ width: { xs: 160, sm: 220 } }} error={slugProblem}
-            slotProps={{ htmlInput: { 'aria-label': publicPageText(locale, 'slug'), 'data-public-page-focus': 'slug' } }}
+            slotProps={{ htmlInput: { 'aria-label': translate(locale, 'publicPageBuilder.slug'), 'data-public-page-focus': 'slug' } }}
             onChange={(event) => dispatch({ type: 'slug/update', slug: event.target.value })} />
         </SettingsRow>
         <Typography variant="caption" color={slugProblem ? 'error' : 'text.secondary'} sx={{ textAlign: 'right' }}>{slugHelperText}</Typography>
       </Stack>
-      <SettingsRow label={publicPageText(locale, 'pageLanguage')}>
+      <SettingsRow label={translate(locale, 'publicPageBuilder.pageLanguage')}>
         <TextField select size="small" value={state.document.locale} sx={{ width: { xs: 160, sm: 220 } }}
-          slotProps={{ htmlInput: { 'aria-label': publicPageText(locale, 'pageLanguage') } }}
+          slotProps={{ htmlInput: { 'aria-label': translate(locale, 'publicPageBuilder.pageLanguage') } }}
           onChange={(event) => dispatch({ type: 'locale/update', locale: event.target.value as typeof PUBLIC_PAGE_LOCALES[number] })}>
           {PUBLIC_PAGE_LOCALES.map((code) => (
-            <MenuItem key={code} value={code}>{publicPageText(locale, code === 'ru' ? 'languageRu' : 'languageEn')}</MenuItem>
+            <MenuItem key={code} value={code}>{translate(locale, `publicPageBuilder.${code === 'ru' ? 'languageRu' : 'languageEn'}`)}</MenuItem>
           ))}
         </TextField>
       </SettingsRow>
-      <SettingsRow label={publicPageText(locale, 'title')}>
+      <SettingsRow label={translate(locale, 'publicPageBuilder.title')}>
         <TextField size="small" value={seo.title} sx={{ width: { xs: 160, sm: 220 } }}
-          slotProps={{ htmlInput: { 'aria-label': publicPageText(locale, 'title'), 'data-public-page-focus': 'seo.title' } }}
+          slotProps={{ htmlInput: { 'aria-label': translate(locale, 'publicPageBuilder.title'), 'data-public-page-focus': 'seo.title' } }}
           onChange={(event) => dispatch({ type: 'seo/update', changes: { title: event.target.value } })} />
       </SettingsRow>
-      <TextField multiline label={publicPageText(locale, 'description')} value={seo.description}
+      <TextField multiline label={translate(locale, 'publicPageBuilder.description')} value={seo.description}
         slotProps={{ htmlInput: { 'data-public-page-focus': 'seo.description' } }}
         onChange={(event) => dispatch({ type: 'seo/update', changes: { description: event.target.value } })} />
       <ImageUploadControl compact disabled={busy} onBusyChange={onBusyChange}
         focusMarker="seo.imageMediaId" altFocusMarker={seo.imageMediaId ? `media:${seo.imageMediaId}:alt` : undefined}
-        label={publicPageText(locale, 'previewImage')} media={shareMedia} previewUrl={sharePreviewUrl}
+        label={translate(locale, 'publicPageBuilder.previewImage')} media={shareMedia} previewUrl={sharePreviewUrl}
         repository={repository} {...uploadLabels}
         onAltChange={(updatedMedia) => dispatch({ type: 'media/add', media: updatedMedia })}
         onUploaded={async (uploadedMedia, url) => {

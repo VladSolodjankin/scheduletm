@@ -17,7 +17,8 @@ import type {
 } from '../../features/public-page-builder/types/publicPage';
 import { splitRichTextParagraph, updateRichTextSelection } from '../../features/public-page-builder/model/richText';
 import type { Locale } from '../../shared/i18n/dictionaries';
-import { publicPageText } from './uiText';
+import { translate } from '../../shared/i18n/translate';
+import type { PublicPageBuilderKey } from '../../shared/i18n/dictionaries';
 
 type InlineMark = Exclude<keyof RichTextMarks, 'color'>;
 type SavedSelection = { paragraphIndex: number; start: number; end: number };
@@ -150,13 +151,13 @@ export function RichTextEditor({ locale, value, onChange }: {
     if (!paragraph) {return;}
     updateParagraph(activeParagraph, { ...paragraph, ...change });
   };
-  const alignmentButtons: Array<{ value: RichTextAlignment; icon: typeof FormatAlignLeft; label: Parameters<typeof publicPageText>[1] }> = [
+  const alignmentButtons: Array<{ value: RichTextAlignment; icon: typeof FormatAlignLeft; label: PublicPageBuilderKey }> = [
     { value: 'left', icon: FormatAlignLeft, label: 'alignLeft' },
     { value: 'center', icon: FormatAlignCenter, label: 'alignCenter' },
     { value: 'right', icon: FormatAlignRight, label: 'alignRight' },
     { value: 'justify', icon: FormatAlignJustify, label: 'alignJustify' },
   ];
-  const markButtons: Array<{ mark: InlineMark; icon: typeof FormatBold; label: Parameters<typeof publicPageText>[1] }> = [
+  const markButtons: Array<{ mark: InlineMark; icon: typeof FormatBold; label: PublicPageBuilderKey }> = [
     { mark: 'bold', icon: FormatBold, label: 'bold' },
     { mark: 'italic', icon: FormatItalic, label: 'italic' },
     { mark: 'strike', icon: FormatStrikethrough, label: 'strike' },
@@ -165,37 +166,37 @@ export function RichTextEditor({ locale, value, onChange }: {
 
   return <Stack spacing={1}>
     <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', border: 1, borderColor: 'divider', borderRadius: 1 }}>
-      <TextField select size="small" aria-label={publicPageText(locale, 'fontSize')} value={paragraph?.size ?? 'medium'}
+      <TextField select size="small" aria-label={translate(locale, 'publicPageBuilder.fontSize')} value={paragraph?.size ?? 'medium'}
         onChange={(event) => paragraphControl({ size: event.target.value as RichTextSize })} sx={{ minWidth: 130 }}>
-        {paragraphSizes.map((size) => <MenuItem key={size} value={size}>{publicPageText(locale, `textSize${size[0].toUpperCase()}${size.slice(1)}` as Parameters<typeof publicPageText>[1])}</MenuItem>)}
+        {paragraphSizes.map((size) => <MenuItem key={size} value={size}>{translate(locale, `publicPageBuilder.${`textSize${size[0].toUpperCase()}${size.slice(1)}` as PublicPageBuilderKey}`)}</MenuItem>)}
       </TextField>
-      <TextField select size="small" aria-label={publicPageText(locale, 'fontFamily')} value={paragraph?.fontFamily ?? ''}
+      <TextField select size="small" aria-label={translate(locale, 'publicPageBuilder.fontFamily')} value={paragraph?.fontFamily ?? ''}
         onChange={(event) => paragraphControl({ fontFamily: event.target.value || null })} sx={{ minWidth: 112 }}>
-        {paragraphFonts.map((font) => <MenuItem key={font || 'theme'} value={font}>{font || publicPageText(locale, 'inherit')}</MenuItem>)}
+        {paragraphFonts.map((font) => <MenuItem key={font || 'theme'} value={font}>{font || translate(locale, 'publicPageBuilder.inherit')}</MenuItem>)}
       </TextField>
-      {alignmentButtons.map(({ value: alignment, icon: Icon, label }) => <Tooltip key={alignment} title={publicPageText(locale, label)}>
-        <IconButton aria-label={publicPageText(locale, label)} color={paragraph?.alignment === alignment ? 'primary' : 'default'}
+      {alignmentButtons.map(({ value: alignment, icon: Icon, label }) => <Tooltip key={alignment} title={translate(locale, `publicPageBuilder.${label}`)}>
+        <IconButton aria-label={translate(locale, `publicPageBuilder.${label}`)} color={paragraph?.alignment === alignment ? 'primary' : 'default'}
           onMouseDown={preserveSelection} onClick={() => paragraphControl({ alignment })}><Icon /></IconButton>
       </Tooltip>)}
-      {markButtons.map(({ mark, icon: Icon, label }) => <Tooltip key={mark} title={publicPageText(locale, label)}>
-        <IconButton aria-label={publicPageText(locale, label)} onMouseDown={preserveSelection} onClick={() => applyMark(mark)}><Icon /></IconButton>
+      {markButtons.map(({ mark, icon: Icon, label }) => <Tooltip key={mark} title={translate(locale, `publicPageBuilder.${label}`)}>
+        <IconButton aria-label={translate(locale, `publicPageBuilder.${label}`)} onMouseDown={preserveSelection} onClick={() => applyMark(mark)}><Icon /></IconButton>
       </Tooltip>)}
-      <Tooltip title={publicPageText(locale, 'textColor')}>
-        <Box component="label" aria-label={publicPageText(locale, 'textColor')} sx={{ width: 38, height: 38, p: 0.75, cursor: 'pointer' }} onMouseDown={rememberSelection}>
+      <Tooltip title={translate(locale, 'publicPageBuilder.textColor')}>
+        <Box component="label" aria-label={translate(locale, 'publicPageBuilder.textColor')} sx={{ width: 38, height: 38, p: 0.75, cursor: 'pointer' }} onMouseDown={rememberSelection}>
           <Box component="input" type="color" defaultValue="#291d0a" onChange={(event) => applyColor(event.target.value)} sx={{ width: '100%', height: '100%', border: 0, p: 0 }} />
         </Box>
       </Tooltip>
     </Stack>
     <Box ref={editorRootRef} sx={{ minHeight: 260, p: 2, borderRadius: 1, bgcolor: 'var(--page-background)', color: 'var(--page-text)', border: 1, borderColor: 'divider' }}>
       {value.paragraphs.map((item, index) => <Box key={index} data-rich-text-paragraph={index} contentEditable suppressContentEditableWarning
-        role="textbox" aria-multiline="true" aria-label={`${publicPageText(locale, 'fieldBody')} ${index + 1}`}
+        role="textbox" aria-multiline="true" aria-label={`${translate(locale, 'publicPageBuilder.fieldBody')} ${index + 1}`}
         onFocus={() => setActiveParagraph(index)} onMouseUp={rememberSelection} onKeyUp={rememberSelection}
         onInput={(event) => updateParagraphText(index, event)} onKeyDown={(event) => splitParagraph(index, event)}
         sx={{ minHeight: '1.45em', outline: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', textAlign: item.alignment,
           fontFamily: item.fontFamily ?? richTextSizeVariables[item.size].fontFamily,
           fontSize: richTextSizeVariables[item.size].fontSize, fontWeight: richTextSizeVariables[item.size].fontWeight,
           lineHeight: richTextSizeVariables[item.size].lineHeight, letterSpacing: richTextSizeVariables[item.size].letterSpacing,
-          '&:empty::before': { content: `"${publicPageText(locale, 'enterText')}"`, color: 'text.disabled' } }}>
+          '&:empty::before': { content: `"${translate(locale, 'publicPageBuilder.enterText')}"`, color: 'text.disabled' } }}>
         {item.runs.map((run, runIndex) => <Box key={runIndex} component="span"
           data-bold={run.marks?.bold || undefined} data-italic={run.marks?.italic || undefined}
           data-underline={run.marks?.underline || undefined} data-strike={run.marks?.strike || undefined}

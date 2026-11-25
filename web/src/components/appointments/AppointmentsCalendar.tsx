@@ -20,13 +20,13 @@ import { AppSurface } from '../../shared/ui/AppSurface';
 import { AppStatusBadge } from '../../shared/ui/AppStatus';
 import {
   CalendarViewMode,
-  formatLocalDate,
-  formatLocalTime,
   isSlotInPast,
   SLOT_ROWS,
   statusLabel,
   toDateKeyInTimezone,
 } from './appointmentsUtils';
+import { useI18n } from '../../shared/i18n/I18nContext';
+import { formatDate, formatTime } from '../../shared/utils/dateTime';
 
 type Props = {
   t: (key: TranslationKey) => string;
@@ -65,6 +65,7 @@ export function AppointmentsCalendar({
   onPastSlotAttempt,
   getGridDayKey,
 }: Props) {
+  const { locale } = useI18n();
   const theme = useTheme();
   const [draggingAppointmentId, setDraggingAppointmentId] = useState<number | null>(null);
   const [blockedCellKey, setBlockedCellKey] = useState<string | null>(null);
@@ -118,10 +119,10 @@ export function AppointmentsCalendar({
 
             <Typography variant="subtitle1" sx={{ fontWeight: 700, textAlign: 'center' }}>
               {viewMode === 'week'
-                ? `${formatLocalDate(visibleDays[0])} - ${formatLocalDate(visibleDays[visibleDays.length - 1])}`
+                ? `${formatDate(visibleDays[0], locale)} - ${formatDate(visibleDays[visibleDays.length - 1], locale)}`
                 : viewMode === 'month'
-                  ? formatLocalDate(visibleDays[0], { month: 'long', year: 'numeric' })
-                  : formatLocalDate(visibleDays[0])}
+                  ? formatDate(visibleDays[0], locale, { month: 'long', year: 'numeric' })
+                  : formatDate(visibleDays[0], locale)}
             </Typography>
 
             <ToggleButtonGroup
@@ -198,7 +199,7 @@ export function AppointmentsCalendar({
                         sx={{ fontWeight: 700 }}
                         color={isPast ? 'text.disabled' : 'text.primary'}
                       >
-                        {formatLocalDate(day, { weekday: 'short', day: '2-digit', month: 'short' })}
+                        {formatDate(day, locale, { weekday: 'short', day: '2-digit', month: 'short' })}
                       </Typography>
                       {isToday ? <AppStatusBadge label={t('appointments.today')} tone="info" /> : null}
                       {wholeDayOff ? <AppStatusBadge label={exceptionTypeLabel(wholeDayOff.type)} tone="warning" /> : null}
@@ -230,7 +231,7 @@ export function AppointmentsCalendar({
                             }}
                           >
                             <Typography variant="caption" sx={{ fontWeight: 700, display: 'block' }}>
-                              {formatLocalTime(item.scheduledAt)}
+                              {formatTime(item.scheduledAt, locale)}
                             </Typography>
                             <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                               {`${statusLabel(item.status)} - ${getMeetingProviderLabel(item.meetingProvider)} - ${t('appointments.durationMinutesShort').replace('{minutes}', String(item.durationMin))}`}
@@ -287,12 +288,12 @@ export function AppointmentsCalendar({
                 >
                   <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                     <Typography variant="body2" sx={{ fontWeight: 700 }} color={isPast ? 'text.disabled' : 'text.primary'}>
-                      {formatLocalDate(day, { weekday: 'short' })}
+                      {formatDate(day, locale, { weekday: 'short' })}
                     </Typography>
                     {isToday ? <AppStatusBadge label={t('appointments.today')} tone="info" /> : null}
                   </Stack>
                   <Typography variant="caption" color="text.secondary">
-                    {formatLocalDate(day)}
+                    {formatDate(day, locale)}
                   </Typography>
                 </Box>
               );
@@ -459,7 +460,7 @@ export function AppointmentsCalendar({
                               }}
                             >
                               <Typography variant="caption" sx={{ fontWeight: 700, display: 'block' }}>
-                                {formatLocalTime(item.scheduledAt)}
+                                {formatTime(item.scheduledAt, locale)}
                               </Typography>
                               <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                                 {`${statusLabel(item.status)} - ${getMeetingProviderLabel(item.meetingProvider)} - ${t('appointments.durationMinutesShort').replace('{minutes}', String(item.durationMin))}`}

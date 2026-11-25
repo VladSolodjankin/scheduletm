@@ -14,7 +14,7 @@ export function PublicPageBookingPage() {
   return <AppPage
     title={succeeded ? t('publicBooking.successTitle') : t('publicBooking.title')}
     subtitle={succeeded ? undefined : t('publicBooking.subtitle')}
-    maxWidth={succeeded ? 640 : 720}
+    size="compact"
   >
     <AppSurface>
       <PublicBookingForm

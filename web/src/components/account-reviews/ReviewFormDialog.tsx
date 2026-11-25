@@ -7,6 +7,7 @@ import { AppImageUpload, type AppUploadedImage } from '../../shared/ui/AppImageU
 import { AppStatusMessage } from '../../shared/ui/AppStatus';
 import { AppTextField } from '../../shared/ui/AppTextField';
 import { FormContainer } from '../../shared/ui/FormContainer';
+import { useI18n } from '../../shared/i18n/I18nContext';
 
 const FORM_ID = 'account-review-form';
 const MAX_NAME_LENGTH = 80;
@@ -22,7 +23,6 @@ type Props = {
   screenshotPreviewUrl: string | null;
   isSaving: boolean;
   saveError: string;
-  labels: Record<string, string>;
   onClose: () => void;
   onSubmit: (payload: AccountReviewPayload) => Promise<boolean>;
   onUploadImage: (file: File, onProgress: (percent: number) => void) => Promise<AppUploadedImage>;
@@ -35,12 +35,12 @@ export function ReviewFormDialog({
   screenshotPreviewUrl,
   isSaving,
   saveError,
-  labels,
   onClose,
   onSubmit,
   onUploadImage,
   onDeleteImage,
 }: Props) {
+  const { t } = useI18n();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [name, setName] = useState(review?.name ?? '');
@@ -78,7 +78,7 @@ export function ReviewFormDialog({
       }
       return true;
     } catch {
-      setImageError(labels.imageCleanupError);
+      setImageError(t('accountReviews.errors.imageCleanup'));
       return false;
     } finally {
       setIsCleaningImage(false);
@@ -156,15 +156,15 @@ export function ReviewFormDialog({
       fullScreen={fullScreen}
       onClose={isSaving || isImageBusy ? undefined : () => void handleClose()}
       maxWidth="sm"
-      title={review ? labels.editTitle : labels.createTitle}
-      description={labels.formDescription}
+      title={review ? t('accountReviews.editTitle') : t('accountReviews.createTitle')}
+      description={t('accountReviews.formDescription')}
       actions={(
         <>
           <AppButton variant="text" onClick={() => void handleClose()} disabled={isSaving || isImageBusy}>
-            {labels.cancel}
+            {t('common.cancel')}
           </AppButton>
           <AppButton type="submit" form={FORM_ID} isLoading={isSaving} disabled={isImageBusy}>
-            {labels.save}
+            {t('accountReviews.save')}
           </AppButton>
         </>
       )}
@@ -176,29 +176,29 @@ export function ReviewFormDialog({
 
           <AppTextField
             required
-            label={labels.name}
+            label={t('accountReviews.name')}
             value={name}
             error={hasSubmitted && nameInvalid}
-            helperText={hasSubmitted && nameInvalid ? labels.nameError : `${name.length}/${MAX_NAME_LENGTH}`}
+            helperText={hasSubmitted && nameInvalid ? t('accountReviews.nameError') : `${name.length}/${MAX_NAME_LENGTH}`}
             slotProps={{ htmlInput: { maxLength: MAX_NAME_LENGTH } }}
             onChange={(event) => setName(event.target.value)}
           />
 
           <FormControl component="fieldset" error={hasSubmitted && ratingInvalid} required>
-            <FormLabel component="legend" sx={{ mb: 0.5 }}>{labels.rating}</FormLabel>
+            <FormLabel component="legend" sx={{ mb: 0.5 }}>{t('accountReviews.rating')}</FormLabel>
             <Rating
               name="account-review-rating"
               value={rating}
               onChange={(_, value) => setRating(value)}
-              getLabelText={(value) => labels.ratingValue.replace('{rating}', String(value))}
+              getLabelText={(value) => t('accountReviews.ratingValue').replace('{rating}', String(value))}
             />
-            {hasSubmitted && ratingInvalid ? <FormHelperText>{labels.ratingError}</FormHelperText> : null}
+            {hasSubmitted && ratingInvalid ? <FormHelperText>{t('accountReviews.ratingError')}</FormHelperText> : null}
           </FormControl>
 
           <AppTextField
-            label={labels.date}
+            label={t('accountReviews.date')}
             value={reviewDate}
-            helperText={labels.dateHelper}
+            helperText={t('accountReviews.dateHelper')}
             slotProps={{ htmlInput: { maxLength: MAX_DATE_LENGTH } }}
             onChange={(event) => setReviewDate(event.target.value)}
           />
@@ -207,28 +207,28 @@ export function ReviewFormDialog({
             required
             multiline
             minRows={4}
-            label={labels.text}
+            label={t('accountReviews.text')}
             value={text}
             error={hasSubmitted && textInvalid}
-            helperText={hasSubmitted && textInvalid ? labels.textError : `${text.length}/${MAX_TEXT_LENGTH}`}
+            helperText={hasSubmitted && textInvalid ? t('accountReviews.textError') : `${text.length}/${MAX_TEXT_LENGTH}`}
             slotProps={{ htmlInput: { maxLength: MAX_TEXT_LENGTH } }}
             onChange={(event) => setText(event.target.value)}
           />
 
           <AppImageUpload<AppUploadedImage>
             key={screenshotMediaId ?? screenshotUrl ?? 'empty'}
-            label={labels.screenshot}
+            label={t('accountReviews.screenshot')}
             image={currentImage}
             previewUrl={pendingImage?.objectUrl ?? screenshotUrl ?? undefined}
             uploadImage={onUploadImage}
             onUploaded={handleUploaded}
             onRemoved={handleRemoveImage}
-            uploadLabel={labels.uploadImage}
-            replaceLabel={labels.replaceImage}
-            removeLabel={labels.removeImage}
-            invalidTypeText={labels.invalidImageType}
-            tooLargeText={labels.imageTooLarge}
-            uploadErrorText={labels.imageUploadError}
+            uploadLabel={t('accountReviews.uploadImage')}
+            replaceLabel={t('accountReviews.replaceImage')}
+            removeLabel={t('accountReviews.removeImage')}
+            invalidTypeText={t('accountReviews.invalidImageType')}
+            tooLargeText={t('accountReviews.imageTooLarge')}
+            uploadErrorText={t('accountReviews.errors.imageUpload')}
             defaultAlt={name.trim()}
             disabled={isSaving || isImageBusy}
             onBusyChange={setIsUploadingImage}
@@ -236,10 +236,10 @@ export function ReviewFormDialog({
           {screenshotMediaId ? (
             <AppTextField
               required
-              label={labels.screenshotAlt}
+              label={t('accountReviews.screenshotAlt')}
               value={screenshotAlt}
               error={hasSubmitted && altInvalid}
-              helperText={hasSubmitted && altInvalid ? labels.screenshotAltError : `${screenshotAlt.length}/${MAX_ALT_LENGTH}`}
+              helperText={hasSubmitted && altInvalid ? t('accountReviews.screenshotAltError') : `${screenshotAlt.length}/${MAX_ALT_LENGTH}`}
               slotProps={{ htmlInput: { maxLength: MAX_ALT_LENGTH } }}
               onChange={(event) => setScreenshotAlt(event.target.value)}
             />
@@ -247,12 +247,12 @@ export function ReviewFormDialog({
 
           <AppTextField
             select
-            label={labels.status}
+            label={t('accountReviews.status')}
             value={status}
             onChange={(event) => setStatus(event.target.value as AccountReviewStatus)}
           >
-            <MenuItem value="published">{labels.statusPublished}</MenuItem>
-            <MenuItem value="hidden">{labels.statusHidden}</MenuItem>
+            <MenuItem value="published">{t('accountReviews.statusPublished')}</MenuItem>
+            <MenuItem value="hidden">{t('accountReviews.statusHidden')}</MenuItem>
           </AppTextField>
         </FormContainer>
       </Box>

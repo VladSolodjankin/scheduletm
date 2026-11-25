@@ -53,16 +53,19 @@ function archivedService() {
   };
 }
 
-function assignmentEditor(page, specialistName) {
-  return page.getByText(specialistName, { exact: true }).locator(
-    'xpath=ancestor::div[.//input[@type="number"] and .//button[normalize-space()="Use service defaults"]][1]',
-  );
+function assignmentRow(dialog, specialistName) {
+  return dialog.locator('.service-assignments__row').filter({ hasText: specialistName });
 }
 
-function serviceCard(page, serviceName) {
-  return page.getByRole('heading', { name: serviceName, exact: true }).locator(
-    'xpath=ancestor::*[contains(@class, "MuiCard-root")][1]',
-  );
+function serviceRow(page, serviceName) {
+  return page.locator('.service-row').filter({
+    has: page.locator('.app-list-row__title').getByText(serviceName, { exact: true }),
+  });
+}
+
+async function openServiceMenuItem(page, serviceName, itemName) {
+  await serviceRow(page, serviceName).getByRole('button', { name: 'More actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: itemName, exact: true }).click();
 }
 
 async function installMockSessionAndApi(page) {
@@ -230,15 +233,13 @@ test('services CRUD form and specialist defaults use one consistent mock-backed 
 
   await expect.poll(() => pageErrors).toEqual([]);
   await expect(page.getByRole('heading', { name: 'Services', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Deep Tissue Massage', exact: true })).toBeVisible();
-  await expect(page.getByText('Focused recovery session.', { exact: true })).toBeVisible();
+  await expect(serviceRow(page, 'Deep Tissue Massage')).toBeVisible();
+  await expect(serviceRow(page, 'Deep Tissue Massage').getByText('1 with custom pricing', { exact: true })).toBeVisible();
+  await expect(serviceRow(page, 'Deep Tissue Massage').getByRole('img', { name: 'Specialist One, Specialist Two' })).toBeVisible();
   await expect(page.locator('.app-filter-bar')).toHaveCSS('border-radius', '8px');
-  await expect(serviceCard(page, 'Deep Tissue Massage')).toHaveCSS('border-radius', '16px');
-  await expect(serviceCard(page, 'Deep Tissue Massage').locator('.service-card__content')).toHaveCSS('padding', '24px');
-  await expect(serviceCard(page, 'Deep Tissue Massage').locator('.service-card__actions')).toHaveCSS('padding-left', '24px');
-  await expect(serviceCard(page, 'Deep Tissue Massage').locator('.service-card__actions')).toHaveCSS('padding-bottom', '24px');
-  await expect(page.locator('.service-card__image').first()).toHaveCSS('border-radius', '8px');
-  await expect(page.locator('.service-card__assignment').first()).toHaveCSS('border-radius', '8px');
+  await expect(page.locator('.services-list__rows')).toHaveCSS('border-radius', '16px');
+  await expect(page.locator('.services-list__rows .MuiCard-root')).toHaveCount(0);
+  await expect(page.locator('.app-list-thumb').first()).toHaveCSS('border-radius', '8px');
   await expect.poll(() => page.locator(':root').evaluate((element) => {
     const styles = getComputedStyle(element);
     return {
@@ -255,40 +256,46 @@ test('services CRUD form and specialist defaults use one consistent mock-backed 
 
   await page.getByRole('combobox', { name: /Status/ }).click();
   await page.getByRole('option', { name: 'Archived services', exact: true }).click();
-  const archivedCard = serviceCard(page, 'Archived Service');
+  const archivedCard = serviceRow(page, 'Archived Service');
   await expect(archivedCard).toBeVisible();
   await expect(archivedCard.locator('img')).toHaveCount(0);
   await page.getByRole('combobox', { name: /Status/ }).click();
   await page.getByRole('option', { name: 'Active services', exact: true }).click();
 
-  const inheritedAssignment = assignmentEditor(page, 'Specialist One');
-  await expect(inheritedAssignment.getByLabel('Price')).toHaveValue('2500');
-  await expect(inheritedAssignment.getByLabel('Duration, minutes')).toHaveValue('75');
-  await expect(inheritedAssignment.getByText('Service default', { exact: true })).toHaveCount(2);
+  await serviceRow(page, 'Deep Tissue Massage').locator('.app-list-row__main').click();
+  let dialog = page.getByRole('dialog', { name: 'Edit service' });
+  const inheritedAssignment = assignmentRow(dialog, 'Specialist One');
+  await expect(inheritedAssignment.locator('input[type="number"]')).toHaveCount(0);
+  await expect(inheritedAssignment.getByText('RUB 2,500 · 1 hr 15 min', { exact: true })).toBeVisible();
+  await expect(inheritedAssignment.getByRole('button', { name: 'Set custom price', exact: true })).toBeVisible();
 
-  const customAssignment = assignmentEditor(page, 'Specialist Two');
-  await expect(customAssignment.getByLabel('Price')).toHaveValue('3200');
-  await expect(customAssignment.getByLabel('Duration, minutes')).toHaveValue('90');
-  await customAssignment.getByRole('button', { name: 'Use service defaults', exact: true }).click();
-  await customAssignment.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect.poll(() => state.assignmentPayloads).toEqual([{
-    serviceId: 101,
-    specialistId: 12,
-    payload: {
-      isActive: true,
-      priceOverride: null,
-      durationOverrideMinutes: null,
-    },
-  }]);
+  const customAssignment = assignmentRow(dialog, 'Specialist Two');
+  await expect(customAssignment.getByText('Custom', { exact: true })).toBeVisible();
+  await expect(customAssignment.getByText('RUB 3,200 · 1 hr 30 min', { exact: true })).toBeVisible();
+  await customAssignment.getByRole('button', { name: 'Use service defaults: Specialist Two', exact: true }).click();
+  await expect(customAssignment.getByText('Custom', { exact: true })).toHaveCount(0);
+
+  await inheritedAssignment.getByRole('button', { name: 'Set custom price', exact: true }).click();
+  await expect(inheritedAssignment.getByLabel('Price')).toHaveValue('');
+  await expect(inheritedAssignment.getByText('Service default', { exact: true })).toHaveCount(2);
+  await inheritedAssignment.getByLabel('Price').fill('2700');
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect.poll(() => state.assignmentPayloads).toEqual([
+    { serviceId: 101, specialistId: 11, payload: { isActive: true, priceOverride: 2700, durationOverrideMinutes: null } },
+    { serviceId: 101, specialistId: 12, payload: { isActive: true, priceOverride: null, durationOverrideMinutes: null } },
+  ]);
+  await expect.poll(() => state.updatePayloads).toHaveLength(1);
+  state.updatePayloads.length = 0;
 
   await page.getByRole('button', { name: 'Add service', exact: true }).click();
-  let dialog = page.getByRole('dialog', { name: 'Add service' });
+  dialog = page.getByRole('dialog', { name: 'Add service' });
   await expect(dialog.getByLabel('Name')).toBeVisible();
   await expect(dialog.getByLabel('Description')).toBeVisible();
   await expect(dialog.getByLabel('Price')).toHaveValue('0');
   await expect(dialog.getByLabel('Duration, minutes')).toHaveValue('60');
   await expect(dialog.getByText('Specialists', { exact: true })).toBeVisible();
-  await expect(dialog.getByText('Account user IDs are never shown here.', { exact: false })).toBeVisible();
+  await expect(dialog.getByText('Specialists inherit the service price and duration', { exact: false })).toBeVisible();
   await expect(dialog.getByLabel('Specialist One')).toBeVisible();
   await expect(dialog.getByLabel('Specialist Two')).toBeVisible();
   await expect(dialog.locator('input[type="file"]')).toHaveAttribute(
@@ -333,10 +340,9 @@ test('services CRUD form and specialist defaults use one consistent mock-backed 
     isActive: true,
     specialistIds: [11],
   }]);
-  await expect(page.getByRole('heading', { name: 'New UX Service', exact: true })).toBeVisible();
+  await expect(serviceRow(page, 'New UX Service')).toBeVisible();
 
-  const originalCard = serviceCard(page, 'Deep Tissue Massage');
-  await originalCard.getByRole('button', { name: 'Edit', exact: true }).click();
+  await openServiceMenuItem(page, 'Deep Tissue Massage', 'Edit');
   dialog = page.getByRole('dialog', { name: 'Edit service' });
   await expect(dialog.getByLabel('Name')).toHaveValue('Deep Tissue Massage');
   await expect(dialog.getByLabel('Description')).toHaveValue('Focused recovery session.');
@@ -368,8 +374,7 @@ test('services CRUD form and specialist defaults use one consistent mock-backed 
   expect(state.updatePayloads[0].payload).not.toHaveProperty('imageUrl');
   expect(state.updatePayloads[0].payload).not.toHaveProperty('imageMediaId');
 
-  let updatedCard = serviceCard(page, 'Deep Tissue Massage Plus');
-  await updatedCard.getByRole('button', { name: 'Edit', exact: true }).click();
+  await openServiceMenuItem(page, 'Deep Tissue Massage Plus', 'Edit');
   dialog = page.getByRole('dialog', { name: 'Edit service' });
   await dialog.getByRole('button', { name: 'Remove image', exact: true }).click();
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
@@ -399,8 +404,7 @@ test('services CRUD form and specialist defaults use one consistent mock-backed 
     },
   });
 
-  updatedCard = serviceCard(page, 'Deep Tissue Massage Plus');
-  await updatedCard.getByRole('button', { name: 'Delete permanently', exact: true }).click();
+  await openServiceMenuItem(page, 'Deep Tissue Massage Plus', 'Delete permanently');
   const deleteDialog = page.getByRole('dialog', { name: 'Delete service permanently?' });
   await expect(deleteDialog.getByText('Appointments: 2', { exact: true })).toBeVisible();
   await expect(deleteDialog.getByText('Recurring appointment groups: 1', { exact: true })).toBeVisible();

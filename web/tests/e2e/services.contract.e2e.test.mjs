@@ -18,7 +18,7 @@ describe('web service catalog contracts', () => {
 
   it('uses the fixed service and assignment API paths', async () => {
     const client = await read('src/shared/api/client.ts');
-    const serviceCard = await read('src/components/services/ServiceCard.tsx');
+    const serviceRow = await read('src/components/services/ServiceListRow.tsx');
 
     assert.match(client, /get<T>\('\/api\/services'/);
     assert.match(client, /post<T>\('\/api\/services'/);
@@ -28,17 +28,18 @@ describe('web service catalog contracts', () => {
     assert.match(client, /delete\(`\/api\/services\/\$\{serviceId\}`/);
     assert.match(client, /`\/api\/public-pages\/media\/\$\{encodeURIComponent\(mediaId\)\}\/preview`/);
     assert.match(client, /responseType: 'blob'/);
-    assert.match(serviceCard, /assignment\.canEdit/);
+    assert.match(serviceRow, /assignment\.canEdit === true/);
   });
 
   it('resolves catalog images from authenticated managed-media previews', async () => {
     const container = await read('src/containers/ServicesContainer.tsx');
+    const images = await read('src/shared/api/useManagedImages.ts');
 
-    assert.match(container, /imageMediaApi\.getPreview\(accessToken, mediaId\)/);
-    assert.match(container, /URL\.createObjectURL\(response\.data\)/);
+    assert.match(container, /useManagedImages<ServiceImageMedia>/);
     assert.match(container, /previewUrl \? \{ \.\.\.service, imageUrl: previewUrl \} : service/);
-    assert.match(container, /URL\.revokeObjectURL\(url\)/);
-    assert.match(container, /archived services show the empty image state/);
+    assert.match(images, /imageMediaApi\.getPreview\(accessToken, mediaId\)/);
+    assert.match(images, /URL\.createObjectURL\(response\.data\)/);
+    assert.match(images, /URL\.revokeObjectURL\(url\)/);
   });
 
   it('preserves only active, available assignments during metadata edits', async () => {
@@ -72,7 +73,8 @@ describe('web service catalog contracts', () => {
     const serviceStyles = await read('src/components/services/services.css');
     assert.match(serviceForm, /className="service-form__main"/);
     assert.match(serviceStyles, /\.service-form__main[\s\S]*grid-template-columns: minmax\(0, 5fr\) minmax\(0, 3fr\)/);
-    assert.match(serviceForm, /<AppSurface[\s\S]*title=\{labels\.specialistsTitle\}/);
+    assert.match(serviceForm, /<AppSectionHeader[\s\S]*title=\{t\('services\.specialistsTitle'\)\}/);
+    assert.doesNotMatch(serviceForm, /<AppSurface/);
     assert.match(serviceForm, /imageMediaId,/);
     assert.doesNotMatch(serviceForm, /type="url"|imageUrl:/);
     assert.match(sharedUpload, /image\/jpeg,image\/png,image\/webp/);
@@ -87,22 +89,25 @@ describe('web service catalog contracts', () => {
 
   it('shows inherited specialist defaults and safe archive/delete flows', async () => {
     const container = await read('src/containers/ServicesContainer.tsx');
-    const serviceCard = await read('src/components/services/ServiceCard.tsx');
+    const assignmentsEditor = await read('src/components/services/ServiceAssignmentsEditor.tsx');
+    const serviceForm = await read('src/components/services/ServiceFormDialog.tsx');
 
-    assert.match(serviceCard, /assignment\.priceOverride \?\? service\.basePrice/);
-    assert.match(serviceCard, /assignment\.durationOverrideMinutes \?\? service\.baseDurationMinutes/);
-    assert.match(serviceCard, /priceOverride: priceInherited \? null : parsedPrice/);
-    assert.match(serviceCard, /durationOverrideMinutes: durationInherited \? null : parsedDuration/);
+    assert.match(assignmentsEditor, /price === null \? basePrice : price/);
+    assert.match(assignmentsEditor, /duration === null \? baseDurationMinutes : duration/);
+    assert.match(assignmentsEditor, /priceOverride: parseOptional\(draft\.priceText\)/);
+    assert.match(assignmentsEditor, /durationOverrideMinutes: parseOptional\(draft\.durationText\)/);
+    assert.match(serviceForm, /getChangedAssignmentDrafts\(assignmentDrafts, \{ includeAvailability: false \}\)/);
     assert.match(container, /<AppFilterBar/);
     assert.match(container, /getDeleteImpact<ServiceDeleteImpact>/);
     assert.match(container, /disabled=\{isDeleteImpactLoading \|\| !deleteImpact\?\.canDelete\}/);
     assert.match(container, /maxWidth="xs"/);
     assert.match(container, /payload\.imageMediaId !== undefined[\s\S]*payload\.imageMediaId !== previousImageMediaId/);
-    assert.match(container, /changedManagedImage && previousImageMediaId[\s\S]*cleanupManagedImage\(previousImageMediaId\)/);
-    assert.match(container, /servicesApi\.delete\(accessToken, service\.id\)[\s\S]*cleanupManagedImage\(service\.imageMediaId\)/);
-    assert.match(container, /failedCleanupMediaIds[\s\S]*retryFailedMediaCleanup/);
-    assert.match(container, /failedCleanupMediaIds\.length[\s\S]*services\.imageCleanupWarning[\s\S]*services\.retryImageCleanup/);
-    assert.match(container, /isAxiosError\(caught\)[\s\S]*response\?\.status === 404[\s\S]*filter\(\(id\) => id !== mediaId\)/);
+    assert.match(container, /changedManagedImage && previousImageMediaId[\s\S]*cleanupImage\(previousImageMediaId\)/);
+    assert.match(container, /servicesApi\.delete\(accessToken, service\.id\)[\s\S]*cleanupImage\(service\.imageMediaId\)/);
+    assert.match(container, /<AppImageCleanupNotice[\s\S]*services\.imageCleanupWarning[\s\S]*services\.retryImageCleanup[\s\S]*images\.retryCleanup/);
+    const images = await read('src/shared/api/useManagedImages.ts');
+    assert.match(images, /isAxiosError\(caught\) && caught\.response\?\.status === 404/);
+    assert.match(images, /current\.filter\(\(id\) => id !== mediaId\)/);
     assert.doesNotMatch(container, /\{mediaId\}|String\(mediaId\)/);
   });
 });

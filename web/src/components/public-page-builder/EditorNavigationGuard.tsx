@@ -2,7 +2,7 @@ import { Alert, Button, Dialog, DialogActions, DialogContent, DialogContentText,
 import { useId, useRef, useState } from 'react';
 import { useBlocker } from 'react-router-dom';
 import type { Locale } from '../../shared/i18n/dictionaries';
-import { publicPageText } from './uiText';
+import { translate } from '../../shared/i18n/translate';
 
 export function EditorNavigationGuard({ locale, dirty, busy, save }: {
   locale: Locale;
@@ -33,15 +33,15 @@ export function EditorNavigationGuard({ locale, dirty, busy, save }: {
   };
   return (
     <Dialog open={blocker.state === 'blocked'} onClose={stay} aria-labelledby={titleId} aria-describedby={descriptionId}>
-      <DialogTitle id={titleId}>{publicPageText(locale, 'unsaved')}</DialogTitle>
+      <DialogTitle id={titleId}>{translate(locale, 'publicPageBuilder.unsaved')}</DialogTitle>
       <DialogContent>
-        <DialogContentText id={descriptionId}>{publicPageText(locale, 'leaveWarning')}</DialogContentText>
-        {saveFailed ? <Alert severity="error">{publicPageText(locale, 'saveError')}</Alert> : null}
+        <DialogContentText id={descriptionId}>{translate(locale, 'publicPageBuilder.leaveWarning')}</DialogContentText>
+        {saveFailed ? <Alert severity="error">{translate(locale, 'publicPageBuilder.saveError')}</Alert> : null}
       </DialogContent>
       <DialogActions>
-        <Button autoFocus onClick={stay}>{publicPageText(locale, 'stay')}</Button>
-        <Button disabled={busy} onClick={() => blocker.proceed?.()}>{publicPageText(locale, 'discardAndLeave')}</Button>
-        <Button variant="contained" disabled={busy} onClick={() => void leaveAfterSave()}>{publicPageText(locale, 'saveAndLeave')}</Button>
+        <Button autoFocus onClick={stay}>{translate(locale, 'publicPageBuilder.stay')}</Button>
+        <Button disabled={busy} onClick={() => blocker.proceed?.()}>{translate(locale, 'publicPageBuilder.discardAndLeave')}</Button>
+        <Button variant="contained" disabled={busy} onClick={() => void leaveAfterSave()}>{translate(locale, 'publicPageBuilder.saveAndLeave')}</Button>
       </DialogActions>
     </Dialog>
   );

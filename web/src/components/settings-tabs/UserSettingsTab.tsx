@@ -11,6 +11,8 @@ import { AppRhfPhoneField } from '../../shared/ui/AppRhfPhoneField';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
 import { LocaleSelect } from '../LocaleSelect';
 import { TimezoneSelect } from '../TimezoneSelect';
+import { useI18n } from '../../shared/i18n/I18nContext';
+import { formatDateTime } from '../../shared/utils/dateTime';
 
 type Props = {
   copy: SettingsCardCopy;
@@ -31,6 +33,7 @@ export function UserSettingsTab({
   onRequestUserDeletion,
   onCancelUserDeletion,
 }: Props) {
+  const { locale } = useI18n();
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const { field: deleteScheduledAtField } = useController({ control, name: 'deleteScheduledAt' });
 
@@ -108,7 +111,7 @@ export function UserSettingsTab({
         <Stack spacing={1} sx={{ mt: 4 }}>
           {deleteScheduledAtField.value && (
             <Typography variant="body2">
-              {copy.userDeleteScheduledAt.replace('{date}', new Date(deleteScheduledAtField.value).toLocaleString())}
+              {copy.userDeleteScheduledAt.replace('{date}', formatDateTime(deleteScheduledAtField.value, locale))}
             </Typography>
           )}
           <AppButton

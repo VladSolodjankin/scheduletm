@@ -28,6 +28,9 @@ export const dictionaries = {
       themeToggleAria: 'Toggle theme mode',
       languageAria: 'Select language',
       cancel: 'Cancel',
+      moreActions: 'More actions',
+      active: 'Active',
+      inactive: 'Inactive',
       filters: 'Filters',
       loading: 'Loading…',
       errors: {
@@ -501,12 +504,11 @@ export const dictionaries = {
       selectAll: 'Select all',
       clear: 'Clear',
       noSpecialists: 'Add an active specialist before assigning this service.',
-      assignments: 'Specialist pricing and availability',
       assignmentsHelper: 'Specialists inherit the service price and duration until you set custom values.',
-      noAssignments: 'No specialists assigned.',
-      availableForBooking: 'Available for booking',
       serviceDefault: 'Service default',
-      customValue: 'Custom value',
+      customBadge: 'Custom',
+      customCount: '{count} with custom pricing',
+      setCustom: 'Set custom price',
       useServiceDefaults: 'Use service defaults',
       archive: 'Archive',
       restore: 'Restore',
@@ -652,6 +654,7 @@ export const dictionaries = {
       deactivate: 'Deactivate user',
       delete: 'Delete user',
       resendInvite: 'Resend invite',
+      notVerified: 'Not verified',
       empty: 'No users yet.',
       save: 'Save',
       close: 'Close',
@@ -1151,6 +1154,9 @@ export const dictionaries = {
       themeToggleAria: 'Переключить тему',
       languageAria: 'Выбрать язык',
       cancel: 'Отмена',
+      moreActions: 'Ещё действия',
+      active: 'Активен',
+      inactive: 'Неактивен',
       filters: 'Фильтры',
       loading: 'Загрузка…',
       errors: {
@@ -1625,12 +1631,11 @@ export const dictionaries = {
       selectAll: 'Выбрать всех',
       clear: 'Очистить',
       noSpecialists: 'Добавьте активного специалиста, чтобы назначить ему услугу.',
-      assignments: 'Цены и доступность специалистов',
       assignmentsHelper: 'Специалисты используют цену и длительность услуги, пока вы не зададите индивидуальные значения.',
-      noAssignments: 'Специалисты не назначены.',
-      availableForBooking: 'Доступна для записи',
       serviceDefault: 'Значение услуги',
-      customValue: 'Индивидуальное значение',
+      customBadge: 'Своя',
+      customCount: '{count} со своей ценой',
+      setCustom: 'Задать свою цену',
       useServiceDefaults: 'Использовать значения услуги',
       archive: 'В архив',
       restore: 'Восстановить',
@@ -1776,6 +1781,7 @@ export const dictionaries = {
       deactivate: 'Деактивировать пользователя',
       delete: 'Удалить пользователя',
       resendInvite: 'Отправить инвайт повторно',
+      notVerified: 'Не подтверждён',
       empty: 'Пользователи пока не добавлены.',
       save: 'Сохранить',
       close: 'Закрыть',
@@ -2251,7 +2257,8 @@ export const dictionaries = {
 
 export type Locale = keyof typeof dictionaries;
 
-type PublicPageBuilderTranslationKey = `publicPageBuilder.${keyof typeof dictionaries.en.publicPageBuilder}`;
+export type PublicPageBuilderKey = keyof typeof dictionaries.en.publicPageBuilder;
+type PublicPageBuilderTranslationKey = `publicPageBuilder.${PublicPageBuilderKey}`;
 type PublicBookingTranslationKey = `publicBooking.${Exclude<keyof typeof dictionaries.en.publicBooking, 'errors'>}`
   | `publicBooking.errors.${keyof typeof dictionaries.en.publicBooking.errors}`;
 type PublicStatusTranslationKey = `publicStatus.${Exclude<keyof typeof dictionaries.en.publicStatus, 'errors'>}`
@@ -2322,6 +2329,9 @@ export type TranslationKey =
   | 'common.appErrorDescription'
   | 'common.appErrorTitle'
   | 'common.cancel'
+  | 'common.moreActions'
+  | 'common.active'
+  | 'common.inactive'
   | 'common.filters'
   | 'common.loading'
   | 'common.errors.network'
@@ -2614,6 +2624,7 @@ export type TranslationKey =
   | 'users.deactivate'
   | 'users.delete'
   | 'users.resendInvite'
+  | 'users.notVerified'
   | 'users.empty'
   | 'users.save'
   | 'users.close'

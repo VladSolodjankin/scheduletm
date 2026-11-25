@@ -2,7 +2,6 @@ import { Alert, Box, Button, CircularProgress } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { PublicPageRenderer } from '../components/public-page-blocks/PublicPageRenderer';
-import { publicPageText } from '../components/public-page-builder/uiText';
 import { ApiPublicPageRepository, trackPublicPageEvent } from '../features/public-page-builder/repository/ApiPublicPageRepository';
 import { PublicPageRepositoryError } from '../features/public-page-builder/repository/PublicPageRepository';
 import type { PublicPageDocument } from '../features/public-page-builder/types/publicPage';
@@ -12,6 +11,7 @@ import type { PublicBookingOptions, PublicBookingService, PublicReviewsData } fr
 import { publicPageHead } from '@meetli/shared/public-page-seo';
 import { publicPageCanonicalUrl } from '../features/public-page-builder/config/publicPageUrl';
 import { normalizeSlug } from '../features/public-page-builder/model/slug';
+import { translate } from '../shared/i18n/translate';
 
 const repository = new ApiPublicPageRepository('');
 
@@ -197,14 +197,14 @@ export function PublicPageViewPage({ slug: fixedSlug }: { slug?: string }) {
   }, [loadReviews]);
   if (status === 'loading') {return <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress /></Box>;}
   if (status !== 'ready' || !page) {
-    return <Alert severity="info" action={<Button onClick={() => void load()}>{publicPageText(locale, 'retry')}</Button>}>{publicPageText(locale, status === 'not-found' ? 'notFound' : 'unavailable')}</Alert>;
+    return <Alert severity="info" action={<Button onClick={() => void load()}>{translate(locale, 'publicPageBuilder.retry')}</Button>}>{translate(locale, `publicPageBuilder.${status === 'not-found' ? 'notFound' : 'unavailable'}`)}</Alert>;
   }
   return <>
-    {servicesError ? <Alert severity="warning" action={<Button onClick={() => void loadServices()}>{publicPageText(locale, 'retry')}</Button>}>
-      {publicPageText(locale, 'servicesLoadError')}
+    {servicesError ? <Alert severity="warning" action={<Button onClick={() => void loadServices()}>{translate(locale, 'publicPageBuilder.retry')}</Button>}>
+      {translate(locale, 'publicPageBuilder.servicesLoadError')}
     </Alert> : null}
-    {reviewsError ? <Alert severity="warning" action={<Button onClick={() => void loadReviews()}>{publicPageText(locale, 'retry')}</Button>}>
-      {publicPageText(locale, 'reviewsLoadError')}
+    {reviewsError ? <Alert severity="warning" action={<Button onClick={() => void loadReviews()}>{translate(locale, 'publicPageBuilder.retry')}</Button>}>
+      {translate(locale, 'publicPageBuilder.reviewsLoadError')}
     </Alert> : null}
     <Box onClick={(event) => {
       const target = event.target instanceof Element ? event.target : null;

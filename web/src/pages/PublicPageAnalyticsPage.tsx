@@ -1,14 +1,15 @@
 import { ArrowBack } from '@mui/icons-material';
-import { Alert, Box, Card, CardContent, CircularProgress, IconButton, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PUBLIC_PAGE_ANALYTICS_PERIODS, type PublicPageAnalytics, type PublicPageAnalyticsPeriod } from '@meetli/shared/public-page-analytics';
 import { useI18n } from '../shared/i18n/I18nContext';
-import { publicPageText } from '../components/public-page-builder/uiText';
+import { AppPage } from '../shared/ui/AppPage';
 import { ApiPublicPageRepository } from '../features/public-page-builder/repository/ApiPublicPageRepository';
 import { getBlockDefinition } from '../features/public-page-builder/model/blockRegistry';
 import { registerPublicPageBlocks } from '../features/public-page-builder/config/registerBlocks';
 import type { PublicPageDocument } from '../features/public-page-builder/types/publicPage';
+import { translate } from '../shared/i18n/translate';
 
 registerPublicPageBlocks();
 
@@ -45,7 +46,7 @@ function Ranking({ title, rows }: { title: string; rows: { key: string; label: s
     <Card variant="outlined" sx={{ flex: 1, minWidth: 260 }}>
       <CardContent>
         <Typography variant="h6" component="h2" sx={{ mb: 1 }}>{title}</Typography>
-        {rows.length === 0 ? <Typography color="text.secondary">{publicPageText(locale, 'analyticsNoData')}</Typography> : (
+        {rows.length === 0 ? <Typography color="text.secondary">{translate(locale, 'publicPageBuilder.analyticsNoData')}</Typography> : (
           <Stack component="ul" sx={{ listStyle: 'none', m: 0, p: 0, gap: 1 }}>
             {rows.map(({ key, label, count }) => (
               <Stack key={key} component="li" direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
@@ -84,7 +85,7 @@ export function PublicPageAnalyticsPage() {
 
   const blockLabel = (blockId: string) => {
     const block = loaded?.document.sections.flatMap((section) => section.blocks).find(({ id }) => id === blockId);
-    if (!block) {return publicPageText(locale, 'analyticsRemovedBlock');}
+    if (!block) {return translate(locale, 'publicPageBuilder.analyticsRemovedBlock');}
     return block.name || getBlockDefinition(block.type)?.localizedName?.(locale) || block.type;
   };
 
@@ -92,42 +93,47 @@ export function PublicPageAnalyticsPage() {
   const clickRate = analytics && analytics.totals.views > 0
     ? `${Math.round((analytics.totals.clicks / analytics.totals.views) * 100)}%` : '-';
   return (
-    <Stack spacing={3} sx={{ p: { xs: 2, md: 3 }, maxWidth: 1100, mx: 'auto' }}>
-      <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-        <IconButton aria-label={publicPageText(locale, 'back')} onClick={() => navigate('/public-pages')}><ArrowBack /></IconButton>
-        <Typography variant="h5" component="h1" sx={{ flex: 1 }}>
-          {publicPageText(locale, 'analytics')}{loaded ? ` · ${loaded.title}` : ''}
-        </Typography>
-        <ToggleButtonGroup exclusive size="small" value={days} onChange={(_event, next: PublicPageAnalyticsPeriod | null) => { if (next) {setDays(next);} }}
-          aria-label={publicPageText(locale, 'analyticsPeriodLabel')}>
-          {PUBLIC_PAGE_ANALYTICS_PERIODS.map((period) => (
-            <ToggleButton key={period} value={period}>{publicPageText(locale, 'analyticsPeriod').replace('{days}', String(period))}</ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Stack>
-      {failed ? <Alert severity="error">{publicPageText(locale, 'analyticsLoadError')}</Alert> : null}
+    <AppPage
+      title={`${translate(locale, 'publicPageBuilder.analytics')}${loaded ? ` · ${loaded.title}` : ''}`}
+      action={(
+        <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Button size="small" variant="text" startIcon={<ArrowBack />} onClick={() => navigate('/public-pages')}>
+            {translate(locale, 'publicPageBuilder.back')}
+          </Button>
+          <ToggleButtonGroup exclusive size="small" value={days} onChange={(_event, next: PublicPageAnalyticsPeriod | null) => { if (next) {setDays(next);} }}
+            aria-label={translate(locale, 'publicPageBuilder.analyticsPeriodLabel')}>
+            {PUBLIC_PAGE_ANALYTICS_PERIODS.map((period) => (
+              <ToggleButton key={period} value={period}>{translate(locale, 'publicPageBuilder.analyticsPeriod').replace('{days}', String(period))}</ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Stack>
+      )}
+    >
+    <Stack spacing={3}>
+      {failed ? <Alert severity="error">{translate(locale, 'publicPageBuilder.analyticsLoadError')}</Alert> : null}
       {!analytics && !failed ? <Box sx={{ display: 'grid', placeItems: 'center', py: 6 }}><CircularProgress /></Box> : null}
       {analytics ? (
         <>
           <Stack direction="row" sx={{ gap: 2, flexWrap: 'wrap' }}>
-            <StatCard label={publicPageText(locale, 'analyticsViews')} value={String(analytics.totals.views)} />
-            <StatCard label={publicPageText(locale, 'analyticsClicks')} value={String(analytics.totals.clicks)} />
-            <StatCard label={publicPageText(locale, 'analyticsClickRate')} value={clickRate} />
+            <StatCard label={translate(locale, 'publicPageBuilder.analyticsViews')} value={String(analytics.totals.views)} />
+            <StatCard label={translate(locale, 'publicPageBuilder.analyticsClicks')} value={String(analytics.totals.clicks)} />
+            <StatCard label={translate(locale, 'publicPageBuilder.analyticsClickRate')} value={clickRate} />
           </Stack>
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="h6" component="h2" sx={{ mb: 2 }}>{publicPageText(locale, 'analyticsDaily')}</Typography>
-              <DailyBars daily={analytics.daily} label={publicPageText(locale, 'analyticsDaily')} />
+              <Typography variant="h6" component="h2" sx={{ mb: 2 }}>{translate(locale, 'publicPageBuilder.analyticsDaily')}</Typography>
+              <DailyBars daily={analytics.daily} label={translate(locale, 'publicPageBuilder.analyticsDaily')} />
             </CardContent>
           </Card>
           <Stack direction="row" sx={{ gap: 2, flexWrap: 'wrap' }}>
-            <Ranking title={publicPageText(locale, 'analyticsBlocks')}
+            <Ranking title={translate(locale, 'publicPageBuilder.analyticsBlocks')}
               rows={analytics.blocks.map(({ blockId, clicks }) => ({ key: blockId, label: blockLabel(blockId), count: clicks }))} />
-            <Ranking title={publicPageText(locale, 'analyticsSources')}
-              rows={analytics.sources.map(({ source, views }) => ({ key: source || 'direct', label: source || publicPageText(locale, 'analyticsDirect'), count: views }))} />
+            <Ranking title={translate(locale, 'publicPageBuilder.analyticsSources')}
+              rows={analytics.sources.map(({ source, views }) => ({ key: source || 'direct', label: source || translate(locale, 'publicPageBuilder.analyticsDirect'), count: views }))} />
           </Stack>
         </>
       ) : null}
     </Stack>
+    </AppPage>
   );
 }

@@ -207,9 +207,13 @@ export function UsersContainer() {
             ) : (
               <UsersTable
                 emptyText={t('users.empty')}
+                editLabel={t('users.edit')}
                 deactivateLabel={t('users.deactivate')}
                 deleteLabel={t('users.delete')}
                 resendInviteLabel={t('users.resendInvite')}
+                notVerifiedLabel={t('users.notVerified')}
+                inactiveLabel={t('common.inactive')}
+                moreActionsLabel={t('common.moreActions')}
                 roleLabels={{
                   owner: t('appointments.roleOwner'),
                   productAdmin: t('appointments.roleProductAdmin'),

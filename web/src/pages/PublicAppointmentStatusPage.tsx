@@ -8,10 +8,11 @@ import type { PublicAppointmentMeetingStatus } from '../shared/types/api';
 import { AppButton } from '../shared/ui/AppButton';
 import { AppPage } from '../shared/ui/AppPage';
 import { AppSurface } from '../shared/ui/AppSurface';
+import { formatDateTime } from '../shared/utils/dateTime';
 
 export function PublicAppointmentStatusPage() {
   const { slug = '' } = useParams();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [appointmentId, setAppointmentId] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [meeting, setMeeting] = useState<PublicAppointmentMeetingStatus | null>(null);
@@ -36,7 +37,7 @@ export function PublicAppointmentStatusPage() {
     }
   };
 
-  return <AppPage title={t('publicStatus.title')} maxWidth={640}>
+  return <AppPage title={t('publicStatus.title')} size="compact">
     <Stack spacing={2}>
       <AppSurface component="form" onSubmit={submit}>
         <Stack spacing={2}>
@@ -50,7 +51,7 @@ export function PublicAppointmentStatusPage() {
         <Stack spacing={1}>
           <Typography variant="h6">{meeting.service}</Typography>
           <Typography>{meeting.specialist}</Typography>
-          <Typography>{new Date(meeting.scheduledAt).toLocaleString()} · {meeting.duration} {t('publicStatus.minutes')}</Typography>
+          <Typography>{formatDateTime(meeting.scheduledAt, locale)} · {meeting.duration} {t('publicStatus.minutes')}</Typography>
           <Typography>{t('publicStatus.status')}: {meeting.status}</Typography>
           {meeting.meeting.location ? <Typography>{meeting.meeting.location}</Typography> : null}
           {meeting.meeting.meetingUrl ? <Link href={meeting.meeting.meetingUrl} target="_blank" rel="noreferrer">{t('publicStatus.openMeeting')}</Link> : null}

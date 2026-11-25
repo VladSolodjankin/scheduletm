@@ -48,6 +48,10 @@ export type AssignmentPayload = {
   durationOverrideMinutes: number | null;
 };
 
+export type AssignmentChange = AssignmentPayload & {
+  specialistId: number;
+};
+
 export type ServiceDeleteImpact = {
   canDelete: boolean;
   impact: {

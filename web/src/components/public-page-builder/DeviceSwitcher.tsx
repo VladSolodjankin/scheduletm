@@ -3,7 +3,7 @@ import PhoneIphone from '@mui/icons-material/PhoneIphone';
 import TabletMac from '@mui/icons-material/TabletMac';
 import { ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
 import type { Locale } from '../../shared/i18n/dictionaries';
-import { publicPageText } from './uiText';
+import { translate } from '../../shared/i18n/translate';
 
 export type PreviewDevice = 'mobile' | 'tablet' | 'desktop';
 
@@ -19,14 +19,14 @@ export function DeviceSwitcher({
   compact?: boolean;
 }) {
   const items = [
-    ['desktop', publicPageText(locale, 'deviceDesktop'), <Laptop key="desktop" fontSize="small" />],
-    ['tablet', publicPageText(locale, 'deviceTablet'), <TabletMac key="tablet" fontSize="small" />],
-    ['mobile', publicPageText(locale, 'deviceMobile'), <PhoneIphone key="mobile" fontSize="small" />],
+    ['desktop', translate(locale, 'publicPageBuilder.deviceDesktop'), <Laptop key="desktop" fontSize="small" />],
+    ['tablet', translate(locale, 'publicPageBuilder.deviceTablet'), <TabletMac key="tablet" fontSize="small" />],
+    ['mobile', translate(locale, 'publicPageBuilder.deviceMobile'), <PhoneIphone key="mobile" fontSize="small" />],
   ] as const;
   return (
     <ToggleButtonGroup
       exclusive
-      aria-label={publicPageText(locale, 'preview')}
+      aria-label={translate(locale, 'publicPageBuilder.preview')}
       size="small"
       value={value}
       onChange={(_, next: PreviewDevice | null) => next && onChange(next)}

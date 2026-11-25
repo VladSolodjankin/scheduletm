@@ -49,17 +49,19 @@ describe('dashboard design system contracts', () => {
   });
 
   it('keeps Services on token-backed classes without giant pill surfaces', async () => {
-    const serviceCard = await read('src/components/services/ServiceCard.tsx');
+    const serviceRow = await read('src/components/services/ServiceListRow.tsx');
     const serviceForm = await read('src/components/services/ServiceFormDialog.tsx');
+    const assignmentsEditor = await read('src/components/services/ServiceAssignmentsEditor.tsx');
     const serviceStyles = await read('src/components/services/services.css');
+    const sharedStyles = await read('src/shared/styles/app.css');
 
-    assert.match(serviceCard, /className="service-card"/);
+    assert.match(serviceRow, /<AppListRow/);
     assert.match(serviceForm, /className="service-form__main"/);
-    assert.match(serviceStyles, /\.service-card[\s\S]*border-radius: var\(--app-radius-m\)/);
-    assert.match(serviceStyles, /\.service-card__assignment[\s\S]*border-radius: var\(--app-radius-s\)/);
+    assert.match(sharedStyles, /\.app-list\.app-list[\s\S]*border-radius: var\(--app-radius-m\)/);
+    assert.match(sharedStyles, /\.app-list-thumb[\s\S]*border-radius: var\(--app-radius-s\)/);
     assert.doesNotMatch(serviceStyles, /border-radius:\s*(?:224px|\d+(?:\.\d+)?rem)/);
     assert.doesNotMatch(serviceStyles, /#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i);
-    assert.doesNotMatch(`${serviceCard}\n${serviceForm}`, /sx=\{\{/);
+    assert.doesNotMatch(`${serviceRow}\n${serviceForm}\n${assignmentsEditor}`, /sx=\{\{/);
   });
 
   it('uses one fixed dashboard palette and leaves authored public-page radii explicit', async () => {

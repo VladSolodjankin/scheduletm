@@ -1,5 +1,9 @@
 import AccountBalanceRounded from '@mui/icons-material/AccountBalanceRounded';
 import AddRounded from '@mui/icons-material/AddRounded';
+import ArchiveRounded from '@mui/icons-material/ArchiveRounded';
+import RestoreRounded from '@mui/icons-material/RestoreRounded';
+import VisibilityOffRounded from '@mui/icons-material/VisibilityOffRounded';
+import VisibilityRounded from '@mui/icons-material/VisibilityRounded';
 import BlockRounded from '@mui/icons-material/BlockRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
 import AttachMoneyRounded from '@mui/icons-material/AttachMoneyRounded';
@@ -35,6 +39,10 @@ export const AppIcons = {
   cash: AttachMoneyRounded,
   paymentLink: LinkRounded,
   add: AddRounded,
+  archive: ArchiveRounded,
+  hide: VisibilityOffRounded,
+  restore: RestoreRounded,
+  show: VisibilityRounded,
   deactivate: BlockRounded,
   close: CloseRounded,
   copy: ContentCopyRounded,

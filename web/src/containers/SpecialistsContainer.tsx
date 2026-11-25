@@ -223,7 +223,10 @@ export function SpecialistsContainer() {
               <AppLoadingState lines={2} />
             ) : (
               <SpecialistsTable
+                editLabel={t('settings.specialists.editDialogTitle')}
                 deleteLabel={t('settings.specialists.delete')}
+                inactiveLabel={t('common.inactive')}
+                moreActionsLabel={t('common.moreActions')}
                 emptyText={t('settings.specialists.empty')}
                 timezoneLabel={t('settings.specialists.columns.timezone')}
                 specialists={specialists}

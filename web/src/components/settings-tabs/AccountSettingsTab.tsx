@@ -10,6 +10,8 @@ import { AppForm } from '../../shared/ui/AppForm';
 import { AppIcons } from '../../shared/ui/AppIcons';
 import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
 import { BusinessLocationMap } from './BusinessLocationMap';
+import { useI18n } from '../../shared/i18n/I18nContext';
+import { formatDateTime } from '../../shared/utils/dateTime';
 
 type Props = {
   copy: SettingsCardCopy;
@@ -22,6 +24,7 @@ type Props = {
 };
 
 export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSaving, onSubmit, onRequestAccountDeletion, onCancelAccountDeletion }: Props) {
+  const { locale } = useI18n();
   const { field: businessAddressField } = useController({ control, name: 'businessAddress' });
   const { field: businessLatField } = useController({ control, name: 'businessLat' });
   const { field: businessLngField } = useController({ control, name: 'businessLng' });
@@ -132,7 +135,7 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
         {copy.saveSettings}
       </AppButton>
       <Stack spacing={1} sx={{ mt: 4 }}>
-        {deleteScheduledAtField.value && <Typography variant="body2">{copy.accountDeleteScheduledAt.replace('{date}', new Date(deleteScheduledAtField.value).toLocaleString())}</Typography>}
+        {deleteScheduledAtField.value && <Typography variant="body2">{copy.accountDeleteScheduledAt.replace('{date}', formatDateTime(deleteScheduledAtField.value, locale))}</Typography>}
         <AppButton color={deleteScheduledAtField.value ? 'inherit' : 'error'} type="button" onClick={() => {
           if (deleteScheduledAtField.value) {
             void onCancelAccountDeletion();

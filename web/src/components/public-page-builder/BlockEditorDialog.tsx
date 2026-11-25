@@ -8,7 +8,6 @@ import { getBlockDefinition } from '../../features/public-page-builder/model/blo
 import type { Locale } from '../../shared/i18n/dictionaries';
 import { ColorControl } from './ColorControl';
 import { blockIssueText } from './blockIssueText';
-import { publicPageText } from './uiText';
 import { ImageUploadControl } from './ImageUploadControl';
 import { reconcilePendingMediaCleanup } from '../../features/public-page-builder/model/media';
 import { applyAvatarCoverColor, isSameAvatarCoverColor, resolveAvatarCoverPalette, resolveSelectedAvatarCoverColor } from './avatarCoverPalette';
@@ -23,6 +22,7 @@ import { credentialItems, type CredentialItem } from '../../features/public-page
 import { ButtonDesignControls } from './ButtonDesignControls';
 import { BlockScheduleControls } from './BlockScheduleControls';
 import type { ServicesResponse } from '../services/types';
+import { translate } from '../../shared/i18n/translate';
 
 export type BlockEditorSave = { block: PageBlock; sectionId?: string; section?: PageSection; addedMedia: Array<{ media: MediaReference; objectUrl: string }>; updatedMedia: MediaReference[]; removedMediaIds: string[] };
 export type BlockEditorPreview = Pick<BlockEditorSave, 'block' | 'sectionId' | 'section' | 'addedMedia' | 'updatedMedia'>;
@@ -73,7 +73,7 @@ function AvatarCoverPalette({ locale, theme, value, onChange }: {
   value: unknown;
   onChange: (color: string) => void;
 }) {
-  const label = publicPageText(locale, 'cover');
+  const label = translate(locale, 'publicPageBuilder.cover');
   const selectedColor = resolveSelectedAvatarCoverColor(theme, value);
   const colors = resolveAvatarCoverPalette(theme);
 
@@ -145,7 +145,7 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
   const initialAvatarAlt = block.type === 'avatar'
     ? (typeof block.content.imageAlt === 'string' && block.content.imageAlt.trim())
       || (typeof block.content.heading === 'string' && block.content.heading.trim())
-      || publicPageText(locale, 'avatar')
+      || translate(locale, 'publicPageBuilder.avatar')
     : '';
   const [draft, setDraft] = useState<PageBlock>(() => {
     const initial = structuredClone(block);
@@ -210,11 +210,11 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
     })();
   };
   const renderCredentialImage = (item: CredentialItem) => repository ? <ImageUploadControl focusMarker="block.content.media"
-    altFocusMarker={item.imageMediaId ? `media:${item.imageMediaId}:alt` : undefined} label={publicPageText(locale, 'credentialsImage')}
+    altFocusMarker={item.imageMediaId ? `media:${item.imageMediaId}:alt` : undefined} label={translate(locale, 'publicPageBuilder.credentialsImage')}
     media={mediaFor(item.imageMediaId)} previewUrl={item.imageMediaId ? mediaUrlFor(item.imageMediaId) : undefined}
-    repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
-    removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
-    invalidTypeText={publicPageText(locale, 'invalidImageType')} tooLargeText={publicPageText(locale, 'imageTooLarge')} uploadErrorText={publicPageText(locale, 'imageUploadError')}
+    repository={repository} uploadLabel={translate(locale, 'publicPageBuilder.uploadImage')} replaceLabel={translate(locale, 'publicPageBuilder.replaceImage')}
+    removeLabel={translate(locale, 'publicPageBuilder.remove')} altLabel={translate(locale, 'publicPageBuilder.imageAlt')}
+    invalidTypeText={translate(locale, 'publicPageBuilder.invalidImageType')} tooLargeText={translate(locale, 'publicPageBuilder.imageTooLarge')} uploadErrorText={translate(locale, 'publicPageBuilder.imageUploadError')}
     onAltChange={(updated) => {
       if (pending.some((candidate) => candidate.media.id === updated.id)) {setPending((items) => items.map((candidate) => candidate.media.id === updated.id ? { ...candidate, media: updated } : candidate));}
       else {setUpdatedMedia((items) => [...items.filter((candidate) => candidate.id !== updated.id), updated]);}
@@ -252,23 +252,23 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
       }}>
       <DialogTitle id={`${titleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
         <Typography id={titleId} component="span" variant="h6" sx={{ flex: 1 }}>{title ?? draft.name}</Typography>
-        <IconButton aria-label={publicPageText(locale, 'close')} onClick={cancel}><Close /></IconButton>
+        <IconButton aria-label={translate(locale, 'publicPageBuilder.close')} onClick={cancel}><Close /></IconButton>
       </DialogTitle>
       <DialogContent dividers sx={{ px: { xs: 2, sm: 3 }, pt: 0, pb: 3 }}>
         <Tabs value={tab} onChange={(_, value: number) => setTab(value)} variant={compact ? 'scrollable' : 'standard'} scrollButtons={compact ? 'auto' : false} allowScrollButtonsMobile={compact} sx={{ mb: 2.5, minHeight: 48, borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label={publicPageText(locale, 'tabContent')} data-public-page-editor-tab="content" />
-          <Tab label={publicPageText(locale, 'tabDesign')} data-public-page-editor-tab="design" />
-          <Tab label={publicPageText(locale, 'tabSettings')} data-public-page-editor-tab="settings" />
-          <Tab label={publicPageText(locale, 'tabSection')} data-public-page-editor-tab="section" disabled={!sections?.length} />
+          <Tab label={translate(locale, 'publicPageBuilder.tabContent')} data-public-page-editor-tab="content" />
+          <Tab label={translate(locale, 'publicPageBuilder.tabDesign')} data-public-page-editor-tab="design" />
+          <Tab label={translate(locale, 'publicPageBuilder.tabSettings')} data-public-page-editor-tab="settings" />
+          <Tab label={translate(locale, 'publicPageBuilder.tabSection')} data-public-page-editor-tab="section" disabled={!sections?.length} />
         </Tabs>
         <Stack spacing={2} sx={{ p: { xs: 1.5, sm: 2.5 }, border: 1, borderColor: 'divider', borderRadius: 2 }}>
           {tab === 0 ? <Stack spacing={2} data-public-page-focus="block.content" tabIndex={-1}>
           {draft.type === 'image' && repository ? <ImageUploadControl focusMarker="block.content.media"
-            altFocusMarker={imageMediaId ? `media:${imageMediaId}:alt` : undefined} label={publicPageText(locale, 'image')}
+            altFocusMarker={imageMediaId ? `media:${imageMediaId}:alt` : undefined} label={translate(locale, 'publicPageBuilder.image')}
             media={mediaFor(imageMediaId)} previewUrl={imageMediaId ? pending.find((item) => item.media.id === imageMediaId)?.objectUrl ?? previewUrls?.get(imageMediaId) : undefined}
-            repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
-            removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
-            invalidTypeText={publicPageText(locale, 'invalidImageType')} tooLargeText={publicPageText(locale, 'imageTooLarge')} uploadErrorText={publicPageText(locale, 'imageUploadError')}
+            repository={repository} uploadLabel={translate(locale, 'publicPageBuilder.uploadImage')} replaceLabel={translate(locale, 'publicPageBuilder.replaceImage')}
+            removeLabel={translate(locale, 'publicPageBuilder.remove')} altLabel={translate(locale, 'publicPageBuilder.imageAlt')}
+            invalidTypeText={translate(locale, 'publicPageBuilder.invalidImageType')} tooLargeText={translate(locale, 'publicPageBuilder.imageTooLarge')} uploadErrorText={translate(locale, 'publicPageBuilder.imageUploadError')}
             onAltChange={(updated) => {
               if (pending.some((item) => item.media.id === updated.id)) { setPending((items) => items.map((item) => item.media.id === updated.id ? { ...item, media: updated } : item)); }
               else { setUpdatedMedia((items) => [...items.filter((item) => item.id !== updated.id), updated]); }
@@ -295,11 +295,11 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
               const item = rawItem && typeof rawItem === 'object' ? rawItem as Record<string, unknown> : {};
               const mediaId = typeof item.mediaId === 'string' ? item.mediaId : null;
                return <ImageUploadControl key={mediaId ?? `gallery-${index}`} focusMarker="block.content.media"
-                 altFocusMarker={mediaId ? `media:${mediaId}:alt` : undefined} label={`${publicPageText(locale, 'image')} ${index + 1}`}
+                 altFocusMarker={mediaId ? `media:${mediaId}:alt` : undefined} label={`${translate(locale, 'publicPageBuilder.image')} ${index + 1}`}
                 media={mediaFor(mediaId)} previewUrl={mediaId ? pending.find((candidate) => candidate.media.id === mediaId)?.objectUrl ?? previewUrls?.get(mediaId) : undefined}
-                repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
-                removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
-                invalidTypeText={publicPageText(locale, 'invalidImageType')} tooLargeText={publicPageText(locale, 'imageTooLarge')} uploadErrorText={publicPageText(locale, 'imageUploadError')}
+                repository={repository} uploadLabel={translate(locale, 'publicPageBuilder.uploadImage')} replaceLabel={translate(locale, 'publicPageBuilder.replaceImage')}
+                removeLabel={translate(locale, 'publicPageBuilder.remove')} altLabel={translate(locale, 'publicPageBuilder.imageAlt')}
+                invalidTypeText={translate(locale, 'publicPageBuilder.invalidImageType')} tooLargeText={translate(locale, 'publicPageBuilder.imageTooLarge')} uploadErrorText={translate(locale, 'publicPageBuilder.imageUploadError')}
                 onAltChange={(updated) => {
                   if (pending.some((candidate) => candidate.media.id === updated.id)) {setPending((items) => items.map((candidate) => candidate.media.id === updated.id ? { ...candidate, media: updated } : candidate));}
                   else {setUpdatedMedia((items) => [...items.filter((candidate) => candidate.id !== updated.id), updated]);}
@@ -314,9 +314,9 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
                 onRemoved={() => { const oldPending = pending.find((candidate) => candidate.media.id === mediaId); void (async () => { if (oldPending && !(await cleanupItems([oldPending]))) {return;}
                   setDraft((current) => ({ ...current, content: { ...current.content, images: (Array.isArray(current.content.images) ? current.content.images : []).filter((_, candidateIndex) => candidateIndex !== index) } })); })(); }} />;
             })}
-            <ImageUploadControl focusMarker="block.content.media" label={publicPageText(locale, 'addImage')} media={null} repository={repository}
-              uploadLabel={publicPageText(locale, 'addImage')} replaceLabel={publicPageText(locale, 'replaceImage')} removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
-              invalidTypeText={publicPageText(locale, 'invalidImageType')} tooLargeText={publicPageText(locale, 'imageTooLarge')} uploadErrorText={publicPageText(locale, 'imageUploadError')}
+            <ImageUploadControl focusMarker="block.content.media" label={translate(locale, 'publicPageBuilder.addImage')} media={null} repository={repository}
+              uploadLabel={translate(locale, 'publicPageBuilder.addImage')} replaceLabel={translate(locale, 'publicPageBuilder.replaceImage')} removeLabel={translate(locale, 'publicPageBuilder.remove')} altLabel={translate(locale, 'publicPageBuilder.imageAlt')}
+              invalidTypeText={translate(locale, 'publicPageBuilder.invalidImageType')} tooLargeText={translate(locale, 'publicPageBuilder.imageTooLarge')} uploadErrorText={translate(locale, 'publicPageBuilder.imageUploadError')}
               onAltChange={() => undefined} onUploaded={(uploaded, objectUrl) => { setPending((items) => [...items, { media: uploaded, objectUrl }]); setDraft((current) => ({ ...current, content: { ...current.content, images: [...(Array.isArray(current.content.images) ? current.content.images : []), { mediaId: uploaded.id, alt: uploaded.alt }] } })); }} onRemoved={() => undefined} />
           </Stack> : null}
           {draft.type === 'services' ? <ServicesBlockEditor block={draft} locale={locale} catalog={serviceCatalog}
@@ -332,12 +332,12 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
           : Editor ? <Editor block={draft} mediaUrlFor={mediaUrlFor} onContentChange={(content) => setDraft({ ...draft, content })}
             pageTheme={theme} pageSection={sectionDraft ?? selectedSection}
             avatarMediaControl={draft.type === 'avatar' && repository ? <ImageUploadControl compact focusMarker="block.content.media"
-              altFocusMarker={avatarMediaId ? `media:${avatarMediaId}:alt` : undefined} label={publicPageText(locale, 'avatar')}
-              defaultAlt={(typeof draft.content.heading === 'string' && draft.content.heading.trim()) || publicPageText(locale, 'avatar')}
+              altFocusMarker={avatarMediaId ? `media:${avatarMediaId}:alt` : undefined} label={translate(locale, 'publicPageBuilder.avatar')}
+              defaultAlt={(typeof draft.content.heading === 'string' && draft.content.heading.trim()) || translate(locale, 'publicPageBuilder.avatar')}
               media={mediaFor(avatarMediaId)} previewUrl={avatarMediaId ? mediaUrlFor(avatarMediaId) : undefined}
-              repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
-              removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
-              invalidTypeText={publicPageText(locale, 'invalidImageType')} tooLargeText={publicPageText(locale, 'imageTooLarge')} uploadErrorText={publicPageText(locale, 'imageUploadError')}
+              repository={repository} uploadLabel={translate(locale, 'publicPageBuilder.uploadImage')} replaceLabel={translate(locale, 'publicPageBuilder.replaceImage')}
+              removeLabel={translate(locale, 'publicPageBuilder.remove')} altLabel={translate(locale, 'publicPageBuilder.imageAlt')}
+              invalidTypeText={translate(locale, 'publicPageBuilder.invalidImageType')} tooLargeText={translate(locale, 'publicPageBuilder.imageTooLarge')} uploadErrorText={translate(locale, 'publicPageBuilder.imageUploadError')}
               onAltChange={(updated) => {
                 if (pending.some((item) => item.media.id === updated.id)) {setPending((items) => items.map((item) => item.media.id === updated.id ? { ...item, media: updated } : item));}
                 else {setUpdatedMedia((items) => [...items.filter((item) => item.id !== updated.id), updated]);}
@@ -364,17 +364,17 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
           </Stack> : null}
           {tab === 1 ? <Stack spacing={2} data-public-page-focus="block.design" tabIndex={-1}>
           {draft.type === 'button' ? <ButtonDesignControls block={draft} theme={theme} section={sectionDraft} locale={locale} onChange={setDraft} /> : null}
-          {draft.type !== 'social-button' && draft.type !== 'button' ? <><ColorControl label={publicPageText(locale, 'background')} value={draft.design.backgroundColor}
+          {draft.type !== 'social-button' && draft.type !== 'button' ? <><ColorControl label={translate(locale, 'publicPageBuilder.background')} value={draft.design.backgroundColor}
             onChange={(value) => setDraft({ ...draft, design: { ...draft.design, backgroundColor: value } })} />
-          <ColorControl label={publicPageText(locale, 'textColor')} value={draft.design.textColor}
+          <ColorControl label={translate(locale, 'publicPageBuilder.textColor')} value={draft.design.textColor}
             onChange={(value) => setDraft({ ...draft, design: { ...draft.design, textColor: value } })} /></> : null}
           {repository ? <ImageUploadControl focusMarker="block.design.backgroundMediaId"
             altFocusMarker={draft.design.backgroundMediaId ? `media:${draft.design.backgroundMediaId}:alt` : undefined}
-            label={publicPageText(locale, 'blockBackground')} media={mediaFor(draft.design.backgroundMediaId)}
+            label={translate(locale, 'publicPageBuilder.blockBackground')} media={mediaFor(draft.design.backgroundMediaId)}
             previewUrl={draft.design.backgroundMediaId ? pending.find((item) => item.media.id === draft.design.backgroundMediaId)?.objectUrl ?? previewUrls?.get(draft.design.backgroundMediaId) : undefined}
-            repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
-            removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
-            invalidTypeText={publicPageText(locale, 'invalidImageType')} tooLargeText={publicPageText(locale, 'imageTooLarge')} uploadErrorText={publicPageText(locale, 'imageUploadError')}
+            repository={repository} uploadLabel={translate(locale, 'publicPageBuilder.uploadImage')} replaceLabel={translate(locale, 'publicPageBuilder.replaceImage')}
+            removeLabel={translate(locale, 'publicPageBuilder.remove')} altLabel={translate(locale, 'publicPageBuilder.imageAlt')}
+            invalidTypeText={translate(locale, 'publicPageBuilder.invalidImageType')} tooLargeText={translate(locale, 'publicPageBuilder.imageTooLarge')} uploadErrorText={translate(locale, 'publicPageBuilder.imageUploadError')}
             onAltChange={(updated) => {
               if (pending.some((item) => item.media.id === updated.id)) { setPending((items) => items.map((item) => item.media.id === updated.id ? { ...item, media: updated } : item)); }
               else { setUpdatedMedia((items) => [...items.filter((item) => item.id !== updated.id), updated]); }
@@ -395,57 +395,57 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
                 setDraft((current) => ({ ...current, design: { ...current.design, backgroundMediaId: null } }));
               })();
             }} /> : null}
-          {cleanupError ? <Alert severity="error">{publicPageText(locale, 'mediaCleanupError')}</Alert> : null}
-          <TextField type="number" label={publicPageText(locale, 'overlay')} value={Math.round(draft.design.backgroundOverlay * 100)} slotProps={{ htmlInput: { min: 0, max: 100 } }}
+          {cleanupError ? <Alert severity="error">{translate(locale, 'publicPageBuilder.mediaCleanupError')}</Alert> : null}
+          <TextField type="number" label={translate(locale, 'publicPageBuilder.overlay')} value={Math.round(draft.design.backgroundOverlay * 100)} slotProps={{ htmlInput: { min: 0, max: 100 } }}
             onChange={(event) => setDraft({ ...draft, design: { ...draft.design, backgroundOverlay: Math.max(0, Math.min(100, Number(event.target.value))) / 100 } })} />
-          <TextField select label={publicPageText(locale, 'imageFit')} value={draft.design.backgroundFit}
+          <TextField select label={translate(locale, 'publicPageBuilder.imageFit')} value={draft.design.backgroundFit}
             onChange={(event) => setDraft({ ...draft, design: { ...draft.design, backgroundFit: event.target.value as 'cover' | 'contain' } })}>
-            <MenuItem value="cover">{publicPageText(locale, 'imageFitCover')}</MenuItem><MenuItem value="contain">{publicPageText(locale, 'imageFitContain')}</MenuItem>
+            <MenuItem value="cover">{translate(locale, 'publicPageBuilder.imageFitCover')}</MenuItem><MenuItem value="contain">{translate(locale, 'publicPageBuilder.imageFitContain')}</MenuItem>
           </TextField>
-          <TextField label={publicPageText(locale, 'focalPoint')} value={draft.design.backgroundPosition}
+          <TextField label={translate(locale, 'publicPageBuilder.focalPoint')} value={draft.design.backgroundPosition}
             onChange={(event) => setDraft({ ...draft, design: { ...draft.design, backgroundPosition: event.target.value } })} />
-          {(['paddingTop', 'paddingBottom'] as const).map((field) => <TextField key={field} type="number" label={publicPageText(locale, field)} value={draft.design[field]}
+          {(['paddingTop', 'paddingBottom'] as const).map((field) => <TextField key={field} type="number" label={translate(locale, `publicPageBuilder.${field}`)} value={draft.design[field]}
             slotProps={{ htmlInput: { min: 0, max: 160 } }} onChange={(event) => setDraft({ ...draft, design: { ...draft.design, [field]: Math.max(0, Math.min(160, Number(event.target.value))) } })} />)}
-          {draft.type !== 'social-button' ? <Button onClick={() => setDraft({ ...draft, design: { ...draft.design, backgroundColor: null, textColor: null } })}>{publicPageText(locale, 'theme')}</Button> : null}
+          {draft.type !== 'social-button' ? <Button onClick={() => setDraft({ ...draft, design: { ...draft.design, backgroundColor: null, textColor: null } })}>{translate(locale, 'publicPageBuilder.theme')}</Button> : null}
           </Stack> : null}
           <Stack spacing={2} data-public-page-focus="block.settings" tabIndex={-1} sx={{ display: tab === 2 ? undefined : 'none' }}>
-            <TextField label={publicPageText(locale, 'name')} value={draft.name}
+            <TextField label={translate(locale, 'publicPageBuilder.name')} value={draft.name}
               slotProps={{ htmlInput: { 'data-public-page-focus': 'block.name' } }}
               onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
-            <FormControlLabel data-public-page-focus="block.visible" label={publicPageText(locale, 'visible')} control={<Switch checked={draft.visible}
+            <FormControlLabel data-public-page-focus="block.visible" label={translate(locale, 'publicPageBuilder.visible')} control={<Switch checked={draft.visible}
               onChange={(_, checked) => setDraft({ ...draft, visible: checked })} />} />
-            {draft.type === 'button' ? <FormControlLabel label={publicPageText(locale, 'openInNewTab')} control={<Switch checked={draft.content.openInNewTab === true} onChange={(_, checked) => setDraft({ ...draft, content: { ...draft.content, openInNewTab: checked } })} />} /> : null}
+            {draft.type === 'button' ? <FormControlLabel label={translate(locale, 'publicPageBuilder.openInNewTab')} control={<Switch checked={draft.content.openInNewTab === true} onChange={(_, checked) => setDraft({ ...draft, content: { ...draft.content, openInNewTab: checked } })} />} /> : null}
             <BlockScheduleControls value={draft.schedule} timezone={timezone} locale={locale} onChange={(schedule) => setDraft({ ...draft, schedule })} onValidityChange={setScheduleValid} />
           </Stack>
           {tab === 3 ? <Stack spacing={2} data-public-page-focus="section.design" tabIndex={-1}>
             {sectionDraft ? <>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: { sm: 'center' } }}>
-              <TextField fullWidth select label={publicPageText(locale, 'section')} value={sectionDraft.design.variant}
+              <TextField fullWidth select label={translate(locale, 'publicPageBuilder.section')} value={sectionDraft.design.variant}
                 onChange={(event) => setSectionDraft({ ...sectionDraft, design: { ...sectionDraft.design, variant: event.target.value as PageSection['design']['variant'] } })}>
-                <MenuItem value="off">{publicPageText(locale, 'sectionOff')}</MenuItem>
-                <MenuItem value="custom">{publicPageText(locale, 'newSection')}</MenuItem>
-                <MenuItem disabled>{publicPageText(locale, 'sectionsFromDesign')}</MenuItem>
-                <MenuItem value="primary">{publicPageText(locale, 'primarySection')}</MenuItem>
-                <MenuItem value="secondary">{publicPageText(locale, 'secondarySection')}</MenuItem>
+                <MenuItem value="off">{translate(locale, 'publicPageBuilder.sectionOff')}</MenuItem>
+                <MenuItem value="custom">{translate(locale, 'publicPageBuilder.newSection')}</MenuItem>
+                <MenuItem disabled>{translate(locale, 'publicPageBuilder.sectionsFromDesign')}</MenuItem>
+                <MenuItem value="primary">{translate(locale, 'publicPageBuilder.primarySection')}</MenuItem>
+                <MenuItem value="secondary">{translate(locale, 'publicPageBuilder.secondarySection')}</MenuItem>
               </TextField>
               {onRemoveSection && draftSectionId ? <Button color="error" variant="contained" startIcon={<DeleteOutlined />}
                 sx={{ flexShrink: 0 }}
               disabled={cleaning}
               onClick={() => { void (async () => {
-                if (!window.confirm(publicPageText(locale, 'deleteSectionConfirm'))) {return;}
+                if (!window.confirm(translate(locale, 'publicPageBuilder.deleteSectionConfirm'))) {return;}
                 if (!(await cleanupItems(pending))) {return;}
                 onRemoveSection(draftSectionId);
                 onClose();
-              })(); }}>{publicPageText(locale, 'removeSection')}</Button> : null}
+              })(); }}>{translate(locale, 'publicPageBuilder.removeSection')}</Button> : null}
             </Stack>
             <SectionDesignControls locale={locale} theme={theme} section={sectionDraft} onChange={setSectionDraft}
               backgroundImageControl={repository ? <ImageUploadControl focusMarker="section.design.backgroundMediaId"
                 altFocusMarker={sectionDraft.design.backgroundMediaId ? `media:${sectionDraft.design.backgroundMediaId}:alt` : undefined}
-                label={publicPageText(locale, 'sectionBackground')} media={mediaFor(sectionDraft.design.backgroundMediaId)}
+                label={translate(locale, 'publicPageBuilder.sectionBackground')} media={mediaFor(sectionDraft.design.backgroundMediaId)}
                 previewUrl={sectionDraft.design.backgroundMediaId ? pending.find((item) => item.media.id === sectionDraft.design.backgroundMediaId)?.objectUrl ?? previewUrls?.get(sectionDraft.design.backgroundMediaId) : undefined}
-                repository={repository} uploadLabel={publicPageText(locale, 'uploadImage')} replaceLabel={publicPageText(locale, 'replaceImage')}
-                removeLabel={publicPageText(locale, 'remove')} altLabel={publicPageText(locale, 'imageAlt')}
-                invalidTypeText={publicPageText(locale, 'invalidImageType')} tooLargeText={publicPageText(locale, 'imageTooLarge')} uploadErrorText={publicPageText(locale, 'imageUploadError')}
+                repository={repository} uploadLabel={translate(locale, 'publicPageBuilder.uploadImage')} replaceLabel={translate(locale, 'publicPageBuilder.replaceImage')}
+                removeLabel={translate(locale, 'publicPageBuilder.remove')} altLabel={translate(locale, 'publicPageBuilder.imageAlt')}
+                invalidTypeText={translate(locale, 'publicPageBuilder.invalidImageType')} tooLargeText={translate(locale, 'publicPageBuilder.imageTooLarge')} uploadErrorText={translate(locale, 'publicPageBuilder.imageUploadError')}
                 onAltChange={(updated) => setUpdatedMedia((items) => [...items.filter((item) => item.id !== updated.id), updated])}
                 onUploaded={(uploaded, objectUrl) => {
                   const uploadedItem = { media: uploaded, objectUrl };
@@ -469,7 +469,7 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
       </DialogContent>
       {blockValidationIssues.length > 0 ? <Alert severity="error" sx={{ mx: 3, mb: 1 }}>{blockIssueText(locale, blockValidationIssues)}</Alert> : null}
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button disabled={cleaning} onClick={cancel}>{publicPageText(locale, 'cancel')}</Button>
+        <Button disabled={cleaning} onClick={cancel}>{translate(locale, 'publicPageBuilder.cancel')}</Button>
         <Button disabled={cleaning || cleanupError || !scheduleValid || blockValidationIssues.length > 0} variant="contained" onClick={() => onSave({ block: draft, sectionId: draftSectionId, section: sectionDraft, addedMedia: pending, updatedMedia, removedMediaIds: [
           ...(originalMediaId && originalMediaId !== draft.design.backgroundMediaId ? [originalMediaId] : []),
           ...(originalAvatarMediaId && originalAvatarMediaId !== avatarMediaId ? [originalAvatarMediaId] : []),
@@ -480,7 +480,7 @@ function BlockEditorDialogContent({ open, compact, block, locale, title, onClose
           ...originalCredentialMediaIds.filter((mediaId) => !(draft.type === 'credentials'
             && credentialItems(draft.content).some((item) => item.imageMediaId === mediaId))),
           ...(originalSectionMediaId && originalSectionMediaId !== sectionDraft?.design.backgroundMediaId ? [originalSectionMediaId] : []),
-        ] })}>{publicPageText(locale, 'save')}</Button>
+        ] })}>{translate(locale, 'publicPageBuilder.save')}</Button>
       </DialogActions>
     </Dialog>
   );

@@ -13,6 +13,7 @@ import { AppFilterBar } from '../shared/ui/AppFilterBar';
 import { AppPage } from '../shared/ui/AppPage';
 import { AppLoadingState, AppStatusBadge, AppStatusMessage, type AppStatusTone } from '../shared/ui/AppStatus';
 import { AppTextField } from '../shared/ui/AppTextField';
+import { formatDateTime } from '../shared/utils/dateTime';
 
 type Filters = {
   accountId: string;
@@ -37,7 +38,7 @@ function getStatusTone(status: string): AppStatusTone {
 
 export function NotificationLogsContainer() {
   const { accessToken, user } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigate = useNavigate();
   const resolveError = useApiErrorResolver();
 
@@ -173,7 +174,7 @@ export function NotificationLogsContainer() {
                 },
                 { key: 'attempts', label: t('notificationLogs.columns.attempts'), width: 104, render: (item) => `${item.attempts}/${item.maxAttempts}` },
                 { key: 'lastError', label: t('notificationLogs.columns.lastError'), width: 300, render: (item) => item.lastError || '—' },
-                { key: 'createdAt', label: t('notificationLogs.columns.createdAt'), width: 200, render: (item) => new Date(item.createdAt).toLocaleString() },
+                { key: 'createdAt', label: t('notificationLogs.columns.createdAt'), width: 200, render: (item) => formatDateTime(item.createdAt, locale) },
                 {
                   key: 'actions',
                   label: t('notificationLogs.columns.actions'),

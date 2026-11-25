@@ -45,7 +45,8 @@ describe('web telegram bot settings contracts', () => {
     assert.match(qr, /QRCode\.toDataURL/);
     assert.match(qr, /type: 'svg'/);
     assert.match(qr, /image\/png/);
-    assert.match(qr, /navigator\.clipboard\.writeText/);
+    assert.match(qr, /useCopyToClipboard/);
+    assert.match(qr, /clipboard\.copyText\(assets\.svg\)/);
   });
 
   it('defines the same telegramBot keys for en and ru', async () => {

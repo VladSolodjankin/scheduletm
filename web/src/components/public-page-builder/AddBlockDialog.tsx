@@ -29,8 +29,9 @@ import type { MediaReference, PageBlock, PageTheme } from '../../features/public
 import type { ApiPublicPageRepository } from '../../features/public-page-builder/repository/ApiPublicPageRepository';
 import type { Locale } from '../../shared/i18n/dictionaries';
 import { BlockEditorDialog, type BlockEditorSave } from './BlockEditorDialog';
-import { publicPageText } from './uiText';
 import type { ServicesResponse } from '../services/types';
+import { translate } from '../../shared/i18n/translate';
+import type { PublicPageBuilderKey } from '../../shared/i18n/dictionaries';
 
 const blockLabelKeys = {
   avatar: 'blockTypeAvatar', button: 'blockTypeButton', links: 'blockTypeLinks', text: 'blockTypeText', image: 'blockTypeImage',
@@ -64,7 +65,7 @@ const blockIcons = {
   hours: ScheduleOutlined,
   video: PlayCircleOutlined,
 } as const;
-const platformKeys: Record<SocialPlatform, Parameters<typeof publicPageText>[1]> = {
+const platformKeys: Record<SocialPlatform, PublicPageBuilderKey> = {
   'facebook-messenger': 'platformFacebookMessenger', vk: 'platformVk', whatsapp: 'platformWhatsapp', viber: 'platformViber',
   telegram: 'platformTelegram', facebook: 'platformFacebook', threads: 'platformThreads', instagram: 'platformInstagram', tiktok: 'platformTiktok',
 };
@@ -94,20 +95,20 @@ export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, t
   const close = () => { setCategory(null); setQuery(''); setDraft(null); onClose(); };
   const selectPlatform = (platform: SocialPlatform) => {
     if (usedPlatforms.has(platform)) {return;}
-    const label = publicPageText(locale, platformKeys[platform]);
+    const label = translate(locale, `publicPageBuilder.${platformKeys[platform]}`);
     const block = createBlock('social-button', locale);
     if (block) {setDraft({ ...block, name: label, content: { platform, label, url: 'https://' } });}
   };
   const tileSx = { p: 2.5, minHeight: 112, cursor: 'pointer', border: '1px solid', borderColor: 'divider', borderRadius: 2, textAlign: 'center', bgcolor: 'background.paper',
     '&:hover, &:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' } } as const;
-  const title = category ? publicPageText(locale, category) : publicPageText(locale, 'addBlock');
+  const title = category ? translate(locale, `publicPageBuilder.${category}`) : translate(locale, 'publicPageBuilder.addBlock');
   return <>
     <Dialog open={open && !draft} aria-labelledby={titleId} onClose={close} fullScreen={compact} fullWidth maxWidth={false}
       slotProps={{ paper: { sx: { maxWidth: compact ? '100%' : 820, borderRadius: compact ? 0 : 4 } } }}>
       <DialogTitle id={`${titleId}-header`} sx={{ display: 'flex', alignItems: 'center', gap: 1, minHeight: 68, px: 3, py: 1.5 }}>
-        {category ? <IconButton aria-label={publicPageText(locale, 'back')} onClick={() => { setCategory(null); setQuery(''); }}><ArrowBack /></IconButton> : null}
+        {category ? <IconButton aria-label={translate(locale, 'publicPageBuilder.back')} onClick={() => { setCategory(null); setQuery(''); }}><ArrowBack /></IconButton> : null}
         <Typography id={titleId} component="span" variant="h6" sx={{ flex: 1 }}>{title}</Typography>
-        <IconButton aria-label={publicPageText(locale, 'close')} onClick={close}><Close /></IconButton>
+        <IconButton aria-label={translate(locale, 'publicPageBuilder.close')} onClick={close}><Close /></IconButton>
       </DialogTitle>
       <DialogContent dividers sx={{ p: { xs: 2, sm: 3 } }}>
         {!category ? <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
@@ -115,7 +116,7 @@ export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, t
             const Icon = categoryIcons[item];
             return <Paper key={item} component="button" type="button" onClick={() => setCategory(item)} sx={tileSx}>
               <Icon aria-hidden="true" sx={{ fontSize: 44, color: 'text.secondary' }} />
-              <Typography sx={{ mt: 0.75, fontWeight: 700 }}>{publicPageText(locale, item)}</Typography>
+              <Typography sx={{ mt: 0.75, fontWeight: 700 }}>{translate(locale, `publicPageBuilder.${item}`)}</Typography>
             </Paper>;
           })}
           {getBlockDefinitions().filter(({ type }) => type !== 'social-button').map((definition) => {
@@ -123,27 +124,27 @@ export function AddBlockDialog({ open, compact = false, locale, usedPlatforms, t
             const Icon = blockIcons[definition.type as keyof typeof blockIcons];
             return <Paper key={definition.type} component="button" type="button" onClick={() => setDraft(createBlock(definition.type, locale))} sx={tileSx}>
               {Icon ? <Icon aria-hidden="true" sx={{ fontSize: 44, color: 'text.secondary' }} /> : null}
-              <Typography sx={{ mt: 0.75, fontWeight: 700 }}>{labelKey ? publicPageText(locale, labelKey) : definition.name}</Typography>
+              <Typography sx={{ mt: 0.75, fontWeight: 700 }}>{labelKey ? translate(locale, `publicPageBuilder.${labelKey}`) : definition.name}</Typography>
             </Paper>;
           })}
         </Box> : <Box sx={{ display: 'grid', gap: 2 }}>
-          <TextField fullWidth autoFocus label={publicPageText(locale, 'searchPlatforms')} value={query} onChange={(event) => setQuery(event.target.value)} />
+          <TextField fullWidth autoFocus label={translate(locale, 'publicPageBuilder.searchPlatforms')} value={query} onChange={(event) => setQuery(event.target.value)} />
           <Box role="group" aria-label={title} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' }, gap: 1.5 }}>
-            {categories[category].filter((platform) => publicPageText(locale, platformKeys[platform]).toLocaleLowerCase(locale).includes(query.trim().toLocaleLowerCase(locale))).map((platform) => {
+            {categories[category].filter((platform) => translate(locale, `publicPageBuilder.${platformKeys[platform]}`).toLocaleLowerCase(locale).includes(query.trim().toLocaleLowerCase(locale))).map((platform) => {
               const disabled = usedPlatforms.has(platform); const style = socialPlatformStyles[platform];
-              return <Paper key={platform} component="button" type="button" disabled={disabled} aria-label={publicPageText(locale, platformKeys[platform])}
+              return <Paper key={platform} component="button" type="button" disabled={disabled} aria-label={translate(locale, `publicPageBuilder.${platformKeys[platform]}`)}
                 onClick={() => selectPlatform(platform)} sx={{ p: 2, minHeight: 96, border: 0, borderRadius: 3, cursor: disabled ? 'default' : 'pointer',
                   background: style.background, color: style.color, opacity: disabled ? .38 : 1, '&:focus-visible': { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 2 } }}>
                 <SocialPlatformIcon platform={platform} sx={{ fontSize: 32, color: style.iconColor }} />
-                <Typography sx={{ mt: .5, fontWeight: 700 }}>{publicPageText(locale, platformKeys[platform])}</Typography>
+                <Typography sx={{ mt: .5, fontWeight: 700 }}>{translate(locale, `publicPageBuilder.${platformKeys[platform]}`)}</Typography>
               </Paper>;
             })}
           </Box>
         </Box>}
       </DialogContent>
-      <DialogActions><Button onClick={() => {close(); onOpenArchive();}}>{publicPageText(locale, 'blockArchive')}</Button>{category ? <Button startIcon={<ArrowBack />} onClick={() => { setCategory(null); setQuery(''); }}>{publicPageText(locale, 'back')}</Button> : null}</DialogActions>
+      <DialogActions><Button onClick={() => {close(); onOpenArchive();}}>{translate(locale, 'publicPageBuilder.blockArchive')}</Button>{category ? <Button startIcon={<ArrowBack />} onClick={() => { setCategory(null); setQuery(''); }}>{translate(locale, 'publicPageBuilder.back')}</Button> : null}</DialogActions>
     </Dialog>
-    <BlockEditorDialog open={Boolean(draft)} block={draft} locale={locale} title={publicPageText(locale, 'configureBlock')}
+    <BlockEditorDialog open={Boolean(draft)} block={draft} locale={locale} title={translate(locale, 'publicPageBuilder.configureBlock')}
       compact={compact}
       theme={theme} timezone={timezone} repository={repository} media={media} previewUrls={previewUrls}
       serviceCatalog={serviceCatalog} servicesLoading={servicesLoading} servicesError={servicesError} onRefreshServices={onRefreshServices}

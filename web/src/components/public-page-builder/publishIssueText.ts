@@ -1,6 +1,7 @@
 import type { PublishValidationCode, PublishValidationIssue } from '../../features/public-page-builder/model/publishValidation';
 import type { Locale } from '../../shared/i18n/dictionaries';
-import { publicPageText, type PublicPageUiKey } from './uiText';
+import { translate } from '../../shared/i18n/translate';
+import type { PublicPageBuilderKey } from '../../shared/i18n/dictionaries';
 
 const issueKeys = {
   invalid_document: 'publishInvalidDocument',
@@ -16,8 +17,8 @@ const issueKeys = {
   missing_seo_title: 'publishMissingTitle',
   missing_seo_description: 'publishMissingDescription',
   placeholder_link: 'publishPlaceholderLink',
-} satisfies Record<PublishValidationCode, PublicPageUiKey>;
+} satisfies Record<PublishValidationCode, PublicPageBuilderKey>;
 
 export function publishIssueText(locale: Locale, issue: PublishValidationIssue): string {
-  return publicPageText(locale, issueKeys[issue.code] ?? 'publishInvalidDocument');
+  return translate(locale, `publicPageBuilder.${issueKeys[issue.code] ?? 'publishInvalidDocument'}`);
 }

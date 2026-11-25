@@ -8,7 +8,7 @@ import type { Locale } from '../../shared/i18n/dictionaries';
 import { ColorControl } from './ColorControl';
 import { CompactTypographyControls } from './SectionDesignControls';
 import { LinkLayoutControls } from './LayoutControls';
-import { publicPageText } from './uiText';
+import { translate } from '../../shared/i18n/translate';
 
 const inheritedTypography = () => ({ fontFamily: null, fontSize: null, fontWeight: null, fontStyle: null, color: null });
 const inheritedLink = (): LinkStyle => ({ titleStyle: inheritedTypography(), subtitleStyle: inheritedTypography(), backgroundColor: null, backgroundOpacity: null, borderWidth: null, borderColor: null, shadow: null, width: null, align: null });
@@ -30,27 +30,27 @@ export function ButtonDesignControls({ block, theme, section, locale, onChange }
   return <Stack spacing={2}>
     <LinkLayoutControls locale={locale} inheritable width={link?.width ?? null} align={link?.align ?? null}
       onWidthChange={(width) => updateLink({ width })} onAlignChange={(align) => updateLink({ align })} />
-    <FormControlLabel label={publicPageText(locale, 'customButtonDesign')} control={<Switch checked={link !== null}
+    <FormControlLabel label={translate(locale, 'publicPageBuilder.customButtonDesign')} control={<Switch checked={link !== null}
       onChange={(_, checked) => update({ linkStyle: checked ? inheritedLink() : null, ...(!checked ? { borderRadius: null } : {}) })} />} />
-    <Typography color="text.secondary" variant="body2">{publicPageText(locale, link ? 'customValues' : 'buttonInheritance')}</Typography>
+    <Typography color="text.secondary" variant="body2">{translate(locale, `publicPageBuilder.${link ? 'customValues' : 'buttonInheritance'}`)}</Typography>
     {link ? <>
-      <CompactTypographyControls locale={locale} label={publicPageText(locale, 'titleStyle')} value={link.titleStyle} resolvedValue={resolved.titleStyle} onChange={(titleStyle) => updateLink({ titleStyle })} />
-      <CompactTypographyControls locale={locale} label={publicPageText(locale, 'subtitleStyle')} value={link.subtitleStyle} resolvedValue={resolved.subtitleStyle} onChange={(subtitleStyle) => updateLink({ subtitleStyle })} />
-      <ColorControl label={publicPageText(locale, 'background')} value={link.backgroundColor} resolvedValue={String(variables['--theme-link-background'])} onChange={(backgroundColor) => updateLink({ backgroundColor })} />
-      <TextField type="number" label={`${publicPageText(locale, 'backgroundOpacity')} (%)`} value={Math.round((link.backgroundOpacity ?? sectionLink?.backgroundOpacity ?? defaults.backgroundOpacity) * 100)} slotProps={{ htmlInput: { min: 0, max: 100 } }} onChange={(event) => updateLink({ backgroundOpacity: Math.max(0, Math.min(100, Number(event.target.value))) / 100 })} />
-      <TextField type="number" label={publicPageText(locale, 'borderWidth')} value={link.borderWidth ?? sectionLink?.borderWidth ?? defaults.borderWidth} slotProps={{ htmlInput: { min: 0, max: 16 } }} onChange={(event) => updateLink({ borderWidth: Math.max(0, Math.min(16, Number(event.target.value))) })} />
-      <ColorControl label={publicPageText(locale, 'borderColor')} value={link.borderColor} resolvedValue={String(variables['--theme-link-border-color'])} onChange={(borderColor) => updateLink({ borderColor })} />
-      <TextField type="number" label={publicPageText(locale, 'borderRadius')} value={block.design.borderRadius ?? theme.styleDefaults.blockBorderRadius} slotProps={{ htmlInput: { min: 0, max: 100 } }} onChange={(event) => update({ borderRadius: Math.max(0, Math.min(100, Number(event.target.value))) })} />
-      <TextField select label={publicPageText(locale, 'shadow')} value={link.shadow === null ? '' : String(link.shadow)} onChange={(event) => updateLink({ shadow: event.target.value === '' ? null : event.target.value === 'true' })}>
-        <MenuItem value="">{publicPageText(locale, 'inherit')}</MenuItem><MenuItem value="false">{publicPageText(locale, 'none')}</MenuItem><MenuItem value="true">{publicPageText(locale, 'softShadow')}</MenuItem>
+      <CompactTypographyControls locale={locale} label={translate(locale, 'publicPageBuilder.titleStyle')} value={link.titleStyle} resolvedValue={resolved.titleStyle} onChange={(titleStyle) => updateLink({ titleStyle })} />
+      <CompactTypographyControls locale={locale} label={translate(locale, 'publicPageBuilder.subtitleStyle')} value={link.subtitleStyle} resolvedValue={resolved.subtitleStyle} onChange={(subtitleStyle) => updateLink({ subtitleStyle })} />
+      <ColorControl label={translate(locale, 'publicPageBuilder.background')} value={link.backgroundColor} resolvedValue={String(variables['--theme-link-background'])} onChange={(backgroundColor) => updateLink({ backgroundColor })} />
+      <TextField type="number" label={`${translate(locale, 'publicPageBuilder.backgroundOpacity')} (%)`} value={Math.round((link.backgroundOpacity ?? sectionLink?.backgroundOpacity ?? defaults.backgroundOpacity) * 100)} slotProps={{ htmlInput: { min: 0, max: 100 } }} onChange={(event) => updateLink({ backgroundOpacity: Math.max(0, Math.min(100, Number(event.target.value))) / 100 })} />
+      <TextField type="number" label={translate(locale, 'publicPageBuilder.borderWidth')} value={link.borderWidth ?? sectionLink?.borderWidth ?? defaults.borderWidth} slotProps={{ htmlInput: { min: 0, max: 16 } }} onChange={(event) => updateLink({ borderWidth: Math.max(0, Math.min(16, Number(event.target.value))) })} />
+      <ColorControl label={translate(locale, 'publicPageBuilder.borderColor')} value={link.borderColor} resolvedValue={String(variables['--theme-link-border-color'])} onChange={(borderColor) => updateLink({ borderColor })} />
+      <TextField type="number" label={translate(locale, 'publicPageBuilder.borderRadius')} value={block.design.borderRadius ?? theme.styleDefaults.blockBorderRadius} slotProps={{ htmlInput: { min: 0, max: 100 } }} onChange={(event) => update({ borderRadius: Math.max(0, Math.min(100, Number(event.target.value))) })} />
+      <TextField select label={translate(locale, 'publicPageBuilder.shadow')} value={link.shadow === null ? '' : String(link.shadow)} onChange={(event) => updateLink({ shadow: event.target.value === '' ? null : event.target.value === 'true' })}>
+        <MenuItem value="">{translate(locale, 'publicPageBuilder.inherit')}</MenuItem><MenuItem value="false">{translate(locale, 'publicPageBuilder.none')}</MenuItem><MenuItem value="true">{translate(locale, 'publicPageBuilder.softShadow')}</MenuItem>
       </TextField>
-      <Button onClick={() => update({ linkStyle: null, borderRadius: null })}>{publicPageText(locale, 'resetButtonDesign')}</Button>
+      <Button onClick={() => update({ linkStyle: null, borderRadius: null })}>{translate(locale, 'publicPageBuilder.resetButtonDesign')}</Button>
     </> : null}
-    <TextField select label={publicPageText(locale, 'animation')} value={block.design.animation} onChange={(event) => update({ animation: event.target.value as PageBlock['design']['animation'] })}>
-      {(['none', 'pulse', 'lift'] as const).map((value) => <MenuItem key={value} value={value}>{publicPageText(locale, value)}</MenuItem>)}
+    <TextField select label={translate(locale, 'publicPageBuilder.animation')} value={block.design.animation} onChange={(event) => update({ animation: event.target.value as PageBlock['design']['animation'] })}>
+      {(['none', 'pulse', 'lift'] as const).map((value) => <MenuItem key={value} value={value}>{translate(locale, `publicPageBuilder.${value}`)}</MenuItem>)}
     </TextField>
-    <Typography variant="caption" color="text.secondary">{publicPageText(locale, 'reducedMotionHint')}</Typography>
-    <Button onClick={() => setPreviewRun((value) => value + 1)}>{publicPageText(locale, 'preview')}</Button>
+    <Typography variant="caption" color="text.secondary">{translate(locale, 'publicPageBuilder.reducedMotionHint')}</Typography>
+    <Button onClick={() => setPreviewRun((value) => value + 1)}>{translate(locale, 'publicPageBuilder.preview')}</Button>
     <Box style={resolvePublicPageThemeVariables(theme, section)} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
       onClickCapture={(event) => {event.preventDefault(); event.stopPropagation();}}>
       <PublicPageStyleBoundary><BlockRenderer key={previewRun} block={block} editor themeBorderRadius={theme.styleDefaults.blockBorderRadius} roundingStyle={theme.roundingStyle} /></PublicPageStyleBoundary>

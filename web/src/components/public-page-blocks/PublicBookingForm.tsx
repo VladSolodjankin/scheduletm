@@ -6,6 +6,7 @@ import { useI18n } from '../../shared/i18n/I18nContext';
 import type { PublicAvailableSlots, PublicBookingOptions, PublicBookingResult } from '../../shared/types/api';
 import { AppButton } from '../../shared/ui/AppButton';
 import { AppSurface } from '../../shared/ui/AppSurface';
+import { formatTime } from '../../shared/utils/dateTime';
 
 type FormState = {
   specialistId: string;
@@ -37,7 +38,7 @@ export function PublicBookingForm({ slug, initialServiceId, initialSpecialistId,
   initialSpecialistId?: string;
   onSuccess?: (result: PublicBookingResult) => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [options, setOptions] = useState<PublicBookingOptions | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [selectedSlot, setSelectedSlot] = useState('');
@@ -197,7 +198,7 @@ export function PublicBookingForm({ slug, initialServiceId, initialSpecialistId,
               size="small"
               onClick={() => setSelectedSlot(slot)}
             >
-              {new Date(slot).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+              {formatTime(slot, locale)}
             </Button>
           ))}
         </Stack>

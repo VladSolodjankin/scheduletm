@@ -1,9 +1,10 @@
 import { Stack, Typography } from '@mui/material';
 import { isAxiosError } from 'axios';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ReviewCard } from '../components/account-reviews/ReviewCard';
+import { useCallback, useEffect, useState } from 'react';
+import { ReviewListRow } from '../components/account-reviews/ReviewListRow';
 import { ReviewFormDialog } from '../components/account-reviews/ReviewFormDialog';
-import { accountReviewsApi, imageMediaApi } from '../shared/api/client';
+import { accountReviewsApi } from '../shared/api/client';
+import { useManagedImages } from '../shared/api/useManagedImages';
 import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
@@ -12,6 +13,8 @@ import type { AccountReview, AccountReviewPayload, AccountReviewsResponse } from
 import { AppButton } from '../shared/ui/AppButton';
 import { AppConfirmDialog } from '../shared/ui/AppDialog';
 import { AppIcons } from '../shared/ui/AppIcons';
+import { AppImageCleanupNotice } from '../shared/ui/AppImageCleanupNotice';
+import { AppList } from '../shared/ui/AppList';
 import { AppPage } from '../shared/ui/AppPage';
 import type { AppUploadedImage } from '../shared/ui/AppImageUpload';
 import { AppEmptyState, AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
@@ -24,8 +27,6 @@ const errorKeysByCode: Record<string, TranslationKey> = {
   media_not_found: 'accountReviews.errors.mediaNotFound',
   review_limit_reached: 'accountReviews.errors.limitReached',
 };
-
-type MediaPreviewState = { accessToken: string | null; urls: Map<string, string> };
 
 export function AccountReviewsContainer() {
   const { accessToken } = useAuth();
@@ -43,10 +44,9 @@ export function AccountReviewsContainer() {
   const [busyReviewId, setBusyReviewId] = useState<number | null>(null);
   const [deletingReview, setDeletingReview] = useState<AccountReview | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [failedCleanupMediaIds, setFailedCleanupMediaIds] = useState<string[]>([]);
-  const [isRetryingCleanup, setIsRetryingCleanup] = useState(false);
-  const [mediaPreviews, setMediaPreviews] = useState<MediaPreviewState>(() => ({ accessToken: null, urls: new Map() }));
-  const mediaPreviewUrlsRef = useRef<Map<string, string>>(new Map());
+  const images = useManagedImages<AppUploadedImage>(
+    reviews.flatMap((review) => review.screenshot ? [review.screenshot.mediaId] : []),
+  );
 
   const messageFor = useCallback((caught: unknown, fallbackMessage: string) => {
     if (isAxiosError<{ code?: string }>(caught)) {
@@ -57,37 +57,6 @@ export function AccountReviewsContainer() {
     }
     return resolveError(caught, fallbackMessage).message;
   }, [resolveError, t]);
-
-  const cleanupManagedImage = async (mediaId: string) => {
-    if (!accessToken) {
-      setFailedCleanupMediaIds((current) => current.includes(mediaId) ? current : [...current, mediaId]);
-      return false;
-    }
-    try {
-      await imageMediaApi.delete(accessToken, mediaId);
-      setFailedCleanupMediaIds((current) => current.filter((id) => id !== mediaId));
-      return true;
-    } catch (caught) {
-      if (isAxiosError(caught) && caught.response?.status === 404) {
-        setFailedCleanupMediaIds((current) => current.filter((id) => id !== mediaId));
-        return true;
-      }
-      setFailedCleanupMediaIds((current) => current.includes(mediaId) ? current : [...current, mediaId]);
-      return false;
-    }
-  };
-
-  const retryFailedMediaCleanup = async () => {
-    if (!failedCleanupMediaIds.length || isRetryingCleanup) {
-      return;
-    }
-    setIsRetryingCleanup(true);
-    try {
-      await Promise.all(failedCleanupMediaIds.map((mediaId) => cleanupManagedImage(mediaId)));
-    } finally {
-      setIsRetryingCleanup(false);
-    }
-  };
 
   const load = useCallback(async () => {
     if (!accessToken) {
@@ -139,56 +108,11 @@ export function AccountReviewsContainer() {
     };
   }, [accessToken, messageFor, t]);
 
-  useEffect(() => {
-    const previewUrls = mediaPreviewUrlsRef.current;
-    return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
-      previewUrls.clear();
-    };
-  }, [accessToken]);
-
-  useEffect(() => {
-    if (!accessToken) {
-      return;
-    }
-    let cancelled = false;
-    const mediaIds = new Set(reviews.flatMap((review) => review.screenshot ? [review.screenshot.mediaId] : []));
-    mediaPreviewUrlsRef.current.forEach((url, mediaId) => {
-      if (!mediaIds.has(mediaId)) {
-        URL.revokeObjectURL(url);
-        mediaPreviewUrlsRef.current.delete(mediaId);
-      }
-    });
-    void Promise.all([...mediaIds]
-      .filter((mediaId) => !mediaPreviewUrlsRef.current.has(mediaId))
-      .map(async (mediaId) => {
-        try {
-          const response = await imageMediaApi.getPreview(accessToken, mediaId);
-          if (cancelled) {
-            return;
-          }
-          const previewUrl = URL.createObjectURL(response.data);
-          if (mediaPreviewUrlsRef.current.has(mediaId)) {
-            URL.revokeObjectURL(previewUrl);
-            return;
-          }
-          mediaPreviewUrlsRef.current.set(mediaId, previewUrl);
-          setMediaPreviews({ accessToken, urls: new Map(mediaPreviewUrlsRef.current) });
-        } catch {
-          // Keep the API-provided URL; hidden reviews may show an empty thumbnail.
-        }
-      }));
-    return () => {
-      cancelled = true;
-    };
-  }, [accessToken, reviews]);
-
   const screenshotUrlFor = (review: AccountReview | null) => {
     if (!review?.screenshot) {
       return null;
     }
-    const preview = mediaPreviews.accessToken === accessToken ? mediaPreviews.urls.get(review.screenshot.mediaId) : undefined;
-    return preview ?? review.screenshot.url;
+    return images.previewUrlFor(review.screenshot.mediaId) ?? review.screenshot.url;
   };
 
   const openCreate = () => {
@@ -224,7 +148,7 @@ export function AccountReviewsContainer() {
       }
       await load();
       if (previousMediaId && previousMediaId !== payload.screenshotMediaId) {
-        await cleanupManagedImage(previousMediaId);
+        await images.cleanupImage(previousMediaId);
       }
       return true;
     } catch (caught) {
@@ -262,7 +186,7 @@ export function AccountReviewsContainer() {
       setDeletingReview(null);
       await load();
       if (review.screenshot) {
-        await cleanupManagedImage(review.screenshot.mediaId);
+        await images.cleanupImage(review.screenshot.mediaId);
       }
     } catch (caught) {
       setDeletingReview(null);
@@ -271,40 +195,6 @@ export function AccountReviewsContainer() {
       setIsDeleting(false);
     }
   };
-
-  const labels = useMemo(() => ({
-    createTitle: t('accountReviews.createTitle'),
-    editTitle: t('accountReviews.editTitle'),
-    formDescription: t('accountReviews.formDescription'),
-    edit: t('accountReviews.edit'),
-    hide: t('accountReviews.hide'),
-    show: t('accountReviews.show'),
-    delete: t('accountReviews.delete'),
-    statusPublished: t('accountReviews.statusPublished'),
-    statusHidden: t('accountReviews.statusHidden'),
-    status: t('accountReviews.status'),
-    name: t('accountReviews.name'),
-    nameError: t('accountReviews.nameError'),
-    text: t('accountReviews.text'),
-    textError: t('accountReviews.textError'),
-    rating: t('accountReviews.rating'),
-    ratingError: t('accountReviews.ratingError'),
-    ratingValue: t('accountReviews.ratingValue'),
-    date: t('accountReviews.date'),
-    dateHelper: t('accountReviews.dateHelper'),
-    screenshot: t('accountReviews.screenshot'),
-    screenshotAlt: t('accountReviews.screenshotAlt'),
-    screenshotAltError: t('accountReviews.screenshotAltError'),
-    uploadImage: t('accountReviews.uploadImage'),
-    replaceImage: t('accountReviews.replaceImage'),
-    removeImage: t('accountReviews.removeImage'),
-    invalidImageType: t('accountReviews.invalidImageType'),
-    imageTooLarge: t('accountReviews.imageTooLarge'),
-    imageUploadError: t('accountReviews.errors.imageUpload'),
-    imageCleanupError: t('accountReviews.errors.imageCleanup'),
-    save: t('accountReviews.save'),
-    cancel: t('common.cancel'),
-  }), [t]);
 
   const limitReached = reviews.length >= limit;
   const addButton = (
@@ -321,16 +211,13 @@ export function AccountReviewsContainer() {
     >
       <Stack spacing={2}>
         {error ? <AppStatusMessage severity="error" message={error} /> : null}
-        {failedCleanupMediaIds.length ? (
-          <Stack spacing={1}>
-            <AppStatusMessage severity="warning" message={t('accountReviews.imageCleanupWarning')} />
-            <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
-              <AppButton size="small" variant="outlined" isLoading={isRetryingCleanup} onClick={() => void retryFailedMediaCleanup()}>
-                {t('accountReviews.retryImageCleanup')}
-              </AppButton>
-            </Stack>
-          </Stack>
-        ) : null}
+        <AppImageCleanupNotice
+          failedCount={images.failedCleanupMediaIds.length}
+          message={t('accountReviews.imageCleanupWarning')}
+          retryLabel={t('accountReviews.retryImageCleanup')}
+          isRetrying={images.isRetryingCleanup}
+          onRetry={() => void images.retryCleanup()}
+        />
         {isLoading ? (
           <AppLoadingState lines={3} />
         ) : loadFailed ? (
@@ -348,18 +235,19 @@ export function AccountReviewsContainer() {
               {t('accountReviews.counter').replace('{count}', String(reviews.length)).replace('{limit}', String(limit))}
               {limitReached ? ` · ${t('accountReviews.limitReached').replace('{limit}', String(limit))}` : ''}
             </Typography>
-            {reviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                screenshotUrl={screenshotUrlFor(review)}
-                labels={labels}
-                isBusy={busyReviewId === review.id || deletingReview?.id === review.id}
-                onEdit={() => openEdit(review)}
-                onToggleStatus={() => void toggleStatus(review)}
-                onDelete={() => setDeletingReview(review)}
-              />
-            ))}
+            <AppList>
+              {reviews.map((review) => (
+                <ReviewListRow
+                  key={review.id}
+                  review={review}
+                  screenshotUrl={screenshotUrlFor(review)}
+                  isBusy={busyReviewId === review.id || deletingReview?.id === review.id}
+                  onEdit={() => openEdit(review)}
+                  onToggleStatus={() => void toggleStatus(review)}
+                  onDelete={() => setDeletingReview(review)}
+                />
+              ))}
+            </AppList>
           </>
         ) : (
           <AppEmptyState
@@ -377,22 +265,10 @@ export function AccountReviewsContainer() {
         screenshotPreviewUrl={screenshotUrlFor(editingReview)}
         isSaving={isSaving}
         saveError={dialogError}
-        labels={labels}
         onClose={closeDialog}
         onSubmit={saveReview}
-        onUploadImage={async (file, onProgress) => {
-          if (!accessToken) {
-            throw new Error('missing_access_token');
-          }
-          const response = await imageMediaApi.upload<AppUploadedImage>(accessToken, file, onProgress);
-          return response.data;
-        }}
-        onDeleteImage={async (mediaId) => {
-          if (!accessToken) {
-            throw new Error('missing_access_token');
-          }
-          await imageMediaApi.delete(accessToken, mediaId);
-        }}
+        onUploadImage={images.uploadImage}
+        onDeleteImage={images.deleteImage}
       />
 
       <AppConfirmDialog

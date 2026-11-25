@@ -11,10 +11,11 @@ import { AppConfirmDialog } from '../shared/ui/AppDialog';
 import { AppLoadingState } from '../shared/ui/AppStatus';
 import { AppPage } from '../shared/ui/AppPage';
 import { AppSurface } from '../shared/ui/AppSurface';
+import { formatDateTime } from '../shared/utils/dateTime';
 
 export function AppointmentManagePage() {
   const { token = '' } = useParams();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigate = useNavigate();
   const { isAuthenticated, accessToken } = useAuth();
   const [details, setDetails] = useState<AppointmentManagementDetails | null>(null);
@@ -89,7 +90,7 @@ export function AppointmentManagePage() {
   };
 
   return (
-    <AppPage title={t('appointmentManage.title')} maxWidth={640}>
+    <AppPage title={t('appointmentManage.title')} size="compact">
       <Stack spacing={2}>
         {isLoading ? <AppLoadingState /> : null}
         {error ? <Alert severity="error">{error}</Alert> : null}
@@ -99,7 +100,7 @@ export function AppointmentManagePage() {
               <Typography variant="h6">{details.service}</Typography>
               <Typography>{details.specialist}</Typography>
               <Typography>
-                {new Date(details.scheduledAt).toLocaleString()} · {details.durationMin} {t('appointmentManage.minutes')}
+                {formatDateTime(details.scheduledAt, locale)} · {details.durationMin} {t('appointmentManage.minutes')}
               </Typography>
               <Typography>{t('appointmentManage.status')}: {details.status}</Typography>
               {details.meeting.location ? <Typography>{details.meeting.location}</Typography> : null}

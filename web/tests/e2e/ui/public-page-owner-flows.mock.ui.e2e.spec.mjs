@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { publicPageText as t } from '../../../src/components/public-page-builder/uiText.ts';
+import { translate } from '../../../src/shared/i18n/translate.ts';
+
+const t = (locale, key) => translate(locale, `publicPageBuilder.${key}`);
 import { PUBLIC_PAGE_TEMPLATES } from '../../../src/features/public-page-builder/templates/index.ts';
 import { PUBLIC_PAGE_THEMES } from '../../../src/features/public-page-builder/config/themes.ts';
 

@@ -67,8 +67,9 @@ export const APP_TOKENS = {
   },
   layout: {
     sidebar: '20rem',
-    pageMax: '100rem',
+    pageMax: '75rem',
     pageNarrow: '56rem',
+    pageCompact: '45rem',
     dialogS: '30rem',
     dialogM: '40rem',
     dialogL: '56rem',

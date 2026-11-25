@@ -94,7 +94,7 @@ export function OnboardingContainer() {
   const allDone = status?.steps.every((item) => item.completed) ?? false;
 
   return (
-    <AppPage title={t('onboarding.pageTitle')} subtitle={t('onboarding.pageSubtitle')} maxWidth={760}>
+    <AppPage title={t('onboarding.pageTitle')} subtitle={t('onboarding.pageSubtitle')} contentWidth="form">
       <Stack spacing={2.5}>
         {error ? <AppStatusMessage severity="error" message={error} /> : null}
 

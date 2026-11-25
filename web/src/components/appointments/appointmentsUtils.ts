@@ -138,17 +138,6 @@ export function getUtcNowByTimeZone(timeZone: string): Date {
   return new Date(fromDatetimeLocal(`${todayKey}T00:00`, timeZone));
 }
 
-export function formatLocalDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
-  return date.toLocaleDateString(undefined, options);
-}
-
-export function formatLocalTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 export function statusLabel(status: AppointmentStatus): string {
   if (status === 'confirmed') {
     return 'confirmed';

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { BlockSchedule } from '../../features/public-page-builder/types/publicPage';
 import { localScheduleTimeToUtc, utcScheduleTimeToLocal } from '../../features/public-page-builder/model/schedule';
 import type { Locale } from '../../shared/i18n/dictionaries';
-import { publicPageText } from './uiText';
+import { translate } from '../../shared/i18n/translate';
 
 export function BlockScheduleControls({ value, timezone, locale, onChange, onValidityChange }: {
   value: BlockSchedule; timezone: string; locale: Locale; onChange: (schedule: BlockSchedule) => void; onValidityChange: (valid: boolean) => void;
@@ -30,25 +30,25 @@ export function BlockScheduleControls({ value, timezone, locale, onChange, onVal
   };
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
   return <Stack spacing={2}>
-    <FormControlLabel label={publicPageText(locale, 'scheduleEnabled')} control={<Switch checked={enabled} onChange={(_, checked) => {
+    <FormControlLabel label={translate(locale, 'publicPageBuilder.scheduleEnabled')} control={<Switch checked={enabled} onChange={(_, checked) => {
       setEnabled(checked);
       if (!checked) {onChange({ ...value, period: null });}
       else {changeDates(start, end);}
     }} />} />
     {enabled ? <>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <TextField fullWidth type="datetime-local" label={publicPageText(locale, 'scheduleFrom')} value={start} error={Boolean(error && !daysInvalid)} slotProps={{ inputLabel: { shrink: true } }} onChange={(event) => changeDates(event.target.value, end)} />
-        <TextField fullWidth type="datetime-local" label={publicPageText(locale, 'scheduleUntil')} value={end} error={Boolean(error && !daysInvalid)} slotProps={{ inputLabel: { shrink: true } }} onChange={(event) => changeDates(start, event.target.value)} />
+        <TextField fullWidth type="datetime-local" label={translate(locale, 'publicPageBuilder.scheduleFrom')} value={start} error={Boolean(error && !daysInvalid)} slotProps={{ inputLabel: { shrink: true } }} onChange={(event) => changeDates(event.target.value, end)} />
+        <TextField fullWidth type="datetime-local" label={translate(locale, 'publicPageBuilder.scheduleUntil')} value={end} error={Boolean(error && !daysInvalid)} slotProps={{ inputLabel: { shrink: true } }} onChange={(event) => changeDates(start, event.target.value)} />
       </Stack>
-      <Typography variant="body2" color="text.secondary">{publicPageText(locale, 'scheduleTimezone').replace('{timezone}', timezone)}</Typography>
-      <Typography variant="caption" color="text.secondary">{publicPageText(locale, 'scheduleBoundaryHint')}</Typography>
+      <Typography variant="body2" color="text.secondary">{translate(locale, 'publicPageBuilder.scheduleTimezone').replace('{timezone}', timezone)}</Typography>
+      <Typography variant="caption" color="text.secondary">{translate(locale, 'publicPageBuilder.scheduleBoundaryHint')}</Typography>
     </> : null}
-    <FormControlLabel label={publicPageText(locale, 'scheduleWeekdays')} control={<Switch checked={value.weekdays !== null}
+    <FormControlLabel label={translate(locale, 'publicPageBuilder.scheduleWeekdays')} control={<Switch checked={value.weekdays !== null}
       onChange={(_, checked) => onChange({ ...value, weekdays: checked ? [1, 2, 3, 4, 5] : null })} />} />
     {value.weekdays !== null ? <ToggleButtonGroup value={value.weekdays} onChange={(_, weekdays: number[]) => onChange({ ...value, weekdays })}
-      aria-label={publicPageText(locale, 'scheduleWeekdays')} sx={{ flexWrap: 'wrap' }}>
-      {[1, 2, 3, 4, 5, 6, 7].map((day) => <ToggleButton key={day} value={day} aria-label={publicPageText(locale, days[day - 1])}>{publicPageText(locale, days[day - 1])}</ToggleButton>)}
+      aria-label={translate(locale, 'publicPageBuilder.scheduleWeekdays')} sx={{ flexWrap: 'wrap' }}>
+      {[1, 2, 3, 4, 5, 6, 7].map((day) => <ToggleButton key={day} value={day} aria-label={translate(locale, `publicPageBuilder.${days[day - 1]}`)}>{translate(locale, `publicPageBuilder.${days[day - 1]}`)}</ToggleButton>)}
     </ToggleButtonGroup> : null}
-    {error ? <Alert severity="error">{publicPageText(locale, error)}</Alert> : null}
+    {error ? <Alert severity="error">{translate(locale, `publicPageBuilder.${error}`)}</Alert> : null}
   </Stack>;
 }

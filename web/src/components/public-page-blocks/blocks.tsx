@@ -48,7 +48,6 @@ import {
   ctaActionToHref,
 } from '../../features/public-page-builder/model/cta';
 import { useI18n } from '../../shared/i18n/I18nContext';
-import { publicPageText } from '../public-page-builder/uiText';
 import { SOCIAL_PLATFORMS, type SocialPlatform } from '../../features/public-page-builder/model/socialPlatforms';
 import {
   AVATAR_LAYOUTS,
@@ -67,6 +66,9 @@ import {
 import { resolvePublicPageThemeVariables } from './publicPageThemeVariables';
 import { PublicBookingDialog } from './PublicBookingDialog';
 import type { PublicBookingService } from '../../shared/types/api';
+import { translate } from '../../shared/i18n/translate';
+import type { PublicPageBuilderKey } from '../../shared/i18n/dictionaries';
+import { formatMoney } from '../../shared/utils/money';
 
 export { normalizeAvatarLayout, normalizeAvatarSize, resolveAvatarPresentation } from './avatarPresentation';
 
@@ -206,7 +208,7 @@ export function SocialPlatformIcon({ platform, ...props }: { platform: SocialPla
   return <Icon {...props} />;
 }
 
-const fieldKeys: Record<string, Parameters<typeof publicPageText>[1]> = {
+const fieldKeys: Record<string, PublicPageBuilderKey> = {
   title: 'fieldTitle', heading: 'fieldHeadline', subtitle: 'fieldSubtitle', body: 'fieldBody', description: 'fieldDescription',
   label: 'fieldLabel', url: 'fieldUrl', alt: 'imageAlt', imageAlt: 'imageAlt',
   address: 'fieldAddress', price: 'fieldPrice', platform: 'fieldPlatform', days: 'fieldDays', hours: 'fieldHours',
@@ -214,7 +216,7 @@ const fieldKeys: Record<string, Parameters<typeof publicPageText>[1]> = {
 
 function Field({ field, value, onChange }: { field: string; value: unknown; onChange: (value: string) => void }) {
   const { locale } = useI18n();
-  return <TextField size="small" fullWidth label={publicPageText(locale, fieldKeys[field] ?? 'fieldValue')}
+  return <TextField size="small" fullWidth label={translate(locale, `publicPageBuilder.${fieldKeys[field] ?? 'fieldValue'}`)}
     value={text(value)} multiline={field === 'body' || field === 'description'}
     minRows={field === 'body' || field === 'description' ? 3 : undefined}
     onChange={(event) => onChange(event.target.value)} />;
@@ -232,11 +234,11 @@ function ActionEditor({
   const field = type === 'phone' ? 'phone' : type === 'email' ? 'email' : 'url';
   return (
     <Stack direction="row" spacing={1}>
-      <TextField select size="small" label={publicPageText(locale, 'fieldAction')} value={type}
+      <TextField select size="small" label={translate(locale, 'publicPageBuilder.fieldAction')} value={type}
         onChange={(event) => onChange({ type: event.target.value, [event.target.value === 'phone' ? 'phone' : event.target.value === 'email' ? 'email' : 'url']: '' })}>
-        {['url', 'phone', 'email', 'messenger'].map((option) => <MenuItem key={option} value={option}>{publicPageText(locale, `action${option[0].toUpperCase()}${option.slice(1)}` as Parameters<typeof publicPageText>[1])}</MenuItem>)}
+        {['url', 'phone', 'email', 'messenger'].map((option) => <MenuItem key={option} value={option}>{translate(locale, `publicPageBuilder.${`action${option[0].toUpperCase()}${option.slice(1)}` as PublicPageBuilderKey}`)}</MenuItem>)}
       </TextField>
-      <TextField size="small" fullWidth label={publicPageText(locale, field === 'phone' ? 'fieldPhone' : field === 'email' ? 'fieldEmail' : 'fieldUrl')} value={text(value[field])}
+      <TextField size="small" fullWidth label={translate(locale, `publicPageBuilder.${field === 'phone' ? 'fieldPhone' : field === 'email' ? 'fieldEmail' : 'fieldUrl'}`)} value={text(value[field])}
         onChange={(event) => onChange({ ...value, [field]: event.target.value })} />
     </Stack>
   );
@@ -324,7 +326,7 @@ function AvatarLayoutPreview({ layout }: { layout: AvatarLayout }) {
   </Box>;
 }
 
-function avatarLayoutLabelKey(layout: AvatarLayout): Parameters<typeof publicPageText>[1] {
+function avatarLayoutLabelKey(layout: AvatarLayout): PublicPageBuilderKey {
   const keys = { centered: 'avatarLayoutCentered', 'cover-centered': 'avatarLayoutCoverCentered',
     'cover-left': 'avatarLayoutCoverLeft', 'image-cover': 'avatarLayoutImageCover' } as const;
   return keys[layout];
@@ -362,7 +364,7 @@ export function SpecializedBlockEditor({
       id: crypto.randomUUID(), ...row,
       ...(list!.key === 'links' && block.type === 'links' ? { action: { type: 'url', url: '' } } : {}),
       ...(list!.key === 'contacts' && block.type === 'contacts' ? { action: { type: 'url', url: '' } } : {}),
-      ...(preset ? { platform: preset, label: publicPageText(locale, `platform${preset[0].toUpperCase()}${preset.slice(1)}` as Parameters<typeof publicPageText>[1]), url: 'https://' } : {}),
+      ...(preset ? { platform: preset, label: translate(locale, `publicPageBuilder.${`platform${preset[0].toUpperCase()}${preset.slice(1)}` as PublicPageBuilderKey}`), url: 'https://' } : {}),
     }] });
   };
   return (
@@ -371,10 +373,10 @@ export function SpecializedBlockEditor({
         onChange={(value) => update({ ...block.content, [field]: value })} />)}
       {block.type === 'button' && block.content.action && typeof block.content.action === 'object' && !Array.isArray(block.content.action)
         ? <><ActionEditor value={block.content.action as Record<string, unknown>} onChange={(action) => update({ ...block.content, action })} />
-          <TextField select size="small" label={publicPageText(locale, 'buttonIcon')} value={text(block.content.icon)} onChange={(event) => update({ ...block.content, icon: event.target.value })}>
-            <MenuItem value="">{publicPageText(locale, 'none')}</MenuItem>{(['link', 'phone', 'email', 'message'] as const).map((icon) => <MenuItem key={icon} value={icon}>{publicPageText(locale, `buttonIcon${icon[0].toUpperCase()}${icon.slice(1)}` as Parameters<typeof publicPageText>[1])}</MenuItem>)}</TextField>
-          <TextField size="small" label={publicPageText(locale, 'buttonColor')} value={text(block.content.color)} onChange={(event) => update({ ...block.content, color: event.target.value })} />
-          <TextField size="small" label={publicPageText(locale, 'buttonTextColor')} value={text(block.content.textColor)} onChange={(event) => update({ ...block.content, textColor: event.target.value })} /></> : null}
+          <TextField select size="small" label={translate(locale, 'publicPageBuilder.buttonIcon')} value={text(block.content.icon)} onChange={(event) => update({ ...block.content, icon: event.target.value })}>
+            <MenuItem value="">{translate(locale, 'publicPageBuilder.none')}</MenuItem>{(['link', 'phone', 'email', 'message'] as const).map((icon) => <MenuItem key={icon} value={icon}>{translate(locale, `publicPageBuilder.${`buttonIcon${icon[0].toUpperCase()}${icon.slice(1)}` as PublicPageBuilderKey}`)}</MenuItem>)}</TextField>
+          <TextField size="small" label={translate(locale, 'publicPageBuilder.buttonColor')} value={text(block.content.color)} onChange={(event) => update({ ...block.content, color: event.target.value })} />
+          <TextField size="small" label={translate(locale, 'publicPageBuilder.buttonTextColor')} value={text(block.content.textColor)} onChange={(event) => update({ ...block.content, textColor: event.target.value })} /></> : null}
       {block.type === 'avatar' ? <Stack spacing={2}>
         <Box data-avatar-preview-stage sx={{ position: 'relative', height: 300, overflow: 'hidden', display: 'grid', placeItems: 'start center', pt: 2,
           ...(pageTheme ? resolvePublicPageThemeVariables(pageTheme, pageSection, {
@@ -399,11 +401,11 @@ export function SpecializedBlockEditor({
             </Box>
           </Box></FitToWidth>
         </Box>
-        <Typography variant="subtitle2" id={`avatar-layout-${block.id}`}>{publicPageText(locale, 'fieldLayout')}</Typography>
+        <Typography variant="subtitle2" id={`avatar-layout-${block.id}`}>{translate(locale, 'publicPageBuilder.fieldLayout')}</Typography>
         <Box role="radiogroup" aria-labelledby={`avatar-layout-${block.id}`} sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 1 }}>
           {avatarLayouts.map((layout) => {
             const selected = normalizeAvatarLayout(block.content.layout) === layout;
-            const label = publicPageText(locale, avatarLayoutLabelKey(layout));
+            const label = translate(locale, `publicPageBuilder.${avatarLayoutLabelKey(layout)}`);
             return <ButtonBase key={layout} role="radio" aria-checked={selected} aria-label={label}
               tabIndex={selected ? 0 : -1}
               onClick={() => update({ ...block.content, layout })}
@@ -423,21 +425,21 @@ export function SpecializedBlockEditor({
         {avatarMediaControl}
         {hasAvatarPhoto ? <Stack spacing={0.5}>
           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Typography variant="subtitle2" id={`avatar-zoom-${block.id}`}>{publicPageText(locale, 'avatarZoom')}</Typography>
+            <Typography variant="subtitle2" id={`avatar-zoom-${block.id}`}>{translate(locale, 'publicPageBuilder.avatarZoom')}</Typography>
             <Button size="small" disabled={!avatarFramingChanged} onClick={() => update(applyAvatarFraming(block.content, { focusX: 50, focusY: 50, zoom: 1 }))}>
-              {publicPageText(locale, 'avatarFramingReset')}
+              {translate(locale, 'publicPageBuilder.avatarFramingReset')}
             </Button>
           </Stack>
           {normalizeAvatarLayout(block.content.layout) !== 'image-cover' ? <Slider aria-labelledby={`avatar-zoom-${block.id}`}
             min={AVATAR_ZOOM_MIN} max={AVATAR_ZOOM_MAX} step={0.05} value={avatarFraming.zoom}
             valueLabelDisplay="auto" valueLabelFormat={(value) => `${Math.round(value * 100)}%`}
             onChange={(_event, value) => update(applyAvatarFraming(block.content, { ...avatarFraming, zoom: Array.isArray(value) ? value[0] : value }))} /> : null}
-          <Typography variant="caption" color="text.secondary">{publicPageText(locale, 'avatarFramingHint')}</Typography>
+          <Typography variant="caption" color="text.secondary">{translate(locale, 'publicPageBuilder.avatarFramingHint')}</Typography>
         </Stack> : null}
         {(normalizeAvatarLayout(block.content.layout) === 'cover-centered' || normalizeAvatarLayout(block.content.layout) === 'cover-left') ? avatarCoverControl : null}
         {normalizeAvatarLayout(block.content.layout) !== 'image-cover' ? <Stack spacing={0.75}>
           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Typography variant="subtitle2" id={`avatar-size-${block.id}`}>{publicPageText(locale, 'avatarSize')}</Typography>
+            <Typography variant="subtitle2" id={`avatar-size-${block.id}`}>{translate(locale, 'publicPageBuilder.avatarSize')}</Typography>
             <Typography variant="body2" color="text.secondary">{avatarSizeLabel(normalizeAvatarSize(block.content.avatarSize))}</Typography>
           </Stack>
           <Box role="radiogroup" aria-labelledby={`avatar-size-${block.id}`} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.75 }}>
@@ -459,7 +461,7 @@ export function SpecializedBlockEditor({
           onChange={(value) => update({ ...block.content, [field]: value })} />)}
       </Stack> : null}
       {list ? <Stack spacing={1}>
-            <Typography variant="subtitle2">{publicPageText(locale, 'items')}</Typography>
+            <Typography variant="subtitle2">{translate(locale, 'publicPageBuilder.items')}</Typography>
             {rows.map((row, index) => (
               <Stack key={text(row.id, String(index))} spacing={1}
                 sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 1 }}>
@@ -478,13 +480,13 @@ export function SpecializedBlockEditor({
                       : candidate),
                   })} />
                 ) : null}
-                <IconButton size="small" aria-label={publicPageText(locale, 'removeItem')}
+                <IconButton size="small" aria-label={translate(locale, 'publicPageBuilder.removeItem')}
                   onClick={() => update({ ...block.content, [list.key]: rows.filter((_, rowIndex) => rowIndex !== index) })}>
                   <Delete fontSize="small" />
                 </IconButton>
               </Stack>
             ))}
-            <Button size="small" startIcon={<Add />} onClick={() => addRow()}>{publicPageText(locale, 'addItem')}</Button>
+            <Button size="small" startIcon={<Add />} onClick={() => addRow()}>{translate(locale, 'publicPageBuilder.addItem')}</Button>
           </Stack> : null}
     </Stack>
   );
@@ -721,14 +723,6 @@ function safeServiceImageUrl(value: string | null): string | null {
   }
 }
 
-function formatServicePrice(service: PublicBookingService, locale: string): string {
-  try {
-    return new Intl.NumberFormat(locale, { style: 'currency', currency: service.currency }).format(service.price);
-  } catch {
-    return `${service.price} ${service.currency}`;
-  }
-}
-
 export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(() => typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -803,10 +797,10 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
   const onBlur = (event: FocusEvent<HTMLDivElement>) => {
     if (!event.currentTarget.contains(event.relatedTarget)) {setFocusWithin(false);}
   };
-  const title = text(block.content.title) || publicPageText(locale, 'blockTypeServices');
+  const title = text(block.content.title) || translate(locale, 'publicPageBuilder.blockTypeServices');
   if (selectedServices.length === 0) {
     return editor ? <Surface block={block}><Typography component="h2" variant="h5">{title}</Typography>
-      <Typography color="text.secondary">{publicPageText(locale, 'servicesNoneSelected')}</Typography></Surface> : null;
+      <Typography color="text.secondary">{translate(locale, 'publicPageBuilder.servicesNoneSelected')}</Typography></Surface> : null;
   }
   const layout = block.content.layout === 'grid' || block.content.layout === 'list' ? block.content.layout : 'carousel';
   const carousel = layout === 'carousel' && selectedServices.length > 1;
@@ -814,9 +808,9 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
   const slides = selectedServices.map((service, index) => {
     const imageUrl = safeServiceImageUrl(service.imageUrl);
     const inactive = carousel && selectedIndex !== index;
-    return <Box key={service.id} role="group" aria-roledescription={publicPageText(locale, 'carouselSlide')}
+    return <Box key={service.id} role="group" aria-roledescription={translate(locale, 'publicPageBuilder.carouselSlide')}
       inert={inactive ? true : undefined} aria-hidden={inactive ? true : undefined}
-      aria-label={publicPageText(locale, 'serviceSlidePosition').replace('{current}', String(index + 1)).replace('{total}', String(selectedServices.length))}
+      aria-label={translate(locale, 'publicPageBuilder.serviceSlidePosition').replace('{current}', String(index + 1)).replace('{total}', String(selectedServices.length))}
       sx={{
         ...(carousel ? {
           flex: '0 0 88%',
@@ -841,18 +835,18 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
             <Typography component="h3" variant="h6">{service.name}</Typography>
             {service.description ? <Typography>{service.description}</Typography> : null}
             <Stack direction="row" sx={{ alignItems: 'baseline', flexWrap: 'wrap', gap: 'var(--page-space-1)', mt: 'auto' }}>
-              <Typography sx={{ fontWeight: 700 }}>{formatServicePrice(service, locale)}</Typography>
-              <Typography variant="body2">{service.durationMin} {publicPageText(locale, 'serviceMinutes')}</Typography>
+              <Typography sx={{ fontWeight: 700 }}>{formatMoney(service.price, service.currency, locale)}</Typography>
+              <Typography variant="body2">{service.durationMin} {translate(locale, 'publicPageBuilder.serviceMinutes')}</Typography>
             </Stack>
             {service.firstSessionFree ? <Typography variant="body2" sx={{ color: 'var(--theme-link-title-color)', fontWeight: 700 }}>
-              {publicPageText(locale, 'serviceFirstSessionFree')}
+              {translate(locale, 'publicPageBuilder.serviceFirstSessionFree')}
             </Typography> : null}
           </Stack>
           {block.content.showBookingButton !== false && publicPageSlug ? <Button
             onClick={() => setBookingServiceId(service.id)} variant="contained"
             sx={{ ...ordinaryPublicPageLinkSx, mt: 'var(--app-space-xs)', minHeight: 'var(--app-control-l)', textTransform: 'none',
               ...(wideRow ? { '@container public-services (min-width: 600px)': { mt: 0, flexShrink: 0, maxWidth: '40%' } } : {}) }}>
-            {publicPageText(locale, 'serviceBook')}
+            {translate(locale, 'publicPageBuilder.serviceBook')}
           </Button> : null}
         </CardContent>
       </Card>
@@ -873,15 +867,15 @@ export function ServicesBlock({ block, services = [], publicPageSlug = '', edito
           '@container public-services (min-width: 600px)': { gap: 'var(--page-space-3)' } }}>{slides}</Box>
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', alignItems: 'center', rowGap: 0.5, minHeight: 34 }}>
-        <Stack direction="row" role="group" aria-label={publicPageText(locale, 'carouselNavigation')} sx={{ gridColumn: 2, gap: 'var(--page-space-1)' }}>
+        <Stack direction="row" role="group" aria-label={translate(locale, 'publicPageBuilder.carouselNavigation')} sx={{ gridColumn: 2, gap: 'var(--page-space-1)' }}>
           {selectedServices.map((service, index) => <ButtonBase key={service.id} data-service-dot
-            aria-label={publicPageText(locale, 'goToServiceSlide').replace('{number}', String(index + 1))}
+            aria-label={translate(locale, 'publicPageBuilder.goToServiceSlide').replace('{number}', String(index + 1))}
             aria-current={selectedIndex === index ? 'true' : undefined} onClick={() => navigate(index)}
             onKeyDown={(event) => onNavigationKeyDown(event, index)}
             sx={{ width: 'var(--app-space-m)', height: 'var(--app-space-m)', borderRadius: 'var(--app-radius-circle)', bgcolor: selectedIndex === index ? 'var(--theme-link-background)' : 'transparent',
               border: 'calc(var(--app-border-width) * 2) solid', borderColor: 'var(--theme-link-background)', '&:focus-visible': { outline: 'calc(var(--app-border-width) * 2) solid var(--theme-link-border-color)', outlineOffset: 'calc(var(--app-border-width) * 2)' } }} />)}
         </Stack>
-        {autoplayConfigured && !editor && !reducedMotion ? <IconButton size="small" aria-label={publicPageText(locale, autoplayPaused ? 'carouselPlay' : 'carouselPause')}
+        {autoplayConfigured && !editor && !reducedMotion ? <IconButton size="small" aria-label={translate(locale, `publicPageBuilder.${autoplayPaused ? 'carouselPlay' : 'carouselPause'}`)}
           sx={{ gridColumn: 3, justifySelf: 'start', ml: 'var(--page-space-1)',
             '@container public-services (max-width: 420px)': { gridColumn: 2, gridRow: 2, justifySelf: 'center', ml: 0 } }}
           onClick={() => setAutoplayPaused((value) => !value)}>{autoplayPaused ? <PlayArrow /> : <Pause />}</IconButton> : null}
@@ -964,7 +958,7 @@ export function VideoBlock({ block }: { block: PageBlock }) {
     <Stack sx={{ gap: 'var(--page-space-2)', ...bindTitleSx }}>
       <ListTitle block={block} />
       {video ? <Box sx={{ position: 'relative', aspectRatio: '16 / 9', borderRadius: 'var(--block-border-radius)', overflow: 'hidden', bgcolor: 'color-mix(in srgb, var(--page-text) 8%, transparent)' }}>
-        <Box component="iframe" src={publicPageVideoEmbedUrl(video)} title={text(block.content.title) || publicPageText(locale, 'blockTypeVideo')}
+        <Box component="iframe" src={publicPageVideoEmbedUrl(video)} title={text(block.content.title) || translate(locale, 'publicPageBuilder.blockTypeVideo')}
           loading="lazy" allow="fullscreen; picture-in-picture; encrypted-media" allowFullScreen referrerPolicy="strict-origin-when-cross-origin"
           sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
       </Box> : null}

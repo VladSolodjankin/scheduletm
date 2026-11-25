@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { PUBLIC_PAGE_TEMPLATES } from '../../../src/features/public-page-builder/templates/index.ts';
 import { PUBLIC_PAGE_SCHEMA_VERSION } from '@meetli/shared/public-page';
-import { publicPageText } from '../../../src/components/public-page-builder/uiText.ts';
+import { translate } from '../../../src/shared/i18n/translate.ts';
+
+const publicPageText = (locale, key) => translate(locale, `publicPageBuilder.${key}`);
 
 const PAGE_ID = 'c93e91d7-7eb2-41cf-bdac-c8c9d251bb11';
 const blockOf = (state) => state.record.draft.sections[0].blocks[0];

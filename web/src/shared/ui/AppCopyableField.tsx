@@ -1,10 +1,8 @@
 import { IconButton, InputAdornment, Tooltip, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
 
 import { AppIcons } from './AppIcons';
 import { AppTextField } from './AppTextField';
-
-const COPIED_FEEDBACK_MS = 2000;
+import { useCopyToClipboard } from '../utils/useCopyToClipboard';
 
 type AppCopyableFieldProps = {
   label: string;
@@ -24,24 +22,8 @@ export function AppCopyableField({
   copiedLabel,
   copyFailedLabel,
 }: AppCopyableFieldProps) {
-  const [feedback, setFeedback] = useState<'copied' | 'failed' | null>(null);
-
-  useEffect(() => {
-    if (!feedback) {
-      return undefined;
-    }
-    const timeoutId = window.setTimeout(() => setFeedback(null), COPIED_FEEDBACK_MS);
-    return () => window.clearTimeout(timeoutId);
-  }, [feedback]);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setFeedback('copied');
-    } catch {
-      setFeedback('failed');
-    }
-  };
+  const { status: feedback, copyText } = useCopyToClipboard();
+  const copy = () => copyText(value);
 
   const feedbackText = feedback === 'copied' ? copiedLabel : feedback === 'failed' ? copyFailedLabel : '';
 

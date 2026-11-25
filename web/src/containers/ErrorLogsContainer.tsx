@@ -11,10 +11,11 @@ import { AppDataTable } from '../shared/ui/AppDataTable';
 import { AppIcons } from '../shared/ui/AppIcons';
 import { AppPage } from '../shared/ui/AppPage';
 import { AppLoadingState, AppStatusBadge, AppStatusMessage } from '../shared/ui/AppStatus';
+import { formatDateTime } from '../shared/utils/dateTime';
 
 export function ErrorLogsContainer() {
   const { accessToken, user } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigate = useNavigate();
   const resolveError = useApiErrorResolver();
 
@@ -80,7 +81,7 @@ export function ErrorLogsContainer() {
                 key: 'createdAt',
                 label: t('errorLogs.columns.createdAt'),
                 width: 210,
-                render: (item) => new Date(item.createdAt).toLocaleString()
+                render: (item) => formatDateTime(item.createdAt, locale)
               },
               {
                 key: 'source',

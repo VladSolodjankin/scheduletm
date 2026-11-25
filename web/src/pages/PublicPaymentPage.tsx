@@ -10,6 +10,7 @@ import { AppButton } from '../shared/ui/AppButton';
 import { AppEmptyState, AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 import { AppSurface } from '../shared/ui/AppSurface';
 import { formatMoney } from '../shared/utils/money';
+import { formatDateTime } from '../shared/utils/dateTime';
 
 const POLL_INTERVAL_MS = 3000;
 const POLL_MAX_ATTEMPTS = 10;
@@ -158,8 +159,7 @@ export function PublicPaymentPage() {
 
   const { appointment, canPayOnline, manual } = details;
   const amountLabel = formatMoney(appointment.amount, appointment.currency, locale);
-  const scheduledLabel = new Intl.DateTimeFormat(locale, { dateStyle: 'full', timeStyle: 'short' })
-    .format(new Date(appointment.scheduledAt));
+  const scheduledLabel = formatDateTime(appointment.scheduledAt, locale, { dateStyle: 'full', timeStyle: 'short' });
   const hasManual = Boolean(manual.bankTransfer || manual.customLink || manual.cash);
   const canShowPayment = !appointment.isPaid && returnStatus !== 'success';
 

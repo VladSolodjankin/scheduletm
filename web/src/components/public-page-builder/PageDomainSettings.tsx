@@ -4,7 +4,7 @@ import type { PublicPageDomain } from '@meetli/shared/public-page-domain';
 import { PublicPageRepositoryError } from '../../features/public-page-builder/repository/PublicPageRepository';
 import type { ApiPublicPageRepository } from '../../features/public-page-builder/repository/ApiPublicPageRepository';
 import type { Locale } from '../../shared/i18n/dictionaries';
-import { publicPageText } from './uiText';
+import { translate } from '../../shared/i18n/translate';
 
 type DomainError = 'invalid' | 'taken' | 'failed';
 
@@ -43,39 +43,39 @@ export function PageDomainSettings({ pageId, locale, repository }: {
   if (domain === undefined && !error) {return null;}
   return (
     <Stack spacing={1.5}>
-      <Typography variant="subtitle2">{publicPageText(locale, 'customDomain')}</Typography>
-      {error ? <Alert severity="error">{publicPageText(locale, error === 'invalid' ? 'domainInvalid' : error === 'taken' ? 'domainTaken' : 'domainError')}</Alert> : null}
+      <Typography variant="subtitle2">{translate(locale, 'publicPageBuilder.customDomain')}</Typography>
+      {error ? <Alert severity="error">{translate(locale, `publicPageBuilder.${error === 'invalid' ? 'domainInvalid' : error === 'taken' ? 'domainTaken' : 'domainError'}`)}</Alert> : null}
       {domain ? (
         <>
           <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <Typography sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{domain.domain}</Typography>
             <Chip size="small" color={domain.verified ? 'success' : 'default'}
-              label={publicPageText(locale, domain.verified ? 'domainConnected' : 'domainPending')} />
+              label={translate(locale, `publicPageBuilder.${domain.verified ? 'domainConnected' : 'domainPending'}`)} />
           </Stack>
           {domain.verified ? null : (
             <Typography variant="body2" color="text.secondary">
-              {publicPageText(locale, 'domainInstruction').replace('{domain}', domain.domain).replace('{target}', domain.target)}
+              {translate(locale, 'publicPageBuilder.domainInstruction').replace('{domain}', domain.domain).replace('{target}', domain.target)}
             </Typography>
           )}
           <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap' }}>
             {domain.verified ? null : (
               <Button variant="contained" size="small" disabled={pending} onClick={() => void run(() => repository.verifyDomain(pageId))}>
-                {publicPageText(locale, 'domainCheck')}
+                {translate(locale, 'publicPageBuilder.domainCheck')}
               </Button>
             )}
             <Button size="small" color="inherit" disabled={pending} onClick={() => void run(async () => { await repository.removeDomain(pageId); return null; })}>
-              {publicPageText(locale, 'domainRemove')}
+              {translate(locale, 'publicPageBuilder.domainRemove')}
             </Button>
           </Stack>
         </>
       ) : (
         <Stack direction="row" sx={{ gap: 1 }}>
           <TextField size="small" fullWidth value={input} placeholder="example.com" disabled={pending}
-            slotProps={{ htmlInput: { 'aria-label': publicPageText(locale, 'customDomain') } }}
+            slotProps={{ htmlInput: { 'aria-label': translate(locale, 'publicPageBuilder.customDomain') } }}
             onChange={(event) => setInput(event.target.value)} />
           <Button variant="contained" size="small" disabled={pending || !input.trim()}
             onClick={() => void run(() => repository.setDomain(pageId, input))}>
-            {publicPageText(locale, 'domainConnect')}
+            {translate(locale, 'publicPageBuilder.domainConnect')}
           </Button>
         </Stack>
       )}

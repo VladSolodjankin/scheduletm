@@ -14,7 +14,7 @@ import {
 } from '../../features/public-page-builder/model/credentials';
 import type { BlockContent, PageBlock } from '../../features/public-page-builder/types/publicPage';
 import type { Locale } from '../../shared/i18n/dictionaries';
-import { publicPageText } from './uiText';
+import { translate } from '../../shared/i18n/translate';
 
 export function CredentialsBlockEditor({ block, locale, onContentChange, onRemoveItem, renderImageControl }: {
   block: PageBlock;
@@ -38,40 +38,40 @@ export function CredentialsBlockEditor({ block, locale, onContentChange, onRemov
   };
   const add = () => setItems([...items, { id: crypto.randomUUID(), imageMediaId: null, alt: '', title: '', organization: '', year: '' }]);
   return <Stack spacing={2}>
-    <TextField size="small" fullWidth label={publicPageText(locale, 'fieldTitle')} value={title}
+    <TextField size="small" fullWidth label={translate(locale, 'publicPageBuilder.fieldTitle')} value={title}
       slotProps={{ htmlInput: { maxLength: 120 } }}
       onChange={(event) => onContentChange({ ...block.content, title: event.target.value })} />
-    {items.length === 0 ? <Typography color="text.secondary">{publicPageText(locale, 'credentialsEmpty')}</Typography> : null}
+    {items.length === 0 ? <Typography color="text.secondary">{translate(locale, 'publicPageBuilder.credentialsEmpty')}</Typography> : null}
     {items.map((item, index) => <Stack key={item.id} spacing={1.5} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
       <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
         <Typography variant="subtitle2" sx={{ flex: 1 }}>
-          {publicPageText(locale, 'credentialsItem').replace('{number}', String(index + 1))}
+          {translate(locale, 'publicPageBuilder.credentialsItem').replace('{number}', String(index + 1))}
         </Typography>
-        <Tooltip title={publicPageText(locale, 'moveUp')}><span><IconButton size="small" disabled={index === 0}
-          aria-label={publicPageText(locale, 'moveUp')} onClick={() => move(index, -1)}><ArrowUpward fontSize="small" /></IconButton></span></Tooltip>
-        <Tooltip title={publicPageText(locale, 'moveDown')}><span><IconButton size="small" disabled={index === items.length - 1}
-          aria-label={publicPageText(locale, 'moveDown')} onClick={() => move(index, 1)}><ArrowDownward fontSize="small" /></IconButton></span></Tooltip>
-        <IconButton size="small" aria-label={publicPageText(locale, 'removeItem')}
+        <Tooltip title={translate(locale, 'publicPageBuilder.moveUp')}><span><IconButton size="small" disabled={index === 0}
+          aria-label={translate(locale, 'publicPageBuilder.moveUp')} onClick={() => move(index, -1)}><ArrowUpward fontSize="small" /></IconButton></span></Tooltip>
+        <Tooltip title={translate(locale, 'publicPageBuilder.moveDown')}><span><IconButton size="small" disabled={index === items.length - 1}
+          aria-label={translate(locale, 'publicPageBuilder.moveDown')} onClick={() => move(index, 1)}><ArrowDownward fontSize="small" /></IconButton></span></Tooltip>
+        <IconButton size="small" aria-label={translate(locale, 'publicPageBuilder.removeItem')}
           onClick={() => onRemoveItem(item.id)}><DeleteOutlined fontSize="small" /></IconButton>
       </Stack>
       {renderImageControl(item, index)}
-      <TextField size="small" fullWidth required label={publicPageText(locale, 'credentialsItemTitle')} value={item.title}
+      <TextField size="small" fullWidth required label={translate(locale, 'publicPageBuilder.credentialsItemTitle')} value={item.title}
         slotProps={{ htmlInput: { maxLength: MAX_CREDENTIAL_TITLE_LENGTH } }}
         onChange={(event) => updateItem(item.id, { title: event.target.value })} />
-      <TextField size="small" fullWidth label={publicPageText(locale, 'credentialsOrganization')} value={item.organization}
+      <TextField size="small" fullWidth label={translate(locale, 'publicPageBuilder.credentialsOrganization')} value={item.organization}
         slotProps={{ htmlInput: { maxLength: MAX_CREDENTIAL_ORGANIZATION_LENGTH } }}
         onChange={(event) => updateItem(item.id, { organization: event.target.value })} />
-      <TextField size="small" fullWidth label={publicPageText(locale, 'credentialsYear')} value={item.year}
-        error={!isValidCredentialYear(item.year)} helperText={publicPageText(locale, 'credentialsYearHelper')}
+      <TextField size="small" fullWidth label={translate(locale, 'publicPageBuilder.credentialsYear')} value={item.year}
+        error={!isValidCredentialYear(item.year)} helperText={translate(locale, 'publicPageBuilder.credentialsYearHelper')}
         slotProps={{ htmlInput: { maxLength: 4, inputMode: 'numeric' } }}
         onChange={(event) => updateItem(item.id, { year: event.target.value })} />
     </Stack>)}
     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
       <Button size="small" startIcon={<AddRounded />} disabled={items.length >= MAX_CREDENTIALS} onClick={add}>
-        {publicPageText(locale, 'credentialsAddItem')}
+        {translate(locale, 'publicPageBuilder.credentialsAddItem')}
       </Button>
       <Typography variant="caption" color="text.secondary">
-        {publicPageText(locale, 'credentialsCount').replace('{count}', String(items.length)).replace('{max}', String(MAX_CREDENTIALS))}
+        {translate(locale, 'publicPageBuilder.credentialsCount').replace('{count}', String(items.length)).replace('{max}', String(MAX_CREDENTIALS))}
       </Typography>
     </Stack>
   </Stack>;

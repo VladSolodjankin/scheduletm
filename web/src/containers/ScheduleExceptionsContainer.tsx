@@ -1,4 +1,4 @@
-import { FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
+import { MenuItem, Stack } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { ScheduleExceptionsTab } from '../components/settings-tabs/ScheduleExceptionsTab';
@@ -7,7 +7,9 @@ import { apiClient, authHeaders } from '../shared/api/client';
 import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
+import { AppFilterBar } from '../shared/ui/AppFilterBar';
 import { AppPage } from '../shared/ui/AppPage';
+import { AppTextField } from '../shared/ui/AppTextField';
 import { AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 import type {
   ScheduleException,
@@ -173,13 +175,15 @@ export function ScheduleExceptionsContainer() {
   }
 
   return (
-    <AppPage title={t('common.daysOff')} maxWidth={900}>
+    <AppPage title={t('common.daysOff')} contentWidth="form">
       <Stack spacing={2.5}>
         {!isSpecialist && specialists.length > 0 ? (
-          <FormControl size="small" sx={{ maxWidth: 360 }}>
-            <InputLabel id="days-off-specialist">{t('settings.scopeSpecialist')}</InputLabel>
-            <Select
-              labelId="days-off-specialist"
+          <AppFilterBar
+            mobileTitle={t('common.daysOff')}
+            mobileLabel={specialists.find(({ id }) => id === selectedSpecialistId)?.name ?? t('settings.scopeSpecialist')}
+          >
+            <AppTextField
+              select
               label={t('settings.scopeSpecialist')}
               value={selectedSpecialistId ?? ''}
               onChange={(event) => {
@@ -192,8 +196,8 @@ export function ScheduleExceptionsContainer() {
                   {specialist.name}
                 </MenuItem>
               ))}
-            </Select>
-          </FormControl>
+            </AppTextField>
+          </AppFilterBar>
         ) : null}
 
         {error ? <AppStatusMessage severity="error" message={error} /> : null}

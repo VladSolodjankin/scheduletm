@@ -56,6 +56,7 @@ const tokenVariables = {
   '--app-sidebar-width': APP_TOKENS.layout.sidebar,
   '--app-page-max': APP_TOKENS.layout.pageMax,
   '--app-page-narrow': APP_TOKENS.layout.pageNarrow,
+  '--app-page-compact': APP_TOKENS.layout.pageCompact,
   '--app-dialog-s': APP_TOKENS.layout.dialogS,
   '--app-dialog-m': APP_TOKENS.layout.dialogM,
   '--app-dialog-l': APP_TOKENS.layout.dialogL,

@@ -9,7 +9,7 @@ import { Alert, Box, Button, Chip, IconButton, Stack, Tooltip, Typography } from
 import type { ReactNode } from 'react';
 import type { Locale } from '../../shared/i18n/dictionaries';
 import type { EditorSaveStatus } from '../../features/public-page-builder/types/editor';
-import { publicPageText } from './uiText';
+import { translate } from '../../shared/i18n/translate';
 
 export function BuilderToolbar(props: {
   locale: Locale;
@@ -30,10 +30,10 @@ export function BuilderToolbar(props: {
 }) {
   const { locale, saveStatus } = props;
   const statusLabel = saveStatus === 'saving'
-    ? publicPageText(locale, 'saving')
+    ? translate(locale, 'publicPageBuilder.saving')
     : saveStatus === 'error'
-      ? publicPageText(locale, 'saveError')
-      : publicPageText(locale, props.dirty ? 'unsaved' : 'saved');
+      ? translate(locale, 'publicPageBuilder.saveError')
+      : translate(locale, `publicPageBuilder.${props.dirty ? 'unsaved' : 'saved'}`);
   const isBusy = saveStatus === 'saving' || props.isPublishing || props.isSlugUnavailable;
   const compactAction = (label: string, icon: ReactNode, onClick: () => void, disabled: boolean) => (
     <Tooltip title={label}>
@@ -61,26 +61,26 @@ export function BuilderToolbar(props: {
         </Stack>
         {props.compact ? (
           <Stack direction="row" spacing={0} sx={{ flexShrink: 0 }}>
-            {compactAction(publicPageText(locale, 'undo'), <Undo fontSize="small" />, props.onUndo, !props.canUndo)}
-            {compactAction(publicPageText(locale, 'redo'), <Redo fontSize="small" />, props.onRedo, !props.canRedo)}
-            {compactAction(publicPageText(locale, 'save'), <SaveOutlined fontSize="small" />, props.onSave, isBusy)}
-            {compactAction(publicPageText(locale, 'publish'), <PublishOutlined fontSize="small" />, props.onPublish, isBusy)}
+            {compactAction(translate(locale, 'publicPageBuilder.undo'), <Undo fontSize="small" />, props.onUndo, !props.canUndo)}
+            {compactAction(translate(locale, 'publicPageBuilder.redo'), <Redo fontSize="small" />, props.onRedo, !props.canRedo)}
+            {compactAction(translate(locale, 'publicPageBuilder.save'), <SaveOutlined fontSize="small" />, props.onSave, isBusy)}
+            {compactAction(translate(locale, 'publicPageBuilder.publish'), <PublishOutlined fontSize="small" />, props.onPublish, isBusy)}
           </Stack>
         ) : (
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexShrink: 0 }}>
             <Stack direction="row" spacing={1}>
-              <Button variant="text" color="inherit" aria-label={publicPageText(locale, 'undo')} disabled={!props.canUndo} onClick={props.onUndo}>{publicPageText(locale, 'undo')}</Button>
-              <Button variant="text" color="inherit" aria-label={publicPageText(locale, 'redo')} disabled={!props.canRedo} onClick={props.onRedo}>{publicPageText(locale, 'redo')}</Button>
+              <Button variant="text" color="inherit" aria-label={translate(locale, 'publicPageBuilder.undo')} disabled={!props.canUndo} onClick={props.onUndo}>{translate(locale, 'publicPageBuilder.undo')}</Button>
+              <Button variant="text" color="inherit" aria-label={translate(locale, 'publicPageBuilder.redo')} disabled={!props.canRedo} onClick={props.onRedo}>{translate(locale, 'publicPageBuilder.redo')}</Button>
             </Stack>
             <Stack direction="row" spacing={1}>
-              <Button variant="outlined" disabled={isBusy} onClick={props.onSave}>{publicPageText(locale, 'save')}</Button>
-              <Button variant="contained" disabled={isBusy} onClick={props.onPublish}>{publicPageText(locale, 'publish')}</Button>
+              <Button variant="outlined" disabled={isBusy} onClick={props.onSave}>{translate(locale, 'publicPageBuilder.save')}</Button>
+              <Button variant="contained" disabled={isBusy} onClick={props.onPublish}>{translate(locale, 'publicPageBuilder.publish')}</Button>
             </Stack>
           </Stack>
         )}
       </Box>
       {props.pageActions}
-      {props.hasPublishErrors ? <Alert severity="warning">{publicPageText(locale, 'validation')}</Alert> : null}
+      {props.hasPublishErrors ? <Alert severity="warning">{translate(locale, 'publicPageBuilder.validation')}</Alert> : null}
     </Stack>
   );
 }

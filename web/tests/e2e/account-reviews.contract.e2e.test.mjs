@@ -30,9 +30,10 @@ describe('web account reviews contracts', () => {
     const container = await read('src/containers/AccountReviewsContainer.tsx');
     const form = await read('src/components/account-reviews/ReviewFormDialog.tsx');
 
-    assert.match(container, /imageMediaApi\.upload/);
+    assert.match(container, /useManagedImages<AppUploadedImage>/);
+    assert.match(container, /onUploadImage=\{images\.uploadImage\}/);
     assert.match(container, /previousMediaId !== payload\.screenshotMediaId/);
-    assert.match(container, /cleanupManagedImage\(review\.screenshot\.mediaId\)/);
+    assert.match(container, /images\.cleanupImage\(review\.screenshot\.mediaId\)/);
     assert.match(container, /review_limit_reached: 'accountReviews\.errors\.limitReached'/);
     assert.match(container, /status: review\.status === 'published' \? 'hidden' : 'published'/);
     assert.match(form, /fullScreen=\{fullScreen\}/);

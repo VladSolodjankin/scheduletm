@@ -1,10 +1,11 @@
 import { MenuItem, Stack, Typography } from '@mui/material';
-import { isAxiosError } from 'axios';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ServiceCard } from '../components/services/ServiceCard';
 import { ServiceFormDialog } from '../components/services/ServiceFormDialog';
+import { ServiceListRow } from '../components/services/ServiceListRow';
+import { ServicePricingDialog } from '../components/services/ServicePricingDialog';
 import type {
+  AssignmentChange,
   AssignmentPayload,
   ServiceAssignment,
   ServiceCatalogItem,
@@ -14,7 +15,8 @@ import type {
   ServicesResponse,
   ServiceSpecialist,
 } from '../components/services/types';
-import { imageMediaApi, servicesApi } from '../shared/api/client';
+import { servicesApi } from '../shared/api/client';
+import { useManagedImages } from '../shared/api/useManagedImages';
 import { useApiErrorResolver } from '../shared/api/error';
 import { useAuth } from '../shared/auth/AuthContext';
 import { useI18n } from '../shared/i18n/I18nContext';
@@ -24,11 +26,12 @@ import { AppConfirmDialog } from '../shared/ui/AppDialog';
 import { AppEmptyState, AppLoadingState, AppStatusMessage } from '../shared/ui/AppStatus';
 import { AppIcons } from '../shared/ui/AppIcons';
 import { AppFilterBar } from '../shared/ui/AppFilterBar';
+import { AppImageCleanupNotice } from '../shared/ui/AppImageCleanupNotice';
+import { AppList } from '../shared/ui/AppList';
 import { AppPage } from '../shared/ui/AppPage';
 import { AppTextField } from '../shared/ui/AppTextField';
 
 type ServiceFilter = 'active' | 'archived';
-type MediaPreviewState = { accessToken: string | null; urls: Map<string, string> };
 
 export function ServicesContainer() {
   const { accessToken, user } = useAuth();
@@ -51,27 +54,24 @@ export function ServicesContainer() {
   const [deleteError, setDeleteError] = useState('');
   const [isDeleteImpactLoading, setIsDeleteImpactLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [failedCleanupMediaIds, setFailedCleanupMediaIds] = useState<string[]>([]);
-  const [isRetryingCleanup, setIsRetryingCleanup] = useState(false);
-  const [savingAssignmentKey, setSavingAssignmentKey] = useState<string | null>(null);
-  const [mediaPreviews, setMediaPreviews] = useState<MediaPreviewState>(() => ({
-    accessToken: null,
-    urls: new Map(),
-  }));
+  const [pricingService, setPricingService] = useState<ServiceCatalogItem | null>(null);
+  const [pricingError, setPricingError] = useState('');
+  const [isPricingSaving, setIsPricingSaving] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const openedIntentRef = useRef('');
-  const mediaPreviewUrlsRef = useRef<Map<string, string>>(new Map());
 
   const canManage = user?.role === WebUserRole.ProductAdmin
     || user?.role === WebUserRole.Owner;
   const canAccess = canManage || user?.role === WebUserRole.Specialist;
 
+  const images = useManagedImages<ServiceImageMedia>(
+    canAccess ? services.flatMap((service) => service.imageMediaId ? [service.imageMediaId] : []) : [],
+  );
+  const { previewUrlFor, cleanupImage } = images;
   const resolvedServices = useMemo(() => services.map((service) => {
-    const previewUrl = mediaPreviews.accessToken === accessToken && service.imageMediaId
-      ? mediaPreviews.urls.get(service.imageMediaId)
-      : undefined;
+    const previewUrl = previewUrlFor(service.imageMediaId);
     return previewUrl ? { ...service, imageUrl: previewUrl } : service;
-  }), [accessToken, mediaPreviews, services]);
+  }), [previewUrlFor, services]);
 
   const clearDialogQuery = useCallback(() => {
     const next = new URLSearchParams(searchParams);
@@ -83,37 +83,6 @@ export function ServicesContainer() {
   const reportError = useCallback((caught: unknown, fallbackMessage: string) => {
     setError(resolveError(caught, fallbackMessage).message);
   }, [resolveError]);
-
-  const cleanupManagedImage = async (mediaId: string) => {
-    if (!accessToken) {
-      setFailedCleanupMediaIds((current) => current.includes(mediaId) ? current : [...current, mediaId]);
-      return false;
-    }
-    try {
-      await imageMediaApi.delete(accessToken, mediaId);
-      setFailedCleanupMediaIds((current) => current.filter((id) => id !== mediaId));
-      return true;
-    } catch (caught) {
-      if (isAxiosError(caught) && caught.response?.status === 404) {
-        setFailedCleanupMediaIds((current) => current.filter((id) => id !== mediaId));
-        return true;
-      }
-      setFailedCleanupMediaIds((current) => current.includes(mediaId) ? current : [...current, mediaId]);
-      return false;
-    }
-  };
-
-  const retryFailedMediaCleanup = async () => {
-    if (!failedCleanupMediaIds.length || isRetryingCleanup) {
-      return;
-    }
-    setIsRetryingCleanup(true);
-    try {
-      await Promise.all(failedCleanupMediaIds.map((mediaId) => cleanupManagedImage(mediaId)));
-    } finally {
-      setIsRetryingCleanup(false);
-    }
-  };
 
   const refresh = useCallback(async () => {
     if (!accessToken || !canAccess) {
@@ -128,14 +97,6 @@ export function ServicesContainer() {
       reportError(caught, t('services.errors.load'));
     }
   }, [accessToken, canAccess, reportError, t]);
-
-  useEffect(() => {
-    const previewUrls = mediaPreviewUrlsRef.current;
-    return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
-      previewUrls.clear();
-    };
-  }, [accessToken]);
 
   useEffect(() => {
     if (!accessToken || !canAccess) {
@@ -168,45 +129,6 @@ export function ServicesContainer() {
       isActive = false;
     };
   }, [accessToken, canAccess, reportError, t]);
-
-  useEffect(() => {
-    if (!accessToken || !canAccess) {
-      return;
-    }
-
-    let cancelled = false;
-    const mediaIds = new Set(services.flatMap((service) => service.imageMediaId ? [service.imageMediaId] : []));
-    mediaPreviewUrlsRef.current.forEach((url, mediaId) => {
-      if (!mediaIds.has(mediaId)) {
-        URL.revokeObjectURL(url);
-        mediaPreviewUrlsRef.current.delete(mediaId);
-      }
-    });
-
-    void Promise.all([...mediaIds]
-      .filter((mediaId) => !mediaPreviewUrlsRef.current.has(mediaId))
-      .map(async (mediaId) => {
-        try {
-          const response = await imageMediaApi.getPreview(accessToken, mediaId);
-          if (cancelled) {
-            return;
-          }
-          const previewUrl = URL.createObjectURL(response.data);
-          if (mediaPreviewUrlsRef.current.has(mediaId)) {
-            URL.revokeObjectURL(previewUrl);
-            return;
-          }
-          mediaPreviewUrlsRef.current.set(mediaId, previewUrl);
-          setMediaPreviews({ accessToken, urls: new Map(mediaPreviewUrlsRef.current) });
-        } catch {
-          // Keep the API-provided public URL for active services; archived services show the empty image state.
-        }
-      }));
-
-    return () => {
-      cancelled = true;
-    };
-  }, [accessToken, canAccess, services]);
 
   useEffect(() => {
     const intent = `${searchParams.get('create') ?? ''}:${searchParams.get('edit') ?? ''}`;
@@ -258,7 +180,21 @@ export function ServicesContainer() {
     clearDialogQuery();
   };
 
-  const saveService = async (payload: ServicePayload) => {
+  const saveAssignmentChanges = async (serviceId: number, changes: AssignmentChange[]) => {
+    if (!accessToken) {
+      return;
+    }
+    for (const { specialistId, ...assignmentPayload } of changes) {
+      await servicesApi.updateAssignment<ServiceAssignment, AssignmentPayload>(
+        accessToken,
+        serviceId,
+        specialistId,
+        assignmentPayload,
+      );
+    }
+  };
+
+  const saveService = async (payload: ServicePayload, assignmentChanges: AssignmentChange[]) => {
     if (!accessToken) {
       return false;
     }
@@ -269,14 +205,22 @@ export function ServicesContainer() {
       const changedManagedImage = editingService
         && payload.imageMediaId !== undefined
         && payload.imageMediaId !== previousImageMediaId;
-      if (editingService) {
-        await servicesApi.update<ServiceCatalogItem, ServicePayload>(accessToken, editingService.id, payload);
-      } else {
-        await servicesApi.create<ServiceCatalogItem, ServicePayload>(accessToken, payload);
+      const response = editingService
+        ? await servicesApi.update<ServiceCatalogItem, ServicePayload>(accessToken, editingService.id, payload)
+        : await servicesApi.create<ServiceCatalogItem, ServicePayload>(accessToken, payload);
+      let assignmentError: unknown = null;
+      try {
+        await saveAssignmentChanges(editingService?.id ?? response.data.id, assignmentChanges);
+      } catch (caught) {
+        assignmentError = caught;
       }
       await refresh();
+      if (assignmentError) {
+        // The service itself is saved; report pricing failure on the page so a retry cannot duplicate it.
+        reportError(assignmentError, t('services.errors.saveAssignment'));
+      }
       if (changedManagedImage && previousImageMediaId) {
-        await cleanupManagedImage(previousImageMediaId);
+        await cleanupImage(previousImageMediaId);
       }
       return true;
     } catch (caught) {
@@ -305,29 +249,31 @@ export function ServicesContainer() {
     }
   };
 
-  const saveAssignment = async (
-    service: ServiceCatalogItem,
-    assignment: ServiceAssignment,
-    payload: AssignmentPayload,
-  ) => {
+  const savePricing = async (service: ServiceCatalogItem, changes: AssignmentChange[]) => {
     if (!accessToken) {
+      return false;
+    }
+    setIsPricingSaving(true);
+    setPricingError('');
+    try {
+      await saveAssignmentChanges(service.id, changes);
+      await refresh();
+      return true;
+    } catch (caught) {
+      setPricingError(resolveError(caught, t('services.errors.saveAssignment')).message);
+      return false;
+    } finally {
+      setIsPricingSaving(false);
+    }
+  };
+
+  const openService = (service: ServiceCatalogItem) => {
+    if (canManage) {
+      openEdit(service);
       return;
     }
-    const assignmentKey = `${service.id}:${assignment.specialistId}`;
-    setSavingAssignmentKey(assignmentKey);
-    try {
-      await servicesApi.updateAssignment<ServiceAssignment, AssignmentPayload>(
-        accessToken,
-        service.id,
-        assignment.specialistId,
-        payload,
-      );
-      await refresh();
-    } catch (caught) {
-      reportError(caught, t('services.errors.saveAssignment'));
-    } finally {
-      setSavingAssignmentKey(null);
-    }
+    setPricingError('');
+    setPricingService(service);
   };
 
   const openDeleteDialog = async (service: ServiceCatalogItem) => {
@@ -360,7 +306,7 @@ export function ServicesContainer() {
       setDeleteImpact(null);
       await refresh();
       if (service.imageMediaId) {
-        await cleanupManagedImage(service.imageMediaId);
+        await cleanupImage(service.imageMediaId);
       }
     } catch (caught) {
       setDeleteError(resolveError(caught, t('services.errors.delete')).message);
@@ -374,53 +320,6 @@ export function ServicesContainer() {
       setIsDeleting(false);
     }
   };
-
-  const labels = useMemo(() => ({
-    active: t('services.active'),
-    archived: t('services.archived'),
-    firstSessionFree: t('services.firstSessionFree'),
-    minutes: t('services.minutes'),
-    hoursShort: t('services.hoursShort'),
-    assignments: t('services.assignments'),
-    assignmentsHelper: t('services.assignmentsHelper'),
-    noAssignments: t('services.noAssignments'),
-    edit: t('services.edit'),
-    archive: t('services.archive'),
-    restore: t('services.restore'),
-    deletePermanently: t('services.deletePermanently'),
-    save: t('services.save'),
-    cancel: t('common.cancel'),
-    createTitle: t('services.createTitle'),
-    editTitle: t('services.editTitle'),
-    formDescription: t('services.formDescription'),
-    name: t('services.name'),
-    nameError: t('services.nameError'),
-    description: t('services.description'),
-    descriptionError: t('services.descriptionError'),
-    price: t('services.price'),
-    priceHelper: t('services.priceHelper'),
-    priceError: t('services.priceError'),
-    duration: t('services.duration'),
-    durationHelper: t('services.durationHelper'),
-    durationError: t('services.durationError'),
-    image: t('services.image'),
-    uploadImage: t('services.uploadImage'),
-    replaceImage: t('services.replaceImage'),
-    removeImage: t('services.removeImage'),
-    invalidImageType: t('services.invalidImageType'),
-    imageTooLarge: t('services.imageTooLarge'),
-    imageUploadError: t('services.errors.imageUpload'),
-    imageCleanupError: t('services.errors.imageCleanup'),
-    specialistsTitle: t('services.specialistsTitle'),
-    specialistsHelper: t('services.specialistsHelper'),
-    selectAll: t('services.selectAll'),
-    clear: t('services.clear'),
-    noSpecialists: t('services.noSpecialists'),
-    availableForBooking: t('services.availableForBooking'),
-    serviceDefault: t('services.serviceDefault'),
-    customValue: t('services.customValue'),
-    useServiceDefaults: t('services.useServiceDefaults'),
-  }), [t]);
 
   const filteredServices = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase(locale);
@@ -457,22 +356,14 @@ export function ServicesContainer() {
     >
       <Stack className="services-list">
         {error ? <AppStatusMessage severity="error" message={error} /> : null}
-        {failedCleanupMediaIds.length ? (
-          <Stack className="services-cleanup">
-            <AppStatusMessage severity="warning" message={t('services.imageCleanupWarning')} />
-            <Stack className="services-actions">
-              <AppButton
-                size="small"
-                variant="outlined"
-                isLoading={isRetryingCleanup}
-                disabled={isSaving || isDeleting}
-                onClick={() => void retryFailedMediaCleanup()}
-              >
-                {t('services.retryImageCleanup')}
-              </AppButton>
-            </Stack>
-          </Stack>
-        ) : null}
+        <AppImageCleanupNotice
+          failedCount={images.failedCleanupMediaIds.length}
+          message={t('services.imageCleanupWarning')}
+          retryLabel={t('services.retryImageCleanup')}
+          isRetrying={images.isRetryingCleanup}
+          disabled={isSaving || isDeleting}
+          onRetry={() => void images.retryCleanup()}
+        />
         {!canAccess ? (
           <AppEmptyState title={t('services.accessDenied')} />
         ) : isLoading ? (
@@ -500,27 +391,22 @@ export function ServicesContainer() {
               </AppTextField>
             </AppFilterBar>
 
-            {filteredServices.length ? filteredServices.map((service) => {
-              const savingSpecialistId = savingAssignmentKey?.startsWith(`${service.id}:`)
-                ? Number(savingAssignmentKey.split(':')[1])
-                : null;
-              return (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  locale={locale}
-                  canManage={canManage}
-                  labels={labels}
-                  savingAssignmentId={savingSpecialistId}
-                  isMutating={statusService?.id === service.id || deletingService?.id === service.id}
-                  onEdit={() => openEdit(service)}
-                  onArchive={() => setStatusService(service)}
-                  onRestore={() => setStatusService(service)}
-                  onDelete={() => void openDeleteDialog(service)}
-                  onSaveAssignment={(assignment, payload) => saveAssignment(service, assignment, payload)}
-                />
-              );
-            }) : (
+            {filteredServices.length ? (
+              <AppList className="services-list__rows">
+                {filteredServices.map((service) => (
+                  <ServiceListRow
+                    key={service.id}
+                    service={service}
+                    canManage={canManage}
+                    isMutating={statusService?.id === service.id || deletingService?.id === service.id}
+                    onOpen={() => openService(service)}
+                    onArchive={() => setStatusService(service)}
+                    onRestore={() => setStatusService(service)}
+                    onDelete={() => void openDeleteDialog(service)}
+                  />
+                ))}
+              </AppList>
+            ) : (
               <AppEmptyState
                 title={services.length ? t('services.noResults') : t('services.empty')}
                 description={services.length ? t('services.noResultsHelper') : t('services.emptyHelper')}
@@ -542,23 +428,23 @@ export function ServicesContainer() {
         specialists={specialists}
         isSaving={isSaving}
         saveError={dialogError}
-        labels={labels}
         onClose={closeDialog}
         onSubmit={saveService}
-        onUploadImage={async (file, onProgress) => {
-          if (!accessToken) {
-            throw new Error('missing_access_token');
-          }
-          const response = await imageMediaApi.upload<ServiceImageMedia>(accessToken, file, onProgress);
-          return response.data;
-        }}
-        onDeleteImage={async (mediaId) => {
-          if (!accessToken) {
-            throw new Error('missing_access_token');
-          }
-          await imageMediaApi.delete(accessToken, mediaId);
-        }}
+        onUploadImage={images.uploadImage}
+        onDeleteImage={images.deleteImage}
       />
+
+      {pricingService ? (
+        <ServicePricingDialog
+          key={pricingService.id}
+          open
+          service={pricingService}
+          isSaving={isPricingSaving}
+          saveError={pricingError}
+          onClose={() => setPricingService(null)}
+          onSubmit={(changes) => savePricing(pricingService, changes)}
+        />
+      ) : null}
 
       <AppConfirmDialog
         open={Boolean(statusService)}
