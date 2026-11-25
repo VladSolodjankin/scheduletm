@@ -988,6 +988,13 @@ export const dictionaries = {
       implementedTemplates: 'Implemented templates · {count}', templatePreviewHint: 'Preview only. Links and controls are inactive.',
       create: 'Create page', empty: 'No public pages yet',
       loading: 'Loading…', retry: 'Retry', edit: 'Edit', duplicate: 'Duplicate',
+      avatarZoom: 'Photo zoom', avatarFramingReset: 'Reset',
+      avatarFramingHint: 'Drag the photo in the preview to choose which part is visible.',
+      copyJson: 'Copy as JSON', copyJsonDone: 'Page layout copied', copyJsonError: 'Could not copy to the clipboard',
+      pasteJson: 'Paste from JSON', pasteJsonTitle: 'Create a page from JSON',
+      pasteJsonHint: 'Paste a layout copied with “Copy as JSON”. Settings and the order of elements are transferred; images and linked services are not. A new draft is created with its own address.',
+      pasteJsonPlaceholder: 'Paste JSON here', pasteJsonInvalid: 'This is not a valid page layout',
+      pasteJsonUnsupported: 'This layout was made in a different version and cannot be imported',
       archive: 'Archive', restore: 'Restore', draft: 'Draft', published: 'Published', archived: 'Archived',
       unsaved: 'Unsaved changes', leaveWarning: 'Save your changes before leaving, or discard them.', stay: 'Stay', discardAndLeave: 'Discard and leave', saveAndLeave: 'Save and leave',
       publishMissingTitle: 'Enter a page title in Page settings.', publishMissingDescription: 'Enter a page description in Page settings.', publishMissingBlock: 'Add at least one visible block.', publishInvalidBlock: 'Check the content of the selected block.', publishInvalidLink: 'Enter a valid link or contact action.', publishInvalidMedia: 'Select an available image and check its settings.', publishMissingAlt: 'Add a description for the image.', publishMissingLabel: 'Add a label for the link or action.', publishInvalidDocument: 'Check the page settings and block content before publishing.', publishPlaceholderLink: 'This still points to the placeholder example.com address — replace it with the real link before publishing.',
@@ -2052,13 +2059,6 @@ export const dictionaries = {
       openInApp: 'Открыть в приложении', login: 'Войти, чтобы управлять всеми своими записями',
       errors: { load: 'Ссылка недействительна или устарела.', cancel: 'Не удалось отменить запись.', reschedule: 'Не удалось перенести запись.' },
     },
-    publicPageBuilder: {
-      unknownBlockTitle: 'Неподдерживаемый блок',
-      unknownBlockDescription: 'Этот тип блока недоступен, но остальная страница продолжает отображаться.',
-      blockErrorTitle: 'Не удалось отобразить блок',
-      blockErrorDescription: 'В этом блоке произошла ошибка. Остальная страница по-прежнему доступна.',
-     pages: 'Публичные страницы', editorWorkspaceTitle: 'Публичные страницы · Редактор', pagesSubtitle: 'Создавайте, публикуйте и управляйте страницами аккаунта.',
-      implementedTemplates: 'Готовые шаблоны · {count}', templatePreviewHint: 'Только предпросмотр. Ссылки и элементы управления неактивны.',
     agent: {
       open: 'Помощник настройки', title: 'Помощник настройки', close: 'Закрыть', newChat: 'Новый диалог',
       subtitle: 'Поможет настроить специалистов, услуги, цены и оповещения',
@@ -2107,8 +2107,22 @@ export const dictionaries = {
       notification_payment_reminder: 'Напоминание об оплате', notificationOff: 'выключено', notificationImmediate: 'сразу',
       notificationDaily: 'сводкой раз в день',
     },
+    publicPageBuilder: {
+      unknownBlockTitle: 'Неподдерживаемый блок',
+      unknownBlockDescription: 'Этот тип блока недоступен, но остальная страница продолжает отображаться.',
+      blockErrorTitle: 'Не удалось отобразить блок',
+      blockErrorDescription: 'В этом блоке произошла ошибка. Остальная страница по-прежнему доступна.',
+     pages: 'Публичные страницы', editorWorkspaceTitle: 'Публичные страницы · Редактор', pagesSubtitle: 'Создавайте, публикуйте и управляйте страницами аккаунта.',
+      implementedTemplates: 'Готовые шаблоны · {count}', templatePreviewHint: 'Только предпросмотр. Ссылки и элементы управления неактивны.',
       create: 'Создать страницу', empty: 'Публичных страниц пока нет',
       loading: 'Загрузка…', retry: 'Повторить', edit: 'Редактировать', duplicate: 'Дублировать',
+      avatarZoom: 'Масштаб фото', avatarFramingReset: 'Сбросить',
+      avatarFramingHint: 'Перетащите фото в превью, чтобы выбрать видимую часть.',
+      copyJson: 'Копировать как JSON', copyJsonDone: 'Макет страницы скопирован', copyJsonError: 'Не удалось скопировать в буфер обмена',
+      pasteJson: 'Вставить из JSON', pasteJsonTitle: 'Создать страницу из JSON',
+      pasteJsonHint: 'Вставьте макет, скопированный через «Копировать как JSON». Переносятся настройки и расположение элементов; картинки и привязанные услуги не переносятся. Создастся новый черновик с собственным адресом.',
+      pasteJsonPlaceholder: 'Вставьте JSON сюда', pasteJsonInvalid: 'Это не похоже на макет страницы',
+      pasteJsonUnsupported: 'Макет создан в другой версии и не может быть импортирован',
       archive: 'В архив', restore: 'Восстановить', draft: 'Черновик', published: 'Опубликована', archived: 'В архиве',
       unsaved: 'Есть несохранённые изменения', leaveWarning: 'Сохраните изменения перед выходом или отмените их.', stay: 'Остаться', discardAndLeave: 'Выйти без сохранения', saveAndLeave: 'Сохранить и выйти',
       publishMissingTitle: 'Укажите заголовок страницы в настройках страницы.', publishMissingDescription: 'Укажите описание страницы в настройках страницы.', publishMissingBlock: 'Добавьте хотя бы один видимый блок.', publishInvalidBlock: 'Проверьте содержимое выбранного блока.', publishInvalidLink: 'Укажите корректную ссылку или действие для связи.', publishInvalidMedia: 'Выберите доступное изображение и проверьте его настройки.', publishMissingAlt: 'Добавьте описание изображения.', publishMissingLabel: 'Добавьте подпись ссылки или действия.', publishInvalidDocument: 'Проверьте настройки страницы и содержимое блоков перед публикацией.', publishPlaceholderLink: 'Эта ссылка всё ещё ведёт на тестовый адрес example.com — замените её на настоящую ссылку перед публикацией.',
@@ -2251,6 +2265,7 @@ type AccountReviewsTranslationKey = `accountReviews.${Exclude<keyof typeof dicti
 type PaymentsTranslationKey = `payments.${keyof typeof dictionaries.en.payments}`;
 type PayPageTranslationKey = `payPage.${keyof typeof dictionaries.en.payPage}`;
 type TelegramBotTranslationKey = `telegramBot.${keyof typeof dictionaries.en.telegramBot}`;
+type AgentTranslationKey = `agent.${keyof typeof dictionaries.en.agent}`;
 type OnboardingStepTranslationKey = `onboarding.steps.${keyof typeof dictionaries.en.onboarding.steps}.${'title' | 'description'}`;
 type OnboardingTranslationKey = `onboarding.${Exclude<keyof typeof dictionaries.en.onboarding, 'steps' | 'errors'>}`
   | `onboarding.errors.${keyof typeof dictionaries.en.onboarding.errors}`
@@ -2264,8 +2279,8 @@ export type TranslationKey =
   | ServicesTranslationKey
   | AccountReviewsTranslationKey
   | TelegramBotTranslationKey
+  | AgentTranslationKey
   | PaymentsTranslationKey
-type AgentTranslationKey = `agent.${keyof typeof dictionaries.en.agent}`;
   | PayPageTranslationKey
   | OnboardingTranslationKey
   | 'publicPageBuilder.unknownBlockTitle'
@@ -2279,7 +2294,6 @@ type AgentTranslationKey = `agent.${keyof typeof dictionaries.en.agent}`;
   | 'common.logout'
   | 'common.settings'
   | 'common.daysOff'
-  | AgentTranslationKey
   | 'common.payments'
   | 'common.login'
   | 'common.back'

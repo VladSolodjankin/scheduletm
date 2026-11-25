@@ -8,6 +8,7 @@ import {
   Divider,
   IconButton,
   MenuItem,
+  Slider,
   Stack,
   TextField,
   Typography,
@@ -22,6 +23,8 @@ import LinkIcon from '@mui/icons-material/Link';
 import Pause from '@mui/icons-material/Pause';
 import PlaceOutlined from '@mui/icons-material/PlaceOutlined';
 import { PublicAvatarImage } from './PublicAvatarImage';
+import { applyAvatarFraming, AVATAR_ZOOM_MAX, AVATAR_ZOOM_MIN, resolveAvatarFraming, type AvatarFraming } from './avatarFraming';
+import { AVATAR_DRAG_SX, useAvatarFramingDrag } from './useAvatarFramingDrag';
 import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
 import PlayArrow from '@mui/icons-material/PlayArrow';
 import Telegram from '@mui/icons-material/Telegram';
@@ -349,6 +352,9 @@ export function SpecializedBlockEditor({
   const shape = editorShape[block.type] ?? {};
   const list = shape.list;
   const rows = list ? items(block.content[list.key]) : [];
+  const hasAvatarPhoto = block.type === 'avatar' && Boolean(text(block.content.imageMediaId));
+  const avatarFraming = resolveAvatarFraming(block.content);
+  const avatarFramingChanged = avatarFraming.focusX !== 50 || avatarFraming.focusY !== 50 || avatarFraming.zoom !== 1;
   const addRow = (preset?: SocialPlatform) => {
     const fields = list?.fields ?? [];
     const row = Object.fromEntries(fields.map((field) => [field, '']));
@@ -386,7 +392,9 @@ export function SpecializedBlockEditor({
               overflow: 'hidden', bgcolor: 'var(--page-background)' }}>
               <Box sx={{ p: `${AVATAR_PREVIEW_REFERENCE.sectionPadding}px`, boxSizing: 'border-box', bgcolor: 'var(--page-section-background)',
                 '--avatar-leading-section-radius': '25px' }}>
-                <AvatarBlock block={block} mediaUrlFor={mediaUrlFor} preview />
+                <AvatarBlock block={block} mediaUrlFor={mediaUrlFor} preview
+                  onFramingChange={hasAvatarPhoto && onContentChange
+                    ? (framing) => update(applyAvatarFraming(block.content, framing)) : undefined} />
               </Box>
             </Box>
           </Box></FitToWidth>
@@ -413,6 +421,19 @@ export function SpecializedBlockEditor({
           })}
         </Box>
         {avatarMediaControl}
+        {hasAvatarPhoto ? <Stack spacing={0.5}>
+          <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Typography variant="subtitle2" id={`avatar-zoom-${block.id}`}>{publicPageText(locale, 'avatarZoom')}</Typography>
+            <Button size="small" disabled={!avatarFramingChanged} onClick={() => update(applyAvatarFraming(block.content, { focusX: 50, focusY: 50, zoom: 1 }))}>
+              {publicPageText(locale, 'avatarFramingReset')}
+            </Button>
+          </Stack>
+          {normalizeAvatarLayout(block.content.layout) !== 'image-cover' ? <Slider aria-labelledby={`avatar-zoom-${block.id}`}
+            min={AVATAR_ZOOM_MIN} max={AVATAR_ZOOM_MAX} step={0.05} value={avatarFraming.zoom}
+            valueLabelDisplay="auto" valueLabelFormat={(value) => `${Math.round(value * 100)}%`}
+            onChange={(_event, value) => update(applyAvatarFraming(block.content, { ...avatarFraming, zoom: Array.isArray(value) ? value[0] : value }))} /> : null}
+          <Typography variant="caption" color="text.secondary">{publicPageText(locale, 'avatarFramingHint')}</Typography>
+        </Stack> : null}
         {(normalizeAvatarLayout(block.content.layout) === 'cover-centered' || normalizeAvatarLayout(block.content.layout) === 'cover-left') ? avatarCoverControl : null}
         {normalizeAvatarLayout(block.content.layout) !== 'image-cover' ? <Stack spacing={0.75}>
           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -485,8 +506,16 @@ function FitToWidth({ width, children }: { width: number; children: ReactNode })
   </Box>;
 }
 
-export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: PageBlock; mediaUrlFor?: (mediaId: string) => string | undefined; preview?: boolean }) {
+export function AvatarBlock({ block, mediaUrlFor, preview = false, onFramingChange }: {
+  block: PageBlock;
+  mediaUrlFor?: (mediaId: string) => string | undefined;
+  preview?: boolean;
+  /** Editor only: lets the photo be dragged inside its frame. */
+  onFramingChange?: (framing: AvatarFraming) => void;
+}) {
   const presentation = resolveAvatarPresentation(block.content.layout, block.content.avatarSize);
+  const framing = resolveAvatarFraming(block.content);
+  const heroDragHandlers = useAvatarFramingDrag(framing, onFramingChange);
   const layout = presentation.renderLayout;
   const imageMediaId = text(block.content.imageMediaId);
   const imageUrl = (imageMediaId ? mediaUrlFor?.(imageMediaId) : undefined) || (preview ? AVATAR_EDITOR_PLACEHOLDER_URL : '');
@@ -503,13 +532,15 @@ export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: Pa
     const imageAlt = text(block.content.imageAlt).trim();
     return <Box sx={{ position: 'relative', width: '100%', mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`,
       minWidth: 0, maxWidth: '100%', bgcolor: 'transparent' }}>
-      <Box className="public-page-avatar-cover-bleed" role={imageUrl && imageAlt ? 'img' : undefined} aria-label={imageUrl && imageAlt ? imageAlt : undefined} sx={{
-        width: `calc(100% + ${AVATAR_PREVIEW_REFERENCE.sectionPadding * 2}px)`,
-        aspectRatio: `${AVATAR_HERO_REFERENCE.imageWidth} / ${AVATAR_HERO_REFERENCE.imageHeight}`,
-        borderRadius: 'var(--avatar-leading-section-radius) var(--avatar-leading-section-radius) 0 0',
-        backgroundImage: imageUrl ? `url("${imageUrl}")` : undefined,
-        backgroundSize: 'cover', backgroundPosition: '50% 50%', backgroundRepeat: 'no-repeat',
-      }} />
+      <Box className="public-page-avatar-cover-bleed" role={imageUrl && imageAlt ? 'img' : undefined} aria-label={imageUrl && imageAlt ? imageAlt : undefined}
+        {...heroDragHandlers} sx={{
+          width: `calc(100% + ${AVATAR_PREVIEW_REFERENCE.sectionPadding * 2}px)`,
+          aspectRatio: `${AVATAR_HERO_REFERENCE.imageWidth} / ${AVATAR_HERO_REFERENCE.imageHeight}`,
+          borderRadius: 'var(--avatar-leading-section-radius) var(--avatar-leading-section-radius) 0 0',
+          backgroundImage: imageUrl ? `url("${imageUrl}")` : undefined,
+          backgroundSize: 'cover', backgroundPosition: `${framing.focusX}% ${framing.focusY}%`, backgroundRepeat: 'no-repeat',
+          ...(onFramingChange ? AVATAR_DRAG_SX : {}),
+        }} />
       <Box sx={{ width: '100%', mt: `${AVATAR_PREVIEW_REFERENCE.copyMarginTop}px`, textAlign: 'center' }}>{copy}</Box>
     </Box>;
   }
@@ -522,7 +553,7 @@ export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: Pa
     return <Box style={avatarVariables} sx={{ width: '100%', minWidth: 0, maxWidth: '100%',
       mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`, textAlign: 'center' }}>
       <Box sx={{ width: '100%', height: avatarSize, display: 'grid', placeItems: 'center' }}>
-        <PublicAvatarImage src={imageUrl} alt={text(block.content.imageAlt)} size={avatarSize} />
+        <PublicAvatarImage src={imageUrl} alt={text(block.content.imageAlt)} size={avatarSize} framing={framing} onFramingChange={onFramingChange} />
       </Box>
       <Box sx={{ width: '100%', mt: `${AVATAR_PREVIEW_REFERENCE.copyMarginTop}px` }}>{copy}</Box>
     </Box>;
@@ -544,7 +575,7 @@ export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: Pa
     return <Box style={avatarVariables} sx={{ position: 'relative', width: '100%',
       mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`, minWidth: 0, maxWidth: '100%', bgcolor: 'transparent' }}>
       <Box className="public-page-avatar-cover-bleed" sx={coverSx}>
-        <PublicAvatarImage src={imageUrl} alt={text(block.content.imageAlt)} size={avatarSize} sx={{ position: 'absolute', zIndex: 1,
+        <PublicAvatarImage src={imageUrl} alt={text(block.content.imageAlt)} size={avatarSize} framing={framing} onFramingChange={onFramingChange} sx={{ position: 'absolute', zIndex: 1,
           bottom: 0, left: 0, transform: `translate(${geometry.avatarTranslateX}px, ${geometry.avatarTranslateY}px)` }} />
       </Box>
       <Box sx={{ width: `calc(100% - ${geometry.copyMarginLeft}px)`, mt: `${AVATAR_PREVIEW_REFERENCE.copyMarginTop}px`, ml: `${geometry.copyMarginLeft}px`, textAlign: 'left' }}>{copy}</Box>
@@ -555,7 +586,7 @@ export function AvatarBlock({ block, mediaUrlFor, preview = false }: { block: Pa
     return <Box style={avatarVariables} sx={{ position: 'relative', width: '100%',
       mb: `${AVATAR_PREVIEW_REFERENCE.contentMarginBottom}px`, minWidth: 0, maxWidth: '100%', textAlign: 'center' }}>
       <Box className="public-page-avatar-cover-bleed" sx={coverSx}>
-        <PublicAvatarImage src={imageUrl} alt={text(block.content.imageAlt)} size={avatarSize} sx={{ position: 'absolute', zIndex: 1,
+        <PublicAvatarImage src={imageUrl} alt={text(block.content.imageAlt)} size={avatarSize} framing={framing} onFramingChange={onFramingChange} sx={{ position: 'absolute', zIndex: 1,
           bottom: 0, left: '50%',
           transform: `translate(${geometry.avatarTranslateX}px, ${geometry.avatarTranslateY}px)` }} />
       </Box>

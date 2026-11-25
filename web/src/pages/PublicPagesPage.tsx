@@ -1,4 +1,4 @@
-import { Add, Archive, ContentCopy, Delete, Edit, InsightsOutlined, OpenInNew, RestoreFromTrash } from '@mui/icons-material';
+import { Add, Archive, ContentCopy, ContentPaste, DataObject, Delete, Edit, InsightsOutlined, OpenInNew, RestoreFromTrash } from '@mui/icons-material';
 import {
   Alert, Box, Button, ButtonBase, Card, CardActions, CardContent, Chip, CircularProgress, Container,
   Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Stack, TextField, Typography,
@@ -15,6 +15,11 @@ import {
   type PublicPageRepositoryErrorCode,
 } from '../features/public-page-builder/repository/PublicPageRepository';
 import { createStableId } from '../features/public-page-builder/utils/createStableId';
+import {
+  exportPublicPageLayout,
+  importPublicPageLayout,
+  LayoutImportError,
+} from '../features/public-page-builder/model/layoutTransfer';
 import type { PublicPageDocument } from '../features/public-page-builder/types/publicPage';
 import { getPublicPageTemplate, PUBLIC_PAGE_TEMPLATES, type PublicPageTemplate } from '../features/public-page-builder/templates';
 import type { Locale } from '../shared/i18n/dictionaries';
@@ -102,6 +107,10 @@ export function PublicPagesPage() {
   const [templateId, setTemplateId] = useState('blank');
   const [mutationError, setMutationError] = useState<MutationError | null>(null);
   const [isMutating, setIsMutating] = useState(false);
+  const [copyNotice, setCopyNotice] = useState<'copyJsonDone' | 'copyJsonError' | null>(null);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [pasteError, setPasteError] = useState<'pasteJsonInvalid' | 'pasteJsonUnsupported' | 'saveError' | null>(null);
   const templatePreview = useMemo(
     () => getPublicPageTemplate(templateId)?.createDocument('template-preview', '2026-01-01T00:00:00.000Z', locale),
     [templateId, locale],
@@ -142,6 +151,37 @@ export function PublicPagesPage() {
       await load();
     } catch (error) {
       setMutationError(mutationFailure(error, 'other'));
+    } finally {
+      setIsMutating(false);
+    }
+  };
+  const copyLayout = async (record: PublicPageRecord) => {
+    setMutationError(null);
+    setCopyNotice(null);
+    try {
+      await navigator.clipboard.writeText(exportPublicPageLayout(record.draft));
+      setCopyNotice('copyJsonDone');
+    } catch {
+      setCopyNotice('copyJsonError');
+    }
+  };
+  const importLayout = async () => {
+    let document: PublicPageDocument;
+    try {
+      document = importPublicPageLayout(pasteText);
+    } catch (error) {
+      setPasteError(error instanceof LayoutImportError && error.code === 'unsupported' ? 'pasteJsonUnsupported' : 'pasteJsonInvalid');
+      return;
+    }
+    setIsMutating(true);
+    setPasteError(null);
+    try {
+      const created = await repository.create(document);
+      setPasteOpen(false);
+      setPasteText('');
+      navigate(`/public-pages/${created.id}/edit`);
+    } catch {
+      setPasteError('saveError');
     } finally {
       setIsMutating(false);
     }
@@ -212,8 +252,14 @@ export function PublicPagesPage() {
                 <Typography id={pagesHeadingId} variant="h4">{publicPageText(locale, 'pages')}</Typography>
                 <Typography color="text.secondary" sx={{ mt: 0.5 }}>{publicPageText(locale, 'pagesSubtitle')}</Typography>
               </Box>
-              <Button variant="contained" startIcon={<Add />} onClick={() => setCreateOpen(true)} sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}>{publicPageText(locale, 'create')}</Button>
+              <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap', alignSelf: { xs: 'flex-start', sm: 'center' } }}>
+                <Button variant="outlined" startIcon={<ContentPaste />} onClick={() => { setPasteError(null); setPasteOpen(true); }}>{publicPageText(locale, 'pasteJson')}</Button>
+                <Button variant="contained" startIcon={<Add />} onClick={() => setCreateOpen(true)}>{publicPageText(locale, 'create')}</Button>
+              </Stack>
             </Stack>
+            {copyNotice ? (
+              <Alert severity={copyNotice === 'copyJsonDone' ? 'success' : 'error'} onClose={() => setCopyNotice(null)}>{publicPageText(locale, copyNotice)}</Alert>
+            ) : null}
             {status === 'loading' ? (
               <Box sx={{ py: 6, textAlign: 'center' }}><CircularProgress aria-label={publicPageText(locale, 'loading')} /></Box>
             ) : status === 'error' ? (
@@ -247,6 +293,7 @@ export function PublicPagesPage() {
                               <Button startIcon={<InsightsOutlined />} onClick={() => navigate(`/public-pages/${record.id}/analytics`)}>{publicPageText(locale, 'analytics')}</Button>
                             ) : null}
                             <Button disabled={isMutating} startIcon={<ContentCopy />} onClick={() => void duplicate(record)}>{publicPageText(locale, 'duplicate')}</Button>
+                            <Button startIcon={<DataObject />} onClick={() => void copyLayout(record)}>{publicPageText(locale, 'copyJson')}</Button>
                             {record.status !== 'archived' ? (
                               <Button disabled={isMutating} startIcon={<Archive />} onClick={() => void archive(record)}>{publicPageText(locale, 'archive')}</Button>
                             ) : null}
@@ -271,6 +318,23 @@ export function PublicPagesPage() {
             )}
           </Stack>
         </Container>
+      <Dialog open={pasteOpen} onClose={() => setPasteOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>{publicPageText(locale, 'pasteJsonTitle')}</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <Typography variant="body2" color="text.secondary">{publicPageText(locale, 'pasteJsonHint')}</Typography>
+            {pasteError ? <Alert severity="error">{publicPageText(locale, pasteError)}</Alert> : null}
+            <TextField multiline minRows={8} maxRows={16} fullWidth value={pasteText} autoFocus
+              placeholder={publicPageText(locale, 'pasteJsonPlaceholder')}
+              onChange={(event) => { setPasteText(event.target.value); setPasteError(null); }}
+              slotProps={{ htmlInput: { spellCheck: false, style: { fontFamily: 'monospace', fontSize: 12 } } }} />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={isMutating} onClick={() => setPasteOpen(false)}>{publicPageText(locale, 'cancel')}</Button>
+          <Button disabled={isMutating || !pasteText.trim()} variant="contained" onClick={() => void importLayout()}>{publicPageText(locale, 'create')}</Button>
+        </DialogActions>
+      </Dialog>
       <Dialog open={createOpen} onClose={() => setCreateOpen(false)} fullWidth maxWidth="lg" scroll="paper">
         <DialogTitle>{publicPageText(locale, 'create')}</DialogTitle>
         <DialogContent dividers>

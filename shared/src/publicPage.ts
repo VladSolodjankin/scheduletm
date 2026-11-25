@@ -158,6 +158,10 @@ const blockSchema = z.discriminatedUnion('type', [
     subtitle: z.string(),
     imageMediaId: nullableString,
     imageAlt: z.string(),
+    // Optional framing of the photo inside its frame; absent means centred, no zoom.
+    imageFocusX: z.number().min(0).max(100).optional(),
+    imageFocusY: z.number().min(0).max(100).optional(),
+    imageZoom: z.number().min(1).max(3).optional(),
     layout: z.enum(['centered', 'cover-centered', 'cover-left', 'image-cover']),
     avatarSize: z.union([z.literal(65), z.literal(95), z.literal(125), z.literal(150)]),
     coverColor: nullableString,
