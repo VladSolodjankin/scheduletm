@@ -6,6 +6,8 @@ export type AgentChange = {
   id?: number;
   data: Record<string, unknown>;
   before?: Record<string, unknown> | null;
+  /** Display names for `id` and `specialistId`, added by the server. */
+  names?: Record<string, string>;
 };
 
 export type AgentAction = {

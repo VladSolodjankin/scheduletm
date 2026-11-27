@@ -3,6 +3,7 @@ import {
   accountNotificationDefaultsBatchSchema,
   accountSettingsSchema,
   managedUserCreateSchema,
+  scheduleExceptionCreateSchema,
   serviceAssignmentUpdateSchema,
   serviceCreateSchema,
   specialistBookingPolicySchema,
@@ -22,11 +23,13 @@ import { getPaymentSettings } from '../paymentSettingsService.js';
 import { createServiceForActor, getServicesForActor, updateAssignmentForActor, updateServiceForActor } from '../serviceService.js';
 import {
   canManageSpecialistBookingPolicies,
+  createScheduleExceptionForActor,
   getAccountNotificationDefaults,
   getAccountSettings,
   getSpecialistBookingPolicy,
   getSpecialistNotificationSettings,
   getUserSettings,
+  listScheduleExceptionsForActor,
   putAccountNotificationDefaults,
   putSpecialistNotificationSettings,
   updateAccountSettings,
@@ -65,6 +68,8 @@ type UpdateOperation = {
 export type AgentResource = {
   description: string;
   idMeaning?: string;
+  /** What `id` points to, so the confirmation card can show a name instead of a number. */
+  idTarget?: 'specialist' | 'service';
   canUse: (actor: User) => boolean;
   read?: ReadFn;
   create?: CreateOperation;
@@ -90,6 +95,20 @@ const findById = async <T extends { id: number }>(items: Promise<T[]>, id: numbe
   (await items).find((item) => item.id === id) ?? null;
 
 const serviceFields = serviceCreateSchema.omit({ imageMediaId: true });
+
+const scheduleExceptionFields = z.intersection(
+  z.object({
+    specialistId: z.number().int().positive().optional()
+      .describe('Specialist id from the specialists resource. Owners must pass it; a specialist always adds to their own schedule'),
+  }),
+  scheduleExceptionCreateSchema,
+);
+
+/**
+ * Yesterday in UTC as YYYY-MM-DD, so today is kept in every timezone; older days off only add noise
+ * to the assistant's context.
+ */
+const upcomingFrom = () => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
 export const agentResources: Record<string, AgentResource> = {
   account_settings: {
@@ -117,6 +136,7 @@ export const agentResources: Record<string, AgentResource> = {
   },
 
   specialist_notifications: {
+    idTarget: 'specialist',
     description: 'Notification settings of one specialist that override the business defaults. Send only the items you change',
     idMeaning: 'Specialist id from the specialists resource. Owners must pass it; a specialist always works with their own settings',
     canUse: isStaff,
@@ -129,6 +149,7 @@ export const agentResources: Record<string, AgentResource> = {
   },
 
   booking_policy: {
+    idTarget: 'specialist',
     description: 'Booking rules of one specialist: free cancellation period, refunds, automatic cancellation of unpaid appointments, meeting formats',
     idMeaning: 'Specialist id from the specialists resource. Owners must pass it; a specialist always works with their own policy',
     canUse: (actor) => canManageSpecialistBookingPolicies(actor.role),
@@ -141,7 +162,27 @@ export const agentResources: Record<string, AgentResource> = {
     },
   },
 
+  schedule_exceptions: {
+    idTarget: 'specialist',
+    description: 'Days off, vacations, holidays and blocked hours of one specialist on specific dates. '
+      + 'One entry covers one date: a vacation of several days needs one create per day. Existing entries cannot be changed here',
+    idMeaning: 'Specialist id from the specialists resource, for read. Owners must pass it; a specialist always reads their own',
+    canUse: (actor) => canManageSpecialistBookingPolicies(actor.role),
+    read: async (actor, id) => {
+      const from = upcomingFrom();
+      return { upcoming: required(await listScheduleExceptionsForActor(actor, id)).filter((item) => item.date >= from) };
+    },
+    create: {
+      schema: scheduleExceptionFields,
+      run: async (actor, data) => {
+        const { specialistId, ...exception } = data as { specialistId?: number } & Data;
+        return required(await createScheduleExceptionForActor(actor, specialistId, exception));
+      },
+    },
+  },
+
   specialists: {
+    idTarget: 'specialist',
     description: 'People clients book with: name, prices, working hours and slot length. '
       + 'create turns an accepted invitation (availableWebUsers) into a bookable specialist. '
       + 'To add a new person, use specialist_invites first',
@@ -186,6 +227,7 @@ export const agentResources: Record<string, AgentResource> = {
   },
 
   services: {
+    idTarget: 'service',
     description: 'Services clients can book, with price and duration. Together with service_prices this is the price list',
     idMeaning: 'Service id',
     canUse: (actor) => canManageServices(actor.role) || actor.role === WebUserRole.Specialist,
@@ -203,6 +245,7 @@ export const agentResources: Record<string, AgentResource> = {
   },
 
   service_prices: {
+    idTarget: 'service',
     description: 'Individual price or duration of a service for one specialist. Current values are in services[].assignments',
     idMeaning: 'Service id',
     canUse: (actor) => canManageServices(actor.role) || actor.role === WebUserRole.Specialist,
@@ -252,7 +295,8 @@ export type AgentChange = {
   data: Data;
 };
 
-export type ValidatedChange = AgentChange & { before?: Data | null; note?: string };
+/** `names` maps `id` and `specialistId` to display names for the confirmation card. */
+export type ValidatedChange = AgentChange & { before?: Data | null; note?: string; names?: Record<string, string> };
 
 /** Validates one proposed change against the resource's schema; never writes anything. */
 export async function validateAgentChange(actor: User, change: AgentChange): Promise<ValidatedChange> {
@@ -274,6 +318,29 @@ export async function validateAgentChange(actor: User, change: AgentChange): Pro
     return { ...change, data, before };
   }
   return { ...change, data, note: (operation as CreateOperation).summary };
+}
+
+/** Adds specialist and service names to the changes, so the card does not show bare ids. */
+export async function nameAgentChanges(actor: User, changes: ValidatedChange[]): Promise<ValidatedChange[]> {
+  let names: Record<'specialist' | 'service', Map<number, string>>;
+  try {
+    const catalog = await getServicesForActor(actor);
+    names = {
+      specialist: new Map(catalog.specialists.map(({ id, name }) => [id, name])),
+      service: new Map(catalog.services.map(({ id, name }) => [id, name])),
+    };
+  } catch {
+    return changes;
+  }
+  return changes.map((change) => {
+    const target = agentResources[change.resource]?.idTarget;
+    const found: Record<string, string> = {};
+    const idName = target && change.id ? names[target].get(change.id) : undefined;
+    if (idName) found.id = idName;
+    const specialistName = typeof change.data.specialistId === 'number' ? names.specialist.get(change.data.specialistId) : undefined;
+    if (specialistName) found.specialistId = specialistName;
+    return Object.keys(found).length > 0 ? { ...change, names: found } : change;
+  });
 }
 
 /** Applies an already confirmed change through the resource's service. */

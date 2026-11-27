@@ -164,11 +164,23 @@ const WEEKDAY_KEYS = [
   'publicPageBuilder.friday', 'publicPageBuilder.saturday', 'publicPageBuilder.sunday',
 ] as const satisfies readonly TranslationKey[];
 
-/** Work days arrive as ISO weekday numbers; show them as day names instead of `#1, #2`. */
+const EXCEPTION_TYPE_KEYS: Record<string, TranslationKey> = {
+  day_off: 'settings.scheduleExceptions.types.dayOff',
+  vacation: 'settings.scheduleExceptions.types.vacation',
+  interval: 'settings.scheduleExceptions.types.interval',
+  break: 'settings.scheduleExceptions.types.break',
+};
+
+const formatMinuteOfDay = (minute: number) =>
+  `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
+
+/** Shows codes as people read them: day names instead of `#1, #2`, `13:00` instead of 780 minutes. */
 const formatField = (t: Translate, key: string, value: unknown) => {
   if (key === 'workDays' && Array.isArray(value)) {
     return value.map((day) => (typeof day === 'number' && WEEKDAY_KEYS[day - 1] ? t(WEEKDAY_KEYS[day - 1]) : String(day))).join(', ');
   }
+  if ((key === 'startsAtMinute' || key === 'endsAtMinute') && typeof value === 'number') {return formatMinuteOfDay(value);}
+  if (key === 'type' && typeof value === 'string' && EXCEPTION_TYPE_KEYS[value]) {return t(EXCEPTION_TYPE_KEYS[value]);}
   return formatValue(value);
 };
 
@@ -186,7 +198,7 @@ function rowsOf(t: Translate, change: AgentChange): ChangeRow[] {
   const rows: ChangeRow[] = Object.entries(fields).map(([key, value]) => ({
     key,
     label: labelOf(t, 'field_', key),
-    value: key === 'specialistId' || key === 'userId' ? `#${String(value)}` : formatField(t, key, value),
+    value: change.names?.[key] ?? (key === 'specialistId' || key === 'userId' ? `#${String(value)}` : formatField(t, key, value)),
     before: change.before && key in change.before ? formatField(t, key, change.before[key]) : undefined,
   }));
   if (nested && typeof nested === 'object') {
@@ -211,7 +223,7 @@ function ChangeList({ changes, t }: { changes: AgentChange[]; t: Translate }) {
         <Box key={index} sx={{ borderLeft: 2, borderColor: 'divider', pl: 1.5 }}>
           <Typography variant="caption" color="text.secondary">
             {t(change.operation === 'create' ? 'agent.create' : 'agent.update')} · {t(`agent.resource_${change.resource}` as TranslationKey)}
-            {change.id ? ` #${change.id}` : ''}
+            {change.names?.id ? `: ${change.names.id}` : change.id ? ` #${change.id}` : ''}
           </Typography>
           {rowsOf(t, change).map((row) => (
             <Typography key={row.key} variant="body2" sx={{ wordBreak: 'break-word' }}>

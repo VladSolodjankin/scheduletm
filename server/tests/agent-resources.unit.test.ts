@@ -3,11 +3,13 @@ import { WebUserRole } from '../src/types/webUserRole.js';
 
 const settings = vi.hoisted(() => ({
   canManageSpecialistBookingPolicies: vi.fn((role: string) => role !== 'client'),
+  createScheduleExceptionForActor: vi.fn(),
   getAccountNotificationDefaults: vi.fn(),
   getAccountSettings: vi.fn(),
   getSpecialistBookingPolicy: vi.fn(),
   getSpecialistNotificationSettings: vi.fn(),
   getUserSettings: vi.fn(),
+  listScheduleExceptionsForActor: vi.fn(),
   putAccountNotificationDefaults: vi.fn(),
   putSpecialistNotificationSettings: vi.fn(),
   updateAccountSettings: vi.fn(),
@@ -39,6 +41,7 @@ import {
   AgentResourceError,
   applyAgentChange,
   buildAgentCatalog,
+  nameAgentChanges,
   readAgentResource,
   validateAgentChange,
 } from '../src/services/agent/agentResources.js';
@@ -146,6 +149,66 @@ describe('agent resource registry', () => {
   it('rejects working hours that end before they start', async () => {
     await expect(validateAgentChange(owner, { resource: 'specialists', operation: 'update', id: 3, data: { workStartHour: 18, workEndHour: 9 } }))
       .rejects.toMatchObject({ code: 'invalid_data' });
+  });
+
+  it('adds days off for one specialist through the existing schedule service', async () => {
+    const catalog = buildAgentCatalog(owner).schedule_exceptions as { operations: string[] };
+    expect(catalog.operations).toEqual(['read', 'create']);
+    expect(buildAgentCatalog(specialist)).toHaveProperty('schedule_exceptions');
+
+    settings.createScheduleExceptionForActor.mockResolvedValue({ id: 1 });
+    await applyAgentChange(owner, {
+      resource: 'schedule_exceptions', operation: 'create', data: { specialistId: 3, date: '2027-01-07', type: 'day_off', note: 'Рождество' },
+    });
+    expect(settings.createScheduleExceptionForActor).toHaveBeenCalledWith(owner, 3, { date: '2027-01-07', type: 'day_off', note: 'Рождество' });
+
+    await applyAgentChange(owner, {
+      resource: 'schedule_exceptions', operation: 'create', data: { date: '2027-01-08', type: 'break', startsAtMinute: 780, endsAtMinute: 840 },
+    });
+    expect(settings.createScheduleExceptionForActor).toHaveBeenLastCalledWith(
+      owner, undefined, { date: '2027-01-08', type: 'break', startsAtMinute: 780, endsAtMinute: 840 },
+    );
+
+    for (const data of [
+      { date: '07.01.2027', type: 'day_off' },
+      { date: '2027-01-07', type: 'day_off', startsAtMinute: 600, endsAtMinute: 700 },
+      { date: '2027-01-07', type: 'break' },
+    ]) {
+      await expect(validateAgentChange(owner, { resource: 'schedule_exceptions', operation: 'create', data }))
+        .rejects.toMatchObject({ code: 'invalid_data' });
+    }
+    settings.createScheduleExceptionForActor.mockResolvedValue(null);
+    await expect(applyAgentChange(owner, {
+      resource: 'schedule_exceptions', operation: 'create', data: { specialistId: 99, date: '2027-01-07', type: 'vacation' },
+    })).rejects.toMatchObject({ code: 'rejected' });
+  });
+
+  it('names specialists and services in proposed changes', async () => {
+    services.getServicesForActor.mockResolvedValue({
+      services: [{ id: 5, name: 'Стрижка' }],
+      specialists: [{ id: 1, name: 'Анна', isActive: true }],
+    });
+    const named = await nameAgentChanges(owner, [
+      { resource: 'booking_policy', operation: 'update', id: 1, data: { cancelGracePeriodHours: 24 } },
+      { resource: 'service_prices', operation: 'update', id: 5, data: { specialistId: 1, changes: {} } },
+      { resource: 'schedule_exceptions', operation: 'create', data: { specialistId: 99, date: '2027-01-01', type: 'day_off' } },
+    ]);
+    expect(named.map((change) => change.names)).toEqual([{ id: 'Анна' }, { id: 'Стрижка', specialistId: 'Анна' }, undefined]);
+
+    services.getServicesForActor.mockRejectedValue(new Error('FORBIDDEN'));
+    const plain = [{ resource: 'specialists', operation: 'update' as const, id: 1, data: {} }];
+    expect(await nameAgentChanges(owner, plain)).toEqual(plain);
+  });
+
+  it('reads only upcoming days off', async () => {
+    settings.listScheduleExceptionsForActor.mockResolvedValue([
+      { id: 1, date: '2020-01-01', type: 'day_off' },
+      { id: 2, date: '2999-01-01', type: 'vacation' },
+    ]);
+    expect(await readAgentResource(owner, 'schedule_exceptions', 3)).toEqual({ upcoming: [{ id: 2, date: '2999-01-01', type: 'vacation' }] });
+    expect(settings.listScheduleExceptionsForActor).toHaveBeenCalledWith(owner, 3);
+    settings.listScheduleExceptionsForActor.mockResolvedValue(null);
+    await expect(readAgentResource(owner, 'schedule_exceptions')).rejects.toMatchObject({ code: 'rejected' });
   });
 
   it('hides payment details from specialists when reading integrations', async () => {

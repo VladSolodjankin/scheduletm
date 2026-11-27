@@ -183,11 +183,14 @@ const WHOLE_DAY_EXCEPTION_TYPES = new Set(['day_off', 'vacation']);
 const PARTIAL_DAY_EXCEPTION_TYPES = new Set(['interval', 'break']);
 
 export const scheduleExceptionCreateSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, v.scheduleExceptionDateInvalid),
-  type: z.enum(['day_off', 'vacation', 'interval', 'break']),
-  startsAtMinute: z.coerce.number().int().min(0).max(1439).optional(),
-  endsAtMinute: z.coerce.number().int().min(1).max(1440).optional(),
-  note: z.string().trim().max(200).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, v.scheduleExceptionDateInvalid).describe('Date, YYYY-MM-DD'),
+  type: z.enum(['day_off', 'vacation', 'interval', 'break'])
+    .describe('day_off and vacation block the whole day; interval and break block the time between startsAtMinute and endsAtMinute'),
+  startsAtMinute: z.coerce.number().int().min(0).max(1439).optional()
+    .describe('Start of a blocked interval in minutes from midnight, e.g. 780 for 13:00. Only for interval and break'),
+  endsAtMinute: z.coerce.number().int().min(1).max(1440).optional()
+    .describe('End of a blocked interval in minutes from midnight. Only for interval and break'),
+  note: z.string().trim().max(200).optional().describe('Short note, e.g. a holiday name'),
 }).refine((value) => (value.startsAtMinute === undefined) === (value.endsAtMinute === undefined), {
   message: v.scheduleExceptionIntervalRequired,
 }).refine((value) => (
