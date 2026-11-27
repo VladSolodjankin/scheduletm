@@ -34,20 +34,45 @@ export async function findAgentConversation(
   return row ?? null;
 }
 
-export async function findLatestAgentConversation(accountId: number, webUserId: number): Promise<AgentConversationRecord | null> {
-  const row = await db('agent_conversations').where(owner(accountId, webUserId))
-    .orderBy('updated_at', 'desc').first('id', 'updated_at');
-  return row ?? null;
+/** User turns carry text blocks (message, file transcriptions); tool results do not. */
+const USER_TURN_FILTER = `role = 'user' and content @> '[{"type":"text"}]'::jsonb`;
+
+export async function countAgentUserTurns(conversationId: string): Promise<number> {
+  const row = await db('agent_messages').where('conversation_id', conversationId).whereRaw(USER_TURN_FILTER)
+    .count<{ count: string }[]>('* as count').first();
+  return Number(row?.count ?? 0);
+}
+
+export type AgentConversationSummaryRecord = {
+  id: string;
+  created_at: Date;
+  updated_at: Date;
+  user_turns: number;
+  first_user_content: unknown;
+};
+
+/** The user's conversations that have at least one message, newest first, with their first user turn for a title. */
+export async function listAgentConversations(
+  accountId: number,
+  webUserId: number,
+  limit: number,
+): Promise<AgentConversationSummaryRecord[]> {
+  const turns = db('agent_messages').whereRaw(USER_TURN_FILTER)
+    .groupBy('conversation_id')
+    .select('conversation_id', db.raw('count(*)::int as user_turns'), db.raw('min(id) as first_id'));
+  const rows = await db('agent_conversations as c')
+    .join(turns.as('t'), 't.conversation_id', 'c.id')
+    .join('agent_messages as m', 'm.id', 't.first_id')
+    .where({ 'c.account_id': accountId, 'c.web_user_id': webUserId })
+    .orderBy('c.updated_at', 'desc')
+    .limit(limit)
+    .select('c.id', 'c.created_at', 'c.updated_at', 't.user_turns', 'm.content as first_user_content');
+  return rows.map((row) => ({ ...row, user_turns: Number(row.user_turns) }));
 }
 
 export async function listAgentMessages(conversationId: string): Promise<AgentMessageRecord[]> {
   return db('agent_messages').where('conversation_id', conversationId).orderBy('id', 'asc')
     .select('id', 'role', 'content', 'created_at');
-}
-
-export async function countAgentMessages(conversationId: string): Promise<number> {
-  const row = await db('agent_messages').where('conversation_id', conversationId).count<{ count: string }[]>('* as count').first();
-  return Number(row?.count ?? 0);
 }
 
 export async function insertAgentMessage(conversationId: string, role: AgentMessageRole, content: unknown): Promise<void> {

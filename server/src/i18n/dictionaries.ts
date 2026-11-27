@@ -53,6 +53,7 @@ export const dictionaries = {
       specialistUpdateFailed: 'Unable to update specialist',
       specialistDeleteFailed: 'Unable to delete specialist',
       lastActiveSpecialist: 'At least one specialist must stay active',
+      invalidWorkHours: 'The working day must end after it starts',
       lastSpecialist: 'The only specialist cannot be deleted',      usersLoadFailed: 'Unable to load users',
       managedUserEmailInUse: 'This email is already in use',
       managedUserNotFound: 'User not found',
@@ -176,6 +177,7 @@ export const dictionaries = {
       specialistUpdateFailed: 'Не удалось обновить специалиста',
       specialistDeleteFailed: 'Не удалось удалить специалиста',
       lastActiveSpecialist: 'Хотя бы один специалист должен оставаться активным',
+      invalidWorkHours: 'Рабочий день должен заканчиваться позже, чем начинается',
       lastSpecialist: 'Единственного специалиста нельзя удалить',      usersLoadFailed: 'Не удалось загрузить пользователей',
       managedUserEmailInUse: 'Этот email уже используется',
       managedUserNotFound: 'Пользователь не найден',
@@ -303,6 +305,8 @@ export const schemaValidationDictionary = {
   scheduleExceptionIntervalRequired: 'Для интервала/перерыва укажите начало и окончание',
   scheduleExceptionWholeDayNoInterval: 'Для выходного/отпуска не указывайте время начала и окончания',
   scheduleExceptionEndAfterStart: 'Время окончания должно быть позже времени начала',
+  workEndAfterStart: 'Рабочий день должен заканчиваться позже, чем начинается',
+  workDaysUnique: 'Дни недели не должны повторяться',
 } as const;
 
 export type Locale = keyof typeof dictionaries;

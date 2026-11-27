@@ -1,4 +1,17 @@
-import { FormControl, FormControlLabel, InputLabel, MenuItem, Select, Stack, Switch, Typography } from '@mui/material';
+import {
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormHelperText,
+  FormLabel,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  Switch,
+  Typography,
+} from '@mui/material';
 import { Controller, Control, useController } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 
@@ -12,6 +25,18 @@ import { AppRhfTextField } from '../../shared/ui/AppRhfTextField';
 import { BusinessLocationMap } from './BusinessLocationMap';
 import { useI18n } from '../../shared/i18n/I18nContext';
 import { formatDateTime } from '../../shared/utils/dateTime';
+import type { TranslationKey } from '../../shared/i18n/dictionaries';
+
+/** Short weekday names in ISO order (index + 1 is the ISO weekday), shared with the public page schedule. */
+const WEEKDAY_LABELS = [
+  'publicPageBuilder.monday',
+  'publicPageBuilder.tuesday',
+  'publicPageBuilder.wednesday',
+  'publicPageBuilder.thursday',
+  'publicPageBuilder.friday',
+  'publicPageBuilder.saturday',
+  'publicPageBuilder.sunday',
+] as const satisfies readonly TranslationKey[];
 
 type Props = {
   copy: SettingsCardCopy;
@@ -24,7 +49,7 @@ type Props = {
 };
 
 export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSaving, onSubmit, onRequestAccountDeletion, onCancelAccountDeletion }: Props) {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const { field: businessAddressField } = useController({ control, name: 'businessAddress' });
   const { field: businessLatField } = useController({ control, name: 'businessLat' });
   const { field: businessLngField } = useController({ control, name: 'businessLng' });
@@ -118,6 +143,34 @@ export function AccountSettingsTab({ copy, control, meetingDurationOptions, isSa
             label={copy.weekStartsOnMonday}
           />
         )}
+      />
+
+      <Controller
+        name="workDays"
+        control={control}
+        rules={{ validate: (value) => (value?.length ?? 0) > 0 || t('settings.workDaysRequired') }}
+        render={({ field, fieldState }) => {
+          const selected = field.value ?? [];
+          const toggle = (day: number, checked: boolean) => {
+            const next = checked ? [...selected.filter((item) => item !== day), day] : selected.filter((item) => item !== day);
+            field.onChange(next.sort((a, b) => a - b));
+          };
+          return (
+            <FormControl component="fieldset" error={Boolean(fieldState.error)} margin="normal" sx={{ display: 'block' }}>
+              <FormLabel component="legend">{t('settings.workDays')}</FormLabel>
+              <FormGroup row>
+                {WEEKDAY_LABELS.map((labelKey, index) => (
+                  <FormControlLabel
+                    key={labelKey}
+                    label={t(labelKey)}
+                    control={<Checkbox checked={selected.includes(index + 1)} onChange={(event) => toggle(index + 1, event.target.checked)} />}
+                  />
+                ))}
+              </FormGroup>
+              {fieldState.error?.message ? <FormHelperText>{fieldState.error.message}</FormHelperText> : null}
+            </FormControl>
+          );
+        }}
       />
 
       <Controller

@@ -88,6 +88,10 @@ specialistRoutes.patch('/:id', async (req, res) => {
       return res.status(409).json({ message: t(req, 'lastActiveSpecialist') });
     }
 
+    if (message === 'INVALID_WORK_HOURS') {
+      return res.status(400).json({ message: t(req, 'invalidWorkHours') });
+    }
+
     void trackServerError({ actor, method: req.method, path: req.path, error });
     res.locals.errorTracked = true;
     return res.status(500).json({ message: t(req, 'specialistUpdateFailed') });

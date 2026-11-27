@@ -342,3 +342,7 @@ export async function deletePublicPage(
     await scopedPage(trx, accountId, pageId).delete();
   });
 }
+
+export async function hasPublishedPublicPage(accountId: number): Promise<boolean> {
+  return Boolean(await db('public_pages').where({ account_id: accountId, status: 'published' }).first('id'));
+}

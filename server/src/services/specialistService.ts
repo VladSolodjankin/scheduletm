@@ -169,6 +169,14 @@ export async function updateSpecialistForActor(
     throw new Error('FORBIDDEN');
   }
 
+  // The schema checks the pair when both hours are sent; a single hour is checked against the stored one.
+  const workStartHour = payload.workStartHour ?? existing.work_start_hour;
+  const workEndHour = payload.workEndHour ?? existing.work_end_hour;
+  if ((payload.workStartHour !== undefined || payload.workEndHour !== undefined)
+    && workStartHour !== undefined && workEndHour !== undefined && Number(workStartHour) >= Number(workEndHour)) {
+    throw new Error('INVALID_WORK_HOURS');
+  }
+
   if (isManager && payload.isActive === false && existing.is_active) {
     if ((await countSpecialistsByAccount(accountId, { activeOnly: true })) <= 1) {
       throw new Error('LAST_ACTIVE_SPECIALIST');

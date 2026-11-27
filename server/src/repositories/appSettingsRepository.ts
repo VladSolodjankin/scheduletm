@@ -8,6 +8,8 @@ export type AppSettingsRecord = {
   daily_digest_enabled: boolean;
   week_starts_on_monday: boolean;
   locale: string;
+  /** ISO weekdays clients can book, as CSV like '1,2,3,4,5,6'. */
+  work_days: string;
 };
 
 export type UpdateAppSettingsInput = {
@@ -17,6 +19,7 @@ export type UpdateAppSettingsInput = {
   dailyDigestEnabled?: boolean;
   weekStartsOnMonday?: boolean;
   locale?: string;
+  workDays?: number[];
 };
 
 const baseQuery = (accountId: number) => db('app_settings').where({ account_id: accountId });
@@ -51,5 +54,13 @@ export async function updateAppSettingsByAccountId(input: UpdateAppSettingsInput
     patch.locale = input.locale;
   }
 
-  await baseQuery(input.accountId).update(patch);
+  if (input.workDays !== undefined) {
+    patch.work_days = input.workDays.join(',');
+  }
+
+  const updated = await baseQuery(input.accountId).update(patch);
+  // Newer accounts have no app_settings row; work days only live here, so create it when they are set.
+  if (updated === 0 && input.workDays !== undefined) {
+    await db('app_settings').insert({ account_id: input.accountId, timezone: 'UTC', ...patch });
+  }
 }

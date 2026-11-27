@@ -93,7 +93,8 @@ const serviceFields = serviceCreateSchema.omit({ imageMediaId: true });
 
 export const agentResources: Record<string, AgentResource> = {
   account_settings: {
-    description: 'Business-wide settings: address for offline visits, default appointment length, week start, daily digest, appointment visibility for specialists',
+    description: 'Business-wide settings: address for offline visits, weekdays clients can book, default appointment length, '
+      + 'week start, daily digest, appointment visibility for specialists',
     canUse: isManager,
     read: async (actor) => required(await getAccountSettings(actor)),
     update: {

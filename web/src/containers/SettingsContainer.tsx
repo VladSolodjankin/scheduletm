@@ -49,6 +49,7 @@ const defaultAccountSettings: AccountSettings = {
   businessLat: null,
   businessLng: null,
   specialistsSeeAllAppointments: false,
+  workDays: [1, 2, 3, 4, 5],
   deleteScheduledAt: null,
 };
 

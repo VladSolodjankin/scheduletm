@@ -600,3 +600,7 @@ export async function listUnpaidActiveAppointmentsCreatedBeforeAllAccounts(befor
       'clients.email as client_email',
     );
 }
+
+export async function hasAnyAppointment(accountId: number): Promise<boolean> {
+  return Boolean(await db('appointments').where({ account_id: accountId }).first('id'));
+}

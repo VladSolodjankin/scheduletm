@@ -5,10 +5,19 @@ import { requireAccessToken, type AuthedRequest } from '../middlewares/authMiddl
 import { isClientRole } from '../policies/rolePermissions.js';
 import { getAgentUsageToday } from '../repositories/agentRepository.js';
 import {
+  AGENT_ATTACHMENT_MAX_COUNT,
+  AgentAttachmentError,
+  prepareAgentAttachments,
+  type PreparedAgentAttachment,
+} from '../services/agent/agentAttachments.js';
+import {
+  AGENT_CONVERSATION_MESSAGE_LIMIT,
   AGENT_DAILY_MESSAGE_LIMIT,
   AgentError,
-  getLatestAgentConversation,
+  getAgentConversation,
+  getAgentSetupStatus,
   isAgentAvailable,
+  listAgentConversationSummaries,
   prepareAgentChat,
   resolveAgentAction,
   runAgentChat,
@@ -20,11 +29,22 @@ import { formatZodError } from '../utils/validation.js';
 export const agentRoutes = Router();
 agentRoutes.use(requireAccessToken);
 
+const attachmentSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  // Unsupported types are answered with 415 by prepareAgentAttachments.
+  mimeType: z.string().trim().toLowerCase().max(100),
+  data: z.string().min(1),
+});
 const chatSchema = z.object({
   conversationId: z.string().uuid().optional(),
-  message: z.string().trim().min(1).max(4000),
+  message: z.string().trim().max(4000),
+  attachments: z.array(attachmentSchema).max(AGENT_ATTACHMENT_MAX_COUNT).optional(),
+}).refine((value) => value.message.length > 0 || (value.attachments?.length ?? 0) > 0, {
+  path: ['message'],
+  message: 'message_or_attachment_required',
 });
 const actionIdSchema = z.string().uuid();
+const conversationIdSchema = z.string().uuid();
 
 const STATUS_BY_CODE: Record<AgentError['code'], number> = {
   agent_unavailable: 503,
@@ -32,14 +52,21 @@ const STATUS_BY_CODE: Record<AgentError['code'], number> = {
   agent_daily_limit: 429,
   agent_busy: 409,
   conversation_not_found: 404,
+  conversation_limit: 409,
   action_not_found: 404,
   action_already_resolved: 409,
+};
+const ATTACHMENT_STATUS_BY_CODE: Record<AgentAttachmentError['code'], number> = {
+  attachment_too_large: 413,
+  unsupported_attachment: 415,
+  invalid_attachment: 400,
 };
 
 const actorOf = (req: Request) => (req as unknown as AuthedRequest).user;
 
 function handleError(error: unknown, req: Request, res: Response) {
   if (error instanceof AgentError) return res.status(STATUS_BY_CODE[error.code]).json({ code: error.code });
+  if (error instanceof AgentAttachmentError) return res.status(ATTACHMENT_STATUS_BY_CODE[error.code]).json({ code: error.code });
   void trackServerError({ actor: actorOf(req), method: req.method, path: req.path, error });
   res.locals.errorTracked = true;
   return res.status(500).json({ code: 'internal_error' });
@@ -50,13 +77,32 @@ agentRoutes.get('/status', async (req, res) => {
   try {
     const available = isAgentAvailable() && !isClientRole(actor.role);
     const usedToday = available ? (await getAgentUsageToday(actor.accountId)).messages : 0;
-    return res.json({ available, dailyLimit: AGENT_DAILY_MESSAGE_LIMIT, usedToday });
+    return res.json({
+      available,
+      dailyLimit: AGENT_DAILY_MESSAGE_LIMIT,
+      usedToday,
+      conversationMessageLimit: AGENT_CONVERSATION_MESSAGE_LIMIT,
+    });
   } catch (error) { return handleError(error, req, res); }
 });
 
-agentRoutes.get('/conversations/latest', async (req, res) => {
+agentRoutes.get('/setup-status', async (req, res) => {
   try {
-    return res.json({ conversation: await getLatestAgentConversation(actorOf(req)) });
+    return res.json(await getAgentSetupStatus(actorOf(req)));
+  } catch (error) { return handleError(error, req, res); }
+});
+
+agentRoutes.get('/conversations', async (req, res) => {
+  try {
+    return res.json({ conversations: await listAgentConversationSummaries(actorOf(req)) });
+  } catch (error) { return handleError(error, req, res); }
+});
+
+agentRoutes.get('/conversations/:id', async (req, res) => {
+  const id = conversationIdSchema.safeParse(req.params.id);
+  if (!id.success) return res.status(400).json({ code: 'invalid_conversation_id' });
+  try {
+    return res.json({ conversation: await getAgentConversation(actorOf(req), id.data) });
   } catch (error) { return handleError(error, req, res); }
 });
 
@@ -66,8 +112,10 @@ agentRoutes.post('/chat', async (req, res) => {
   const actor = actorOf(req);
 
   let conversationId: string;
+  let attachments: PreparedAgentAttachment[];
   try {
     conversationId = await prepareAgentChat(actor, parsed.data.conversationId);
+    attachments = await prepareAgentAttachments(parsed.data.attachments ?? []);
   } catch (error) { return handleError(error, req, res); }
 
   res.writeHead(200, {
@@ -84,7 +132,7 @@ agentRoutes.post('/chat', async (req, res) => {
   };
 
   try {
-    await runAgentChat({ actor, conversationId, message: parsed.data.message, emit, signal: controller.signal });
+    await runAgentChat({ actor, conversationId, message: parsed.data.message, attachments, emit, signal: controller.signal });
   } catch (error) {
     if (!(error instanceof Anthropic.APIUserAbortError)) {
       if (error instanceof AgentError) emit({ type: 'error', code: error.code });

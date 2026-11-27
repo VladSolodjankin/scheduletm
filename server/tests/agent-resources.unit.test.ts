@@ -130,6 +130,24 @@ describe('agent resource registry', () => {
       .rejects.toMatchObject({ code: 'rejected' });
   });
 
+  it('lets owners change work days through account settings, but not specialists', async () => {
+    settings.getAccountSettings.mockResolvedValue({ workDays: [1, 2, 3, 4, 5, 6] });
+    settings.updateAccountSettings.mockResolvedValue({ workDays: [1, 2, 3, 4, 5] });
+    const change = await validateAgentChange(owner, { resource: 'account_settings', operation: 'update', data: { workDays: [5, 4, 3, 2, 1] } });
+    expect(change.before).toEqual({ workDays: [1, 2, 3, 4, 5, 6] });
+    await applyAgentChange(owner, change);
+    expect(settings.updateAccountSettings).toHaveBeenCalledWith(owner, { workDays: [5, 4, 3, 2, 1] });
+    await expect(validateAgentChange(owner, { resource: 'account_settings', operation: 'update', data: { workDays: [1, 1] } }))
+      .rejects.toMatchObject({ code: 'invalid_data' });
+    await expect(validateAgentChange(specialist, { resource: 'account_settings', operation: 'update', data: { workDays: [1] } }))
+      .rejects.toMatchObject({ code: 'unknown_resource' });
+  });
+
+  it('rejects working hours that end before they start', async () => {
+    await expect(validateAgentChange(owner, { resource: 'specialists', operation: 'update', id: 3, data: { workStartHour: 18, workEndHour: 9 } }))
+      .rejects.toMatchObject({ code: 'invalid_data' });
+  });
+
   it('hides payment details from specialists when reading integrations', async () => {
     settings.getUserSettings.mockResolvedValue({
       googleConnected: true, microsoftConnected: false, appleCalendarFeedEnabled: false, zoomConnected: false, yandexConnected: false,

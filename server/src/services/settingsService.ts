@@ -63,6 +63,8 @@ export type AccountSettings = {
   businessLat: number | null;
   businessLng: number | null;
   specialistsSeeAllAppointments: boolean;
+  /** ISO weekdays clients can book (1 Monday ... 7 Sunday), sorted. */
+  workDays: number[];
   deleteScheduledAt: string | null;
 };
 
@@ -133,10 +135,24 @@ const mapSystemSettings = async (): Promise<SystemSettings> => {
   };
 };
 
+const DEFAULT_WORK_DAYS = [1, 2, 3, 4, 5, 6];
+
+/** Normalizes weekdays for storage and responses: unique ISO numbers 1-7 in ascending order. */
+export const normalizeWorkDays = (days: number[]) => [...new Set(days)].filter((day) => day >= 1 && day <= 7).sort((a, b) => a - b);
+
+const parseWorkDays = (csv: string | null | undefined) => {
+  const days = normalizeWorkDays((csv ?? '').split(',').map((value) => Number(value.trim())).filter(Number.isInteger));
+  return days.length > 0 ? days : DEFAULT_WORK_DAYS;
+};
+
 const mapAccountSettings = async (accountId: number): Promise<AccountSettings> => {
-  const row = await findAccountSettingsByAccountId(accountId);
-  const account = await findAccountById(accountId);
+  const [row, account, legacy] = await Promise.all([
+    findAccountSettingsByAccountId(accountId),
+    findAccountById(accountId),
+    findAppSettingsByAccountId(accountId),
+  ]);
   const deleteScheduledAt = (account as { delete_scheduled_at?: Date | string | null } | null)?.delete_scheduled_at;
+  const workDays = parseWorkDays(legacy?.work_days);
 
   if (row) {
     return {
@@ -147,11 +163,11 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
       businessLat: row.business_lat === null ? null : Number(row.business_lat),
       businessLng: row.business_lng === null ? null : Number(row.business_lng),
       specialistsSeeAllAppointments: row.specialists_see_all_appointments,
+      workDays,
       deleteScheduledAt: deleteScheduledAt ? new Date(deleteScheduledAt).toISOString() : null,
     };
   }
 
-  const legacy = await findAppSettingsByAccountId(accountId);
   if (legacy) {
     return {
       dailyDigestEnabled: legacy.daily_digest_enabled,
@@ -161,6 +177,7 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
       businessLat: null,
       businessLng: null,
       specialistsSeeAllAppointments: false,
+      workDays,
       deleteScheduledAt: deleteScheduledAt ? new Date(deleteScheduledAt).toISOString() : null,
     };
   }
@@ -173,6 +190,7 @@ const mapAccountSettings = async (accountId: number): Promise<AccountSettings> =
     businessLat: null,
     businessLng: null,
     specialistsSeeAllAppointments: false,
+    workDays,
     deleteScheduledAt: deleteScheduledAt ? new Date(deleteScheduledAt).toISOString() : null,
   };
 };
@@ -298,6 +316,7 @@ export const updateAccountSettings = async (actor: User, payload: unknown, reque
     slotDurationMin: parsed.data.defaultMeetingDuration,
     dailyDigestEnabled: parsed.data.dailyDigestEnabled,
     weekStartsOnMonday: parsed.data.weekStartsOnMonday,
+    workDays: parsed.data.workDays && normalizeWorkDays(parsed.data.workDays),
   });
 
   return mapAccountSettings(accountId);

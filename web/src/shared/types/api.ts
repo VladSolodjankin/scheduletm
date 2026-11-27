@@ -68,6 +68,8 @@ export type AccountSettings = {
   businessLat: number | null;
   businessLng: number | null;
   specialistsSeeAllAppointments: boolean;
+  /** ISO weekdays the business works: 1 = Monday … 7 = Sunday. */
+  workDays: number[];
   deleteScheduledAt: string | null;
 };
 

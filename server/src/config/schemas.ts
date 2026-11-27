@@ -140,6 +140,9 @@ export const accountSettingsSchema = z.object({
   businessLat: z.coerce.number().min(-90).max(90).nullable().describe('Latitude of the business address'),
   businessLng: z.coerce.number().min(-180).max(180).nullable().describe('Longitude of the business address'),
   specialistsSeeAllAppointments: z.boolean().describe('Specialists see every appointment of the account, not only their own'),
+  workDays: z.array(z.number().int().min(1).max(7)).min(1).max(7)
+    .refine((days) => new Set(days).size === days.length, { message: v.workDaysUnique })
+    .describe('Weekdays clients can book: ISO numbers, 1 is Monday and 7 is Sunday'),
 }).partial();
 
 export const BOT_SLUG_PATTERN = /^[a-z0-9_-]{3,40}$/;
@@ -279,6 +282,11 @@ export const specialistUpdateSchema = z.object({
     .describe('Minutes added when a session is extended'),
 }).refine((value) => Object.keys(value).length > 0, {
   message: v.atLeastOneFieldToUpdate,
+}).refine((value) => (
+  value.workStartHour === undefined || value.workEndHour === undefined || value.workStartHour < value.workEndHour
+), {
+  path: ['workEndHour'],
+  message: v.workEndAfterStart,
 });
 
 const specialistIdsSchema = z.array(z.coerce.number().int().positive()).max(500);

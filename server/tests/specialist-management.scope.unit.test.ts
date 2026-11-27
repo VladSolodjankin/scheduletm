@@ -75,4 +75,13 @@ describe('specialist management scope', () => {
       specialistId: foreignSpecialist.id,
     }));
   });
+
+  it('checks a single working hour against the stored one', async () => {
+    findByIdMock.mockResolvedValue({ ...foreignSpecialist, work_start_hour: 9, work_end_hour: 18 });
+    await expect(updateSpecialistForActor(productAdmin, foreignSpecialist.id, { workStartHour: 19 }))
+      .rejects.toThrow('INVALID_WORK_HOURS');
+    expect(upsertSettingsMock).not.toHaveBeenCalled();
+    await expect(updateSpecialistForActor(productAdmin, foreignSpecialist.id, { workEndHour: 20 }))
+      .resolves.toMatchObject({ id: foreignSpecialist.id });
+  });
 });

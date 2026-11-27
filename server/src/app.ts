@@ -101,6 +101,17 @@ export const createApp = () => {
       return next(error);
     },
   );
+  // Chat messages may carry base64 attachments (checked and limited per file in the agent route).
+  app.use(
+    '/api/agent/chat',
+    express.json({ limit: '16mb' }),
+    (error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const status = getBodyParserErrorStatus(error);
+      if (status === 413) return res.status(413).json({ code: 'attachment_too_large' });
+      if (status) return res.status(status).json({ code: 'invalid_request' });
+      return next(error);
+    },
+  );
   app.use(
     '/api/integrations/zoom/webhook',
     express.json({

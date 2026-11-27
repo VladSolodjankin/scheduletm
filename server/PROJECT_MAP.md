@@ -20,12 +20,14 @@ Express/PostgreSQL API для web и интеграций.
 5. Public Pages, public booking и public appointment status.
 6. Notifications, retry lease и logs.
 7. Error tracking, health/readiness и shutdown.
+8. In-app setup assistant: `src/services/agent/` (Anthropic API, env `ANTHROPIC_API_KEY`), routes `/api/agent/*` (chat SSE с вложениями, history, proposals, setup-status).
 
 Правила:
 
 - tenant data всегда ограничиваются `account_id`;
 - `product_admin` — единственная глобальная роль;
 - время хранится в UTC, пользовательские timezone — IANA;
-- access/refresh отклоняются для inactive/deleted user и inactive account.
+- access/refresh отклоняются для inactive/deleted user и inactive account;
+- история `agent_messages` только дописывается (append-only); вложения транскрибируются в текст, файлы не хранятся.
 
 Подробности: [`README.md`](./README.md), [`docs/rbac.md`](./docs/rbac.md).
